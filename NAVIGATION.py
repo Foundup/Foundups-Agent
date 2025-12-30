@@ -47,18 +47,18 @@ NEED_TO = {
     "ai overseer coordinate mission": "modules/ai_intelligence/ai_overseer/src/ai_overseer.py:AIIntelligenceOverseer.coordinate_mission()",
     "ai overseer check false positive": "modules/ai_intelligence/ai_overseer/src/ai_overseer.py:AIIntelligenceOverseer._is_known_false_positive()",
     "ai overseer record false positive": "modules/ai_intelligence/ai_overseer/src/ai_overseer.py:AIIntelligenceOverseer.record_false_positive()",
-    "ricDAE MCP integration": "modules/ai_intelligence/ric_dae/src/ric_dae.py",
+    "ricDAE MCP integration": "modules/ai_intelligence/ric_dae/src/mcp_tools.py:ResearchIngestionMCP",
 
     # Infrastructure & Orchestration
     "wsp orchestration": "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py:WSPOrchestrator",
     "coordinate qwen and gemma agents": "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py:WSPOrchestrator.route_to_agent()",
     "mcp server management": "modules/infrastructure/mcp_manager/src/mcp_manager.py:MCPManager",
     "auto-start mcp servers": "modules/infrastructure/mcp_manager/src/mcp_manager.py:MCPManager.ensure_server_running()",
-    "wre skills loading": "modules/infrastructure/wre_core/src/wre_skills_loader.py:WRESkillsLoader",
-    "progressive disclosure for skills": "modules/infrastructure/wre_core/src/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
-    "skillz wardrobe": "modules/infrastructure/wre_core/src/wre_skills_loader.py:WRESkillsLoader - Wardrobe Skills = advanced prompting system (see WSP 96)",
-    "wardrobe skills": "modules/infrastructure/wre_core/src/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
-    "load skillz": "modules/infrastructure/wre_core/src/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
+    "wre skills loading": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader",
+    "progressive disclosure for skills": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
+    "skillz wardrobe": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader - Wardrobe Skills = advanced prompting system (see WSP 96)",
+    "wardrobe skills": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
+    "load skillz": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
     "wre skillz protocol": "WSP_framework/src/WSP_96_WRE_Skills_Wardrobe_Protocol.md - Micro Chain-of-Thought paradigm",
 
     # WSP Compliance & Pattern Memory
@@ -169,7 +169,7 @@ MODULE_GRAPH = {
         # Infrastructure flows
         ("route_to_agent", "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py:route_to_agent()"),
         ("ensure_mcp_server", "modules/infrastructure/mcp_manager/src/mcp_manager.py:ensure_server_running()"),
-        ("load_skill_on_demand", "modules/infrastructure/wre_core/src/wre_skills_loader.py:load_skill_on_demand()"),
+        ("load_skill_on_demand", "modules/infrastructure/wre_core/skills/wre_skills_loader.py:load_skill_on_demand()"),
     ],
 
     "module_relationships": {

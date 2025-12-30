@@ -81,7 +81,7 @@ class ProfilesRepo:
         """Initialize SQLite database tables."""
         if not self.persist:
             return
-            
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("""
@@ -98,6 +98,17 @@ class ProfilesRepo:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Whacked users tracking for 0/1/2 classification (Phase 3O-3R)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS whacked_users (
+                user_id TEXT PRIMARY KEY,
+                username TEXT,
+                whack_count INTEGER DEFAULT 1,
+                whacked_by TEXT DEFAULT '[]'
+            )
+        """)
+
         conn.commit()
         conn.close()
 
@@ -275,13 +286,111 @@ class ProfilesRepo:
             key=lambda p: p.score,
             reverse=True
         )
-        
+
         total_count = len(sorted_profiles)
         for i, profile in enumerate(sorted_profiles):
             if profile.user_id == user_id:
                 return i + 1, total_count
-        
+
         return 0, total_count
+
+    # Whacked Users Tracking (Phase 3O-3R: 0/1/2 Classification)
+    def record_whacked_user(self, user_id: str, username: str, mod_id: str) -> None:
+        """
+        Record a user who got whacked (for MAGA troll classification).
+
+        Args:
+            user_id: User ID of whacked person
+            username: Username of whacked person
+            mod_id: Moderator ID who whacked them
+        """
+        if not self.persist:
+            return
+
+        import json
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # Check if user already whacked
+        cursor.execute("SELECT whack_count, whacked_by FROM whacked_users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+
+        if row:
+            # Increment whack count, add mod to list
+            whack_count = row[0] + 1
+            whacked_by = json.loads(row[1])
+            if mod_id not in whacked_by:
+                whacked_by.append(mod_id)
+
+            cursor.execute("""
+                UPDATE whacked_users
+                SET whack_count = ?, whacked_by = ?, username = ?
+                WHERE user_id = ?
+            """, (whack_count, json.dumps(whacked_by), username, user_id))
+
+            logger.info(f"[WHACK-DB] Updated @{username}: {whack_count} whacks (by {len(whacked_by)} mods)")
+        else:
+            # First time whacked
+            whacked_by = [mod_id]
+            cursor.execute("""
+                INSERT INTO whacked_users (user_id, username, whack_count, whacked_by)
+                VALUES (?, ?, 1, ?)
+            """, (user_id, username, json.dumps(whacked_by)))
+
+            logger.info(f"[WHACK-DB] First whack recorded: @{username} (by mod {mod_id})")
+
+        conn.commit()
+        conn.close()
+
+    def is_whacked_user(self, user_id: str) -> bool:
+        """
+        Check if user has been whacked (fast lookup for classification).
+
+        Args:
+            user_id: User ID to check
+
+        Returns:
+            bool: True if user in whacked_users table
+        """
+        if not self.persist:
+            return False
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM whacked_users WHERE user_id = ? LIMIT 1", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+
+        return result is not None
+
+    def get_whacked_user(self, user_id: str) -> Optional[Dict]:
+        """
+        Get whacked user details.
+
+        Args:
+            user_id: User ID to lookup
+
+        Returns:
+            Dict with whack details or None if not whacked
+        """
+        if not self.persist:
+            return None
+
+        import json
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, whack_count, whacked_by FROM whacked_users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return {
+                'user_id': user_id,
+                'username': row[0],
+                'whack_count': row[1],
+                'whacked_by': json.loads(row[2])
+            }
+        return None
 
     # Testing utility
     def _reset(self) -> None:
@@ -549,6 +658,12 @@ def get_session_leaderboard(limit: int = 10) -> List[Dict]:
         }
         for i, p in enumerate(sorted_profiles)
     ]
+
+
+# Whacked Users API (Phase 3O-3R: 0/1/2 Classification)
+def get_profile_store() -> ProfilesRepo:
+    """Get the global ProfilesRepo instance for whacked_users tracking."""
+    return _profiles_repo
 
 
 # Testing helpers (not exported via public API)

@@ -4,3 +4,8 @@
 - Added annotation checks for analyze_ui and failure telemetry coverage for post_to_x (2025-10-18).
 - Added screenshot hashing assertions for telemetry events (2025-10-18).
 - Persisted session snapshots with hashes into JSONL archives and validated in tests (2025-10-18).
+- **WSP 49 Compliance**: Relocated Edge browser validation tests from root to proper module location (2025-12-16):
+  - Added `test_edge_youtube_studio.py` - BrowserManager Edge browser validation for YouTube Studio access
+  - Added `test_edge_comment_processing.py` - Edge browser comment engagement validation (Like/Heart/Reply actions)
+  - Tests validate Sprint 3 architecture (separate browsers for vision vs comments)
+  - Cross-reference: [docs/EDGE_BROWSER_VALIDATION_TEST.md](../../../../docs/EDGE_BROWSER_VALIDATION_TEST.md)

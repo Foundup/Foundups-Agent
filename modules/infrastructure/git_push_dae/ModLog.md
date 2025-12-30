@@ -10,7 +10,7 @@
 
 **Changes Made**:
 1. `_is_appropriate_time()` now treats **23:00-06:00** as sleep hours to reduce late-night notification spam.
-2. Added `GitPushDAE.run_once()` and `launch_git_push_dae(run_once=True)` so the interactive main menu can execute one cycle and return (no "hung" menu).
+2. Added `GitPushDAE.run_once()` and `launch_git_push_dae(run_once=True)` so the interactive main menu and `main.py --git` can execute one cycle and return (no "hung" menu); added `main.py --git-daemon` for continuous mode.
 3. `tests/test_git_push_dae.py` uses an isolated daemon fixture for agentic helper-method tests so unit tests do **not** load persistent state or local LLMs (Qwen).
 
 **Impact**:

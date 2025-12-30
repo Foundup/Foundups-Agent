@@ -46,10 +46,11 @@ class TestAntiRateLimiting(unittest.TestCase):
 
         # Check all required headers
         required_headers = [
-            'User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding',
-            'DNT', 'Connection', 'Upgrade-Insecure-Requests',
-            'Sec-Fetch-Dest', 'Sec-Fetch-Mode', 'Sec-Fetch-Site',
-            'Cache-Control'
+            'User-Agent',
+            'Accept',
+            'Accept-Language',
+            'Accept-Encoding',
+            'Connection',
         ]
 
         for header in required_headers:
@@ -67,10 +68,10 @@ class TestAntiRateLimiting(unittest.TestCase):
             # Get all delay values
             delays = [call[0][0] for call in mock_sleep.call_args_list]
 
-        # All delays should be between 2.0 and 5.0 seconds
+        # All delays should be between 10.0 and 18.0 seconds by default
         for delay in delays:
-            self.assertGreaterEqual(delay, 2.0, "Delay too short")
-            self.assertLessEqual(delay, 5.0, "Delay too long")
+            self.assertGreaterEqual(delay, 10.0, "Delay too short")
+            self.assertLessEqual(delay, 18.0, "Delay too long")
 
         # Delays should vary (not all the same)
         unique_delays = set(delays)
@@ -90,8 +91,12 @@ class TestAntiRateLimiting(unittest.TestCase):
 
         # Check retry configuration
         self.assertIsNotNone(http_adapter.max_retries)
-        self.assertEqual(http_adapter.max_retries.total, 3)
-        self.assertIn(429, http_adapter.max_retries.status_forcelist)
+        self.assertEqual(http_adapter.max_retries.total, 2)
+        self.assertNotIn(429, http_adapter.max_retries.status_forcelist)
+        self.assertIn(500, http_adapter.max_retries.status_forcelist)
+        self.assertIn(502, http_adapter.max_retries.status_forcelist)
+        self.assertIn(503, http_adapter.max_retries.status_forcelist)
+        self.assertIn(504, http_adapter.max_retries.status_forcelist)
 
     @patch('requests.Session.get')
     def test_check_video_with_anti_detection(self, mock_get):
@@ -99,6 +104,8 @@ class TestAntiRateLimiting(unittest.TestCase):
         # Mock successful response
         mock_response = Mock()
         mock_response.status_code = 200
+        mock_response.url = 'https://www.youtube.com/watch?v=test_video_id'
+        mock_response.headers = {}
         mock_response.text = '''
             <html>
                 <title>Test Video - YouTube</title>
@@ -121,48 +128,43 @@ class TestAntiRateLimiting(unittest.TestCase):
             self.assertIn('User-Agent', headers)
 
     @patch('requests.Session.get')
-    def test_rate_limit_handling(self, mock_get):
-        """Test handling of 429 rate limit errors"""
+    @patch('modules.platform_integration.youtube_auth.src.youtube_auth.get_authenticated_service')
+    def test_rate_limit_handling(self, mock_auth, mock_get):
+        """Test handling of 429 rate limit errors (treated as CAPTCHA trigger)."""
         # Mock 429 response
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_response.raise_for_status.side_effect = requests.HTTPError("429")
+        mock_response.url = 'https://www.youtube.com/watch?v=test_video_id'
+        mock_response.headers = {}
         mock_get.return_value = mock_response
+        mock_auth.side_effect = RuntimeError("auth unavailable in unit test")
 
-        with patch.object(self.checker, '_anti_detection_delay'):
+        with patch.object(self.checker, '_anti_detection_delay'), patch.object(self.checker, '_register_captcha_hit') as mock_captcha:
+            mock_captcha.return_value = 42.0
             result = self.checker.check_video_is_live('test_video_id')
 
             # Should handle error gracefully
             self.assertFalse(result['live'])
-            self.assertIn('error', result)
-            self.assertIn('429', result['error'])
+            self.assertIn('method', result)
+            mock_captcha.assert_called_once()
 
     @patch('requests.Session.get')
     def test_channel_check_with_delays(self, mock_get):
-        """Test that channel checking adds delays between video checks"""
-        # Mock channel page with multiple videos
+        """Test that channel checking uses /live and does not follow watch redirects."""
         channel_response = Mock()
-        channel_response.status_code = 200
-        channel_response.url = 'https://www.youtube.com/channel/test/streams'
-        channel_response.text = '''
-            "videoId":"video1"
-            "videoId":"video2"
-            "videoId":"video3"
-        '''
+        channel_response.status_code = 302
+        channel_response.url = 'https://www.youtube.com/channel/test_channel_id/live'
+        channel_response.headers = {"Location": "/watch?v=live123"}
+        mock_get.return_value = channel_response
 
-        # Mock video responses (all not live)
-        video_response = Mock()
-        video_response.status_code = 200
-        video_response.text = '<html><title>Video - YouTube</title></html>'
-
-        mock_get.side_effect = [channel_response, video_response, video_response, video_response]
-
-        with patch.object(self.checker, '_anti_detection_delay') as mock_delay:
+        with patch.object(self.checker, '_anti_detection_delay'), patch.object(self.checker, 'check_video_is_live') as mock_check_video:
+            mock_check_video.return_value = {"live": True, "video_id": "live123", "method": "api"}
             result = self.checker.check_channel_for_live('test_channel_id')
 
-            # Should call delay at least twice (channel check + streams check)
-            # Additional delays depend on implementation details
-            self.assertGreaterEqual(mock_delay.call_count, 2)
+        self.assertIsNotNone(result)
+        self.assertTrue(result.get("live"))
+        self.assertEqual(result.get("video_id"), "live123")
+        self.assertFalse(mock_get.call_args[1].get("allow_redirects", True))
 
     def test_cookie_persistence(self):
         """Test that cookies are persisted in session"""
@@ -175,6 +177,8 @@ class TestAntiRateLimiting(unittest.TestCase):
         with patch('requests.Session.get') as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
+            mock_response.url = 'https://www.youtube.com/watch?v=test_id'
+            mock_response.headers = {}
             mock_response.text = '<html></html>'
             mock_get.return_value = mock_response
 
@@ -194,15 +198,15 @@ class TestAntiRateLimiting(unittest.TestCase):
         retry = adapter.max_retries
 
         # Check backoff factor
-        self.assertEqual(retry.backoff_factor, 2)
+        self.assertEqual(retry.backoff_factor, 15)
         self.assertTrue(retry.respect_retry_after_header)
 
         # Check status codes that trigger retry
-        self.assertIn(429, retry.status_forcelist)
         self.assertIn(500, retry.status_forcelist)
         self.assertIn(502, retry.status_forcelist)
         self.assertIn(503, retry.status_forcelist)
         self.assertIn(504, retry.status_forcelist)
+        self.assertNotIn(429, retry.status_forcelist)
 
 
 class TestLiveStreamDetection(unittest.TestCase):

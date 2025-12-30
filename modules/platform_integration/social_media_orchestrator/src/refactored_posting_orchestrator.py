@@ -48,12 +48,49 @@ class RefactoredPostingOrchestrator:
         # State
         self.is_posting = False
         self.last_posted_video = None
+        self.cancel_requested = False  # 012 cancel capability
+        self.current_operation = None  # Track current operation for logging
 
         # Log QWEN status
         if self.duplicate_manager.qwen_enabled:
             self.logger.info("[AI_BRAIN] [QWEN-ORCHESTRATOR] Intelligence features enabled")
 
         self.logger.info("[PASS] RefactoredPostingOrchestrator initialized with core components")
+
+    def cancel_posting(self) -> Dict[str, Any]:
+        """
+        Cancel current posting operation - 012 intervention capability
+
+        Returns:
+            Status dictionary with cancellation info
+        """
+        if not self.is_posting:
+            self.logger.info("[CANCEL] No posting in progress")
+            return {'cancelled': False, 'reason': 'not_posting'}
+
+        self.cancel_requested = True
+        self.logger.warning("[012-CANCEL] Cancellation requested - aborting current posting")
+        self.logger.warning(f"[012-CANCEL] Current operation: {self.current_operation}")
+
+        return {
+            'cancelled': True,
+            'current_operation': self.current_operation,
+            'message': 'Cancellation signal sent - posting will abort at next checkpoint'
+        }
+
+    def get_posting_status(self) -> Dict[str, Any]:
+        """
+        Get current posting status - for 012 monitoring
+
+        Returns:
+            Status dictionary
+        """
+        return {
+            'is_posting': self.is_posting,
+            'current_operation': self.current_operation,
+            'cancel_requested': self.cancel_requested,
+            'last_posted_video': self.last_posted_video
+        }
 
     def handle_stream_detected(
         self,
@@ -233,6 +270,8 @@ class RefactoredPostingOrchestrator:
         """
         try:
             self.is_posting = True
+            self.cancel_requested = False  # Reset cancel flag
+            self.current_operation = f"Posting {video_id}"
 
             # Use QWEN parameters if available
             posting_delays = posting_delays or {}
@@ -257,6 +296,13 @@ class RefactoredPostingOrchestrator:
 
             # Post to LinkedIn first
             if linkedin_page:
+                # CHECKPOINT: Check cancellation before LinkedIn
+                if self.cancel_requested:
+                    self.logger.warning("[012-CANCEL] Posting cancelled before LinkedIn")
+                    results['errors'].append("Posting cancelled by 012")
+                    return
+
+                self.current_operation = "LinkedIn posting"
                 self.logger.info("[BLUE] [FINGERPRINT-1] STARTING LINKEDIN POSTING SEQUENCE")
                 time.sleep(1)  # 1s delay for visibility
 
@@ -316,6 +362,13 @@ class RefactoredPostingOrchestrator:
             # Post to X ONLY if LinkedIn succeeded
             if x_account:
                 if linkedin_success:
+                    # CHECKPOINT: Check cancellation before X
+                    if self.cancel_requested:
+                        self.logger.warning("[012-CANCEL] Posting cancelled before X/Twitter")
+                        results['errors'].append("Posting cancelled by 012 (LinkedIn completed)")
+                        return
+
+                    self.current_operation = "X/Twitter posting"
                     self.logger.info("[BIRD] [FINGERPRINT-6] STARTING X/TWITTER POSTING SEQUENCE (LinkedIn prerequisite met)")
                     time.sleep(1)
 
@@ -470,7 +523,12 @@ class RefactoredPostingOrchestrator:
             # Browser-based posting should be allowed to retry
             self.logger.info("[WARNING] Error occurred but NOT marking as failed - will retry on next detection")
         finally:
+            was_cancelled = self.cancel_requested
             self.is_posting = False
+            self.cancel_requested = False
+            self.current_operation = None
+            if was_cancelled:
+                self.logger.info("[012-CANCEL] Posting operation cleaned up after cancellation")
 
     def get_posting_stats(self) -> Dict[str, Any]:
         """

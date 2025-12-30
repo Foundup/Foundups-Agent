@@ -14,11 +14,15 @@ def test_gemini_api():
 
     # Load environment variables
     load_dotenv()
-    api_key = os.getenv('GOOGLE_API_KEY')
+    api_key = (
+        os.getenv('GEMINI_API_KEY')
+        or os.getenv('GOOGLE_API_KEY')
+        or os.getenv('GOOGLE_AISTUDIO_API_KEY')
+    )
 
     if not api_key:
-        print("ERROR: GOOGLE_API_KEY not found in .env file")
-        print("Please add: GOOGLE_API_KEY=your_api_key_here")
+        print("ERROR: No Gemini API key found in .env file")
+        print("Please add: GEMINI_API_KEY=your_api_key_here")
         return False
 
     print(f"[INFO] API Key found: {api_key[:10]}...{api_key[-4:]}")

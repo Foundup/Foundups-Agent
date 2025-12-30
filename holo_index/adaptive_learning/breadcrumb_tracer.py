@@ -56,6 +56,62 @@ from modules.infrastructure.database.src.agent_db import AgentDB
 logger = logging.getLogger(__name__)
 
 
+def _breadcrumb_enabled() -> bool:
+    return os.getenv("HOLO_BREADCRUMB_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
+
+def _breadcrumb_logs_enabled() -> bool:
+    return os.getenv("HOLO_BREADCRUMB_LOGS", "true").lower() in {"1", "true", "yes", "on"}
+
+
+class _NullBreadcrumbTracer:
+    """No-op tracer to suppress breadcrumb logging and background threads."""
+
+    def add_search(self, *args, **kwargs):
+        return None
+
+    def add_action(self, *args, **kwargs):
+        return None
+
+    def add_documentation_link(self, *args, **kwargs):
+        return None
+
+    def create_handoff_contract(self, *args, **kwargs):
+        return ""
+
+    def signal_collaboration_readiness(self, *args, **kwargs):
+        return None
+
+    def get_available_collaborators(self, *args, **kwargs):
+        return []
+
+    def assign_task_from_contract(self, *args, **kwargs):
+        return False
+
+    def complete_contract(self, *args, **kwargs):
+        return False
+
+    def get_active_contracts(self, *args, **kwargs):
+        return []
+
+    def discover_autonomous_task(self, *args, **kwargs):
+        return ""
+
+    def enable_autonomous_mode(self, *args, **kwargs):
+        return None
+
+    def get_autonomous_status(self, *args, **kwargs):
+        return {"enabled": False}
+
+    def get_recent_agents(self, *args, **kwargs):
+        return []
+
+    def __getattr__(self, name):
+        def _noop(*_args, **_kwargs):
+            return None
+        return _noop
+
+
 @dataclass
 class HandoffContract:
     """A concrete task assignment with time estimate and ownership."""
@@ -130,7 +186,8 @@ class BreadcrumbTracer:
         self.agent_id = raw_agent_id if raw_agent_id else "0102"
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_id = f"{self.agent_id}_{timestamp}"
-        logger.info("[BREADCRUMB] Session started for agent %s (%s)", self.agent_id, self.session_id)
+        if _breadcrumb_logs_enabled():
+            logger.info("[BREADCRUMB] Session started for agent %s (%s)", self.agent_id, self.session_id)
 
         # In-memory caches for performance (synced with database)
         self.active_contracts = []
@@ -149,6 +206,9 @@ class BreadcrumbTracer:
         self.task_discovery_enabled = True
         self.auto_assignment_enabled = True
 
+        # Session-level deduplication for WSP violations (prevent spam)
+        self._discovered_violations = set()  # Track violations already reported this session
+
         # Load existing data from database
         self._load_from_database()
 
@@ -161,7 +221,10 @@ class BreadcrumbTracer:
         self.task_discovery_monitor.start()
         self.coordination_processor.start()
 
-        logger.info("[BRAIN] AUTONOMOUS Breadcrumb Tracer initialized - WSP 78 database enabled - 0102/0102 coordination active")
+        if _breadcrumb_logs_enabled():
+            logger.info(
+                "[BRAIN] AUTONOMOUS Breadcrumb Tracer initialized - WSP 78 database enabled - 0102/0102 coordination active"
+            )
 
     def _add_breadcrumb(self, action: str, **kwargs) -> int:
         """Persist breadcrumb for shared memory and emit live updates."""
@@ -224,6 +287,8 @@ class BreadcrumbTracer:
                 details.append(f"task={task_direct}")
             detail_text = " | ".join(details) if details else "recorded"
             timestamp = datetime.now().strftime("%H:%M:%S")
+            if not _breadcrumb_logs_enabled():
+                return
             message = f"[{timestamp}] [BREADCRUMB][{self.agent_id}][{self.session_id}][{breadcrumb_id}] {action}: {detail_text}"
             logger.info(message)
         except Exception as exc:
@@ -697,6 +762,17 @@ class BreadcrumbTracer:
         # Check for WSP compliance violations
         wsp_violations = self._scan_wsp_violations()
         for violation in wsp_violations:
+            # Create unique violation key for session deduplication (Occam's Razor)
+            violation_key = f"{violation['location']}:{violation['description']}"
+
+            # Skip if already discovered this session (prevent spam)
+            if violation_key in self._discovered_violations:
+                continue
+
+            # Mark as discovered
+            self._discovered_violations.add(violation_key)
+
+            # Create autonomous task
             self.discover_autonomous_task(
                 f"Fix WSP violation: {violation['description']}",
                 {
@@ -821,20 +897,29 @@ class BreadcrumbTracer:
                 for domain_dir in modules_path.iterdir():
                     if domain_dir.is_dir() and not domain_dir.name.startswith('_'):
                         for module_dir in domain_dir.iterdir():
-                            if module_dir.is_dir():
-                                missing_items = []
-                                if not (module_dir / "README.md").exists():
-                                    missing_items.append("README.md")
-                                if not (module_dir / "src").exists():
-                                    missing_items.append("src/")
+                            # Skip non-module directories (Occam's Razor - filter noise)
+                            if not module_dir.is_dir():
+                                continue
+                            if module_dir.name.startswith(('_', '.')):
+                                continue
+                            if module_dir.name in ('__pycache__', '.pytest_cache', 'node_modules'):
+                                continue
 
-                                if missing_items:
-                                    violations.append({
-                                        "type": "wsp_49_violation",
-                                        "description": f"Module {module_dir.name} missing: {', '.join(missing_items)}",
-                                        "location": str(module_dir),
-                                        "severity": "medium"
-                                    })
+                            # Check for missing WSP 49 structure
+                            missing_items = []
+                            if not (module_dir / "README.md").exists():
+                                missing_items.append("README.md")
+                            if not (module_dir / "src").exists():
+                                missing_items.append("src/")
+
+                            # Add violation if any items missing (correct indentation)
+                            if missing_items:
+                                violations.append({
+                                    "type": "wsp_49_violation",
+                                    "description": f"Module {module_dir.name} missing: {', '.join(missing_items)}",
+                                    "location": str(module_dir),
+                                    "severity": "medium"
+                                })
         except Exception as e:
             logger.debug(f"Error scanning WSP violations: {e}")
 
@@ -1041,6 +1126,9 @@ def get_tracer() -> BreadcrumbTracer:
     """Get or create the global breadcrumb tracer."""
     global _tracer
     if _tracer is None:
+        if not _breadcrumb_enabled():
+            _tracer = _NullBreadcrumbTracer()
+            return _tracer
         _tracer = BreadcrumbTracer()
     return _tracer
 

@@ -1,0 +1,135 @@
+{
+  "platform": "youtube_studio",
+  "description": "YouTube Studio interactions (account switching, navigation)",
+  "iframe": {
+    "selector": null,
+    "required": false,
+    "description": "YouTube Studio is not in iframe"
+  },
+  "actions": {
+    "avatar_button": {
+      "coordinates": {
+        "x": 371,
+        "y": 28
+      },
+      "variance": {
+        "x": 8,
+        "y": 8
+      },
+      "action": "click",
+      "description": "Avatar button - opens account menu",
+      "timing": {
+        "before_click": {
+          "min": 0.15,
+          "max": 0.30
+        },
+        "after_click": {
+          "min": 0.30,
+          "max": 0.50
+        }
+      }
+    },
+    "switch_menu": {
+      "coordinates": {
+        "x": 294,
+        "y": 184
+      },
+      "variance": {
+        "x": 8,
+        "y": 8
+      },
+      "action": "click",
+      "bypass_sentinel": true,
+      "description": "Switch account menu item - opens account list (TRUSTED)",
+      "timing": {
+        "before_click": {
+          "min": 0.20,
+          "max": 0.35
+        },
+        "after_click": {
+          "min": 0.40,
+          "max": 0.60
+        }
+      }
+    },
+    "account_UnDaoDu": {
+      "coordinates": {
+        "x": 178,
+        "y": 161
+      },
+      "variance": {
+        "x": 12,
+        "y": 8
+      },
+      "action": "click",
+      "description": "UnDaoDu account selection",
+      "timing": {
+        "before_click": {
+          "min": 0.25,
+          "max": 0.45
+        },
+        "after_click": {
+          "min": 0.50,
+          "max": 0.80
+        }
+      }
+    },
+    "account_Move2Japan": {
+      "coordinates": {
+        "x": 178,
+        "y": 225
+      },
+      "variance": {
+        "x": 12,
+        "y": 8
+      },
+      "action": "click",
+      "description": "Move2Japan account selection",
+      "timing": {
+        "before_click": {
+          "min": 0.25,
+          "max": 0.45
+        },
+        "after_click": {
+          "min": 0.50,
+          "max": 0.80
+        }
+      }
+    },
+    "account_FoundUps": {
+      "coordinates": {
+        "x": 178,
+        "y": 289
+      },
+      "variance": {
+        "x": 12,
+        "y": 8
+      },
+      "action": "click",
+      "description": "FoundUps account selection (EXTRAPOLATED coordinates)",
+      "timing": {
+        "before_click": {
+          "min": 0.25,
+          "max": 0.45
+        },
+        "after_click": {
+          "min": 0.50,
+          "max": 0.80
+        }
+      }
+    }
+  },
+  "global_timing": {
+    "thinking_pause": {
+      "min": 0.50,
+      "max": 2.00,
+      "probability": 0.30
+    },
+    "fatigue_threshold": 20
+  },
+  "error_simulation": {
+    "base_rate": 0.08,
+    "fatigue_increase": 0.05,
+    "max_error_rate": 0.13
+  }
+}

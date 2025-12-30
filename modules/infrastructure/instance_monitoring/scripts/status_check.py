@@ -108,6 +108,37 @@ def check_instance_status():
         except Exception as e:
             print(f"[WARN] Dependency status unavailable: {e}")
 
+        # Feature switches (env flags) - helps isolate startup behavior
+        print("\n" + "-"*40)
+        print("[SWITCHBOARD] FEATURE FLAGS")
+        print("-"*40)
+        def _env_truthy(name: str, default: str = "false") -> bool:
+            return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+        switches = {
+            "FOUNDUPS_ENABLE_WRE": _env_truthy("FOUNDUPS_ENABLE_WRE", "true"),
+            "FOUNDUPS_ENABLE_WRE_MONITOR": _env_truthy("FOUNDUPS_ENABLE_WRE_MONITOR", "true"),
+            "FOUNDUPS_ENABLE_QWEN": _env_truthy("FOUNDUPS_ENABLE_QWEN", "true"),
+            "FOUNDUPS_ENABLE_PATTERN_MEMORY": _env_truthy("FOUNDUPS_ENABLE_PATTERN_MEMORY", "true"),
+            "FOUNDUPS_ENABLE_SELF_IMPROVEMENT": _env_truthy("FOUNDUPS_ENABLE_SELF_IMPROVEMENT", "true"),
+            "FOUNDUPS_ENABLE_SHORTS_COMMANDS": _env_truthy("FOUNDUPS_ENABLE_SHORTS_COMMANDS", "true") and not _env_truthy("FOUNDUPS_DISABLE_SHORTS_COMMANDS", "false"),
+            "FOUNDUPS_ENABLE_KEY_HYGIENE": _env_truthy("FOUNDUPS_ENABLE_KEY_HYGIENE", "true"),
+            "HOLO_SKIP_MODEL": _env_truthy("HOLO_SKIP_MODEL", "false"),
+            "HOLO_SILENT": _env_truthy("HOLO_SILENT", "false"),
+        }
+        print(json.dumps(switches, indent=2, sort_keys=True))
+
+        # YouTube automation gates snapshot (single source of truth)
+        print("\n" + "-"*40)
+        print("[SWITCHBOARD] YT AUTOMATION GATES")
+        print("-"*40)
+        try:
+            from modules.communication.livechat.src.automation_gates import gate_snapshot
+
+            print(json.dumps(gate_snapshot(), indent=2, sort_keys=True))
+        except Exception as e:
+            print(f"[WARN] Automation gate snapshot unavailable: {e}")
+
         # Check HoloDAE instances
         print("\n" + "-"*40)
         print("[MENU]HOLO-DAE STATUS")

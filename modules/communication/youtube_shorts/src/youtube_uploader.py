@@ -87,7 +87,8 @@ class YouTubeShortsUploader:
                 logger.info("[OK] [UPLOAD-AUTH] OAuth token refreshed and saved")
 
             # Build YouTube API service
-            self.youtube = build('youtube', 'v3', credentials=creds)
+            # Disable discovery caching to avoid noisy `googleapiclient.discovery_cache` logs on Windows.
+            self.youtube = build('youtube', 'v3', credentials=creds, cache_discovery=False)
             self.channel = channel
             logger.info(f"[OK] [UPLOAD-INIT] YouTube API service initialized for {channel.upper()} channel")
 

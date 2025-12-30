@@ -102,26 +102,27 @@ class ModeratorLookup:
             logger.error(f"[MOD-LOOKUP] Database query failed: {e}")
             return None
 
-    def is_active_moderator(
+    def is_moderator(
         self,
-        user_id: str,
-        activity_window_minutes: int = 10
+        user_id: str
     ) -> Tuple[bool, Optional[str]]:
         """
-        Check if user is a moderator who was active in last N minutes.
+        Check if user has moderator role (MOD or OWNER).
+
+        USER INSIGHT (2025-12-24): "mods do not need to be active they just need to
+        be accounted for... its not about active... if they whack trolls they are a mod"
 
         Args:
             user_id: YouTube channel ID
-            activity_window_minutes: Consider user "active" if last_seen within N minutes
 
         Returns:
-            (is_active_mod: bool, username: Optional[str])
+            (is_mod: bool, username: Optional[str])
 
         Examples:
             >>> lookup = ModeratorLookup()
-            >>> is_mod, name = lookup.is_active_moderator("UC_2AskvFe9uqp9maCS6bohg")
+            >>> is_mod, name = lookup.is_moderator("UC_2AskvFe9uqp9maCS6bohg")
             >>> if is_mod:
-            ...     print(f"{name} is an active moderator!")
+            ...     print(f"{name} is a moderator!")
         """
         if not self.db_available:
             return (False, None)
@@ -131,32 +132,116 @@ class ModeratorLookup:
         if not user:
             return (False, None)
 
-        # Check role
-        if user['role'] not in ('MOD', 'OWNER'):
+        # Check role (that's all that matters - role = moderator!)
+        if user['role'] in ('MOD', 'OWNER'):
+            logger.info(f"[MOD-LOOKUP] ✅ MODERATOR: {user['username']} (role: {user['role']})")
+            return (True, user['username'])
+        else:
             logger.debug(f"[MOD-LOOKUP] User {user['username']} is not a moderator (role: {user['role']})")
             return (False, None)
 
-        # Check recent activity
-        if not user['last_seen']:
-            logger.debug(f"[MOD-LOOKUP] Moderator {user['username']} has no recent activity")
-            return (False, None)
+    def is_active_moderator(
+        self,
+        user_id: str,
+        activity_window_minutes: int = 10
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        DEPRECATED: Use is_moderator() instead.
 
-        cutoff = datetime.now() - timedelta(minutes=activity_window_minutes)
+        Check if user is a moderator who was active in last N minutes.
 
-        if user['last_seen'] >= cutoff:
-            minutes_ago = (datetime.now() - user['last_seen']).total_seconds() / 60
-            logger.info(
-                f"[MOD-LOOKUP] ✅ ACTIVE MODERATOR DETECTED: {user['username']} "
-                f"(last seen {minutes_ago:.1f} min ago)"
+        DESIGN NOTE: This method is deprecated because moderator status is a ROLE,
+        not an activity measure. Kept for backward compatibility only.
+
+        Args:
+            user_id: YouTube channel ID
+            activity_window_minutes: Consider user "active" if last_seen within N minutes
+
+        Returns:
+            (is_active_mod: bool, username: Optional[str])
+        """
+        # Just call is_moderator() - activity doesn't matter for mod status
+        return self.is_moderator(user_id)
+
+    def sync_moderators_from_api(
+        self,
+        youtube_service,
+        live_chat_id: str
+    ) -> int:
+        """
+        Pull moderator list from YouTube API and sync to database.
+
+        USER INSIGHT (2025-12-24): Research YouTube API - pull channel mods directly
+        instead of relying on chat activity to populate database.
+
+        API: GET https://www.googleapis.com/youtube/v3/liveChat/moderators
+        Required: liveChatId, part=snippet
+        Quota: Unknown (likely 1-5 units)
+
+        Args:
+            youtube_service: Authenticated YouTube API service
+            live_chat_id: Live chat ID to pull moderators from
+
+        Returns:
+            Number of moderators synced to database
+
+        Example:
+            >>> from modules.platform_integration.youtube_auth import get_youtube_service
+            >>> service = get_youtube_service()
+            >>> lookup = ModeratorLookup()
+            >>> count = lookup.sync_moderators_from_api(service, live_chat_id)
+            >>> print(f"Synced {count} moderators")
+        """
+        if not self.db_available:
+            logger.error("[MOD-LOOKUP] Database unavailable - cannot sync")
+            return 0
+
+        try:
+            # Call YouTube API liveChatModerators.list
+            request = youtube_service.liveChatModerators().list(
+                liveChatId=live_chat_id,
+                part="snippet",
+                maxResults=50  # Max allowed per page
             )
-            return (True, user['username'])
 
-        minutes_ago = (datetime.now() - user['last_seen']).total_seconds() / 60
-        logger.debug(
-            f"[MOD-LOOKUP] Moderator {user['username']} not active "
-            f"(last seen {minutes_ago:.1f} min ago, cutoff: {activity_window_minutes} min)"
-        )
-        return (False, None)
+            moderators_synced = 0
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            while request is not None:
+                response = request.execute()
+
+                for item in response.get('items', []):
+                    snippet = item.get('snippet', {})
+                    moderator_details = snippet.get('moderatorDetails', {})
+
+                    channel_id = moderator_details.get('channelId')
+                    display_name = moderator_details.get('displayName')
+
+                    if not channel_id or not display_name:
+                        continue
+
+                    # Insert or update in database
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO users (user_id, username, role, last_seen, message_count)
+                        VALUES (?, ?, 'MOD', ?, COALESCE((SELECT message_count FROM users WHERE user_id = ?), 0))
+                    ''', (channel_id, display_name, datetime.now().isoformat(), channel_id))
+
+                    moderators_synced += 1
+                    logger.info(f"[MOD-LOOKUP] Synced moderator: {display_name} ({channel_id})")
+
+                # Handle pagination
+                request = youtube_service.liveChatModerators().list_next(request, response)
+
+            conn.commit()
+            conn.close()
+
+            logger.info(f"[MOD-LOOKUP] ✅ Synced {moderators_synced} moderators from YouTube API")
+            return moderators_synced
+
+        except Exception as e:
+            logger.error(f"[MOD-LOOKUP] Failed to sync from API: {e}")
+            return 0
 
     def get_all_active_moderators(
         self,

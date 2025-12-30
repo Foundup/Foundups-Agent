@@ -38,5 +38,6 @@ __all__ = [
     "install_global_handler"
 ]
 
-# Initialize global engine on import
-_engine = get_engine()
+# NOTE: Do not auto-initialize the engine on import.
+# Engine creation is expensive and starts background loops; callers should use get_engine() explicitly.
+_engine = None

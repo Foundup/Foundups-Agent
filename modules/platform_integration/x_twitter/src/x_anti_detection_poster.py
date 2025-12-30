@@ -58,6 +58,14 @@ except ImportError:
     from selenium.webdriver.common.action_chains import ActionChains
     SELENIUM_AVAILABLE = True
 
+# Import centralized anti-detection module (0102 Bezier curves + probabilistic actions)
+try:
+    from modules.infrastructure.foundups_selenium.src.human_behavior import get_human_behavior
+    HUMAN_BEHAVIOR_AVAILABLE = True
+except ImportError:
+    HUMAN_BEHAVIOR_AVAILABLE = False
+    print("[ANTI-DETECTION] Centralized human_behavior module not available - using fallback")
+
 class AntiDetectionX:
     """
     X/Twitter poster with anti-detection measures
@@ -98,9 +106,16 @@ class AntiDetectionX:
 
         # WSP 48: Load pattern memory for recursive learning
         self.memory = self.load_memory()
-        
+        self.human = None  # Will be initialized when driver is created
+
     def human_type(self, element, text):
-        """Type like a human with random delays"""
+        """Type like a human - uses centralized anti-detection module with Bezier curves"""
+        # Use centralized module if available (Bezier curves + 5% typo rate + variable speed)
+        if HUMAN_BEHAVIOR_AVAILABLE and self.human:
+            self.human.human_type(element, text)
+            return
+
+        # Fallback to basic random delays
         element.clear()
         for char in text:
             element.send_keys(char)
@@ -429,6 +444,15 @@ class AntiDetectionX:
 
         # Override navigator.webdriver flag
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+        # Initialize centralized human behavior module (Bezier curves + anti-detection)
+        if HUMAN_BEHAVIOR_AVAILABLE:
+            try:
+                self.human = get_human_behavior(self.driver)
+                print("[ANTI-DETECTION] Using centralized human_behavior module (Bezier curves + probabilistic actions)")
+            except Exception as e:
+                print(f"[ANTI-DETECTION] Failed to initialize human_behavior: {e}")
+                self.human = None
 
         # Random initial delay
         time.sleep(random.uniform(2, 4))

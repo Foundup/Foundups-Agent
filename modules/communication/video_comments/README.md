@@ -58,6 +58,7 @@ This module enables autonomous YouTube comment engagement through quantum-entang
 - [x] **Commenter Database Lookup**: Reuses `livechat/memory/auto_moderator.db` + local commenter history
 - [x] **Mod Detection**: Moderator detection via `auto_moderator.db` + DOM badges
 - [x] **Troll Classification**: MAGA troll detection via GrokGreetingGenerator + heuristics
+- [x] **Hostile Pattern Detection**: Sentiment-based classification for non-MAGA hostility ("don't come back", "gtfo", etc.)
 - [x] **Whack-a-MAGA Responses**: Uses troll mockery responses for trolls
 - [x] **Dynamic Reply Generation**: Context-aware replies via Grok (preferred) or LM Studio fallback
 

@@ -2,7 +2,8 @@
 
 **WSP Reference:** WSP 96 (WRE Skills Protocol)
 **Status:** ✅ VALIDATED (PoC → Production)
-**Last Validated:** 2025-12-14
+**Last Validated:** 2025-12-28
+**Update (2025-12-28):** Enhanced vision robustness with `_vision_exists` helper to prevent `AttributeError` during verification checks. All coordinated actions now use safely-guarded existence checks.
 
 ## 0102 Directive
 

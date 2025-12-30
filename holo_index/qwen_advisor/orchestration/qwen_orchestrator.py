@@ -36,6 +36,10 @@ from holo_index.feedback_learner import get_learner
 from ..qwen_health_monitor import CodeIndexCirculationEngine
 from ..architect_mode import ArchitectDecisionEngine
 
+# WSP 62 Refactoring: Extracted modules
+from .src.wsp_documentation_guardian import WSPDocumentationGuardian
+from .src.intent_response_processor import IntentResponseProcessor
+
 # MCP Integration imports
 try:
     from modules.ai_intelligence.ric_dae.src.mcp_tools import ResearchIngestionMCP
@@ -43,6 +47,14 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
     ResearchIngestionMCP = None
+
+# Local MCP Handler
+from .services.mcp_handler import MCPHandler
+from .services.mission_coordinator import MissionCoordinator
+from .services.component_router import ComponentRouter
+
+# Import for agent type detection
+from holo_index.intent_classifier import get_classifier
 
 
 COMPONENT_META = {
@@ -138,10 +150,35 @@ class QwenOrchestrator:
         self.mcp_handler = MCPHandler(mcp_client=getattr(self, 'mcp_client', None), logger=self._log_chain_of_thought)
 
         # Initialize core components
-        self.intent_classifier = IntentClassifier()
-        self.feedback_learner = FeedbackLearner()
-        self.output_composer = OutputComposer()
-        self.breadcrumb_tracer = BreadcrumbTracer()
+        self.feedback_learner = get_learner()
+        self.output_composer = get_composer()
+
+        # WSP 62 Refactoring: Initialize WSP Documentation Guardian
+        self.wsp_guardian = WSPDocumentationGuardian(
+            repo_root=self.repo_root,
+            logger=self.logger,
+            relative_path_func=self._relative_path,
+            count_lines_func=self._count_file_lines
+        )
+
+        # WSP 62 Refactoring: Initialize Intent Response Processor
+        self.intent_processor = IntentResponseProcessor(
+            logger=self.logger,
+            breadcrumb_tracer=self.breadcrumb_tracer,
+            output_composer=self.output_composer
+        )
+
+    def _ensure_utf8_console(self):
+        """Ensure console supports UTF-8 encoding (Windows compatibility)."""
+        try:
+            if sys.platform == 'win32':
+                import codecs
+                # Wrap stdout/stderr with UTF-8 codec writer
+                sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+                sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+        except Exception as e:
+            # Non-fatal - log warning but continue
+            logging.warning(f"[QWEN] Failed to set UTF-8 console: {e}")
         
         # Performance tracking
         self.performance_history = []
@@ -153,15 +190,29 @@ class QwenOrchestrator:
         self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
         self._last_codeindex_reports: List[Dict[str, Any]] = []
 
-        # Initialize MCP client if available
-        if MCP_AVAILABLE and ResearchIngestionMCP:
+        # Initialize MCP client if available (toggleable)
+        mcp_enabled = os.getenv("HOLO_MCP_ENABLED", "true").lower() in {"1", "true", "yes"}
+        mcp_warn = os.getenv("HOLO_MCP_WARNINGS", "true").lower() in {"1", "true", "yes"}
+        if MCP_AVAILABLE and ResearchIngestionMCP and mcp_enabled:
             try:
                 self.mcp_client = ResearchIngestionMCP()
                 # Update handler with client
                 self.mcp_handler.mcp_client = self.mcp_client
             except Exception as e:
-                print(f"[WARN] Failed to initialize MCP client: {e}")
+                if mcp_warn:
+                    print(f"[WARN] Failed to initialize MCP client: {e}")
                 self.mcp_client = None
+        elif not mcp_enabled:
+            self.mcp_client = None
+
+    def _select_general_components(self, query: str, files: List[str], modules: List[str]) -> List[str]:
+        """Select appropriate components for GENERAL intent queries based on content analysis."""
+        from collections import defaultdict
+        component_scores = defaultdict(int)
+
+        query_lower = query.lower()
+
+        # Score based on query content (FIRST PRINCIPLES: Intent analysis)
         if any(word in query_lower for word in ['orphan', 'missing', 'test', 'connection']):
             component_scores['orphan_analysis'] += 3
 
@@ -189,6 +240,15 @@ class QwenOrchestrator:
         )
 
         return selected
+
+    def _is_qwen_agent(self) -> bool:
+        """Check if this orchestrator is running as a Qwen agent vs 0102 agent."""
+        try:
+            # Check if we have Qwen models available
+            qwen_available = hasattr(self, 'qwen_engine') and self.qwen_engine is not None
+            return qwen_available
+        except:
+            return False
 
     def orchestrate_monitoring(self, work_context):
         """Handle monitoring orchestration for autonomous HoloDAE"""
@@ -271,7 +331,7 @@ class QwenOrchestrator:
 
         # Legacy intent mapping for backward compatibility with output filters
         legacy_intent = self._map_intent_to_legacy(intent)
-        output_filter = self._get_output_filter_for_intent(legacy_intent)
+        output_filter = self.intent_processor._get_output_filter_for_intent(legacy_intent)
 
         # PHASE 5: MCP Integration Separation (Intent-Gated)
         mcp_insights = []
@@ -411,7 +471,7 @@ class QwenOrchestrator:
             throttler.set_query_context(query, search_results)
 
             # Extract component results from analysis_report for summary generation
-            component_results = self._extract_component_results_from_report(analysis_report)
+            component_results = self.intent_processor._extract_component_results_from_report(analysis_report)
 
             concise_summary = throttler.generate_0102_summary(component_results, query)
 
@@ -430,225 +490,8 @@ class QwenOrchestrator:
         # Return composed output for other intents (replaces legacy format_intent_aware_response)
         return composed.full_output
 
-    def _extract_component_results_from_report(self, analysis_report: str) -> Dict[str, Any]:
-        """
-        FIRST PRINCIPLES: Extract structured component results from verbose analysis report
-
-        Parses the massive analysis_report string and extracts actionable data
-        for each component to feed into the 0102 summary generator.
-
-        Args:
-            analysis_report: The full verbose analysis report string
-
-        Returns:
-            Dict mapping component names to their structured results
-
-        Token Budget: ~300 tokens per extraction
-        """
-        results = {}
-        lines = analysis_report.split('\n')
-
-        current_component = None
-        component_data = []
-
-        # FIRST PRINCIPLES: Parse report by component sections
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Detect component section headers
-            if '[HEALTH]' in line.upper() or 'health & wsp compliance' in line.lower():
-                current_component = 'health_analysis'
-                component_data = []
-            elif '[SIZE]' in line.upper() or 'file size monitor' in line.lower():
-                current_component = 'file_size_monitor'
-                component_data = []
-            elif '[MODULE]' in line.upper() or 'module analysis' in line.lower():
-                current_component = 'module_analysis'
-                component_data = []
-            elif '[VIBECODING' in line.upper() or 'vibecoding analysis' in line.lower():
-                current_component = 'vibecoding_analysis'
-                component_data = []
-            elif '[ORPHAN' in line.upper() or 'orphan analysis' in line.lower():
-                current_component = 'orphan_analysis'
-                component_data = []
-
-            # Collect data for current component
-            if current_component:
-                component_data.append(line)
-
-        # FIRST PRINCIPLES: Structure extracted data
-        for component_name in ['health_analysis', 'file_size_monitor', 'module_analysis', 'vibecoding_analysis', 'orphan_analysis']:
-            if component_name in locals() and component_name == 'current_component':
-                component_lines = component_data
-            else:
-                component_lines = []
-
-            # Extract actionable insights from component data
-            if component_name == 'health_analysis':
-                violations = [line for line in component_lines if 'violation' in line.lower() or 'missing' in line.lower()]
-                results[component_name] = {'violations': violations[:5]}  # Max 5 violations
-
-            elif component_name == 'file_size_monitor':
-                large_files = [line for line in component_lines if 'large file' in line.lower() or 'exceeds' in line.lower()]
-                results[component_name] = {'large_files': large_files[:3]}  # Max 3 files
-
-            elif component_name == 'module_analysis':
-                incomplete = [line for line in component_lines if 'missing' in line.lower() or 'incomplete' in line.lower()]
-                results[component_name] = {'incomplete_modules': incomplete[:3]}  # Max 3 modules
-
-            elif component_name == 'vibecoding_analysis':
-                patterns = [line for line in component_lines if 'pattern' in line.lower()]
-                results[component_name] = {'patterns': patterns[:2]}  # Max 2 patterns
-
-            elif component_name == 'orphan_analysis':
-                orphans = [line for line in component_lines if 'orphan' in line.lower() or 'lack' in line.lower()]
-                results[component_name] = {'orphans': orphans[:3]}  # Max 3 orphans
-
-        return results
-
-    def _get_output_filter_for_intent(self, intent: str) -> Dict[str, bool]:
-        """
-        NEW: QWEN-controlled output filtering based on query intent.
-
-        Reduces noise by only showing relevant information for each intent type.
-        """
-        filters = {
-            "fix_error": {
-                "show_init_logs": False,        # Don't show processing details
-                "show_decision_logs": False,   # Don't show orchestration decisions
-                "show_performance_logs": False, # Don't show effectiveness metrics
-                "show_health_checks": False,   # Don't show health analysis
-                "show_module_metrics": False,  # Don't show module health
-                "show_detailed_analysis": False, # Focus on error solution only
-                "show_file_details": True,     # Show file locations for fixes
-                "compact_format": True         # Use compact output format
-            },
-            "locate_code": {
-                "show_init_logs": False,        # Minimal processing details
-                "show_decision_logs": False,   # No orchestration noise
-                "show_performance_logs": False, # No metrics
-                "show_health_checks": False,   # No health analysis
-                "show_module_metrics": False,  # No module details
-                "show_detailed_analysis": False, # Just location info
-                "show_file_details": True,     # Show exact file locations
-                "compact_format": True         # Clean, focused output
-            },
-            "explore": {
-                "show_init_logs": True,         # Show exploration context
-                "show_decision_logs": True,    # Show analysis decisions
-                "show_performance_logs": True, # Show effectiveness
-                "show_health_checks": True,    # Show health analysis
-                "show_module_metrics": True,   # Show module details
-                "show_detailed_analysis": True, # Full analysis
-                "show_file_details": True,     # Show file details
-                "compact_format": False        # Full detailed format
-            },
-            "wsp_manage": {
-                "show_init_logs": False,        # Surgical - no processing noise
-                "show_decision_logs": False,   # Focus on WSP status only
-                "show_performance_logs": False, # No performance metrics
-                "show_health_checks": False,   # No general health - WSP specific
-                "show_module_metrics": False,  # No module noise - WSP compliance only
-                "show_detailed_analysis": True, # Show WSP compliance details
-                "show_file_details": True,     # Show WSP file locations
-                "compact_format": True         # Clean, focused WSP format
-            },
-            "standard": {
-                "show_init_logs": False,        # Minimal init logs
-                "show_decision_logs": True,    # Show key decisions
-                "show_performance_logs": False, # No performance noise
-                "show_health_checks": False,   # No health unless requested
-                "show_module_metrics": False,  # No module noise
-                "show_detailed_analysis": True, # Show analysis
-                "show_file_details": True,     # Show files
-                "compact_format": False        # Standard format
-            }
-        }
-
-        return filters.get(intent, filters["standard"])
-
-    def _format_intent_aware_response(self, intent: str, analysis_report: str) -> str:
-        """
-        NEW: Format response based on query intent for optimal 0102 consumption.
-
-        Different intents get different output formats optimized for their use case.
-        """
-        if intent == "fix_error":
-            # Ultra-compact format for error fixing - just the essentials
-            lines = analysis_report.split('\n')
-            essential_lines = []
-
-            for line in lines:
-                # Keep only critical information
-                if any(keyword in line.lower() for keyword in [
-                    'error', 'fix', 'solution', 'line', 'file:', 'function',
-                    'traceback', 'exception', 'bug', 'issue'
-                ]):
-                    essential_lines.append(line)
-
-            if essential_lines:
-                return "[TOOL] ERROR SOLUTION:\n" + '\n'.join(essential_lines[:5])  # Limit to 5 lines
-            else:
-                return "[TOOL] ERROR FIXING MODE: Focus on error resolution"
-
-        elif intent == "locate_code":
-            # Location-focused format
-            lines = analysis_report.split('\n')
-            location_lines = []
-
-            for line in lines:
-                # Keep location and file information
-                if any(keyword in line.lower() for keyword in [
-                    'file:', 'line', 'function', 'class', 'def ', 'path:',
-                    'location', 'module', 'in file'
-                ]):
-                    location_lines.append(line)
-
-            if location_lines:
-                return "[PIN] CODE LOCATION:\n" + '\n'.join(location_lines[:3])  # Limit to 3 lines
-            else:
-                return "[PIN] CODE LOCATION MODE: Focus on file and function locations"
-
-        elif intent == "explore":
-            # Full analysis for exploration
-            return "[SEARCH] EXPLORATION ANALYSIS:\n" + analysis_report
-
-        elif intent == "wsp_manage":
-            # Surgical WSP documentation management - focus on compliance
-            lines = analysis_report.split('\n')
-            wsp_lines = []
-
-            for line in lines:
-                # Keep only WSP-related compliance information
-                if any(keyword in line.lower() for keyword in [
-                    'wsp-guardian', 'compliance', 'documentation', 'readme', 'modlog',
-                    'ascii', 'stale', 'outdated', 'violation', 'status'
-                ]):
-                    wsp_lines.append(line)
-
-            if wsp_lines:
-                return "[BOOKS] WSP DOCUMENTATION STATUS:\n" + '\n'.join(wsp_lines[:5])  # Limit to 5 lines
-            else:
-                return "[BOOKS] WSP MANAGEMENT MODE: Focus on documentation compliance and updates"
-
-        else:
-            # Standard format with some filtering
-            lines = analysis_report.split('\n')
-
-            # Remove excessive technical details
-            filtered_lines = []
-            skip_patterns = [
-                'holodae-health', 'holodae-analyze', 'holodae-telemetry',
-                'effectiveness:', 'processing', 'orchestration'
-            ]
-
-            for line in lines:
-                if not any(pattern in line.lower() for pattern in skip_patterns):
-                    filtered_lines.append(line)
-
-            return '\n'.join(filtered_lines) if filtered_lines else analysis_report
+    # WSP 62 Refactoring: Intent processing methods extracted to src/intent_response_processor.py
+    # Extracted: _extract_component_results_from_report, _get_output_filter_for_intent, _format_intent_aware_response
 
     def _filter_orchestration_decisions(self, decisions: List[Dict[str, Any]], output_filter: Dict[str, bool]) -> List[Dict[str, Any]]:
         """
@@ -1019,101 +862,8 @@ class QwenOrchestrator:
             "query_contains_wsp": any(kw in lower_query for kw in ['wsp', 'windsurf', 'protocol', 'compliance', 'documentation']),
         }
 
-    def _get_orchestration_decisions(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Get orchestration decisions from performance orchestrator"""
-        available_components = {
-            "health_analysis": {
-                "purpose": "Check system integrity and WSP compliance",
-                "triggers": ["query_contains_health", "has_modules"],
-                "cost": "medium",
-                "value": "high",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when locating code
-            },
-            "vibecoding_analysis": {
-                "purpose": "Detect behavioral vibecoding patterns",
-                "triggers": ["query_contains_vibecoding", "has_files"],
-                "cost": "low",
-                "value": "high",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when locating code
-            },
-            "file_size_monitor": {
-                "purpose": "Monitor for architectural bloat",
-                "triggers": ["query_contains_module", "has_files"],
-                "cost": "low",
-                "value": "medium",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when fixing errors or locating code
-            },
-            "module_analysis": {
-                "purpose": "Validate module structure and dependencies",
-                "triggers": ["has_modules", "query_contains_module"],
-                "cost": "medium",
-                "value": "high",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when locating code
-            },
-            "pattern_coach": {
-                "purpose": "Prevent behavioral vibecoding through coaching",
-                "triggers": ["has_files", "query_contains_vibecoding"],
-                "cost": "low",
-                "value": "medium",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when locating code
-            },
-            "orphan_analysis": {
-                "purpose": "Find dead code and connection opportunities",
-                "triggers": ["query_contains_health", "has_modules"],
-                "cost": "high",
-                "value": "medium",
-                "skip_for_intents": ["fix_error", "locate_code"],  # Skip when locating code
-            },
-            "wsp_documentation_guardian": {
-                "purpose": "Monitor WSP documentation compliance and freshness",
-                "triggers": ["has_files", "query_contains_wsp"],
-                "cost": "medium",
-                "value": "high",
-                "skip_for_intents": [],  # Always run for WSP-related queries
-            },
-        }
-
-        decisions: List[Dict[str, Any]] = []
-        for component_name, component_info in available_components.items():
-            # Skip components based on intent
-            if "skip_for_intents" in component_info:
-                if context.get("query_intent") in component_info["skip_for_intents"]:
-                    continue  # Skip this component entirely
-
-            should_execute = False
-            confidence = 0.5
-            reasoning: List[str] = []
-            for trigger in component_info["triggers"]:
-                if context.get(trigger, False):
-                    should_execute = True
-                    confidence += 0.2
-                    reasoning.append(f"triggered by {trigger}")
-            # Skip expensive operations for error fixing
-            if context.get("query_intent") == "fix_error" and component_info["cost"] == "high":
-                confidence -= 0.3  # Strongly discourage expensive ops when fixing errors
-            elif component_info["cost"] == "high" and not context.get("query_contains_health"):
-                confidence -= 0.1
-            display_name = self._format_component_display(component_name)
-            if should_execute and confidence >= 0.6:
-                decisions.append(
-                    {
-                        "component_name": component_name,
-                        "decision_type": "execute",
-                        "confidence_score": confidence,
-                        "reasoning_chain": reasoning,
-                        "purpose": component_info["purpose"],
-                    }
-                )
-                self._log_chain_of_thought(
-                    "DECISION",
-                    f"EXECUTE {display_name} (confidence: {confidence:.2f}) - {', '.join(reasoning)}",
-                )
-            else:
-                self._log_chain_of_thought(
-                    "DECISION",
-                    f"SKIP {display_name} (confidence: {confidence:.2f}) - insufficient trigger strength",
-                )
-        return decisions
+    # WSP 62 Refactoring: Orchestration decision logic extracted to src/intent_response_processor.py
+    # Extracted: _get_orchestration_decisions
 
     def _get_orchestration_decisions_for_components(
         self,
@@ -1134,7 +884,7 @@ class QwenOrchestrator:
             List of orchestration decisions for allowed components only
         """
         # Get all decisions
-        all_decisions = self._get_orchestration_decisions(context)
+        all_decisions = self.intent_processor._get_orchestration_decisions(context)
 
         # Filter to only allowed components
         filtered_decisions = [
@@ -1176,7 +926,7 @@ class QwenOrchestrator:
         """Execute the orchestrated analysis components."""
         report_lines: List[str] = [f"[HOLODAE-INTELLIGENCE] Data-driven analysis for query: '{query}'"]
         unique_modules = sorted({module for module in modules if module})
-        module_snapshots = {module: self._build_module_snapshot(module) for module in unique_modules}
+        module_snapshots = {module: self.wsp_guardian._build_module_snapshot(module) for module in unique_modules}
         self._last_module_snapshots = module_snapshots
         report_lines.append(
             f"[SEMANTIC] {len(files)} files across {len(unique_modules)} modules"
@@ -1230,7 +980,7 @@ class QwenOrchestrator:
         if component_name == "orphan_analysis":
             return self._run_orphan_analysis(module_snapshots)
         if component_name == "wsp_documentation_guardian":
-            return self._run_wsp_documentation_guardian(query, files, modules, module_snapshots)
+            return self.wsp_guardian._run_wsp_documentation_guardian(query, files, modules, module_snapshots)
         return []
 
     def _run_health_analysis(self, module_snapshots: Dict[str, Dict[str, Any]]) -> List[str]:
@@ -1374,401 +1124,9 @@ class QwenOrchestrator:
             lines.append("[ORPHAN-ANALYSIS][OK] No orphaned scripts identified")
         return lines
 
-    def _run_wsp_documentation_guardian(
-        self,
-        query: str,
-        files: List[str],
-        modules: List[str],
-        module_snapshots: Dict[str, Dict[str, Any]],
-        remediation_mode: bool = False
-    ) -> List[str]:
-        """
-        WSP Documentation Guardian - Enhanced First Principles Implementation
-
-        QWEN FIRST PRINCIPLES APPLIED:
-        1. Understand Context - Detect WSP-related queries vs code queries
-        2. Surgical Filtering - Show only relevant WSP compliance info
-        3. Remove Corruption - Auto-sanitize ASCII violations (WSP 20)
-        4. Focus on Essence - Show current compliance status and missing docs
-        5. Continuous Learning - Log all WSP compliance checks and improvements
-
-        ENHANCED FEATURES:
-        - Doc-only exemption map integration
-        - Config-driven update intervals
-        - Automatic ASCII remediation
-        - ModLog remediation tracking
-        """
-        lines: List[str] = []
-        wsp_related_files = []
-        wsp_framework_docs = []
-        remediation_actions = []
-
-        # Load WSP configuration
-        config = WSP_DOC_CONFIG
-
-        # Index WSP documentation from framework and modules
-        for file_path in files:
-            if 'wsp' in file_path.lower() or 'WSP' in file_path:
-                wsp_related_files.append(file_path)
-
-        # Check WSP framework documentation with smart exemptions
-        wsp_framework_path = self.repo_root / "WSP_framework"
-        if wsp_framework_path.exists():
-            for md_file in wsp_framework_path.rglob("*.md"):
-                file_path_str = str(md_file)
-                wsp_framework_docs.append(file_path_str)
-
-                # Skip doc-only modules for freshness checks
-                rel_path = self._relative_path(md_file)
-                is_doc_only = self._is_doc_only_path(rel_path, config['doc_only_modules'])
-
-                if not is_doc_only:
-                    # Check modification date with config-driven intervals
-                    file_name = md_file.name
-                    expected_interval = config['expected_update_intervals_days'].get(file_name, 90)  # Default quarterly
-
-                    modlog_path = md_file.parent / "ModLog.md"
-                    doc_mtime = md_file.stat().st_mtime
-                    days_since_update = (datetime.now().timestamp() - doc_mtime) / 86400
-
-                    if days_since_update > expected_interval:
-                        lines.append(f"[WSP-GUARDIAN][STALE-WARNING] {rel_path} not updated in {days_since_update:.0f} days (expected: {expected_interval}d)")
-                        # Note: Stale docs are warnings only - not added to remediation_actions
-                        # Remediation_actions are reserved for actual file modifications
-                    elif modlog_path.exists():
-                        modlog_mtime = modlog_path.stat().st_mtime
-                        if modlog_mtime < doc_mtime:
-                            lines.append(f"[WSP-GUARDIAN][OUTDATED] {self._relative_path(modlog_path)} older than document")
-
-        # Check module WSP compliance
-        wsp_compliant_modules = 0
-        total_modules = 0
-
-        for module in modules:
-            if module and module_snapshots.get(module, {}).get('exists'):
-                total_modules += 1
-                snapshot = module_snapshots[module]
-                missing_docs = snapshot.get('missing_docs', [])
-
-                # Check for required WSP documentation
-                required_wsp_docs = ['README.md', 'ModLog.md']
-                missing_wsp_docs = [doc for doc in missing_docs if doc in required_wsp_docs]
-
-                if not missing_wsp_docs:
-                    wsp_compliant_modules += 1
-                else:
-                    lines.append(f"[WSP-GUARDIAN][VIOLATION] {module} missing WSP docs: {', '.join(missing_wsp_docs)}")
-
-        if total_modules > 0:
-            compliance_rate = wsp_compliant_modules / total_modules
-            lines.append(f"[WSP-GUARDIAN][STATUS] WSP compliance: {wsp_compliant_modules}/{total_modules} modules ({compliance_rate:.1%})")
-
-        # ASCII compliance check with conditional remediation
-        ascii_violations = []
-        ascii_remediated = []
-
-        for file_path in wsp_related_files + wsp_framework_docs:
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-
-                if any(ord(c) > 127 for c in content):
-                    rel_path = self._relative_path(file_path)
-                    ascii_violations.append(rel_path)
-
-                    # Conditionally remediate based on mode
-                    if remediation_mode:
-                        sanitized_content = self._sanitize_ascii_content(content)
-                        if sanitized_content != content:
-                            # Create backup in temp directory
-                            backup_dir = self.repo_root / config['backup_temp_dir']
-                            backup_dir.mkdir(parents=True, exist_ok=True)
-                            backup_filename = Path(file_path).name + '.backup'
-                            backup_path = backup_dir / backup_filename
-
-                            # Only backup if we haven't already
-                            if not backup_path.exists():
-                                with open(backup_path, 'w', encoding='utf-8') as f:
-                                    f.write(content)
-
-                            # Write sanitized version
-                            with open(file_path, 'w', encoding='ascii', errors='replace') as f:
-                                f.write(sanitized_content)
-
-                            ascii_remediated.append(rel_path)
-                            remediation_actions.append(f"Auto-sanitized ASCII violations in {rel_path}")
-                            self.logger.info(f"[WSP-GUARDIAN] Auto-sanitized ASCII in {rel_path}")
-
-            except Exception as e:
-                self.logger.warning(f"[WSP-GUARDIAN] Error checking ASCII in {file_path}: {e}")
-                continue
-
-        # Report ASCII status (always show violations, only show fixes if in remediation mode)
-        if ascii_violations:
-            violation_count = len(ascii_violations)
-            if remediation_mode:
-                remediated_count = len(ascii_remediated)
-                lines.append(f"[WSP-GUARDIAN][ASCII] {violation_count} files had violations, {remediated_count} auto-remediated")
-            else:
-                lines.append(f"[WSP-GUARDIAN][ASCII-WARNING] {violation_count} files have non-ASCII characters (use --fix-ascii to remediate)")
-                lines.append(f"[WSP-GUARDIAN][ASCII-VIOLATION] Non-ASCII chars in: {', '.join(ascii_violations[:3])}")
-
-        # Execute remediation pipeline only if we actually made changes
-        if remediation_actions and remediation_mode:
-            self._execute_wsp_remediation_pipeline(remediation_actions, config)
-
-        # Log all WSP compliance checks for continuous learning
-        self.logger.info(f"[WSP-GUARDIAN] Checked {len(wsp_related_files)} WSP files, {len(wsp_framework_docs)} framework docs")
-        self.logger.info(f"[WSP-GUARDIAN] Compliance rate: {wsp_compliant_modules}/{total_modules}")
-        if ascii_violations:
-            self.logger.warning(f"[WSP-GUARDIAN] ASCII violations found: {len(ascii_violations)}, remediated: {len(ascii_remediated)}")
-
-        return lines if lines else ["[WSP-GUARDIAN][OK] All WSP documentation compliant and up-to-date"]
-
-    def _is_doc_only_path(self, rel_path: str, doc_only_modules: set) -> bool:
-        """Check if path is in doc-only exemption map to prevent false stale alerts."""
-        path_parts = Path(rel_path).parts
-
-        # Check if any parent directory is doc-only
-        for i in range(len(path_parts)):
-            check_path = '/'.join(path_parts[:i+1])
-            if check_path in doc_only_modules:
-                return True
-
-        return False
-
-    def _sanitize_ascii_content(self, content: str) -> str:
-        """
-        Sanitize content to ASCII-only, replacing non-ASCII characters with safe alternatives.
-        WSP 20 Compliance: Remove corruption while preserving readability.
-        """
-        sanitized = []
-        for char in content:
-            if ord(char) <= 127:
-                sanitized.append(char)
-            else:
-                # Replace common Unicode chars with ASCII equivalents
-                if char in ['—', '–', '―']:  # Various dashes
-                    sanitized.append('-')
-                elif char in ['"', '"', '"', '"']:  # Various quotes
-                    sanitized.append('"')
-                elif char in ["'", "'", '′', '″']:  # Various apostrophes
-                    sanitized.append("'")
-                elif char in ['…', '...']:  # Ellipsis
-                    sanitized.append('...')
-                elif char in ['•', '·', '[U+22C5]']:  # Various bullets
-                    sanitized.append('*')
-                elif char in ['->', '->', '[U+279C]']:  # Arrows
-                    sanitized.append('->')
-                elif char in ['[OK]', '[U+2714]', '[U+2611]']:  # Checkmarks
-                    sanitized.append('[OK]')
-                elif char in ['[FAIL]', '[U+2718]', '[CHECKED]']:  # X marks
-                    sanitized.append('[X]')
-                elif char in ['[U+26A0]', '[U+25B2]', '[U+26A0]️']:  # Warnings
-                    sanitized.append('[WARNING]')
-                elif char in ['[AI]', '[BOT]', '[IDEA]']:  # Brains/AI
-                    sanitized.append('[AI]')
-                elif char in ['[BOOKS]', '[U+1F4D6]', '[U+1F4C4]']:  # Books/docs
-                    sanitized.append('[DOC]')
-                elif char in ['[TOOL]', '[U+2699]', '[U+1F6E0]']:  # Tools
-                    sanitized.append('[TOOL]')
-                elif ord(char) > 127:
-                    # Replace with [U+XXXX] notation for traceability
-                    sanitized.append(f'[U+{ord(char):04X}]')
-                else:
-                    sanitized.append(char)  # Keep as-is if we can't map it
-
-        return ''.join(sanitized)
-
-    def _execute_wsp_remediation_pipeline(self, remediation_actions: List[str], config: Dict[str, Any]) -> None:
-        """
-        Execute WSP remediation pipeline with ModLog tracking.
-        Creates remediation log and updates relevant ModLogs.
-        """
-        if not remediation_actions:
-            return
-
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        remediation_log_path = self.repo_root / config['remediation_log_path']
-
-        # Ensure log directory exists
-        remediation_log_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Read existing log or create new one
-        existing_content = ""
-        if remediation_log_path.exists():
-            try:
-                with open(remediation_log_path, 'r', encoding='utf-8') as f:
-                    existing_content = f.read()
-            except Exception:
-                existing_content = ""
-
-        # Create remediation entry
-        remediation_entry = f"""## ASCII Remediation Session - {timestamp}
-
-**Session Summary:**
-- Total remediation actions: {len(remediation_actions)}
-- Auto-remediation enabled: {config['auto_remediate_ascii']}
-
-**Actions Taken:**
-""" + '\n'.join(f"- {action}" for action in remediation_actions) + "\n\n---\n"
-
-        # Write updated log
-        new_content = remediation_entry + existing_content
-        with open(remediation_log_path, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-
-        # Update main ModLog if it exists (with deduplication)
-        modlog_path = self.repo_root / "WSP_framework" / "ModLog.md"
-        if modlog_path.exists():
-            try:
-                with open(modlog_path, 'r', encoding='utf-8') as f:
-                    modlog_content = f.read()
-
-                # Check for recent duplicate entries to prevent spam
-                recent_entry_pattern = f"WSP Documentation Guardian performed ASCII remediation on \\d+ files"
-                if re.search(recent_entry_pattern, modlog_content):
-                    # Skip adding duplicate entry
-                    self.logger.info(f"[WSP-GUARDIAN] Skipping duplicate ModLog entry (already logged recent remediation)")
-                else:
-                    # Add remediation entry to ModLog
-                    remediation_note = f"""- **{timestamp}**: WSP Documentation Guardian performed ASCII remediation on {len(remediation_actions)} files
-"""
-
-                    # Insert after the most recent entry
-                    if "## Recent Changes" in modlog_content:
-                        modlog_content = modlog_content.replace("## Recent Changes", f"## Recent Changes\n{remediation_note}", 1)
-                    else:
-                        modlog_content = remediation_note + modlog_content
-
-                    with open(modlog_path, 'w', encoding='utf-8') as f:
-                        f.write(modlog_content)
-
-            except Exception as e:
-                self.logger.warning(f"[WSP-GUARDIAN] Failed to update ModLog: {e}")
-
-        self.logger.info(f"[WSP-GUARDIAN] Remediation pipeline completed - {len(remediation_actions)} actions logged")
-
-    def rollback_ascii_changes(self, filename: str) -> str:
-        """
-        Rollback ASCII changes for a specific file from backup.
-
-        Returns status message.
-        """
-        config = WSP_DOC_CONFIG
-        backup_dir = self.repo_root / config['backup_temp_dir']
-
-        # Find backup file
-        backup_filename = filename + '.backup'
-        backup_path = backup_dir / backup_filename
-
-        if not backup_path.exists():
-            return f"[ERROR] No backup found for {filename} in {backup_dir}"
-
-        # Find target file
-        target_file = None
-        for ext in ['.md', '.txt', '']:
-            candidate = self.repo_root / filename
-            if ext and not filename.endswith(ext):
-                candidate = candidate.with_suffix(ext)
-            if candidate.exists():
-                target_file = candidate
-                break
-
-        if not target_file:
-            return f"[ERROR] Target file {filename} not found"
-
-        try:
-            # Restore from backup
-            with open(backup_path, 'r', encoding='utf-8') as f:
-                backup_content = f.read()
-
-            with open(target_file, 'w', encoding='utf-8') as f:
-                f.write(backup_content)
-
-            # Log the rollback
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.logger.info(f"[WSP-GUARDIAN] Rolled back ASCII changes for {filename}")
-
-            # Update remediation log
-            self._log_rollback_to_remediation_log(filename, timestamp)
-
-            return f"[SUCCESS] Rolled back ASCII changes for {filename}"
-
-        except Exception as e:
-            return f"[ERROR] Failed to rollback {filename}: {e}"
-
-    def _log_rollback_to_remediation_log(self, filename: str, timestamp: str) -> None:
-        """Log rollback action to remediation log."""
-        config = WSP_DOC_CONFIG
-        remediation_log_path = self.repo_root / config['remediation_log_path']
-
-        try:
-            existing_content = ""
-            if remediation_log_path.exists():
-                with open(remediation_log_path, 'r', encoding='utf-8') as f:
-                    existing_content = f.read()
-
-            rollback_entry = f"""## ASCII Rollback Session - {timestamp}
-
-**Rollback Action:**
-- Rolled back ASCII changes for: {filename}
-
----\n"""
-
-            new_content = rollback_entry + existing_content
-            with open(remediation_log_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-
-        except Exception as e:
-            self.logger.warning(f"[WSP-GUARDIAN] Failed to log rollback: {e}")
-
-    def _build_module_snapshot(self, module: str) -> Dict[str, Any]:
-        path = self._resolve_module_path(module)
-        snapshot: Dict[str, Any] = {
-            'module': module,
-            'path': path,
-            'exists': bool(path and path.exists()),
-            'missing_docs': [],
-            'test_count': 0,
-            'py_file_count': 0,
-            'script_orphans': [],
-            'large_python_files': [],
-        }
-        if not snapshot['exists']:
-            return snapshot
-
-        py_files = list(path.rglob('*.py'))
-        snapshot['py_file_count'] = len(py_files)
-
-        tests_dir = path / 'tests'
-        test_files = list(tests_dir.rglob('test_*.py')) if tests_dir.exists() else []
-        snapshot['test_count'] = len(test_files)
-
-        docs = ('README.md', 'INTERFACE.md', 'ModLog.md', 'tests/TestModLog.md')
-        snapshot['missing_docs'] = [doc for doc in docs if not (path / doc).exists()]
-
-        large_files: List[tuple[Path, int, int]] = []
-        for py_file in py_files:
-            line_count = self._count_file_lines(py_file)
-            size_kb = max(1, py_file.stat().st_size // 1024)
-            if line_count > 400 or size_kb > 120:
-                large_files.append((py_file, line_count, size_kb))
-        snapshot['large_python_files'] = large_files
-
-        scripts_dir = path / 'scripts'
-        script_orphans: List[Path] = []
-        if scripts_dir.exists():
-            test_names = {test.name for test in test_files}
-            for script in scripts_dir.glob('*.py'):
-                if script.name.startswith('__init__'):
-                    continue
-                expected = f"test_{script.stem}.py"
-                if expected not in test_names:
-                    script_orphans.append(script)
-        snapshot['script_orphans'] = script_orphans
-
-        return snapshot
+    # WSP 62 Refactoring: WSP Documentation Guardian methods extracted to src/wsp_documentation_guardian.py
+    # Extracted methods: _run_wsp_documentation_guardian, _is_doc_only_path, _sanitize_ascii_content,
+    # _execute_wsp_remediation_pipeline, rollback_ascii_changes, _log_rollback_to_remediation_log, _build_module_snapshot
 
     def _resolve_module_path(self, module: str) -> Optional[Path]:
         if not module:

@@ -20,7 +20,6 @@ from typing import Dict, Any, List, Optional
 from collections import deque
 from dataclasses import dataclass
 from modules.gamification.whack_a_magat.src.timeout_announcer import TimeoutManager
-from modules.gamification.whack_a_magat.src.status_announcer import StatusAnnouncer
 
 logger = logging.getLogger(__name__)
 

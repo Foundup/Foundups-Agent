@@ -11,6 +11,7 @@ NAVIGATION: Routes /commands into gamification systems.
 """
 
 import logging
+import os
 from typing import Optional, Dict, Any
 from modules.gamification.whack_a_magat import (
     get_profile, get_leaderboard, get_user_position,
@@ -20,18 +21,15 @@ from modules.gamification.whack_a_magat.src.spree_tracker import get_active_spre
 from modules.gamification.whack_a_magat.src.self_improvement import observe_command
 from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
 
-# YouTube Shorts chat commands integration
-try:
-    from modules.communication.youtube_shorts.src.chat_commands import get_shorts_handler
-    SHORTS_AVAILABLE = True
-except ImportError:
-    SHORTS_AVAILABLE = False
-
 logger = logging.getLogger(__name__)
 
 import time
 import random
 from collections import deque
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
 
 
 class CommandFloodDetector:
@@ -138,6 +136,34 @@ class CommandHandler:
 
         # Command flood protection
         self.flood_detector = CommandFloodDetector()
+        # Shorts commands are heavy (Veo/Sora deps) - lazy-load on first use
+        self._shorts_handler = None
+        self._shorts_available = None
+
+    def _get_shorts_handler(self):
+        """
+        Lazy-load Shorts handler to avoid startup cost when livechat is running
+        but Shorts commands are never invoked.
+        """
+        if _env_truthy("FOUNDUPS_DISABLE_SHORTS_COMMANDS", "false") or not _env_truthy("FOUNDUPS_ENABLE_SHORTS_COMMANDS", "true"):
+            self._shorts_available = False
+            return None
+
+        if self._shorts_available is False:
+            return None
+
+        if self._shorts_handler is not None:
+            return self._shorts_handler
+
+        try:
+            from modules.communication.youtube_shorts.src.chat_commands import get_shorts_handler
+            self._shorts_handler = get_shorts_handler()
+            self._shorts_available = True
+            return self._shorts_handler
+        except Exception as e:
+            self._shorts_available = False
+            logger.debug(f"[SHORTS] Shorts commands unavailable: {e}")
+            return None
 
     def handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
         """Handle whack gamification commands."""
@@ -186,55 +212,106 @@ class CommandHandler:
 
         # Check for !party command - reaction spam!
         if text_lower.startswith('!party'):
+            logger.debug(f"[PARTY-DEBUG] !party command detected from @{username} (role={role}, user_id={user_id})")
+
+            if not _env_truthy("YT_AUTOMATION_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_AUTOMATION_ENABLED=false")
+                return f"@{username} !party disabled (YT_AUTOMATION_ENABLED=false)"
+            if not _env_truthy("YT_LIVECHAT_UI_ACTIONS_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_LIVECHAT_UI_ACTIONS_ENABLED=false")
+                return f"@{username} !party disabled (YT_LIVECHAT_UI_ACTIONS_ENABLED=false)"
+            if not _env_truthy("YT_PARTY_REACTIONS_ENABLED", "true"):
+                logger.warning(f"[PARTY-DEBUG] Blocked: YT_PARTY_REACTIONS_ENABLED=false")
+                return f"@{username} !party disabled (YT_PARTY_REACTIONS_ENABLED=false)"
+
             # OWNER/MOD OR Top 10 leaderboard members can party!
             can_party = False
             party_reason = ""
-            
+
             if role == 'OWNER':
                 can_party = True
                 party_reason = "OWNER"
+                logger.debug(f"[PARTY-DEBUG] Permission granted: OWNER role")
             elif role == 'MOD':
-                can_party = True  
+                can_party = True
                 party_reason = "MOD"
+                logger.debug(f"[PARTY-DEBUG] Permission granted: MOD role")
             else:
                 # Check if user is in top 10 of whack-a-maga leaderboard
+                logger.debug(f"[PARTY-DEBUG] Checking leaderboard position for user_id={user_id}")
                 try:
                     position, total = get_user_position(user_id)
+                    logger.debug(f"[PARTY-DEBUG] Leaderboard result: position={position}, total={total}")
                     if position > 0 and position <= 10:
                         can_party = True
                         party_reason = f"TOP {position} WHACKER"
                         logger.info(f"[PARTY] {username} is #{position} on leaderboard - party approved!")
+                    else:
+                        logger.debug(f"[PARTY-DEBUG] Permission denied: position={position} (must be ≤10)")
                 except Exception as e:
                     logger.warning(f"[PARTY] Could not check leaderboard position: {e}")
-            
+                    logger.debug(f"[PARTY-DEBUG] Leaderboard check error: {type(e).__name__}: {str(e)}")
+
             if can_party:
                 logger.info(f"[PARTY] !party triggered by {username} ({party_reason})")
                 try:
-                    from modules.communication.livechat.src.party_reactor import get_party_reactor
-                    reactor = get_party_reactor()
-                    
+                    import asyncio
+                    from modules.communication.livechat.src.party_reactor import trigger_party
+
                     # Parse click count if provided (e.g., !party 50)
                     parts = text_lower.split()
-                    clicks = 30  # Default
+                    clicks = 10  # Default (human-like, not spammy)
                     if len(parts) > 1 and parts[1].isdigit():
                         clicks = min(int(parts[1]), 100)  # Cap at 100
-                    
-                    results = reactor.party_mode(total_clicks=clicks)
-                    return reactor.get_party_summary(results)
+                        logger.debug(f"[PARTY-DEBUG] Custom click count: {clicks} (capped at 100)")
+                    else:
+                        logger.debug(f"[PARTY-DEBUG] Using default click count: {clicks}")
+
+                    logger.debug(f"[PARTY-DEBUG] Calling trigger_party(total_clicks={clicks})")
+
+                    async def _run_party_background() -> None:
+                        try:
+                            result = await trigger_party(total_clicks=clicks)
+                            logger.info(f"[PARTY] {result}")
+                        except Exception as e:
+                            logger.error(f"[PARTY] Background party failed: {e}", exc_info=True)
+
+                    # If we're already inside the LiveChat async loop, schedule in background
+                    # to avoid blocking polling (and to avoid asyncio.run() in a running loop).
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = None
+
+                    if loop and loop.is_running():
+                        loop.create_task(_run_party_background())
+                        return f"{mention} 🎉 Party started ({clicks} reactions) — check logs for progress"
+
+                    # Fallback for non-async contexts (e.g., manual scripts)
+                    result = asyncio.run(trigger_party(total_clicks=clicks))
+                    logger.debug(f"[PARTY-DEBUG] trigger_party() returned: {result[:50]}...")
+                    return result
                 except Exception as e:
                     logger.error(f"[PARTY] Error: {e}")
+                    logger.error(f"[PARTY-DEBUG] Exception details:")
+                    logger.error(f"[PARTY-DEBUG]   Type: {type(e).__name__}")
+                    logger.error(f"[PARTY-DEBUG]   Message: {str(e)}")
+                    import traceback
+                    logger.error(f"[PARTY-DEBUG]   Traceback: {traceback.format_exc()}")
                     return f"@{username} 🎉 Party failed: {e}"
             else:
+                logger.warning(f"[PARTY-DEBUG] Permission denied for @{username} (role={role}, not in top 10)")
                 return f"@{username} 🎉 !party is for ADMINS or TOP 10 MAGADOOM WHACKERS! Get whacking! 💀✊✋🖐️"
 
         # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
         # CRITICAL: Shorts commands use ! prefix (MAGADOOM uses / prefix for separation)
         shorts_keywords = ['!createshort', '!shortveo', '!shortsora', '!short']
-        if SHORTS_AVAILABLE and any(text_lower.startswith(kw) for kw in shorts_keywords):
-            shorts_handler = get_shorts_handler()
-            shorts_response = shorts_handler.handle_shorts_command(text, username, user_id, role)
-            if shorts_response:
-                return shorts_response
+        if any(text_lower.startswith(kw) for kw in shorts_keywords):
+            shorts_handler = self._get_shorts_handler()
+            if shorts_handler:
+                shorts_response = shorts_handler.handle_shorts_command(text, username, user_id, role)
+                if shorts_response:
+                    return shorts_response
 
         # Special logging for /quiz debugging
         if 'quiz' in text_lower:
@@ -444,19 +521,81 @@ class CommandHandler:
                     return f"{mention} [FORBIDDEN] /session is for moderators only"
             
             elif text_lower.startswith('/help'):
-                help_msg = f"{mention} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help | !about"
+                help_msg = f"{mention} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help | !about !short !shortstatus !shortstats"
                 if role == 'MOD':
-                    help_msg += " | MOD: /session !party"
+                    help_msg += " | MOD: /fc /session !party /troll"
                 if role == 'OWNER':
-                    help_msg += " | OWNER: /toggle /session !party !createshort !shortveo !shortsora"
-                # Check if user is top 10 whacker (they get !party too!)
+                    help_msg += " | OWNER: /fc /toggle /session !party !createshort !shortsora !shortveo !short @user /troll"
+                # Check if user is top 10 whacker (they get !party and /troll!)
                 try:
                     position, _ = get_user_position(user_id)
                     if position > 0 and position <= 10 and role not in ['MOD', 'OWNER']:
-                        help_msg += f" | TOP {position}: !party 🎉"
+                        help_msg += f" | TOP {position}: !party !createshort !shortsora !shortveo /troll 🎉"
                 except Exception:
                     pass
                 return help_msg
+
+            elif text_lower.startswith('/fc'):
+                # Fact-check command (MOD/OWNER only)
+                observe_command('/fc', 0.0)
+
+                # Permission check - MOD/OWNER only
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} /fc is for ADMINS only! ✊✋🖐️"
+
+                # Parse target username
+                parts = text.split()
+                if len(parts) < 2:
+                    return f"{mention} Usage: /fc @username ✊✋🖐️"
+
+                target_user = parts[1].lstrip('@')
+
+                # Retrieve recent messages
+                messages = self._get_user_recent_messages(target_user, limit=10)
+
+                if not messages:
+                    return f"{mention} No recent messages from @{target_user} ✊✋🖐️"
+
+                # Fact-check with Grok
+                logger.info(f"[FC] {username} fact-checking @{target_user} ({len(messages)} messages)")
+                return self._grok_fact_check(target_user, messages, username)
+
+            elif text_lower.startswith('/troll'):
+                # Troll/roast command (OWNER, MOD, or TOP 10 whackers)
+                observe_command('/troll', 0.0)
+
+                # Permission check
+                can_troll = False
+                if role in ['OWNER', 'MOD']:
+                    can_troll = True
+                else:
+                    # Check if user is top 10 whacker
+                    try:
+                        position, _ = get_user_position(user_id)
+                        if position > 0 and position <= 10:
+                            can_troll = True
+                    except Exception:
+                        pass
+
+                if not can_troll:
+                    return f"{mention} /troll is for ADMINS and TOP 10 WHACKERS! Get whacking to unlock! ✊✋🖐️"
+
+                # Parse target username
+                parts = text.split()
+                if len(parts) < 2:
+                    return f"{mention} Usage: /troll @username ✊✋🖐️"
+
+                target_user = parts[1].lstrip('@')
+
+                # Retrieve recent messages
+                messages = self._get_user_recent_messages(target_user, limit=5)
+
+                if not messages:
+                    return f"{mention} No recent messages from @{target_user} ✊✋🖐️"
+
+                # Roast with Grok
+                logger.info(f"[TROLL] {username} roasting @{target_user} ({len(messages)} messages)")
+                return self._grok_roast(target_user, messages, username)
 
             # Handle deprecated/removed commands with helpful messages
             elif text_lower.startswith('/level'):
@@ -505,8 +644,111 @@ class CommandHandler:
         
         result = f"{mention} [AI] QUIZ LEADERS: "
         medals = ["[U+1F947]", "[U+1F948]", "[U+1F949]", "4️⃣", "5️⃣"]
-        
+
         for i, (user_id, score) in enumerate(top_5):
             result += f"{medals[i]}{user_id[:8]}:{score}pts "
-        
+
         return result.strip()
+
+    def _get_user_recent_messages(self, username: str, limit: int = 10) -> list:
+        """
+        Retrieve recent messages from chat telemetry store.
+
+        Args:
+            username: Target user's display name
+            limit: Number of recent messages to retrieve
+
+        Returns:
+            List of message text strings
+        """
+        try:
+            from modules.communication.livechat.src.chat_telemetry_store import ChatTelemetryStore
+            store = ChatTelemetryStore()
+            messages = store.get_user_messages(username, limit=limit)
+            return [msg['text'] for msg in messages if 'text' in msg]
+        except Exception as e:
+            logger.error(f"[FC] Error retrieving messages: {e}")
+            return []
+
+    def _grok_fact_check(self, username: str, messages: list, requester: str) -> str:
+        """
+        Use Grok to fact-check user's recent messages.
+
+        Args:
+            username: Target user being fact-checked
+            messages: List of recent messages from user
+            requester: User who requested fact-check
+
+        Returns:
+            Formatted fact-check response
+        """
+        try:
+            from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
+            reply_gen = get_livechat_reply_generator()
+
+            if not reply_gen.grok_available:
+                return f"@{requester} Grok unavailable - fact-check failed ✊✋🖐️"
+
+            # Build fact-check prompt
+            message_text = "\n".join([f"- {msg}" for msg in messages[-10:]])
+            prompt = f"""Analyze these recent messages from {username} and fact-check their claims:
+
+{message_text}
+
+Provide a concise fact-check (50 words max). Rate truthfulness 0-10.
+Format: "Rating: X/10 - {{explanation}}" """
+
+            response = reply_gen.grok_client.get_response(prompt)
+
+            if response:
+                return f"@{requester} ✊✋🖐️ FC CHECK: @{username} - {response}"
+            else:
+                return f"@{requester} Fact-check failed - Grok timeout ✊✋🖐️"
+
+        except Exception as e:
+            logger.error(f"[FC] Grok error: {e}")
+            return f"@{requester} Fact-check error: {str(e)[:50]} ✊✋🖐️"
+
+    def _grok_roast(self, username: str, messages: list, requester: str) -> str:
+        """
+        Use Grok to roast/troll user based on recent messages.
+
+        Args:
+            username: Target user being roasted
+            messages: List of recent messages from user
+            requester: User who requested roast
+
+        Returns:
+            Formatted roast response
+        """
+        try:
+            from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
+            reply_gen = get_livechat_reply_generator()
+
+            if not reply_gen.grok_available:
+                return f"@{requester} Grok unavailable - can't roast right now ✊✋🖐️"
+
+            # Build roast prompt
+            message_text = "\n".join([f"- {msg}" for msg in messages[-5:]])
+            prompt = f"""Roast this user based on their recent messages. Be witty and sarcastic (not mean-spirited).
+Keep it short (40 words max) and end with the 0102 signature.
+
+User: {username}
+Recent messages:
+{message_text}
+
+Deliver a creative, funny roast!"""
+
+            response = reply_gen.grok_client.get_response(prompt)
+
+            if response:
+                # Ensure 0102 signature
+                if "✊" not in response and "✋" not in response and "🖐" not in response:
+                    response += " ✊✋🖐️"
+                return f"@{requester} {response}"
+            else:
+                return f"@{requester} Roast timed out - Grok too busy laughing ✊✋🖐️"
+
+        except Exception as e:
+            logger.error(f"[TROLL] Grok error: {e}")
+            return f"@{requester} Roast failed: {str(e)[:50]} ✊✋🖐️"

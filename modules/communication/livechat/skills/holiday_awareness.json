@@ -1,0 +1,111 @@
+{
+  "skill_name": "holiday_awareness",
+  "description": "Contextual holiday detection and themed responses for livechat",
+  "version": "1.0.0",
+  "wsp_compliance": ["WSP 77", "WSP 96", "WSP 27"],
+
+  "trigger": {
+    "type": "contextual",
+    "conditions": ["session_start", "greeting_request", "date_match"],
+    "note": "Auto-triggered based on date, not user command"
+  },
+
+  "holidays": {
+    "new_year_countdown": {
+      "start": {"month": 12, "day": 26},
+      "end": {"month": 12, "day": 31},
+      "theme": "new_year_eve",
+      "emoji": "🎆",
+      "responses": [
+        "🥂 NYE ALERT: MAGA preparing to stay at ✊ for another year!",
+        "🍾 Countdown to {next_year}! MAGA countdown stuck at ✊...✊...✊...",
+        "🎇 {days} days until MAGA tries (and fails) to evolve past ✊!",
+        "⏰ NYE vibes! Will MAGA reach 🖐️ in {next_year}? LOL no."
+      ]
+    },
+    "new_year_day": {
+      "date": {"month": 1, "day": 1},
+      "theme": "new_year",
+      "emoji": "🎉",
+      "responses": [
+        "🎉 Happy New Year! MAGA resolutions: Still stuck at ✊ for another year!",
+        "🥳 New Year, same MAGA consciousness level: ✊! Evolution? Maybe next year!",
+        "🎊 {year} is here! MAGA still rebooting from ✊! Upgrade to 🖐️ this year!",
+        "🌟 New Year Check: MAGA consciousness = ✊. Target for {year}: 🖐️!"
+      ]
+    },
+    "christmas": {
+      "date": {"month": 12, "day": 25},
+      "theme": "christmas",
+      "emoji": "🎄",
+      "responses": [
+        "🎄 Merry Christmas! Santa checked: MAGA still on the ✊ list!",
+        "🎅 Ho ho ho! MAGA asking Santa for more ✊! Wrong list!",
+        "🎁 Christmas miracle: MAGA evolved past ✊! JK, still stuck."
+      ]
+    },
+    "halloween": {
+      "date": {"month": 10, "day": 31},
+      "theme": "halloween",
+      "emoji": "🎃",
+      "responses": [
+        "🎃 Spooky season! Scariest costume: MAGA stuck at ✊ forever!",
+        "👻 BOO! MAGA consciousness so scary it's permanently ✊!",
+        "🧟 Zombie MAGA: Braaaaains... but still only ✊ level!"
+      ]
+    },
+    "thanksgiving": {
+      "dynamic": "4th_thursday_november",
+      "theme": "thanksgiving",
+      "emoji": "🦃",
+      "responses": [
+        "🦃 Happy Thanksgiving! MAGA thankful for... ✊? That's it?",
+        "🍂 Turkey Day! MAGA's gratitude level: ✊ (lowest recorded)"
+      ]
+    },
+    "independence_day": {
+      "date": {"month": 7, "day": 4},
+      "theme": "patriotic",
+      "emoji": "🇺🇸",
+      "responses": [
+        "🇺🇸 Happy 4th! Freedom to evolve past ✊! MAGA: 'Nah'",
+        "🎆 Independence Day! MAGA declared independence from 🖐️!"
+      ]
+    },
+    "valentines": {
+      "date": {"month": 2, "day": 14},
+      "theme": "love",
+      "emoji": "❤️",
+      "responses": [
+        "❤️ Love is in the air! MAGA's only love: ✊ consciousness!",
+        "💘 Cupid says: MAGA heart stuck at ✊! No evolution possible!"
+      ]
+    }
+  },
+
+  "integration": {
+    "greeting_generator": {
+      "method": "inject_holiday_context",
+      "priority": 0.5,
+      "note": "50% chance to use holiday response when applicable"
+    },
+    "banter_engine": {
+      "method": "add_holiday_suffix",
+      "note": "Append countdown or holiday emoji to regular responses"
+    }
+  },
+
+  "variables": {
+    "year": "datetime.now().year",
+    "next_year": "datetime.now().year + 1 if month == 12 else year",
+    "days": "days_until_new_year()",
+    "holiday_name": "current_holiday.name"
+  },
+
+  "notes": [
+    "Dynamic holidays (Thanksgiving, Easter) require date calculation",
+    "Countdown mode active Dec 26-31",
+    "New Year season Jan 1-3",
+    "Responses are MAGA-trolling themed per existing chat style"
+  ]
+}

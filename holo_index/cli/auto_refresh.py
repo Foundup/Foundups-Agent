@@ -10,13 +10,56 @@ WSP Compliance: WSP 49 (Module Structure), WSP 83 (Documentation Tree)
 
 import os
 import time
+import threading
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
+
+# AutonomousHoloDAE integration for background auto-reindex
+try:
+    from holo_index.qwen_advisor.autonomous_holodae import AutonomousHoloDAE
+    AUTONOMOUS_HOLODAE_AVAILABLE = True
+except ImportError:
+    AUTONOMOUS_HOLODAE_AVAILABLE = False
+
+# Global daemon instance (singleton pattern)
+_autonomous_daemon: Optional['AutonomousHoloDAE'] = None
+_daemon_lock = threading.Lock()
+
+
+def ensure_autonomous_daemon_running() -> Tuple[bool, str]:
+    """
+    Ensure AutonomousHoloDAE is running in background for continuous auto-reindex.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    global _autonomous_daemon
+
+    if not AUTONOMOUS_HOLODAE_AVAILABLE:
+        return False, "[DAEMON] AutonomousHoloDAE not available"
+
+    with _daemon_lock:
+        if _autonomous_daemon is None:
+            try:
+                _autonomous_daemon = AutonomousHoloDAE()
+                _autonomous_daemon.start_autonomous_monitoring()
+                return True, "[DAEMON] AutonomousHoloDAE started - continuous auto-reindex enabled"
+            except Exception as e:
+                return False, f"[DAEMON] Failed to start AutonomousHoloDAE: {e}"
+        elif not _autonomous_daemon.active:
+            try:
+                _autonomous_daemon.start_autonomous_monitoring()
+                return True, "[DAEMON] AutonomousHoloDAE restarted - continuous auto-reindex enabled"
+            except Exception as e:
+                return False, f"[DAEMON] Failed to restart AutonomousHoloDAE: {e}"
+        else:
+            return True, "[DAEMON] AutonomousHoloDAE already running"
 
 
 def maybe_refresh_indexes(holo, args, db=None) -> Tuple[List[str], Dict[str, bool]]:
     """
     Check index freshness and perform automatic refresh if needed.
+    Auto-starts AutonomousHoloDAE for background monitoring (Gemma pattern detection).
 
     Args:
         holo: HoloIndex instance
@@ -26,14 +69,21 @@ def maybe_refresh_indexes(holo, args, db=None) -> Tuple[List[str], Dict[str, boo
     Returns:
         Tuple of (summary_lines, action_flags)
         summary_lines: List of strings for throttler sections
-        action_flags: Dict with keys like 'code_refreshed', 'wsp_refreshed', 'docdae_ran'
+        action_flags: Dict with keys like 'code_refreshed', 'wsp_refreshed', 'docdae_ran', 'daemon_started'
     """
     summary_lines = []
     action_flags = {
         'code_refreshed': False,
         'wsp_refreshed': False,
-        'docdae_ran': False
+        'docdae_ran': False,
+        'daemon_started': False
     }
+
+    # Auto-start AutonomousHoloDAE for background auto-reindex + Gemma pattern detection
+    daemon_success, daemon_msg = ensure_autonomous_daemon_running()
+    if daemon_success:
+        summary_lines.append(daemon_msg)
+        action_flags['daemon_started'] = True
 
     # Check if indexes need automatic refresh (only if not explicitly indexing)
     if db:

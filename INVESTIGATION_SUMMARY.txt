@@ -1,0 +1,179 @@
+YOUTUBE COMMENT ENGAGEMENT DAE - INVESTIGATION SUMMARY
+Issue: YouTube DAE opens Studio but doesn't process comments from inbox
+
+ROOT CAUSE ANALYSIS
+Three blocking points identified:
+
+EXIT POINT 1 (UNLIKELY): Parent process terminated
+Location: modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py:701-705
+Trigger: Parent YouTube DAE process dead
+Result: Graceful exit
+
+EXIT POINT 2 (MOST LIKELY): No comments detected in DOM
+Location: modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py:720-752
+Trigger: get_comment_count() returns 0
+Root Cause: DOM selector 'ytcp-comment-thread' returns no matches
+Result: Loop breaks immediately, no comments processed
+Log: "[DAEMON][PHASE--1] NO COMMENTS FOUND"
+
+EXIT POINT 3 (POSSIBLE): No thread at index 1
+Location: modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py:773-792
+Trigger: extract_comment_data() returns None
+Root Cause: querySelectorAll('ytcp-comment-thread')[0] is undefined
+Result: Loop breaks after 0 comments
+Log: "[DAEMON][PHASE-2] NO MORE COMMENTS"
+
+EXACT CODE PATH
+===============
+
+1. INITIALIZATION (comment_engagement_dae.py:504-580)
+   async connect()
+   - Create Selenium WebDriver
+   - Initialize CommentProcessor with SELECTORS dict
+   
+2. NAVIGATION (comment_engagement_dae.py:582-604)
+   async navigate_to_inbox()
+   - Check if already on /comments/inbox (line 591)
+   - If yes: skip wait (POTENTIAL ISSUE)
+   - If no: navigate and wait 5 seconds
+   
+3. MAIN LOOP (comment_engagement_dae.py:640-879)
+   async engage_all_comments()
+   
+   A. Check orphan status (line 701-705)
+      IF parent_pid dead -> break
+   
+   B. Count comments (line 710-713)
+      comment_count = get_comment_count()
+      IF count == 0 -> break at line 720 (EXIT #2)
+      
+      get_comment_count() code (line 606-611):
+      count = driver.execute_script(
+          "return document.querySelectorAll('ytcp-comment-thread').length"
+      )
+   
+   C. Process first comment (line 762)
+      result = await comment_processor.engage_comment(1)
+      
+      This calls extract_comment_data (comment_processor.py:323-415)
+      JavaScript: querySelectorAll('ytcp-comment-thread')[0]
+      IF no thread -> return None
+      IF data is None -> return {'no_comment_exists': True}
+   
+   D. Check for exit signal (line 773)
+      IF result.get('no_comment_exists') -> break at line 792 (EXIT #3)
+   
+   E. Refresh page (line 825-872)
+      driver.refresh()
+      wait 5 seconds
+      loop back to B
+
+CRITICAL SELECTOR
+=================
+
+Location: comment_engagement_dae.py line 135
+SELECTORS = {
+    'comment_thread': 'ytcp-comment-thread',
+    ...
+}
+
+Used in:
+1. Line 609: get_comment_count() querySelectorAll call
+2. Line 336: extract_comment_data() JavaScript querySelectorAll
+
+If selector broken: returns 0, exits at line 720
+
+FILES INVOLVED
+==============
+
+O:\Foundups-Agent\modules\communication\video_comments\skills\tars_like_heart_reply\comment_engagement_dae.py
+- Line 135: SELECTORS dict
+- Line 504-580: async connect()
+- Line 582-604: async navigate_to_inbox()
+- Line 606-611: get_comment_count()
+- Line 640-879: async engage_all_comments()
+
+O:\Foundups-Agent\modules\communication\video_comments\skills\tars_like_heart_reply\src\comment_processor.py
+- Line 323-415: extract_comment_data()
+- Line 463-909: async engage_comment()
+- Line 336-337: JavaScript DOM query
+
+BLOCKING CONDITIONS
+===================
+
+1. Selector Not Found (MOST LIKELY)
+   - YouTube changed selector name
+   - 'ytcp-comment-thread' no longer matches
+   - get_comment_count() returns 0
+   - Exit at line 720-752
+
+2. Page Not Fully Loaded
+   - Wait is only 5 seconds (line 600)
+   - Comments threads need more time to render
+   - DOM query returns 0 (not yet rendered)
+
+3. Navigation Skip
+   - If already on /comments/inbox, skips wait (line 591-593)
+   - Cached version may be stale
+   - Comment threads not reloaded
+
+DIAGNOSTIC STEPS
+================
+
+Open YouTube Studio in Chrome
+Navigate to Comments > Inbox (verify comments visible)
+Open DevTools console (F12)
+
+Test current selector:
+  document.querySelectorAll('ytcp-comment-thread').length
+  If 0: selector is broken
+
+Try alternatives:
+  document.querySelectorAll('ytcp-comment-thread-renderer').length
+  document.querySelectorAll('ytcp-comment-item').length
+  document.querySelectorAll('[role="comment"]').length
+  document.querySelectorAll('.ytcp-comment-container').length
+
+Check page load timing:
+  setTimeout(() => {
+      console.log(document.querySelectorAll('ytcp-comment-thread').length);
+  }, 10000);
+
+KEY FILES FOR SELECTOR VERIFICATION
+===================================
+
+1. comment_engagement_dae.py
+   Line 135: SELECTORS dict
+   Line 609: get_comment_count() uses selector
+
+2. comment_processor.py
+   Line 336: JavaScript uses selector
+   Line 509: Calls extract_comment_data()
+   Line 512-524: Checks if comment_data is None
+
+3. Extract flow (complete path):
+   engage_all_comments() [line 711]
+   -> get_comment_count() [line 606-611]
+   -> JavaScript: querySelectorAll('ytcp-comment-thread')
+   [if 0, exit at line 720]
+   
+   OR if > 0:
+   
+   engage_all_comments() [line 762]
+   -> comment_processor.engage_comment(1)
+   -> extract_comment_data(1) [line 509]
+   -> JavaScript: threads = querySelectorAll('ytcp-comment-thread')
+   [line 336]
+   -> thread = threads[0] [line 337]
+   [if undefined, return None at line 338]
+
+CONCLUSION
+==========
+
+Most likely: DOM selector 'ytcp-comment-thread' no longer matches 
+YouTube Studio's current HTML, causing get_comment_count() to return 0,
+triggering exit at line 720-752 with no error message.
+
+Secondary: Page may need longer than 5 seconds to fully load.
+
+Verification: Test selector in browser console.

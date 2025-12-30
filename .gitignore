@@ -102,6 +102,8 @@ memory/*
 01/
 01/*
 02_logs/
+archive/unicode_campaign_backups/
+archive/**/*.backup
 build/
 foundups-agent-clean/
 temp/

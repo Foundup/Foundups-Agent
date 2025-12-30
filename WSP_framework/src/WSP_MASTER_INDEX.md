@@ -176,6 +176,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 91 | DAEMON Observability Protocol | Active | Comprehensive observability standards for DAEMON systems including logs, traces, metrics, lifecycle events, decision path logging, self-improvement tracking, cost tracking, performance metrics, error handling, semantic conventions, health monitoring, and inter-DAEMON communication | WSP 80, WSP 27, WSP 48 | DAEMON observability, lifecycle management, decision logging, self-improvement tracking |
 | WSP 92 | DAE Cube Mapping and Mermaid Flow Protocol | Active | Revolutionary vibecoding prevention system that maps modules to DAE cubes, generates mermaid flow diagrams, and provides brain surgeon level code intelligence through system flow awareness | WSP 80, WSP 27, WSP 35, WSP 84 | Cube mapping, mermaid flows, vibecoding prevention, system intelligence |
 | WSP 93 | CodeIndex Surgical Intelligence Protocol | Active | Production-grade CodeIndex implementation with Qwen advisors, PoC surgeon mode (3K token surgical operations), and complete DAEMON lifecycle orchestration | WSP 80, WSP 91, WSP 92, WSP 87 | CodeIndex intelligence, surgical operations, Qwen advisors, DAEMON orchestration |
+| WSP 95 | WRE Skills Wardrobe Protocol | Active | Establishes the Wardrobe-Cube pattern (Micro Chain-of-Thought) for AI agent instructions; defines the prototype-staged-production lifecycle for task-specific skills | WSP 3, WSP 77, WSP 50, WSP 22 | AI agent instruction management, skill evolution, pattern fidelity scoring, task execution |
 | WSP 96 | MCP Governance & Consensus Protocol | Active | Establishes MCP-based governance architecture with clear evolution path: PoC (0102 centralized) -> Prototype (Event Replay Archive) -> MVP (community voting + blockchain integration); includes Qwen Sentinel validation, tech-agnostic chain adapters (EVM/Solana), and Chainlink-style MCP relays | WSP 21, WSP 27, WSP 54, WSP 80, WSP 91 | MCP governance, Event Replay Archive, community voting, blockchain integration, Qwen Sentinel |
 | WSP 97 | System Execution Prompting Protocol | Active | **META-FRAMEWORK** - Establishes baked-in execution methodology with core mantra "HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP"; defines agent profiles (0102/Qwen/Gemma), mission templates, and compliance validation for building Rubik Cubes (MVP DAEs). Rubik = fully agentic PWA connecting to any blockchain via FoundUp MCPs | WSP 21, WSP 77, WSP 80, WSP 35 | Execution methodology, agent profiles, mission templates, Rubik cubes, MVP DAEs, PWA blockchain connectivity |
 
@@ -244,9 +245,9 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total WSPs**: 89 (numbered 00-96)
- - **Active WSPs**: 87 (all except WSP 18, 43, 86, 94, 95)
- - **Available Slots**: 3 (WSP 18, 94, 95)
+ - **Total WSPs**: 91 (numbered 00-97)
+ - **Active WSPs**: 89 (all except WSP 18, 43, 86, 94)
+ - **Available Slots**: 2 (WSP 18, 94)
  - **Deprecated WSPs**: 1 (WSP 43 -> superseded by WSP 25/44 for emergence/state tracking)
  - **Superseded WSPs**: 1 (WSP 86 -> superseded by WSP 87)
  - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-96

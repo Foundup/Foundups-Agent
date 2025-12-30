@@ -5,22 +5,25 @@ Modular chat interaction system with user classification and gamification
 """
 
 from .user_classifier import UserClassifier, UserProfile, UserType
-from .commands import CommandProcessor, CommandPermission
-from .whack_a_magat import WhackAMAGAtSystem, ActionType, WhackLevel
+# NOTE: commands.py and whack_a_magat.py removed - WhackAMAGAt moved to gamification module
+# from .commands import CommandProcessor, CommandPermission
+# from .whack_a_magat import WhackAMAGAtSystem, ActionType, WhackLevel
 from .chat_rules_engine import ChatRulesEngine
 from .response_generator import ResponseGenerator
+from .database import ChatRulesDB
 
 __version__ = "0.1.0"
 __all__ = [
     "ChatRulesEngine",
+    "ChatRulesDB",
     "UserClassifier",
-    "UserProfile", 
+    "UserProfile",
     "UserType",
-    "CommandProcessor",
-    "CommandPermission",
-    "WhackAMAGAtSystem",
-    "ActionType",
-    "WhackLevel",
+    # "CommandProcessor",  # Removed - broken import
+    # "CommandPermission",  # Removed - broken import
+    # "WhackAMAGAtSystem",  # Moved to gamification module
+    # "ActionType",  # Moved to gamification module
+    # "WhackLevel",  # Moved to gamification module
     "ResponseGenerator"
 ]
 

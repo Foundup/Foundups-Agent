@@ -1,0 +1,6 @@
+test_hover_action_fallback_on_out_of_bounds: PASS
+test_click_action_fallback_on_out_of_bounds: PASS
+MANUAL RUN COMPLETE
+test_hover_action_fallback_on_out_of_bounds: PASS
+test_click_action_fallback_on_out_of_bounds: PASS
+MANUAL RUN COMPLETE

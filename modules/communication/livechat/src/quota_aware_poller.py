@@ -87,29 +87,34 @@ class QuotaAwarePoller:
         # Calculate time since last message
         time_since_message = time.time() - self.last_message_time
         
-        # CRITICAL: Over quota or near limit - EMERGENCY SHUTOFF
-        if quota_percentage >= 0.98:  # Stop at 98% to prevent death spiral
-            logger.critical(f"[ALERT] QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
-            logger.critical("[STOP] EMERGENCY SHUTOFF - Stopping polling to preserve quota")
-            return None  # Stop polling entirely
-        
+        # CRITICAL: Over quota - ATTEMPT ROTATION FIRST
         if quota_percentage >= 0.95:
             logger.error(f"[U+1F534] QUOTA CRITICAL: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
 
-            # HOLOINDEX IMPROVEMENT: Integration Gap Fix - Rotate OAuth tokens when quota critical
+            # CARDIOVASCULAR FIX: Attempt OAuth rotation BEFORE shutting down
+            # This prevents global shutdown after successful rotation (user-reported bug)
             if self.oauth_manager and hasattr(self.oauth_manager, 'rotate_credentials'):
-                logger.warning("[REFRESH] HOLOINDEX FIX: Attempting OAuth token rotation due to quota exhaustion")
+                logger.warning("[REFRESH] Attempting OAuth token rotation due to quota exhaustion")
                 try:
                     rotation_success = self.oauth_manager.rotate_credentials()
                     if rotation_success:
-                        logger.info("[OK] HOLOINDEX FIX: OAuth token rotation successful - quota reset")
-                        # Reset quota tracking for new credential set
-                        # Note: Actual quota reset happens on YouTube's side, we just switch credentials
+                        logger.info("[OK] OAuth token rotation successful - quota reset, continuing polling")
+                        # CRITICAL FIX: Return NORMAL interval after successful rotation
+                        # Old code returned EMERGENCY_INTERVAL even after success
+                        # This caused continued slowdown even with fresh quota
+                        return self.NORMAL_INTERVAL
                     else:
-                        logger.error("[FAIL] HOLOINDEX FIX: OAuth token rotation failed")
+                        logger.error("[FAIL] OAuth token rotation failed")
                 except Exception as e:
-                    logger.error(f"[FAIL] HOLOINDEX FIX: OAuth rotation error: {e}")
+                    logger.error(f"[FAIL] OAuth rotation error: {e}")
 
+            # Only stop if rotation failed or unavailable AND quota exhausted
+            if quota_percentage >= 0.98:
+                logger.critical(f"[ALERT] QUOTA EXHAUSTED: {units_used}/{self.daily_limit} units ({quota_percentage:.1%})")
+                logger.critical("[STOP] EMERGENCY SHUTOFF - Stopping polling to preserve quota")
+                return None  # Stop polling entirely
+
+            # If rotation failed but still have 2% buffer, use emergency interval
             return self.EMERGENCY_INTERVAL
         
         # EMERGENCY: 90-95% quota used

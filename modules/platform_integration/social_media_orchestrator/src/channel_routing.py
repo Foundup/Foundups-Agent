@@ -68,14 +68,34 @@ class SocialMediaRouter:
             linkedin_page_id='104834798',  # GeoZai page
             x_account='geozai',
             enabled=True
+        ),
+        'UCROkIz1wOCP3tPk-1j3umyQ': ChannelRouting(
+            channel_id='UCROkIz1wOCP3tPk-1j3umyQ',
+            channel_name='FoundUps1934',
+            linkedin_page_id='1263645',
+            x_account='foundups',
+            enabled=False  # Safety: keep test channel disabled for social posting
+        ),
+        'UCfHM9Fw9HD-NwiS0seD_oIA': ChannelRouting(
+            channel_id='UCfHM9Fw9HD-NwiS0seD_oIA',
+            channel_name='UnDaoDu',
+            linkedin_page_id='165749317',
+            x_account='undaodu',
+            enabled=True
         )
     }
 
     # Display names with visual indicators (from stream_resolver)
+    # CORRECT MAPPINGS (verified 2025-12-27):
+    #   UC-LSSlOZwpGIRIYihaz8zCw = Move2Japan (Chrome)
+    #   UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu (Chrome, same Google account as Move2Japan)
+    #   UCSNTUXjAgpd4sgWYP0xoJgw = FoundUps (Edge, different Google account)
     DISPLAY_NAMES = {
-        'UCSNTUXjAgpd4sgWYP0xoJgw': 'UnDaoDu [MINDFUL]',
-        'UC-LSSlOZwpGIRIYihaz8zCw': 'FoundUps [LOYAL]',
-        'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan [JAPAN]'
+        'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan [JAPAN]',
+        'UCfHM9Fw9HD-NwiS0seD_oIA': 'UnDaoDu [MINDFUL]',
+        'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps [LOYAL]',
+        'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan-Alt [JAPAN]',
+        'UCROkIz1wOCP3tPk-1j3umyQ': 'FoundUps1934 [TEST]',
     }
 
     @classmethod

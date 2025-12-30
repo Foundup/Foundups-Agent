@@ -1,0 +1,38 @@
+{
+  "video_id": "sora2_1766390047",
+  "model": "sora",
+  "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance, showing cultural fusion and strength. Wide establishing shot in dramatic natural setting, intense eye contact and synchronized movements, traditional Maori facial expressions and gestures, flowing tribal tattoos visible, unified powerful stance, cultural respect and warrior spirit, golden hour lighting casting strong shadows, slow motion emphasis on intense expressions, professional documentary style, authentic cultural representation, commanding presence, traditional rhythm and coordination, respectful portrayal of cultural heritage and strength",
+  "duration": 10,
+  "aspect_ratio": "9:16",
+  "cost": 8.0,
+  "source": "sora2",
+  "generated_at": 1766390065.0932505,
+  "status_payload": {
+    "object": "video.generation.job",
+    "id": "task_01kd2gksz3etgr06xvek40r0vb",
+    "status": "succeeded",
+    "created_at": 1766389835,
+    "finished_at": 1766390043,
+    "expires_at": 1766476235,
+    "generations": [
+      {
+        "object": "video.generation",
+        "id": "gen_01kd2gsfhbffx81aqmsqtxzzk5",
+        "job_id": "task_01kd2gksz3etgr06xvek40r0vb",
+        "created_at": 1766390043,
+        "width": 1080,
+        "height": 1920,
+        "n_seconds": 10,
+        "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance, showing cultural fusion and strength. Wide establishing shot in dramatic natural setting, intense eye contact and synchronized movements, traditional Maori facial expressions and gestures, flowing tribal tattoos visible, unified powerful stance, cultural respect and warrior spirit, golden hour lighting casting strong shadows, slow motion emphasis on intense expressions, professional documentary style, authentic cultural representation, commanding presence, traditional rhythm and coordination, respectful portrayal of cultural heritage and strength"
+      }
+    ],
+    "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance, showing cultural fusion and strength. Wide establishing shot in dramatic natural setting, intense eye contact and synchronized movements, traditional Maori facial expressions and gestures, flowing tribal tattoos visible, unified powerful stance, cultural respect and warrior spirit, golden hour lighting casting strong shadows, slow motion emphasis on intense expressions, professional documentary style, authentic cultural representation, commanding presence, traditional rhythm and coordination, respectful portrayal of cultural heritage and strength",
+    "model": "sora",
+    "n_variants": 1,
+    "n_seconds": 10,
+    "height": 1920,
+    "width": 1080,
+    "inpaint_items": null,
+    "failure_reason": null
+  }
+}

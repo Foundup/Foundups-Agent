@@ -1,5 +1,16 @@
 # Testing Evolution Log - Stream Resolver
 
+## LATEST UPDATE - 2025-12-22 No-API Stream Detection Coverage [OK]
+
+### Test Additions
+- Added no-API indicator trust coverage for /live pages.
+- Added /streams fallback coverage when /live lacks strong indicators.
+
+### Files Updated
+- `modules/platform_integration/stream_resolver/tests/test_no_quota_stream_checker.py`
+
+---
+
 ## 🆕 **LATEST UPDATE - PHASE 4 YOUTUBE API EXTRACTION VERIFICATION** [OK]
 
 ### **Phase 4 Refactoring Impact on Tests**

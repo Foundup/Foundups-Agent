@@ -149,9 +149,9 @@
   "health_check_interval": 30,
   "announcement_channel": "undaodu_livechat",
   "learning_stats": {
-    "total_bugs_detected": 4997,
+    "total_bugs_detected": 5005,
     "total_bugs_fixed": 2,
-    "total_reports_generated": 2698,
+    "total_reports_generated": 2706,
     "last_detection": null,
     "last_fix": null,
     "pattern_accuracy": 0.0
@@ -170,5 +170,5 @@
       "changes": "Initial skill creation with 6 error patterns"
     }
   ],
-  "last_monitoring_run": 1765527741.2174063
+  "last_monitoring_run": 1766384852.4351773
 }

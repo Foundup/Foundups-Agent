@@ -36,7 +36,7 @@ import time
 import os
 import re
 from typing import Dict, Any, Optional, List, Tuple
-from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
+from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
 from modules.communication.livechat.src.llm_bypass_engine import LLMBypassEngine
 from modules.ai_intelligence.banter_engine.src.emoji_sequence_map import EMOJI_TO_NUMBER as EMOJI_TO_NUM
 from modules.communication.livechat.src.llm_integration import GrokIntegration
@@ -45,7 +45,7 @@ from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import Age
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
-from modules.gamification.whack_a_magat.src.self_improvement import MAGADOOMSelfImprovement
+from modules.gamification.whack_a_magat.src.self_improvement import get_self_improvement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
 try:
@@ -70,7 +70,7 @@ class MessageProcessor:
         self.youtube_service = youtube_service
         self.memory_manager = memory_manager  # WSP-compliant hybrid storage
         self.chat_sender = chat_sender  # To access bot channel ID and prevent self-responses
-        self.banter_engine = BanterEngine()
+        self.banter_engine = get_banter_engine()
         self.llm_bypass_engine = LLMBypassEngine()
         self.trigger_emojis = ["[U+270A]", "[U+270B]", "[U+1F590]️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
@@ -88,7 +88,8 @@ class MessageProcessor:
         self.command_handler = CommandHandler(self.event_handler.get_timeout_manager(), self)
         # WSP 84 compliant: Use existing modules, not duplicate code
         self.greeting_generator = GrokGreetingGenerator()
-        self.self_improvement = MAGADOOMSelfImprovement()
+        # Lazy, toggleable singleton (avoids duplicate disk/memory init)
+        self.self_improvement = get_self_improvement()
         
         # NEW: Intelligent livechat reply generator (Grok-powered)
         self.intelligent_reply = get_livechat_reply_generator()
@@ -656,7 +657,8 @@ class MessageProcessor:
                 self._update_trigger_time(author_id)
                 
                 # Try intelligent reply generator (Grok-powered with patterns)
-                if self.intelligent_reply:
+                from modules.communication.livechat.src.automation_gates import _env_truthy
+                if self.intelligent_reply and _env_truthy("YT_COMMENT_REPLY_ENABLED", "true"):
                     is_member = processed_message.get("is_member", False)  # Blue badge
                     response = self.intelligent_reply.generate_reply(
                         message=message_text,
@@ -943,6 +945,9 @@ class MessageProcessor:
         # Quiz answer shortcuts
         quiz_answers = ['!1', '!2', '!3', '!4']
 
+        # Additional ! commands routed through CommandHandler (non-quiz)
+        bang_commands = ['!party']
+
         text_lower = text.lower().strip()
 
         # Check / commands
@@ -951,7 +956,10 @@ class MessageProcessor:
         # Check quiz answers (!1-!4)
         has_quiz_answer = any(text_lower.startswith(cmd) for cmd in quiz_answers)
 
-        has_command = has_slash_command or has_quiz_answer
+        # Check non-quiz ! commands
+        has_bang_command = any(text_lower.startswith(cmd) for cmd in bang_commands)
+
+        has_command = has_slash_command or has_quiz_answer or has_bang_command
 
         if has_command:
             logger.info(f"[GAME] Detected gamification command: {text_lower}")

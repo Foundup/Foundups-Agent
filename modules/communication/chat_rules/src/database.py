@@ -256,9 +256,32 @@ class ChatRulesDB:
                 AND duration_seconds <= 10
                 AND timestamp > datetime('now', '-' || ? || ' minutes')
             ''', (mod_id, minutes))
-            
+
             return cursor.fetchone()['count']
-    
+
+    def get_timeout_count_for_target(self, target_id: str) -> int:
+        """
+        Get total whack count for a target (across all moderators).
+
+        Simple Occam's Razor: More whacks = higher confidence they're a troll.
+        Used by CommenterClassifier to boost Tier 0 confidence based on history.
+
+        Args:
+            target_id: Channel ID of the commenter
+
+        Returns:
+            Total number of times this target has been whacked
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT COUNT(*) as count
+                FROM timeout_history
+                WHERE target_id = ?
+            ''', (target_id,))
+
+            return cursor.fetchone()['count']
+
     # Cooldown management
     
     def set_cooldown(self, mod_id: str, cooldown_type: str, minutes: int):

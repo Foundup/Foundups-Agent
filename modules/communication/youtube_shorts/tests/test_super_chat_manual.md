@@ -424,7 +424,7 @@ Bot: @TestUser [U+1F4B0] Thank you for the $25.00 Super Chat!
 **Check**:
 ```bash
 # Verify Gemini API key
-python -c "import os; print(os.getenv('GEMINI_API_KEY', 'NOT SET'))"
+python -c "import os; v=os.getenv('GEMINI_API_KEY'); print('[OK] GEMINI_API_KEY set (len=%d)'%len(v) if v else '[FAIL] GEMINI_API_KEY missing')"
 
 # Test Gemini API
 python modules/communication/youtube_shorts/tests/test_gemini_api.py

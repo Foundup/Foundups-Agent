@@ -622,7 +622,7 @@ class SimplePostingOrchestrator:
 
                 for channel_id, channel_name in channels:
                     live_info = scraper.check_channel_for_live(channel_id)
-                    if live_info:
+                    if live_info and live_info.get("live"):
                         self.logger.info(f"[VERIFICATION] [U+2701]E{channel_name} is LIVE")
                         return True
 

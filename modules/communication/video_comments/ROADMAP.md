@@ -50,6 +50,9 @@ Transform YouTube comment engagement from manual interaction to fully autonomous
 - [x] Detect moderator badge (from auto_moderator.db)
 - [x] Detect subscriber badge
 - [x] MAGA troll detection (expanded triggers)
+- [x] **HOSTILE_PATTERNS** integration (Phase 1 from FLOW_ANALYSIS_20251223)
+  - "don't come back", "go away", "gtfo", "stfu", "nobody asked", etc.
+  - Score 0.75 (provisional troll) for hostile comments even without MAGA content
 
 ### 2.2 Response Generation ✅
 - [x] MOD_RESPONSES for moderators

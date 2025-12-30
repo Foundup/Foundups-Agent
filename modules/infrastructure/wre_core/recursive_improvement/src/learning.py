@@ -5,6 +5,7 @@ import io
 import asyncio
 import json
 import multiprocessing
+import logging
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,6 +18,8 @@ import time
 from .core import ErrorPattern, Solution, Improvement, PatternType
 from .persistence import QuantumStatePersistence, QuantumState
 from .utils import load_memory, save_pattern, save_solution, save_improvement
+
+logger = logging.getLogger(__name__)
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 # Prevent UnicodeEncodeError on Windows systems
@@ -109,7 +112,7 @@ class RecursiveLearningEngine:
         """Periodic state save"""
         if self.quantum_state:
             self.quantum_persistence.save_state(self.quantum_state)
-            print(f"Auto-saved quantum state at {datetime.datetime.now().isoformat()}")
+            logger.debug(f"Auto-saved quantum state at {datetime.datetime.now().isoformat()}")
     
     def _start_auto_save_loop(self, interval: int):
         """Start background loop for auto-saving"""

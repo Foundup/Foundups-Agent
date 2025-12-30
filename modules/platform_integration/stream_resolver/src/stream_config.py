@@ -37,18 +37,20 @@ class StreamResolverConfig:
         # Development override for faster testing
         self.FORCE_DEV_DELAY = os.getenv("FORCE_DEV_DELAY", "false").lower() == "true"
 
-        # Load channel ID from environment with validation
+        # Load channel IDs from environment
+        self.MOVE2JAPAN_CHANNEL_ID = os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+        self.FOUNDUPS_CHANNEL_ID = os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw')
+        self.UNDAODU_CHANNEL_ID = os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA')
+
+        # Primary channel (backward compatibility - defaults to Move2Japan)
         self.CHANNEL_ID = self._get_channel_id()
 
-        # Additional channel IDs
-        self.CHANNEL_ID2 = os.getenv('CHANNEL_ID2')
-        self.MOVE2JAPAN_CHANNEL_ID = os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UCklMTNnu5POwRmQsg5JJumA')
-
     def _get_channel_id(self) -> str:
-        """Get and validate primary channel ID."""
-        channel_id = os.getenv("CHANNEL_ID")
+        """Get and validate primary channel ID (defaults to Move2Japan for backward compatibility)."""
+        # Try COMMUNITY_CHANNEL_ID first (startup engagement target), then MOVE2JAPAN_CHANNEL_ID
+        channel_id = os.getenv("COMMUNITY_CHANNEL_ID") or self.MOVE2JAPAN_CHANNEL_ID
         if not channel_id:
-            raise ValueError("CHANNEL_ID must be defined in environment variables")
+            raise ValueError("No channel IDs defined in environment variables")
         return channel_id
 
 

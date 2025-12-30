@@ -366,11 +366,12 @@ def main() -> None:
             except Exception:
                 pass
 
-    # Initialize Pattern Coach (used in onboarding copy)
+    # Pattern Coach is intentionally opt-in (can be verbose and slow)
     pattern_coach = None
-    if ADVISOR_AVAILABLE:
+    if args.pattern_coach and ADVISOR_AVAILABLE:
         try:
             from holo_index.qwen_advisor.pattern_coach import PatternCoach
+
             pattern_coach = PatternCoach()
         except Exception as e:
             if verbose:
@@ -393,8 +394,8 @@ def main() -> None:
     onboarding_text += "\n      python holo_index.py --init-dae 'YouTube Live'  # Initialize DAE context"
     onboarding_text += "\n  - Documentation: WSP_35_HoloIndex_Qwen_Advisor_Plan.md | docs/QWEN_ADVISOR_IMPLEMENTATION_COMPLETE.md | tests/holo_index/TESTModLog.md"
     onboarding_text += "\n  - Session points summary appears after each run (WSP reward telemetry)."
-    if pattern_coach:
-        onboarding_text += "\n[INFO] Pattern Coach initialized - watching for vibecoding patterns"
+    if args.pattern_coach and pattern_coach:
+        onboarding_text += "\n[INFO] Pattern Coach enabled - watching for vibecoding patterns"
     throttler.add_section('onboarding', onboarding_text, priority=1, tags=['onboarding', 'guidance'])
 
     # CRITICAL: Unicode compliance reminder for 0102 agents
@@ -1072,7 +1073,7 @@ def main() -> None:
                 results['health_notices'] = health_notices
 
             # [NEW] Pattern Coach Integration (WSP 84)
-            if pattern_coach and results:
+            if args.pattern_coach and pattern_coach and results:
                 try:
                     coach_msg = pattern_coach.analyze_and_coach(
                         query=args.search,

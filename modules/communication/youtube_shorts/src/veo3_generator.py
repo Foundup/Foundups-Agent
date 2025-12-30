@@ -54,6 +54,15 @@ class InsufficientCreditsError(Exception):
     pass
 
 
+class Veo3ApiKeyCompromisedError(Veo3GenerationError):
+    """API key rejected as leaked/compromised; operator action required."""
+
+    def __init__(self, message: str, *, key_source: str, fingerprint: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.key_source = key_source
+        self.fingerprint = fingerprint
+
+
 class Veo3Generator:
     """
     Google Veo 3 video generation interface.
@@ -69,12 +78,49 @@ class Veo3Generator:
         Args:
             output_dir: Directory for generated videos (default: module assets/)
         """
-        # Load environment
-        load_dotenv()
-        api_key = os.getenv('GOOGLE_API_KEY')
+        def _looks_like_placeholder(value: str) -> bool:
+            stripped = (value or "").strip()
+            return stripped.startswith("${") and stripped.endswith("}") and len(stripped) > 3
 
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file")
+        def _resolve_api_key() -> tuple[str, str]:
+            candidates = [
+                ("VEO3_API_KEY", os.getenv("VEO3_API_KEY")),
+                ("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY")),
+                ("GOOGLE_API_KEY", os.getenv("GOOGLE_API_KEY")),
+            ]
+            for name, value in candidates:
+                if value and not _looks_like_placeholder(value):
+                    return value, name
+            raise ValueError(
+                "No API key configured for Veo 3. Set VEO3_API_KEY (preferred) "
+                "or GEMINI_API_KEY or GOOGLE_API_KEY in your environment/.env."
+            )
+
+        # Load environment
+        load_dotenv(override=False)
+        api_key, api_key_source = _resolve_api_key()
+        self._api_key_source = api_key_source
+        self._api_key_fingerprint = None
+        self._key_hygiene = None
+
+        try:
+            from modules.infrastructure.shared_utilities.key_hygiene import KeyHygiene
+
+            self._key_hygiene = KeyHygiene(service="veo3", urls=KeyHygiene.default_genai_urls())
+            if self._key_hygiene.enabled():
+                self._api_key_fingerprint = self._key_hygiene.record_key_seen(api_key_source, api_key)
+                self._key_hygiene.maybe_prompt_rotation(
+                    key_source=api_key_source,
+                    fingerprint=self._api_key_fingerprint,
+                )
+        except Exception:
+            self._key_hygiene = None
+
+        if os.getenv("GOOGLE_API_KEY") and os.getenv("GEMINI_API_KEY") and not os.getenv("VEO3_API_KEY"):
+            logger.info(
+                "[VEO3-INIT] Both GOOGLE_API_KEY and GEMINI_API_KEY are set; using %s (set VEO3_API_KEY to pin)",
+                api_key_source,
+            )
 
         if genai is None:
             message = "google.genai is not installed. Install with: pip install google-genai --upgrade"
@@ -255,6 +301,27 @@ class Veo3Generator:
         except Exception as e:
             error_msg = str(e)
             logger.error(f"[FAIL] [VEO3-ERROR] Generation failed: {error_msg}")
+
+            lowered = error_msg.lower()
+            if "reported as leaked" in lowered or "api key was reported as leaked" in lowered:
+                if self._key_hygiene and self._api_key_fingerprint:
+                    self._key_hygiene.mark_compromised(
+                        self._api_key_fingerprint,
+                        reason="reported_leaked",
+                        detail="provider flagged key as leaked",
+                    )
+                raise Veo3ApiKeyCompromisedError(
+                    "Veo 3 API key rejected (reported leaked). Rotate/replace your key and set "
+                    "VEO3_API_KEY (preferred) or GEMINI_API_KEY. "
+                    f"(current key source: {getattr(self, '_api_key_source', 'unknown')})",
+                    key_source=getattr(self, "_api_key_source", "unknown"),
+                    fingerprint=getattr(self, "_api_key_fingerprint", None),
+                )
+            if "permission_denied" in lowered and "api key" in lowered:
+                raise Veo3GenerationError(
+                    "Veo 3 PERMISSION_DENIED. Verify your API key has access to the Veo model and is not restricted. "
+                    f"(current key source: {getattr(self, '_api_key_source', 'unknown')})"
+                )
 
             # Check for quota errors
             if "quota" in error_msg.lower() or "insufficient" in error_msg.lower():

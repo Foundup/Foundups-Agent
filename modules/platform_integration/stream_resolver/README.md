@@ -92,6 +92,7 @@ Key environment variables:
 - `YOUTUBE_API_KEY2`: Fallback API key for rotation
 - `STREAM_VISION_DISABLED`: Set to "true" to disable vision stream detection (recommended when Studio comment engagement needs exclusive Chrome)
 - `STREAM_CHROME_PORT`: Chrome debug port for vision stream detection (defaults to `FOUNDUPS_CHROME_PORT` / 9222)
+- `YT_STREAM_API_VERIFY`: Set to "false" to skip API confirmation and trust strong /live or /streams indicators (no-API mode)
 - `WSP_ALLOW_STREAM_PATCH`: Set to "1" to allow modifications to backup version
 - `FORCE_DEV_DELAY`: Set to "true" for faster testing delays
 
@@ -102,6 +103,13 @@ The module implements comprehensive error handling:
 - HTTP error classification and retry logic  
 - Circuit breaker pattern (enhanced version)
 - Graceful degradation strategies
+
+## No-Quota Stream Detection
+
+The no-quota checker prefers low-risk scraping:
+- Checks `/live` with redirects disabled to avoid watch-page CAPTCHA triggers.
+- Falls back to `/streams` when `/live` shows no strong indicators.
+- Uses API confirmation when enabled, but trusts strong indicators if the API is unavailable or disabled.
 
 ## Testing
 

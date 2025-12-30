@@ -5,6 +5,7 @@ Learns from moderation patterns and automatically optimizes thresholds.
 WSP 48 compliant - recursive improvement through pattern extraction.
 """
 
+import os
 import json
 import logging
 import time
@@ -15,6 +16,25 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+_DEFAULT_THRESHOLDS: Dict[str, Any] = {
+    "spree_window": 30,  # seconds
+    "multi_kill_window": 5,  # seconds
+    "mockery_cooldown": 60,  # seconds
+    "xp_multiplier": 1.0,
+    "daily_cap": 1000,
+    "announcement_gap": 3,  # seconds
+}
+
+
+def _self_improvement_enabled() -> bool:
+    return _env_truthy("FOUNDUPS_ENABLE_SELF_IMPROVEMENT", "true")
+
 
 @dataclass
 class ModerationPattern:
@@ -68,14 +88,7 @@ class MAGADOOMSelfImprovement:
         }
         
         # Current thresholds (will be optimized)
-        self.thresholds = {
-            "spree_window": 30,  # seconds
-            "multi_kill_window": 5,  # seconds
-            "mockery_cooldown": 60,  # seconds
-            "xp_multiplier": 1.0,
-            "daily_cap": 1000,
-            "announcement_gap": 3  # seconds
-        }
+        self.thresholds = _DEFAULT_THRESHOLDS.copy()
         
         # Load previous learnings
         self._load_memory()
@@ -303,25 +316,93 @@ class MAGADOOMSelfImprovement:
                 logger.warning(f"Could not load memory: {e}")
 
 
-# Module-level singleton
-_self_improvement = MAGADOOMSelfImprovement()
+class SelfImprovementFacade:
+    """
+    Lazy, toggleable access to the MAGADOOM self-improvement engine.
+
+    First principles:
+    - Avoid heavy disk/JSON work at import time.
+    - Allow safe disabling for debugging via FOUNDUPS_ENABLE_SELF_IMPROVEMENT=0.
+    """
+
+    def __init__(self):
+        self._engine: Optional[MAGADOOMSelfImprovement] = None
+
+    def _get_engine(self) -> Optional[MAGADOOMSelfImprovement]:
+        if not _self_improvement_enabled():
+            return None
+        if self._engine is None:
+            self._engine = MAGADOOMSelfImprovement()
+        return self._engine
+
+    def observe_timeout(self, mod_id: str, duration: int, stream_density: str) -> None:
+        engine = self._get_engine()
+        if engine:
+            engine.observe_timeout(mod_id, duration, stream_density)
+
+    def observe_spree(self, mod_id: str, spree_level: str, frag_count: int) -> None:
+        engine = self._get_engine()
+        if engine:
+            engine.observe_spree(mod_id, spree_level, frag_count)
+
+    def observe_command(self, command: str, response_time: float = 0.0) -> None:
+        engine = self._get_engine()
+        if engine:
+            engine.observe_command(command, response_time)
+
+    def observe_system_issue(self, issue_type: str, severity: str, context: Dict) -> None:
+        engine = self._get_engine()
+        if engine:
+            engine.observe_system_issue(issue_type, severity, context)
+
+    def get_optimized_thresholds(self) -> Dict[str, Any]:
+        engine = self._get_engine()
+        if engine:
+            return engine.get_optimized_thresholds()
+        return _DEFAULT_THRESHOLDS.copy()
+
+    def get_performance_report(self) -> Dict[str, Any]:
+        engine = self._get_engine()
+        if engine:
+            return engine.get_performance_report()
+        return {
+            "total_timeouts": 0,
+            "total_sprees": 0,
+            "commands_processed": 0,
+            "stream_densities": {},
+            "top_fraggers": [],
+            "patterns_learned": 0,
+            "optimizations_applied": 0,
+            "current_thresholds": _DEFAULT_THRESHOLDS.copy(),
+        }
+
+
+_self_improvement_facade: Optional[SelfImprovementFacade] = None
+
+
+def get_self_improvement() -> SelfImprovementFacade:
+    """Get the process-wide self-improvement facade (lazy engine init)."""
+    global _self_improvement_facade
+    if _self_improvement_facade is None:
+        _self_improvement_facade = SelfImprovementFacade()
+    return _self_improvement_facade
 
 def observe_timeout(mod_id: str, duration: int, stream_density: str):
     """Record timeout for learning"""
-    _self_improvement.observe_timeout(mod_id, duration, stream_density)
+    get_self_improvement().observe_timeout(mod_id, duration, stream_density)
 
 def observe_spree(mod_id: str, spree_level: str, frag_count: int):
     """Record spree achievement for learning"""
-    _self_improvement.observe_spree(mod_id, spree_level, frag_count)
+    get_self_improvement().observe_spree(mod_id, spree_level, frag_count)
 
 def observe_command(command: str, response_time: float = 0.0):
     """Record command usage for learning"""
-    _self_improvement.observe_command(command, response_time)
+    get_self_improvement().observe_command(command, response_time)
 
 def get_optimized_thresholds() -> Dict[str, Any]:
     """Get current optimized thresholds"""
-    return _self_improvement.get_optimized_thresholds()
+    return get_self_improvement().get_optimized_thresholds()
 
 def get_performance_report() -> Dict[str, Any]:
     """Get performance insights"""
-    return _self_improvement.get_performance_report()
+    return get_self_improvement().get_performance_report()

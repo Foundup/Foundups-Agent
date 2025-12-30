@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock YouTube Chat</title>
+    <style>
+        body { margin: 0; padding: 0; background: #0f0f0f; color: white; font-family: sans-serif; }
+        #chat-container { width: 400px; height: 600px; position: relative; border: 1px solid #333; }
+        #chatframe { width: 100%; height: 100%; border: none; }
+        .ad-container { position: absolute; top: 100px; right: 10px; width: 300px; height: 250px; background: #222; border: 1px solid red; z-index: 1000; }
+        .ad-label { color: red; font-size: 10px; position: absolute; top: 0; left: 0; }
+        .reaction-button { width: 40px; height: 40px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; margin: 10px; }
+        .reaction-button:hover { background: #444; }
+        #heart-icon { position: absolute; bottom: 20px; left: 20px; }
+        #reaction-popup { position: absolute; bottom: 70px; left: 20px; background: #1e1e1e; padding: 10px; border-radius: 8px; display: none; }
+        #reaction-popup.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <!-- Mock Iframe Content directly for simplicity in this test, 
+             though InteractionController handles real iframes -->
+        <div id="mock-chat-content" style="height: 100%; width: 100%; position: relative;">
+            <div id="heart-icon" class="reaction-button" onmouseover="document.getElementById('reaction-popup').classList.add('visible')">❤️</div>
+            <div id="reaction-popup">
+                <div class="reaction-item" id="reaction_100" style="padding: 5px; cursor: pointer;">💯</div>
+                <div class="reaction-item" id="reaction_heart" style="padding: 5px; cursor: pointer;">❤️</div>
+            </div>
+            
+            <!-- This is the 'ad' that we want to avoid -->
+            <div id="ad-slot-1" class="yt-ad-renderer ad-container" onclick="console.log('AD CLICKED!')">
+                <span class="ad-label">ADVERTISEMENT</span>
+                <p>Buy something now!</p>
+            </div>
+
+            <!-- Another ad with different classes -->
+            <div class="promoted-item" style="position: absolute; top: 380px; left: 50px; background: yellow; color: black; padding: 20px;">
+                SPONSORED CONTENT
+            </div>
+        </div>
+    </div>
+</body>
+</html>

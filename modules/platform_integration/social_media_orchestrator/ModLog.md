@@ -21,6 +21,22 @@ Centralized orchestration system providing unified social media management acros
 
 ## Recent Changes
 
+### 2025-12-15 - Add FoundUps1934 [TEST] Channel (Disabled by Default)
+**WSP References**: WSP 22 (ModLog), WSP 3 (Modular Build), WSP 49 (Platform Integration Safety)
+
+**Problem Identified**
+- Needed a safe YouTube test channel (`@foundups1934`) for automation experiments without risking cross-posting to LinkedIn/X.
+- Channel routing/config did not recognize the test channel ID, so higher-level services could not reliably exclude it from posting.
+
+**Changes Made**
+1. Added channel ID mapping for `UCROkIz1wOCP3tPk-1j3umyQ` as `FoundUps1934 [TEST]`.
+2. Added an explicit config entry with `enabled: false` so posting is disabled by default.
+
+**Files Updated**
+- `modules/platform_integration/social_media_orchestrator/src/channel_routing.py`
+- `modules/platform_integration/social_media_orchestrator/config/channels_config.json`
+- `modules/platform_integration/social_media_orchestrator/src/core/channel_configuration_manager.py`
+
 ### WSP 90 Compliance: UTF-8 Encoding for Social Media Posts
 **WSP References**: WSP 90, WSP 1, WSP 49
 
@@ -925,6 +941,5 @@ schedule_id = await orchestrator.schedule_content(
 - 笨・WSP 22: Documented implementation in ModLogs
 
 ---
-
 
 

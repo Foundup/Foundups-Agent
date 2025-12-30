@@ -75,6 +75,7 @@ class WREMonitor:
         # Performance tracking
         self.metrics = defaultdict(lambda: deque(maxlen=1000))
         self.patterns_learned = []
+        self.action_experiences = deque(maxlen=2000)
         self.errors_handled = []
         self.api_calls = []
         self.stream_transitions = []
@@ -184,6 +185,11 @@ class WREMonitor:
             
             if learn_rate > 1:
                 logger.info(f"[0102] High learning rate: {learn_rate:.1f} patterns/min")
+
+    def track_action_experience(self, experience: Dict[str, Any]) -> None:
+        """Track action outcomes for WRE learning."""
+        self.action_experiences.append(experience)
+        self.learning_events += 1
     
     def track_error(self, error_type: str, error_msg: str, recovery_action: str):
         """Track error and recovery"""
@@ -352,6 +358,7 @@ class WREMonitor:
             'runtime_minutes': runtime / 60,
             'messages_processed': self.messages_processed,
             'patterns_learned': len(self.patterns_learned),
+            'action_experiences': len(self.action_experiences),
             'learning_events': self.learning_events,
             'token_efficiency': (self.tokens_saved / max(1, self.tokens_used)) * 100,
             'tokens_saved': self.tokens_saved,
@@ -429,6 +436,7 @@ class WREMonitor:
         report = {
             'summary': self.get_status(),
             'patterns_learned': self.patterns_learned,
+            'action_experiences': list(self.action_experiences)[-200:],
             'errors_handled': self.errors_handled,
             'api_calls': self.api_calls[-100:],  # Last 100
             'stream_transitions': self.stream_transitions,

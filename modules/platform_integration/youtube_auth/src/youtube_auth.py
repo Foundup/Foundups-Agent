@@ -10,6 +10,10 @@ from modules.platform_integration.youtube_auth.src.quota_monitor import QuotaMon
 
 logger = logging.getLogger(__name__)
 
+# Reduce noisy upstream logging that is not actionable for Foundups DAEs.
+# Example: "file_cache is only supported with oauth2client<4.0.0"
+logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.WARNING)
+
 # Initialize quota monitor
 quota_monitor = QuotaMonitor()
 
@@ -117,13 +121,13 @@ def get_authenticated_service(token_index=None):
             from datetime import datetime, timedelta, timezone
             # Handle both timezone-aware and naive datetimes
             if creds.expiry.tzinfo is None:
-                # If expiry is naive, assume UTC
-                time_until_expiry = creds.expiry - datetime.now()
+                # If expiry is naive, assume UTC (compare UTC to UTC, not UTC to local time)
+                time_until_expiry = creds.expiry - datetime.now(timezone.utc).replace(tzinfo=None)
             else:
                 # If expiry is aware, use aware comparison
                 time_until_expiry = creds.expiry - datetime.now(timezone.utc)
             if time_until_expiry < timedelta(minutes=10):
-                logger.info(f"[REFRESH] Token expiring in {time_until_expiry.seconds // 60} minutes for set {index}, proactively refreshing...")
+                logger.info(f"[REFRESH] Token expiring in {int(time_until_expiry.total_seconds() // 60)} minutes for set {index}, proactively refreshing...")
                 try:
                     creds.refresh(Request())
                     logger.info(f"[OK] Proactive refresh successful for set {index} (new expiry: {creds.expiry})")
@@ -206,7 +210,9 @@ def get_authenticated_service(token_index=None):
 
         try:
             # Try to build service with current credentials
-            youtube_service = build('youtube', 'v3', credentials=creds)
+            # Disable discovery caching to avoid noisy `googleapiclient.discovery_cache` logs on Windows
+            # (file_cache requires oauth2client<4.0.0).
+            youtube_service = build('youtube', 'v3', credentials=creds, cache_discovery=False)
             logger.info(f"[CELEBRATE] YouTube API service built successfully with credential set {index}")
             
             # Test the service with a lightweight call to ensure it's working
@@ -259,7 +265,12 @@ def get_authenticated_service(token_index=None):
     # Return a no-auth YouTube service for read-only operations
     # This allows checking if streams are live without consuming quota
     try:
-        youtube_service = build('youtube', 'v3', developerKey=os.getenv('YOUTUBE_API_KEY', None))
+        youtube_service = build(
+            'youtube',
+            'v3',
+            developerKey=os.getenv('YOUTUBE_API_KEY', None),
+            cache_discovery=False,
+        )
         if youtube_service:
             logger.warning("[OK] No-auth YouTube service created - Limited to public read-only operations")
             return youtube_service

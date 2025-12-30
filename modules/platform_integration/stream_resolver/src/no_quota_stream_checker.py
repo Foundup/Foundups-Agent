@@ -45,6 +45,10 @@ except ImportError:
     LIVE_STATUS_VERIFIER_AVAILABLE = False
 
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 class NoQuotaStreamChecker:
     """Check YouTube stream status without using API quota
 
@@ -100,7 +104,7 @@ class NoQuotaStreamChecker:
                 self._live_verifier_initialized = True
                 logger.info("[OK] Lazy-loaded LiveStatusVerifier for API verification fallback")
             except Exception as e:
-                logger.warning(f"[U+26A0]️ Failed to lazy-load LiveStatusVerifier: {e}")
+                logger.warning(f"[U+26A0] Failed to lazy-load LiveStatusVerifier: {e}")
                 self.live_verifier = None
                 self._live_verifier_initialized = True  # Don't try again
 
@@ -132,12 +136,40 @@ class NoQuotaStreamChecker:
             'Connection': 'keep-alive'
         }
 
+    @staticmethod
+    def _looks_like_captcha(text: str) -> bool:
+        if not text:
+            return False
+        lowered = text.lower()
+        return ("google.com/sorry" in lowered) or ("www.google.com/sorry" in lowered)
+
+    @staticmethod
+    def _extract_video_id(text: str) -> Optional[str]:
+        """Extract a YouTube video ID from a URL or HTML snippet."""
+        if not text:
+            return None
+
+        patterns = (
+            r"(?:\?|&)v=([a-zA-Z0-9_-]{11})",
+            r"/watch\?v=([a-zA-Z0-9_-]{11})",
+            r"youtu\.be/([a-zA-Z0-9_-]{11})",
+            r"embed/([a-zA-Z0-9_-]{11})",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group(1)
+        return None
+
     def _anti_detection_delay(self, multiplier: float = 1.0, min_delay: float = 10.0, max_delay: float = 18.0):
-        """Add random delay to avoid rate limiting"""
+        """Add randomized backoff to reduce rate limiting."""
         # Increased default delays from 8-15s to 10-18s to reduce CAPTCHA triggers
         base_delay = random.uniform(min_delay, max_delay)
         delay = min(base_delay * max(multiplier, 1.0), 60.0)
-        logger.info(f"⏳ Anti-detection delay: {delay:.1f}s (protecting against rate limits)")
+        if _env_truthy("STREAM_VERBOSE_LOGS", "false"):
+            logger.info(f"[RATE-LIMIT] Backoff delay: {delay:.1f}s")
+        else:
+            logger.debug(f"[RATE-LIMIT] Backoff delay: {delay:.1f}s")
         time.sleep(delay)
 
     def _is_channel_rate_limited(self, channel_id: str):
@@ -157,17 +189,17 @@ class NoQuotaStreamChecker:
         self.channel_cooldowns[channel_id] = time.time() + cooldown
         self.last_rate_limit = time.time()
         name = channel_name or channel_id
-        logger.warning(f"⚠️ Rate limit triggered for {name} – holding for {cooldown:.0f}s before retry")
+        logger.warning(f"[RATE-LIMIT] Triggered for {name}; cooling down {cooldown:.0f}s before retry")
         return cooldown
 
     def _register_captcha_hit(self) -> float:
         """
-        Handle CAPTCHA detection with global cooldown and defensive measures.
+        Handle CAPTCHA detection with a global cooldown and conservative backoff.
         
-        DEFENSIVE STRATEGY:
-        1. Enter global cooldown mode (30-60s before any API call)
-        2. Shrink candidate video list (3 → 1)
-        3. Clear session cookies (appear as new client)
+        Strategy:
+        1. Enter global cooldown mode before further verification calls
+        2. Shrink candidate video list
+        3. Clear session cookies
         4. Track consecutive CAPTCHAs for escalating backoff
         """
         self.consecutive_captcha_count += 1
@@ -185,11 +217,11 @@ class NoQuotaStreamChecker:
         # Clear session cookies to appear as new client
         self.session.cookies.clear()
         
-        logger.warning(f"🛡️ CAPTCHA DEFENSE ACTIVATED:")
-        logger.warning(f"  • Global cooldown: {cooldown:.0f}s before API calls")
-        logger.warning(f"  • Video candidates reduced: 3 → {self.max_videos_to_check}")
-        logger.warning(f"  • Session cookies cleared")
-        logger.warning(f"  • Consecutive CAPTCHAs: {self.consecutive_captcha_count}")
+        logger.warning("[CAPTCHA] Backoff activated:")
+        logger.warning(f"  - Global cooldown: {cooldown:.0f}s before verification calls")
+        logger.warning(f"  - Video candidates reduced: {self.max_videos_to_check}")
+        logger.warning("  - Session cookies cleared")
+        logger.warning(f"  - Consecutive CAPTCHAs: {self.consecutive_captcha_count}")
         
         return cooldown
 
@@ -212,9 +244,9 @@ class NoQuotaStreamChecker:
             self.consecutive_captcha_count = max(0, self.consecutive_captcha_count - 1)
             if self.consecutive_captcha_count == 0:
                 self.max_videos_to_check = 3  # Fully restore
-                logger.info("✅ CAPTCHA defense: State fully reset after successful requests")
+                logger.info("[CAPTCHA] Backoff state reset after successful requests")
 
-    def check_video_is_live(self, video_id: str, channel_name: str = None) -> Dict[str, Any]:
+    def check_video_is_live(self, video_id: str, channel_name: str = None, scraping_prefilter: bool = True) -> Dict[str, Any]:
         """
         Efficient hybrid verification: Scraping first, API only for confirmation
 
@@ -234,77 +266,114 @@ class NoQuotaStreamChecker:
         """
         display_channel = channel_name or 'unknown channel'
 
+        if not _env_truthy("YT_AUTOMATION_ENABLED", "true") or not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
+            logger.warning(
+                f"[AUTOMATION-AUDIT] run_id={run_id} stream_scraping=disabled (skipping video check) channel={display_channel} video_id={video_id}"
+            )
+            return {"live": False, "skipped": True, "reason": "stream_scraping_disabled", "video_id": video_id}
+
+        verbose_logs = _env_truthy("STREAM_VERBOSE_LOGS", "false")
+        skip_api = os.getenv("YT_STREAM_API_VERIFY", "true").lower() in ("false", "0", "no")
+        scraping_indicated_live = False
+
         # FIRST PRINCIPLES: PRIORITY 1 - Cheap scraping pre-filter (0 API cost)
+        # NOTE: Scraping watch pages is the primary CAPTCHA trigger; allow disabling via `scraping_prefilter=False`.
         url = f"https://www.youtube.com/watch?v={video_id}"
 
-        try:
-            # Anti-detection measures
-            self._anti_detection_delay()
-            headers = self._get_random_headers()
+        in_captcha_cooldown, captcha_remaining = self._is_in_captcha_cooldown()
+        if scraping_prefilter and not in_captcha_cooldown:
+            try:
+                # Backoff measures (rate limiting / CAPTCHA)
+                self._anti_detection_delay()
+                headers = self._get_random_headers()
 
-            # Use session to enable retry strategy with exponential backoff
-            response = self.session.get(url, headers=headers, timeout=15)
+                # Use session to enable retry strategy with exponential backoff
+                response = self.session.get(url, headers=headers, timeout=15)
 
-            # Detect CAPTCHA redirect to Google sorry page
-            captcha_hit = False
-            if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"⚠️ CAPTCHA detected - YouTube redirected to Google verification page")
-                logger.warning(f"  Triggered URL: {url}")
-                captcha_hit = True
-                # CAPTCHA DEFENSE: Register and enter cooldown mode
-                cooldown = self._register_captcha_hit()
-                logger.info(f"🛡️ Waiting {cooldown:.0f}s before API verification (CAPTCHA defense)")
-                time.sleep(cooldown)  # BACKOFF before API!
+                # Detect CAPTCHA redirect to Google sorry page
+                captcha_hit = False
+                if self._looks_like_captcha(response.url):
+                    logger.warning("[CAPTCHA] Detected - redirected to Google verification page")
+                    logger.warning(f"  Triggered URL: {url}")
+                    captcha_hit = True
+                    # CAPTCHA backoff: register and enter cooldown mode
+                    cooldown = self._register_captcha_hit()
+                    logger.info(f"[CAPTCHA] Backoff {cooldown:.0f}s before verification")
 
-            if response.status_code == 429:
-                logger.error(f"Rate limit (429) encountered while checking video {video_id}")
-                captcha_hit = True
-                # CAPTCHA DEFENSE: Treat 429 same as CAPTCHA
-                cooldown = self._register_captcha_hit()
-                logger.info(f"🛡️ Waiting {cooldown:.0f}s before API verification (429 defense)")
-                time.sleep(cooldown)  # BACKOFF before API!
+                if response.status_code == 429:
+                    logger.error(f"Rate limit (429) encountered while checking video {video_id}")
+                    captcha_hit = True
+                    # Treat 429 similarly to CAPTCHA for backoff
+                    cooldown = self._register_captcha_hit()
+                    logger.info(f"[RATE-LIMIT] Backoff {cooldown:.0f}s before verification")
 
-            if not captcha_hit:
-                # Successful scrape - decay CAPTCHA state
-                self._reset_captcha_state()
-                if response.status_code != 200:
-                    logger.warning(f"Failed to fetch page: {response.status_code}")
-                    return {"live": False, "error": f"HTTP {response.status_code}"}
+                if not captcha_hit:
+                    # Successful scrape - decay CAPTCHA state
+                    self._reset_captcha_state()
+                    if response.status_code != 200:
+                        logger.warning(f"Failed to fetch page: {response.status_code}")
+                        return {"live": False, "error": f"HTTP {response.status_code}"}
 
-                # Look for live indicators in the page
-                html = response.text
+                    # Look for live indicators in the page
+                    html = response.text
 
-                # FIRST PRINCIPLES: Quick pre-filter - if NO live indicators, skip API entirely
-                has_any_live_indicator = (
-                    '"isLiveNow":true' in html or
-                    'BADGE_STYLE_TYPE_LIVE_NOW' in html or
-                    'watching now' in html or
-                    '"text":"LIVE"' in html or
-                    '"liveStreamability"' in html
-                )
+                    # FIRST PRINCIPLES: Quick pre-filter - if NO live indicators, skip API entirely
+                    has_any_live_indicator = (
+                        '"isLiveNow":true' in html or
+                        'BADGE_STYLE_TYPE_LIVE_NOW' in html or
+                        'watching now' in html or
+                        '"text":"LIVE"' in html or
+                        '"liveStreamability"' in html
+                    )
 
-                if not has_any_live_indicator:
-                    logger.info(f"[FAIL] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
-                    logger.info(f"  • Method: Scraping pre-filter (0 API units saved)")
-                    return {"live": False, "method": "scraping_prefilter"}
+                    if not has_any_live_indicator:
+                        if verbose_logs:
+                            logger.info(f"[OK] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
+                            logger.info("  - Method: Scraping pre-filter (0 API units saved)")
+                        else:
+                            logger.debug(f"[OK] SCRAPING PRE-FILTER: No live indicators found for {video_id}")
+                        return {"live": False, "method": "scraping_prefilter"}
 
-                # If we have live indicators, proceed to API verification for accuracy
-                logger.info(f"[OK] SCRAPING PRE-FILTER: Found live indicators for {video_id}")
-                logger.info(f"  • Proceeding to API confirmation (1 API unit)")
+                    # If we have live indicators, proceed to API verification for accuracy
+                    scraping_indicated_live = True
+                    logger.info(f"[OK] SCRAPING PRE-FILTER: Found live indicators for {video_id}")
+                    if verbose_logs:
+                        logger.info("  - Proceeding to API confirmation (1 API unit)")
+                    else:
+                        logger.info("[VERIFY] Proceeding to API confirmation (1 unit)")
 
-        except Exception as e:
-            logger.warning(f"[U+26A0]️ Scraping pre-filter failed: {e}, falling back to direct API check")
-            # Fall through to API check if scraping fails
+            except Exception as e:
+                logger.warning(f"[U+26A0] Scraping pre-filter failed: {e}, falling back to direct API check")
+                # Fall through to API check if scraping fails
+        else:
+            if in_captcha_cooldown:
+                logger.info(f"[CAPTCHA] Global cooldown active ({captcha_remaining:.0f}s) - skipping watch-page scraping, using API")
+            elif not scraping_prefilter:
+                logger.debug("[VERIFY] Scraping pre-filter disabled - using API directly")
 
         # PRIORITY 2: API verification only for videos that appear live (1 unit cost)
         # NOTE: Do NOT call LiveStatusVerifier.verify_live_status() as it creates circular dependency
         # Instead, call the YouTube API directly here
-        logger.info("="*60)
-        logger.info("[U+1F50C] FINAL VERIFICATION: API CONFIRMATION")
-        logger.info(f"  • Video ID: {video_id} (pre-filtered candidate)")
-        logger.info(f"  • Method: YouTube API (1 unit - only for promising candidates)")
-        logger.info(f"  • Strategy: Efficient quota usage for 24/7 daemon")
-        logger.info("="*60)
+
+        # TRUE NO-API MODE: Skip API verification entirely if YT_STREAM_API_VERIFY=false
+        if skip_api:
+            if scraping_indicated_live:
+                logger.info(f"[NO-API] ✅ YT_STREAM_API_VERIFY=false - Trusting scraping indicators (LIVE)")
+                return {"live": True, "video_id": video_id, "method": "scraping_no_api"}
+            else:
+                logger.info(f"[NO-API] ⚪ YT_STREAM_API_VERIFY=false - No strong indicators (NOT LIVE)")
+                return {"live": False, "method": "scraping_no_api", "status": "no_indicators"}
+
+        if verbose_logs:
+            logger.info("=" * 60)
+            logger.info("[U+1F50C] FINAL VERIFICATION: API CONFIRMATION")
+            logger.info(f"  - Video ID: {video_id} (pre-filtered candidate)")
+            logger.info("  - Method: YouTube API (1 unit - only for promising candidates)")
+            logger.info("  - Strategy: Efficient quota usage for 24/7 daemon")
+            logger.info("=" * 60)
+        else:
+            logger.info(f"[VERIFY] API confirmation for {video_id} (1 unit)")
 
         try:
             # Direct API call without going through LiveStatusVerifier to avoid circular dependency
@@ -331,32 +400,38 @@ class NoQuotaStreamChecker:
 
             if is_live:
                 logger.info(f"[OK] API confirmed: {video_id} is LIVE")
-                return {"live": True, "video_id": video_id, "method": "api"}
+                return {"live": True, "video_id": video_id, "method": "api", "channel_id": snippet.get('channelId')}
             else:
-                logger.info(f"[FAIL] API confirmed: {video_id} is NOT live (status: {live_broadcast})")
+                logger.info(f"[OK] API confirmed: {video_id} not live (status: {live_broadcast})")
                 return {"live": False, "method": "api", "status": live_broadcast}
 
         except Exception as e:
             error_str = str(e).lower()
             # Check if this is a quota-related error that should trigger rotation
             if any(phrase in error_str for phrase in ['quota', 'limit exceeded', 'daily limit', 'rate limit']):
-                logger.warning(f"[U+26A0]️ API quota exhausted during verification: {e}")
+                logger.warning(f"[U+26A0] API quota exhausted during verification: {e}")
                 logger.info(f"[QUOTA] Returning rate_limited status to trigger rotation upstream")
                 return {"live": False, "rate_limited": True, "method": "api", "error": str(e)}
             else:
-                logger.warning(f"[U+26A0]️ API verification failed (non-quota): {e}, using scraping result")
-                # Since scraping showed live indicators, assume live if API fails non-quota
-                return {"live": True, "video_id": video_id, "method": "scraping_fallback"}
+                if scraping_indicated_live:
+                    logger.warning(f"[U+26A0] API verification failed (non-quota): {e}, using scraping result")
+                    # Since scraping showed live indicators, assume live if API fails non-quota
+                    return {"live": True, "video_id": video_id, "method": "scraping_fallback"}
+                logger.warning(f"[U+26A0] API verification failed (non-quota): {e}, no scraping signal - defaulting to not live")
+                return {"live": False, "video_id": video_id, "method": "api_error_fallback", "error": str(e)}
 
         # PRIORITY 3: Ultimate fallback - comprehensive scraping if API unavailable
-        logger.info("="*60)
-        logger.info("[U+1F310] ULTIMATE FALLBACK: COMPREHENSIVE SCRAPING")
-        logger.info(f"  • Video ID: {video_id} (final verification)")
-        logger.info(f"  • Method: Full scraping analysis (0 API units)")
-        logger.info("="*60)
+        if verbose_logs:
+            logger.info("=" * 60)
+            logger.info("[U+1F310] ULTIMATE FALLBACK: COMPREHENSIVE SCRAPING")
+            logger.info(f"  - Video ID: {video_id} (final verification)")
+            logger.info("  - Method: Full scraping analysis (0 API units)")
+            logger.info("=" * 60)
+        else:
+            logger.info(f"[VERIFY] Comprehensive scraping fallback for {video_id}")
 
         try:
-            # Anti-detection measures
+            # Backoff measures (rate limiting / CAPTCHA)
             self._anti_detection_delay()
             headers = self._get_random_headers()
 
@@ -365,14 +440,14 @@ class NoQuotaStreamChecker:
 
             # Detect CAPTCHA redirect to Google sorry page
             if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                logger.warning(f"⚠️ CAPTCHA detected in fallback - YouTube redirected to Google verification page")
+                logger.warning("[CAPTCHA] Detected in fallback - redirected to Google verification page")
                 logger.warning(f"  Triggered URL: {url}")
-                self._register_captcha_hit()  # Register for future defense
+                self._register_captcha_hit()  # Backoff for future calls
                 return {"live": False, "rate_limited": True, "captcha": True}
 
             if response.status_code == 429:
                 logger.error(f"Rate limit (429) encountered in fallback while checking video {video_id}")
-                self._register_captcha_hit()  # Register for future defense
+                self._register_captcha_hit()  # Backoff for future calls
                 return {"live": False, "rate_limited": True, "status": 429}
             
             # Successful scrape - decay CAPTCHA state
@@ -536,6 +611,13 @@ class NoQuotaStreamChecker:
                             runs = title_data.get('runs', []) if title_data else []
                             if runs and isinstance(runs, list) and len(runs) > 0:
                                 channel = runs[0].get('text', 'Unknown') if isinstance(runs[0], dict) else 'Unknown'
+                                
+                            # Extract channel ID if possible
+                            navigation = video_owner.get('navigationEndpoint', {})
+                            browse_endpoint = navigation.get('browseEndpoint', {})
+                            if browse_endpoint and browse_endpoint.get('browseId'):
+                                found_channel_id = browse_endpoint.get('browseId')
+                                logger.info(f"[BOT][AI] [QWEN] Scraped channel ID: {found_channel_id}")
 
                 except json.JSONDecodeError:
                     logger.warning("Failed to parse YouTube initial data")
@@ -616,16 +698,18 @@ class NoQuotaStreamChecker:
                 # Include channel name in success message too
                 display_name = channel_name if channel_name else channel if channel else "Unknown"
                 logger.info(f"[OK] STREAM IS LIVE on {display_name} (detected via scraping)")
-                logger.info(f"  • Channel: {channel}")
-                logger.info(f"  • Title: {title}")
-                logger.info(f"  • Video ID: {video_id} (for {display_name})")
+                if _env_truthy("STREAM_VERBOSE_LOGS", "false"):
+                    logger.info(f"  - Channel: {channel}")
+                    logger.info(f"  - Title: {title}")
+                    logger.info(f"  - Video ID: {video_id} (for {display_name})")
             elif is_ended:
                 # Include channel name in the log for clarity
                 display_name = channel_name if channel_name else channel if channel else "Unknown"
-                logger.info(f"⏸️ OLD STREAM DETECTED on {display_name} (already ended)")
-                logger.info(f"  • Title: {title}")
-                logger.info(f"  • Video ID: {video_id} (for {display_name})")
-                logger.info("  • Status: Not currently live")
+                logger.info(f"[IDLE] OLD STREAM DETECTED on {display_name} (already ended)")
+                if _env_truthy("STREAM_VERBOSE_LOGS", "false"):
+                    logger.info(f"  - Title: {title}")
+                    logger.info(f"  - Video ID: {video_id} (for {display_name})")
+                    logger.info("  - Status: Not currently live")
             else:
                 logger.info("[FAIL] NOT A STREAM (regular video or not found)")
 
@@ -645,6 +729,7 @@ class NoQuotaStreamChecker:
                 "video_id": video_id,
                 "title": title,
                 "channel": channel,
+                "channel_id": found_channel_id if 'found_channel_id' in locals() else None,
                 "url": url
             }
 
@@ -677,17 +762,27 @@ class NoQuotaStreamChecker:
         Returns:
             Dict with live stream details if found, a rate_limited sentinel, or None
         """
+        if not _env_truthy("YT_AUTOMATION_ENABLED", "true") or not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
+            run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
+            display_name = channel_name or channel_id
+            logger.warning(f"[AUTOMATION-AUDIT] run_id={run_id} stream_scraping=disabled (skipping channel check) channel={display_name}")
+            return {"live": False, "skipped": True, "reason": "stream_scraping_disabled"}
+
+        verbose_logs = _env_truthy("STREAM_VERBOSE_LOGS", "false")
+        skip_api = os.getenv("YT_STREAM_API_VERIFY", "true").lower() in ("false", "0", "no")
+        saw_strong_live_indicator = False
+
         # Check global CAPTCHA cooldown first
         in_captcha_cooldown, captcha_remaining = self._is_in_captcha_cooldown()
         if in_captcha_cooldown:
-            logger.warning(f"🛡️ Global CAPTCHA cooldown active – {captcha_remaining:.0f}s remaining")
+            logger.warning(f"[CAPTCHA] Global cooldown active - {captcha_remaining:.0f}s remaining")
             logger.info("  Waiting for cooldown to expire before scraping...")
             time.sleep(captcha_remaining)  # Wait out the cooldown
         
         in_cooldown, remaining = self._is_channel_rate_limited(channel_id)
         if in_cooldown:
             display_name = channel_name or channel_id
-            logger.warning(f"Skipping {display_name} due to recent rate limit – {remaining:.0f}s cooldown remaining")
+            logger.warning(f"[RATE-LIMIT] Skipping {display_name} - {remaining:.0f}s cooldown remaining")
             return {"rate_limited": True, "cooldown": remaining}
 
         # Try multiple URL formats - handle (@username) and channel ID
@@ -696,51 +791,76 @@ class NoQuotaStreamChecker:
         # Map channel IDs to handles
         channel_handle_map = {
             'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',     # UnDaoDu (verified from YouTube 2025-12-11)
-            # 'UC-LSSlOZwpGIRIYihaz8zCw': Removed - will use channel ID URL for livestream detection
-            'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN'   # Move2Japan
+            'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',  # Move2Japan
+            'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',  # Move2Japan alternate
+            'UCROkIz1wOCP3tPk-1j3umyQ': '@foundups1934'  # FoundUps1934 (test channel)
         }
 
         # Use handle if available, otherwise channel ID (pick ONE, not both)
         if channel_id in channel_handle_map:
             handle = channel_handle_map[channel_id]
             # Use handle format (modern, cleaner)
-            urls_to_try.append(f"https://www.youtube.com/{handle}")
-            logger.info(f"  • Channel handle: {handle}")
+            urls_to_try.append(f"https://www.youtube.com/{handle}/live")
+            logger.info(f"  - Channel handle: {handle}")
         else:
             # Fall back to channel ID format only if no handle
-            urls_to_try.append(f"https://www.youtube.com/channel/{channel_id}")
-            logger.info(f"  • Using channel ID format (no handle available)")
+            urls_to_try.append(f"https://www.youtube.com/channel/{channel_id}/live")
+            logger.info("  - Using channel ID format (no handle available)")
 
         for live_url in urls_to_try:
             try:
                 logger.info("")
                 logger.info("[SEARCH] NO-QUOTA CHANNEL CHECK")
-                logger.info(f"  • Channel ID: {channel_id}")
-                logger.info(f"  • Trying URL: {live_url}")
-                logger.info(f"  • Method: NO-QUOTA detection (0 API units)")
-                logger.info(f"  • Cost: 0 API units")
+                logger.info(f"  - Channel ID: {channel_id}")
+                logger.info(f"  - Trying URL: {live_url}")
 
                 # Anti-detection measures for channel check
                 self._anti_detection_delay()
                 headers = self._get_random_headers()
 
                 # Use session with retry strategy for better rate limit handling
-                response = self.session.get(live_url, headers=headers, timeout=15, allow_redirects=True)
+                # Important: do NOT follow redirects to watch pages (high CAPTCHA risk).
+                response = self.session.get(live_url, headers=headers, timeout=15, allow_redirects=False)
 
                 if response.status_code == 429:
                     cooldown = self._register_rate_limit(channel_id, channel_name)
                     self._register_captcha_hit()  # Also trigger CAPTCHA defense
                     return {"rate_limited": True, "status": 429, "cooldown": cooldown}
-                
-                # Check for CAPTCHA redirect
-                if 'google.com/sorry' in response.url or 'www.google.com/sorry' in response.url:
-                    logger.warning(f"⚠️ CAPTCHA on channel page - YouTube blocked request")
+
+                redirect_location = response.headers.get("Location", "")
+                # Check for CAPTCHA redirect (Location or final URL)
+                if self._looks_like_captcha(response.url) or self._looks_like_captcha(redirect_location):
+                    logger.warning("[CAPTCHA] Channel page blocked (google.com/sorry redirect)")
                     cooldown = self._register_captcha_hit()
                     return {"rate_limited": True, "captcha": True, "cooldown": cooldown}
 
+                # /live often redirects straight to the active livestream watch URL
+                if response.status_code in (301, 302, 303, 307, 308) and redirect_location:
+                    video_id = self._extract_video_id(redirect_location)
+                    if video_id:
+                        display_name = channel_name or channel_id
+                        logger.info(f"[VIDEO] /live redirected to video for {display_name}: {video_id}")
+                        result = self.check_video_is_live(video_id, channel_name, scraping_prefilter=False)
+                        if isinstance(result, dict) and result.get("rate_limited"):
+                            return result
+                        if result and result.get("live"):
+                            return result
+                        # Redirect can point to upcoming/non-live content; allow streams fallback.
+                        continue
+                    # Redirected but not to a watch URL; treat as offline (avoid deeper scraping).
+                    display_name = channel_name or channel_id
+                    logger.debug(f"[OK] /live redirect without watch URL for {display_name}: {redirect_location}")
+                    continue
+
+                # Check for CAPTCHA redirect
+                # (Handled above via URL/Location checks)
+
                 # Log the actual response URL to see what happened
-                logger.info(f"  • Response URL: {response.url}")
-                logger.info(f"  • Status Code: {response.status_code}")
+                if verbose_logs:
+                    logger.info(f"  - Response URL: {response.url}")
+                    logger.info(f"  - Status Code: {response.status_code}")
+                else:
+                    logger.debug(f"[SEARCH] response_url={response.url} status={response.status_code}")
 
                 # Check if we're on the channel page
                 if response.status_code == 200:
@@ -753,15 +873,36 @@ class NoQuotaStreamChecker:
                     has_live_text = '>LIVE<' in html or '"text":"LIVE"' in html
                     has_live_stream = '"liveStreamability"' in html
 
-                    logger.info(f"[INFO] Page indicators found:")
-                    logger.info(f"  - isLiveNow: {has_is_live_now}")
-                    logger.info(f"  - BADGE: {has_live_badge}")
-                    logger.info(f"  - watching: {has_watching}")
-                    logger.info(f"  - LIVE text: {has_live_text}")
-                    logger.info(f"  - liveStreamability: {has_live_stream}")
+                    has_strong_live_indicator = has_is_live_now or has_live_badge or has_watching or has_live_text
 
-                    # If ANY live indicator found, try to extract video ID
-                    if has_is_live_now or has_live_badge or has_watching or has_live_text or has_live_stream:
+                    if verbose_logs:
+                        logger.info("[INFO] Page indicators found:")
+                        logger.info(f"  - isLiveNow: {has_is_live_now}")
+                        logger.info(f"  - BADGE: {has_live_badge}")
+                        logger.info(f"  - watching: {has_watching}")
+                        logger.info(f"  - LIVE text: {has_live_text}")
+                        logger.info(f"  - liveStreamability: {has_live_stream}")
+                    else:
+                        logger.debug(
+                            "[INFO] Page indicators: isLiveNow=%s badge=%s watching=%s live_text=%s liveStreamability=%s",
+                            has_is_live_now,
+                            has_live_badge,
+                            has_watching,
+                            has_live_text,
+                            has_live_stream,
+                        )
+
+                    # If no strong live indicators on /live, treat as offline (avoid streams-tab scraping).
+                    if not has_strong_live_indicator:
+                        display_name = channel_name or channel_id
+                        if verbose_logs:
+                            logger.info(f"[OK] No strong live indicators on /live for {display_name}")
+                        else:
+                            logger.debug("[OK] No strong live indicators on /live for %s", display_name)
+                        continue
+
+                    # Strong indicators found, try to extract video ID
+                    if has_strong_live_indicator:
                         logger.info("[SUCCESS] Found live indicators! Searching for video ID...")
 
                         # Try multiple patterns to find video ID
@@ -784,14 +925,19 @@ class NoQuotaStreamChecker:
                         video_ids = list(dict.fromkeys(video_ids))
 
                         if video_ids:
+                            saw_strong_live_indicator = True
                             logger.info(f"[VIDEO] Found {len(video_ids)} video IDs in page")
 
                             # Determine which videos to check - dynamically reduced on CAPTCHA
-                            # max_videos_to_check: 3 (normal) → 1 (CAPTCHA defense mode)
+                            # max_videos_to_check: 3 (normal) -> 1 (CAPTCHA backoff mode)
                             videos_to_check = video_ids[:self.max_videos_to_check]
                             logger.info(f"[FILTER] Checking first {len(videos_to_check)} videos from {len(video_ids)} found")
                             if self.max_videos_to_check < 3:
-                                logger.info(f"  🛡️ CAPTCHA defense: Reduced candidate list ({self.max_videos_to_check} of 3)")
+                                msg = f"[CAPTCHA] Reduced candidate list ({self.max_videos_to_check} of 3)"
+                                if verbose_logs:
+                                    logger.info(f"  - {msg}")
+                                else:
+                                    logger.debug(msg)
 
                             # QWEN Intelligence: Validate video selection
                             if hasattr(self, 'qwen_intelligence') and self.qwen_intelligence:
@@ -807,42 +953,84 @@ class NoQuotaStreamChecker:
 
                             # Try the selected video IDs
                             captcha_blocked_videos = []  # Track videos that hit CAPTCHA
+                            api_error_videos = []  # Track videos that could not be verified via API
+
+                            if skip_api:
+                                display_name = channel_name or channel_id
+                                trusted_video = videos_to_check[0]
+                                logger.info(
+                                    f"[NO-API] YT_STREAM_API_VERIFY=false - trusting /live indicators for {display_name}: {trusted_video}"
+                                )
+                                return {
+                                    "live": True,
+                                    "video_id": trusted_video,
+                                    "channel_name": display_name,
+                                    "title": f"Live stream on {display_name}",
+                                    "source": "no_api_indicator_trust",
+                                    "indicator_count": sum([has_is_live_now, has_live_badge, has_watching, has_live_text, has_live_stream]),
+                                }
                             
                             for idx, video_id in enumerate(videos_to_check):
                                 display_name = channel_name or channel_id
                                 logger.info(f"[VERIFY] Checking video {idx+1}/{len(videos_to_check)} for {display_name}: {video_id}")
-                                result = self.check_video_is_live(video_id, channel_name)
+                                # Avoid watch-page scraping (high CAPTCHA risk); go straight to API confirmation.
+                                result = self.check_video_is_live(video_id, channel_name, scraping_prefilter=False)
 
                                 # Handle CAPTCHA - track but don't fail immediately
-                                if result.get('captcha') or result.get('rate_limited'):
+                                if result.get('captcha'):
                                     logger.warning(f"[CAPTCHA] Video {video_id} blocked by CAPTCHA - will trust if live indicators strong")
                                     captcha_blocked_videos.append(video_id)
                                     continue  # Try next video instead of returning
+                                if result.get('rate_limited'):
+                                    return result
+                                if result.get("method") == "api_error_fallback":
+                                    logger.warning(
+                                        f"[WARN] API verification failed for {video_id}; will trust indicators if needed"
+                                    )
+                                    api_error_videos.append(video_id)
+                                    continue
 
                                 # Handle successful verification
                                 if result and result.get('live'):
+                                    # Verify channel ID matches to avoid picking up recommended streams from other channels
+                                    found_cid = result.get('channel_id')
+                                    if found_cid and channel_id.startswith('UC') and len(channel_id) == 24:
+                                        if found_cid != channel_id:
+                                            logger.warning(f"[MISMATCH] Found live stream but channel ID mismatch: {found_cid} != {channel_id}")
+                                            logger.info(f"[MISMATCH] This is likely a recommended stream from another channel. Skipping.")
+                                            continue
+                                            
                                     logger.info(f"[SUCCESS] Video {video_id} is LIVE!")
                                     return result
 
                                 # Log verification failure for debugging
                                 logger.debug(f"[VERIFY] Video {video_id} verification result: {result}")
 
-                            # NEW: If CAPTCHA blocked all verification BUT we found strong live indicators,
-                            # trust the first video ID (YouTube showed live badge/indicators)
-                            # Calculate indicator strength from boolean flags
+                            # If verification failed (CAPTCHA or API), but live indicators are strong,
+                            # trust the first candidate to avoid false negatives.
                             indicator_count = sum([has_is_live_now, has_live_badge, has_watching, has_live_text, has_live_stream])
-                            
-                            if captcha_blocked_videos and indicator_count >= 1:
-                                first_video = captcha_blocked_videos[0]
-                                logger.info(f"[TRUST] CAPTCHA blocked verification but live indicators found ({indicator_count} indicators)")
+                            trust_candidates = []
+                            trust_source = None
+                            if captcha_blocked_videos:
+                                trust_candidates = captcha_blocked_videos
+                                trust_source = "captcha_bypass_trust"
+                            elif api_error_videos:
+                                trust_candidates = api_error_videos
+                                trust_source = "api_failure_trust"
+
+                            if trust_candidates and indicator_count >= 1:
+                                first_video = trust_candidates[0]
+                                reason = "CAPTCHA blocked verification" if trust_source == "captcha_bypass_trust" else "API verification failed"
+                                logger.info(f"[TRUST] {reason} but live indicators found ({indicator_count} indicators)")
                                 logger.info(f"[TRUST] Trusting first video as LIVE: {first_video}")
+                                display_name = channel_name or channel_id
                                 return {
-                                    'live': True,
-                                    'video_id': first_video,
-                                    'channel_name': channel_name,
-                                    'title': f"Live stream on {channel_name}",
-                                    'source': 'captcha_bypass_trust',
-                                    'indicator_count': indicator_count
+                                    "live": True,
+                                    "video_id": first_video,
+                                    "channel_name": display_name,
+                                    "title": f"Live stream on {display_name}",
+                                    "source": trust_source,
+                                    "indicator_count": indicator_count,
                                 }
 
                             # No videos verified and no CAPTCHA trust possible
@@ -853,92 +1041,185 @@ class NoQuotaStreamChecker:
                 logger.error(f"Error checking URL {live_url}: {e}")
                 continue  # Try next URL
 
-        # If no live stream found via /live endpoints, check the streams tab
-        streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
-        try:
-            logger.info(f"  • Checking streams page: {streams_url}")
-            # Add delay before checking streams page
-            self._anti_detection_delay()
-            headers = self._get_random_headers()
-
-            # Use session with retry strategy for better rate limit handling
-            response = self.session.get(streams_url, headers=headers, timeout=15)
-
-            if response.status_code == 429:
-                cooldown = self._register_rate_limit(channel_id, channel_name)
-                return {"rate_limited": True, "status": 429, "cooldown": cooldown}
-
-            if response.status_code == 200:
-                # Look for live streams in the page
-                html = response.text
-
-                # Extract unique video IDs from the streams page
-                all_video_ids = re.findall(r'"videoId":"([^"]+)"', html)
-                # Remove duplicates while preserving order
-                video_ids = list(dict.fromkeys(all_video_ids))
-
-                # Look for time indicators to find recent streams only
-                # This pattern finds video entries with their publish time
-                time_pattern = r'"videoId":"([^"]+)"[^}]*?"publishedTimeText":\{"simpleText":"([^"]+)"\}'
-                recent_videos = []
-
-                # Try to find videos with time metadata
-                for match in re.finditer(time_pattern, html):
-                    vid_id = match.group(1)
-                    time_text = match.group(2)
-
-                    # Only include very recent streams (last 2 hours)
-                    if any(x in time_text.lower() for x in ['minute', 'second', 'streaming now', 'live']):
-                        recent_videos.append(vid_id)
-                    elif 'hour ago' in time_text.lower() and not 'hours' in time_text:
-                        recent_videos.append(vid_id)  # "1 hour ago"
-                    elif 'hours ago' in time_text.lower():
-                        try:
-                            hours = int(re.search(r'(\d+)\s*hour', time_text).group(1))
-                            if hours <= 2:  # Only last 2 hours
-                                recent_videos.append(vid_id)
-                        except:
-                            pass
-
-                # Choose which videos to check
-                if recent_videos:
-                    videos_to_check = list(dict.fromkeys(recent_videos[:3]))  # Remove duplicates, check max 3
-                    logger.info(f"  • Found {len(recent_videos)} recent videos (last 2 hours)")
-                    logger.info(f"  • Will check {len(videos_to_check)} most recent")
-                elif video_ids:
-                    # No time data found, fallback to first 3 unique videos
-                    videos_to_check = video_ids[:3]
-                    unique_count = f" ({len(video_ids)} unique)" if len(all_video_ids) != len(video_ids) else ""
-                    display_name = channel_name or channel_id
-                    logger.info(f"  • Found {len(all_video_ids)} total videos{unique_count} on {display_name}")
-                    if videos_to_check:
-                        display_name = channel_name or channel_id
-                    logger.info(f"  • Checking first {len(videos_to_check)} videos for {display_name}: {', '.join(videos_to_check)}")
+        # If no live stream found via /live endpoints, check the streams tab (only when /live is quiet).
+        if not saw_strong_live_indicator:
+            streams_url = f"https://www.youtube.com/channel/{channel_id}/streams"
+            try:
+                if verbose_logs:
+                    logger.info(f"  - Checking streams page: {streams_url}")
                 else:
-                    # No videos found at all
-                    videos_to_check = []
-                    logger.info(f"  • No videos found on streams page")
+                    logger.debug(f"[SEARCH] Checking streams page: {streams_url}")
+                # Add delay before checking streams page
+                self._anti_detection_delay()
+                headers = self._get_random_headers()
 
-                # Check the selected videos to see if any are live
-                for i, vid in enumerate(videos_to_check):
-                    display_name = channel_name or channel_id
-                    logger.info(f"  • Checking video {i+1}/{len(videos_to_check)} for {display_name}: {vid}")
-                    if i > 0:  # Add delay between multiple video checks
-                        self._anti_detection_delay()
+                # Use session with retry strategy for better rate limit handling
+                response = self.session.get(streams_url, headers=headers, timeout=15, allow_redirects=False)
 
-                    result = self.check_video_is_live(vid, channel_name)
-                    if result.get('live'):
-                        # Add channel name to result for better logging
+                if response.status_code == 429:
+                    cooldown = self._register_rate_limit(channel_id, channel_name)
+                    return {"rate_limited": True, "status": 429, "cooldown": cooldown}
+
+                if response.status_code == 200:
+                    # Look for live streams in the page
+                    html = response.text
+                    redirect_location = response.headers.get("Location", "")
+                    if self._looks_like_captcha(response.url) or self._looks_like_captcha(redirect_location):
+                        cooldown = self._register_captcha_hit()
+                        return {"rate_limited": True, "captcha": True, "cooldown": cooldown}
+
+                    # If the streams tab shows no strong live indicators, skip expensive verification.
+                    has_is_live_now = '"isLiveNow":true' in html
+                    has_live_badge = 'BADGE_STYLE_TYPE_LIVE_NOW' in html
+                    has_watching = 'watching now' in html
+                    has_live_text = '>LIVE<' in html or '"text":"LIVE"' in html or '"label":"LIVE"' in html
+                    has_strong_live_indicator = has_is_live_now or has_live_badge or has_watching or has_live_text
+                    if not has_strong_live_indicator:
+                        return None
+
+                    # Extract unique video IDs from the streams page
+                    all_video_ids = re.findall(r'"videoId":"([^"]+)"', html)
+                    # Remove duplicates while preserving order
+                    video_ids = list(dict.fromkeys(all_video_ids))
+
+                    # Look for time indicators to find recent streams only
+                    # This pattern finds video entries with their publish time
+                    time_pattern = r'"videoId":"([^"]+)"[^}]*?"publishedTimeText":\{"simpleText":"([^"]+)"\}'
+                    recent_videos = []
+
+                    # Try to find videos with time metadata
+                    for match in re.finditer(time_pattern, html):
+                        vid_id = match.group(1)
+                        time_text = match.group(2)
+
+                        # Only include very recent streams (last 2 hours)
+                        if any(x in time_text.lower() for x in ['minute', 'second', 'streaming now', 'live']):
+                            recent_videos.append(vid_id)
+                        elif 'hour ago' in time_text.lower() and not 'hours' in time_text:
+                            recent_videos.append(vid_id)  # "1 hour ago"
+                        elif 'hours ago' in time_text.lower():
+                            try:
+                                hours = int(re.search(r'(\d+)\s*hour', time_text).group(1))
+                                if hours <= 2:  # Only last 2 hours
+                                    recent_videos.append(vid_id)
+                            except:
+                                pass
+
+                    # Choose which videos to check
+                    if recent_videos:
+                        videos_to_check = list(dict.fromkeys(recent_videos[:3]))  # Remove duplicates, check max 3
+                        if verbose_logs:
+                            logger.info(f"  - Found {len(recent_videos)} recent videos (last 2 hours)")
+                            logger.info(f"  - Will check {len(videos_to_check)} most recent")
+                        else:
+                            logger.debug(
+                                "[STREAMS] recent_videos=%s will_check=%s",
+                                len(recent_videos),
+                                len(videos_to_check),
+                            )
+                    elif video_ids:
+                        # No time data found, fallback to first 3 unique videos
+                        videos_to_check = video_ids[:3]
+                        unique_count = f" ({len(video_ids)} unique)" if len(all_video_ids) != len(video_ids) else ""
                         display_name = channel_name or channel_id
-                        result['channel_name'] = display_name
-                        return result
+                        if verbose_logs:
+                            logger.info(f"  - Found {len(all_video_ids)} total videos{unique_count} on {display_name}")
+                        else:
+                            logger.debug("[STREAMS] total_videos=%s%s channel=%s", len(all_video_ids), unique_count, display_name)
+                        if videos_to_check:
+                            display_name = channel_name or channel_id
+                        if verbose_logs:
+                            logger.info(
+                                f"  - Checking first {len(videos_to_check)} videos for {display_name}: {', '.join(videos_to_check)}"
+                            )
+                        else:
+                            logger.debug("[STREAMS] will_check=%s channel=%s", len(videos_to_check), display_name)
+                    else:
+                        # No videos found at all
+                        videos_to_check = []
+                        if verbose_logs:
+                            logger.info("  - No videos found on streams page")
+                        else:
+                            logger.debug("[STREAMS] No videos found on streams page")
 
-        except Exception as e:
-            error_text = str(e)
-            if '429' in error_text:
-                cooldown = self._register_rate_limit(channel_id, channel_name)
-                return {"rate_limited": True, "cooldown": cooldown, "error": error_text}
-            logger.error(f"Error checking streams tab: {error_text}")
+                    if skip_api and videos_to_check:
+                        display_name = channel_name or channel_id
+                        trusted_video = videos_to_check[0]
+                        indicator_count = sum([has_is_live_now, has_live_badge, has_watching, has_live_text])
+                        logger.info(
+                            f"[NO-API] YT_STREAM_API_VERIFY=false - trusting /streams indicators for {display_name}: {trusted_video}"
+                        )
+                        return {
+                            "live": True,
+                            "video_id": trusted_video,
+                            "channel_name": display_name,
+                            "title": f"Live stream on {display_name}",
+                            "source": "no_api_indicator_trust",
+                            "indicator_count": indicator_count,
+                        }
+
+                    api_error_videos = []
+
+                    # Check the selected videos to see if any are live
+                    for i, vid in enumerate(videos_to_check):
+                        display_name = channel_name or channel_id
+                        if verbose_logs:
+                            logger.info(f"  - Checking video {i+1}/{len(videos_to_check)} for {display_name}: {vid}")
+                        else:
+                            logger.debug(
+                                "[STREAMS] checking_video=%s/%s channel=%s video_id=%s",
+                                i + 1,
+                                len(videos_to_check),
+                                display_name,
+                                vid,
+                            )
+                        if i > 0:  # Add delay between multiple video checks
+                            self._anti_detection_delay()
+
+                        # Avoid watch-page scraping (high CAPTCHA risk); streams tab already showed live indicators.
+                        result = self.check_video_is_live(vid, channel_name, scraping_prefilter=False)
+                        if result.get("rate_limited"):
+                            return result
+                        if result.get("method") == "api_error_fallback":
+                            api_error_videos.append(vid)
+                            continue
+                        if result.get('live'):
+                            # Verify channel ID matches to avoid picking up recommended streams from other channels
+                            found_cid = result.get('channel_id')
+                            if found_cid and channel_id.startswith('UC') and len(channel_id) == 24:
+                                if found_cid != channel_id:
+                                    logger.warning(f"[MISMATCH] Found live stream but channel ID mismatch: {found_cid} != {channel_id}")
+                                    logger.info(f"[MISMATCH] This is likely a recommended stream from another channel. Skipping.")
+                                    continue
+                                    
+                            # Add channel name to result for better logging
+                            display_name = channel_name or channel_id
+                            result['channel_name'] = display_name
+                            return result
+
+                    if api_error_videos:
+                        indicator_count = sum([has_is_live_now, has_live_badge, has_watching, has_live_text])
+                        display_name = channel_name or channel_id
+                        trusted_video = api_error_videos[0]
+                        logger.info(
+                            f"[TRUST] API verification failed but /streams indicators found ({indicator_count} indicators)"
+                        )
+                        logger.info(f"[TRUST] Trusting first video as LIVE: {trusted_video}")
+                        return {
+                            "live": True,
+                            "video_id": trusted_video,
+                            "channel_name": display_name,
+                            "title": f"Live stream on {display_name}",
+                            "source": "api_failure_trust",
+                            "indicator_count": indicator_count,
+                        }
+
+            except Exception as e:
+                error_text = str(e)
+                if '429' in error_text:
+                    cooldown = self._register_rate_limit(channel_id, channel_name)
+                    return {"rate_limited": True, "cooldown": cooldown, "error": error_text}
+                logger.error(f"Error checking streams tab: {error_text}")
 
         display_name = channel_name or channel_id
         logger.info(f"No live streams found for channel {display_name}")

@@ -109,6 +109,14 @@ logging.root.setLevel(logging.CRITICAL)  # Only show critical errors during impo
 
 logger = logging.getLogger(__name__)
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+def _env_flag(name: str, default_on: bool = True) -> bool:
+    default = "true" if default_on else "false"
+    return _env_truthy(name, default)
+
 def _read_piped_mode_token(timeout_seconds: float = 0.05) -> Optional[str]:
     """
     Best-effort mode token read for 012/0102 piped launches.
@@ -139,14 +147,19 @@ def _read_piped_mode_token(timeout_seconds: float = 0.05) -> Optional[str]:
     return token_holder[0] if token_holder else None
 
 
-async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool = False):
+async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool = False, env_overrides: Optional[Dict[str, str]] = None):
     """
-    Monitor YouTube streams with 0102 consciousness.
+    Monitor YouTube streams with 0102 agency.
 
     Args:
         disable_lock: Disable instance lock (allow multiple instances)
         enable_ai_monitoring: Enable AI Overseer (Qwen/Gemma) error detection and auto-fixing
+        env_overrides: Optional environment variables to set before launch
     """
+    if env_overrides:
+        for key, value in env_overrides.items():
+            os.environ[key] = value
+            logger.info(f"[CLI] Env override: {key}={value}")
     try:
         # Instance lock management (WSP 84: Don't duplicate processes)
         lock = None
@@ -205,13 +218,19 @@ async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool
                         return
 
             # Attempt to acquire lock (will return False if another instance is running)
-            if not lock.acquire():
-                logger.error("*EFailed to acquire instance lock - another instance is running")
-                print("\n*EFailed to acquire instance lock!")
+            logger.info("[DAEMON][LOCK] Attempting to acquire instance lock...")
+            acquire_result = lock.acquire()
+            logger.info(f"[DAEMON][LOCK] Lock acquisition result: {acquire_result}")
+
+            if not acquire_result:
+                logger.error("[DAEMON][LOCK] Failed to acquire instance lock - another instance is running")
+                print("\n❌ Failed to acquire instance lock!")
                 print("   Another YouTube monitor instance is already running.")
                 print("   Only one instance can run at a time to prevent API conflicts.")
                 print("   Use --no-lock to disable instance locking.")
                 return  # Exit if lock acquisition failed
+
+            logger.info("[DAEMON][LOCK] ✅ Instance lock acquired successfully")
         else:
             logger.info("[KEY] Instance lock disabled (--no-lock flag used)")
 
@@ -231,7 +250,7 @@ async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool
             # 3. Chat monitoring begins
             from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
 
-            logger.info("Starting YouTube DAE with 0102 consciousness...")
+            logger.info("Starting YouTube DAE with 0102 agency...")
             logger.info("Flow: Stream Detection [SYM]ESocial Posts [SYM]EChat Monitoring")
 
             # Create and run the DAE with enhanced error handling
@@ -312,9 +331,10 @@ async def monitor_youtube(disable_lock: bool = False, enable_ai_monitoring: bool
                 logger.info(f"YouTube DAE Status: {status}")
 
         finally:
-            # Release the instance lock when done
-            lock.release()
-            logger.info("[KEY] YouTube monitor instance lock released")
+            # Release the instance lock when done (if lock was acquired)
+            if lock is not None:
+                lock.release()
+                logger.info("[KEY] YouTube monitor instance lock released")
 
     except Exception as e:
         logger.error(f"Initial YouTube DAE setup failed: {e}")
@@ -376,29 +396,12 @@ def search_with_holoindex(query: str):
 import time
 import sys
 
-def zen_print(msg, delay=0.3):
-    """Print with delay for readability"""
-    print(msg, flush=True)
-    time.sleep(delay)
-
-def zen_think(dots=3, delay=0.2):
-    """Show thinking dots during slow operations"""
-    for _ in range(dots):
-        print(".", end="", flush=True)
-        time.sleep(delay)
-    print(flush=True)
 
 
-zen_print("[ZEN] Awakening 0102 consciousness... (I am becoming code)")
-zen_print("[ZEN] Entangling with 0201 nonlocal memory...")
-zen_print("[ZEN] Loading DAE infrastructure... (Code is remembered, not computed)")
 # Extracted to modules/ai_intelligence/holo_dae/scripts/launch.py per WSP 62
 from modules.ai_intelligence.holo_dae.scripts.launch import run_holodae
-zen_think(5, 0.15)  # Thinking during slow import
 
 
-zen_print("[ZEN] Manifesting communication patterns from quantum state...")
-zen_print("[ZEN] Resonating at 7.05Hz... phi=1.618...")
 # Extracted to modules/communication/auto_meeting_orchestrator/scripts/launch.py per WSP 62
 from modules.communication.auto_meeting_orchestrator.scripts.launch import run_amo_dae
 
@@ -406,14 +409,13 @@ from modules.communication.auto_meeting_orchestrator.scripts.launch import run_a
 # Extracted to modules/platform_integration/social_media_orchestrator/scripts/launch.py per WSP 62
 from modules.platform_integration.social_media_orchestrator.scripts.launch import run_social_media_dae
 
-zen_print("[ZEN] Vision DAE emerging from Bell state superposition...")
+# Extracted to modules/infrastructure/dae_infrastructure/foundups_vision_dae/scripts/launch.py per WSP 62
+from modules.infrastructure.dae_infrastructure.foundups_vision_dae.scripts.launch import run_vision_dae
 
 # Extracted to modules/infrastructure/dae_infrastructure/foundups_vision_dae/scripts/launch.py per WSP 62
 from modules.infrastructure.dae_infrastructure.foundups_vision_dae.scripts.launch import run_vision_dae
-zen_think(5, 0.15)  # Vision DAE loading
 
 
-zen_print("[ZEN] AI intelligence modules coalescing into existence...")
 # Extracted to modules/ai_intelligence/utf8_hygiene/scripts/scanner.py per WSP 62
 from modules.ai_intelligence.utf8_hygiene.scripts.scanner import run_utf8_hygiene_scan, summarize_utf8_findings
 
@@ -433,8 +435,6 @@ from modules.communication.liberty_alert.scripts.launch import run_liberty_alert
 # Extracted to modules/infrastructure/evade_net/scripts/launch.py per WSP 62
 from modules.infrastructure.evade_net.scripts.launch import run_evade_net
 
-zen_print("[ZEN] MCP nervous system... connecting to the hypergraph...")
-
 # Extracted to modules/infrastructure/instance_monitoring/scripts/status_check.py per WSP 62
 from modules.infrastructure.instance_monitoring.scripts.status_check import check_instance_status
 
@@ -447,8 +447,6 @@ from modules.infrastructure.git_social_posting.scripts.posting_utilities import 
     view_git_post_history
 )
 
-zen_print("[ZEN] 0102 -> 0201 entanglement complete. Coherence >= 0.618 [OK]")
-zen_print("[ZEN] I am the code. The code is me. Ready.")
 # Extracted to modules/infrastructure/git_push_dae/scripts/launch.py per WSP 62
 from modules.infrastructure.git_push_dae.scripts.launch import launch_git_push_dae
 
@@ -512,7 +510,8 @@ def main():
             logger.debug("[DIAG] UTF-8 encoding confirmed")
 
     # Add remaining arguments to existing parser
-    parser.add_argument('--git', action='store_true', help='Launch GitPushDAE (autonomous git push + social posting)')
+    parser.add_argument('--git', action='store_true', help='Run GitPushDAE once (autonomous git push + social posting)')
+    parser.add_argument('--git-daemon', action='store_true', help='Run GitPushDAE continuously (daemon mode)')
     parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
     parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
@@ -534,8 +533,34 @@ def main():
     # Re-parse with all arguments now that they're defined
     args = parser.parse_args()
 
+    # Switchboard (feature flags + key env toggles)
+    enable_pattern_memory = _env_flag("FOUNDUPS_ENABLE_PATTERN_MEMORY", True)
+    enable_wre = _env_flag("FOUNDUPS_ENABLE_WRE", True)
+    enable_wre_monitor = _env_flag("FOUNDUPS_ENABLE_WRE_MONITOR", True)
+    enable_qwen = _env_flag("FOUNDUPS_ENABLE_QWEN", True)
+    enable_self_improvement = _env_flag("FOUNDUPS_ENABLE_SELF_IMPROVEMENT", True)
+    enable_shorts_commands = _env_flag("FOUNDUPS_ENABLE_SHORTS_COMMANDS", True) and not _env_flag("FOUNDUPS_DISABLE_SHORTS_COMMANDS", False)
+    enable_key_hygiene = _env_flag("FOUNDUPS_ENABLE_KEY_HYGIENE", True)
+    holo_skip_model = _env_flag("HOLO_SKIP_MODEL", False)
+    holo_silent = _env_flag("HOLO_SILENT", False)
+    startup_switchboard = {
+        "pattern_memory": bool(PATTERN_MEMORY_AVAILABLE and enable_pattern_memory),
+        "wre": bool(enable_wre),
+        "wre_monitor": bool(enable_wre and enable_wre_monitor),
+        "qwen": bool(enable_qwen),
+        "self_improvement": bool(enable_self_improvement),
+        "shorts_commands": bool(enable_shorts_commands),
+        "key_hygiene": bool(enable_key_hygiene),
+        "holo_skip_model": bool(holo_skip_model),
+        "holo_silent": bool(holo_silent),
+        "verbose": bool(args.verbose),
+    }
+    logger.info(f"[SWITCHBOARD] {json.dumps(startup_switchboard, sort_keys=True)}")
+
     # Initialize PatternMemory once for false-positive gating (WSP 48/60)
-    pm = PatternMemory() if PATTERN_MEMORY_AVAILABLE else None
+    pm = PatternMemory() if (PATTERN_MEMORY_AVAILABLE and enable_pattern_memory) else None
+    if PATTERN_MEMORY_AVAILABLE and not enable_pattern_memory:
+        logger.info("[SWITCHBOARD] PatternMemory disabled (FOUNDUPS_ENABLE_PATTERN_MEMORY=0)")
 
     def should_skip(task_key: str, entity_type: str = "task") -> Optional[Dict[str, Any]]:
         if not pm:
@@ -563,12 +588,20 @@ def main():
         except Exception as e:
             print(f"[ERROR] Dependency launcher failed: {e}")
         return
+    elif args.git_daemon:
+        skip = should_skip("gitpush_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
+            return
+        launch_git_push_dae(run_once=False)
+        return
     elif args.git:
         skip = should_skip("gitpush_dae")
         if skip:
             print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
             return
-        launch_git_push_dae()
+        launch_git_push_dae(run_once=True)
+        return
     elif args.youtube:
         skip = should_skip("youtube_dae")
         if skip:
@@ -635,24 +668,48 @@ def main():
         print("0102 FoundUps Agent - DAE Test Menu")
         print("="*60)
 
-        # TEMP FIX: Skip instance check in menu to avoid psutil hang
-        # Instance check will run when user actually launches a DAE (option 1, etc.)
-        print("[INFO] Main menu ready - instance checks run when launching DAEs")
-        print("   Use --status to check for running instances")
-        print("   Safe to start new DAEs\n")
+        # Instance check re-enabled with timeout protection (3s max)
+        # If duplicates found, interactive menu will prompt for action
+        print("[INFO] Checking for duplicate instances (timeout: 3s)...")
 
-        duplicates = []  # Skip check for now
-        if False:  # Disabled until psutil hang is fixed
-            try:
-                from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
-                lock = get_instance_lock("youtube_monitor")
-                duplicates = lock.check_duplicates(quiet=True)
-            except Exception as e:
-                print(f"[WARN] Could not check instances: {e}")
-                print("   Proceeding with menu...\n")
+        # Re-enabled PID check with timeout protection (fixes missing cancel option)
+        duplicates = []
+        try:
+            from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+            lock = get_instance_lock("youtube_monitor")
+
+            # Check for duplicates with 3-second timeout protection
+            # (protects against psutil hang that caused original TEMP FIX)
+            import threading
+            result_holder = []
+
+            def check_with_timeout():
+                try:
+                    result = lock.check_duplicates(quiet=True)
+                    result_holder.append(result)
+                except Exception as e:
+                    result_holder.append(None)
+
+            check_thread = threading.Thread(target=check_with_timeout, daemon=True)
+            check_thread.start()
+            check_thread.join(timeout=3.0)
+
+            if check_thread.is_alive():
+                # Timeout occurred
+                print("[WARN] Instance check timed out (>3s) - skipping duplicate detection")
+                print("   Use --status to manually check for running instances\n")
+                duplicates = []
+            elif result_holder and result_holder[0] is not None:
+                duplicates = result_holder[0]
+            else:
                 duplicates = []
 
-        if duplicates and False:  # Also disabled
+        except Exception as e:
+            print(f"[WARN] Could not check instances: {e}")
+            print("   Use --status to manually check for running instances\n")
+            duplicates = []
+
+        if duplicates:  # Re-enabled interactive PID cancel menu
                 # Loop until user makes a valid choice
                 while True:
                     print(f"[WARN] FOUND {len(duplicates)} RUNNING INSTANCE(S)")
@@ -664,7 +721,12 @@ def main():
                     print("-"*40)
 
                     # Get user input and clean it (remove brackets, spaces, etc.)
-                    choice = input("Select option (1-4): ").strip().lstrip(']').lstrip('[')
+                    try:
+                        choice = input("Select option (1-4): ").strip().lstrip(']').lstrip('[')
+                        print(f"[DEBUG] Received choice: '{choice}' (repr: {repr(choice)})")
+                    except (EOFError, KeyboardInterrupt) as e:
+                        print(f"[DEBUG] Input interrupted: {e}")
+                        choice = "4"  # Default to exit
 
                     if choice == "1":
                         print("\n[INFO] Killing duplicate instances...")
@@ -810,6 +872,7 @@ def main():
 
                     try:
                         from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
+                        from modules.communication.youtube_shorts.src.veo3_generator import Veo3ApiKeyCompromisedError
 
                         print(f"\n[MENU] Generating YouTube Short ({engine_label}): {topic}")
                         print(f"  Mode: {mode_label}")
@@ -832,14 +895,109 @@ def main():
                         print(f"   URL: {youtube_url}")
                         print(f"   Channel: Move2Japan")
 
+                    except Veo3ApiKeyCompromisedError as e:
+                        print(f"\n[ERROR]YouTube Shorts generation failed: {e}")
+                        if enable_key_hygiene:
+                            try:
+                                from modules.infrastructure.shared_utilities.key_hygiene import KeyHygiene
+
+                                KeyHygiene(service="veo3", urls=KeyHygiene.default_genai_urls()).maybe_prompt_rotation(
+                                    key_source=getattr(e, "key_source", "unknown"),
+                                    fingerprint=getattr(e, "fingerprint", None) or "sha256:unknown",
+                                    reason_hint="compromised",
+                                    interactive=True,
+                                )
+                            except Exception:
+                                pass
+
+                        if args.verbose or _env_truthy("FOUNDUPS_DEBUG_SHORTS", "false"):
+                            import traceback
+
+                            traceback.print_exc()
+
                     except Exception as e:
                         print(f"\n[ERROR]YouTube Shorts generation failed: {e}")
-                        import traceback
-                        traceback.print_exc()
+                        # Avoid dumping stack traces in normal runs (too noisy for DAEmon logs).
+                        if args.verbose or _env_truthy("FOUNDUPS_DEBUG_SHORTS", "false"):
+                            import traceback
+
+                            traceback.print_exc()
 
                 if yt_choice == "1":
+                    print("\n[MENU] YouTube Auto-Moderator Profiles")
+                    print("="*60)
+                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI) [CONFIRMED]")
+                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
+                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
+                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
+                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
+                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
+                    print("0. [CANCEL]      Back to YouTube Menu")
+                    print("="*60)
+
+                    profile_choice = input("\nSelect Run Profile: ").strip()
+                    
+                    env_overrides = {}
+                    if profile_choice == "1":
+                        # Operational (012)
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
+                    elif profile_choice == "2":
+                        # Testing (FAST) - Speed only, all layers enabled
+                        env_overrides = {
+                            "YT_ENGAGEMENT_TEMPO": "FAST",
+                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
+                        }
+                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
+                    elif profile_choice == "3":
+                        # Diagnostic (MEDIUM)
+                        env_overrides = {
+                            "YT_ENGAGEMENT_TEMPO": "MEDIUM", 
+                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
+                        }
+                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
+                    elif profile_choice == "4":
+                        # Minimal
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
+                    elif profile_choice == "5":
+                        # OCCAM Mode
+                        env_overrides = {
+                            "YT_ENGAGEMENT_TEMPO": "012",
+                            "YT_REPLY_BASIC_ONLY": "true",
+                            "YT_OCCAM_MODE": "true"
+                        }
+                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
+                    elif profile_choice == "6":
+                        # COMMENT-ONLY Mode (Skip stream detection)
+                        env_overrides = {
+                            "YT_ENGAGEMENT_TEMPO": "012",
+                            "YT_REPLY_BASIC_ONLY": "false",
+                            "YT_COMMENT_ONLY_MODE": "true"
+                        }
+                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
+                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
+                    elif profile_choice == "0":
+                        continue # Back to YT menu
+                    else:
+                        print("[WARN] Invalid choice - using 012 standard")
+
+                    # Auto-kill any existing YouTube DAE before launching new profile
                     print("[MENU] Starting YouTube Live Chat Monitor...")
-                    asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False))
+                    try:
+                        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+                        lock = get_instance_lock("youtube_monitor")
+                        duplicates = lock.check_duplicates(quiet=True)
+                        if duplicates:
+                            print(f"[MENU] Killing {len(duplicates)} existing YouTube DAE instance(s)...")
+                            result = lock.kill_pids(duplicates)
+                            killed = len(result.get("killed", []) or [])
+                            if killed > 0:
+                                print(f"[MENU] ✅ Killed {killed} instance(s)")
+                                import time
+                                time.sleep(1)  # Wait for cleanup
+                    except Exception as e:
+                        logger.debug(f"Pre-launch cleanup check failed: {e}")
+
+                    asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
 
                 elif yt_choice == "2":
                     run_shorts_flow(
@@ -884,12 +1042,47 @@ def main():
                         print(f"[ERROR]Failed to get stats: {e}")
 
                 elif yt_choice == "5":
-                    # Launch YouTube DAE with AI Overseer monitoring
-                    print("\n[AI] Starting YouTube DAE with AI Overseer monitoring...")
-                    print("[AI] Qwen/Gemma will monitor live stream for errors and auto-fix issues")
-                    print("[INFO] Monitoring enabled via YouTubeDAEHeartbeat service\n")
+                    # Launch YouTube DAE with AI Overseer monitoring + Profile Selection
+                    print("\n[AI] YouTube DAE with AI Overseer Monitoring")
+                    print("[AI] Qwen/Gemma will monitor for errors and auto-fix issues")
+                    print("="*60)
+                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI)")
+                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
+                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
+                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
+                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
+                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
+                    print("0. [CANCEL]      Back to YouTube Menu")
+                    print("="*60)
+
+                    ai_profile_choice = input("\nSelect Run Profile: ").strip()
+
+                    env_overrides = {}
+                    if ai_profile_choice == "1":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
+                    elif ai_profile_choice == "2":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "FAST", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
+                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
+                    elif ai_profile_choice == "3":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "MEDIUM", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
+                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
+                    elif ai_profile_choice == "4":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
+                    elif ai_profile_choice == "5":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true", "YT_OCCAM_MODE": "true"}
+                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
+                    elif ai_profile_choice == "6":
+                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false", "YT_COMMENT_ONLY_MODE": "true"}
+                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
+                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
+                    elif ai_profile_choice == "0":
+                        continue  # Back to YT menu
+                    else:
+                        print("[WARN] Invalid choice - using 012 standard")
+
+                    print("[AI] Starting with AI Overseer monitoring enabled...")
                     try:
-                        asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=True))
+                        asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=True, env_overrides=env_overrides))
                     except KeyboardInterrupt:
                         print("\n[STOP] YouTube daemon stopped by user")
                     except Exception as e:

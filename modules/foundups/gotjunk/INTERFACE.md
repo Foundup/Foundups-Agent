@@ -285,7 +285,7 @@ export default defineConfig({
 GEMINI_API_KEY_GotJunk=your_key_here  # In .env.local (gitignored)
 
 # ❌ WRONG: Hardcoded
-const apiKey = "AIza..."  # NEVER commit this!
+const apiKey = "<DO_NOT_HARDCODE_API_KEYS>"  # NEVER commit this!
 ```
 
 ### HTTPS Required
