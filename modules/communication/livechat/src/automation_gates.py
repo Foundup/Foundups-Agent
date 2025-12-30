@@ -52,6 +52,16 @@ def gate_snapshot() -> Dict[str, object]:
         "party_reactions": _env_truthy("YT_PARTY_REACTIONS_ENABLED", "true"),
         "announcements": _env_truthy("YT_LIVECHAT_ANNOUNCEMENTS_ENABLED", "true"),
         "stream_scraping": _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"),
+        "stream_resolver": _env_truthy("YT_STREAM_RESOLVER_ENABLED", "true"),
+        "comment_only": _env_truthy("YT_COMMENT_ONLY_MODE", "false"),
+        "comment_reactions": _env_truthy("YT_COMMENT_REACTIONS_ENABLED", "true"),
+        "engagement_tempo": os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper(),
+        "comment_like": _env_truthy("YT_COMMENT_LIKE_ENABLED", "true"),
+        "comment_heart": _env_truthy("YT_COMMENT_HEART_ENABLED", "true"),
+        "comment_reply": _env_truthy("YT_COMMENT_REPLY_ENABLED", "true"),
+        "reply_basic_only": _env_truthy("YT_REPLY_BASIC_ONLY", "false"),
+        "reply_no_classification": _env_truthy("YT_NO_CLASSIFICATION", "false"),
+        "reply_no_semantic_state": _env_truthy("YT_NO_SEMANTIC_STATE", "false"),
         "stream_vision_disabled": os.getenv("STREAM_VISION_DISABLED", "true"),
     }
 

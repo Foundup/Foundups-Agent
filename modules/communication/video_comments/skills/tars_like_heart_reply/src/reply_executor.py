@@ -34,16 +34,19 @@ class BrowserReplyExecutor:
     - Anti-detection: Human-like typing with typos
     """
     
-    def __init__(self, driver, human, selectors):
+    def __init__(self, driver, human, selectors, delay_multiplier=1.0):
         """
         Args:
             driver: Selenium WebDriver instance
             human: HumanBehavior instance (or None)
             selectors: Dict of DOM selectors
+            delay_multiplier: Tempo multiplier (0.1=FAST, 0.25=MEDIUM, 1.0=012)
         """
         self.driver = driver
         self.human = human
         self.selectors = selectors
+        self.delay_multiplier = delay_multiplier
+        logger.info(f"[DAEMON][REPLY-EXECUTOR] Initialized with tempo multiplier: {delay_multiplier}x")
 
     async def process_nested_replies(
         self,
@@ -195,7 +198,8 @@ class BrowserReplyExecutor:
                     reply_result['like'] = bool(like_success)
                     if like_success:
                         logger.info(f"[NESTED] ✅ Liked reply from {author}")
-                        await asyncio.sleep(self.human.human_delay(0.8, 0.3) if self.human else 0.8)
+                        delay = (self.human.human_delay(0.8, 0.3) if self.human else 0.8) * self.delay_multiplier
+                        await asyncio.sleep(delay)
 
                 # Heart nested reply (same relative selector pattern)
                 if do_heart and reply_data['has_heart_btn']:
@@ -225,7 +229,8 @@ class BrowserReplyExecutor:
                     reply_result['heart'] = bool(heart_success)
                     if heart_success:
                         logger.info(f"[NESTED] ❤️ Hearted reply from {author}")
-                        await asyncio.sleep(self.human.human_delay(0.8, 0.3) if self.human else 0.8)
+                        delay = (self.human.human_delay(0.8, 0.3) if self.human else 0.8) * self.delay_multiplier
+                        await asyncio.sleep(delay)
 
                 # Reply to nested reply (if intelligent replies enabled)
                 if use_intelligent_reply and reply_data['has_reply_btn']:
@@ -292,7 +297,8 @@ class BrowserReplyExecutor:
             if not opened:
                 return False
 
-            await asyncio.sleep(self.human.human_delay(1.5, 0.6) if self.human else 1.5)
+            delay = (self.human.human_delay(1.5, 0.6) if self.human else 1.5) * self.delay_multiplier
+            await asyncio.sleep(delay)
 
             # Type reply (same as parent comment logic)
             typed = self.driver.execute_script("""
@@ -303,7 +309,7 @@ class BrowserReplyExecutor:
                 const thread = threads[threadIdx];
                 if (!thread) return false;
 
-                // Find the reply's textarea (it appears after clicking Reply button)
+                # Find the reply's textarea (it appears after clicking Reply button)
                 const textarea = thread.querySelector('textarea[id*="textarea"]');
                 if (!textarea) return false;
 
@@ -315,7 +321,8 @@ class BrowserReplyExecutor:
             if not typed:
                 return False
 
-            await asyncio.sleep(self.human.human_delay(1.0, 0.4) if self.human else 1.0)
+            delay = (self.human.human_delay(1.0, 0.4) if self.human else 1.0) * self.delay_multiplier
+            await asyncio.sleep(delay)
 
             # Submit reply
             submitted = self.driver.execute_script("""
@@ -339,33 +346,97 @@ class BrowserReplyExecutor:
 
     async def execute_reply(self, comment_idx: int, reply_text: str) -> bool:
         """Execute reply flow: Open box -> Type -> Submit."""
-        thread_selector = self.SELECTORS["comment_thread"]
+        thread_selector = self.selectors["comment_thread"]
 
         # Open reply box
+        # Open reply box using Robust Shadow DOM piercing
         reply_open = self.driver.execute_script(
             """
             const threadSelector = arguments[0];
             const threadIndex = arguments[1];
+            
+            // Recursive Hidden Element Finder
+            function findInShadow(root, selector, textFilter = null) {
+                if (!root) return null;
+                
+                // Direct check (selector match)
+                if (selector) {
+                    const el = root.querySelector(selector);
+                    if (el) return el;
+                }
+                
+                // Text content check (if textFilter provided)
+                if (textFilter && !selector) {
+                    // Check buttons in this root
+                    const buttons = root.querySelectorAll('button');
+                    for (const btn of buttons) {
+                        if ((btn.textContent || '').trim().toUpperCase() === textFilter.toUpperCase()) {
+                            return btn;
+                        }
+                    }
+                }
+                
+                // Recursion into children with shadowRoots
+                const children = root.querySelectorAll('*');
+                for (let child of children) {
+                    if (child.shadowRoot) {
+                        const found = findInShadow(child.shadowRoot, selector, textFilter);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+
             const threads = document.querySelectorAll(threadSelector);
             const thread = threads[threadIndex];
             if (!thread) return {success: false, error: 'Thread not found'};
+            
+            const startNode = thread.shadowRoot || thread;
 
-            let replyBtn = thread.querySelector('#reply-button-end button');
-            if (!replyBtn) replyBtn = thread.querySelector('ytcp-button#reply-button button');
-            if (!replyBtn) replyBtn = thread.querySelector('button[aria-label=\"Reply\"]');
+            // 0. TEST MODULE ALIGNMENT: Prioritize simple ID found in known-good test
+            // The test uses #reply-button directly. It might be the custom element itself.
+            let replyBtn = findInShadow(startNode, '#reply-button');
+            
+            // 1. Try complex selector-based finds if simple ID fails
+            if (!replyBtn) replyBtn = findInShadow(startNode, 'ytcp-comment-button#reply-button button');
+            if (!replyBtn) replyBtn = findInShadow(startNode, '#reply-button-end button');
+            if (!replyBtn) replyBtn = findInShadow(startNode, 'ytcp-button#reply-button button');
+            
+            // Wrapper/Shadow Fallback
             if (!replyBtn) {
-              const buttons = thread.querySelectorAll('button');
-              for (const btn of buttons) {
-                if ((btn.textContent || '').trim() === 'Reply') {
-                  replyBtn = btn;
-                  break;
-                }
-              }
+                 const wrapper = findInShadow(startNode, 'ytcp-comment-button#reply-button');
+                 if (wrapper) {
+                     // Try clicking the wrapper itself if it has the ID
+                     replyBtn = wrapper; 
+                 }
             }
 
-            if (!replyBtn) return {success: false, error: 'Reply button not found'};
-            try { replyBtn.scrollIntoView({behavior: 'smooth', block: 'center'}); } catch (e) {}
-            replyBtn.click();
+            // 2. Try text-based find (ultimate fallback)
+            if (!replyBtn) {
+                replyBtn = findInShadow(startNode, null, 'REPLY');
+            }
+
+            if (!replyBtn) return {success: false, error: 'Reply button not found (Deep Shadow Search)'};
+            
+            try { 
+                replyBtn.scrollIntoView({behavior: 'smooth', block: 'center'});
+                
+                // FORCE CLICK: Dispatch events manually to bypass custom element quirks
+                const validEvents = ['mousedown', 'mouseup', 'click'];
+                validEvents.forEach(type => {
+                    const event = new MouseEvent(type, {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    replyBtn.dispatchEvent(event);
+                });
+                
+                // Standard click as backup
+                replyBtn.click();
+            } catch (e) {
+                return {success: false, error: 'Click failed: ' + e.toString()};
+            }
             return {success: true};
             """,
             thread_selector,
@@ -377,245 +448,169 @@ class BrowserReplyExecutor:
                 logger.warning(f"[REPLY] DOM open failed: {reply_open.get('error')}")
             return False
 
-        # Human-like delay after opening reply box (randomized 0.6s-2.4s)
+        # Human-like delay after opening reply box (randomized 0.6s-2.4s, respects FAST mode)
         if self.human:
-            await asyncio.sleep(self.human.human_delay(1.5, 0.6))
+            await asyncio.sleep(self.human.human_delay(1.5, 0.6) * self.delay_multiplier)
         else:
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(1.5 * self.delay_multiplier)
+        logger.info(f"[DAEMON][REPLY-EXEC] Reply box opened, waited {1.5 * self.delay_multiplier:.2f}s")
 
-        # Type into reply editor (textarea or contenteditable)
-        # Anti-Detection (WSP 49): Human typing with character-by-character simulation
-        # PRIMARY: Selenium human_type() (0.08s-0.28s per char, 5% typo rate)
-        # FALLBACK: execute_script() instant insertion (Shadow DOM compatibility)
-        typed_via_selenium = False
+        logger.info("[HARD-THINK] Reply box OPENED. Looking for textarea via Shadow DOM...")
 
-        if self.human and HUMAN_BEHAVIOR_AVAILABLE:
-            try:
-                from selenium.webdriver.common.by import By
-
-                # Find thread via Selenium
-                threads = self.driver.find_elements(By.CSS_SELECTOR, thread_selector)
-                if comment_idx > len(threads):
-                    raise ValueError(f"Thread {comment_idx} not found")
-
-                thread = threads[comment_idx - 1]
-
-                # Try multiple selectors to find the editor
-                editor_selectors = [
-                    "ytcp-comment-creator [contenteditable='true']",
-                    "[contenteditable='true']",
-                    "textarea#textarea",
-                    "textarea",
-                    "input[type='text']",
-                ]
-
-                editor = None
-                for selector in editor_selectors:
-                    try:
-                        editor = thread.find_element(By.CSS_SELECTOR, selector)
-                        break
-                    except:
-                        continue
-
-                if not editor:
-                    # Try global search as fallback
-                    for selector in editor_selectors:
-                        try:
-                            editor = self.driver.find_element(By.CSS_SELECTOR, selector)
-                            break
-                        except:
-                            continue
-
-                if editor:
-                    # Human-like typing: character-by-character with typos (0102 like)
-                    self.human.scroll_to_element(editor)
-                    await asyncio.sleep(self.human.human_delay(0.2, 0.5))
-                    editor.click()
-                    await asyncio.sleep(self.human.human_delay(0.3, 0.5))
-
-                    # Type text with human behavior (0.08s-0.28s per char, 5% typo rate)
-                    self.human.human_type(editor, reply_text)
-
-                    logger.info(f"[REPLY] Text typed via human_type() - ANTI-DETECTION ✓ (0102 like)")
-                    typed_via_selenium = True
-                else:
-                    logger.warning(f"[REPLY] Selenium editor not found, falling back...")
-
-            except Exception as selenium_error:
-                logger.warning(f"[REPLY] Selenium typing failed: {selenium_error}, falling back...")
-
-        # Fallback: JavaScript-based character-by-character typing (Shadow DOM compatible)
-        # This is the "0102 like" approach - types each character with human delays
-        if not typed_via_selenium:
-            # Step 1: Find and prepare the editor
-            prep_result = self.driver.execute_script(
+        # Robust Textarea Finder & Typer
+        # 1. LOOP: Find the element (Shadow DOM robust) - Retry for up to 5s
+        # 2. Focus & Clear
+        # 3. Type (Human or Direct)
+        
+        textarea = None
+        max_retries = 10 
+        retry_interval = 0.5
+        
+        for attempt in range(1, max_retries + 1):
+            textarea = self.driver.execute_script(
                 """
                 const threadSelector = arguments[0];
                 const threadIndex = arguments[1];
                 const threads = document.querySelectorAll(threadSelector);
                 const thread = threads[threadIndex];
-                if (!thread) return {success: false, error: 'Thread not found'};
-
-                const selectors = [
-                  "ytcp-comment-creator [contenteditable='true']",
-                  "[contenteditable='true']",
-                  "textarea#textarea",
-                  "textarea",
-                  "input[type='text']",
-                ];
-
-                function findEditor() {
-                  for (const sel of selectors) {
-                    const local = thread.querySelector(sel);
-                    if (local) return local;
-                    const global = document.querySelector(sel);
-                    if (global) return global;
-                  }
-                  return null;
+                if (!thread) return null;
+                
+                const startNode = thread.shadowRoot || thread;
+                
+                // Helper to find in shadow
+                function findInShadow(root, selector) {
+                    if (!root) return null;
+                    const el = root.querySelector(selector);
+                    if (el) return el;
+                    const children = root.querySelectorAll('*');
+                    for (let child of children) {
+                        if (child.shadowRoot) {
+                            const found = findInShadow(child.shadowRoot, selector);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
                 }
 
-                const editor = findEditor();
-                if (!editor) return {success: false, error: 'Reply editor not found'};
+                // Try multiple selectors for textarea
+                let textarea = findInShadow(startNode, '#contenteditable-textarea');
+                if (!textarea) textarea = findInShadow(startNode, 'div#contenteditable-textarea');
+                if (!textarea) textarea = findInShadow(startNode, 'ytcp-mention-input'); 
+                if (!textarea) textarea = findInShadow(startNode, 'textarea');
 
-                // Prepare editor
-                try { editor.scrollIntoView({behavior: 'smooth', block: 'center'}); } catch (e) {}
-                try { editor.click(); } catch (e) {}
-                try { editor.focus(); } catch (e) {}
-
-                // Store editor reference globally for character-by-character typing
-                window.__ytReplyEditor = editor;
-                window.__ytReplyIsTextarea = (editor.tagName || '').toUpperCase() === 'TEXTAREA' ||
-                                              (editor.tagName || '').toUpperCase() === 'INPUT';
-
-                return {success: true, tag: editor.tagName, isTextarea: window.__ytReplyIsTextarea};
+                return textarea;
                 """,
                 thread_selector,
-                comment_idx - 1,
+                comment_idx - 1
             )
+            
+            if textarea:
+                break
+            
+            if attempt < max_retries:
+                logger.info(f"[HARD-THINK] Waiting for textarea to render... (Attempt {attempt}/{max_retries})")
+                await asyncio.sleep(retry_interval)
+        
+        if textarea:
+            logger.info(f"[HARD-THINK] Textarea FOUND. Typing reply ({len(reply_text)} chars)...")
 
-            if not prep_result or not prep_result.get("success"):
-                logger.warning(f"[REPLY] Editor preparation failed: {prep_result.get('error') if prep_result else 'Unknown'}")
-                return False
+            # ANTI-DETECTION: "Reading/thinking" pause before typing (2025-12-30)
+            # Simulates human reading the comment and formulating response
+            if self.delay_multiplier >= 1.0:  # Only for standard tempo
+                if self.human:
+                    # 1-3 second "thinking" pause (shortened per user feedback)
+                    think_time = self.human.human_delay(2.0, 0.5)
+                else:
+                    think_time = random.uniform(1.0, 3.0)
+                logger.info(f"[ANTI-DETECTION] 🤔 Thinking before typing: {think_time:.1f}s")
+                await asyncio.sleep(think_time)
 
-            logger.info(f"[REPLY] Editor found (tag={prep_result.get('tag')}), starting character-by-character typing (0102 like)...")
+            # Click to focus (JS click to be safe)
+            self.driver.execute_script("arguments[0].click();", textarea)
 
-            # Step 2: Type character-by-character with human-like delays
-            import random
+            # Clear existing
+            self.driver.execute_script("arguments[0].textContent = '';", textarea)
 
-            chars_typed = 0
-            i = 0
-            while i < len(reply_text):
-                char = reply_text[i]
+            # For contenteditable divs (YouTube reply boxes), send_keys() is unreliable
+            # Type character-by-character with JS injection (visual human-like typing)
+            logger.info(f"[DAEMON][REPLY-EXEC] ⌨️ Typing reply character-by-character...")
 
-                # 5% chance of typo (like human_type())
-                if random.random() < 0.05 and i > 0:
-                    # Type wrong character
-                    wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz ')
+            # Calculate delay per character (SLOWED DOWN 2025-12-30)
+            # Increased from 0.08 to 0.12 base + more variability
+            if self.human and HUMAN_BEHAVIOR_AVAILABLE:
+                base_char_delay = 0.12  # Slower typing (was 0.08)
+                char_delay = base_char_delay * self.delay_multiplier
+            else:
+                char_delay = 0.08  # Fallback (was 0.05)
+
+            # Type character-by-character with delays (visible human-like typing)
+            try:
+                for i, char in enumerate(reply_text):
+                    # Append one character at a time
                     self.driver.execute_script(
                         """
-                        const editor = window.__ytReplyEditor;
-                        const isTextarea = window.__ytReplyIsTextarea;
-                        const char = arguments[0];
-
-                        if (isTextarea) {
-                          editor.value += char;
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        } else {
-                          const textNode = document.createTextNode(char);
-                          editor.appendChild(textNode);
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        }
+                        const el = arguments[0];
+                        const char = arguments[1];
+                        el.textContent += char;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
                         """,
-                        wrong_char
-                    )
-
-                    # Pause (realize mistake)
-                    if self.human:
-                        await asyncio.sleep(self.human.human_delay(0.15, 0.5))
-                    else:
-                        await asyncio.sleep(random.uniform(0.1, 0.3))
-
-                    # Backspace
-                    self.driver.execute_script(
-                        """
-                        const editor = window.__ytReplyEditor;
-                        const isTextarea = window.__ytReplyIsTextarea;
-
-                        if (isTextarea) {
-                          editor.value = editor.value.slice(0, -1);
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        } else {
-                          if (editor.lastChild) editor.removeChild(editor.lastChild);
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        }
-                        """
-                    )
-
-                    # Small delay after correction
-                    if self.human:
-                        await asyncio.sleep(self.human.human_delay(0.1, 0.5))
-                    else:
-                        await asyncio.sleep(random.uniform(0.05, 0.15))
-
-                # Type the correct character
-                try:
-                    self.driver.execute_script(
-                        """
-                        const editor = window.__ytReplyEditor;
-                        const isTextarea = window.__ytReplyIsTextarea;
-                        const char = arguments[0];
-
-                        // Defensive check: editor might be cleared by YouTube SPA re-render
-                        if (!editor) {
-                            throw new Error('Editor reference lost - YouTube DOM may have re-rendered');
-                        }
-
-                        if (isTextarea) {
-                          editor.value += char;
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        } else {
-                          const textNode = document.createTextNode(char);
-                          editor.appendChild(textNode);
-                          editor.dispatchEvent(new Event('input', {bubbles: true}));
-                        }
-                        """,
+                        textarea,
                         char
                     )
-                except Exception as e:
-                    logger.warning(f"[REPLY] Character typing failed at position {chars_typed}: {e}")
-                    logger.warning("[REPLY] YouTube DOM may have changed - aborting reply")
-                    return False
 
-                chars_typed += 1
+                    # Variable delay based on character type (spaces/punctuation slower)
+                    if char == ' ':
+                        await asyncio.sleep(char_delay * 1.5)
+                    elif char in '.,!?':
+                        await asyncio.sleep(char_delay * 2.5)  # Increased from 2.0
+                    else:
+                        # Add random variability to each character (0.7x to 1.5x base delay)
+                        await asyncio.sleep(char_delay * random.uniform(0.7, 1.5))
 
-                # Human-like delay between characters (0.08s-0.28s base, with variance)
-                if self.human:
-                    char_delay = self.human.human_delay(0.08, 0.7)  # 70% variance: 0.024s-0.136s
-                else:
-                    char_delay = random.uniform(0.05, 0.20)
+                    # ANTI-DETECTION: Occasional mid-typing pause (2025-12-30)
+                    # 3% chance of "hesitation" pause during typing (simulates thinking)
+                    if random.random() < 0.03 and self.delay_multiplier >= 1.0:
+                        hesitate = random.uniform(0.5, 2.0)
+                        logger.debug(f"[ANTI-DETECTION] Typing hesitation: {hesitate:.1f}s")
+                        await asyncio.sleep(hesitate)
 
-                # Longer pause after punctuation (like humans)
-                if char in '.!?,;:\n':
-                    char_delay *= random.uniform(1.5, 2.5)
+                # Trigger final validation events after typing complete
+                self.driver.execute_script(
+                    """
+                    const el = arguments[0];
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    el.dispatchEvent(new KeyboardEvent('keyup', {'key': 'a'}));
+                    """,
+                    textarea
+                )
+                logger.info(f"[DAEMON][REPLY-EXEC] ✅ Character-by-character typing complete")
 
-                await asyncio.sleep(char_delay)
-                i += 1
+            except Exception as e:
+                logger.error(f"[DAEMON][REPLY-EXEC] ❌ JS injection failed: {e}")
+                import traceback
+                traceback.print_exc()
+                return False
 
-            # Cleanup global reference
-            self.driver.execute_script(
-                """
-                delete window.__ytReplyEditor;
-                delete window.__ytReplyIsTextarea;
-                """
-            )
+            # VERIFY text was entered
+            entered_text = self.driver.execute_script("return arguments[0].textContent", textarea)
 
-            logger.info(f"[REPLY] Typed {chars_typed} characters with human delays - ANTI-DETECTION ✓ (0102 like)")
+            if not entered_text or len(entered_text.strip()) < len(reply_text.strip()) * 0.5:
+                logger.error(f"[DAEMON][REPLY-EXEC] ❌ Verification FAILED! Expected {len(reply_text)} chars, got {len(entered_text) if entered_text else 0}")
+                logger.error(f"[DAEMON][REPLY-EXEC]   Expected: '{reply_text[:50]}...'")
+                logger.error(f"[DAEMON][REPLY-EXEC]   Got: '{entered_text[:50] if entered_text else ''}...'")
+                return False
+            else:
+                logger.info(f"[DAEMON][REPLY-EXEC] ✅ Verification PASSED ({len(entered_text)} chars entered)")
+
+        else:
+             logger.error("  [REPLY] [HARD-THINK] Failed to find textarea after opening box (Shadow DOM search returned null)")
+             return False
 
         # Human-like delay before submit (randomized 0.4s-1.2s)
         if self.human:
-            await asyncio.sleep(self.human.human_delay(0.8, 0.5))
+            await asyncio.sleep(self.human.human_delay(0.8, 0.5) * self.delay_multiplier)
         else:
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.8 * self.delay_multiplier)
 
         # Submit
         submit_result = self.driver.execute_script(
@@ -647,4 +642,3 @@ class BrowserReplyExecutor:
             return False
 
         return True
-    

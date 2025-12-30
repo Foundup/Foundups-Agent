@@ -26,6 +26,7 @@ WSP Compliance: WSP 87 (Size Limits), WSP 49 (Module Structure), WSP 72 (Block I
 """
 
 import json
+import logging
 import os
 import re
 from pathlib import Path
@@ -62,7 +63,8 @@ class HoloIndex:
     def _log_agent_action(self, message: str, action_tag: str = "0102"):
         """Real-time logging for multi-agent coordination - allows other 0102 agents to follow."""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        if not getattr(self, "quiet", False):
+        silent = os.getenv("HOLO_SILENT", "0").lower() in {"1", "true", "yes"}
+        if not silent and not getattr(self, "quiet", False):
             print(f"[{timestamp}] [HOLO-{action_tag}] {message}")
 
         # Also log to shared file for other agents to follow
@@ -76,6 +78,8 @@ class HoloIndex:
 
     def _announce_breadcrumb_trail(self):
         """Announce breadcrumb availability discreetly."""
+        if os.getenv("HOLO_SILENT", "0").lower() in {"1", "true", "yes"}:
+            return
         if self._breadcrumb_hint_shown:
             return
         if not hasattr(self, 'breadcrumb_tracer') or not self.breadcrumb_tracer:
@@ -100,8 +104,6 @@ class HoloIndex:
         if HoloIndex._initialized:
             self.__dict__.update(HoloIndex._shared_state)
             self.quiet = quiet  # allow caller to silence logs on reuse
-            # Avoid noisy duplicate init logs; only trace at debug level on reuse
-            logging.getLogger(__name__).debug("HoloIndex already initialized; reusing existing instance")
             return
 
         self.quiet = quiet
@@ -341,13 +343,17 @@ class HoloIndex:
             }
 
         if embeddings:
-            print(f"DEBUG: WSP Index - ids: {len(ids)}, docs: {len(documents)}, embeds: {len(embeddings)}")
+            if os.getenv("HOLO_VERBOSE", "").lower() in {"1", "true", "yes"}:
+                self._log_agent_action(
+                    f"WSP Index counts: ids={len(ids)} docs={len(documents)} embeds={len(embeddings)}",
+                    "DEBUG",
+                )
             self.wsp_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
             self.wsp_summary = summary_cache
             self.wsp_summary_file.write_text(json.dumps(self.wsp_summary, indent=2), encoding='utf-8')
-            print("[OK] WSP index refreshed and summary cache saved")
+            self._log_agent_action("WSP index refreshed and summary cache saved", "OK")
         else:
-            print("[WARN] No WSP entries were indexed (empty content)")
+            self._log_agent_action("No WSP entries were indexed (empty content)", "WARN")
 
     def index_test_registry(self) -> None:
         """
@@ -945,10 +951,28 @@ class HoloIndex:
             symbol = normalized[split_idx + 1 :].strip() or None
 
         try:
-            file_path = Path(filepath.strip())
-            if not file_path.is_absolute():
-                file_path = (self.project_root / filepath.strip()).resolve()
-            return file_path, symbol
+            raw_filepath = filepath.strip()
+
+            # Some NAVIGATION/WSP sources embed titles like "path/to/file.md - Description".
+            # Keep parsing strict unless the original path does not exist; then attempt safe recovery.
+            filepath_candidates = [raw_filepath]
+            for sep in (" - ", " — ", " – "):
+                if sep in raw_filepath:
+                    filepath_candidates.append(raw_filepath.split(sep, 1)[0].strip())
+
+            resolved_first: Optional[Path] = None
+            for candidate in filepath_candidates:
+                if not candidate:
+                    continue
+                file_path = Path(candidate)
+                if not file_path.is_absolute():
+                    file_path = (self.project_root / candidate).resolve()
+                if resolved_first is None:
+                    resolved_first = file_path
+                if file_path.exists():
+                    return file_path, symbol
+
+            return resolved_first, symbol
         except Exception:
             return None, symbol
 
@@ -1128,6 +1152,13 @@ class HoloIndex:
                 entities = self._extract_typescript_entities(file_path)
                 manual_preview, line_num = self._match_typescript_entity(symbol, entities)
 
+            # Numeric symbol is almost certainly a line number (e.g., "file.py:336")
+            if line_num is None and symbol and symbol.isdigit():
+                try:
+                    line_num = int(symbol)
+                except ValueError:
+                    line_num = None
+
             if line_num is None:
                 line_num = self._find_symbol_line(file_path, symbol)
 
@@ -1137,7 +1168,9 @@ class HoloIndex:
             elif manual_preview:
                 preview = manual_preview
             else:
-                preview = "[No preview available]"
+                # Default to file header for human-friendly previews (docs/config files)
+                preview = self._extract_ast_preview(str(file_path), 1)
+                enhanced_hit['line'] = 1
 
             enhanced_hit['preview'] = preview
             enhanced_hits.append(enhanced_hit)

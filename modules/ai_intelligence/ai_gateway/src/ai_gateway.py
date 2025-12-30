@@ -85,6 +85,46 @@ class AIGateway:
 
         logger.info(f"[AI-GATEWAY] Initialized with {len([p for p in self.providers.values() if p.api_key])} active providers")
 
+    def _get_env_int(self, name: str, default: int) -> int:
+        """Read an int from env with a safe fallback."""
+        value = os.getenv(name)
+        if value is None or value == "":
+            return default
+        try:
+            return int(value)
+        except ValueError:
+            logger.warning(f"[AI-GATEWAY] Invalid {name} value: {value}")
+            return default
+
+    def _get_env_float(self, name: str, default: float) -> float:
+        """Read a float from env with a safe fallback."""
+        value = os.getenv(name)
+        if value is None or value == "":
+            return default
+        try:
+            return float(value)
+        except ValueError:
+            logger.warning(f"[AI-GATEWAY] Invalid {name} value: {value}")
+            return default
+
+    def _get_provider_max_tokens(self, provider_name: str, default: int) -> int:
+        """Resolve max_tokens for provider from env overrides."""
+        provider_key = f"{provider_name.upper()}_MAX_TOKENS"
+        if os.getenv(provider_key):
+            return self._get_env_int(provider_key, default)
+        if os.getenv("MAX_TOKENS"):
+            return self._get_env_int("MAX_TOKENS", default)
+        return self._get_env_int("LLM_MAX_TOKENS", default)
+
+    def _get_provider_temperature(self, provider_name: str, default: float) -> float:
+        """Resolve temperature for provider from env overrides."""
+        provider_key = f"{provider_name.upper()}_TEMPERATURE"
+        if os.getenv(provider_key):
+            return self._get_env_float(provider_key, default)
+        if os.getenv("TEMPERATURE"):
+            return self._get_env_float("TEMPERATURE", default)
+        return self._get_env_float("LLM_TEMPERATURE", default)
+
     def _setup_providers(self) -> Dict[str, ProviderConfig]:
         """Set up AI provider configurations"""
 
@@ -282,6 +322,8 @@ class AIGateway:
 
     def _call_openai(self, provider: ProviderConfig, prompt: str, model: str) -> str:
         """Call OpenAI API"""
+        max_tokens = self._get_provider_max_tokens(provider.name, 1000)
+        temperature = self._get_provider_temperature(provider.name, 0.7)
         headers = {
             'Authorization': f'Bearer {provider.api_key}',
             'Content-Type': 'application/json'
@@ -290,8 +332,8 @@ class AIGateway:
         data = {
             'model': model,
             'messages': [{'role': 'user', 'content': prompt}],
-            'max_tokens': 1000,
-            'temperature': 0.7
+            'max_tokens': max_tokens,
+            'temperature': temperature
         }
 
         response = requests.post(
@@ -307,6 +349,8 @@ class AIGateway:
 
     def _call_anthropic(self, provider: ProviderConfig, prompt: str, model: str) -> str:
         """Call Anthropic API"""
+        max_tokens = self._get_provider_max_tokens(provider.name, 1000)
+        temperature = self._get_provider_temperature(provider.name, 0.7)
         headers = {
             'x-api-key': provider.api_key,
             'Content-Type': 'application/json',
@@ -315,7 +359,8 @@ class AIGateway:
 
         data = {
             'model': model,
-            'max_tokens': 1000,
+            'max_tokens': max_tokens,
+            'temperature': temperature,
             'messages': [{'role': 'user', 'content': prompt}]
         }
 
@@ -332,6 +377,8 @@ class AIGateway:
 
     def _call_grok(self, provider: ProviderConfig, prompt: str, model: str) -> str:
         """Call Grok API"""
+        max_tokens = self._get_provider_max_tokens(provider.name, 1000)
+        temperature = self._get_provider_temperature(provider.name, 0.7)
         headers = {
             'Authorization': f'Bearer {provider.api_key}',
             'Content-Type': 'application/json'
@@ -340,8 +387,8 @@ class AIGateway:
         data = {
             'model': model,
             'messages': [{'role': 'user', 'content': prompt}],
-            'max_tokens': 1000,
-            'temperature': 0.7
+            'max_tokens': max_tokens,
+            'temperature': temperature
         }
 
         response = requests.post(
@@ -357,10 +404,16 @@ class AIGateway:
 
     def _call_gemini(self, provider: ProviderConfig, prompt: str, model: str) -> str:
         """Call Google Gemini API"""
+        max_tokens = self._get_provider_max_tokens(provider.name, 1000)
+        temperature = self._get_provider_temperature(provider.name, 0.7)
         data = {
             'contents': [{
                 'parts': [{'text': prompt}]
-            }]
+            }],
+            'generationConfig': {
+                'maxOutputTokens': max_tokens,
+                'temperature': temperature
+            }
         }
 
         params = {

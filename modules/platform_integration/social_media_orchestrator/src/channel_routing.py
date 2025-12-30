@@ -86,12 +86,16 @@ class SocialMediaRouter:
     }
 
     # Display names with visual indicators (from stream_resolver)
+    # CORRECT MAPPINGS (verified 2025-12-27):
+    #   UC-LSSlOZwpGIRIYihaz8zCw = Move2Japan (Chrome)
+    #   UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu (Chrome, same Google account as Move2Japan)
+    #   UCSNTUXjAgpd4sgWYP0xoJgw = FoundUps (Edge, different Google account)
     DISPLAY_NAMES = {
-        'UCSNTUXjAgpd4sgWYP0xoJgw': 'UnDaoDu [MINDFUL]',
-        'UC-LSSlOZwpGIRIYihaz8zCw': 'FoundUps [LOYAL]',
-        'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan [JAPAN]',
+        'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan [JAPAN]',
+        'UCfHM9Fw9HD-NwiS0seD_oIA': 'UnDaoDu [MINDFUL]',
+        'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps [LOYAL]',
+        'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan-Alt [JAPAN]',
         'UCROkIz1wOCP3tPk-1j3umyQ': 'FoundUps1934 [TEST]',
-        'UCfHM9Fw9HD-NwiS0seD_oIA': 'UnDaoDu [MINDFUL]'
     }
 
     @classmethod

@@ -28,7 +28,8 @@ Enable 0102 to "see" and interact with any browser UI, regardless of DOM complex
 - [ ] Create `ui_tars_bridge.py` with connection to UI-TARS Desktop
 - [ ] Implement screenshot capture pipeline
 - [ ] Create basic action executor (click, type)
-- [ ] Add telemetry hooks for AI Overseer
+- [x] Add telemetry hooks for AI Overseer
+- [x] **2025-12-26**: Added iframe/frame awareness for accurate coordinate mapping
 
 **Acceptance Criteria:**
 - Can connect to UI-TARS on `E:/HoloIndex/models/ui-tars-1.5`
@@ -125,7 +126,8 @@ Sprint A2 created `youtube_actions.py` (429 lines) with all required functionali
 - [ ] Integrate with AI Overseer event queue
 - [ ] Add Gemma classification for engagement decisions
 - [ ] Ensure wardrobe skills exist for posting/reply flows and apply 012 typing speed
-- [ ] Emit DAE log entries for every UI-TARS action (target, result, screenshot path)
+- [x] Emit DAE log entries for every UI-TARS action (target, result, screenshot path)
+- [x] **2025-12-26**: Implement Studio Account Rotation fallback when no live stream detected
 
 **Acceptance Criteria:**
 - Comments are automatically liked and replied to

@@ -6,81 +6,169 @@
     "required": true,
     "description": "YouTube live chat is in an iframe"
   },
+  "safety_bounds": {
+    "x_min": 0,
+    "x_max": 1000,
+    "y_min": 450,
+    "y_max": 1000,
+    "forbidden_selectors": [
+      "[id*='ad']",
+      ".yt-ad",
+      ".promoted",
+      "iframe:not(#chatframe)"
+    ]
+  },
   "actions": {
     "party_toggle": {
-      "coordinates": {"x": 359, "y": 759},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 790
+      },
+      "variance": {
+        "x": 5,
+        "y": 5
+      },
       "action": "hover",
       "description": "Heart button - hover to open reaction popup",
       "timing": {
-        "before_hover": {"min": 0.15, "max": 0.35},
-        "after_hover": {"min": 0.15, "max": 0.30}
+        "before_hover": {
+          "min": 1.20,
+          "max": 2.50
+        },
+        "after_hover": {
+          "min": 3.00,
+          "max": 5.00
+        }
       }
     },
     "reaction_100": {
-      "coordinates": {"x": 361, "y": 735},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 790
+      },
+      "variance": {
+        "x": 4,
+        "y": 4
+      },
       "action": "click",
       "emoji": "💯",
-      "description": "100% reaction",
+      "description": "100% reaction - sits at trigger level",
       "timing": {
-        "before_click": {"min": 0.10, "max": 0.25},
-        "after_click": {"min": 0.10, "max": 0.30}
+        "before_click": {
+          "min": 1.50,
+          "max": 3.00
+        },
+        "after_click": {
+          "min": 1.20,
+          "max": 2.40
+        }
       }
     },
     "reaction_wide_eyes": {
-      "coordinates": {"x": 357, "y": 708},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 754
+      },
+      "variance": {
+        "x": 4,
+        "y": 4
+      },
       "action": "click",
       "emoji": "😲",
-      "description": "Wide eyes reaction",
+      "description": "Wide eyes (WOW) reaction - 36px above 100",
       "timing": {
-        "before_click": {"min": 0.10, "max": 0.25},
-        "after_click": {"min": 0.10, "max": 0.30}
+        "before_click": {
+          "min": 1.50,
+          "max": 3.00
+        },
+        "after_click": {
+          "min": 1.20,
+          "max": 2.40
+        }
       }
     },
     "reaction_celebrate": {
-      "coordinates": {"x": 358, "y": 669},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 718
+      },
+      "variance": {
+        "x": 4,
+        "y": 4
+      },
       "action": "click",
       "emoji": "🎉",
-      "description": "Celebrate reaction",
+      "description": "Celebrate (Party) reaction - 36px above WOW",
       "timing": {
-        "before_click": {"min": 0.10, "max": 0.25},
-        "after_click": {"min": 0.10, "max": 0.30}
+        "before_click": {
+          "min": 1.20,
+          "max": 2.50
+        },
+        "after_click": {
+          "min": 1.00,
+          "max": 2.00
+        }
       }
     },
     "reaction_smiley": {
-      "coordinates": {"x": 357, "y": 635},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 682
+      },
+      "variance": {
+        "x": 4,
+        "y": 4
+      },
       "action": "click",
       "emoji": "😊",
-      "description": "Smiley reaction",
+      "description": "Smiley (Crying Laughing) reaction - 36px above Party",
       "timing": {
-        "before_click": {"min": 0.10, "max": 0.25},
-        "after_click": {"min": 0.10, "max": 0.30}
+        "before_click": {
+          "min": 1.20,
+          "max": 2.50
+        },
+        "after_click": {
+          "min": 1.00,
+          "max": 2.00
+        }
       }
     },
     "reaction_heart": {
-      "coordinates": {"x": 359, "y": 599},
-      "variance": {"x": 8, "y": 8},
+      "coordinates": {
+        "x": 359,
+        "y": 646
+      },
+      "variance": {
+        "x": 4,
+        "y": 4
+      },
       "action": "click",
       "emoji": "❤️",
-      "description": "Heart reaction",
+      "description": "Heart reaction - 36px above Smiley (Top)",
       "timing": {
-        "before_click": {"min": 0.10, "max": 0.25},
-        "after_click": {"min": 0.10, "max": 0.30}
+        "before_click": {
+          "min": 1.20,
+          "max": 2.50
+        },
+        "after_click": {
+          "min": 1.00,
+          "max": 2.00
+        }
       }
     }
   },
   "global_timing": {
-    "thinking_pause": {"min": 0.50, "max": 2.00, "probability": 0.30},
-    "popup_reopen_interval": 3,
-    "fatigue_threshold": 20
+    "thinking_pause": {
+      "min": 1.50,
+      "max": 4.00,
+      "probability": 0.40
+    },
+    "popup_reopen_interval": 1,
+    "fatigue_threshold": 12
   },
   "error_simulation": {
-    "base_rate": 0.08,
-    "fatigue_increase": 0.05,
-    "max_error_rate": 0.13
+    "base_rate": 0.04,
+    "fatigue_increase": 0.02,
+    "max_error_rate": 0.08
   }
 }

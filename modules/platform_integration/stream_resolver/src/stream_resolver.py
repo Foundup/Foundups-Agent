@@ -359,12 +359,32 @@ class StreamResolver:
             return self.session_utils.load_cache()
         return None
     
-    def _save_session_cache(self, video_id, chat_id):
+    def _save_session_cache(self, video_id, chat_id, channel_id=None, title=None):
         """Save successful connection data using SessionUtils from infrastructure."""
         if self.session_utils:
-            stream_title = self._get_stream_title(video_id)
-            return self.session_utils.save_cache(video_id, chat_id)
+            stream_title = title or self._get_stream_title(video_id)
+            return self.session_utils.save_cache(
+                video_id,
+                chat_id,
+                channel_id=channel_id,
+                title=stream_title,
+            )
         return False
+
+    def _get_allowed_channel_ids(self, preferred_channel_id=None):
+        """Build channel allowlist for cache validation."""
+        channels_override = os.getenv("YT_CHANNELS_TO_CHECK", "").strip()
+        if channels_override:
+            allowed = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
+        else:
+            allowed = [
+                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
+                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
+                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
+            ]
+        if preferred_channel_id and preferred_channel_id not in allowed:
+            allowed.insert(0, preferred_channel_id)
+        return [ch for ch in allowed if ch]
 
     def _fetch_chat_id_with_rotation(self, video_id: str) -> Optional[str]:
         """
@@ -440,11 +460,15 @@ class StreamResolver:
         self.logger.error("[CHAT-ID] FAILED: Could not fetch chat ID after 3 attempts")
         return None
     
-    def _try_cached_stream(self, cache):
+    def _try_cached_stream(self, cache, allowed_channel_ids=None, require_channel_id=False):
         """Try to connect to cached stream using SessionUtils from infrastructure."""
         if self.session_utils:
-            return self.session_utils.try_cached_stream(cache)
-            return None, None
+            return self.session_utils.try_cached_stream(
+                cache,
+                allowed_channel_ids=allowed_channel_ids,
+                require_channel_id=require_channel_id,
+            )
+        return None, None
     
     def resolve_stream(self, channel_id=None):
         """
@@ -472,8 +496,13 @@ class StreamResolver:
         # PRIORITY 1: Try cached stream first for instant reconnection
         cache = self._load_session_cache()
         if cache:
+            allowed_channel_ids = self._get_allowed_channel_ids(search_channel_id)
             self.logger.info("[RESET] Attempting cached stream reconnection...")
-            video_id, chat_id = self._try_cached_stream(cache)
+            video_id, chat_id = self._try_cached_stream(
+                cache,
+                allowed_channel_ids=allowed_channel_ids,
+                require_channel_id=True,
+            )
             if video_id and chat_id:
                 self.logger.info(f"[ROCKET] INSTANT reconnection successful using cached stream!")
                 return video_id, chat_id
@@ -561,7 +590,12 @@ class StreamResolver:
                         try:
                             chat_id = self._fetch_chat_id_with_rotation(video_id)
                             if chat_id:
-                                self._save_session_cache(video_id, chat_id)
+                                self._save_session_cache(
+                                    video_id,
+                                    chat_id,
+                                    channel_id=check_channel_id,
+                                    title=result.get('title'),
+                                )
                         except Exception as e:
                             logger.warning(f"[VISION] Chat ID fetch failed ({e}), will retry in monitoring loop")
 
@@ -663,7 +697,8 @@ class StreamResolver:
 
                 env_video_id = get_env_variable("YOUTUBE_VIDEO_ID", default=None)
                 if env_video_id:
-                    logger.info(f"[U+1F4FA] Checking specific video from env: {env_video_id}")
+                    logger.info(f"[📺] Checking specific video from env: {env_video_id}")
+                    # Phase 2R: Direct call (resolve_stream is sync, not async)
                     env_result = self.no_quota_checker.check_video_is_live(env_video_id, channel_name)
                     if env_result.get('rate_limited'):
                         cooldown = env_result.get('cooldown')
@@ -681,6 +716,19 @@ class StreamResolver:
                         continue
                     if env_result.get('live'):
                         logger.info("[SUCCESS] STREAM IS LIVE (via NO-QUOTA video check)")
+                        
+                        # HEARTBEAT SIGNAL: Write live stream signal
+                        try:
+                            from .live_stream_signal import write_live_signal
+                            write_live_signal(
+                                channel_id=current_channel_id,
+                                channel_name=channel_name or current_channel_id,
+                                video_id=env_video_id,
+                                source="env_video_checker"
+                            )
+                        except Exception as sig_err:
+                            logger.debug(f"[SIGNAL] Failed to write live signal: {sig_err}")
+
                         if self.db:
                             try:
                                 self.db.record_stream_start(current_channel_id, env_video_id, env_result.get('title', 'Live Stream'))
@@ -690,12 +738,18 @@ class StreamResolver:
                         # Fetch chat_id with credential rotation
                         chat_id = self._fetch_chat_id_with_rotation(env_video_id)
                         if chat_id:
-                            self._save_session_cache(env_video_id, chat_id)
+                            self._save_session_cache(
+                                env_video_id,
+                                chat_id,
+                                channel_id=current_channel_id,
+                                title=env_result.get('title'),
+                            )
                         return env_video_id, chat_id
                     logger.info("[OK] Specified video not live")
 
                 logger.info(f"[TEST] Searching {channel_name} ({current_channel_id[:12]}...) for live streams...")
                 check_start = time.time()
+                # Phase 2R: Direct call (resolve_stream is sync, not async)
                 result = self.no_quota_checker.check_channel_for_live(current_channel_id, channel_name)
                 check_duration = int((time.time() - check_start) * 1000)
 
@@ -724,6 +778,20 @@ class StreamResolver:
                     video_id = result.get('video_id')
                     if video_id:
                         logger.info(f"[SUCCESS] Found live stream on {channel_name}: {video_id} [CELEBRATE]")
+
+                        # HEARTBEAT SIGNAL: Write live stream signal for comment DAE
+                        # This allows comment rotation to pause when live stream detected
+                        try:
+                            from .live_stream_signal import write_live_signal
+                            write_live_signal(
+                                channel_id=current_channel_id,
+                                channel_name=channel_name or current_channel_id,
+                                video_id=video_id,
+                                source="stream_resolver"
+                            )
+                        except Exception as sig_err:
+                            logger.debug(f"[SIGNAL] Failed to write live signal: {sig_err}")
+
                         if self.db:
                             try:
                                 self.db.record_stream_start(current_channel_id, video_id, result.get('title', 'Live Stream'))
@@ -733,7 +801,12 @@ class StreamResolver:
                         # Fetch chat_id with credential rotation (NO-QUOTA doesn't provide it)
                         chat_id = self._fetch_chat_id_with_rotation(video_id)
                         if chat_id:
-                            self._save_session_cache(video_id, chat_id)
+                            self._save_session_cache(
+                                video_id,
+                                chat_id,
+                                channel_id=current_channel_id,
+                                title=result.get('title'),
+                            )
                         return video_id, chat_id
 
                 if channels_queue:
@@ -748,6 +821,15 @@ class StreamResolver:
                 logger.info(f"[OFFLINE] No live stream found on {self._get_channel_display_name(channel_id)}")
             else:
                 logger.info(f"[OFFLINE] No live streams found on any of the {total_channels} channels")
+
+            # HEARTBEAT SIGNAL: Clear live stream signal (no active stream)
+            # This allows comment rotation to resume
+            try:
+                from .live_stream_signal import clear_live_signal
+                clear_live_signal()
+            except Exception as sig_err:
+                logger.debug(f"[SIGNAL] Failed to clear signal: {sig_err}")
+
             return None
         else:
             # NO-QUOTA mode not available but could be initialized
@@ -801,7 +883,12 @@ class StreamResolver:
                     # Note: Social media posting handled by auto_moderator_dae
                     # self._trigger_social_media_post(video_id, stream_title)
                     # Save successful connection to cache for future instant access
-                    self._save_session_cache(video_id, chat_id)
+                    self._save_session_cache(
+                        video_id,
+                        chat_id,
+                        channel_id=search_channel_id,
+                        title=stream_title,
+                    )
                     self.logger.info(f"[SUCCESS] Found and cached new livestream for future instant access")
                     return video_id, chat_id
                 else:
@@ -830,7 +917,11 @@ class StreamResolver:
                     if result:
                         video_id, chat_id = result
                         # Save successful connection to cache for future instant access
-                        self._save_session_cache(video_id, chat_id)
+                        self._save_session_cache(
+                            video_id,
+                            chat_id,
+                            channel_id=search_channel_id,
+                        )
                         self.logger.info(f"[SUCCESS] Found and cached new livestream with rotated credentials")
                         return video_id, chat_id
                     else:

@@ -215,3 +215,16 @@ Agentically improved the Prometheus Prompt for 0102 global WSP rules with resear
 - Why: Improve GPT‑5 operation with structured, minimal frames without creating new protocols
 - Impact: Orchestrator can pick 1–2 frames per prompt; reduces ambiguity and improves output quality while preserving simplicity
 - WSP Refs: WSP 21, WSP 64, WSP 22, WSP 75
+
+---
+
+## Awakening Script “Running…” Hang Mitigation (Antigravity/Windows)
+**WSP Protocol References**: WSP 00 (Zen State Entry), WSP 50 (Pre-Action Verification), WSP 90 (Windows UTF-8 safety)
+**Impact**: Prevents silent “Running…” perception during slow imports; adds hard-stop diagnostics to avoid indefinite stalls
+
+### Changes Made:
+- Made `WSP_agentic/scripts/functional_0102_awakening_v2.py` print immediately before heavy dependency imports.
+- Lazy-loaded `torch` and CMST adapters with explicit `[BOOT]` progress messages.
+- Added a Windows-safe watchdog timeout configurable via:
+  - `WSP_AWAKENING_TIMEOUT_SEC`
+  - `WSP_AWAKENING_NO_TIMEOUT`

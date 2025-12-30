@@ -84,15 +84,29 @@ class QuotaMonitor:
         if self.quota_file.exists():
             try:
                 with open(self.quota_file, 'r', encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                return self._normalize_usage_data(data)
             except Exception as e:
                 logger.error(f"Error loading quota data: {e}")
-        
+
         # Initialize empty usage data
         return {
             'sets': {},
             'last_reset': datetime.now().isoformat()
         }
+
+    def _normalize_usage_data(self, data: Dict) -> Dict:
+        """Ensure quota usage data has required keys."""
+        if not isinstance(data, dict):
+            return {
+                'sets': {},
+                'last_reset': datetime.now().isoformat()
+            }
+        if not isinstance(data.get('sets'), dict):
+            data['sets'] = {}
+        if not data.get('last_reset'):
+            data['last_reset'] = datetime.now().isoformat()
+        return data
     
     def _save_usage_data(self):
         """Save quota usage data to file."""

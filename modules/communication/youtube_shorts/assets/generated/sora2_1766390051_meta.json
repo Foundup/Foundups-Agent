@@ -1,0 +1,38 @@
+{
+  "video_id": "sora2_1766390051",
+  "model": "sora",
+  "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance",
+  "duration": 8,
+  "aspect_ratio": "9:16",
+  "cost": 6.4,
+  "source": "sora2",
+  "generated_at": 1766390068.9609418,
+  "status_payload": {
+    "object": "video.generation.job",
+    "id": "task_01kd2gn1wge17tkgz83xq95mey",
+    "status": "succeeded",
+    "created_at": 1766389876,
+    "finished_at": 1766390046,
+    "expires_at": 1766476276,
+    "generations": [
+      {
+        "object": "video.generation",
+        "id": "gen_01kd2gs916eqjbb01n2q1k8f4m",
+        "job_id": "task_01kd2gn1wge17tkgz83xq95mey",
+        "created_at": 1766390046,
+        "width": 1080,
+        "height": 1920,
+        "n_seconds": 8,
+        "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance"
+      }
+    ],
+    "prompt": "Diverse group of strong Hispanic men with traditional Polynesian-inspired tattoos performing powerful Maori Haka dance",
+    "model": "sora",
+    "n_variants": 1,
+    "n_seconds": 8,
+    "height": 1920,
+    "width": 1080,
+    "inpaint_items": null,
+    "failure_reason": null
+  }
+}

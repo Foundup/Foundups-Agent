@@ -12,6 +12,45 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### 2025-12-28 - Async Threading for Blocking I/O (Event Loop Protection)
+
+**By:** Antigravity (Agent)
+**WSP References:** WSP 49 (Platform Integration Safety), WSP 27 (DAE Architecture)
+
+**Problem:** Blocking I/O calls (`check_channel_for_live`, `check_video_is_live`) inside `resolve_stream` were stalling the main event loop, causing responsiveness issues in the DAE heartbeat.
+
+**Solution:** Wrapped all blocking scraping/API verification calls in `asyncio.to_thread()`.
+
+**Implementation Details:**
+1.  Refactored `resolve_stream` to await `asyncio.to_thread` for all high-latency network operations.
+2.  Ensures the DAE heartbeat remains responsive even during extended scraping backoffs or slow API responses.
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py`
+
+**Status:** IMPLEMENTED - Stream resolution is now non-blocking.
+
+---
+
+
+**By:** 0102  
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 91 (Observability)
+
+**Problem:** No-API mode (`YT_STREAM_API_VERIFY=false`) could miss live streams because `/live` avoided watch-page scraping and relied on API confirmation. When `/live` had no indicators, the `/streams` fallback was skipped, causing false negatives.
+
+**Solution:**
+- Trust strong `/live` indicators when API verification fails or no-API mode is active.
+- Restore `/streams` fallback when `/live` is quiet (no strong indicators).
+- Keep watch-page scraping disabled to reduce CAPTCHA risk.
+- Added unit coverage for no-API indicator trust and `/streams` fallback.
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/no_quota_stream_checker.py`
+- `modules/platform_integration/stream_resolver/tests/test_no_quota_stream_checker.py`
+- `modules/platform_integration/stream_resolver/README.md`
+- `modules/platform_integration/stream_resolver/INTERFACE.md`
+- `modules/platform_integration/stream_resolver/tests/TestModLog.md`
+
 ### 2025-12-15 - Automation Gating + Compact ASCII Logs
 
 **By:** 0102  

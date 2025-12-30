@@ -3,6 +3,10 @@
 ## Overview
 The Stream Resolver module is responsible for finding and validating YouTube livestreams. It handles API interactions to detect active or upcoming livestreams for a channel and retrieve their associated chat IDs.
 
+It also includes a no-quota scraping path (NoQuotaStreamChecker) that checks `/live` and `/streams` indicators with optional API confirmation. When the API is disabled or unavailable, strong indicators can be trusted to avoid false negatives.
+
+**Note:** Since 2025-12-28, all potentially blocking I/O calls in this module are wrapped in `asyncio.to_thread` to prevent event loop stalls.
+
 ## Exports
 This module exports:
 - `get_active_livestream_video_id`: Function to find an active livestream and its chat ID

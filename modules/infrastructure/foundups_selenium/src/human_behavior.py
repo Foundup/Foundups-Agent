@@ -19,6 +19,25 @@ class HumanBehavior:
 
     def __init__(self, driver):
         self.driver = driver
+        # Explicit initialization with default values
+        self._last_x = None
+        self._last_y = None
+
+    @property
+    def last_x(self):
+        return getattr(self, "_last_x", None)
+
+    @last_x.setter
+    def last_x(self, value):
+        self._last_x = value
+
+    @property
+    def last_y(self):
+        return getattr(self, "_last_y", None)
+
+    @last_y.setter
+    def last_y(self, value):
+        self._last_y = value
 
     def human_delay(self, base: float, variance: float = 0.5) -> float:
         """
@@ -30,9 +49,6 @@ class HumanBehavior:
 
         Returns:
             Random delay between base*(1-variance) and base*(1+variance)
-
-        Example:
-            human_delay(1.0, 0.5) → 0.5s to 1.5s random
         """
         min_delay = base * (1 - variance)
         max_delay = base * (1 + variance)
@@ -42,19 +58,7 @@ class HumanBehavior:
                      control_points: int = 2) -> List[Tuple[int, int]]:
         """
         Generate Bezier curve points for natural mouse movement.
-
-        Humans don't move mouse in straight lines - they follow curved paths
-        with acceleration and deceleration.
-
-        Args:
-            start: (x, y) starting position
-            end: (x, y) ending position
-            control_points: Number of control points (2 = cubic Bezier)
-
-        Returns:
-            List of (x, y) coordinates along curve
         """
-        # Generate random control points for natural curve
         x1, y1 = start
         x2, y2 = end
 
@@ -66,7 +70,7 @@ class HumanBehavior:
 
         # Generate points along Bezier curve
         points = []
-        steps = random.randint(10, 20)  # Variable movement speed
+        steps = random.randint(15, 25)  # Slower movement
 
         for i in range(steps + 1):
             t = i / steps
@@ -92,27 +96,23 @@ class HumanBehavior:
     def move_to_element_human_like(self, element, pause_before_click: bool = True):
         """
         Move mouse to element with human-like Bezier curve path.
-
-        Args:
-            element: Selenium WebElement to move to
-            pause_before_click: Add random hover pause before clicking
-
-        Returns:
-            ActionChains object ready for click
         """
-        # Get current mouse position (approximate center of viewport)
         viewport_width = self.driver.execute_script("return window.innerWidth")
         viewport_height = self.driver.execute_script("return window.innerHeight")
-        current_x = viewport_width // 2
-        current_y = viewport_height // 2
+        
+        if self.last_x is None or self.last_y is None:
+            current_x = viewport_width // 2
+            current_y = viewport_height // 2
+        else:
+            current_x = self.last_x
+            current_y = self.last_y
 
-        # Get element location and size
         location = element.location
         size = element.size
 
-        # Target random point within element (humans don't click exact center)
-        offset_x = random.randint(-size['width']//3, size['width']//3)
-        offset_y = random.randint(-size['height']//3, size['height']//3)
+        # Target random point within element
+        offset_x = random.randint(-max(1, size['width']//3), max(1, size['width']//3))
+        offset_y = random.randint(-max(1, size['height']//3), max(1, size['height']//3))
 
         target_x = location['x'] + size['width']//2 + offset_x
         target_y = location['y'] + size['height']//2 + offset_y
@@ -126,158 +126,101 @@ class HumanBehavior:
         # Move mouse along curve with variable speed
         action = ActionChains(self.driver)
 
+        # "Prime" the mouse movement
+        try:
+            action.move_by_offset(0, 0).pause(0.01)
+        except:
+            pass
+
+        last_x, last_y = current_x, current_y
         for i, (x, y) in enumerate(curve_points):
-            # Variable speed (accelerate, then decelerate)
-            if i < len(curve_points) // 3:
-                delay = 0.01  # Fast at start
-            elif i < 2 * len(curve_points) // 3:
-                delay = 0.005  # Faster in middle
-            else:
-                delay = 0.015  # Slow near target
+            # Slow down movement significantly for stability
+            delay = random.uniform(0.02, 0.04) 
 
-            action.move_by_offset(x - current_x, y - current_y)
-            action.pause(delay)
-            current_x, current_y = x, y
+            dx = x - last_x
+            dy = y - last_y
 
-        # Hover pause before clicking (humans don't instant-click)
+            if dx != 0 or dy != 0:
+                action.move_by_offset(dx, dy)
+                action.pause(delay)
+                last_x, last_y = x, y
+
+        # Track last position
+        self.last_x = last_x
+        self.last_y = last_y
+
+        # Hover pause before clicking
         if pause_before_click:
-            hover_time = self.human_delay(0.2, 0.6)  # 0.08s-0.32s
+            hover_time = self.human_delay(0.4, 0.5)
             action.pause(hover_time)
 
         return action
 
     def human_click(self, element):
-        """
-        Click element with human-like mouse movement and timing.
-
-        This replaces driver.execute_script("element.click()") which is
-        easily detected by YouTube.
-
-        Args:
-            element: Selenium WebElement to click
-        """
-        # Move to element with Bezier curve
+        """Click element with human-like mouse movement and timing."""
         action = self.move_to_element_human_like(element, pause_before_click=True)
-
-        # Click with slight randomization (humans don't have perfect timing)
         action.click()
-
-        # Post-click micro-pause (mouse stays on element briefly)
-        action.pause(self.human_delay(0.1, 0.8))  # 0.02s-0.18s
-
-        # Execute all actions
+        action.pause(self.human_delay(0.1, 0.8))
         action.perform()
-
-        # Additional delay after click (reaction time to see result)
-        time.sleep(self.human_delay(0.3, 0.5))  # 0.15s-0.45s
+        time.sleep(self.human_delay(0.3, 0.5))
 
     def human_type(self, element, text: str):
-        """
-        Type text with human-like timing and occasional typos.
-
-        Args:
-            element: Selenium WebElement (input field)
-            text: Text to type
-        """
-        # Focus element first (humans click before typing)
+        """Type text with human-like timing and occasional typos."""
         self.human_click(element)
-
-        # Clear existing text
         element.clear()
-        time.sleep(self.human_delay(0.2, 0.4))  # 0.12s-0.28s
+        time.sleep(self.human_delay(0.2, 0.4))
 
-        # Type character by character with variable speed
         for i, char in enumerate(text):
-            # Variable typing speed (humans aren't consistent)
             if char == ' ':
-                delay = self.human_delay(0.15, 0.6)  # Slower for spaces
+                delay = self.human_delay(0.15, 0.6)
             elif char in '.,!?':
-                delay = self.human_delay(0.2, 0.5)  # Pause at punctuation
+                delay = self.human_delay(0.2, 0.5)
             else:
-                delay = self.human_delay(0.08, 0.7)  # Normal typing
+                delay = self.human_delay(0.08, 0.7)
 
-            # Occasional "typo" then backspace (5% chance)
             if random.random() < 0.05 and i > 0:
                 wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
                 element.send_keys(wrong_char)
                 time.sleep(self.human_delay(0.15, 0.5))
-                element.send_keys('\b')  # Backspace
+                element.send_keys('\b')
                 time.sleep(self.human_delay(0.1, 0.4))
 
             element.send_keys(char)
             time.sleep(delay)
 
-        # Final pause (review before submitting)
-        time.sleep(self.human_delay(0.5, 0.6))  # 0.2s-0.8s
+        time.sleep(self.human_delay(0.5, 0.6))
 
     def scroll_to_element(self, element):
-        """
-        Scroll to element with human-like smooth scrolling.
-
-        Args:
-            element: Selenium WebElement to scroll to
-        """
-        # Get element position
+        """Scroll to element with human-like smooth scrolling."""
         y_position = element.location['y']
-
-        # Scroll in chunks (humans don't instant-scroll)
         current_scroll = self.driver.execute_script("return window.pageYOffset")
         distance = y_position - current_scroll
-
-        # Number of scroll steps (more steps = smoother)
         steps = random.randint(8, 15)
         step_size = distance / steps
 
         for i in range(steps):
             self.driver.execute_script(f"window.scrollBy(0, {step_size})")
-            time.sleep(self.human_delay(0.02, 0.5))  # 0.01s-0.03s per step
+            time.sleep(self.human_delay(0.02, 0.5))
 
-        # Final adjustment pause
-        time.sleep(self.human_delay(0.3, 0.5))  # 0.15s-0.45s
+        time.sleep(self.human_delay(0.3, 0.5))
 
     def random_micro_movement(self):
-        """
-        Add random micro mouse movements (humans fidget).
-
-        Call this periodically during page interaction to simulate
-        natural mouse movement when reading/thinking.
-        """
+        """Add random micro mouse movements."""
         action = ActionChains(self.driver)
-
-        # Small random movements
         for _ in range(random.randint(2, 5)):
             dx = random.randint(-20, 20)
             dy = random.randint(-20, 20)
             action.move_by_offset(dx, dy)
             action.pause(self.human_delay(0.1, 0.8))
-
         action.perform()
 
     def should_perform_action(self, probability: float = 0.85) -> bool:
-        """
-        Randomly decide whether to perform action (simulates human selectivity).
-
-        Args:
-            probability: Chance of performing action (0.85 = 85%)
-
-        Returns:
-            True if action should be performed
-
-        Example:
-            # 85% chance to like (humans don't like EVERY comment)
-            if human.should_perform_action(0.85):
-                human.human_click(like_button)
-        """
+        """Randomly decide whether to perform action."""
         return random.random() < probability
 
     def random_pause_thinking(self):
-        """
-        Random pause simulating reading/thinking time.
-
-        Call this between actions to simulate human comprehension time.
-        """
-        # Humans pause to read comments before acting
-        time.sleep(self.human_delay(1.5, 0.6))  # 0.6s-2.4s
+        """Random pause simulating reading/thinking time."""
+        time.sleep(self.human_delay(1.5, 0.6))
 
 
 # Singleton instance

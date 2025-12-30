@@ -144,11 +144,11 @@ class IntelligentLivechatReply:
             self.grok_available = False
     
     def _init_banter_engine(self):
-        """Initialize Banter Engine."""
+        """Initialize Banter Engine (singleton)."""
         try:
-            from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
-            self.banter_engine = BanterEngine()
-            logger.info("[LIVECHAT-REPLY] Banter engine initialized")
+            from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
+            self.banter_engine = get_banter_engine()
+            logger.debug("[LIVECHAT-REPLY] Banter engine connected (singleton)")
         except Exception as e:
             logger.warning(f"[LIVECHAT-REPLY] Banter engine not available: {e}")
             self.banter_engine = None

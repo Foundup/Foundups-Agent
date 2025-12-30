@@ -1,8 +1,19 @@
 # video_comments Test Suite
 
-**Test Coverage:** 0% (implementation needed)
-**Last Run:** Never
-**Framework:** pytest
+**Test Coverage:** Partial (existing tests available)
+**Framework:** pytest + unittest
+
+## [EXISTING] Available Tests
+
+| Test File | Purpose | Status |
+|-----------|---------|--------|
+| `test_llm_integration.py` | WSP FMAS tests for LLM comment generation | âœ… Available |
+| `test_reply_to_comment.py` | YouTube API reply capability demo | âœ… Available |
+| `test_classifier_pipeline.py` | Commenter classification tests | âœ… Available |
+| `test_like_single_comment.py` | Single comment like/heart test | âœ… Available |
+| `test_poc_dialogue.py` | PoC dialogue flow test | âœ… Available |
+| `test_post_comment.py` | Comment posting test | âœ… Available |
+| `test_move2japan_access.py` | Move2Japan channel access test | âœ… Available |
 
 ## [TEST] Test Categories
 
@@ -13,10 +24,10 @@
 ### Test Structure
 ```
 tests/
-„¥„Ÿ„Ÿ __init__.py              # Test package
-„¥„Ÿ„Ÿ README.md               # This file
-„¥„Ÿ„Ÿ test_[module_name].py   # Main test file
-„¤„Ÿ„Ÿ TestModLog.md          # Test evolution log
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ __init__.py              # Test package
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ README.md               # This file
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ test_[module_name].py   # Main test file
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ TestModLog.md          # Test evolution log
 ```
 
 ## [RUN] Running Tests

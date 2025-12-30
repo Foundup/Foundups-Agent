@@ -150,8 +150,8 @@ class ChatSender:
 
                 # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
                 # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
-                from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
-                banter = BanterEngine(emoji_enabled=True)
+                from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
+                banter = get_banter_engine(emoji_enabled=True)
                 message_text = banter._convert_unicode_tags_to_emoji(message_text)
                 logger.debug(
                     f"[EMOJI] After conversion: {message_text.encode('ascii', 'backslashreplace').decode('ascii')}"

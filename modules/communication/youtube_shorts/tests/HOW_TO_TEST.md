@@ -200,7 +200,7 @@ smooth pan revealing hidden details, golden hour lighting, cinematic composition
 ## Troubleshooting
 
 **Error**: `GOOGLE_API_KEY not found`
-- Check `.env` file has `GOOGLE_API_KEY=AIza...`
+- Check `.env` file has `GOOGLE_API_KEY=<your_google_ai_studio_key>`
 
 **Error**: `'GenerativeModel' object has no attribute 'predict_long_running'`
 - Run: `pip install google-genai>=0.3.0`

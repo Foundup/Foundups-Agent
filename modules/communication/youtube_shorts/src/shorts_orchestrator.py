@@ -1,12 +1,12 @@
 """
 YouTube Shorts Orchestrator
 
-Manages the complete 012<->0102 interaction flow:
-1. 012 provides topic
-2. 0102 enhances prompt
+Manages the complete Shorts creation flow:
+1. Topic input
+2. Optional prompt enhancement
 3. Veo 3 or Sora2 generates video
 4. Upload to YouTube
-5. Report back to 012
+5. Return published URL
 
 WSP Compliance:
 - Comprehensive daemon logging for full flow monitoring
@@ -136,13 +136,13 @@ class ShortsOrchestrator:
         if normalized == 'auto':
             normalized = self._suggest_engine('')
 
-        logger.info(f"[SHORTS-ENGINE] [SEARCH] Requesting {normalized.upper()} generator")
-        logger.debug(f"[SHORTS-ENGINE] Currently cached generators: {list(self.generators.keys())}")
-
         # Return cached generator if available
         if normalized in self.generators:
             logger.debug(f"[SHORTS-ENGINE] [OK] Using cached {normalized.upper()} generator (no import needed)")
             return self.generators[normalized]
+
+        logger.info(f"[SHORTS-ENGINE] [SEARCH] Requesting {normalized.upper()} generator")
+        logger.debug(f"[SHORTS-ENGINE] Currently cached generators: {list(self.generators.keys())}")
 
         # Not cached - need to load
         logger.info(f"[SHORTS-ENGINE] [BOX] Loading {normalized.upper()} generator for first time...")
@@ -244,10 +244,10 @@ class ShortsOrchestrator:
         progress_callback: Optional[callable] = None
     ) -> str:
         """
-        Complete 012<->0102 flow: Generate and upload Short.
+        Complete Shorts flow: generate and upload.
 
         Args:
-            topic: Simple topic from 012 (e.g., "Cherry blossoms in Tokyo")
+            topic: Simple topic (e.g., "Cherry blossoms in Tokyo")
             duration: Video length in seconds (15-60)
                      Default: 15 (uses 3-act multi-clip system)
             enhance_prompt: Use Gemini to enhance topic (ignored if use_3act=True)
@@ -280,9 +280,9 @@ class ShortsOrchestrator:
 
         print()
         print("=" * 60)
-        print("YouTube Shorts Creation Flow - 012<->0102")
+        print("YouTube Shorts Creation Flow")
         print("=" * 60)
-        print(f"[012 Input] Topic: {topic}")
+        print(f"[INPUT] Topic: {topic}")
         print(f"  Engine: {engine_to_use.upper()}")
 
         start_time = time.time()
@@ -291,7 +291,7 @@ class ShortsOrchestrator:
             # Step 1 & 2: Generate video
             # Use 3-act system for 15s, single clip for other durations
             if use_3act and duration == 15 and hasattr(generator, "generate_three_act_short"):
-                print("[0102 Generating] Creating 3-act Short (Setup -> Shock -> Reveal)...")
+                print("[0102] Generating 3-act Short (Setup -> Shock -> Reveal)...")
                 video_path = generator.generate_three_act_short(
                     topic=topic,
                     fast_mode=fast_mode,
@@ -306,7 +306,7 @@ class ShortsOrchestrator:
                 else:
                     video_prompt = topic
 
-                print(f"[0102 Generating] Creating video with {engine_to_use.upper()}...")
+                print(f"[0102] Generating video with {engine_to_use.upper()}...")
                 video_path = generator.generate_video(
                     prompt=video_prompt,
                     duration=duration,
@@ -331,7 +331,7 @@ Generated with AI for Move2Japan
             if "food" in topic_lower:
                 tags.append("JapaneseFood")
 
-            print("[0102 Uploading] Posting to YouTube...")
+            print("[0102] Uploading to YouTube...")
             if progress_callback:
                 progress_callback("[U+1F4E4] Uploading to YouTube... Almost there!")
 
@@ -527,7 +527,6 @@ if __name__ == "__main__":
     #     duration=30
     # )
     # print(f"\nCreated Short: {url}")
-
 
 
 

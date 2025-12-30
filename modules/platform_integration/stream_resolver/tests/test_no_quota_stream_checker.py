@@ -62,22 +62,76 @@ class TestNoQuotaStreamChecker(unittest.TestCase):
         self.assertFalse(result.get('live', True))
 
     @patch('requests.Session.get')
-    def test_check_channel_for_live_success(self, mock_get):
+    @patch.object(NoQuotaStreamChecker, "check_video_is_live")
+    def test_check_channel_for_live_success(self, mock_check_video, mock_get):
         """Test successful channel live check."""
-        # Mock response with live video
+        # Mock /live redirect to a watch URL (do not follow redirects in implementation)
         mock_response = MagicMock()
-        mock_response.text = '''
-        <html><body>
-        <a href="/watch?v=dQw4w9WgXcQ">Live Stream</a>
-        </body></html>
-        '''
+        mock_response.status_code = 302
+        mock_response.url = f"https://www.youtube.com/channel/{self.test_channel_id}/live"
+        mock_response.headers = {"Location": f"/watch?v={self.test_video_id}"}
+        mock_get.return_value = mock_response
+
+        mock_check_video.return_value = {"live": True, "video_id": self.test_video_id, "method": "api"}
+
+        result = self.checker.check_channel_for_live(self.test_channel_id)
+
+        self.assertIsInstance(result, dict)
+        self.assertTrue(result.get("live"))
+        self.assertEqual(result.get("video_id"), self.test_video_id)
+        mock_get.assert_called()
+        called_url = mock_get.call_args[0][0]
+        self.assertTrue(str(called_url).endswith("/live"))
+        self.assertFalse(mock_get.call_args[1].get("allow_redirects", True))
+
+    @patch('requests.Session.get')
+    @patch.object(NoQuotaStreamChecker, "_anti_detection_delay")
+    @patch.object(NoQuotaStreamChecker, "check_video_is_live")
+    def test_check_channel_no_api_trusts_live_indicators(self, mock_check_video, mock_delay, mock_get):
+        """Test no-API mode trusts strong /live indicators."""
+        os.environ["YT_STREAM_API_VERIFY"] = "false"
+        self.addCleanup(lambda: os.environ.pop("YT_STREAM_API_VERIFY", None))
+
+        mock_response = MagicMock()
         mock_response.status_code = 200
+        mock_response.url = f"https://www.youtube.com/channel/{self.test_channel_id}/live"
+        mock_response.headers = {}
+        mock_response.text = '"isLiveNow":true "BADGE_STYLE_TYPE_LIVE_NOW" "videoId":"dQw4w9WgXcQ"'
         mock_get.return_value = mock_response
 
         result = self.checker.check_channel_for_live(self.test_channel_id)
 
         self.assertIsInstance(result, dict)
-        mock_get.assert_called()
+        self.assertTrue(result.get("live"))
+        self.assertEqual(result.get("video_id"), "dQw4w9WgXcQ")
+        mock_check_video.assert_not_called()
+
+    @patch('requests.Session.get')
+    @patch.object(NoQuotaStreamChecker, "_anti_detection_delay")
+    @patch.object(NoQuotaStreamChecker, "check_video_is_live")
+    def test_check_channel_streams_fallback_when_live_quiet(self, mock_check_video, mock_delay, mock_get):
+        """Test /streams fallback when /live has no strong indicators."""
+        live_response = MagicMock()
+        live_response.status_code = 200
+        live_response.url = f"https://www.youtube.com/channel/{self.test_channel_id}/live"
+        live_response.headers = {}
+        live_response.text = "<html><body>Channel home</body></html>"
+
+        streams_response = MagicMock()
+        streams_response.status_code = 200
+        streams_response.url = f"https://www.youtube.com/channel/{self.test_channel_id}/streams"
+        streams_response.headers = {}
+        streams_response.text = '"BADGE_STYLE_TYPE_LIVE_NOW" "videoId":"live123"'
+
+        mock_get.side_effect = [live_response, streams_response]
+        mock_check_video.return_value = {"live": True, "video_id": "live123"}
+
+        result = self.checker.check_channel_for_live(self.test_channel_id)
+
+        self.assertIsInstance(result, dict)
+        self.assertTrue(result.get("live"))
+        self.assertEqual(result.get("video_id"), "live123")
+        self.assertGreaterEqual(mock_get.call_count, 2)
 
     def test_get_random_headers(self):
         """Test random header generation."""
@@ -98,8 +152,9 @@ class TestNoQuotaStreamChecker(unittest.TestCase):
 
     def test_is_channel_rate_limited_not_limited(self):
         """Test channel rate limit check when not limited."""
-        result = self.checker._is_channel_rate_limited(self.test_channel_id)
-        self.assertFalse(result)
+        is_limited, remaining = self.checker._is_channel_rate_limited(self.test_channel_id)
+        self.assertFalse(is_limited)
+        self.assertEqual(remaining, 0.0)
 
     def test_register_rate_limit(self):
         """Test rate limit registration."""
@@ -114,21 +169,32 @@ class TestNoQuotaStreamChecker(unittest.TestCase):
         self.checker._register_rate_limit(self.test_channel_id)
 
         # Check that channel is now rate limited
-        self.assertTrue(self.checker._is_channel_rate_limited(self.test_channel_id))
+        is_limited, _ = self.checker._is_channel_rate_limited(self.test_channel_id)
+        self.assertTrue(is_limited)
 
     @patch('no_quota_stream_checker.LIVE_STATUS_VERIFIER_AVAILABLE', False)
-    def test_fallback_behavior(self):
+    @patch('requests.Session.get')
+    def test_fallback_behavior(self, mock_get):
         """Test fallback behavior when LiveStatusVerifier is unavailable."""
-        # This should work without the API verifier
+        # This should work without the API verifier and without touching the network.
+        mock_response = MagicMock()
+        mock_response.text = '<html><body>Not Live</body></html>'
+        mock_response.status_code = 200
+        mock_response.url = f"https://www.youtube.com/watch?v={self.test_video_id}"
+        mock_response.headers = {}
+        mock_get.return_value = mock_response
+
         result = self.checker.check_video_is_live(self.test_video_id)
         self.assertIsInstance(result, dict)
 
     @patch('requests.Session.get')
-    def test_request_timeout_handling(self, mock_get):
+    @patch('modules.platform_integration.youtube_auth.src.youtube_auth.get_authenticated_service')
+    def test_request_timeout_handling(self, mock_auth, mock_get):
         """Test handling of request timeouts."""
         from requests.exceptions import Timeout
 
         mock_get.side_effect = Timeout("Request timed out")
+        mock_auth.side_effect = RuntimeError("auth unavailable in unit test")
 
         result = self.checker.check_video_is_live(self.test_video_id)
 
@@ -138,19 +204,13 @@ class TestNoQuotaStreamChecker(unittest.TestCase):
     def test_session_configuration(self):
         """Test that session is properly configured."""
         self.assertIsNotNone(self.checker.session)
-        self.assertIsNotNone(hasattr(self.checker.session, 'get'))
+        self.assertTrue(hasattr(self.checker.session, 'get'))
 
     def test_lazy_live_verifier_loading(self):
         """Test lazy loading of LiveStatusVerifier."""
-        # Initially should not be loaded
-        self.assertFalse(hasattr(self.checker, '_live_verifier') or
-                        self.checker._live_verifier is not None)
-
-        # After calling _get_live_verifier, it should attempt to load
-        verifier = self.checker._get_live_verifier()
-        # Result depends on whether LiveStatusVerifier is available
-        # Just verify the method completes without error
-        self.assertTrue(True)  # Method executed successfully
+        self.assertFalse(self.checker._live_verifier_initialized)
+        self.checker._get_live_verifier()
+        self.assertTrue(self.checker._live_verifier_initialized)
 
     def test_get_live_verifier_caching(self):
         """Test that LiveStatusVerifier is cached after first load."""
@@ -161,7 +221,7 @@ class TestNoQuotaStreamChecker(unittest.TestCase):
         verifier2 = self.checker._get_live_verifier()
 
         # Should be the same object (cached)
-        self.assertEqual(verifier1, verifier2)
+        self.assertIs(verifier1, verifier2)
 
 
 class TestNoQuotaStreamCheckerIntegration(unittest.TestCase):

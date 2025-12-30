@@ -1,5 +1,5 @@
 """
-DAE Dependency Launcher - Auto-start Chrome + LM Studio for YouTube DAE
+DAE Dependency Launcher - Auto-start Chrome + Edge + LM Studio for YouTube DAE
 ========================================================================
 
 WSP Compliance:
@@ -14,7 +14,8 @@ Usage:
 
 Dependencies:
     1. Chrome with remote debugging port 9222 (for Selenium/UI-TARS)
-    2. LM Studio on port 1234 (for UI-TARS vision model)
+    2. Edge with remote debugging port 9223 (for FoundUps Studio inbox)
+    3. LM Studio on port 1234 (for UI-TARS vision model)
 """
 
 import asyncio
@@ -37,6 +38,14 @@ CHROME_PROFILE = Path(os.getenv(
 ))
 YOUTUBE_STUDIO_URL = "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox"
 
+EDGE_DEBUG_PORT = int(os.getenv("FOUNDUPS_EDGE_PORT", os.getenv("EDGE_DEBUG_PORT", "9223")))
+EDGE_PROFILE = Path(os.getenv(
+    "EDGE_PROFILE_PATH",
+    "O:/Foundups-Agent/modules/platform_integration/browser_profiles/youtube_foundups/edge"
+))
+FOUNDUPS_CHANNEL_ID = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
+FOUNDUPS_STUDIO_URL = f"https://studio.youtube.com/channel/{FOUNDUPS_CHANNEL_ID}/comments/inbox"
+
 LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
 
 
@@ -51,6 +60,23 @@ def resolve_lm_studio_path() -> Optional[str]:
         r"E:\LM_studio\LM Studio\LM Studio.exe",
         str(Path(os.getenv("LOCALAPPDATA", "")) / "Programs" / "LM Studio" / "LM Studio.exe"),
         r"C:\Users\user\AppData\Local\Programs\LM Studio\LM Studio.exe",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return str(Path(candidate))
+    return None
+
+
+def resolve_edge_path() -> Optional[str]:
+    """
+    Resolve Microsoft Edge executable path.
+
+    Prefers explicit `EDGE_PATH`, then checks common install locations.
+    """
+    candidates = [
+        os.getenv("EDGE_PATH"),
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     ]
     for candidate in candidates:
         if candidate and Path(candidate).exists():
@@ -73,6 +99,10 @@ def is_port_open(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bo
 def is_chrome_running() -> bool:
     """Check if Chrome with debug port is running."""
     return is_port_open(CHROME_DEBUG_PORT)
+
+def is_edge_running() -> bool:
+    """Check if Edge with debug port is running."""
+    return is_port_open(EDGE_DEBUG_PORT)
 
 
 def is_lm_studio_running() -> bool:
@@ -125,6 +155,55 @@ def launch_chrome() -> Tuple[bool, str]:
         
     except Exception as e:
         logger.error(f"[DEPS] Failed to launch Chrome: {e}")
+        return False, str(e)
+
+
+def launch_edge() -> Tuple[bool, str]:
+    """
+    Launch Edge with remote debugging port and FoundUps profile.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    if is_edge_running():
+        logger.info(f"[DEPS] Edge already running on port {EDGE_DEBUG_PORT}")
+        return True, "Edge already running"
+
+    edge_path = resolve_edge_path()
+    if not edge_path:
+        logger.error("[DEPS] Edge executable not found (set EDGE_PATH in .env)")
+        return False, "Edge executable not found"
+
+    try:
+        EDGE_PROFILE.mkdir(parents=True, exist_ok=True)
+
+        cmd = [
+            edge_path,
+            f"--remote-debugging-port={EDGE_DEBUG_PORT}",
+            f"--user-data-dir={EDGE_PROFILE}",
+            FOUNDUPS_STUDIO_URL
+        ]
+
+        logger.info(f"[DEPS] Launching Edge with debug port {EDGE_DEBUG_PORT}...")
+
+        subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+        )
+
+        for _ in range(30):
+            time.sleep(1)
+            if is_edge_running():
+                logger.info(f"[DEPS] [OK] Edge started on port {EDGE_DEBUG_PORT}")
+                return True, f"Edge started on port {EDGE_DEBUG_PORT}"
+
+        logger.warning("[DEPS] Edge launched but port not responding")
+        return False, "Edge launched but debug port not responding"
+
+    except Exception as e:
+        logger.error(f"[DEPS] Failed to launch Edge: {e}")
         return False, str(e)
 
 
@@ -198,8 +277,20 @@ async def ensure_dependencies(require_lm_studio: bool = True) -> Dict[str, bool]
     results['chrome'] = chrome_ok
     if not chrome_ok:
         logger.error(f"[DEPS] [ERROR] Chrome: {chrome_msg}")
+
+    # 2. Edge with debug port (optional but recommended for FoundUps)
+    edge_auto = os.getenv("YT_EDGE_AUTO_LAUNCH", "true").strip().lower() in ("1", "true", "yes", "y", "on")
+    if edge_auto:
+        edge_ok, edge_msg = launch_edge()
+        results['edge'] = edge_ok
+        if not edge_ok:
+            logger.warning(f"[DEPS] [WARN] Edge: {edge_msg}")
+    else:
+        results['edge'] = is_edge_running()
+        if results['edge']:
+            logger.info("[DEPS] Edge detected (auto-launch disabled)")
     
-    # 2. LM Studio for UI-TARS (optional but recommended)
+    # 3. LM Studio for UI-TARS (optional but recommended)
     if require_lm_studio:
         lm_ok, lm_msg = launch_lm_studio()
         results['lm_studio'] = lm_ok
@@ -215,6 +306,7 @@ async def ensure_dependencies(require_lm_studio: bool = True) -> Dict[str, bool]
     logger.info("="*60)
     logger.info("[DEPS] DEPENDENCY STATUS:")
     logger.info(f"  Chrome (port {CHROME_DEBUG_PORT}): {'READY' if results['chrome'] else 'NOT READY'}")
+    logger.info(f"  Edge (port {EDGE_DEBUG_PORT}): {'READY' if results.get('edge') else 'NOT READY'}")
     logger.info(f"  LM Studio (port {LM_STUDIO_PORT}): {'READY' if results.get('lm_studio') else 'NOT RUNNING'}")
     logger.info("="*60)
     
@@ -225,6 +317,7 @@ def get_dependency_status() -> Dict[str, bool]:
     """Get current status of dependencies without launching."""
     return {
         'chrome': is_chrome_running(),
+        'edge': is_edge_running(),
         'lm_studio': is_lm_studio_running()
     }
 
@@ -235,11 +328,17 @@ if __name__ == "__main__":
     print("\n[INFO] Checking dependency status...")
     status = get_dependency_status()
     print(f"  Chrome (9222): {'READY' if status['chrome'] else 'NOT READY'}")
+    print(f"  Edge (9223): {'READY' if status['edge'] else 'NOT READY'}")
     print(f"  LM Studio (1234): {'READY' if status['lm_studio'] else 'NOT READY'}")
     
     if not all(status.values()):
         print("\n[INFO] Launching missing dependencies...")
         asyncio.run(ensure_dependencies())
+
+
+
+
+
 
 
 

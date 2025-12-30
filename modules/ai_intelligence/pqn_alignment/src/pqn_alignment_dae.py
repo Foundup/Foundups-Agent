@@ -23,6 +23,7 @@ chat broadcasting and event notification systems.
 """
 
 import logging
+import os
 import asyncio
 import json
 import hashlib
@@ -65,7 +66,8 @@ try:
     )
     RECURSIVE_AVAILABLE = True
 except ImportError:
-    logging.warning("Recursive systems not available - DAE will operate without recursive improvement")
+    if os.getenv("FOUNDUPS_SUPPRESS_RECURSIVE_WARNINGS", "false").lower() not in {"1", "true", "yes", "on"}:
+        logging.warning("Recursive systems not available - DAE will operate without recursive improvement")
     RECURSIVE_AVAILABLE = False
 
 # WRE Integration per WSP 46
@@ -77,7 +79,8 @@ try:
     )
     WRE_AVAILABLE = True
 except ImportError:
-    logging.warning("WRE Master Orchestrator not available - DAE will operate independently")
+    if os.getenv("FOUNDUPS_SUPPRESS_RECURSIVE_WARNINGS", "false").lower() not in {"1", "true", "yes", "on"}:
+        logging.warning("WRE Master Orchestrator not available - DAE will operate independently")
     WRE_AVAILABLE = False
 
 

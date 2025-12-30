@@ -76,6 +76,10 @@ def _get_comment_engagement_switches() -> _CommentEngagementSwitches:
         do_heart = "heart" in allowed
         do_reply = "reply" in allowed
 
+    if "YT_COMMENT_REACTIONS_ENABLED" in os.environ:
+        do_like = _env_truthy("YT_COMMENT_REACTIONS_ENABLED", "true")
+        do_heart = do_like
+
     if "YT_COMMENT_LIKE_ENABLED" in os.environ:
         do_like = _env_truthy("YT_COMMENT_LIKE_ENABLED", "true")
     if "YT_COMMENT_HEART_ENABLED" in os.environ:
@@ -198,10 +202,15 @@ class SubprocessRunner(EngagementRunner):
             logger.error(f"[DAEMON][CARDIOVASCULAR] ❌ Script missing: {self.engagement_script}")
             return {'error': 'missing_script', 'stats': {'errors': 1}}
 
+        # Browser port (9222=Chrome default, 9223=Edge for FoundUps)
+        browser_port = kwargs.get('browser_port', 9222)
+        browser_name = "Edge" if browser_port == 9223 else "Chrome"
+
         logger.info(f"[DAEMON][CARDIOVASCULAR] ✓ Building comment engagement command...")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Channel: {channel_id}")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Max comments: {max_comments} (0=UNLIMITED)")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Video ID: {video_id or 'None (Studio inbox)'}")
+        logger.info(f"[DAEMON][CARDIOVASCULAR]   Browser: {browser_name} (port {browser_port})")
 
         # Build command
         cmd = [
@@ -210,6 +219,7 @@ class SubprocessRunner(EngagementRunner):
             str(self.engagement_script),
             "--channel", channel_id,
             "--max-comments", str(max_comments),
+            "--browser-port", str(browser_port),
             "--json-output"
         ]
 
@@ -225,6 +235,8 @@ class SubprocessRunner(EngagementRunner):
             cmd.append("--no-like")
         if not switches.do_heart:
             cmd.append("--no-heart")
+        if not switches.do_reply:
+            cmd.append("--no-reply")
         if not switches.use_intelligent_reply:
             cmd.append("--no-intelligent-reply")
         if switches.reply_text:
@@ -264,10 +276,13 @@ class SubprocessRunner(EngagementRunner):
         logger.info(f"[SUBPROCESS] Command: {' '.join(cmd)}")
 
         # Start subprocess
+        env = os.environ.copy()
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(self.repo_root),
+            env=env
         )
 
         # Calculate timeout
@@ -318,7 +333,7 @@ class SubprocessRunner(EngagementRunner):
                             continue
 
                         # Log everything else (errors, warnings, info)
-                        logger.info(f"[SUBPROCESS-{prefix}] {text}")
+                        logger.info(f"[REPLY] {text}")
 
         stdout_task = asyncio.create_task(_drain_stream(process.stdout, stdout_lines, "STDOUT"))
         stderr_task = asyncio.create_task(_drain_stream(process.stderr, stderr_lines, "STDERR"))
@@ -423,7 +438,7 @@ class ThreadRunner(EngagementRunner):
 
         # Calculate timeout
         if max_comments == 0:
-            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "1800"))
+            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "7200"))
         else:
             timeout = (max_comments * 240) + 60
 

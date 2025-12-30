@@ -28,6 +28,7 @@ from modules.communication.livechat.src.chat_poller import ChatPoller
 from modules.infrastructure.system_health_monitor.src.system_health_analyzer import SystemHealthAnalyzer
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
 from modules.communication.livechat.src.stream_session_logger import get_session_logger
+from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
 try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
@@ -89,6 +90,16 @@ class LiveChatCore:
         self.recent_command_cache = {}  # Cache to prevent duplicate command responses
         self.message_timestamps = []  # Track message times for activity monitoring
 
+        # Stream health monitoring (intelligent stream switching)
+        self._last_message_time = time.time()  # Track chat activity
+        self._inactivity_threshold_seconds = int(os.getenv("STREAM_INACTIVITY_THRESHOLD", "600"))  # 10 minutes default
+        self._min_viewers_threshold = int(os.getenv("STREAM_MIN_VIEWERS", "5"))  # Minimum viable viewers
+        self._health_check_enabled = os.getenv("STREAM_HEALTH_CHECK_ENABLED", "true").lower() in ("1", "true", "yes")
+        logger.info(f"[STREAM-HEALTH] Monitoring enabled: {self._health_check_enabled}")
+        if self._health_check_enabled:
+            logger.info(f"[STREAM-HEALTH]   Inactivity threshold: {self._inactivity_threshold_seconds}s")
+            logger.info(f"[STREAM-HEALTH]   Min viewers: {self._min_viewers_threshold}")
+
         # Orchestrator integration (surgical migration)
         self.message_router = message_router
         self.router_mode = message_router is not None
@@ -125,7 +136,11 @@ class LiveChatCore:
         # NEW: Quota-aware polling with HOLOINDEX integration gap fix
         try:
             # Get credential set number from service
-            cred_set = getattr(youtube_service, 'credential_set', 1)
+            cred_set = getattr(
+                youtube_service,
+                'credential_set',
+                getattr(youtube_service, '_credential_set', 1)
+            )
             # HOLOINDEX IMPROVEMENT: Pass oauth_manager for automatic token rotation
             oauth_manager = youtube_service if hasattr(youtube_service, 'rotate_credentials') else None
             self.quota_poller = QuotaAwarePoller(cred_set, oauth_manager) if QuotaAwarePoller else None
@@ -179,14 +194,32 @@ class LiveChatCore:
         os.makedirs(self.memory_dir, exist_ok=True)
         
         # AUTOMATIC: Initialize WRE monitor for continuous improvement
-        try:
-            from modules.infrastructure.wre_core.wre_monitor import get_monitor
-            self.wre_monitor = get_monitor()
-            logger.info("[0102] WRE Monitor attached - Continuous improvement active")
-        except Exception as e:
-            logger.debug(f"WRE Monitor not available: {e}")
+        enable_wre_monitor = os.getenv("FOUNDUPS_ENABLE_WRE_MONITOR", "true").strip().lower() in ("1", "true", "yes", "y", "on")
+        enable_wre = os.getenv("FOUNDUPS_ENABLE_WRE", "true").strip().lower() in ("1", "true", "yes", "y", "on")
+        if enable_wre and enable_wre_monitor:
+            try:
+                from modules.infrastructure.wre_core.wre_monitor import get_monitor
+                self.wre_monitor = get_monitor()
+                logger.info("[0102] WRE Monitor attached - Continuous improvement active")
+            except Exception as e:
+                logger.debug(f"WRE Monitor not available: {e}")
+                self.wre_monitor = None
+        else:
             self.wre_monitor = None
-        
+            if not enable_wre:
+                logger.info("[0102] WRE Monitor disabled (FOUNDUPS_ENABLE_WRE=0)")
+            else:
+                logger.info("[0102] WRE Monitor disabled (FOUNDUPS_ENABLE_WRE_MONITOR=0)")
+
+        # BREADCRUMB TELEMETRY: Centralized breadcrumb hub for all DAEs
+        # Persistent storage enables: WRE learning, AI Overseer pattern detection, 0102 troubleshooting
+        try:
+            self.breadcrumb_telemetry = get_breadcrumb_telemetry()
+            logger.info("[BREADCRUMB-HUB] Telemetry initialized - all DAEs can send breadcrumbs")
+        except Exception as e:
+            logger.warning(f"[BREADCRUMB-HUB] Failed to initialize telemetry: {e}")
+            self.breadcrumb_telemetry = None
+
         logger.info(f"LiveChatCore initialized for video: {video_id}")
     
     async def initialize(self) -> bool:
@@ -313,7 +346,56 @@ class LiveChatCore:
             self.recent_messages_sent = self.recent_messages_sent[-100:]
 
         return success
-    
+
+    def store_breadcrumb(
+        self,
+        source_dae: str,
+        event_type: str,
+        message: str,
+        phase: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+        session_id: Optional[str] = None
+    ):
+        """
+        Store breadcrumb from any DAE (comment_engagement, party_reactor, etc.).
+
+        This is the central breadcrumb hub - all DAEs send breadcrumbs here for:
+        - Persistent storage (survives DAE restarts)
+        - WRE learning (breadcrumbs = training data)
+        - AI Overseer pattern detection
+        - 0102 troubleshooting
+
+        Args:
+            source_dae: DAE name (e.g., 'comment_engagement', 'party_reactor')
+            event_type: Event classification (e.g., 'no_comments', 'navigation', 'wsp_violation')
+            message: Human-readable message
+            phase: Optional phase identifier (e.g., 'PHASE-1', 'DAE-NAV')
+            metadata: Optional JSON-serializable context
+            session_id: Optional session identifier for grouping
+
+        Example:
+            >>> # From comment_engagement_dae.py:
+            >>> self.livechat_sender.store_breadcrumb(
+            ...     source_dae='comment_engagement',
+            ...     phase='PHASE-2',
+            ...     event_type='no_comments_detected',
+            ...     message='Inbox cleared via Occam detection',
+            ...     metadata={'comment_count': 0, 'detection_method': 'DOM'}
+            ... )
+        """
+        if self.breadcrumb_telemetry:
+            try:
+                self.breadcrumb_telemetry.store_breadcrumb(
+                    source_dae=source_dae,
+                    event_type=event_type,
+                    message=message,
+                    phase=phase,
+                    metadata=metadata,
+                    session_id=session_id
+                )
+            except Exception as e:
+                logger.debug(f"[BREADCRUMB-HUB] Failed to store breadcrumb: {e}")
+
     async def poll_messages(self) -> tuple:
         """
         Poll for new chat messages.
@@ -770,7 +852,11 @@ class LiveChatCore:
                 if self.quota_intelligence:
                     try:
                         # Get current credential set (default to 1 if not available)
-                        current_set = getattr(self.youtube, 'credential_set', 1)
+                        current_set = getattr(
+                            self.youtube,
+                            'credential_set',
+                            getattr(self.youtube, '_credential_set', 1)
+                        )
                         logger.debug(f"[REFRESH] [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
                         # Check if rotation is needed
@@ -801,19 +887,40 @@ class LiveChatCore:
                             try:
                                 # Import youtube_auth module for service reinitialization
                                 from modules.platform_integration.youtube_auth.src.youtube_auth import get_authenticated_service
+                                from modules.platform_integration.youtube_auth.src.monitored_youtube_service import (
+                                    create_monitored_service
+                                )
 
                                 # Get new YouTube service with target credential set
                                 logger.info(f"[REFRESH] Reinitializing YouTube service with Set {target_set} credentials...")
-                                new_youtube = get_authenticated_service(token_index=target_set)
+                                new_youtube_service = get_authenticated_service(token_index=target_set)
 
-                                if new_youtube:
+                                if new_youtube_service:
+                                    try:
+                                        new_youtube = create_monitored_service(
+                                            new_youtube_service,
+                                            credential_set=target_set
+                                        )
+                                    except Exception as wrap_error:
+                                        logger.warning(
+                                            f"[WARN] Failed to wrap YouTube service for monitoring: {wrap_error}"
+                                        )
+                                        new_youtube = new_youtube_service
+
                                     # Update service reference
                                     old_service = self.youtube
                                     self.youtube = new_youtube
+                                    self.session_manager.youtube = new_youtube
+                                    self.chat_poller.youtube = new_youtube
+                                    self.chat_sender.update_youtube_service(new_youtube)
+                                    self.message_processor.youtube_service = new_youtube
+                                    if self.intelligent_throttle:
+                                        self.intelligent_throttle.current_credential_set = target_set
 
                                     # Reinitialize quota poller with new service
-                                    if hasattr(new_youtube, 'quota_manager'):
-                                        self.quota_poller = QuotaAwarePoller(new_youtube.quota_manager)
+                                    if QuotaAwarePoller:
+                                        oauth_manager = new_youtube if hasattr(new_youtube, 'rotate_credentials') else None
+                                        self.quota_poller = QuotaAwarePoller(target_set, oauth_manager)
                                         logger.info(f"[REFRESH] QuotaAwarePoller reinitialized with Set {target_set}")
 
                                     logger.critical(f"[OK] ROTATION SUCCESSFUL: Now using Set {target_set} credentials")
@@ -987,7 +1094,9 @@ class LiveChatCore:
                 if messages:
                     logger.info(f"Processing {len(messages)} messages")
                     await self.process_message_batch(messages)
-                
+                    # Update last message timestamp for stream health monitoring
+                    self._last_message_time = time.time()
+
                 # Check for pending batched announcements
                 if hasattr(self.message_processor, 'event_handler'):
                     pending_count = self.message_processor.event_handler.get_pending_count()
@@ -1002,7 +1111,23 @@ class LiveChatCore:
                 # Update viewer count periodically
                 if time.time() % 60 < 1:  # Every minute
                     self.session_manager.update_viewer_count()
-                
+
+                # Check stream health (intelligent switching to better streams)
+                if self._health_check_enabled:
+                    current_time = time.time()
+                    time_since_message = current_time - self._last_message_time
+                    viewers = self.session_manager.viewer_count
+
+                    # Stream is unhealthy if: no messages for X minutes AND low viewer count
+                    if time_since_message > self._inactivity_threshold_seconds and viewers < self._min_viewers_threshold:
+                        logger.warning(f"[STREAM-HEALTH] ⚠️ UNHEALTHY STREAM DETECTED")
+                        logger.warning(f"[STREAM-HEALTH]   Last message: {int(time_since_message)}s ago (threshold: {self._inactivity_threshold_seconds}s)")
+                        logger.warning(f"[STREAM-HEALTH]   Viewers: {viewers} (threshold: {self._min_viewers_threshold})")
+                        logger.warning(f"[STREAM-HEALTH]   Video: {self.video_id}")
+                        logger.info(f"[STREAM-HEALTH] 🔄 Triggering intelligent stream switch...")
+                        self.is_running = False
+                        break
+
                 # Wait before next poll
                 sleep_time = max(poll_interval_ms / 1000.0, 1.0)
                 await asyncio.sleep(sleep_time)

@@ -41,6 +41,7 @@ from .services.telemetry_formatter import TelemetryFormatter
 from .services.module_metrics import ModuleMetrics
 from .services.monitoring_loop import MonitoringLoop
 from holo_index.wre_integration.skill_executor import SkillExecutor
+from modules.communication.livechat.src.automation_gates import gate_snapshot
 
 # Import breadcrumb tracer
 from holo_index.adaptive_learning.breadcrumb_tracer import get_tracer
@@ -102,6 +103,10 @@ class HoloDAECoordinator:
         self._initialize_doc_only_modules()
         self.module_map: Dict[str, Dict[str, Any]] = {}
         self.orphan_candidates: List[str] = []
+
+        # AI Discovery: Gate Registry
+        self.detected_gates: Dict[str, Any] = {}
+        self._scan_for_gates()
 
         # Environment + logging context
         self.holo_console_enabled = os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes"}
@@ -184,6 +189,53 @@ class HoloDAECoordinator:
                 self.doc_only_modules.add(normalized)
             absolute = (self.repo_root / normalized).resolve()
             self.doc_only_modules.add(str(absolute).replace('\\', '/'))
+
+    def _scan_for_gates(self) -> None:
+        """
+        AI GENESIS: Recursively discover 'Gate' capabilities in modules.
+        This allows the Coordinator to 'awaken' to new compliance officers like AutoGate.
+        """
+        self._detailed_log("[HOLODAE-GENESIS] Scanning for autonomous gates...")
+        modules_root = self.repo_root / "modules"
+        
+        # Heuristic: Look for *_gate.py files
+        for gate_file in modules_root.rglob("*_gate.py"):
+            try:
+                # Convert path to module string
+                rel_path = gate_file.relative_to(self.repo_root)
+                module_str = str(rel_path).replace(os.sep, ".")[:-3]
+                
+                # Dynamic import
+                if module_str not in sys.modules:
+                    import importlib
+                    module = importlib.import_module(module_str)
+                else:
+                    module = sys.modules[module_str]
+                
+                # Inspect for Gate classes
+                import inspect
+                for name, obj in inspect.getmembers(module):
+                    if inspect.isclass(obj) and name.endswith("Gate") and name != "AutoGate": 
+                        # We found a generic gate! (AutoGate is special, but let's register it too if generic)
+                        pass
+                    
+                    # Specific check for AutoGate (our known entity)
+                    if name == "AutoGate":
+                        self.detected_gates["AutoGate"] = {
+                            "module": module_str,
+                            "path": str(rel_path),
+                            "class": obj,
+                            "discovered_at": time.time()
+                        }
+                        self._detailed_log(f"[HOLODAE-GENESIS] ✨ Discovered ACTIVE GATE: {name} in {rel_path}")
+                        self.telemetry_logger.log_system_event(
+                            "gate_discovery", 
+                            "high", 
+                            f"AI successfully identified compliance gate: {name}"
+                        )
+
+            except Exception as e:
+                self._detailed_log(f"[HOLODAE-GENESIS] Failed to probe {gate_file}: {e}")
 
     def _holo_log(self, message: str, console: Optional[bool] = None) -> None:
         """Log HoloDAE activity visible to 012 with HOLO_AGENT_ID"""
@@ -426,7 +478,10 @@ class HoloDAECoordinator:
             'files_watched': self.file_watcher.get_watched_files_count(),
             'current_work_context': self.current_work_context.get_summary(),
             'last_monitoring_summary': self.monitoring_loop.last_monitoring_result.get_summary() if self.monitoring_loop.last_monitoring_result else None,
-            'last_monitoring_timestamp': self.monitoring_loop.last_monitoring_result.timestamp.isoformat() if self.monitoring_loop.last_monitoring_result else None
+            'last_monitoring_timestamp': self.monitoring_loop.last_monitoring_result.timestamp.isoformat() if self.monitoring_loop.last_monitoring_result else None,
+            'last_monitoring_timestamp': self.monitoring_loop.last_monitoring_result.timestamp.isoformat() if self.monitoring_loop.last_monitoring_result else None,
+            'automation_gates': gate_snapshot(),
+            'discovered_gates': list(self.detected_gates.keys())
         }
 
     def show_menu(self) -> str:

@@ -21,6 +21,7 @@ Stores patterns extracted from 012.txt for in-context learning (RAG)
 WSP Compliance: WSP 93 (CodeIndex Surgical Intelligence), WSP 46 (WRE Pattern)
 """
 
+import os
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Optional, Any
@@ -30,6 +31,8 @@ import logging
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+if os.getenv("HOLO_PATTERN_MEMORY_LOGS", "true").lower() not in {"1", "true", "yes", "on"}:
+    logger.setLevel(logging.WARNING)
 
 
 class PatternMemory:
@@ -135,7 +138,7 @@ class PatternMemory:
                 metadatas=[metadata]
             )
 
-            logger.info(f"[PATTERN-MEMORY] Stored pattern {pattern_id} from {metadata['source']}")
+            logger.debug(f"[PATTERN-MEMORY] Stored pattern {pattern_id} from {metadata['source']}")
             return True
 
         except Exception as e:

@@ -12,6 +12,180 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### 2025-12-28 - Holiday Awareness WSP 96 Skill Pattern Refactor
+
+**By:** 0102
+**WSP References:** WSP 96 (Skills Wardrobe Protocol), WSP 77 (Agent Coordination), WSP 27 (DAE Architecture)
+
+**User Request:** "it should be doing a new years banter no? it should recognize holidays... why a py? isnt here an existing chat system... it should trigger our skillz system"
+
+**Problem:** Initial implementation created standalone `holiday_awareness.py` with hardcoded responses. User correctly identified this violates WSP 96 - responses should be in JSON skill file, Python should only be executor.
+
+**Solution:** Refactored to WSP 96 compliant pattern:
+1. **JSON Skill** (`skills/holiday_awareness.json`): Contains holiday dates, themes, and MAGA-trolling responses
+2. **Python Executor** (`src/holiday_awareness.py`): Date calculation, context detection, JSON loading
+
+**Implementation Details:**
+- Added `_load_skill_config()` to load JSON at module level
+- Added `_get_responses_from_skill()` to fetch responses by theme
+- Replaced hardcoded `HOLIDAY_GREETINGS` dict with minimal `_FALLBACK_GREETINGS`
+- Updated `get_holiday_greeting()` to use JSON first, fallback second
+- `greeting_generator.py:163` already wired to use `get_session_holiday_greeting()` (50% chance)
+
+**Files Created:**
+- `modules/communication/livechat/skills/holiday_awareness.json`
+
+**Files Modified:**
+- `modules/communication/livechat/src/holiday_awareness.py`
+
+**Status:** COMPLETE - New Year's countdown active (Dec 28: 3 days until 2026)
+
+---
+
+### 2025-12-28 - Phase 3S: Smart Rotation & Active Session Prioritization
+
+**By:** Antigravity (Agent)
+**WSP References:** WSP 00 (Occam's Razor), WSP 27 (DAE Architecture), WSP 49 (Platform Integration Safety)
+
+**Problem:** System was rigidly defaulting to Move2Japan even when UnDaoDu was active, causing unnecessary account swaps and potential "breaks" in navigation flow. Occam's Razor demands no unnecessary actions.
+
+**Solution:** Implemented robust session detection and active channel prioritization.
+
+**Implementation Details:**
+1.  **Smart Detection**: Added `_detect_current_channel_id` to `AutoModeratorDAE` and `TarsAccountSwapper`. This method uses a hybrid approach (Script Execution -> URL Regex) to accurately identify the current channel.
+2.  **Queue Prioritization**: `AutoModeratorDAE` now inspects the browser state at startup. If an active session is detected, that channel is moved to the front of the rotation queue, preventing redundant initial swaps.
+3.  **Fast Path Swapping**: `TarsAccountSwapper.swap_to` now includes a "Fast Path" check. It compares requested ID with current browser ID before navigating, returning `True` immediately if already on target.
+4.  **Environment Sync**: Synchronized all channel IDs across `AutoModeratorDAE`, `TarsAccountSwapper`, and `StudioAccountSwitcher` to use `.env` variables (`MOVE2JAPAN_CHANNEL_ID`, `UNDAODU_CHANNEL_ID`, `FOUNDUPS_CHANNEL_ID`).
+5.  **Robust Vision Check**: Added `_vision_exists` helper to `CommentProcessor` to resolve `AttributeError` during vision-verified interaction checks.
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+- `modules/communication/video_comments/skills/tars_account_swapper/account_swapper_skill.py`
+- `modules/communication/video_comments/skills/tars_like_heart_reply/src/comment_processor.py`
+- `modules/infrastructure/foundups_vision/src/studio_account_switcher.py`
+
+**Status:** IMPLEMENTED - Rotation is now context-aware and respects existing browser state.
+
+---
+
+
+**By:** 0102
+**WSP References:** WSP 00 (Occam's Razor), WSP 91 (DAEmon Observability), WSP 77 (Agent Coordination)
+
+**User Report:** "it open in comments for m2j then it goes to the @move2japan/live the system is not being updated witht he detected live stream that is @UnDaoDu channel atm"
+
+**Problem:** `get_community_monitor()` singleton only set `channel_id` on first creation. When a different channel went live (UnDaoDu), subsequent calls to `get_community_monitor("UnDaoDu")` returned the existing M2J instance WITHOUT updating the channel_id. This caused:
+1. Live priority set correctly: `set_live_priority("UnDaoDu", "video_id")` ✓
+2. BUT monitor stayed on M2J channel_id (never updated) ✗
+3. Result: System processed M2J comments instead of UnDaoDu live stream
+
+**Root Cause:** [community_monitor.py:672-679](src/community_monitor.py#L672-L679) - Singleton else block updated `chat_sender` and `telemetry_store` but NOT `channel_id` when different channel went live.
+
+**Solution:** Added channel_id update logic in singleton getter to detect and handle channel switches.
+
+**Implementation:**
+
+**1. Added Channel Switch Detection** ([community_monitor.py:681-687](src/community_monitor.py#L681-L687)):
+```python
+# Phase 3R (2025-12-24): Update primary channel_id when different stream detected
+# CRITICAL FIX: Singleton was stuck on first channel, ignoring live stream switches
+if channel_id != _community_monitor_instance.channel_id:
+    logger.info(f"[COMMUNITY] 🔄 CHANNEL SWITCH DETECTED:")
+    logger.info(f"[COMMUNITY]   Old primary: {_community_monitor_instance.channel_id}")
+    logger.info(f"[COMMUNITY]   New primary: {channel_id}")
+    _community_monitor_instance.channel_id = channel_id
+```
+
+**Flow After Fix**:
+1. Daemon starts → `get_community_monitor("M2J")` creates instance with M2J
+2. UnDaoDu goes live → `get_community_monitor("UnDaoDu")` detects switch
+3. Logs: `🔄 CHANNEL SWITCH DETECTED: Old primary: M2J, New primary: UnDaoDu`
+4. Updates: `_community_monitor_instance.channel_id = "UnDaoDu"`
+5. `set_live_priority("UnDaoDu", "video_id")` sets priority ✓
+6. Result: System processes UnDaoDu live stream comments ✓
+
+**Integration with Phase 3R Live Priority**:
+- [auto_moderator_dae.py:784-790](../auto_moderator_dae.py#L784-L790) - Calls `set_live_priority()` when stream detected
+- [community_monitor.py:152-186](src/community_monitor.py#L152-L186) - `get_next_channel()` checks live priority
+- [community_monitor.py:386-393](src/community_monitor.py#L386-L393) - Passes `--video {video_id}` flag
+- [comment_engagement_dae.py:631-659](../../video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py#L631-L659) - Navigates to actual video_id
+
+**Status**: FIXED - Singleton now updates channel_id when live stream switches
+
+**Next Test**: Verify system switches from M2J to UnDaoDu when UnDaoDu stream goes live
+
+---
+
+### 2025-12-24 - /fc and /troll Commands (Grok-Powered Fact-Check & Roast)
+
+**By:** 0102
+**WSP References:** WSP 00 (Occam's Razor), WSP 72 (Module Independence), WSP 77 (AI Integration)
+
+**User Request:** "lets make fact checking easier... lets make it simple /fc @user... /troll @user should have grok troll? deep dive into the live chat commands..."
+
+**Problem:** Live chat needed fact-checking and trolling commands, but user's initial proposal was overengineered (Gemma → Grok pipeline). Occam's Razor demanded simplest solution.
+
+**Occam's Analysis**:
+- **Complex Proposal**: Gemma retrieves chat → serves to Grok → sentiment analysis → fact-check (4 steps, 2 AIs)
+- **Simple Solution**: Chat log retrieval → Grok analysis → return result (2 steps, 1 AI)
+- **Decision**: Grok-only implementation (Gemma unnecessary for chat log access)
+
+**Solution:** Added `/fc` (fact-check) and `/troll` (roast) commands using existing `ChatTelemetryStore` + Grok for analysis.
+
+**Implementation:**
+
+**1. Added Helper Methods** ([command_handler.py](src/command_handler.py):591-692):
+   - `_get_user_recent_messages()` - Retrieves chat history from `ChatTelemetryStore`
+   - `_grok_fact_check()` - Grok analyzes messages, returns truthfulness rating (0-10)
+   - `_grok_roast()` - Grok generates witty roast based on recent messages
+
+**2. Added /fc Command** ([command_handler.py](src/command_handler.py):538-557):
+   - **Syntax**: `/fc @username`
+   - **Flow**: Retrieves last 10 messages → Grok fact-checks → returns rating
+   - **Permissions**: All users (flood protection applies)
+   - **Output**: `@requester ✊✋🖐️ FC CHECK: @target - Rating: X/10 - {explanation}`
+
+**3. Added /troll Command** ([command_handler.py](src/command_handler.py):559-594):
+   - **Syntax**: `/troll @username`
+   - **Flow**: Retrieves last 5 messages → Grok generates roast
+   - **Permissions**: OWNER, MOD, or TOP 10 WHACKERS only
+   - **Output**: `@requester {witty_roast} ✊✋🖐️`
+
+**4. Updated /help** ([command_handler.py](src/command_handler.py):524-536):
+   - Added `/fc` to all users
+   - Added `/troll` to MOD/OWNER/TOP10 sections
+
+**Token Economics**:
+- `/fc`: ~400 tokens per check (~$0.0002)
+- `/troll`: ~300 tokens per roast (~$0.00015)
+- **Monthly cost** (100 uses/day each): ~$1/month
+
+**Example Usage**:
+```
+User: /fc @MAGATroll
+Bot: @User ✊✋🖐️ FC CHECK: @MAGATroll - Rating: 1/10 - Claims "stolen election" with zero evidence. Pure misinformation. 🚨
+
+User: /troll @MAGATroll
+Bot: @User Still defending Trump like he's paying you... oh wait, he doesn't pay anyone! 😂 ✊✋🖐️
+```
+
+**Architecture Benefits**:
+- ✅ **Simplicity**: Single AI (Grok), direct flow
+- ✅ **Reuse**: Leverages existing `ChatTelemetryStore`
+- ✅ **Creative**: Grok generates contextual, witty responses
+- ✅ **Efficient**: ~$1/month for 6000 uses
+
+**Design Document**: [FC_TROLL_COMMANDS_DESIGN.md](docs/FC_TROLL_COMMANDS_DESIGN.md)
+
+**Status**: IMPLEMENTED - Ready for live testing
+
+**UPDATE 2025-12-24**: Fixed `/fc` permission to MOD-only (was accidentally public)
+- Added permission check: [command_handler.py:542-544](src/command_handler.py#L542-L544)
+- Updated /help: [command_handler.py:524-536](src/command_handler.py#L524-L536)
+- Both `/fc` and `/troll` now restricted to ADMINS (MOD/OWNER) + TOP 10 for /troll
+
+---
+
 ### 2025-12-18 - Break State Integration (Anti-Detection - Heartbeat Level)
 
 **By:** 0102

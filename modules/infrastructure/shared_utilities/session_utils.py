@@ -29,7 +29,7 @@ Extracted from stream_resolver.py vibecoded functionality
 import os
 import json
 import logging
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,13 @@ class SessionUtils:
             return None
 
     @staticmethod
-    def save_cache(video_id: str, chat_id: str, cache_file: str = None) -> bool:
+    def save_cache(
+        video_id: str,
+        chat_id: str,
+        cache_file: str = None,
+        channel_id: Optional[str] = None,
+        title: Optional[str] = None,
+    ) -> bool:
         """
         Save video/chat ID mapping to cache.
 
@@ -83,6 +89,8 @@ class SessionUtils:
             video_id: YouTube video ID
             chat_id: Live chat ID
             cache_file: Path to cache file (uses default if None)
+            channel_id: Optional channel ID for allowlist validation
+            title: Optional stream title
 
         Returns:
             True if saved successfully, False otherwise
@@ -97,11 +105,20 @@ class SessionUtils:
             cache = SessionUtils.load_cache(cache_path) or {}
 
             # Update cache with new mapping
-            cache[video_id] = {
+            existing = cache.get(video_id, {})
+            existing_title = existing.get('title') if isinstance(existing, dict) else None
+            existing_channel = existing.get('channel_id') if isinstance(existing, dict) else None
+
+            cache_entry = {
                 'chat_id': chat_id,
                 'timestamp': datetime.now().isoformat(),
-                'title': getattr(cache.get(video_id, {}), 'get', lambda x: None)('title')  # Preserve title if exists
             }
+            if title or existing_title:
+                cache_entry['title'] = title or existing_title
+            if channel_id or existing_channel:
+                cache_entry['channel_id'] = channel_id or existing_channel
+
+            cache[video_id] = cache_entry
 
             # Save updated cache
             with open(cache_path, 'w', encoding='utf-8') as f:
@@ -115,12 +132,18 @@ class SessionUtils:
             return False
 
     @staticmethod
-    def try_cached_stream(cache: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
+    def try_cached_stream(
+        cache: Dict[str, Any],
+        allowed_channel_ids: Optional[List[str]] = None,
+        require_channel_id: bool = False,
+    ) -> Tuple[Optional[str], Optional[str]]:
         """
         Try to find an active stream from cache.
 
         Args:
             cache: Cache dictionary from load_cache()
+            allowed_channel_ids: Optional allowlist of channel IDs
+            require_channel_id: If True, skip entries without channel_id
 
         Returns:
             Tuple of (video_id, chat_id) if found, (None, None) otherwise
@@ -131,12 +154,21 @@ class SessionUtils:
         try:
             # Look for recent entries (within last 6 hours)
             cutoff_time = datetime.now() - timedelta(hours=6)
+            allowed_set = set(allowed_channel_ids or [])
 
             for video_id, data in cache.items():
                 if isinstance(data, dict) and 'timestamp' in data and 'chat_id' in data:
                     try:
                         entry_time = datetime.fromisoformat(data['timestamp'])
                         if entry_time > cutoff_time:
+                            channel_id = data.get('channel_id')
+                            if allowed_set:
+                                if not channel_id and require_channel_id:
+                                    logger.info(f"[CACHE] Skipping cached stream without channel_id: {video_id}")
+                                    continue
+                                if channel_id and channel_id not in allowed_set:
+                                    logger.info(f"[CACHE] Skipping cached stream for non-allowed channel: {channel_id}")
+                                    continue
                             chat_id = data['chat_id']
                             logger.info(f"Found cached active stream: {video_id} -> {chat_id}")
                             return video_id, chat_id
@@ -202,10 +234,30 @@ def load_session_cache(cache_file: str = None) -> Optional[Dict[str, Any]]:
     """Backward compatibility function."""
     return SessionUtils.load_cache(cache_file)
 
-def save_session_cache(video_id: str, chat_id: str, cache_file: str = None) -> bool:
+def save_session_cache(
+    video_id: str,
+    chat_id: str,
+    cache_file: str = None,
+    channel_id: Optional[str] = None,
+    title: Optional[str] = None,
+) -> bool:
     """Backward compatibility function."""
-    return SessionUtils.save_cache(video_id, chat_id, cache_file)
+    return SessionUtils.save_cache(
+        video_id,
+        chat_id,
+        cache_file=cache_file,
+        channel_id=channel_id,
+        title=title,
+    )
 
-def try_cached_stream(cache: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
+def try_cached_stream(
+    cache: Dict[str, Any],
+    allowed_channel_ids: Optional[List[str]] = None,
+    require_channel_id: bool = False,
+) -> Tuple[Optional[str], Optional[str]]:
     """Backward compatibility function."""
-    return SessionUtils.try_cached_stream(cache)
+    return SessionUtils.try_cached_stream(
+        cache,
+        allowed_channel_ids=allowed_channel_ids,
+        require_channel_id=require_channel_id,
+    )

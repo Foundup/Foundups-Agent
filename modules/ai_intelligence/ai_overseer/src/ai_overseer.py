@@ -85,6 +85,13 @@ except ImportError:
     MCP_AVAILABLE = False
     logging.warning("[AI-OVERSEER] MCP integration not available - running without MCP")
 
+# AutoGate Integration
+try:
+    from modules.ai_intelligence.ai_overseer.src.auto_gate import AutoGate
+    AUTOGATE_AVAILABLE = True
+except ImportError:
+    AUTOGATE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parents[5]
 
@@ -208,6 +215,15 @@ class AIIntelligenceOverseer:
 
         # WSP 48/60: Pattern memory for false-positive suppression
         self.pattern_memory = PatternMemory() if PATTERN_MEMORY_AVAILABLE else None
+
+        # AutoGate Initialization
+        self.auto_gate = None
+        if AUTOGATE_AVAILABLE and self.holo_adapter:
+            try:
+                self.auto_gate = AutoGate(self.repo_root, self.holo_adapter)
+                logger.info("[AI-OVERSEER] AutoGate initialized")
+            except Exception as e:
+                logger.warning(f"[AI-OVERSEER] AutoGate failed to init: {e}")
 
         # Priority 1: HoloDAE Telemetry Monitor (dual-channel architecture)
         # Bridges HoloDAE JSONL telemetry → AI Overseer event_queue
@@ -609,6 +625,28 @@ class AIIntelligenceOverseer:
         # Phase 2: Qwen Partner coordination plan
         plan = self.generate_coordination_plan(analysis)
 
+        # --- AUTO-GATE CHECK (Always Run) ---
+        gate_verdict = None
+        if self.auto_gate:
+            try:
+                gate_verdict = self.auto_gate.validate_plan(plan)
+                logger.info(f"[GATE] Verdict: {gate_verdict.status}")
+                
+                # WSP 77: 0102 (Principal) receives the warning via log/context
+                if gate_verdict.status != "PASS":
+                     for w in gate_verdict.warnings:
+                         logger.warning(f"[GATE-WARN] {w}")
+                     
+                     # If BLOCKED, revoke auto-approval (Passive Resistance -> Checkpoint)
+                     if gate_verdict.status == "BLOCK" and auto_approve:
+                         logger.warning("[0102-PRINCIPAL] 🛑 Auto-approval REVOKED by AutoGate BLOCK verdict.")
+                         logger.info("[0102-PRINCIPAL] Downgrading to supervised execution.")
+                         auto_approve = False
+
+            except Exception as e:
+                logger.error(f"[GATE] Check failed: {e}")
+        # ------------------------------------
+
         # Create agent team
         team = AgentTeam(
             mission_id=plan.mission_id,
@@ -619,7 +657,21 @@ class AIIntelligenceOverseer:
 
         # 0102 Principal oversight: Execute plan with supervision
         if not auto_approve:
-            print(f"\n[0102-PRINCIPAL] Execute mission plan?")
+            print(f"\\n[0102-PRINCIPAL] Execute mission plan?")
+            
+            # Display Gate Results to Observer (if present)
+            if gate_verdict:
+                if gate_verdict.status == "PASS":
+                     print(f"  [GATE] Verdict: PASS (Safe)")
+                elif gate_verdict.status == "WARN":
+                     print(f"  [GATE] Verdict: WARNING ⚠️")
+                     for w in gate_verdict.warnings:
+                         print(f"    --> {w}")
+                elif gate_verdict.status == "BLOCK":
+                     print(f"  [GATE] Verdict: BLOCKED 🛑")
+                     for w in gate_verdict.warnings:
+                         print(f"    --> {w}")
+
             print(f"  Mission: {mission_description}")
             print(f"  Complexity: {plan.estimated_complexity}/5")
             print(f"  Phases: {len(plan.phases)}")

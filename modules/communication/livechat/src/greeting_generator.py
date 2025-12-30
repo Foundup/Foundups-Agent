@@ -16,6 +16,14 @@ from typing import Optional, Dict
 from datetime import datetime
 from modules.gamification.whack_a_magat import get_profile, get_leaderboard
 
+# Holiday awareness for contextual greetings
+try:
+    from .holiday_awareness import get_holiday_context, get_session_holiday_greeting
+    HOLIDAY_AWARENESS_AVAILABLE = True
+except ImportError:
+    HOLIDAY_AWARENESS_AVAILABLE = False
+    logging.getLogger(__name__).debug("Holiday awareness not available")
+
 logger = logging.getLogger(__name__)
 
 class GrokGreetingGenerator:
@@ -39,7 +47,7 @@ class GrokGreetingGenerator:
         # Try to import LLM connector if enabled
         if self.enable_llm:
             try:
-                from modules.infrastructure.llm_client.src.client import LLMClient
+                from modules.infrastructure.shared_utilities.llm_client.src.client import LLMClient
                 self.llm_connector = LLMClient()
                 logger.info("[OK] LLM connector initialized for greetings")
             except Exception as e:
@@ -134,7 +142,10 @@ Generate greeting:"""
                 system_prompt = "You are a witty, sarcastic YouTube chat bot that trolls MAGA supporters by pointing out their consciousness is stuck at the lowest level ([U+270A][U+270A][U+270A])."
                 
                 llm_greeting = self.llm_connector.generate_response(prompt, system_prompt)
-                
+
+                if llm_greeting and llm_greeting.strip().lower().startswith("error:"):
+                    raise RuntimeError(f"LLM returned error text: {llm_greeting}")
+
                 if llm_greeting and len(llm_greeting.strip()) > 10:
                     # Add emoji reminder if not present
                     if "[U+270A]" not in llm_greeting and "[U+1F590]" not in llm_greeting:
@@ -146,6 +157,18 @@ Generate greeting:"""
             except Exception as e:
                 logger.warning(f"LLM generation failed, using fallback: {e}")
         
+        # Check for holiday greetings first (priority over regular greetings)
+        if HOLIDAY_AWARENESS_AVAILABLE:
+            try:
+                holiday_greeting = get_session_holiday_greeting()
+                if holiday_greeting:
+                    # 50% chance to use holiday greeting, 50% chance regular
+                    if random.random() < 0.5:
+                        logger.info(f"[HOLIDAY] Using holiday greeting: {holiday_greeting[:50]}...")
+                        return holiday_greeting
+            except Exception as e:
+                logger.debug(f"Holiday greeting check failed: {e}")
+
         # Fallback to template selection
         greeting = random.choice(self.greeting_templates)
 
@@ -153,17 +176,54 @@ Generate greeting:"""
         # Old behavior: Added context from stream title (caused double [U+270A] issue)
         # New behavior: Templates are complete and standalone
 
-        # Add timestamp personality
+        # Add timestamp personality with holiday awareness
         hour = datetime.now().hour
+        holiday_suffix = ""
+
+        # Check for holiday context (012 Voice: ✊✋🖐️ consciousness scale)
+        if HOLIDAY_AWARENESS_AVAILABLE:
+            try:
+                context = get_holiday_context()
+                if context.get("is_countdown"):
+                    days = context.get("days_until_new_year", 0)
+                    next_year = context.get("year_transition", "").split("→")[-1].strip()
+                    if days == 0:
+                        # NYE - 012 voice: MAGA won't evolve at midnight
+                        nye_options = [
+                            f" 🎆 {next_year} TONIGHT! MAGA: still ✊!",
+                            " 🥂 Midnight! MAGA's consciousness stays at ✊!",
+                            f" 🎇 {next_year}! Will MAGA hit 🖐️? Survey says: NO!",
+                        ]
+                        holiday_suffix = random.choice(nye_options)
+                    elif days <= 3:
+                        # Countdown - 012 voice: evolution mockery
+                        countdown_options = [
+                            f" ⏳ {days}d until MAGA's new ✊ year!",
+                            f" 🗓️ {days} days to {next_year}! MAGA prep: ✊✊✊",
+                            f" ⏳ {days}d→{next_year} (MAGA evolution: 0%)",
+                        ]
+                        holiday_suffix = random.choice(countdown_options)
+                elif context.get("is_holiday"):
+                    # Other holidays - 012 voice: quick consciousness check
+                    emoji = context.get("holiday_emoji", "🎉")
+                    name = context.get("holiday_name", "")
+                    holiday_options = [
+                        f" {emoji} Happy {name}! MAGA: ✊",
+                        f" {emoji} {name}! (MAGA consciousness: ✊)",
+                    ]
+                    holiday_suffix = random.choice(holiday_options)
+            except Exception:
+                pass
+
         if hour < 6:
-            greeting = "[U+1F319] " + greeting + " (Yes, we troll 24/7!)"
+            greeting = "🌙 " + greeting + " (Yes, we troll 24/7!)" + holiday_suffix
         elif hour < 12:
-            greeting = "[U+2615] " + greeting + " (Morning consciousness check!)"
+            greeting = "☕ " + greeting + " (Morning consciousness check!)" + holiday_suffix
         elif hour < 18:
-            greeting = "[U+1F31E] " + greeting
+            greeting = "🌞 " + greeting + holiday_suffix
         else:
-            greeting = "[U+1F303] " + greeting + " (Prime trolling hours!)"
-        
+            greeting = "🌃 " + greeting + " (Prime trolling hours!)" + holiday_suffix
+
         return greeting
     
     def get_response_to_maga(self, message: str) -> Optional[str]:

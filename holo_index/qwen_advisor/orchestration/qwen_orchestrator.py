@@ -48,6 +48,14 @@ except ImportError:
     MCP_AVAILABLE = False
     ResearchIngestionMCP = None
 
+# Local MCP Handler
+from .services.mcp_handler import MCPHandler
+from .services.mission_coordinator import MissionCoordinator
+from .services.component_router import ComponentRouter
+
+# Import for agent type detection
+from holo_index.intent_classifier import get_classifier
+
 
 COMPONENT_META = {
     'health_analysis': ('[PILL][OK]', 'Health & WSP Compliance'),
@@ -142,10 +150,8 @@ class QwenOrchestrator:
         self.mcp_handler = MCPHandler(mcp_client=getattr(self, 'mcp_client', None), logger=self._log_chain_of_thought)
 
         # Initialize core components
-        self.intent_classifier = IntentClassifier()
-        self.feedback_learner = FeedbackLearner()
-        self.output_composer = OutputComposer()
-        self.breadcrumb_tracer = BreadcrumbTracer()
+        self.feedback_learner = get_learner()
+        self.output_composer = get_composer()
 
         # WSP 62 Refactoring: Initialize WSP Documentation Guardian
         self.wsp_guardian = WSPDocumentationGuardian(
@@ -184,15 +190,29 @@ class QwenOrchestrator:
         self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
         self._last_codeindex_reports: List[Dict[str, Any]] = []
 
-        # Initialize MCP client if available
-        if MCP_AVAILABLE and ResearchIngestionMCP:
+        # Initialize MCP client if available (toggleable)
+        mcp_enabled = os.getenv("HOLO_MCP_ENABLED", "true").lower() in {"1", "true", "yes"}
+        mcp_warn = os.getenv("HOLO_MCP_WARNINGS", "true").lower() in {"1", "true", "yes"}
+        if MCP_AVAILABLE and ResearchIngestionMCP and mcp_enabled:
             try:
                 self.mcp_client = ResearchIngestionMCP()
                 # Update handler with client
                 self.mcp_handler.mcp_client = self.mcp_client
             except Exception as e:
-                print(f"[WARN] Failed to initialize MCP client: {e}")
+                if mcp_warn:
+                    print(f"[WARN] Failed to initialize MCP client: {e}")
                 self.mcp_client = None
+        elif not mcp_enabled:
+            self.mcp_client = None
+
+    def _select_general_components(self, query: str, files: List[str], modules: List[str]) -> List[str]:
+        """Select appropriate components for GENERAL intent queries based on content analysis."""
+        from collections import defaultdict
+        component_scores = defaultdict(int)
+
+        query_lower = query.lower()
+
+        # Score based on query content (FIRST PRINCIPLES: Intent analysis)
         if any(word in query_lower for word in ['orphan', 'missing', 'test', 'connection']):
             component_scores['orphan_analysis'] += 3
 
@@ -220,6 +240,15 @@ class QwenOrchestrator:
         )
 
         return selected
+
+    def _is_qwen_agent(self) -> bool:
+        """Check if this orchestrator is running as a Qwen agent vs 0102 agent."""
+        try:
+            # Check if we have Qwen models available
+            qwen_available = hasattr(self, 'qwen_engine') and self.qwen_engine is not None
+            return qwen_available
+        except:
+            return False
 
     def orchestrate_monitoring(self, work_context):
         """Handle monitoring orchestration for autonomous HoloDAE"""

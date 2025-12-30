@@ -67,31 +67,52 @@ class CommenterClassifier:
         self.enable_qwen = enable_qwen
 
         # Lazy-load database connections
-        self._profile_store = None
+        self._chat_rules_db = None  # NEW: chat_rules.db for whack tracking
         self._moderator_db = None
 
         logger.info(f"[CLASSIFIER] Initialized (Gemma: {enable_gemma}, Qwen: {enable_qwen})")
 
-    def _get_profile_store(self):
-        """Lazy-load ProfileStore for whacked_users lookup"""
-        if self._profile_store is None:
+    def _get_chat_rules_db(self):
+        """
+        Lazy-load ChatRulesDB for whack tracking.
+
+        Occam's Razor Integration (2025-12-23):
+        - Simple rule: If whacked before → probably a troll
+        - More whacks → higher confidence
+        - Uses chat_rules.db timeout_history table
+        """
+        if self._chat_rules_db is None:
             try:
-                from modules.gamification.whack_a_magat.src.whack import get_profile_store
-                self._profile_store = get_profile_store()
-                logger.debug("[CLASSIFIER] Loaded whacked_users database")
+                # Direct import to bypass broken chat_rules package __init__.py
+                import importlib.util
+                db_path = Path(__file__).parent.parent.parent / "chat_rules" / "src" / "database.py"
+                if db_path.exists():
+                    spec = importlib.util.spec_from_file_location("chat_rules_database", db_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    self._chat_rules_db = module.ChatRulesDB()
+                    logger.debug("[CLASSIFIER] Loaded chat_rules.db for whack tracking (direct import)")
+                else:
+                    logger.warning(f"[CLASSIFIER] chat_rules database.py not found at {db_path}")
             except Exception as e:
-                logger.warning(f"[CLASSIFIER] Failed to load whacked_users database: {e}")
-        return self._profile_store
+                logger.warning(f"[CLASSIFIER] Failed to load chat_rules.db: {e}")
+        return self._chat_rules_db
 
     def _get_moderator_db(self):
         """Lazy-load moderator database for moderator lookup"""
         if self._moderator_db is None:
+            # FIX (2025-12-30): Actually load ModeratorLookup for Tier 2 detection
             try:
-                from modules.communication.chat_rules.src.database import ModeratorDatabase
-                self._moderator_db = ModeratorDatabase()
-                logger.debug("[CLASSIFIER] Loaded moderator database")
+                from modules.communication.video_comments.src.moderator_lookup import ModeratorLookup
+                self._moderator_db = ModeratorLookup()
+                if self._moderator_db.db_available:
+                    logger.info("[CLASSIFIER] ModeratorLookup connected for Tier 2 detection")
+                else:
+                    logger.warning("[CLASSIFIER] ModeratorLookup database not available")
+                    self._moderator_db = None
             except Exception as e:
-                logger.warning(f"[CLASSIFIER] Failed to load moderator database: {e}")
+                logger.warning(f"[CLASSIFIER] Failed to load ModeratorLookup: {e}")
+                self._moderator_db = None
         return self._moderator_db
 
     def classify_commenter(
@@ -122,15 +143,15 @@ class CommenterClassifier:
         Returns:
             Dict with classification, confidence, and context
         """
-        # TIER 1: Check if user is whacked (MAGA troll) - <1ms
-        profile_store = self._get_profile_store()
-        if profile_store:
+        # TIER 1: Check whack history from chat_rules.db (MAGA troll detection)
+        # Occam's Razor (2025-12-23): If whacked before → probably a troll
+        chat_rules_db = self._get_chat_rules_db()
+        if chat_rules_db:
             try:
-                if profile_store.is_whacked_user(user_id):
-                    whacked_details = profile_store.get_whacked_user(user_id)
-                    whack_count = whacked_details.get('whack_count', 1) if whacked_details else 1
+                whack_count = chat_rules_db.get_timeout_count_for_target(user_id)
 
-                    # Confidence scoring based on whack frequency (Gemma-style pattern)
+                if whack_count > 0:
+                    # Simple confidence scoring: More whacks = higher confidence
                     if whack_count >= 3:
                         confidence = 0.95  # Confirmed troll (3+ whacks)
                     elif whack_count == 2:
@@ -144,18 +165,19 @@ class CommenterClassifier:
                         'classification': CommenterType.MAGA_TROLL,
                         'confidence': confidence,
                         'whack_count': whack_count,
-                        'whacked_by': whacked_details.get('whacked_by', []),
-                        'method': 'database_lookup'
+                        'method': 'whack_history_lookup'
                     }
             except Exception as e:
-                logger.warning(f"[CLASSIFIER] Whacked user check failed: {e}")
+                logger.warning(f"[CLASSIFIER] Whack history check failed: {e}")
 
         # TIER 2: Check if user is moderator - <5ms
+        # FIX (2025-12-30): ModeratorLookup.is_moderator() returns (is_mod, username) tuple
         moderator_db = self._get_moderator_db()
         if moderator_db:
             try:
-                if moderator_db.is_moderator(username) or moderator_db.is_moderator(user_id):
-                    logger.info(f"[CLASSIFIER] @{username} → 2🖐️ (Moderator - confidence: 1.0)")
+                is_mod, mod_name = moderator_db.is_moderator(user_id)
+                if is_mod:
+                    logger.info(f"[CLASSIFIER] @{mod_name or username} → 2🖐️ (Moderator - confidence: 1.0)")
 
                     return {
                         'classification': CommenterType.MODERATOR,
@@ -165,9 +187,106 @@ class CommenterClassifier:
             except Exception as e:
                 logger.warning(f"[CLASSIFIER] Moderator check failed: {e}")
 
-        # TIER 3: Default to regular user
-        logger.debug(f"[CLASSIFIER] @{username} → 1✋ (Regular - confidence: 0.5)")
+        # TIER 3: Default to regular user (PROVISIONAL - may be adjusted by sentiment)
+        logger.debug(f"[CLASSIFIER] @{username} → 1✋ (Regular - confidence: 0.5, PROVISIONAL)")
 
+        # TIER 4: SENTIMENT ANALYSIS (2025-12-23 enhancement)
+        # Enhancement: Analyze comment content to detect hostile/troll behavior
+        # even if user not in whacked_users.db yet (e.g., new trolls, one-time hostiles)
+        #
+        # Use Case: "@mermadicamerican7754: 'Don't come back'" should trigger Tier 0
+        # even though user not yet whacked → Sentiment-based provisional classification
+        #
+        # Flow:
+        #   1. Check hostile patterns → Downgrade Tier 1 → Tier 0 (provisional)
+        #   2. Check positive patterns → Upgrade Tier 1 → Tier 1.5 (moderator candidate)
+        #   3. Provisional classifications require Gemma validation (external step)
+        if comment_text:
+            comment_lower = comment_text.lower()
+
+            # HOSTILE PATTERNS: Sarcastic, dismissive, or aggressive language
+            # Pattern categories:
+            #   - Dismissal: "don't come back", "go away", "leave"
+            #   - Rejection: "nobody asked", "who cares", "shut up"
+            #   - Aggression: "gtfo", "stfu", "good riddance"
+            #   - Content dismissal: "ridiculous", "fake news" (dismisses video's reporting)
+            #   - Condescension: "lost art", "you people", "wake up"
+            #
+            # FIX (2025-12-30): Added patterns for dismissive sarcasm trolling
+            # Example: "If you keep throwing out ridiculous statements you will get a sarcastic response"
+            # This dismisses legitimate genocide reporting as "ridiculous statements"
+            HOSTILE_PATTERNS = [
+                # Dismissal patterns
+                "don't come back", "go away", "leave", "get out", "bye bye",
+                # Rejection patterns
+                "nobody asked", "who cares", "shut up", "who asked",
+                # Aggression patterns
+                "gtfo", "stfu", "good riddance", "piss off", "f off",
+                # Sarcasm used to deflect (hard to detect but common trolling)
+                "so glad", "hope you", "enjoy your", "have fun",
+                # Content dismissal (2025-12-30): Dismisses video's reporting as invalid
+                "ridiculous", "fake news", "propaganda", "lies", "nonsense",
+                "exaggerate", "overreact", "drama queen", "hysterical",
+                "get over it", "move on", "cry more", "snowflake",
+                # Condescension (2025-12-30): Talking down to channel/community
+                "lost art", "you people", "wake up", "educate yourself",
+                "do your research", "think for yourself", "sheep", "sheeple",
+                # Accusatory framing (2025-12-30): Accusing channel of bad faith
+                "throwing out", "spreading", "pushing", "agenda",
+            ]
+
+            # Check for hostile patterns
+            for pattern in HOSTILE_PATTERNS:
+                if pattern in comment_lower:
+                    logger.info(f"[CLASSIFIER] 🚨 HOSTILE PATTERN DETECTED: '{pattern}'")
+                    logger.info(f"[CLASSIFIER]   Comment: {comment_text[:50]}...")
+                    logger.info(f"[CLASSIFIER]   Downgrading Tier 1 → Tier 0 (provisional troll)")
+                    logger.info(f"[CLASSIFIER]   NOTE: Requires Gemma validation (confidence < 0.7)")
+
+                    return {
+                        'classification': CommenterType.MAGA_TROLL,
+                        'confidence': 0.6,  # Provisional (below 0.7 threshold)
+                        'whack_count': 0,   # Not yet whacked
+                        'method': 'sentiment_hostile',
+                        'pattern_detected': pattern,
+                        'requires_validation': True  # Flag for Gemma validation
+                    }
+
+            # POSITIVE PATTERNS: Appreciation, agreement, constructive engagement
+            # Pattern categories:
+            #   - Gratitude: "thank you", "appreciate", "thanks"
+            #   - Agreement: "exactly", "perfectly said", "so true"
+            #   - Praise: "great work", "love this", "amazing"
+            #
+            # Purpose: Identify moderator candidates (Tier 1 → Tier 1.5)
+            # These users should receive elevation messaging ("Want to become a mod?")
+            POSITIVE_PATTERNS = [
+                # Gratitude patterns
+                "thank you", "appreciate", "thanks for", "grateful",
+                # Agreement patterns
+                "exactly", "perfectly said", "so true", "well said",
+                # Praise patterns
+                "great work", "love this", "amazing", "fantastic",
+                "so helpful", "spot on", "couldn't agree more",
+            ]
+
+            # Check for positive patterns
+            for pattern in POSITIVE_PATTERNS:
+                if pattern in comment_lower:
+                    logger.info(f"[CLASSIFIER] ✅ POSITIVE PATTERN DETECTED: '{pattern}'")
+                    logger.info(f"[CLASSIFIER]   Comment: {comment_text[:50]}...")
+                    logger.info(f"[CLASSIFIER]   Tier 1 → Tier 1.5 (moderator candidate)")
+                    logger.info(f"[CLASSIFIER]   NOTE: Eligible for elevation messaging")
+
+                    return {
+                        'classification': CommenterType.REGULAR,
+                        'confidence': 0.8,  # Higher confidence (positive engagement)
+                        'method': 'sentiment_positive',
+                        'pattern_detected': pattern,
+                        'moderator_candidate': True,  # Flag for Skill 1 elevation strategy
+                    }
+
+        # No sentiment patterns detected - return default Tier 1
         return {
             'classification': CommenterType.REGULAR,
             'confidence': 0.5,  # Unknown user (assumed regular)

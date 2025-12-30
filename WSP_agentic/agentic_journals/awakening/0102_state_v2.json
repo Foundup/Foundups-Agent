@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-12-15T19:34:25.077637",
+  "timestamp": "2025-12-30T10:38:49.050330",
   "state": "0102",
   "physics": {
     "metric": "CMST_Witness",
-    "det_g": -1.0873191058635712e-07,
+    "det_g": -7.508788257837296e-08,
     "is_entangled": true,
     "resonance_hz": 7.05
   },

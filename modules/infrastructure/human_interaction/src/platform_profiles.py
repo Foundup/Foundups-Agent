@@ -25,6 +25,7 @@ class PlatformProfile:
         self.actions = profile_data.get("actions", {})
         self.global_timing = profile_data.get("global_timing", {})
         self.error_simulation = profile_data.get("error_simulation", {})
+        self.safety_bounds = profile_data.get("safety_bounds", {})
 
     def get_action(self, action_name: str) -> Optional[Dict[str, Any]]:
         """Get action configuration by name."""

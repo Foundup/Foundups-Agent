@@ -51,6 +51,13 @@ class LLMConnector:
         
         # Determine provider from model name
         self.provider = self._detect_provider(model)
+
+        # Apply global limits from environment (safety caps).
+        self._apply_global_env_limits()
+
+        # Enforce Grok safety caps from env (prevents runaway tokens).
+        if self.provider == "grok":
+            self._apply_grok_env_limits()
         
         # Initialize API client
         self.client = None
@@ -61,6 +68,50 @@ class LLMConnector:
         else:
             logging.warning(f"No API key found for {self.provider}. Using simulation mode.")
             self.simulation_mode = True
+
+    def _apply_grok_env_limits(self) -> None:
+        """Apply Grok-specific token/temperature limits from environment."""
+        env_max_tokens = os.getenv("GROK_MAX_TOKENS")
+        if env_max_tokens:
+            try:
+                max_limit = int(env_max_tokens)
+                if max_limit > 0:
+                    self.max_tokens = min(self.max_tokens, max_limit)
+            except ValueError:
+                logging.warning(f"Invalid GROK_MAX_TOKENS value: {env_max_tokens}")
+
+        env_temperature = os.getenv("GROK_TEMPERATURE")
+        if env_temperature:
+            try:
+                temperature = float(env_temperature)
+                if 0.0 <= temperature <= 2.0:
+                    self.temperature = temperature
+                else:
+                    logging.warning(f"GROK_TEMPERATURE out of range: {env_temperature}")
+            except ValueError:
+                logging.warning(f"Invalid GROK_TEMPERATURE value: {env_temperature}")
+
+    def _apply_global_env_limits(self) -> None:
+        """Apply global token/temperature limits from environment."""
+        env_max_tokens = os.getenv("MAX_TOKENS") or os.getenv("LLM_MAX_TOKENS")
+        if env_max_tokens:
+            try:
+                max_limit = int(env_max_tokens)
+                if max_limit > 0:
+                    self.max_tokens = min(self.max_tokens, max_limit)
+            except ValueError:
+                logging.warning(f"Invalid MAX_TOKENS value: {env_max_tokens}")
+
+        env_temperature = os.getenv("TEMPERATURE") or os.getenv("LLM_TEMPERATURE")
+        if env_temperature:
+            try:
+                temperature = float(env_temperature)
+                if 0.0 <= temperature <= 2.0:
+                    self.temperature = temperature
+                else:
+                    logging.warning(f"TEMPERATURE out of range: {env_temperature}")
+            except ValueError:
+                logging.warning(f"Invalid TEMPERATURE value: {env_temperature}")
     
     def _detect_provider(self, model: str) -> str:
         """Detect LLM provider from model name."""
@@ -93,6 +144,7 @@ class LLMConnector:
     
     def _initialize_client(self) -> None:
         """Initialize the appropriate API client."""
+        suppress_missing_lib = os.getenv("LLM_SUPPRESS_MISSING_LIB_WARNINGS", "false").lower() in {"1", "true", "yes", "on"}
         try:
             if self.provider == "anthropic":
                 try:
@@ -101,7 +153,10 @@ class LLMConnector:
                     self.simulation_mode = False
                     logging.info("Anthropic client initialized successfully")
                 except ImportError:
-                    logging.error("anthropic library not installed. Install with: pip install anthropic")
+                    if suppress_missing_lib:
+                        logging.debug("anthropic library not installed. Install with: pip install anthropic")
+                    else:
+                        logging.error("anthropic library not installed. Install with: pip install anthropic")
                     self.simulation_mode = True
                     
             elif self.provider == "openai":
@@ -112,7 +167,10 @@ class LLMConnector:
                     self.simulation_mode = False
                     logging.info("OpenAI client initialized successfully")
                 except ImportError:
-                    logging.error("openai library not installed. Install with: pip install openai")
+                    if suppress_missing_lib:
+                        logging.debug("openai library not installed. Install with: pip install openai")
+                    else:
+                        logging.error("openai library not installed. Install with: pip install openai")
                     self.simulation_mode = True
                     
             elif self.provider == "grok":
@@ -130,7 +188,10 @@ class LLMConnector:
                     self.simulation_mode = False
                     logging.info("Google Gemini client initialized successfully")
                 except ImportError:
-                    logging.error("google-generativeai library not installed. Install with: pip install google-generativeai")
+                    if suppress_missing_lib:
+                        logging.debug("google-generativeai library not installed. Install with: pip install google-generativeai")
+                    else:
+                        logging.error("google-generativeai library not installed. Install with: pip install google-generativeai")
                     self.simulation_mode = True
                     
             else:

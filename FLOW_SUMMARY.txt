@@ -1,0 +1,52 @@
+EXECUTION PATH: Comment Processing Flow
+
+ENTRY: execute_skill() or engage_all_comments()
+  |
+  +-> connect() [comment_engagement_dae.py:504-580]
+  |     Initialize Selenium, Human behavior, CommentProcessor
+  |
+  +-> navigate_to_inbox() [comment_engagement_dae.py:582-604]
+  |     Navigate to Studio comments/inbox
+  |     POTENTIAL ISSUE: May skip wait if already on /comments/inbox (line 591-593)
+  |
+  +-> engage_all_comments() MAIN LOOP [comment_engagement_dae.py:640-879]
+        |
+        +--> ORPHAN DETECTION [line 701-705]
+        |     IF parent_pid dead -> break (EXIT POINT #1)
+        |
+        +--> OCCAM CHECK: COUNT COMMENTS [line 711]
+        |     comment_count = get_comment_count()  # Uses selector 'ytcp-comment-thread'
+        |     IF count == 0 -> break (EXIT POINT #2) ***MOST LIKELY***
+        |
+        +--> comment_processor.engage_comment(1) [line 762]
+        |     |
+        |     +-> extract_comment_data(1) [comment_processor.py:323-415]
+        |     |     const threads = querySelectorAll('ytcp-comment-thread')
+        |     |     const thread = threads[0]
+        |     |     IF !thread -> return null
+        |     |     ELSE extract data -> return dict
+        |     |
+        |     +-> IF comment_data is None [line 512]
+        |     |     return {'no_comment_exists': True}
+        |     |
+        |     +-> ELSE process like/heart/reply [lines 526+]
+        |
+        +--> IF result.get('no_comment_exists') [line 773]
+        |     break (EXIT POINT #3)
+        |
+        +--> REFRESH PAGE [line 862]
+        |     driver.refresh()
+        |     wait 5 seconds
+        |
+        +--> Loop back to top
+        
+CRITICAL SELECTOR: 'ytcp-comment-thread' [line 135]
+  Used in:
+  - Line 609: get_comment_count() 
+  - Line 336: extract_comment_data() JavaScript
+
+IF SELECTOR BROKEN:
+  get_comment_count() returns 0
+  -> Line 720 exits
+  -> No comments processed
+  -> No error message (just "No comments found")

@@ -1,0 +1,28 @@
+INFO: [PROFILE] Loaded platform profile: youtube_chat (6 actions)
+INFO: [INTERACTION] Loaded platform profile: youtube_chat
+INFO: [INTERACTION] Human behavior simulation loaded
+ERROR: [SENTINEL] OUT OF BOUNDS! (500, 300) outside [0-1000, 450-1000]
+WARNING: [SENTINEL] AD DETECTED! Blocking action. ID=ad-slot-1, Class=renderer, Keywords=['ad', 'renderer']
+WARNING: [SENTINEL] FORBIDDEN ELEMENT! Selector match found. Aborting. ID=something, Class=promoted
+=== STARTING UNIT TEST FOR AD PREVENTION LOGIC ===
+
+Test Case 1: Out of Bounds Coordinates (y=300)
+Result: False
+
+Test Case 2: Safe Coordinates (y=600) + Safe Element
+Result: True
+
+Test Case 3: Ad Signature (ID='ad-slot-1')
+Result: False
+
+Test Case 4: Forbidden Selector Match
+Result: False
+
+Test Case 5: yt-renderer (Allowed if no 'ad')
+Result for generic renderer: True
+Traceback (most recent call last):
+  File "O:\Foundups-Agent\verify_sentinel_unit.py", line 106, in <module>
+    test_sentinel_logic()
+  File "O:\Foundups-Agent\verify_sentinel_unit.py", line 103, in test_sentinel_logic
+    print("\n\u2705 ALL UNIT TESTS PASSED!")
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2705' in position 2: illegal multibyte sequence

@@ -29,17 +29,26 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
         pass
 # === END UTF-8 ENFORCEMENT ===
 
-# Main CLI interface
-from .cli import main
-
 # Version info
 __version__ = "1.0.0"
 __author__ = "0102 DAE System"
 
-# Expose key functions for programmatic use
-try:
-    from .cli import HoloIndex, QwenAdvisor
-    __all__ = ['main', 'HoloIndex', 'QwenAdvisor']
-except ImportError:
-    # Graceful fallback if dependencies not available
-    __all__ = ['main']
+def main(argv=None):
+    """
+    Lazy CLI entrypoint.
+
+    Avoid importing `holo_index.cli` at package import time so `python -m holo_index.cli`
+    doesn't emit RuntimeWarnings and consumers can import `holo_index` cheaply.
+    """
+    from .cli import main as _main
+    return _main(argv)
+
+
+def __getattr__(name: str):
+    if name in {"HoloIndex", "QwenAdvisor"}:
+        from .cli import HoloIndex, QwenAdvisor
+        return {"HoloIndex": HoloIndex, "QwenAdvisor": QwenAdvisor}[name]
+    raise AttributeError(f"module 'holo_index' has no attribute {name!r}")
+
+
+__all__ = ["main", "HoloIndex", "QwenAdvisor"]

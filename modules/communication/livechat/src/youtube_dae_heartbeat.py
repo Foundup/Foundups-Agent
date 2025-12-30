@@ -255,14 +255,28 @@ class YouTubeDAEHeartbeat:
                 return {"bugs_detected": 0, "bugs_fixed": 0, "fixes_applied": []}
 
             # Call AI Overseer with daemon output (synchronous call)
-            # Pass chat_sender from DAE instance for live announcements (012's vision!)
+            # Pass THROTTLED chat_sender from DAE instance for live announcements (012's vision!)
             chat_sender = None
             announce_to_chat = False
             if hasattr(self.dae, 'livechat') and self.dae.livechat is not None:
-                if hasattr(self.dae.livechat, 'chat_sender'):
-                    chat_sender = self.dae.livechat.chat_sender
+                # Use livechat_core's throttled send_chat_message instead of raw chat_sender
+                if hasattr(self.dae.livechat, 'send_chat_message'):
+                    # Create a wrapper that uses the throttled send_chat_message
+                    class ThrottledChatSender:
+                        def __init__(self, livechat_core):
+                            self.livechat_core = livechat_core
+
+                        async def send_message(self, message_text: str, response_type: str = 'general', skip_delay: bool = False):
+                            """Send message through throttled livechat_core instead of raw chat_sender"""
+                            return await self.livechat_core.send_chat_message(
+                                message_text=message_text,
+                                skip_delay=skip_delay,  # Still allow skip_delay for priority messages
+                                response_type=response_type
+                            )
+
+                    chat_sender = ThrottledChatSender(self.dae.livechat)
                     announce_to_chat = True
-                    logger.debug("[HEARTBEAT] Chat sender available - live announcements ENABLED")
+                    logger.debug("[HEARTBEAT] Throttled chat sender available - live announcements ENABLED with intelligent throttling")
 
             result = self.ai_overseer.monitor_daemon(
                 bash_output=bash_output,

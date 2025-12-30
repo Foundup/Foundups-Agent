@@ -177,18 +177,23 @@ class UITarsBridge:
         if tars_base.endswith("/v1"):
             tars_base = tars_base[:-3]
         try:
-            import requests  # lightweight check; ignore if missing
-
-            resp = requests.get(f"{tars_base}/v1/models", timeout=2)
-            if resp.status_code == 200:
-                self._emit_event("lm_studio_ready", {"base_url": tars_base})
-                logger.info(f"[UI-TARS] LM Studio ready at {tars_base}")
-            else:
-                self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "status": resp.status_code})
-                logger.warning(f"[UI-TARS] LM Studio unreachable ({resp.status_code}) at {tars_base}")
-        except Exception as e:
-            self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "error": str(e)})
-            logger.warning(f"[UI-TARS] LM Studio health check failed: {e}")
+            # Health check LM Studio / Responses API (port 1234) if configured
+            tars_base = os.getenv("TARS_API_URL", "http://127.0.0.1:1234").rstrip("/")
+            if tars_base.endswith("/v1"):
+                tars_base = tars_base[:-3]
+            try:
+                import requests  # lightweight check; ignore if missing
+                # Use to_thread for health check to avoid blocking loop
+                resp = await asyncio.to_thread(requests.get, f"{tars_base}/v1/models", timeout=2)
+                if resp.status_code == 200:
+                    self._emit_event("lm_studio_ready", {"base_url": tars_base})
+                    logger.info(f"[UI-TARS] LM Studio ready at {tars_base}")
+                else:
+                    self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "status": resp.status_code})
+                    logger.warning(f"[UI-TARS] LM Studio unreachable ({resp.status_code}) at {tars_base}")
+            except Exception as e:
+                self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "error": str(e)})
+                logger.warning(f"[UI-TARS] LM Studio health check failed: {e}")
 
         self._connected = True
         self._session_id = f"session_{int(time.time())}"
@@ -221,7 +226,8 @@ class UITarsBridge:
             # Get browser tabs
             tabs_url = f"http://127.0.0.1:{self.browser_port}/json"
             try:
-                response = requests.get(tabs_url, timeout=5)
+                # Use to_thread for browse info check
+                response = await asyncio.to_thread(requests.get, tabs_url, timeout=5)
                 tabs = response.json()
             except Exception as e:
                 logger.warning(f"[UI-TARS] Could not connect to browser: {e}")
@@ -309,7 +315,9 @@ class UITarsBridge:
             from PIL import Image
             import io
 
-            screenshot_bytes = driver.get_screenshot_as_png()
+            # driver.get_screenshot_as_png() is blocking, but it's localized to Selenium
+            # It's better to wrap it as well if it's slow
+            screenshot_bytes = await asyncio.to_thread(driver.get_screenshot_as_png)
 
             # Resize screenshot to speed up inference (1280px width max)
             img = Image.open(io.BytesIO(screenshot_bytes))
@@ -334,7 +342,8 @@ class UITarsBridge:
             # Derive screenshot-to-viewport scale (accounts for devicePixelRatio / Windows scaling)
             screenshot_scale = 1.0
             try:
-                viewport = driver.execute_script(
+                # Script execution is usually fast enough, but can be wrapped if driver is busy
+                viewport = await asyncio.to_thread(driver.execute_script, 
                     "return {w: window.innerWidth || 0, h: window.innerHeight || 0, dpr: window.devicePixelRatio || 1};"
                 ) or {}
                 vw = float(viewport.get("w") or 0)
@@ -349,7 +358,7 @@ class UITarsBridge:
 
             logger.info(f"[UI-TARS] Calling LM Studio API for: {action} - {description}")
 
-            # 2. Call LM Studio API
+            # 2. Call LM Studio API (CRITICAL: MUST NOT BLOCK LOOP)
             import requests
             tars_api_url = os.getenv("TARS_API_URL", "http://127.0.0.1:1234").rstrip("/")
             if tars_api_url.endswith("/v1"):
@@ -384,7 +393,9 @@ Rules:
   Thought: <one short sentence>
   Action: finished()"""
 
-            response = requests.post(
+            # Wrap blocking requests.post in to_thread
+            response = await asyncio.to_thread(
+                requests.post,
                 f"{tars_api_url}/v1/chat/completions",
                 json={
                     "model": "ui-tars-1.5-7b",
@@ -413,7 +424,7 @@ Rules:
             response_data = response.json()
             model_output = response_data['choices'][0]['message']['content']
 
-            logger.info(f"[UI-TARS] Raw model output: {model_output[:200]}...")
+            logger.info(f"[UI-TARS] Full model output: {model_output}")
 
             # Parse UI-TARS Desktop format: "Action: click(start_box='<|box_start|>(x,y)<|box_end|>')"
             import re
@@ -451,21 +462,27 @@ Rules:
                     confidence=0.0,
                 )
 
-            # UI-TARS uses 1000x1000 coordinate space (factors: [1000, 1000])
+            # UI-TARS uses 1000x1000 coordinate space, but some models output pixels
+            # Handle both cases by checking if coords are > 1000
             x1 = float(coords_match.group(1))
             y1 = float(coords_match.group(2))
             x2 = float(coords_match.group(3)) if coords_match.group(3) else None
             y2 = float(coords_match.group(4)) if coords_match.group(4) else None
 
             # If bbox provided, click center; else use point.
-            box_x = int(round((x1 + x2) / 2.0)) if x2 is not None else int(round(x1))
-            box_y = int(round((y1 + y2) / 2.0)) if y2 is not None else int(round(y1))
+            box_x = (x1 + x2) / 2.0 if x2 is not None else x1
+            box_y = (y1 + y2) / 2.0 if y2 is not None else y1
 
-            # Normalize to 0-1 range
-            normalized_x = box_x / 1000.0
-            normalized_y = box_y / 1000.0
+            # Auto-detect if model is outputting pixels of the resized image
+            if box_x > 1000 or box_y > 1000:
+                logger.warning(f"[UI-TARS] Detected out-of-bounds coordinates ({box_x}, {box_y}). Normalizing against image size {resized_image_size} instead of 1000.")
+                normalized_x = box_x / float(resized_image_size[0])
+                normalized_y = box_y / float(resized_image_size[1])
+            else:
+                normalized_x = box_x / 1000.0
+                normalized_y = box_y / 1000.0
 
-            logger.info(f"[UI-TARS] Parsed coordinates: box=({box_x},{box_y}), normalized=({normalized_x:.3f},{normalized_y:.3f})")
+            logger.info(f"[UI-TARS] Parsed coordinates: box=({box_x:.1f},{box_y:.1f}), normalized=({normalized_x:.3f},{normalized_y:.3f})")
             logger.info(f"[UI-TARS] Thought: {thought[:100] if thought else 'N/A'}")
 
             # 4. Map to viewport CSS coordinates (elementFromPoint uses CSS pixels)
@@ -482,11 +499,30 @@ Rules:
             viewport_css_x = int(screenshot_pixel_x / screenshot_scale)
             viewport_css_y = int(screenshot_pixel_y / screenshot_scale)
 
+            # [IFRAME AWARENESS] Check if we are currently switched into a frame
+            # If so, we must adjust viewport_css coordinates to be relative to the frame's internal (0,0)
+            try:
+                frame_offset = driver.execute_script(
+                    """
+                    const frame = window.frameElement;
+                    if (!frame) return { x: 0, y: 0 };
+                    const rect = frame.getBoundingClientRect();
+                    return { x: rect.left, y: rect.top };
+                    """
+                ) or {"x": 0, "y": 0}
+                
+                if frame_offset["x"] != 0 or frame_offset["y"] != 0:
+                    logger.info(f"[UI-TARS] Adjusting for frame offset: ({frame_offset['x']}, {frame_offset['y']})")
+                    viewport_css_x -= int(frame_offset["x"])
+                    viewport_css_y -= int(frame_offset["y"])
+            except Exception as e:
+                logger.debug(f"[UI-TARS] Frame offset check skipped: {e}")
+
             logger.info("[UI-TARS] Coordinate mapping:")
-            logger.info(f"  Box (1000x1000): ({box_x}, {box_y})")
+            logger.info(f"  Box (1000x1000): ({box_x:.1f}, {box_y:.1f})")
             logger.info(f"  Resized image ({resized_image_size}): ({resized_pixel_x:.0f}, {resized_pixel_y:.0f})")
             logger.info(f"  Screenshot px ({original_screenshot_size}): ({screenshot_pixel_x}, {screenshot_pixel_y})")
-            logger.info(f"  Viewport CSS px: ({viewport_css_x}, {viewport_css_y})")
+            logger.info(f"  Local CSS px: ({viewport_css_x}, {viewport_css_y})")
 
             executed = None
             if action == "click":
@@ -495,12 +531,30 @@ Rules:
                     const x = arguments[0], y = arguments[1];
                     const el = document.elementFromPoint(x, y);
                     if (!el) return { ok: false, error: "No element at point" };
+
+                    // [SENTINEL] Element validation
+                    const id = (el.id || "").toLowerCase();
+                    const cls = (el.className || "").toLowerCase();
+                    const tag = (el.tagName || "").toLowerCase();
+                    const html = (el.outerHTML || "").toLowerCase();
+                    
+                    const adSigs = ["ad", "sponsor", "promoted", "yt-ad", "renderer", "overlay", "overlay-container"];
+                    const isAd = adSigs.some(sig => id.includes(sig) || cls.includes(sig));
+                    const isYouTubeRenderer = (id.includes("renderer") || cls.includes("renderer")) && !id.includes("ad") && !cls.includes("ad");
+
+                    if (isAd && !isYouTubeRenderer) {
+                        return { ok: false, error: "SENTINEL: ABORTED - target looks like an AD or OVERLAY", tag: tag, id: id, className: cls };
+                    }
+
                     el.click();
-                    return { ok: true, tag: el.tagName, id: el.id || null, className: el.className || null };
+                    return { ok: true, tag: tag, id: id, className: cls };
                     """,
                     viewport_css_x,
                     viewport_css_y,
                 )
+                if executed and not executed.get("ok"):
+                    logger.warning(f"[UI-TARS] Click ABORTED by browser sentinel: {executed.get('error')}")
+                    logger.warning(f"[UI-TARS]   Element info: tag={executed.get('tag')}, id={executed.get('id')}, class={executed.get('className')}")
             elif action == "type":
                 if not text:
                     raise Exception("Type action requires context.text")
@@ -509,6 +563,16 @@ Rules:
                     const x = arguments[0], y = arguments[1], text = arguments[2];
                     const el = document.elementFromPoint(x, y);
                     if (!el) return { ok: false, error: "No element at point" };
+
+                    // [SENTINEL] Element validation (same as click)
+                    const id = (el.id || "").toLowerCase();
+                    const cls = (el.className || "").toLowerCase();
+                    const adSigs = ["ad", "sponsor", "promoted", "yt-ad", "renderer", "overlay"];
+                    const isAd = adSigs.some(sig => id.includes(sig) || cls.includes(sig));
+                    const isYouTubeRenderer = (id.includes("renderer") || cls.includes("renderer")) && !id.includes("ad") && !cls.includes("ad");
+                    if (isAd && !isYouTubeRenderer) {
+                        return { ok: false, error: "SENTINEL: ABORTED - target looks like an AD", tag: el.tagName, id: id };
+                    }
 
                     function findEditable(start) {
                       if (!start) return null;

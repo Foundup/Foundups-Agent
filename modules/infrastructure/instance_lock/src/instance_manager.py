@@ -77,44 +77,60 @@ class InstanceLock:
 
     def acquire(self, auto_cleanup: bool = True) -> bool:
         """Attempt to acquire the lock. Returns True when successful."""
-        if auto_cleanup:
-            self._cleanup_stale_processes()
+        try:
+            logger.info(f"[LOCK][DEBUG] Starting acquire() - auto_cleanup={auto_cleanup}")
 
-        if self.lock_file.exists():
-            try:
-                with open(self.lock_file, "r", encoding="utf-8") as handle:
-                    raw_data = json.load(handle)
-                lock_data = self._normalize_lock_data(raw_data)
-            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as error:
-                logger.warning("Invalid lock file detected (%s); recreating.", error)
-                lock_data = {}
-            pid = lock_data.get("pid")
-            heartbeat_iso = lock_data.get("heartbeat", EPOCH_ISO)
-            try:
-                last_heartbeat = datetime.fromisoformat(heartbeat_iso)
-            except ValueError:
-                last_heartbeat = datetime.fromtimestamp(0)
+            if auto_cleanup:
+                logger.info("[LOCK][DEBUG] Running cleanup_stale_processes...")
+                self._cleanup_stale_processes()
+                logger.info("[LOCK][DEBUG] Cleanup complete")
 
-            if pid and self._is_process_running(pid):
-                if datetime.now() - last_heartbeat > timedelta(minutes=self.ttl_minutes):
-                    if self._is_our_process(pid):
-                        logger.warning("Lock expired; terminating stale process %s", pid)
-                        self._kill_process(pid)
+            logger.info(f"[LOCK][DEBUG] Checking if lock file exists: {self.lock_file}")
+            if self.lock_file.exists():
+                try:
+                    with open(self.lock_file, "r", encoding="utf-8") as handle:
+                        raw_data = json.load(handle)
+                    lock_data = self._normalize_lock_data(raw_data)
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError) as error:
+                    logger.warning("Invalid lock file detected (%s); recreating.", error)
+                    lock_data = {}
+                pid = lock_data.get("pid")
+                heartbeat_iso = lock_data.get("heartbeat", EPOCH_ISO)
+                try:
+                    last_heartbeat = datetime.fromisoformat(heartbeat_iso)
+                except ValueError:
+                    last_heartbeat = datetime.fromtimestamp(0)
+
+                logger.info(f"[LOCK][DEBUG] Lock file data: pid={pid}, heartbeat={heartbeat_iso}")
+                is_running = self._is_process_running(pid) if pid else False
+                logger.info(f"[LOCK][DEBUG] Process {pid} running: {is_running}")
+
+                if pid and is_running:
+                    if datetime.now() - last_heartbeat > timedelta(minutes=self.ttl_minutes):
+                        if self._is_our_process(pid):
+                            logger.warning("Lock expired; terminating stale process %s", pid)
+                            self._kill_process(pid)
+                        else:
+                            logger.info("Lock held by unrelated process; removing stale file")
+                            self.lock_file.unlink(missing_ok=True)
                     else:
-                        logger.info("Lock held by unrelated process; removing stale file")
-                        self.lock_file.unlink(missing_ok=True)
+                        if self._is_our_process(pid):
+                            logger.warning("YouTube monitor already running (PID %s)", pid)
+                            logger.warning("Kill duplicates with: taskkill /F /PID %s", pid)
+                            return False
                 else:
-                    if self._is_our_process(pid):
-                        logger.warning("YouTube monitor already running (PID %s)", pid)
-                        logger.warning("Kill duplicates with: taskkill /F /PID %s", pid)
-                        return False
-            else:
-                logger.info("Previous PID %s not active; reusing lock", pid)
+                    logger.info("[LOCK][DEBUG] Previous PID %s not active; reusing lock", pid)
 
-        self._write_lock_file()
-        self._start_heartbeat()
-        logger.info("Instance lock acquired (PID %s)", self.pid)
-        return True
+            logger.info("[LOCK][DEBUG] Writing lock file...")
+            self._write_lock_file()
+            logger.info("[LOCK][DEBUG] Starting heartbeat...")
+            self._start_heartbeat()
+            logger.info("[LOCK][DEBUG] ✅ Instance lock acquired (PID %s)", self.pid)
+            return True
+
+        except Exception as e:
+            logger.error(f"[LOCK][ERROR] Exception in acquire(): {e}", exc_info=True)
+            raise
 
     def release(self) -> None:
         """Stop heartbeat and remove lock if we own it."""
@@ -356,9 +372,35 @@ class InstanceLock:
                             stale_pids.append(pid)
                             logger.warning("Found orphaned main.py process %s (age: %.1f minutes)", pid, age_minutes)
 
-        for pid in stale_pids:
-            logger.warning("Killing stale process %s", pid)
-            self._kill_process(pid)
+        # Prompt user before killing stale processes (unless running non-interactively)
+        if stale_pids:
+            print(f"\n[ALERT] Found {len(stale_pids)} stale process(es):")
+            for pid in stale_pids:
+                print(f"  - PID {pid}")
+            print()
+
+            # Check if running interactively (has a TTY)
+            import sys
+            if sys.stdin.isatty():
+                try:
+                    choice = input("Kill stale processes? [Y/n]: ").strip().lower()
+                    if choice in ('', 'y', 'yes'):
+                        for pid in stale_pids:
+                            logger.warning("Killing stale process %s", pid)
+                            self._kill_process(pid)
+                        print("[OK] Stale processes terminated.")
+                        print("[INFO] Continuing launch...\n")
+                    else:
+                        print("[INFO] Keeping stale processes. You may experience conflicts.")
+                        print("[INFO] Continuing launch anyway...\n")
+                        logger.info("User chose to keep stale processes: %s", stale_pids)
+                except (EOFError, KeyboardInterrupt):
+                    print("\n[INFO] Skipping cleanup. Continuing launch...\n")
+            else:
+                # Non-interactive mode: auto-kill (e.g., --no-lock flag)
+                for pid in stale_pids:
+                    logger.warning("Killing stale process %s (non-interactive)", pid)
+                    self._kill_process(pid)
 
     @staticmethod
     def _kill_process(pid: int) -> None:
@@ -479,7 +521,7 @@ class InstanceLock:
                 continue
 
             # Only detect duplicates if they're actually running the YouTube DAE
-            # Check for --youtube flag or asyncio.run(monitor_youtube in the command
+            # Check for --youtube flag or auto_moderator_dae in the command
             is_youtube_dae = False
             cmdline_str = " ".join(str(arg) for arg in cmdline).lower()
 

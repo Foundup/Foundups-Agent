@@ -26,6 +26,16 @@ from modules.communication.livechat.src.greeting_generator import GrokGreetingGe
 
 logger = logging.getLogger(__name__)
 
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    """Environment variable truthy check for session toggles."""
+    try:
+        value = os.getenv(name, default).strip().lower()
+        return value in ("1", "true", "yes", "y", "on")
+    except Exception:
+        return default.strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 class SessionManager:
     """
     Manages YouTube Live Chat sessions.
@@ -175,8 +185,12 @@ class SessionManager:
             logger.info("Greeting already sent for this session - skipping")
             return True
 
+        if not _env_truthy("YT_LIVECHAT_ANNOUNCEMENTS_ENABLED", "true"):
+            logger.info("[CONFIG] Greetings DISABLED via YT_LIVECHAT_ANNOUNCEMENTS_ENABLED")
+            return True
+
         if not self.greeting_message:
-            logger.info("No greeting message configured")
+            logger.info("No greeting message available - skipping greeting")
             return True
         
         try:
@@ -235,8 +249,12 @@ class SessionManager:
             True if broadcast sent successfully
         """
         # FIRST PRINCIPLES: Only send update broadcast once per session to prevent spam
+        if not _env_truthy("YT_LIVECHAT_ANNOUNCEMENTS_ENABLED", "true"):
+            logger.debug("Announcements disabled via YT_LIVECHAT_ANNOUNCEMENTS_ENABLED - skipping update broadcast")
+            return True
+
         if self.update_broadcast_sent:
-            logger.info("Update broadcast already sent for this session - skipping")
+            logger.debug("Update broadcast already sent for this session - skipping")
             return True
 
         import random

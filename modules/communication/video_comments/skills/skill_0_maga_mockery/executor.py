@@ -73,17 +73,24 @@ class MagaMockerySkill:
     """
 
     # Whack-a-MAGA fallback responses (extracted from intelligent_reply_generator.py lines 244-255)
+    # Updated with #FFCPLN requirements (2025-12-22)
+    # Updated with 1933 Trump/Hitler parallels (2025-12-23)
     TROLL_RESPONSES = [
-        "Another MAGA genius emerges from the depths 🤡",
-        "Did Tucker tell you to say that? 📺",
-        "Bless your heart 💀",
-        "Sir, this is a Wendy's 🍔",
-        "Tell me you drink Brawndo without telling me 🧃",
-        "Found the guy who failed geography AND history 📚",
-        "Your opinion has been noted and filed appropriately 🗑️",
-        "Imagine typing that and hitting send 😂",
-        "Critical thinking wasn't on the curriculum, huh? 🎓",
-        "The blue check marks all of them indeed 🔵",
+        "Another MAGA genius emerges from the depths 🤡 #FFCPLN",
+        "Did Tucker tell you to say that? 📺 #FFCPLN",
+        "Bless your heart 💀 #FFCPLN",
+        "Sir, this is a Wendy's 🍔 #FFCPLN",
+        "Tell me you drink Brawndo without telling me 🧃 #FFCPLN",
+        "Found the guy who failed geography AND history 📚 #FFCPLN",
+        "Your opinion has been noted and filed appropriately 🗑️ #FFCPLN",
+        "Imagine typing that and hitting send 😂 #FFCPLN",
+        "Critical thinking wasn't on the curriculum, huh? 🎓 #FFCPLN",
+        "Besties for 15 years think he didn't know it 🤝 #FFCPLN",  # Trust/betrayal theme
+        # 2025-12-23: 1933 Trump/Hitler parallels (agentic context-aware responses)
+        "2025 IS 1933. Hitler + Trump both took power same year. Enabling Act = 100s of Executive Orders. Expanded ICE = Gestapo. Detention centers = early concentration camps. Masked ICE kidnapping Undocumented Americans = kidnapping Jews. The parallels are STRIKING. Learn history. #FFCPLN",
+        "TDS? Try history books. 1933 Hitler, 2025 Trump - same playbook. Weaponized executive power ✓ Expanded secret police (ICE) ✓ Detention centers ✓ Kidnapping minorities ✓ Facts > feelings. #FFCPLN 📚",
+        "Mike needs education? YOU need 1933 history. Trump's ICE = Hitler's Gestapo. Detention centers = concentration camps. Executive orders = Enabling Act. It's not TDS, it's PATTERN RECOGNITION. #FFCPLN 🎓",
+        "What's a Nazi? Someone who uses executive orders to weaponize government (Enabling Act), expands secret police (ICE/Gestapo), builds detention centers (concentration camps), and kidnaps minorities. Sound familiar? That's 2025. #FFCPLN",
     ]
 
     def __init__(self):
@@ -108,10 +115,15 @@ class MagaMockerySkill:
 
         # STRATEGY 1: GrokGreetingGenerator response (if available)
         # Pattern from: intelligent_reply_generator.py lines 1023-1025
+        # Updated: Ensure #FFCPLN hashtag always present (2025-12-22)
         if context.maga_response:
             logger.info("[SKILL-0] Using GrokGreetingGenerator consciousness-themed mockery")
+            reply_text = context.maga_response
+            # Add #FFCPLN if not already present
+            if '#FFCPLN' not in reply_text:
+                reply_text = f"{reply_text} #FFCPLN"
             return {
-                'reply_text': context.maga_response,
+                'reply_text': reply_text,
                 'strategy': 'grok_greeting',
                 'confidence': 0.9  # High confidence (LLM-generated)
             }

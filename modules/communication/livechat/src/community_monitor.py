@@ -99,6 +99,12 @@ class CommunityMonitor:
         self.chat_sender = chat_sender
         self.telemetry_store = telemetry_store
 
+        # Phase 3R: Live stream priority (2025-12-24)
+        # Map channel_id → video_id for active streams
+        self.live_channel_priority = None  # Channel ID with active stream
+        self.live_video_id = None  # Actual video ID from stream_resolver
+        logger.info(f"[COMMUNITY] Phase 3R: Live stream priority system initialized")
+
         # State tracking
         self.last_check_time = None
         self.last_comment_count = 0
@@ -116,26 +122,62 @@ class CommunityMonitor:
             "tars_like_heart_reply" / "run_skill.py"
         )
 
+    def set_live_priority(self, channel_id: str, video_id: str):
+        """
+        Set priority channel for live stream (Phase 3R: 2025-12-24).
+
+        When a channel has an active live stream, comment processing
+        prioritizes THAT channel's comments (not round-robin rotation).
+
+        Args:
+            channel_id: Channel ID with active stream
+            video_id: Actual video ID from stream_resolver (NOT @handle/live!)
+        """
+        self.live_channel_priority = channel_id
+        self.live_video_id = video_id
+        logger.info(f"[COMMUNITY] 🎯 LIVE PRIORITY SET:")
+        logger.info(f"[COMMUNITY]   Channel: {channel_id}")
+        logger.info(f"[COMMUNITY]   Video: {video_id}")
+        logger.info(f"[COMMUNITY]   Comments will process THIS channel until stream ends")
+
+    def clear_live_priority(self):
+        """Clear live stream priority (return to rotation mode)."""
+        if self.live_channel_priority:
+            logger.info(f"[COMMUNITY] 🔄 CLEARING LIVE PRIORITY:")
+            logger.info(f"[COMMUNITY]   Was: {self.live_channel_priority}")
+            logger.info(f"[COMMUNITY]   Returning to rotation mode")
+        self.live_channel_priority = None
+        self.live_video_id = None
+
     def get_next_channel(self) -> str:
         """
         Get next channel ID in rotation.
 
         Phase 3P: Rotates through all channels (Move2Japan → FoundUps → UnDaoDu → repeat)
+        Phase 3R (2025-12-24): PRIORITY MODE - Live stream channel takes precedence
 
         Returns:
             str: Channel ID to process
         """
+        # PRIORITY: Live channel override (Phase 3R: commenting dictated by live chat)
+        if self.live_channel_priority:
+            logger.info(f"[COMMUNITY] 🎯 PRIORITY MODE: Processing LIVE channel {self.live_channel_priority}")
+            logger.info(f"[COMMUNITY]   Video ID: {self.live_video_id}")
+            logger.info(f"[COMMUNITY]   Reason: Active live stream detected")
+            return self.live_channel_priority
+
+        # FALLBACK: Single channel mode
         if not self.channel_rotation_enabled:
             logger.debug(f"[DAEMON][CARDIOVASCULAR] 📌 Single channel mode: {self.channel_id}")
             return self.channel_id
 
-        # Get current channel
+        # FALLBACK: Round-robin rotation (no live stream)
         channel = self.all_channels[self.current_channel_index]
 
         # Advance to next channel for next time
         self.current_channel_index = (self.current_channel_index + 1) % len(self.all_channels)
 
-        logger.info(f"[DAEMON][CARDIOVASCULAR] 🔄 CHANNEL ROTATION:")
+        logger.info(f"[DAEMON][CARDIOVASCULAR] 🔄 ROTATION MODE (no live stream):")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Current: {channel} (index {self.current_channel_index - 1 if self.current_channel_index > 0 else len(self.all_channels) - 1})")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Next: {self.all_channels[self.current_channel_index]} (index {self.current_channel_index})")
         logger.info(f"[DAEMON][CARDIOVASCULAR]   Total channels: {len(self.all_channels)}")
@@ -340,6 +382,15 @@ class CommunityMonitor:
                 "--max-comments", str(max_comments),
                 "--json-output"  # Output JSON for parsing
             ]
+
+            # Phase 3R: Pass actual video_id from stream_resolver (NOT @handle/live!)
+            # This ensures navigation goes to the CORRECT live stream (not scheduled)
+            if self.live_video_id and target_channel == self.live_channel_priority:
+                cmd.extend(["--video", self.live_video_id])
+                logger.info(f"[COMMUNITY] 🎯 Passing live video ID: {self.live_video_id}")
+                logger.info(f"[COMMUNITY]   This ensures DAE navigates to ACTUAL live (not scheduled)")
+            else:
+                logger.debug(f"[COMMUNITY] No live video ID - using Studio inbox mode")
 
             if not do_like:
                 cmd.append("--no-like")
@@ -626,5 +677,57 @@ def get_community_monitor(channel_id: str, chat_sender=None, telemetry_store=Non
         if telemetry_store is not None and _community_monitor_instance.telemetry_store is None:
             _community_monitor_instance.telemetry_store = telemetry_store
             logger.info("[COMMUNITY] Monitor telemetry_store attached")
+
+        # Phase 3R (2025-12-24): Update primary channel_id when different stream detected
+        # CRITICAL FIX: Singleton was stuck on first channel, ignoring live stream switches
+        if channel_id != _community_monitor_instance.channel_id:
+            logger.info(f"[COMMUNITY] 🔄 CHANNEL SWITCH DETECTED:")
+            logger.info(f"[COMMUNITY]   Old primary: {_community_monitor_instance.channel_id}")
+            logger.info(f"[COMMUNITY]   New primary: {channel_id}")
+
+            old_channel = _community_monitor_instance.channel_id
+            _community_monitor_instance.channel_id = channel_id
+
+            # Phase 4H (2025-12-25): Switch YouTube Studio account
+            # HYBRID: DOM-based account switching + UI-TARS training data collection
+            # Training enables future vision-based switching (Phase 5)
+            try:
+                # Map channel_id to account name
+                channel_to_account = {
+                    "UC-LSSlOZwpGIRIYihaz8zCw": "Move2Japan",
+                    "UCSNTUXjAgpd4sgWYP0xoJgw": "UnDaoDu",
+                    "UCfHM9Fw9HD-NwiS0seD_oIA": "FoundUps",
+                }
+
+                target_account = channel_to_account.get(channel_id)
+                if target_account:
+                    logger.info(f"[COMMUNITY] 🔄 Triggering Studio account switch: {old_channel} → {target_account}")
+                    logger.info(f"[COMMUNITY]   Phase 4H: DOM clicks will generate UI-TARS training data")
+
+                    # Import and switch (async, but don't block - switch happens in background)
+                    # This is fire-and-forget to avoid blocking community monitor
+                    import asyncio
+                    from modules.infrastructure.foundups_vision.src.studio_account_switcher import switch_studio_account
+
+                    # Create background task for account switch
+                    async def _switch_account():
+                        result = await switch_studio_account(target_account)
+                        if result.get("success"):
+                            logger.info(f"[COMMUNITY] ✅ Studio account switched to {target_account}")
+                            logger.info(f"[COMMUNITY]   Training examples recorded: {result.get('training_recorded', 0)}")
+                        else:
+                            logger.warning(f"[COMMUNITY] ⚠️ Studio account switch failed: {result.get('error')}")
+
+                    # Schedule task (fire-and-forget)
+                    try:
+                        loop = asyncio.get_running_loop()
+                        loop.create_task(_switch_account())
+                    except RuntimeError:
+                        # No event loop running - switch synchronously
+                        logger.warning(f"[COMMUNITY] No event loop - skipping Studio account switch")
+
+            except Exception as e:
+                logger.warning(f"[COMMUNITY] Phase 4H account switch failed: {e}")
+                # Continue without Studio account switch (comment engagement still works)
 
     return _community_monitor_instance

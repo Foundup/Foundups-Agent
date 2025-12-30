@@ -138,6 +138,8 @@ class CommentEngagementDAE:
         'reply_btn': "#reply-button-end button, ytcp-button#reply-button button",
         'reply_input': "textarea#textarea, textarea[placeholder*='reply']",
         'reply_submit': "#submit-button button, ytcp-button#submit-button button",
+        'action_menu': "ytcp-icon-button#action-menu-button",  # 3-dot menu for spam troll actions
+        'hide_user_option': "tp-yt-paper-item",  # Hide user from channel (anti-spam nuclear option)
     }
     
     # Vision descriptions for UI-TARS interaction/verification (fallback when DOM is inaccessible)
@@ -166,9 +168,11 @@ class CommentEngagementDAE:
         self,
         channel_id: str,
         video_id: str = None,
+        video_title: str = None,
         use_vision: bool = True,
         use_dom: bool = True,
-        check_moderators: bool = True
+        check_moderators: bool = True,
+        livechat_sender=None
     ):
         """
         Initialize engagement DAE.
@@ -176,15 +180,19 @@ class CommentEngagementDAE:
         Args:
             channel_id: YouTube channel ID
             video_id: YouTube video ID (for live stream comments, None = channel inbox)
+            video_title: Video title for context-aware replies (alignment detection)
             use_vision: Enable UI-TARS vision for verification
             use_dom: Enable Selenium DOM clicking (recommended)
             check_moderators: Enable moderator detection & notifications (default True)
+            livechat_sender: Optional livechat reference for session notifications
         """
         self.channel_id = channel_id
         self.video_id = video_id
+        self.video_title = video_title  # NEW (2025-12-30): Video context for alignment detection
         self.use_vision = use_vision
         self.use_dom = use_dom
         self.check_moderators = check_moderators
+        self.livechat_sender = livechat_sender  # For inbox cleared notifications
         self.driver = None
         self.ui_tars_bridge = None
         self.human = None  # Anti-detection: Human behavior simulator (initialized when driver connects)
@@ -499,30 +507,45 @@ class CommentEngagementDAE:
     async def connect(self) -> bool:
         """
         Connect to browser and vision system.
-        Phase -1: Signal acquisition from Chrome debugging port.
+        Phase -1: Signal acquisition from browser debugging port.
+
+        Supports:
+        - Chrome (port 9222, default)
+        - Edge (port 9223, for FoundUps account)
         """
         logger.info(f"[DAE-CONNECT] Initializing (vision={self.use_vision}, dom={self.use_dom})")
-        
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        
-        chrome_options = Options()
-        chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{CHROME_PORT}")
 
-        # Fast preflight to avoid long Selenium timeout when Chrome debug port is closed
+        from selenium import webdriver
+
+        # Detect browser type based on port (9223 = Edge, else Chrome)
+        use_edge = (CHROME_PORT == 9223)
+        browser_name = "Edge" if use_edge else "Chrome"
+        logger.info(f"[DAE-CONNECT] Browser: {browser_name} (port {CHROME_PORT})")
+
+        # Fast preflight to avoid long Selenium timeout when browser debug port is closed
         if self.use_vision:
             try:
                 from modules.infrastructure.foundups_vision.src.chrome_preflight_check import is_chrome_debug_port_open
                 if not is_chrome_debug_port_open(port=CHROME_PORT, timeout=1.0):
-                    logger.info(f"[DAE-CONNECT] Chrome debug port {CHROME_PORT} not reachable (<1s check) - disabling vision")
-                    logger.info("[DAE-CONNECT] Tip: launch Chrome with --remote-debugging-port=9222 (launch_chrome_youtube_studio.bat)")
+                    logger.info(f"[DAE-CONNECT] {browser_name} debug port {CHROME_PORT} not reachable (<1s check) - disabling vision")
+                    logger.info(f"[DAE-CONNECT] Tip: launch {browser_name} with --remote-debugging-port={CHROME_PORT}")
                     self.use_vision = False
             except Exception as e:
                 logger.debug(f"[DAE-CONNECT] Vision preflight check skipped: {e}")
-        
+
         try:
-            self.driver = webdriver.Chrome(options=chrome_options)
-            logger.info(f"[DAE-CONNECT] Browser entangled: {self.driver.current_url[:60]}...")
+            if use_edge:
+                from selenium.webdriver.edge.options import Options as EdgeOptions
+                edge_options = EdgeOptions()
+                edge_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{CHROME_PORT}")
+                self.driver = webdriver.Edge(options=edge_options)
+            else:
+                from selenium.webdriver.chrome.options import Options
+                chrome_options = Options()
+                chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{CHROME_PORT}")
+                self.driver = webdriver.Chrome(options=chrome_options)
+
+            logger.info(f"[DAE-CONNECT] {browser_name} entangled: {self.driver.current_url[:60]}...")
 
             # Initialize human behavior simulator for anti-detection (WSP 49)
             if HUMAN_BEHAVIOR_AVAILABLE:
@@ -551,7 +574,9 @@ class CommentEngagementDAE:
                 use_dom=True,
                 ui_tars_bridge=None,  # Will be set after vision connection
                 check_moderators=self.check_moderators,
-                mod_lookup=self.mod_lookup
+                mod_lookup=self.mod_lookup,
+                reply_debug_tags=self.reply_debug_tags,
+                video_title=self.video_title  # NEW (2025-12-30): Video context for alignment detection
             )
             logger.info("[DAE-CONNECT] Comment processor initialized")
         except Exception as e:
@@ -574,38 +599,104 @@ class CommentEngagementDAE:
         return True
     
     async def navigate_to_inbox(self) -> None:
-        """Navigate to YouTube Studio comments (video-specific or channel inbox).
-
-        If video_id provided: Navigate to live stream video comments
-        If video_id None: Navigate to channel inbox (all comments)
-
-        CRITICAL: For 24/7 comment processing, video_id should ALWAYS be None
-        to process ALL channel comments via Studio inbox (Occam's Razor).
         """
-        if self.video_id:
-            # Live stream video comments (VIDEO-SPECIFIC - should NOT be used for 24/7 processing!)
-            target_url = f"https://studio.youtube.com/video/{self.video_id}/comments"
-            logger.warning(f"[DAE-NAV] ⚠️ VIDEO-SPECIFIC navigation (video_id={self.video_id})")
-            logger.warning(f"[DAE-NAV] ⚠️ This should ONLY be used for live chat comment processing!")
-            logger.warning(f"[DAE-NAV] ⚠️ For 24/7 processing, use Studio inbox (video_id=None)")
-        else:
-            # Channel inbox (all comments) - RECOMMENDED for 24/7 processing
-            target_url = f"https://studio.youtube.com/channel/{self.channel_id}/comments/inbox"
-            logger.info(f"[DAE-NAV] ✅ Studio inbox navigation (channel_id={self.channel_id})")
-            logger.info(f"[DAE-NAV] ✅ Processing ALL channel comments (Occam's Razor - single unified view)")
+        Navigate to YouTube Studio comments inbox.
+        OCCAM'S RAZOR: Comment DAE strictly handles comments only.
+        Navigation to live streams is handled by the orchestrator.
+        """
+        target_url = f"https://studio.youtube.com/channel/{self.channel_id}/comments/inbox"
+        
+        current_url = self.driver.current_url
+        if target_url in current_url or current_url.startswith(target_url):
+            logger.info(f"[DAE-NAV] ✅ Already on Studio inbox - skipping navigation")
+            return
 
-        logger.info(f"[DAE-NAV] Target URL: {target_url}")
+        logger.info(f"[DAE-NAV] Navigating to Studio inbox: {target_url}")
         self.driver.get(target_url)
-        logger.info(f"[DAE-NAV] Navigation complete - waiting for page load...")
-
-        # Human-like delay after navigation (randomized 3.5s-6.5s)
+        
+        # Human-like delay after navigation
         if self.human:
             await asyncio.sleep(self.human.human_delay(5.0, 0.3))
         else:
             await asyncio.sleep(5)
 
         logger.info(f"[DAE-NAV] Page ready for engagement")
-    
+
+    async def _wait_for_comments_loaded(self, timeout: float = 15.0) -> int:
+        """
+        Wait for YouTube Studio inbox to fully load comments.
+
+        YouTube Studio uses lazy loading - comments are loaded via JavaScript
+        after initial page render. This method waits for either:
+        1. `ytcp-comment-thread` elements to appear (comments exist)
+        2. A "no comments" indicator (inbox is truly empty)
+        3. Timeout (fallback to DOM query)
+
+        FIX (2025-12-30): Resolves 0-comment false positives after account switch.
+        The DOM query was returning 0 because JavaScript hadn't finished loading yet.
+
+        Args:
+            timeout: Maximum wait time in seconds (default: 15s)
+
+        Returns:
+            int: Number of comments found (0 if none loaded)
+        """
+        start_time = time.time()
+        poll_interval = 0.5  # Check every 500ms
+
+        logger.info(f"[DAE-WAIT] Waiting for comments to load (timeout: {timeout}s)...")
+
+        while (time.time() - start_time) < timeout:
+            # Check for comment threads
+            count = self.get_comment_count()
+            if count > 0:
+                elapsed = time.time() - start_time
+                logger.info(f"[DAE-WAIT] ✅ Found {count} comment(s) after {elapsed:.1f}s")
+                return count
+
+            # Check for "no comments" indicator (inbox truly empty)
+            # YouTube Studio shows specific text when inbox is empty
+            try:
+                no_comments_indicator = self.driver.execute_script("""
+                    // Check for empty state indicators
+                    const emptySelectors = [
+                        'ytcp-comments-empty-state',
+                        '.empty-state-content',
+                        '[data-empty-state]',
+                        '.ytcp-comment-surface-empty'
+                    ];
+                    for (const sel of emptySelectors) {
+                        if (document.querySelector(sel)) return true;
+                    }
+
+                    // Check for text indicators
+                    const bodyText = document.body.innerText || '';
+                    if (bodyText.includes('No comments to respond to') ||
+                        bodyText.includes('All caught up') ||
+                        bodyText.includes('No new comments')) {
+                        return true;
+                    }
+
+                    return false;
+                """)
+
+                if no_comments_indicator:
+                    elapsed = time.time() - start_time
+                    logger.info(f"[DAE-WAIT] ✅ Empty inbox confirmed after {elapsed:.1f}s (no comments indicator found)")
+                    return 0
+
+            except Exception as e:
+                logger.debug(f"[DAE-WAIT] Empty state check failed: {e}")
+
+            # Wait before next poll
+            await asyncio.sleep(poll_interval)
+
+        # Timeout reached - do final check
+        final_count = self.get_comment_count()
+        logger.warning(f"[DAE-WAIT] ⚠️ Timeout after {timeout}s - final count: {final_count}")
+
+        return final_count
+
     def get_comment_count(self) -> int:
         """Phase 0: Knowledge - Count visible comments."""
         count = self.driver.execute_script(
@@ -616,18 +707,27 @@ class CommentEngagementDAE:
     def _generate_intelligent_reply(self, comment_data: Dict[str, Any]) -> str:
         """
         Generate an intelligent reply based on commenter context.
-        
+
         Phase 1: Protocol - Decision on response type
+        Phase 3: Channel-Specific Personality - Adapt reply style to target channel
         """
         if INTELLIGENT_REPLIES_AVAILABLE:
             try:
                 generator = get_reply_generator()
-                reply = generator.generate_reply_for_comment(comment_data)
+                # PHASE 3: Pass target channel ID for personality adaptation
+                # - Move2Japan: Political commentary + aggressive MAGA mockery
+                # - UnDaoDu: AI consciousness + soft MAGA redirect
+                # - FoundUps: Entrepreneurship vision + soft MAGA redirect
+                logger.debug(f"[DAE-REPLY] Generating reply with target_channel_id={self.channel_id}")
+                reply = generator.generate_reply_for_comment(
+                    comment_data,
+                    target_channel_id=self.channel_id
+                )
                 logger.info(f"[DAE] Generated intelligent reply for {comment_data.get('author_name')}")
                 return reply
             except Exception as e:
                 logger.warning(f"[DAE] Intelligent reply failed: {e}")
-        
+
         # Fallback to simple response
         return "Thanks for the comment!"
     
@@ -636,29 +736,36 @@ class CommentEngagementDAE:
         max_comments: int = 10,
         do_like: bool = True,
         do_heart: bool = True,
+        do_reply: bool = True,
         reply_text: str = "",
         refresh_between: bool = True,
         use_intelligent_reply: bool = True
     ) -> Dict[str, Any]:
         """
         Engage with all visible comments autonomously.
-        
+
         Flow per comment:
         1. Read comment text (yt-formatted-string#content-text)
-        2. LIKE (click thumbs up)
-        3. HEART (click heart)
-        4. REPLY (click reply -> type in textarea -> click submit)
-        5. REFRESH page (removes replied comment, shows next)
+        2. LIKE (click thumbs up) - if do_like=True
+        3. HEART (click heart) - if do_heart=True
+        4. REPLY (click reply -> type in textarea -> click submit) - if do_reply=True
+        5. REFRESH page (removes replied comment, shows next) - if refresh_between=True
         6. Repeat until max_comments processed
-        
+
         Args:
             max_comments: Maximum comments to process. 0 = UNLIMITED (process all)
-        
+            do_like: Enable like action (default True)
+            do_heart: Enable heart action (default True)
+            do_reply: Enable reply action (default True) - WSP 91 switch
+            reply_text: Custom reply text (if empty, uses intelligent reply)
+            refresh_between: Refresh page between batches (default True)
+            use_intelligent_reply: Use AI-generated replies (default True)
+
         WSP 27 DAE Loop:
         - Signal: Detect comment
         - Knowledge: Extract text and classify commenter
         - Protocol: Generate intelligent reply
-        - Agentic: Execute Like + Heart + Reply
+        - Agentic: Execute Like + Heart + Reply (based on switches)
         - Refresh: Remove processed comment
         """
         # IMPORTANT: max_comments=0 means UNLIMITED processing
@@ -673,12 +780,15 @@ class CommentEngagementDAE:
         logger.info(f" Flow: LIKE -> HEART -> REPLY -> REFRESH (per comment)")
         logger.info(f"{'='*60}\n")
 
+        # WSP 91: DAEmon Observability - Log all switch states at engagement start
         logger.info(f"[DAEMON][PHASE-0] 🔍 KNOWLEDGE PHASE: Starting engagement loop")
         logger.info(f"[DAEMON][PHASE-0]   Target: {max_comments if max_comments > 0 else 'ALL'} comments")
-        logger.info(f"[DAEMON][PHASE-0]   Actions: Like={do_like} | Heart={do_heart} | Reply={use_intelligent_reply}")
+        logger.info(f"[DAEMON][PHASE-0]   Action Switches: Like={do_like} | Heart={do_heart} | Reply={do_reply}")
+        logger.info(f"[DAEMON][PHASE-0]   Feature Switches: Intelligent_Reply={use_intelligent_reply} | Refresh={refresh_between}")
 
         all_results = []
         total_processed = 0
+        first_iteration = True  # FIX (2025-12-30): Track first iteration for proper wait
 
         while total_processed < effective_max:
             logger.debug(f"[DAEMON][CARDIOVASCULAR] 💗 Loop iteration {total_processed + 1}/{effective_max}")
@@ -689,24 +799,55 @@ class CommentEngagementDAE:
                     logger.info(f"[ORPHAN-DETECT] Comment engagement shutting down gracefully (processed {total_processed}/{effective_max} comments)")
                     break  # Exit loop gracefully
 
-            # Check for comments (DOM first; vision fallback when DOM is inaccessible)
+            # PHASE--1: SIGNAL DETECTION
+            # FIX (2025-12-30): Use wait-for-load on first iteration after account switch
+            # YouTube Studio lazy-loads comments - immediate DOM query may return 0 falsely
             logger.debug(f"[DAEMON][PHASE--1] 🔎 SIGNAL DETECTION: Checking for comments...")
-            comment_count = self.get_comment_count()
-            has_comment = comment_count > 0
-            logger.debug(f"[DAEMON][PHASE--1]   DOM count: {comment_count}")
 
-            if not has_comment and self.use_vision:
-                logger.debug(f"[DAEMON][PHASE--1]   Falling back to vision detection...")
-                has_comment = await self._vision_exists(
-                    self.VISION_DESCRIPTIONS["has_comment"],
-                    min_confidence=0.4,
-                    timeout=120,
-                )
-                logger.debug(f"[DAEMON][PHASE--1]   Vision result: {has_comment}")
+            if first_iteration:
+                # First iteration: Wait for comments to fully load
+                logger.info(f"[DAEMON][PHASE--1] 🔄 First check - waiting for comments to load...")
+                comment_count = await self._wait_for_comments_loaded(timeout=15.0)
+                first_iteration = False
+            else:
+                # Subsequent iterations: Quick DOM check (page already loaded)
+                comment_count = self.get_comment_count()
+
+            has_comment = comment_count > 0
+            logger.debug(f"[DAEMON][PHASE--1]   DOM count: {comment_count} (Occam: {has_comment})")
 
             if not has_comment:
                 logger.info(f"[DAEMON][PHASE--1] ⚪ NO COMMENTS FOUND - Inbox is clear!")
                 logger.info("[DAE] No comments found")
+
+                # BREADCRUMB: Store for WRE/AI Overseer analysis
+                if self.livechat_sender:
+                    self.livechat_sender.store_breadcrumb(
+                        source_dae='comment_engagement',
+                        phase='PHASE--1',
+                        event_type='no_comments_detected',
+                        message='Inbox cleared via Occam detection (pre-loop)',
+                        metadata={
+                            'comment_count': 0,
+                            'detection_method': 'DOM',
+                            'total_processed': total_processed,
+                            'session_id': self.session_id
+                        }
+                    )
+
+                # ANTI-SPAM: Notify livechat that inbox is clear (prevents infinite refresh loops)
+                if self.livechat_sender and total_processed > 0:
+                    try:
+                        message = f"✊✋🖐️ Comment inbox cleared! Processed {total_processed} comment{'s' if total_processed != 1 else ''} this session."
+                        await self.livechat_sender.send_chat_message(
+                            message_text=message,
+                            response_type='general',
+                            skip_delay=True  # Priority notification
+                        )
+                        logger.info(f"[DAEMON][NOTIFY] Sent completion message to livechat")
+                    except Exception as e:
+                        logger.error(f"[DAEMON][NOTIFY] Failed to send livechat notification: {e}")
+
                 break
 
             logger.info(f"[DAEMON][PHASE--1] ✅ Comment detected (count: {comment_count})")
@@ -722,9 +863,33 @@ class CommentEngagementDAE:
                 do_like,
                 do_heart,
                 reply_text,
+                do_reply=do_reply,
                 use_intelligent_reply=use_intelligent_reply
             )
             all_results.append(result)
+
+            # OCCAM'S RAZOR: Check if no comment exists (first principles detection)
+            if result.get('no_comment_exists'):
+                logger.info(f"[DAEMON][PHASE-2] ✅ NO MORE COMMENTS - DOM detection (Occam's Razor)")
+                logger.info(f"[DAE] Inbox cleared - no DOM thread at index 1")
+
+                # BREADCRUMB: Store for WRE/AI Overseer analysis
+                if self.livechat_sender:
+                    self.livechat_sender.store_breadcrumb(
+                        source_dae='comment_engagement',
+                        phase='PHASE-2',
+                        event_type='no_comments_detected',
+                        message='Inbox cleared via Occam detection (in-loop)',
+                        metadata={
+                            'comment_count': 0,
+                            'detection_method': 'DOM',
+                            'total_processed': total_processed,
+                            'session_id': self.session_id
+                        }
+                    )
+
+                break  # Exit loop immediately - no vision check needed!
+
             total_processed += 1
 
             # Log result
@@ -751,37 +916,101 @@ class CommentEngagementDAE:
             if nested_results:
                 logger.info(f"[NESTED] Engaged with {len(nested_results)} nested replies in this thread")
 
+            # ANTI-DETECTION: Inter-comment "thinking" pause (2025-12-30)
+            # Human pattern: Pause after posting before moving to next action
+            # Variability: 3-7 seconds (shortened per user feedback)
+            multiplier = self.comment_processor.delay_multiplier if self.comment_processor else 1.0
+            if multiplier >= 1.0:  # Only for standard tempo (not FAST/MEDIUM modes)
+                # Base 5s with 40% variance = 3s to 7s
+                if self.human:
+                    base_pause = self.human.human_delay(5.0, 0.4)
+                else:
+                    base_pause = random.uniform(3.0, 7.0)
+
+                # 10% chance of slightly longer pause (simulates brief distraction)
+                if random.random() < 0.10:
+                    extra_pause = random.uniform(2.0, 5.0)
+                    total_pause = base_pause + extra_pause
+                    logger.info(f"[ANTI-DETECTION] 🧘 Extended pause: {total_pause:.1f}s")
+                else:
+                    total_pause = base_pause
+                    logger.info(f"[ANTI-DETECTION] 💭 Pause: {total_pause:.1f}s")
+
+                await asyncio.sleep(total_pause)
+            else:
+                # Fast modes: minimal pause (0.5-1.5s)
+                fast_pause = random.uniform(0.5, 1.5)
+                logger.debug(f"[ANTI-DETECTION] Quick pause: {fast_pause:.1f}s (fast mode)")
+                await asyncio.sleep(fast_pause)
+
             # PROBABILISTIC REFRESH - Anti-detection pattern (70% refresh, 30% batch)
             # Vulnerability fix: Fixed refresh after EVERY comment = bot signature
+            logger.info(f"[DAE-REFRESH] Checking refresh logic...")
+            logger.info(f"[DAE-REFRESH]   refresh_between={refresh_between} | total_processed={total_processed} | effective_max={effective_max}")
+
             if refresh_between and total_processed < effective_max:
                 # Track comments since last refresh (prevent infinite batching)
                 if not hasattr(self, '_comments_since_refresh'):
                     self._comments_since_refresh = 0
                 self._comments_since_refresh += 1
 
-                # Probabilistic decision: 70% refresh, 30% batch multiple comments
-                refresh_probability = 0.7  # Human-like variation
+                # deterministic refresh for FAST/MEDIUM modes (Occam solution)
+                # Probabilistic decision (70% refresh) for 012 mode (human variation)
+                # CRITICAL FIX: UNLIMITED mode (max_comments=0) MUST refresh every time to get next comment
+                is_standard_tempo = self.comment_processor.delay_multiplier >= 1.0
+                refresh_probability = 0.7 if is_standard_tempo else 1.0
                 should_refresh = random.random() < refresh_probability
-                force_refresh = self._comments_since_refresh >= 5  # Max 5 comments before mandatory refresh
+                force_refresh = unlimited_mode or self._comments_since_refresh >= (5 if is_standard_tempo else 1)
+
+                logger.info(f"[DAE-REFRESH]   tempo={self.comment_processor.delay_multiplier}x | is_standard={is_standard_tempo}")
+                logger.info(f"[DAE-REFRESH]   unlimited_mode={unlimited_mode} | refresh_probability={refresh_probability}")
+                logger.info(f"[DAE-REFRESH]   should_refresh={should_refresh} | force_refresh={force_refresh}")
 
                 if should_refresh or force_refresh:
-                    reason = "force" if force_refresh else "probabilistic"
-                    logger.info(f"[DAEMON][PHASE-3] 🔄 REFRESH ({reason}): Reloading page after {self._comments_since_refresh} comment(s)...")
-                    logger.info(f"[DAE] Refreshing to load next comment (batched {self._comments_since_refresh})...")
-                    self.driver.refresh()
-                    self._comments_since_refresh = 0  # Reset counter
-
-                    # Human-like delay for page reload (randomized 3.5s-6.5s)
-                    if self.human:
-                        delay = self.human.human_delay(5.0, 0.3)
-                        logger.debug(f"[DAEMON][PHASE-3]   Human delay: {delay:.2f}s")
-                        await asyncio.sleep(delay)
+                    # CRITICAL FIX: Do NOT refresh if browser is on live stream
+                    # Refresh is ONLY for Studio inbox (comment processing)
+                    # Live chat page (@channel/live) should NEVER be refreshed
+                    current_url = self.driver.current_url
+                    if "@" in current_url and "/live" in current_url:
+                        logger.info(f"[DAEMON][PHASE-3] ⏭️ SKIP REFRESH: Browser on live stream (refresh is comment-only)")
+                        logger.info(f"[DAE-REFRESH]   Current URL: {current_url[:80]}...")
+                        logger.info(f"[DAE-REFRESH]   Refresh disabled for livechat page")
                     else:
-                        await asyncio.sleep(5)
-                    logger.info(f"[DAEMON][PHASE-3] ✅ Page refreshed - ready for next comment")
+                        # On Studio inbox - refresh is OK
+                        if unlimited_mode:
+                            reason = "unlimited_mode"
+                        elif self._comments_since_refresh >= (5 if is_standard_tempo else 1):
+                            reason = "batch_limit"
+                        else:
+                            reason = "probabilistic"
+                        logger.info(f"[DAEMON][PHASE-3] 🔄 REFRESH ({reason}): Reloading page after {self._comments_since_refresh} comment(s)...")
+                        logger.info(f"[DAE] Refreshing to load next comment (batched {self._comments_since_refresh})...")
+                        self.driver.refresh()
+                        self._comments_since_refresh = 0  # Reset counter
+
+                        # Human-like delay for page reload (3-7s range per user feedback)
+                        # 2025-12-30: Adjusted to 5.0±0.4 for balanced human-like variation
+                        multiplier = self.comment_processor.delay_multiplier if self.comment_processor else 1.0
+                        if self.human:
+                            # Base 5s with 40% variance = 3s-7s
+                            base_delay = self.human.human_delay(5.0, 0.4) * multiplier
+                            # 10% chance of extra brief delay
+                            if random.random() < 0.10:
+                                extra = random.uniform(2.0, 4.0)
+                                delay = base_delay + extra
+                                logger.info(f"[DAEMON][PHASE-3]   Refresh delay: {delay:.1f}s (extended)")
+                            else:
+                                delay = base_delay
+                                logger.info(f"[DAEMON][PHASE-3]   Refresh delay: {delay:.1f}s")
+                            await asyncio.sleep(delay)
+                        else:
+                            await asyncio.sleep(5 * multiplier)
+                        logger.info(f"[DAEMON][PHASE-3] ✅ Page refreshed - ready for next comment")
                 else:
                     logger.info(f"[DAEMON][PHASE-3] ⏭️ SKIP REFRESH: Batching comments (batch size: {self._comments_since_refresh}/5)")
                     logger.debug(f"[ANTI-DETECTION] Skipped refresh to create natural variation")
+            else:
+                logger.info(f"[DAE-REFRESH] SKIPPING REFRESH: refresh_between={refresh_between} or at max ({total_processed}/{effective_max})")
         
         # Check if all comments were processed (tab is clear)
         logger.info(f"[DAEMON][PHASE-4] 🏁 COMPLETION CHECK: Verifying inbox status...")
@@ -791,10 +1020,10 @@ class CommentEngagementDAE:
         if remaining_comments == 0 and self.use_vision:
             # DOM may not expose comment threads; use vision to detect whether any comment is still present
             logger.debug(f"[DAEMON][PHASE-4]   Verifying with vision...")
-            if await self._vision_exists(self.VISION_DESCRIPTIONS["has_comment"], min_confidence=0.4, timeout=60):
+            if await self.comment_processor._vision_exists(self.VISION_DESCRIPTIONS["has_comment"], min_confidence=0.4, timeout=60):
                 remaining_comments = 1
                 logger.info(f"[DAEMON][PHASE-4]   Vision detected remaining comments")
-        all_processed = (remaining_comments == 0 and total_processed > 0)
+        all_processed = (remaining_comments == 0)
 
         if all_processed:
             logger.info(f"[DAEMON][PHASE-4] ✅ ALL COMMENTS PROCESSED - Inbox is 100% clear!")
@@ -868,6 +1097,23 @@ class CommentEngagementDAE:
             # Save updated session counter
             self._save_break_state()
 
+        # ARCHITECTURE FIX (2025-12-28): Comment DAE should ONLY process comments
+        # Live stream navigation is handled by the orchestrator (auto_moderator_dae.py)
+        # based on heartbeat signals from stream_resolver.
+        #
+        # Occam's Razor: Comments DAE = Comments ONLY
+        # - Do NOT navigate to live streams
+        # - Do NOT check if streams are live
+        # - Just process comments and return
+        #
+        # The calling orchestrator will:
+        # 1. Rotate to next channel (M2J → UnDaoDu → FoundUps)
+        # 2. Check stream_resolver heartbeat signal
+        # 3. If live detected → pause rotation, focus on that channel's live chat
+        logger.info(f"[DAE] Session complete - returning control to orchestrator")
+        logger.info(f"[DAE]   Processed: {total_processed} comments")
+        logger.info(f"[DAE]   Browser remains on Studio inbox (by design)")
+
         return summary
     
     def close(self) -> None:
@@ -880,6 +1126,7 @@ class CommentEngagementDAE:
 async def execute_skill(
     channel_id: str,
     video_id: str = None,
+    video_title: str = None,
     max_comments: int = 5,
     do_like: bool = True,
     do_heart: bool = True,
@@ -893,6 +1140,7 @@ async def execute_skill(
     Args:
         channel_id: YouTube channel ID
         video_id: YouTube video ID (for live stream comments, None = channel inbox)
+        video_title: Video title for context-aware replies (alignment detection)
         max_comments: Maximum comments to process
         do_like: Enable like action
         do_heart: Enable heart action
@@ -906,6 +1154,7 @@ async def execute_skill(
     dae = CommentEngagementDAE(
         channel_id=channel_id,
         video_id=video_id,
+        video_title=video_title,
         use_vision=use_vision,
         use_dom=True
     )
