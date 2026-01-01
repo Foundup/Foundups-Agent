@@ -16,6 +16,45 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# CROSS-COMMENT LOOP PREVENTION (ADR-012)
+# ============================================================================
+# Owned channel names - NEVER reply to comments from these channels
+# to prevent infinite cross-commenting loops between our own channels.
+# Like/Heart only, no reply. 0102 behavior: Like = silent acknowledgment.
+OWNED_CHANNELS = frozenset([
+    "Move2Japan",
+    "UnDaoDu",
+    "FoundUps",
+    "Foundups",  # Case variation
+    "@Move2Japan",
+    "@UnDaoDu",
+    "@FoundUps",
+    "@Foundups",
+])
+
+
+def is_owned_channel(username: str) -> bool:
+    """
+    Check if commenter is one of our owned channels.
+
+    ADR-012: Cross-Comment Loop Prevention
+    - If True → Like/Heart only, NO REPLY
+    - Prevents infinite agent-to-agent commenting
+
+    Args:
+        username: Commenter display name or handle
+
+    Returns:
+        True if this is an owned channel
+    """
+    if not username:
+        return False
+    # Check exact match and handle variations
+    clean_name = username.strip().lstrip('@')
+    return username in OWNED_CHANNELS or clean_name in OWNED_CHANNELS or f"@{clean_name}" in OWNED_CHANNELS
+
+
 # Import commenter history store (WSP 60 module memory)
 try:
     from modules.communication.video_comments.src.commenter_history_store import (
@@ -173,14 +212,14 @@ class CommentProcessor:
         find_and_click_script = f"""
         const threadIndex = arguments[0];
         const targetSelector = arguments[1];
-        
+
         function findInShadow(root, selector) {{
             if (!root) return null;
-            
+
             // direct check
             const el = root.querySelector(selector);
             if (el) return el;
-            
+
             // recursive check in children with shadow roots
             const children = root.querySelectorAll('*');
             for (let child of children) {{
@@ -190,8 +229,29 @@ class CommentProcessor:
                 }}
             }}
             return null;
+        }}
+
+        function collectThreads() {{
+            const direct = document.querySelectorAll('{thread_selector}');
+            if (direct && direct.length) return Array.from(direct);
+            const results = [];
+            const stack = [document];
+            while (stack.length) {{
+                const node = stack.pop();
+                if (!node || !node.querySelectorAll) continue;
+                try {{
+                    const found = node.querySelectorAll('{thread_selector}');
+                    for (const el of found) results.push(el);
+                }} catch (e) {{}}
+                const children = node.querySelectorAll('*');
+                for (const child of children) {{
+                    if (child.shadowRoot) stack.push(child.shadowRoot);
+                }}
             }}
-        const threads = document.querySelectorAll('{thread_selector}');
+            return results;
+        }}
+
+        const threads = collectThreads();
         if (!threads || threads.length <= threadIndex) {{
             return {{success: false, error: 'Thread ' + threadIndex + ' not found'}};
         }}
@@ -335,7 +395,27 @@ class CommentProcessor:
         """
         try:
             data = self.driver.execute_script(r"""
-                const threads = document.querySelectorAll('ytcp-comment-thread');
+                function collectThreads(selector) {
+                    const direct = document.querySelectorAll(selector);
+                    if (direct && direct.length) return Array.from(direct);
+                    const results = [];
+                    const stack = [document];
+                    while (stack.length) {
+                        const node = stack.pop();
+                        if (!node || !node.querySelectorAll) continue;
+                        try {
+                            const found = node.querySelectorAll(selector);
+                            for (const el of found) results.push(el);
+                        } catch (e) {}
+                        const children = node.querySelectorAll('*');
+                        for (const child of children) {
+                            if (child.shadowRoot) stack.push(child.shadowRoot);
+                        }
+                    }
+                    return results;
+                }
+
+                const threads = collectThreads('ytcp-comment-thread');
                 const thread = threads[arguments[0]];
                 if (!thread) return null;
                 
@@ -382,11 +462,21 @@ class CommentProcessor:
 
                 // Extract published time (e.g., "3 months ago", "1 year ago")
                 // FIX (2025-12-30): YouTube Studio uses different selectors than regular YouTube
+                // FIX (2025-12-30): Enhanced selectors for YouTube Studio comment inbox
                 let publishedTime = null;
 
                 // Try multiple selectors (YouTube Studio + regular YouTube)
+                // Ordered by specificity - most specific first
                 const timeSelectors = [
-                    'yt-formatted-string.published-time-text',  // Regular YouTube
+                    // YouTube Studio specific (2025-12-30 enhanced)
+                    'span.published-time',                       // Direct span class
+                    '#published-time',                           // ID-based
+                    'ytcp-comment-view-model #published-time',   // Studio model with ID
+                    'ytcp-comment-view #published-time',         // Studio view with ID
+                    '.ytcp-comment-header span',                 // Header span (often contains time)
+                    '#header #published-time-text',              // Header published time
+                    // Regular YouTube selectors
+                    'yt-formatted-string.published-time-text',   // Regular YouTube
                     '.published-time-text',                      // Regular YouTube (class)
                     '#published-time-text',                      // ID-based
                     'ytcp-comment-view span:not(.author)',       // YouTube Studio: spans that aren't author
@@ -398,16 +488,42 @@ class CommentProcessor:
                     const el = thread.querySelector(selector);
                     if (el && el.textContent.includes('ago')) {
                         publishedTime = el.textContent.trim();
+                        console.log('[DOM-DEBUG] Found time via selector:', selector, publishedTime);
                         break;
                     }
                 }
 
-                // Fallback: Search for any text containing "ago" pattern
+                // Fallback 1: Search spans for "ago" pattern
+                if (!publishedTime) {
+                    const spans = thread.querySelectorAll('span');
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        if (text.includes('ago') && /\d+/.test(text)) {
+                            publishedTime = text;
+                            console.log('[DOM-DEBUG] Found time via span scan:', publishedTime);
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback 2: Search for any text containing "ago" pattern in full thread text
                 if (!publishedTime) {
                     const allText = thread.textContent;
-                    const agoMatch = allText.match(/(\d+\s*(?:second|minute|hour|day|week|month|year)s?\s*ago)/i);
+                    // Enhanced regex: handles "yr", "mo", abbreviated forms
+                    const agoMatch = allText.match(/(\d+\s*(?:second|minute|hour|day|week|month|year|yr|mo|wk|hr|min|sec)s?\s*ago)/i);
                     if (agoMatch) {
                         publishedTime = agoMatch[1];
+                        console.log('[DOM-DEBUG] Found time via regex fallback:', publishedTime);
+                    }
+                }
+
+                // Fallback 3: Look for relative time patterns like "Edited 1 year ago"
+                if (!publishedTime) {
+                    const allText = thread.textContent;
+                    const editedMatch = allText.match(/(?:edited\s+)?(\d+\s*(?:second|minute|hour|day|week|month|year)s?\s*ago)/i);
+                    if (editedMatch) {
+                        publishedTime = editedMatch[1];
+                        console.log('[DOM-DEBUG] Found time via edited pattern:', publishedTime);
                     }
                 }
 
@@ -567,6 +683,21 @@ class CommentProcessor:
 
         logger.info(f"[DAE-ENGAGE] Processing comment {comment_idx} from {results['author_name']}...")
         logger.info(f"[DAE-ENGAGE]   Comment text: {comment_data.get('text', '')[:100]}...")
+
+        # ============================================================
+        # ADR-012: CROSS-COMMENT LOOP PREVENTION
+        # ============================================================
+        # Check if commenter is one of our owned channels
+        # If so: Like/Heart ONLY, NO REPLY (prevents infinite loop)
+        commenter_name = results.get('author_name', '')
+        if is_owned_channel(commenter_name):
+            logger.info(f"[ADR-012] 🔄 OWNED CHANNEL DETECTED: {commenter_name}")
+            logger.info(f"[ADR-012]   → Suppressing REPLY to prevent cross-comment loop")
+            logger.info(f"[ADR-012]   → Will still Like/Heart (silent acknowledgment)")
+            do_reply = False  # Override: Never reply to own channels
+            action_plan["reply"]["intended"] = False
+            action_plan["reply"]["reason"] = "ADR-012: Owned channel - loop prevention"
+            results['owned_channel_detected'] = True
 
         if os.getenv("YT_OCCAM_MODE", "false").lower() == "true":
              # Occam mode now uses the standard path BUT the standard path is now HARBED against AI failure.
@@ -957,8 +1088,35 @@ class CommentProcessor:
     def get_comment_count(self) -> int:
         """Get number of comment threads visible in DOM."""
         try:
-            count = self.driver.execute_script("return document.querySelectorAll('ytcp-comment-thread').length")
-            return int(count)
+            result = self.driver.execute_script("""
+                const selector = 'ytcp-comment-thread';
+                const directCount = document.querySelectorAll(selector).length;
+                if (directCount) {
+                    return {count: directCount, fallback: false};
+                }
+                const results = [];
+                const stack = [document];
+                while (stack.length) {
+                    const node = stack.pop();
+                    if (!node || !node.querySelectorAll) continue;
+                    try {
+                        const found = node.querySelectorAll(selector);
+                        for (const el of found) results.push(el);
+                    } catch (e) {}
+                    const children = node.querySelectorAll('*');
+                    for (const child of children) {
+                        if (child.shadowRoot) stack.push(child.shadowRoot);
+                    }
+                }
+                return {count: results.length, fallback: true};
+            """)
+            if isinstance(result, dict):
+                count = int(result.get("count", 0))
+                if result.get("fallback") and count > 0 and not getattr(self, "_shadow_threads_logged", False):
+                    logger.info(f"[DAE-ENGAGE] Shadow DOM threads detected: {count}")
+                    self._shadow_threads_logged = True
+                return count
+            return int(result or 0)
         except Exception:
             return 0
 

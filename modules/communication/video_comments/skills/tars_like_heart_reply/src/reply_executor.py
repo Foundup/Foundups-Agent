@@ -15,6 +15,9 @@ from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
+# ADR-012: Import owned channels list for cross-comment loop prevention
+from modules.communication.video_comments.skills.tars_like_heart_reply.src.comment_processor import OWNED_CHANNELS
+
 # Anti-detection: Human behavior simulation availability
 try:
     from modules.infrastructure.foundups_selenium.src.human_behavior import get_human_behavior
@@ -94,12 +97,25 @@ class BrowserReplyExecutor:
                 const repliesContainer = thread.querySelector('ytcp-comment-replies');
                 if (!repliesContainer) return {has_replies: false};
 
-                // Check if Move2Japan already replied (skip if so)
-                const channelBadge = repliesContainer.querySelector(
-                    'ytcp-comment-author[aria-label*="Move2Japan"], ' +
-                    '[class*="creator-badge"], ' +
-                    '[aria-label*="owner"]'
-                );
+                // ADR-012: Check if ANY owned channel already replied (skip if so)
+                // Prevents cross-comment loops between our channels
+                const ownedChannels = ['Move2Japan', 'UnDaoDu', 'FoundUps', 'Foundups'];
+                let channelBadge = null;
+                for (const channel of ownedChannels) {
+                    const badge = repliesContainer.querySelector(
+                        `ytcp-comment-author[aria-label*="${channel}"]`
+                    );
+                    if (badge) {
+                        channelBadge = badge;
+                        break;
+                    }
+                }
+                // Also check for creator badge (channel owner)
+                if (!channelBadge) {
+                    channelBadge = repliesContainer.querySelector(
+                        '[class*="creator-badge"], [aria-label*="owner"]'
+                    );
+                }
                 if (channelBadge) {
                     return {
                         has_replies: true,
@@ -142,7 +158,7 @@ class BrowserReplyExecutor:
                 return []
 
             if nested_data.get('channel_already_replied'):
-                logger.info(f"[NESTED] Skipping thread {parent_thread_idx} - Move2Japan already replied")
+                logger.info(f"[NESTED] Skipping thread {parent_thread_idx} - Owned channel already replied (ADR-012)")
                 logger.info(f"[NESTED]   Author detected: {nested_data.get('author', 'Unknown')}")
                 return []
 

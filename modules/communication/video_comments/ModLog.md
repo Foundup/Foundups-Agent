@@ -7,6 +7,75 @@
 
 ## Change Log
 
+### 2026-01-01 - ADR-012: Cross-Comment Loop Prevention
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 96 (WRE Skills)
+
+**Problem:** Foundups commented on UnDaoDu's comment (screenshot evidence). This creates potential infinite loop where agents from different owned channels comment on each other endlessly.
+
+**Root Cause:**
+- `reply_executor.py` only checked for "Move2Japan" when skipping nested replies
+- `comment_processor.py` had no check to prevent replying to owned channel comments
+
+**Solution (0102 Behavior - Like Only, No Reply):**
+When commenter is one of our owned channels → Like/Heart ONLY, NEVER REPLY.
+
+**Files Changed:**
+
+1. **comment_processor.py** - Added OWNED_CHANNELS constant and `is_owned_channel()` function:
+   ```python
+   OWNED_CHANNELS = frozenset([
+       "Move2Japan", "UnDaoDu", "FoundUps", "Foundups",
+       "@Move2Japan", "@UnDaoDu", "@FoundUps", "@Foundups",
+   ])
+
+   def is_owned_channel(username: str) -> bool:
+       """ADR-012: Returns True if this is an owned channel"""
+   ```
+
+2. **comment_processor.py** - Added check before reply decision:
+   ```python
+   if is_owned_channel(commenter_name):
+       logger.info(f"[ADR-012] OWNED CHANNEL DETECTED: {commenter_name}")
+       do_reply = False  # Override: Never reply to own channels
+   ```
+
+3. **reply_executor.py** - Updated nested reply check to ALL owned channels:
+   ```javascript
+   const ownedChannels = ['Move2Japan', 'UnDaoDu', 'FoundUps', 'Foundups'];
+   // Now loops through all owned channels instead of just Move2Japan
+   ```
+
+**ADR-012 Summary:**
+| Commenter | Action |
+|-----------|--------|
+| External user | Like + Heart + Reply (normal) |
+| Move2Japan | Like + Heart only |
+| UnDaoDu | Like + Heart only |
+| FoundUps | Like + Heart only |
+
+---
+
+### 2025-12-30 - Edge Port Wiring for Comment Engagement Skill
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol)
+
+**Problem:** Edge runs on a separate debug port (9223) for FoundUps, but the skill runner did not explicitly wire browser type signals for router attach paths.
+
+**Fixes Applied:**
+- `skills/tars_like_heart_reply/run_skill.py` now sets:
+  - `FOUNDUPS_BROWSER_TYPE` based on `--browser-port`
+  - `ACTION_ROUTER_BROWSER_TYPE` for ActionRouter attach logic
+  - `BROWSER_DEBUG_PORT` to align port-based routing paths
+
+**Impact:**
+- Edge (FoundUps) attach signals are explicit and consistent with port-based execution.
+- Chrome behavior unchanged.
+
+---
+
 ### 2025-12-30 - Troll Detection & Tier Emoji Fixes
 
 **By:** 0102

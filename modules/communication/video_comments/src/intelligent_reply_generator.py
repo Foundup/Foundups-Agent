@@ -1919,15 +1919,31 @@ Reply (address their specific point, no generic phrases):"""
         treatment_tier = classification_int  # Start with original
         is_old_comment = False
         days_old = 0
-        if published_time and classification_int == 1:
+
+        # DEBUG (2025-12-30): Log all inputs to old comment detection
+        logger.info(f"[OLD-COMMENT-CHECK] 📅 Input: published_time='{published_time}', classification_int={classification_int}")
+
+        # FIX (2025-12-30): Check old comments for ALL tiers (not just Tier 1)
+        # Old comments deserve the "sorry for late post" excuse regardless of classification
+        if published_time:
             from modules.communication.video_comments.skills.tars_like_heart_reply.src.comment_processor import CommentProcessor
             comment_age_days = CommentProcessor.parse_comment_age_days(published_time)
+            logger.info(f"[OLD-COMMENT-CHECK] 📅 Parsed: comment_age_days={comment_age_days}")
+
             if comment_age_days and comment_age_days >= 90:
                 is_old_comment = True
                 days_old = comment_age_days
-                logger.info(f"[TIER-ESCALATION] ⬆️ Escalating tier 1 → tier 2 TREATMENT (age: {comment_age_days} days)")
-                profile.commenter_type = CommenterType.MODERATOR  # For reply logic
-                treatment_tier = 2  # Use tier 2 prompt/probability
+                logger.info(f"[OLD-COMMENT-CHECK] ✅ OLD COMMENT DETECTED: {comment_age_days} days (>= 90 threshold)")
+
+                # Only escalate Tier 1 to Tier 2 (don't touch Tier 0 MAGA or Tier 2 MOD)
+                if classification_int == 1:
+                    logger.info(f"[TIER-ESCALATION] ⬆️ Escalating tier 1 → tier 2 TREATMENT (age: {comment_age_days} days)")
+                    profile.commenter_type = CommenterType.MODERATOR  # For reply logic
+                    treatment_tier = 2  # Use tier 2 prompt/probability
+            else:
+                logger.info(f"[OLD-COMMENT-CHECK] ❌ Not old enough: {comment_age_days} days (< 90 threshold)")
+        else:
+            logger.warning(f"[OLD-COMMENT-CHECK] ⚠️ No published_time available - cannot detect old comment")
 
         # PROBABILISTIC ENGAGEMENT: Tier 1 (REGULAR) only gets replies 50% of the time
         if treatment_tier == 1:

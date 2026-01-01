@@ -603,15 +603,23 @@ class CommentEngagementDAE:
         Navigate to YouTube Studio comments inbox.
         OCCAM'S RAZOR: Comment DAE strictly handles comments only.
         Navigation to live streams is handled by the orchestrator.
+        
+        FIX (2025-12-30): Uses NOT_ENGAGED filter to show only unprocessed comments.
+        Without this filter, already-liked/hearted comments appear and cause engagement failures.
         """
-        target_url = f"https://studio.youtube.com/channel/{self.channel_id}/comments/inbox"
+        # Import the studio filter (URL-encoded params for NOT_ENGAGED)
+        from modules.infrastructure.dependency_launcher.src.dae_dependencies import STUDIO_FILTER
+        
+        target_url = f"https://studio.youtube.com/channel/{self.channel_id}/comments/inbox?filter={STUDIO_FILTER}"
         
         current_url = self.driver.current_url
-        if target_url in current_url or current_url.startswith(target_url):
+        # Check if already on inbox (with or without filter) - avoid unnecessary reload
+        base_inbox_url = f"https://studio.youtube.com/channel/{self.channel_id}/comments/inbox"
+        if base_inbox_url in current_url:
             logger.info(f"[DAE-NAV] ✅ Already on Studio inbox - skipping navigation")
             return
 
-        logger.info(f"[DAE-NAV] Navigating to Studio inbox: {target_url}")
+        logger.info(f"[DAE-NAV] Navigating to Studio inbox with NOT_ENGAGED filter...")
         self.driver.get(target_url)
         
         # Human-like delay after navigation

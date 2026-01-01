@@ -30,6 +30,18 @@ _preparse = argparse.ArgumentParser(add_help=False)
 _preparse.add_argument("--browser-port", type=int, default=9222)
 _preargs, _ = _preparse.parse_known_args()
 os.environ["FOUNDUPS_CHROME_PORT"] = str(_preargs.browser_port)
+#
+# IMPORTANT (WSP 50: never assume): port-based automation may target Chrome (9222) OR Edge (9223).
+# ActionRouter needs an explicit browser type hint because FoundUpsDriver is ChromeDriver-based.
+_edge_port_env = os.getenv("FOUNDUPS_EDGE_PORT") or os.getenv("EDGE_DEBUG_PORT") or "9223"
+try:
+    _edge_port = int(str(_edge_port_env).strip())
+except Exception:
+    _edge_port = 9223
+browser_type = "edge" if _preargs.browser_port == _edge_port else "chrome"
+os.environ["FOUNDUPS_BROWSER_TYPE"] = browser_type
+os.environ["ACTION_ROUTER_BROWSER_TYPE"] = browser_type
+os.environ["BROWSER_DEBUG_PORT"] = str(_preargs.browser_port)
 
 # Load environment variables (e.g., GROK_API_KEY/XAI_API_KEY) for intelligent replies.
 # This is intentionally done before importing skill modules so they see the env on import.
