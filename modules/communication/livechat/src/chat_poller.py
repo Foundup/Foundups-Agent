@@ -192,9 +192,9 @@ class ChatPoller:
                         if self.first_poll:
                             logger.debug(f"⏭️ Skipping historical Super Chat from {donor_name}")
                         else:
-                            logger.info(f"[U+1F4B0] SUPER CHAT: {donor_name} donated {amount_display} ({currency}) - Tier {tier}")
+                            logger.info(f"💰 SUPER CHAT: {donor_name} donated {amount_display} ({currency}) - Tier {tier}")
                             if user_comment:
-                                logger.info(f"[U+1F4AC] Super Chat message: {user_comment}")
+                                logger.info(f"💬 Super Chat message: {user_comment}")
 
                             messages.append({
                                 "type": "super_chat_event",
@@ -226,9 +226,9 @@ class ChatPoller:
                     logger.info(f"[DATA] Ignoring {len(messages)} historical events from before connection")
             
             if messages:
-                logger.debug(f"[U+1F4E8] Received {len(messages)} new items")
+                logger.debug(f"📨 Received {len(messages)} new items")
             else:
-                logger.debug("[U+1F4ED] No new messages")
+                logger.debug("📭 No new messages")
                 
             return messages
             

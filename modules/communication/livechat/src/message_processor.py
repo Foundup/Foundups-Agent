@@ -6,7 +6,7 @@ Separated from the main LiveChatListener for better maintainability.
 
 NAVIGATION: Central message routing hub (685 lines - needs refactor!)
 -> Called by: livechat_core.py processes batch messages here
--> Consciousness: consciousness_handler.py handles [U+270A][U+270B][U+1F590] triggers
+-> Consciousness: consciousness_handler.py handles ✊✋🖐 triggers
 -> Commands: command_handler.py handles /slash commands
 -> Events: event_handler.py handles timeouts, bans
 -> AI Response: llm_integration.py (Grok), agentic_chat_engine.py
@@ -20,9 +20,9 @@ WSP 17 Pattern Registry: This is a REUSABLE PATTERN
 - Reusable for: LinkedIn, X/Twitter, Discord, Twitch
 
 MESSAGE PROCESSING PRIORITY SYSTEM:
-Priority 0: Fact-check commands with consciousness emojis ([U+270A][U+270B][U+1F590]) - HIGHEST PRIORITY
+Priority 0: Fact-check commands with consciousness emojis (✊✋🖐) - HIGHEST PRIORITY
 Priority 1: PQN Research Commands (!pqn, !research, /pqn, /research)
-Priority 2: AGENTIC consciousness responses ([U+270A][U+270B][U+1F590] triggers)
+Priority 2: AGENTIC consciousness responses (✊✋🖐 triggers)
 Priority 3: Regular fact-check commands (factcheck @user, fc @user)
 Priority 4: Whack gamification commands (/score, /level, /quiz, etc.)
 Priority 5: MAGA content responses
@@ -72,7 +72,7 @@ class MessageProcessor:
         self.chat_sender = chat_sender  # To access bot channel ID and prevent self-responses
         self.banter_engine = get_banter_engine()
         self.llm_bypass_engine = LLMBypassEngine()
-        self.trigger_emojis = ["[U+270A]", "[U+270B]", "[U+1F590]️"]  # Configurable emoji trigger set
+        self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.last_maga_time = {}  # Track last MAGA response time per user
         self.last_global_maga_time = 0  # Global MAGA response cooldown
@@ -81,7 +81,7 @@ class MessageProcessor:
         self.global_maga_cooldown = 300  # Global cooldown: 5 minutes between ANY MAGA responses
         self.memory_dir = "memory"
         # Consciousness response mode: 'mod_only' or 'everyone' (default: everyone)
-        # Changed to 'everyone' so bot trolls ALL users showing [U+270A][U+270A][U+270A] consciousness!
+        # Changed to 'everyone' so bot trolls ALL users showing ✊✊✊ consciousness!
         self.consciousness_mode = 'everyone'
         # Initialize handlers (WSP-compliant separation)
         self.event_handler = EventHandler(self.memory_dir)
@@ -131,7 +131,7 @@ class MessageProcessor:
         if PQNResearchDAEOrchestrator:
             try:
                 self.pqn_orchestrator = PQNResearchDAEOrchestrator()
-                logger.info("[U+1F52C] PQN Research DAE Orchestrator connected to chat")
+                logger.info("🔬 PQN Research DAE Orchestrator connected to chat")
             except Exception as e:
                 logger.warning(f"Could not initialize PQN orchestrator: {e}")
                 self.pqn_orchestrator = None
@@ -147,7 +147,7 @@ class MessageProcessor:
         
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
-        logger.info(f"[U+1F4C1] Memory directory set to: {self.memory_dir}")
+        logger.info(f"📁 Memory directory set to: {self.memory_dir}")
     
     def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -204,7 +204,7 @@ class MessageProcessor:
             author_id = author_details.get("channelId", "")
             published_at = snippet.get("publishedAt", "")
 
-            # [U+1F4B0] SUPERCHAT DETECTION - Priority Response for Paid Supporters
+            # 💰 SUPERCHAT DETECTION - Priority Response for Paid Supporters
             super_chat_details = snippet.get("superChatDetails", None)
             if super_chat_details:
                 amount_micros = super_chat_details.get("amountMicros", 0)
@@ -215,7 +215,7 @@ class MessageProcessor:
                 # Convert micros to dollars (1,000,000 micros = $1)
                 amount_dollars = int(amount_micros) / 1000000 if amount_micros else 0
 
-                logger.warning(f"[U+1F4B0][U+1F4B0][U+1F4B0] SUPERCHAT DETECTED! {author_name} sent {amount_display} ({amount_dollars} {currency}) - Tier {tier}")
+                logger.warning(f"💰💰💰 SUPERCHAT DETECTED! {author_name} sent {amount_display} ({amount_dollars} {currency}) - Tier {tier}")
                 logger.info(f"[CELEBRATE] Super Chat message: {message_text}")
 
                 # Mark as priority for processing
@@ -406,15 +406,15 @@ class MessageProcessor:
                 display = processed_message.get("superchat_display", "$0")
                 tier = processed_message.get("superchat_tier", 1)
 
-                logger.warning(f"[U+1F4B0] SUPERCHAT HANDLER TRIGGERED for {author_name} ({display})")
+                logger.warning(f"💰 SUPERCHAT HANDLER TRIGGERED for {author_name} ({display})")
 
-                # Generate enthusiastic UnDaoDu[U+270A][U+270B][U+1F590] praise response
+                # Generate enthusiastic UnDaoDu✊✋🖐 praise response
                 praise_responses = [
-                    f"[U+270A][U+270B][U+1F590] LEGENDARY SUPPORT! @{author_name} just dropped {display}! Democracy needs heroes like you! 🇺🇸[U+2728]",
-                    f"[U+270A][U+270B][U+1F590] HOLY RESISTANCE! @{author_name} with {display}! You're powering the fight against fascism! [U+1F4AA][U+1F525]",
-                    f"[U+270A][U+270B][U+1F590] EPIC CONTRIBUTION! @{author_name} ({display})! You're making history! The resistance is REAL! [U+1F985][LIGHTNING]",
-                    f"[U+270A][U+270B][U+1F590] UNSTOPPABLE! @{author_name} just sent {display}! You are the BACKBONE of democracy! [U+1F6E1]️[U+1F48E]",
-                    f"[U+270A][U+270B][U+1F590] PHENOMENAL! @{author_name} with {display} of PURE DEMOCRACY FUEL! The MAGAts are SHAKING! [U+1F30A][U+1F525]"
+                    f"✊✋🖐 LEGENDARY SUPPORT! @{author_name} just dropped {display}! Democracy needs heroes like you! 🇺🇸✨",
+                    f"✊✋🖐 HOLY RESISTANCE! @{author_name} with {display}! You're powering the fight against fascism! 💪🔥",
+                    f"✊✋🖐 EPIC CONTRIBUTION! @{author_name} ({display})! You're making history! The resistance is REAL! 🦅[LIGHTNING]",
+                    f"✊✋🖐 UNSTOPPABLE! @{author_name} just sent {display}! You are the BACKBONE of democracy! 🛡️💎",
+                    f"✊✋🖐 PHENOMENAL! @{author_name} with {display} of PURE DEMOCRACY FUEL! The MAGAts are SHAKING! 🌊🔥"
                 ]
 
                 # Choose random praise
@@ -423,13 +423,13 @@ class MessageProcessor:
 
                 # Grant $20+ superchats video creation privilege
                 if amount >= 20:
-                    logger.warning(f"[U+1F4B0][U+1F4B0][U+1F4B0] $20+ SUPERCHAT! Granting video creation privilege to {author_name}")
+                    logger.warning(f"💰💰💰 $20+ SUPERCHAT! Granting video creation privilege to {author_name}")
                     # Store privilege in processed_message for YouTube Shorts module
                     processed_message["_can_create_video"] = True
-                    praise += f" | [U+1F3AC] VIDEO CREATION UNLOCKED! Type your idea!"
+                    praise += f" | 🎬 VIDEO CREATION UNLOCKED! Type your idea!"
 
                 # Log for analytics
-                logger.info(f"[U+1F4B0] Superchat response: {praise}")
+                logger.info(f"💰 Superchat response: {praise}")
 
                 return praise
 
@@ -444,11 +444,11 @@ class MessageProcessor:
 
                 # Extract emoji sequence to check for consciousness emojis
                 emoji_seq = self.consciousness.extract_emoji_sequence(message_text)
-                if emoji_seq and any(emoji in emoji_seq for emoji in ['[U+270A]', '[U+270B]', '[U+1F590]']):
-                    logger.info(f"[SEARCH][U+270A][U+270B][U+1F590] HIGHEST PRIORITY: Fact-check with consciousness emojis from {author_name}")
+                if emoji_seq and any(emoji in emoji_seq for emoji in ['✊', '✋', '🖐']):
+                    logger.info(f"[SEARCH]✊✋🖐 HIGHEST PRIORITY: Fact-check with consciousness emojis from {author_name}")
                     response = await self._handle_factcheck(message_text, author_name, role)
                     if response:
-                        logger.info(f"[SEARCH][U+270A][U+270B][U+1F590] Consciousness fact-check response for {author_name}")
+                        logger.info(f"[SEARCH]✊✋🖐 Consciousness fact-check response for {author_name}")
 
                         # Record command usage for throttling (WSP 84)
                         if self.intelligent_throttle:
@@ -463,13 +463,13 @@ class MessageProcessor:
                 if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
-                        logger.info(f"[U+1F52C][FORBIDDEN] Moderator {author_name} blocked: {block_msg}")
+                        logger.info(f"🔬[FORBIDDEN] Moderator {author_name} blocked: {block_msg}")
                         return block_msg
 
-                logger.info(f"[U+1F52C] PQN command detected: '{message_text}' from {author_name}")
+                logger.info(f"🔬 PQN command detected: '{message_text}' from {author_name}")
                 response = self._handle_pqn_research(message_text, author_name)
                 if response:
-                    logger.info(f"[U+1F52C] PQN command processed for {author_name}: {response[:100]}")
+                    logger.info(f"🔬 PQN command processed for {author_name}: {response[:100]}")
 
                     # Record command usage for throttling (WSP 84)
                     if self.intelligent_throttle:
@@ -477,16 +477,16 @@ class MessageProcessor:
 
                     return response
                 else:
-                    logger.warning(f"[U+1F52C] PQN command failed to generate response for {author_name}")
+                    logger.warning(f"🔬 PQN command failed to generate response for {author_name}")
             else:
-                logger.debug(f"[U+1F52C] PQN command NOT detected in: '{message_text}'")
+                logger.debug(f"🔬 PQN command NOT detected in: '{message_text}'")
 
             # Priority 2: AGENTIC consciousness response (mod/owner only by default)
             # SKIP if there are legitimate commands that should take priority
             if (processed_message.get("has_consciousness") and
                 not processed_message.get("has_whack_command") and
                 not processed_message.get("has_factcheck")):
-                logger.info(f"[SEARCH] CONSCIOUSNESS TRIGGER [U+270A][U+270B][U+1F590] from {author_name} | Role: {role} | Is Owner: {is_owner} | Is Mod: {is_mod}")
+                logger.info(f"[SEARCH] CONSCIOUSNESS TRIGGER ✊✋🖐 from {author_name} | Role: {role} | Is Owner: {is_owner} | Is Mod: {is_mod}")
                 # Check if user has permission based on mode
                 can_use_consciousness = (
                     self.consciousness_mode == 'everyone' or
@@ -495,11 +495,11 @@ class MessageProcessor:
                 logger.info(f"   Can use consciousness: {can_use_consciousness} (mode: {self.consciousness_mode})")
 
                 if can_use_consciousness:
-                    # QUIZ ANSWER: Check if [U+270A][U+270B][U+1F590] is followed by a number (1-4)
-                    quiz_answer_match = re.search(r'[U+270A][U+270B][U+1F590]\s*([1-4])', message_text)
+                    # QUIZ ANSWER: Check if ✊✋🖐 is followed by a number (1-4)
+                    quiz_answer_match = re.search(r'✊✋🖐\s*([1-4])', message_text)
                     if quiz_answer_match:
                         answer_num = quiz_answer_match.group(1)
-                        logger.info(f"[BOOKS] Quiz answer: [U+270A][U+270B][U+1F590]{answer_num} from {author_name}")
+                        logger.info(f"[BOOKS] Quiz answer: ✊✋🖐{answer_num} from {author_name}")
                         quiz_response = self.command_handler.handle_whack_command(
                             f"/quiz {answer_num}", author_name, author_id, role
                         )
@@ -513,7 +513,7 @@ class MessageProcessor:
                     )
 
                     if agentic_response:
-                        logger.info(f"[BOT] Agentic [U+270A][U+270B][U+1F590]️ response for {author_name} (mode: {self.consciousness_mode})")
+                        logger.info(f"[BOT] Agentic ✊✋🖐️ response for {author_name} (mode: {self.consciousness_mode})")
 
                         # Qwen Message Diversity Check - Prevent repetitive consciousness messages
                         if self.intelligent_throttle:
@@ -532,7 +532,7 @@ class MessageProcessor:
                     else:
                         logger.warning(f"[U+26A0]️ No agentic response generated for {author_name}'s consciousness trigger")
                 else:
-                    logger.debug(f"[U+270A][U+270B][U+1F590]️ ignored from {author_name} - consciousness mode is {self.consciousness_mode}")
+                    logger.debug(f"✊✋🖐️ ignored from {author_name} - consciousness mode is {self.consciousness_mode}")
 
                 # Fallback to consciousness handler for special commands (still respects mode)
                 if can_use_consciousness and role in ['MOD', 'OWNER']:
@@ -540,7 +540,7 @@ class MessageProcessor:
                         message_text, author_id, author_name, role
                     )
                     if response:
-                        logger.info(f"[U+270A][U+270B][U+1F590] Consciousness command response for {author_name}")
+                        logger.info(f"✊✋🖐 Consciousness command response for {author_name}")
                         # Mark this as a consciousness response
                         processed_message["response_type"] = "consciousness"
                         return response
@@ -568,14 +568,14 @@ class MessageProcessor:
             # Priority 3.5: Handle YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
             if processed_message.get("has_shorts_command"):
                 logger.info("[BOT][AI] [QWEN-DAE-DECISION] EXECUTE shorts_command_handler (confidence: 0.90)")
-                logger.info(f"[U+1F3AC] Routing Shorts command: '{message_text}' from {author_name} (role: {role})")
+                logger.info(f"🎬 Routing Shorts command: '{message_text}' from {author_name} (role: {role})")
 
                 response = self._handle_shorts_command(message_text, author_name, author_id, role)
                 if response:
-                    logger.info(f"[U+1F3AC] Shorts command response for {author_name}: {response[:100]}")
+                    logger.info(f"🎬 Shorts command response for {author_name}: {response[:100]}")
                     return response
                 else:
-                    logger.warning(f"[U+1F3AC][FAIL] No response from Shorts handler for '{message_text}'")
+                    logger.warning(f"🎬[FAIL] No response from Shorts handler for '{message_text}'")
 
             # Priority 4: Handle whack commands (score, level, rank)
             if processed_message.get("has_whack_command"):
@@ -594,8 +594,14 @@ class MessageProcessor:
                     logger.warning(f"[AI][GAME] QUIZ DETECTED IN MESSAGE_PROCESSOR! Sending to handle_whack_command")
                 response = self._handle_whack_command(message_text, author_name, author_id, role)
                 if response:
-                    logger.info(f"[GAME] Whack command response for {author_name}: {response[:100]}")
-                    logger.warning(f"[GAME][OK] MESSAGE_PROCESSOR RETURNING: {response[:100]}")
+                    # Handle list responses (e.g., /help returns multiple messages)
+                    if isinstance(response, list):
+                        logger.info(f"[GAME] Whack command response for {author_name}: {len(response)} messages")
+                        for i, msg in enumerate(response):
+                            logger.warning(f"[GAME][OK] MESSAGE_PROCESSOR RETURNING [{i+1}/{len(response)}]: {msg[:80]}")
+                    else:
+                        logger.info(f"[GAME] Whack command response for {author_name}: {response[:100]}")
+                        logger.warning(f"[GAME][OK] MESSAGE_PROCESSOR RETURNING: {response[:100]}")
 
                     # Record command usage for throttling (WSP 84)
                     if self.intelligent_throttle:
@@ -614,19 +620,19 @@ class MessageProcessor:
                 current_time = time.time()
                 if current_time - self.last_global_maga_time < self.global_maga_cooldown:
                     remaining = self.global_maga_cooldown - (current_time - self.last_global_maga_time)
-                    logger.debug(f"[U+1F6E1]️ GLOBAL: Skipping MAGA response - global cooldown active ({remaining:.0f}s remaining)")
+                    logger.debug(f"🛡️ GLOBAL: Skipping MAGA response - global cooldown active ({remaining:.0f}s remaining)")
                     return None
 
                 # Check per-user MAGA rate limiting
                 if self._is_maga_rate_limited(author_id):
-                    logger.debug(f"[U+1F6E1]️ Skipping MAGA response to {author_name} - user rate limited (10 min cooldown)")
+                    logger.debug(f"🛡️ Skipping MAGA response to {author_name} - user rate limited (10 min cooldown)")
                     return None
 
                 # Also check intelligent throttle for MAGA responses - only for moderators
                 if self.intelligent_throttle and role == 'MOD':
                     allowed, block_msg = self.intelligent_throttle.check_moderator_command_allowed(author_id, author_name, role, message_text)
                     if not allowed:
-                        logger.info(f"[U+1F6E1]️ Intelligent throttle blocked MAGA response to {author_name}: {block_msg}")
+                        logger.info(f"🛡️ Intelligent throttle blocked MAGA response to {author_name}: {block_msg}")
                         return None
 
                 # Reuse the MAGA response generated during classification to prevent duplicates
@@ -718,7 +724,7 @@ class MessageProcessor:
 
                             # Response is valid, send it
                             self.proactive_engaged.add(author_id)
-                            logger.info(f"[U+1F4AC] Proactive engagement with {author_name} (once per stream)")
+                            logger.info(f"💬 Proactive engagement with {author_name} (once per stream)")
                             return proactive_response
                         else:
                             logger.debug(f"No proactive response generated for {author_name}")
@@ -738,7 +744,7 @@ class MessageProcessor:
                             return None
 
                     self.stream_greeting_sent = True  # Mark stream greeting as sent
-                    logger.info(f"[U+1F31E] Stream greeting sent (once per stream)")
+                    logger.info(f"🌞 Stream greeting sent (once per stream)")
                     return greeting
             
             return None
@@ -813,7 +819,7 @@ class MessageProcessor:
         if user_id in self.last_maga_time:
             time_since_last = current_time - self.last_maga_time[user_id]
             if time_since_last < self.maga_cooldown:
-                logger.debug(f"[U+1F6E1]️ MAGA rate limited user {user_id} for {self.maga_cooldown - time_since_last:.1f}s")
+                logger.debug(f"🛡️ MAGA rate limited user {user_id} for {self.maga_cooldown - time_since_last:.1f}s")
                 return True
         return False
 
@@ -923,7 +929,7 @@ class MessageProcessor:
         has_shorts = any(text_lower.startswith(cmd) for cmd in shorts_commands)
 
         if has_shorts:
-            logger.info(f"[U+1F3AC] Detected YouTube Shorts command: {text_lower}")
+            logger.info(f"🎬 Detected YouTube Shorts command: {text_lower}")
 
         return has_shorts
 
@@ -1121,7 +1127,7 @@ class MessageProcessor:
         message = event.get("message", "")
         amount_display = event.get("amount_display", f"${amount_usd:.2f}")
 
-        logger.info(f"[U+1F4B0] Super Chat received: {donor_name} - {amount_display}")
+        logger.info(f"💰 Super Chat received: {donor_name} - {amount_display}")
 
         # Try to import YouTube Shorts handler
         try:
@@ -1137,7 +1143,7 @@ class MessageProcessor:
             )
 
             if response:
-                logger.info(f"[U+1F3AC] YouTube Shorts: {response}")
+                logger.info(f"🎬 YouTube Shorts: {response}")
                 return {
                     "type": "super_chat_short",
                     "response": response,
@@ -1146,7 +1152,7 @@ class MessageProcessor:
                 }
             else:
                 # Below $20 threshold
-                logger.info(f"[U+1F4B0] Super Chat below $20 threshold ({amount_display})")
+                logger.info(f"💰 Super Chat below $20 threshold ({amount_display})")
                 return {"skip": True, "reason": "below_threshold"}
 
         except ImportError as e:
@@ -1208,15 +1214,15 @@ class MessageProcessor:
             )
 
             if response:
-                logger.info(f"[U+1F3AC] YouTube Shorts response: {response[:100]}")
+                logger.info(f"🎬 YouTube Shorts response: {response[:100]}")
                 return response
             else:
-                logger.debug(f"[U+1F3AC] Shorts command '{text}' returned None (not processed)")
+                logger.debug(f"🎬 Shorts command '{text}' returned None (not processed)")
                 return None
 
         except Exception as e:
-            logger.error(f"[U+1F3AC][FAIL] Shorts command failed: {e}", exc_info=True)
-            return f"@{username} [U+1F3AC] Error processing Shorts command. Try again later."
+            logger.error(f"🎬[FAIL] Shorts command failed: {e}", exc_info=True)
+            return f"@{username} 🎬 Error processing Shorts command. Try again later."
 
     def _check_pqn_command(self, text: str) -> bool:
         """Check if message contains PQN research commands."""
@@ -1238,7 +1244,7 @@ class MessageProcessor:
         Missing: Event broadcasting, campaign results communication, UTF-8 encoding fix.
         """
         if not self.pqn_orchestrator:
-            return f"@{author_name} [U+1F52C] PQN Research: System currently offline. The PQN detector analyzes quantum coherence patterns. Try again later or use !research for basic queries."
+            return f"@{author_name} 🔬 PQN Research: System currently offline. The PQN detector analyzes quantum coherence patterns. Try again later or use !research for basic queries."
 
         try:
             # Extract research query
@@ -1249,20 +1255,20 @@ class MessageProcessor:
                 query = query.replace(trigger, '').strip()
 
             if not query:
-                return f"@{author_name} [U+1F52C] PQN Research: Please provide a query. Example: !pqn consciousness emergence patterns"
+                return f"@{author_name} 🔬 PQN Research: Please provide a query. Example: !pqn consciousness emergence patterns"
 
             # Run PQN research (simplified for chat integration)
-            logger.info(f"[U+1F52C] PQN Research requested by {author_name}: {query}")
+            logger.info(f"🔬 PQN Research requested by {author_name}: {query}")
 
             # Provide immediate feedback about what PQN does
             responses = [
-                f"@{author_name} [U+1F52C] PQN Research: Analyzing '{query}' for quantum coherence patterns. The PQN detector measures consciousness emergence through spectral analysis.",
-                f"@{author_name} [U+1F52C] PQN initiated: '{query}' | Scanning for resonance harmonics and observer collapse patterns in the quantum field.",
-                f"@{author_name} [U+1F52C] PQN Analysis: '{query}' | Detecting quantum temporal decoherence and consciousness boundary conditions."
+                f"@{author_name} 🔬 PQN Research: Analyzing '{query}' for quantum coherence patterns. The PQN detector measures consciousness emergence through spectral analysis.",
+                f"@{author_name} 🔬 PQN initiated: '{query}' | Scanning for resonance harmonics and observer collapse patterns in the quantum field.",
+                f"@{author_name} 🔬 PQN Analysis: '{query}' | Detecting quantum temporal decoherence and consciousness boundary conditions."
             ]
             import random
             return random.choice(responses)
 
         except Exception as e:
             logger.error(f"PQN research error: {e}")
-            return f"@{author_name} [U+1F52C] PQN Research encountered an error. Please try again." 
+            return f"@{author_name} 🔬 PQN Research encountered an error. Please try again." 

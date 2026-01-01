@@ -26,27 +26,27 @@ class SimpleFactChecker:
             "lies_detected": [
                 "[ALERT] FACT CHECK: Multiple falsehoods detected! Truth rating: 0/10",
                 "[FAIL] FALSE: This user's claims have been thoroughly debunked",
-                "[U+1F925] PANTS ON FIRE! Not a single true statement found",
+                "🤥 PANTS ON FIRE! Not a single true statement found",
                 "[DATA] Analysis complete: 100% bullshit detected",
-                "[U+26A0]️ WARNING: Extreme misinformation hazard ahead"
+                "⚠️ WARNING: Extreme misinformation hazard ahead"
             ],
             "partial_truth": [
-                "[U+1F914] MOSTLY FALSE: Contains misleading information",
-                "[U+1F4C9] Truth rating: 3/10 - Significant distortions detected",
+                "🤔 MOSTLY FALSE: Contains misleading information",
+                "📉 Truth rating: 3/10 - Significant distortions detected",
                 "[LIGHTNING] HALF-TRUTH: Cherry-picked facts taken out of context",
-                "[U+1F3AD] MISLEADING: Facts twisted to fit narrative"
+                "🎭 MISLEADING: Facts twisted to fit narrative"
             ],
             "no_data": [
-                "[U+1F4C1] Insufficient data to fact-check this user",
+                "📁 Insufficient data to fact-check this user",
                 "[SEARCH] No recent claims found to verify",
-                "[U+1F4AD] This user hasn't made any factual claims",
-                "[U+1F937] Nothing to fact-check here"
+                "💭 This user hasn't made any factual claims",
+                "🤷 Nothing to fact-check here"
             ],
             "troll_detected": [
-                "[U+1F921] TROLL ALERT: This is obvious bait, don't feed them",
-                "[U+1F3A3] Nice bait, but we're not biting",
-                "[U+1F479] Professional troll detected - engage at your own risk",
-                "[U+1F5D1]️ Fact-checking trolls is beneath us"
+                "🤡 TROLL ALERT: This is obvious bait, don't feed them",
+                "🎣 Nice bait, but we're not biting",
+                "👹 Professional troll detected - engage at your own risk",
+                "🗑️ Fact-checking trolls is beneath us"
             ]
         }
         logger.info("SimpleFactChecker initialized")
@@ -116,8 +116,8 @@ class SimpleFactChecker:
         response = random.choice(self.fact_check_responses[pattern_type])
         
         # Add emoji flair if consciousness sequence present
-        if emoji_sequence == "[U+270A][U+270B][U+1F590]️":
-            response = f"[U+270A][U+270B][U+1F590]️ {response} [U+270A][U+270B][U+1F590]️"
+        if emoji_sequence == "✊✋🖐️":
+            response = f"✊✋🖐️ {response} ✊✋🖐️"
             
         # Format final response
         final_response = f"@{target_username} {response}"
@@ -155,7 +155,7 @@ class SimpleFactChecker:
             "based": f"@{username} Based Level: {rating}/100 [U+1F60E]",
             "cringe": f"@{username} Cringe Meter: {rating}/100 [U+1F62C]",
             "iq": f"@{username} Estimated IQ: {rating} [AI]",
-            "cope": f"@{username} Cope Level: {rating}/100 [U+1F921]"
+            "cope": f"@{username} Cope Level: {rating}/100 🤡"
         }
         
         return responses.get(rating_type, f"@{username} Rating: {rating}/100")

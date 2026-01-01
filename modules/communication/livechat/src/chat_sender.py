@@ -146,7 +146,7 @@ class ChatSender:
                     await asyncio.sleep(random_delay)
 
                 run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
-                logger.info(f"[U+1F4E4] Sending message (type={response_type} run_id={run_id}): {message_text}")
+                logger.info(f"📤 Sending message (type={response_type} run_id={run_id}): {message_text}")
 
                 # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
                 # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters

@@ -12,6 +12,34 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### URL Log Noise Reduction for Studio Inbox Context
+
+**By:** 0102  
+**WSP References:** WSP 91 (Observability), WSP 00 (Occam's Razor), WSP 22 (ModLog Protocol)
+
+**Problem:** Rotation telemetry logged the full Studio inbox URL including long `?filter=...` query payloads. This is high-entropy noise that obscures the stable navigation context (only `/comments/inbox` matters for debugging).
+
+**Fix:** `AutoModeratorDAE._run_multi_channel_engagement()` now logs only the **stable base** of the current Studio URL (strips `?query` + `#fragment`) for the `[ROTATE] Current Chrome URL:` line.
+
+**Impact:** Cleaner logs; no behavior change for Chrome/Edge automation.
+
+### 2025-12-31 - Parallel Edge (FoundUps) Comment Engagement (No Chrome Regression)
+
+**By:** 0102  
+**WSP References:** WSP 27 (DAE Architecture), WSP 77 (Agent Coordination), WSP 22 (ModLog Protocol)
+
+**Problem:** When running Chrome + Edge together, FoundUps (Edge) comment processing could appear “not working” because `_run_multi_channel_engagement()` ran **sequentially** (Chrome Move2Japan → Chrome UnDaoDu → Edge FoundUps). If a Chrome subprocess runs long, Edge was effectively starved.
+
+**Fix:** Updated `AutoModeratorDAE._run_multi_channel_engagement()` to schedule FoundUps/Edge as an **independent async task** (separate browser + port), so Chrome and Edge can run **together**.
+
+**Config:**
+- `YT_EDGE_PARALLEL=true` (default): run Edge concurrently with Chrome rotation.
+- `YT_EDGE_PARALLEL=false`: fall back to legacy sequential Edge execution.
+
+**Impact:**
+- Chrome behavior unchanged (same subprocess + swapper flow).
+- FoundUps/Edge no longer blocked behind long Chrome runs.
+
 ### 2025-12-28 - Holiday Awareness WSP 96 Skill Pattern Refactor
 
 **By:** 0102

@@ -204,7 +204,8 @@ class AutoModeratorDAE:
         label_text = f" {label}" if label else ""
         if url:
             url_channel_id = self._studio_channel_id_from_url(url) or "unknown"
-            logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url={url} url_channel_id={url_channel_id}")
+            url_base = url.split("#", 1)[0].split("?", 1)[0]
+            logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url={url_base} url_channel_id={url_channel_id}")
         else:
             logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url=unknown")
 
@@ -1125,11 +1126,15 @@ class AutoModeratorDAE:
 
         This prevents account rotation or live chat takeover from interrupting
         a partially processed comments backlog.
+        
+        FIX (2025-12-31): Changed default from 0 (infinite) to 60 seconds.
+        With UNLIMITED comment mode having 2-hour timeout, 0 would block live chat forever.
         """
-        timeout_seconds = int(os.getenv("YT_INBOX_CLEAR_TIMEOUT", "0"))
+        # FIX: Default to 60 seconds instead of 0 (infinite) to prevent blocking live chat forever
+        timeout_seconds = int(os.getenv("YT_INBOX_CLEAR_TIMEOUT", "60"))
         start_time = time.time()
 
-        logger.info("[LOCK] Live stream detected - waiting for inbox clear before switching to live chat")
+        logger.info(f"[LOCK] Live stream detected - waiting for inbox clear (timeout: {timeout_seconds}s)")
 
         while True:
             # If engagement is still running, wait it out.
@@ -1356,6 +1361,9 @@ class AutoModeratorDAE:
         FoundUps requires direct Edge connection.
         """
         strict_inbox = _env_truthy("YT_INBOX_STRICT", "true")
+        # Edge can run independently (separate browser + port). Default to parallel so
+        # FoundUps is not starved behind long Chrome/UnDaoDu runs.
+        edge_parallel = _env_truthy("YT_EDGE_PARALLEL", "true")
 
         # CHROME ACCOUNTS (same Google account - can switch via YouTube picker)
         chrome_accounts = [
@@ -1379,55 +1387,241 @@ class AutoModeratorDAE:
         chrome_driver = None
         swapper = None
         rotation_halt = False
+        edge_task = None
+
+        async def _run_edge_foundups() -> int:
+            """
+            Run FoundUps comment engagement via Edge (port 9223).
+
+            IMPORTANT: Do NOT mutate `self._comment_engagement_active_channel` here when running
+            in parallel, otherwise inbox-clear gating (live stream switch) can point at the wrong
+            channel. We still write status into `self._comment_engagement_status`.
+            """
+            edge_driver = None
+            foundups_name, foundups_channel_id = edge_account
+
+            # FRESH SIGNAL CHECK for FoundUps
+            try:
+                from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
+                live_channel = get_live_channel()
+            except ImportError:
+                live_channel = None
+
+            # Check if FoundUps has a live stream (skip if so)
+            if live_channel == foundups_channel_id:
+                logger.info(f"[SIGNAL] {foundups_name} has live stream - skipping comment processing")
+                return 0
+
+            logger.info(f"\n[ROTATE] [Edge] Processing {foundups_name} comments...")
+
+            try:
+                from selenium import webdriver
+                from selenium.webdriver.edge.options import Options as EdgeOptions
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
+
+                edge_port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
+                edge_ok, edge_msg = launch_edge()
+                if not edge_ok:
+                    logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
+                edge_opts = EdgeOptions()
+                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
+
+                # Non-blocking Edge connection
+                edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
+                logger.info(f"[ROTATE] Connected to Edge on port {edge_port}")
+
+                # Navigate to FoundUps Studio inbox (ensure correct page)
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import STUDIO_FILTER
+                foundups_studio_url = (
+                    f"https://studio.youtube.com/channel/{foundups_channel_id}/comments/inbox?filter={STUDIO_FILTER}"
+                )
+                logger.info(f"[ROTATE] Navigating to {foundups_name} Studio inbox...")
+                await asyncio.to_thread(edge_driver.get, foundups_studio_url)
+                await asyncio.sleep(5)
+
+                self._log_studio_context(
+                    foundups_channel_id,
+                    label=f"{foundups_name} comment_engagement",
+                    driver=edge_driver,
+                )
+                result = await runner.run_engagement(
+                    channel_id=foundups_channel_id,
+                    video_id=None,
+                    max_comments=max_comments,
+                    browser_port=9223,  # Edge browser for FoundUps account
+                )
+
+                result = result or {}
+                stats = result.get("stats", {})
+                processed = stats.get("comments_processed", 0)
+
+                self._comment_engagement_status[foundups_channel_id] = {
+                    "all_processed": bool(stats.get("all_processed", False)),
+                    "stats": stats,
+                    "error": result.get("error"),
+                    "updated_at": time.time(),
+                }
+
+                error_text = result.get("error")
+                session_recovered = False
+
+                if error_text:
+                    logger.error(f"[ROTATE] ❌ {foundups_name} engagement failed: {error_text}")
+                else:
+                    logger.info(f"[ROTATE] ✅ {foundups_name} complete: {processed} comments processed")
+
+                if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
+                    logger.warning(f"[ROTATE] Edge session error on {foundups_name}; attempting reconnect")
+                    edge_driver = await self._reconnect_edge_driver(edge_port)
+                    if edge_driver:
+                        try:
+                            await asyncio.to_thread(edge_driver.get, foundups_studio_url)
+                            await asyncio.sleep(5)
+                        except Exception as refresh_err:
+                            logger.warning(f"[ROTATE] Edge navigation after reconnect failed: {refresh_err}")
+                        session_recovered = True
+                    else:
+                        logger.warning(f"[ROTATE] Edge reconnect failed for {foundups_name}")
+
+                verify_retries = int(os.getenv("YT_INBOX_VERIFY_RETRIES", "1"))
+                verify_timeout = float(os.getenv("YT_INBOX_VERIFY_TIMEOUT", "15"))
+                verify_result = None
+                for attempt in range(1, verify_retries + 1):
+                    verify_result = await self._verify_studio_inbox_clear(
+                        edge_driver,
+                        foundups_channel_id,
+                        foundups_name,
+                        timeout_seconds=verify_timeout,
+                    )
+                    if verify_result is True:
+                        break
+                    if verify_result is False:
+                        logger.warning(
+                            f"[VERIFY] {foundups_name} inbox not clear; re-running engagement "
+                            f"(attempt {attempt}/{verify_retries})"
+                        )
+                        self._log_studio_context(
+                            foundups_channel_id,
+                            label=f"{foundups_name} comment_engagement_retry",
+                            driver=edge_driver,
+                        )
+                        retry_result = await runner.run_engagement(
+                            channel_id=foundups_channel_id,
+                            video_id=None,
+                            max_comments=max_comments,
+                            browser_port=9223,
+                        )
+
+                        retry_result = retry_result or {}
+                        retry_stats = retry_result.get("stats", {})
+                        retry_processed = retry_stats.get("comments_processed", 0)
+
+                        self._comment_engagement_status[foundups_channel_id] = {
+                            "all_processed": bool(retry_stats.get("all_processed", False)),
+                            "stats": retry_stats,
+                            "error": retry_result.get("error"),
+                            "updated_at": time.time(),
+                        }
+
+                        if retry_result.get("error"):
+                            logger.error(f"[ROTATE] ❌ {foundups_name} retry failed: {retry_result.get('error')}")
+                        else:
+                            logger.info(
+                                f"[ROTATE] ✅ {foundups_name} retry complete: {retry_processed} comments processed"
+                            )
+                        processed += retry_processed
+                        continue
+
+                    logger.warning(
+                        f"[VERIFY] {foundups_name} inbox verification inconclusive; will recheck next cycle"
+                    )
+                    break
+
+                if strict_inbox:
+                    if error_text and not session_recovered:
+                        logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (error)")
+                    elif verify_result is False:
+                        logger.warning(
+                            f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (unprocessed comments)"
+                        )
+                    elif verify_result is None:
+                        logger.info(f"[VERIFY] {foundups_name} verification inconclusive; next cycle will recheck")
+
+                return int(processed or 0)
+            except Exception as e:
+                logger.warning(f"[ROTATE] ⚠️ Edge connection failed: {e}")
+                logger.warning(f"[ROTATE] {foundups_name} comments will be skipped")
+                logger.warning(f"[ROTATE] To enable: Launch Edge with --remote-debugging-port=9223")
+                return 0
 
         # ═══════════════════════════════════════════════════════════════════
         # PHASE 1: CHROME CHANNELS (Move2Japan + UnDaoDu - same Google account)
         # ═══════════════════════════════════════════════════════════════════
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from modules.communication.video_comments.skills.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
+        # DEBUG: Set YT_SKIP_CHROME=true to skip Chrome and test Edge only
+        skip_chrome = _env_truthy("YT_SKIP_CHROME", "false")
+        if skip_chrome:
+            logger.info("[ROTATE] ⏭️ SKIPPING CHROME (YT_SKIP_CHROME=true) - Testing Edge only")
 
-            chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
-            chrome_ok, chrome_msg = launch_chrome()
-            if not chrome_ok:
-                logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
-            opts = Options()
-            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
-            chrome_driver = webdriver.Chrome(options=opts)
-            swapper = TarsAccountSwapper(chrome_driver)
-            logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port}")
-
-            # SMART ROTATION: Detect current account state to minimize switching
-            # Check current URL to see if we are already on one of the target channels
+        if not skip_chrome:
             try:
-                current_url = chrome_driver.current_url
-                logger.info(f"[ROTATE] Current Chrome URL: {current_url}")
-                current_channel_id = await self._detect_current_channel_id(chrome_driver)
-                
-                if current_channel_id:
-                    # Find if this channel ID is in our list
-                    current_account = next((acc for acc in chrome_accounts if acc[1] == current_channel_id), None)
-                    
-                    if current_account:
-                        logger.info(f"[ROTATE] [SMART] Detected active session on {current_account[0]}")
-                        logger.info(f"[ROTATE] [SMART] Reordering queue: {current_account[0]} -> Others")
-                        
-                        # Move current account to front
-                        chrome_accounts.remove(current_account)
-                        chrome_accounts.insert(0, current_account)
-                    else:
-                        logger.info(f"[ROTATE] [SMART] Current channel {current_channel_id} not in rotation list")
-                else:
-                    logger.info("[ROTATE] [SMART] Not currently on a Studio channel page")
-                    
-            except Exception as e:
-                logger.warning(f"[ROTATE] [SMART] Failed to detect current state: {e}")
+                from selenium import webdriver
+                from selenium.webdriver.chrome.options import Options
+                from modules.communication.video_comments.skills.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
 
-        except Exception as e:
-            logger.error(f"[ROTATE] ❌ Failed to connect to Chrome: {e}")
-            logger.warning(f"[ROTATE] Chrome channels (Move2Japan, UnDaoDu) will be skipped")
+                chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
+                chrome_ok, chrome_msg = launch_chrome()
+                if not chrome_ok:
+                    logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
+                opts = Options()
+                opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
+
+                # FIX (2025-12-31): Use asyncio.to_thread to prevent blocking event loop
+                # This was blocking stream detection from running!
+                chrome_driver = await asyncio.to_thread(webdriver.Chrome, options=opts)
+                swapper = TarsAccountSwapper(chrome_driver)
+                logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port}")
+
+                # SMART ROTATION: Detect current account state to minimize switching
+                # Check current URL to see if we are already on one of the target channels
+                try:
+                    current_url = chrome_driver.current_url
+                    # Noise control: Studio adds long querystring filters; we only need the stable base path.
+                    url_base = (current_url or "").split("#", 1)[0].split("?", 1)[0]
+                    logger.info(f"[ROTATE] Current Chrome URL: {url_base}")
+                    current_channel_id = await self._detect_current_channel_id(chrome_driver)
+
+                    if current_channel_id:
+                        # Find if this channel ID is in our list
+                        current_account = next((acc for acc in chrome_accounts if acc[1] == current_channel_id), None)
+
+                        if current_account:
+                            logger.info(f"[ROTATE] [SMART] Detected active session on {current_account[0]}")
+                            logger.info(f"[ROTATE] [SMART] Reordering queue: {current_account[0]} -> Others")
+
+                            # Move current account to front
+                            chrome_accounts.remove(current_account)
+                            chrome_accounts.insert(0, current_account)
+                        else:
+                            logger.info(f"[ROTATE] [SMART] Current channel {current_channel_id} not in rotation list")
+                    else:
+                        logger.info("[ROTATE] [SMART] Not currently on a Studio channel page")
+
+                except Exception as e:
+                    logger.warning(f"[ROTATE] [SMART] Failed to detect current state: {e}")
+
+            except Exception as e:
+                logger.error(f"[ROTATE] ❌ Failed to connect to Chrome: {e}")
+                logger.warning(f"[ROTATE] Chrome channels (Move2Japan, UnDaoDu) will be skipped")
+
+        # Start Edge in parallel (separate browser) so it isn't blocked behind long Chrome runs.
+        if edge_parallel:
+            try:
+                edge_task = asyncio.create_task(_run_edge_foundups())
+                logger.info("[ROTATE] Edge scheduled in PARALLEL (YT_EDGE_PARALLEL=true)")
+            except Exception as e:
+                logger.warning(f"[ROTATE] Failed to schedule Edge task: {e}")
+                edge_task = None
 
         # Check live stream signal before processing
         if swapper:
@@ -1578,9 +1772,15 @@ class AutoModeratorDAE:
                         if error_text and not session_recovered:
                             logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {account_name} (error)")
                             rotation_halt = True
-                        elif verify_result is not True:
-                            logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {account_name} (verify)")
+                        elif verify_result is False:
+                            # FIX (2025-12-30): Only halt on False (confirmed has comments), NOT on None (inconclusive)
+                            # None = timeout/error → continue to next channel (Edge/FoundUps)
+                            # False = confirmed unprocessed comments → halt and retry
+                            logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {account_name} (unprocessed comments)")
                             rotation_halt = True
+                        elif verify_result is None:
+                            # Inconclusive verification - log but continue rotation
+                            logger.info(f"[VERIFY] {account_name} verification inconclusive; continuing to next channel")
                 except Exception as e:
                     logger.error(f"[ROTATE] ❌ {account_name} exception: {e}", exc_info=True)
                     self._comment_engagement_status[channel_id] = {
@@ -1601,165 +1801,15 @@ class AutoModeratorDAE:
                     logger.info(f"[ROTATE] Live stream pending - stopping Chrome rotation after {account_name}")
                     break
 
-        # ═══════════════════════════════════════════════════════════════════
-        # PHASE 2: EDGE CHANNEL (FoundUps - different Google account)
-        # ═══════════════════════════════════════════════════════════════════
-        if rotation_halt:
-            logger.warning("[ROTATE] Rotation halted; skipping remaining channels")
-            logger.info("[ROTATE] Pending channels will be retried next cycle")
-            return
-
-        edge_driver = None
-        foundups_name, foundups_channel_id = edge_account
-
-        # FRESH SIGNAL CHECK for FoundUps
-        try:
-            from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
-            live_channel = get_live_channel()
-        except ImportError:
-            live_channel = None
-
-        # Check if FoundUps has a live stream (skip if so)
-        if live_channel == foundups_channel_id:
-            logger.info(f"[SIGNAL] {foundups_name} has live stream - skipping comment processing")
-        else:
-            logger.info(f"\n[ROTATE] [Edge] Processing {foundups_name} comments...")
-
+        # Run Edge sequentially if parallel is disabled (legacy behavior)
+        if not edge_parallel:
+            total_processed += await _run_edge_foundups()
+        elif edge_task:
+            # Edge already running; incorporate counts if/when it completes.
             try:
-                from selenium import webdriver
-                from selenium.webdriver.edge.options import Options as EdgeOptions
-                from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
-
-                edge_port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
-                edge_ok, edge_msg = launch_edge()
-                if not edge_ok:
-                    logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
-                edge_opts = EdgeOptions()
-                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
-                
-                # Phase 2R: Non-blocking Edge connection
-                edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
-                logger.info(f"[ROTATE] Connected to Edge on port {edge_port}")
-
-                # Navigate to FoundUps Studio comments
-                foundups_studio_url = f"https://studio.youtube.com/channel/{foundups_channel_id}/comments/inbox"
-                logger.info(f"[ROTATE] Navigating to {foundups_name} Studio inbox...")
-                # Phase 2R: Non-blocking navigation
-                await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-                await asyncio.sleep(5)
-
-                # Process FoundUps comments (subprocess uses Edge port 9223)
-                self._comment_engagement_active_channel = foundups_channel_id
-                self._log_studio_context(foundups_channel_id, label=f"{foundups_name} comment_engagement", driver=edge_driver)
-                result = await runner.run_engagement(
-                    channel_id=foundups_channel_id,
-                    video_id=None,
-                    max_comments=max_comments,
-                    browser_port=9223  # Edge browser for FoundUps account
-                )
-
-                result = result or {}
-                stats = result.get('stats', {})
-                processed = stats.get('comments_processed', 0)
-                total_processed += processed
-
-                self._comment_engagement_status[foundups_channel_id] = {
-                    "all_processed": bool(stats.get("all_processed", False)),
-                    "stats": stats,
-                    "error": result.get('error'),
-                    "updated_at": time.time(),
-                }
-
-                error_text = result.get('error')
-                session_recovered = False
-
-                if result.get('error'):
-                    logger.error(f"[ROTATE] ❌ {foundups_name} engagement failed: {result.get('error')}")
-                else:
-                    logger.info(f"[ROTATE] ✅ {foundups_name} complete: {processed} comments processed")
-
-                if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
-                    logger.warning(f"[ROTATE] Edge session error on {foundups_name}; attempting reconnect")
-                    edge_driver = await self._reconnect_edge_driver(edge_port)
-                    if edge_driver:
-                        try:
-                            await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-                            await asyncio.sleep(5)
-                        except Exception as refresh_err:
-                            logger.warning(f"[ROTATE] Edge refresh after reconnect failed: {refresh_err}")
-                        session_recovered = True
-                    else:
-                        logger.warning(f"[ROTATE] Edge reconnect failed for {foundups_name}")
-
-                verify_retries = int(os.getenv("YT_INBOX_VERIFY_RETRIES", "1"))
-                verify_timeout = float(os.getenv("YT_INBOX_VERIFY_TIMEOUT", "15"))
-                verify_result = None
-                for attempt in range(1, verify_retries + 1):
-                    verify_result = await self._verify_studio_inbox_clear(
-                        edge_driver,
-                        foundups_channel_id,
-                        foundups_name,
-                        timeout_seconds=verify_timeout,
-                    )
-                    if verify_result is True:
-                        break
-                    if verify_result is False:
-                        logger.warning(
-                            f"[VERIFY] {foundups_name} inbox not clear; re-running engagement "
-                            f"(attempt {attempt}/{verify_retries})"
-                        )
-                        self._comment_engagement_active_channel = foundups_channel_id
-                        self._log_studio_context(
-                            foundups_channel_id,
-                            label=f"{foundups_name} comment_engagement_retry",
-                            driver=edge_driver,
-                        )
-                        retry_result = await runner.run_engagement(
-                            channel_id=foundups_channel_id,
-                            video_id=None,
-                            max_comments=max_comments,
-                            browser_port=9223
-                        )
-
-                        retry_result = retry_result or {}
-                        retry_stats = retry_result.get('stats', {})
-                        retry_processed = retry_stats.get('comments_processed', 0)
-                        total_processed += retry_processed
-
-                        self._comment_engagement_status[foundups_channel_id] = {
-                            "all_processed": bool(retry_stats.get("all_processed", False)),
-                            "stats": retry_stats,
-                            "error": retry_result.get('error'),
-                            "updated_at": time.time(),
-                        }
-
-                        if retry_result.get('error'):
-                            logger.error(
-                                f"[ROTATE] ❌ {foundups_name} retry failed: {retry_result.get('error')}"
-                            )
-                        else:
-                            logger.info(
-                                f"[ROTATE] ✅ {foundups_name} retry complete: {retry_processed} comments processed"
-                            )
-                        continue
-
-                    logger.warning(
-                        f"[VERIFY] {foundups_name} inbox verification inconclusive; will recheck next cycle"
-                    )
-                    break
-
-
-                if strict_inbox:
-                    if error_text and not session_recovered:
-                        logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (error)")
-                        rotation_halt = True
-                    elif verify_result is not True:
-                        logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (verify)")
-                        rotation_halt = True
+                total_processed += await edge_task
             except Exception as e:
-                logger.warning(f"[ROTATE] ⚠️ Edge connection failed: {e}")
-                logger.warning(f"[ROTATE] {foundups_name} comments will be skipped")
-                logger.warning(f"[ROTATE] To enable: Launch Edge with --remote-debugging-port=9223")
+                logger.warning(f"[ROTATE] Edge task failed: {e}")
 
         logger.info("=" * 70)
         logger.info(f"[ROTATE] ✅ MULTI-CHANNEL ENGAGEMENT COMPLETE")
