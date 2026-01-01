@@ -12,6 +12,53 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### Read-Only Stream Detection Decoupled From Action Automation Gate
+
+**By:** 0102  
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 91 (Observability), WSP 00 (Occam's Razor)
+
+**Problem:** `NoQuotaStreamChecker` short-circuited when `YT_AUTOMATION_ENABLED=false`. Comment engagement can be enabled independently, so this created a mismatch where **comments still run** but **stream detection never executes**, leading to missed live streams and stale/absent `live_stream_signal`.
+
+**Fix:** Removed `YT_AUTOMATION_ENABLED` as a prerequisite for **read-only** stream scraping checks:
+- `check_channel_for_live(...)` now gates only on `YT_STREAM_SCRAPING_ENABLED`
+- `check_video_is_live(...)` now gates only on `YT_STREAM_SCRAPING_ENABLED`
+
+**Impact:** Stream detection remains available as telemetry even when action automation is disabled; action surfaces remain gated elsewhere (STOP file + per-surface toggles).
+
+### 2025-12-31 - Critical Channel ID Mapping Fix (Stream Detection Failure)
+
+**By:** 0102
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 50 (Pre-Action Verification)
+
+**Problem:** Stream detection was checking WRONG YouTube channels due to incorrect channel ID to handle mapping:
+- `UCSNTUXjAgpd4sgWYP0xoJgw` (FoundUps) was incorrectly mapped to `@UnDaoDu`
+- `UCfHM9Fw9HD-NwiS0seD_oIA` (UnDaoDu) was MISSING from the mapping
+- `UC-LSSlOZwpGIRIYihaz8zCw` (Move2Japan) was incorrectly mapped to `@Foundups`
+
+**Impact:** When checking if FoundUps had a live stream, the system was actually checking UnDaoDu's channel, causing:
+1. False negatives (missed FoundUps streams)
+2. False positives (detected UnDaoDu streams as FoundUps)
+3. Incorrect stream signal writes to `memory/live_stream_signal.json`
+
+**Solution:** Corrected the channel_handle_map in both stream checker files:
+```python
+# BEFORE (WRONG):
+'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',     # This is FoundUps!
+
+# AFTER (FIXED):
+'UCSNTUXjAgpd4sgWYP0xoJgw': '@FoundUps',    # FoundUps
+'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',     # UnDaoDu (was missing)
+'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',  # Move2Japan
+```
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/no_quota_stream_checker.py` - Fixed channel_handle_map
+- `modules/platform_integration/stream_resolver/src/vision_stream_checker.py` - Fixed CHANNEL_HANDLES
+
+**Status:** FIXED - Stream detection now checks correct YouTube channels.
+
+---
+
 ### 2025-12-28 - Async Threading for Blocking I/O (Event Loop Protection)
 
 **By:** Antigravity (Agent)

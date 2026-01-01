@@ -266,7 +266,10 @@ class NoQuotaStreamChecker:
         """
         display_channel = channel_name or 'unknown channel'
 
-        if not _env_truthy("YT_AUTOMATION_ENABLED", "true") or not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
+        # First principles: stream detection is READ-ONLY telemetry.
+        # It should remain available even when action automation is disabled.
+        # Gate only on stream-specific controls.
+        if not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
             run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
             logger.warning(
                 f"[AUTOMATION-AUDIT] run_id={run_id} stream_scraping=disabled (skipping video check) channel={display_channel} video_id={video_id}"
@@ -762,7 +765,10 @@ class NoQuotaStreamChecker:
         Returns:
             Dict with live stream details if found, a rate_limited sentinel, or None
         """
-        if not _env_truthy("YT_AUTOMATION_ENABLED", "true") or not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
+        # First principles: stream detection is READ-ONLY telemetry.
+        # It should remain available even when action automation is disabled.
+        # Gate only on stream-specific controls.
+        if not _env_truthy("YT_STREAM_SCRAPING_ENABLED", "true"):
             run_id = os.getenv("YT_AUTOMATION_RUN_ID", "").strip() or "unset"
             display_name = channel_name or channel_id
             logger.warning(f"[AUTOMATION-AUDIT] run_id={run_id} stream_scraping=disabled (skipping channel check) channel={display_name}")
@@ -789,8 +795,12 @@ class NoQuotaStreamChecker:
         urls_to_try = []
 
         # Map channel IDs to handles
+        # FIXED 2025-12-31: Corrected channel ID to handle mapping
+        # - UCSNTUXjAgpd4sgWYP0xoJgw = FoundUps (was incorrectly mapped to @UnDaoDu)
+        # - UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu (was missing)
         channel_handle_map = {
-            'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',     # UnDaoDu (verified from YouTube 2025-12-11)
+            'UCSNTUXjAgpd4sgWYP0xoJgw': '@FoundUps',    # FoundUps (FIXED - was incorrectly @UnDaoDu)
+            'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',     # UnDaoDu (ADDED - was missing)
             'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',  # Move2Japan
             'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',  # Move2Japan alternate
             'UCROkIz1wOCP3tPk-1j3umyQ': '@foundups1934'  # FoundUps1934 (test channel)
