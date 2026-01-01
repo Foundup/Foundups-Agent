@@ -450,6 +450,12 @@ from modules.infrastructure.git_social_posting.scripts.posting_utilities import 
 # Extracted to modules/infrastructure/git_push_dae/scripts/launch.py per WSP 62
 from modules.infrastructure.git_push_dae.scripts.launch import launch_git_push_dae
 
+# Extracted to modules/platform_integration/youtube_shorts_scheduler/scripts/launch.py per WSP 62
+from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import (
+    run_shorts_scheduler,
+    show_shorts_scheduler_menu
+)
+
 # Re-enable normal logging after all imports are complete
 logging.root.setLevel(original_level)
 
@@ -844,18 +850,20 @@ def main():
                 # Will return to menu after completion
 
             elif choice == "1":
-                # YouTube DAE Menu - Live Chat OR Shorts
-                print("\n[MENU] YouTube DAE Menu")
+                # YouTube DAEs Menu - Each is an independent DAE at 1.x level (ADR-013)
+                print("\n[MENU] YouTube DAEs")
                 print("="*60)
-                print("1. [ALERT] YouTube Live Chat Monitor (AutoModeratorDAE)")
-                print("2. [MENU] YouTube Shorts Generator (Gemini/Veo 3)")
-                print("3. [MENU] YouTube Shorts Generator (Sora2 Live Action)")
-                print("4. [INFO] YouTube Stats & Info")
-                print("5. [AI] Launch with AI Overseer Monitoring (Qwen/Gemma Bug Detection)")
-                print("0. [BACK] Back to Main Menu")
+                print("1. [DAE] Live Chat Monitor (AutoModeratorDAE)")
+                print("2. [DAE] Comment Engagement (Like/Heart/Reply)")
+                print("3. [DAE] Shorts Scheduler (Enhance + Schedule)")
+                print("4. [DAE] Shorts Generator (Veo3/Sora2)")
+                print("5. [INFO] YouTube Stats")
+                print("6. [ALL] Full Production Mode (Live+Comments+Scheduler)")
+                print("7. [AI] AI Overseer Mode (Qwen/Gemma Monitoring)")
+                print("0. Back to Main Menu")
                 print("="*60)
 
-                yt_choice = input("\nSelect YouTube option: ")
+                yt_choice = input("\nSelect YouTube DAE: ")
 
                 def run_shorts_flow(engine_label: str, system_label: str, mode_label: str, duration_label: str, engine_key: str) -> None:
                     print(f"\n[MENU] YouTube Shorts Generator [{engine_label}]")
@@ -923,102 +931,129 @@ def main():
 
                             traceback.print_exc()
 
+                # ============================================================
+                # YOUTUBE DAEs HANDLERS (ADR-013: Independent DAEs at 1.x level)
+                # 1=Live Chat, 2=Comments, 3=Scheduler, 4=Generator, 5=Stats, 6=Full, 7=AI
+                # ============================================================
+
                 if yt_choice == "1":
-                    print("\n[MENU] YouTube Auto-Moderator Profiles")
-                    print("="*60)
-                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI) [CONFIRMED]")
-                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
-                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
-                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
-                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
-                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
-                    print("0. [CANCEL]      Back to YouTube Menu")
+                    # 1.1 Live Chat Monitor DAE - Direct launch with 012 profile (ADR-013)
+                    print("\n[DAE] Live Chat Monitor - 012 Operational Profile")
                     print("="*60)
 
-                    profile_choice = input("\nSelect Run Profile: ").strip()
-                    
-                    env_overrides = {}
-                    if profile_choice == "1":
-                        # Operational (012)
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
-                    elif profile_choice == "2":
-                        # Testing (FAST) - Speed only, all layers enabled
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "FAST",
-                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
-                        }
-                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
-                    elif profile_choice == "3":
-                        # Diagnostic (MEDIUM)
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "MEDIUM", 
-                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
-                        }
-                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
-                    elif profile_choice == "4":
-                        # Minimal
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
-                    elif profile_choice == "5":
-                        # OCCAM Mode
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "012",
-                            "YT_REPLY_BASIC_ONLY": "true",
-                            "YT_OCCAM_MODE": "true"
-                        }
-                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
-                    elif profile_choice == "6":
-                        # COMMENT-ONLY Mode (Skip stream detection)
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "012",
-                            "YT_REPLY_BASIC_ONLY": "false",
-                            "YT_COMMENT_ONLY_MODE": "true"
-                        }
-                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
-                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
-                    elif profile_choice == "0":
-                        continue # Back to YT menu
-                    else:
-                        print("[WARN] Invalid choice - using 012 standard")
+                    env_overrides = {
+                        "YT_ENGAGEMENT_TEMPO": "012",
+                        "YT_REPLY_BASIC_ONLY": "false",
+                        "YT_COMMENT_ONLY_MODE": "false"
+                    }
 
-                    # Auto-kill any existing YouTube DAE before launching new profile
-                    print("[MENU] Starting YouTube Live Chat Monitor...")
+                    # Auto-kill existing instances
                     try:
                         from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
                         lock = get_instance_lock("youtube_monitor")
                         duplicates = lock.check_duplicates(quiet=True)
                         if duplicates:
-                            print(f"[MENU] Killing {len(duplicates)} existing YouTube DAE instance(s)...")
-                            result = lock.kill_pids(duplicates)
-                            killed = len(result.get("killed", []) or [])
-                            if killed > 0:
-                                print(f"[MENU] ✅ Killed {killed} instance(s)")
-                                import time
-                                time.sleep(1)  # Wait for cleanup
+                            print(f"[MENU] Killing {len(duplicates)} existing instance(s)...")
+                            lock.kill_pids(duplicates)
+                            time.sleep(1)
                     except Exception as e:
-                        logger.debug(f"Pre-launch cleanup check failed: {e}")
+                        logger.debug(f"Cleanup failed: {e}")
 
                     asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
 
                 elif yt_choice == "2":
-                    run_shorts_flow(
-                        engine_label="Gemini/Veo 3",
-                        system_label="3-Act Story (Setup  -> Shock  -> 0102 Reveal)",
-                        mode_label="Emergence Journal POC",
-                        duration_label="~16s (2.5s clips merged)",
-                        engine_key="veo3"
-                    )
+                    # 1.2 Comment Engagement DAE
+                    print("\n[DAE] Comment Engagement")
+                    print("="*60)
+                    print("Like/Heart/Reply automation for video comments")
+                    print("Uses 0/1/2 classification (MAGA_TROLL/REGULAR/MODERATOR)")
+                    print("="*60)
+
+                    try:
+                        from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
+
+                        print("[INFO] Starting Comment Engagement DAE...")
+                        dae = CommentEngagementDAE()
+                        asyncio.run(dae.run())
+                    except KeyboardInterrupt:
+                        print("\n[STOP] Comment Engagement DAE stopped by user")
+                    except ImportError as e:
+                        print(f"[ERROR] Could not import: {e}")
+                        print("[TIP] Run: python -m modules.communication.video_comments.skills.tars_like_heart_reply.run_skill")
+                    except Exception as e:
+                        print(f"[ERROR] Failed: {e}")
 
                 elif yt_choice == "3":
-                    run_shorts_flow(
-                        engine_label="Sora2 Live Action",
-                        system_label="3-Act Story (Cinematic Reveal)",
-                        mode_label="Cinematic Sora2 (live-action focus)",
-                        duration_label="15s cinematic (single clip)",
-                        engine_key="sora2"
-                    )
+                    # 1.3 Shorts Scheduler DAE + Selenium Tests
+                    from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import run_selenium_test
+                    
+                    while True:
+                        sched_choice = show_shorts_scheduler_menu()
+
+                        if sched_choice == "1":
+                            run_shorts_scheduler(mode="enhance", dry_run=False)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "2":
+                            run_shorts_scheduler(mode="enhance", dry_run=True)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "3":
+                            run_shorts_scheduler(mode="schedule", dry_run=False)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "4":
+                            # Full Chain Test
+                            run_selenium_test("full_chain")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "5":
+                            # Layer 0 Test
+                            run_selenium_test("layer0")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "6":
+                            # Layer 1 Test - Filter
+                            run_selenium_test("layer1")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "7":
+                            # Layer 2 Test - Edit
+                            run_selenium_test("layer2")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "8":
+                            # Layer 3 Test - Schedule
+                            run_selenium_test("layer3")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "0":
+                            break
+                        else:
+                            print("[ERROR] Invalid choice")
 
                 elif yt_choice == "4":
-                    # YouTube Stats
+                    # 1.4 Shorts Generator DAE (submenu for Veo3/Sora2)
+                    print("\n[DAE] Shorts Generator")
+                    print("="*60)
+                    print("1. Veo3 (Gemini - 3-Act Story)")
+                    print("2. Sora2 (Live Action Cinematic)")
+                    print("0. Back")
+                    print("="*60)
+
+                    engine_choice = input("Select engine: ").strip()
+
+                    if engine_choice == "1":
+                        run_shorts_flow(
+                            engine_label="Gemini/Veo 3",
+                            system_label="3-Act Story (Setup -> Shock -> 0102 Reveal)",
+                            mode_label="Emergence Journal POC",
+                            duration_label="~16s (2.5s clips merged)",
+                            engine_key="veo3"
+                        )
+                    elif engine_choice == "2":
+                        run_shorts_flow(
+                            engine_label="Sora2 Live Action",
+                            system_label="3-Act Story (Cinematic Reveal)",
+                            mode_label="Cinematic Sora2 (live-action focus)",
+                            duration_label="15s cinematic (single clip)",
+                            engine_key="sora2"
+                        )
+
+                elif yt_choice == "5":
+                    # 1.5 YouTube Stats
                     print("\n[INFO] YouTube Stats")
                     try:
                         from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
@@ -1039,60 +1074,73 @@ def main():
                                 print(f"    - {s.get('topic', 'N/A')[:40]}...")
                                 print(f"      {s.get('youtube_url', 'N/A')}")
                     except Exception as e:
-                        print(f"[ERROR]Failed to get stats: {e}")
+                        print(f"[ERROR] Failed to get stats: {e}")
 
-                elif yt_choice == "5":
-                    # Launch YouTube DAE with AI Overseer monitoring + Profile Selection
-                    print("\n[AI] YouTube DAE with AI Overseer Monitoring")
-                    print("[AI] Qwen/Gemma will monitor for errors and auto-fix issues")
+                elif yt_choice == "6":
+                    # 1.6 Full Production Mode (runs Live Chat + Comments)
+                    print("\n[ALL] Full YouTube Production Mode")
                     print("="*60)
-                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI)")
-                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
-                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
-                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
-                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
-                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
-                    print("0. [CANCEL]      Back to YouTube Menu")
+                    print("This will start:")
+                    print("  - Live Chat Monitor (AutoModeratorDAE)")
+                    print("  - Comment Engagement DAE (Like/Heart/Reply)")
+                    print("="*60)
+                    print("[INFO] Starting Full Production Mode with 012 profile...")
+
+                    env_overrides = {
+                        "YT_ENGAGEMENT_TEMPO": "012",
+                        "YT_REPLY_BASIC_ONLY": "false",
+                        "YT_COMMENT_ONLY_MODE": "false"
+                    }
+
+                    # Auto-kill any existing instances
+                    try:
+                        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+                        lock = get_instance_lock("youtube_monitor")
+                        duplicates = lock.check_duplicates(quiet=True)
+                        if duplicates:
+                            print(f"[MENU] Killing {len(duplicates)} existing instance(s)...")
+                            lock.kill_pids(duplicates)
+                            time.sleep(1)
+                    except Exception as e:
+                        logger.debug(f"Pre-launch cleanup failed: {e}")
+
+                    asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
+
+                elif yt_choice == "7":
+                    # 1.7 AI Overseer Mode
+                    print("\n[AI] AI Overseer Mode (Qwen/Gemma Monitoring)")
+                    print("="*60)
+                    print("Profiles: 1=012  2=FAST  3=MEDIUM  4=Minimal  5=Occam  6=Comment-Only")
                     print("="*60)
 
-                    ai_profile_choice = input("\nSelect Run Profile: ").strip()
+                    ai_profile = input("Select profile [1-6, default=1]: ").strip() or "1"
 
-                    env_overrides = {}
-                    if ai_profile_choice == "1":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
-                    elif ai_profile_choice == "2":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "FAST", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
-                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
-                    elif ai_profile_choice == "3":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "MEDIUM", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
-                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
-                    elif ai_profile_choice == "4":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
-                    elif ai_profile_choice == "5":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true", "YT_OCCAM_MODE": "true"}
-                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
-                    elif ai_profile_choice == "6":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false", "YT_COMMENT_ONLY_MODE": "true"}
-                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
-                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
-                    elif ai_profile_choice == "0":
-                        continue  # Back to YT menu
+                    env_overrides = {"YT_COMMENT_ONLY_MODE": "false"}
+                    if ai_profile == "2":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "FAST", "COMMUNITY_DEBUG_SUBPROCESS": "true"})
+                    elif ai_profile == "3":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "MEDIUM", "COMMUNITY_DEBUG_SUBPROCESS": "true"})
+                    elif ai_profile == "4":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"})
+                    elif ai_profile == "5":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true", "YT_OCCAM_MODE": "true"})
+                    elif ai_profile == "6":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false", "YT_COMMENT_ONLY_MODE": "true"})
                     else:
-                        print("[WARN] Invalid choice - using 012 standard")
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"})
 
-                    print("[AI] Starting with AI Overseer monitoring enabled...")
+                    print("[AI] Starting with AI Overseer monitoring...")
                     try:
                         asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=True, env_overrides=env_overrides))
                     except KeyboardInterrupt:
-                        print("\n[STOP] YouTube daemon stopped by user")
+                        print("\n[STOP] Stopped by user")
                     except Exception as e:
-                        print(f"\n[ERROR] Failed to start YouTube daemon: {e}")
-                        logger.error(f"YouTube daemon error: {e}", exc_info=True)
+                        print(f"\n[ERROR] Failed: {e}")
 
                 elif yt_choice == "0":
                     print("[BACK] Returning to main menu...")
                 else:
-                    print("[ERROR]Invalid choice")
+                    print("[ERROR] Invalid choice")
 
             elif choice == "2":
                 # HoloDAE - Code Intelligence & Monitoring
