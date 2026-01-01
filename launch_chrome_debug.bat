@@ -7,8 +7,9 @@ REM Wait for processes to close
 timeout /t 2 /nobreak >nul
 
 REM Launch Chrome with remote debugging
-echo Launching Chrome with remote debugging on port 9222...
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="O:/Foundups-Agent/modules/platform_integration/youtube_auth/data/chrome_profile_move2japan" "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox"
+REM CRITICAL: Anti-backgrounding flags prevent JavaScript throttling when window not focused (2025-12-30)
+echo Launching Chrome with remote debugging on port 9222 (anti-backgrounding enabled)...
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="O:/Foundups-Agent/modules/platform_integration/youtube_auth/data/chrome_profile_move2japan" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox"
 
 echo.
 echo Chrome launched with remote debugging on port 9222

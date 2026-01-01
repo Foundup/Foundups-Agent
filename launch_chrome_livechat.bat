@@ -10,8 +10,9 @@ timeout /t 2 /nobreak >nul
 
 REM Launch Chrome with remote debugging on port 9223 (separate from Studio instance)
 REM Opens to @Move2Japan live stream (auto-redirects to current live if streaming)
-echo Launching Chrome on port 9223 for live chat monitoring...
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9223 --user-data-dir="O:/Foundups-Agent/modules/platform_integration/youtube_auth/data/chrome_profile_move2japan" "https://www.youtube.com/@Move2Japan/live"
+REM CRITICAL: Anti-backgrounding flags prevent JavaScript throttling when window not focused (2025-12-30)
+echo Launching Chrome on port 9223 for live chat monitoring (anti-backgrounding enabled)...
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9223 --user-data-dir="O:/Foundups-Agent/modules/platform_integration/youtube_auth/data/chrome_profile_move2japan" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling "https://www.youtube.com/@Move2Japan/live"
 
 echo.
 echo Chrome launched with remote debugging on port 9223

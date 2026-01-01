@@ -666,7 +666,6 @@ def main() -> None:
         print("=" * 70)
 
         try:
-            from pathlib import Path
             import subprocess
 
             holoindex_root = Path(__file__).parent
@@ -1353,7 +1352,6 @@ def main() -> None:
         safe_print("[MODULE-ANALYSIS] Analyzing modules for duplicates and health issues...")
         try:
             from holo_index.module_health.size_audit import SizeAuditor
-            from pathlib import Path
             # from holo_index.module_health.structure_audit import StructureAuditor # TODO: Implement StructureAuditor
             
             auditor = SizeAuditor()

@@ -329,7 +329,7 @@ modules/[domain]/[block]/
 │   └── *.py
 ├── skills/                       # The Wardrobe (AI instructions)
 │   ├── [skill_name]/
-│   │   ├── SKILL.md              # Instructions (YAML + Markdown)
+│   │   ├── SKILLz.md             # Instructions (YAML + Markdown) - Note the 'z'!
 │   │   ├── versions/
 │   │   │   ├── v1.0_baseline.md
 │   │   │   ├── v1.1_improved.md
@@ -353,7 +353,9 @@ modules/[domain]/[block]/
 
 ---
 
-## SKILL.md Format Specification
+## SKILLz.md Format Specification
+
+> **Why "SKILLz"?** The 'z' suffix makes skill files immediately recognizable as FoundUps/WRE agent instructions. When you see `SKILLz.md`, you know it's a recipe for AI, not documentation.
 
 ### Structure
 
