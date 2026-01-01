@@ -103,8 +103,10 @@ class WRESkillsLoader:
             if promotion_state and skill_info.get("promotion_state") != promotion_state:
                 continue
 
-            # Load SKILL.md to extract metadata
-            skill_path = self.repo_root / skill_info["location"] / "SKILL.md"
+            # Load SKILLz.md (preferred) or SKILL.md (legacy fallback)
+            skill_path = self.repo_root / skill_info["location"] / "SKILLz.md"
+            if not skill_path.exists():
+                skill_path = self.repo_root / skill_info["location"] / "SKILL.md"
             if not skill_path.exists():
                 logger.warning(f"[WRE-LOADER] Skill file not found: {skill_path}")
                 continue
@@ -154,8 +156,10 @@ class WRESkillsLoader:
         if not skill_info:
             raise ValueError(f"Skill not found in registry: {skill_name}")
 
-        # Load SKILL.md
-        skill_path = self.repo_root / skill_info["location"] / "SKILL.md"
+        # Load SKILLz.md (preferred) or SKILL.md (legacy fallback)
+        skill_path = self.repo_root / skill_info["location"] / "SKILLz.md"
+        if not skill_path.exists():
+            skill_path = self.repo_root / skill_info["location"] / "SKILL.md"
         if not skill_path.exists():
             raise FileNotFoundError(f"Skill file not found: {skill_path}")
 

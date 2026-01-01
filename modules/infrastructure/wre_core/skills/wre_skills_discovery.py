@@ -35,11 +35,15 @@ class WRESkillsDiscovery:
     Filesystem-based skills discovery for WRE Phase 2
 
     Scans:
-    - modules/*/skills/**/SKILL.md (production skills)
-    - .claude/skills/**/SKILL.md (prototype skills)
-    - holo_index/skills/**/SKILL.md (holo skills)
+    - modules/*/skills/**/SKILLz.md (production skills - preferred)
+    - modules/*/skills/**/SKILL.md (production skills - legacy)
+    - .claude/skills/**/SKILLz.md (prototype skills)
+    - holo_index/skills/**/SKILLz.md (holo skills)
 
     Does NOT require skills_registry.json - discovers from filesystem
+    
+    Note: SKILLz.md is the new naming convention (WSP 95 enhancement).
+    SKILL.md is supported for backward compatibility.
     """
 
     def __init__(self, repo_root: Optional[Path] = None):
@@ -59,18 +63,23 @@ class WRESkillsDiscovery:
 
     def discover_all_skills(self) -> List[DiscoveredSkill]:
         """
-        Scan filesystem for all SKILL.md files
+        Scan filesystem for all SKILLz.md files (and legacy SKILL.md)
 
         Returns:
             List of discovered skills (both registered and unregistered)
         """
         discovered_skills = []
 
-        # Scan patterns
+        # Scan patterns - SKILLz.md first (preferred), then SKILL.md (legacy)
         scan_patterns = [
-            "modules/*/*/skills/**/SKILL.md",    # Production skills (domain/module/skills/)
-            ".claude/skills/**/SKILL.md",         # Prototype skills
-            "holo_index/skills/**/SKILL.md",      # HoloIndex skills
+            # SKILLz.md - new naming convention
+            "modules/*/*/skills/**/SKILLz.md",    # Production skills (domain/module/skills/)
+            ".claude/skills/**/SKILLz.md",         # Prototype skills
+            "holo_index/skills/**/SKILLz.md",      # HoloIndex skills
+            # SKILL.md - legacy (backward compatibility)
+            "modules/*/*/skills/**/SKILL.md",    # Legacy production skills
+            ".claude/skills/**/SKILL.md",         # Legacy prototype skills
+            "holo_index/skills/**/SKILL.md",      # Legacy HoloIndex skills
         ]
 
         for pattern in scan_patterns:

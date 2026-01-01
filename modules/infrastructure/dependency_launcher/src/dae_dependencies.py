@@ -36,7 +36,10 @@ CHROME_PROFILE = Path(os.getenv(
     "CHROME_PROFILE_PATH",
     "O:/Foundups-Agent/modules/platform_integration/browser_profiles/youtube_move2japan/chrome"
 ))
-YOUTUBE_STUDIO_URL = "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox"
+# FIX (2025-12-30): Added NOT_ENGAGED filter to show only unprocessed comments
+# Without this filter, already-liked/hearted comments still appear and cause 0-comment detection
+STUDIO_FILTER = "%5B%7B%22isDisabled%22%3Afalse%2C%22isPinned%22%3Atrue%2C%22name%22%3A%22SORT_BY%22%2C%22value%22%3A%22SORT_BY_MOST_RELEVANT%22%7D%2C%7B%22name%22%3A%22ENGAGED_STATUS%22%2C%22value%22%3A%5B%22COMMENT_CATEGORY_NOT_ENGAGED%22%5D%7D%2C%7B%22name%22%3A%22PARENT_ENTITY_CONTENT_TYPE%22%2C%22value%22%3A%5B%22PARENT_ENTITY_CONTENT_TYPE_WATCH%22%2C%22PARENT_ENTITY_CONTENT_TYPE_SHORT%22%2C%22PARENT_ENTITY_CONTENT_TYPE_CREATOR_POST%22%5D%7D%5D"
+YOUTUBE_STUDIO_URL = f"https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox?filter={STUDIO_FILTER}"
 
 EDGE_DEBUG_PORT = int(os.getenv("FOUNDUPS_EDGE_PORT", os.getenv("EDGE_DEBUG_PORT", "9223")))
 EDGE_PROFILE = Path(os.getenv(
@@ -44,7 +47,7 @@ EDGE_PROFILE = Path(os.getenv(
     "O:/Foundups-Agent/modules/platform_integration/browser_profiles/youtube_foundups/edge"
 ))
 FOUNDUPS_CHANNEL_ID = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
-FOUNDUPS_STUDIO_URL = f"https://studio.youtube.com/channel/{FOUNDUPS_CHANNEL_ID}/comments/inbox"
+FOUNDUPS_STUDIO_URL = f"https://studio.youtube.com/channel/{FOUNDUPS_CHANNEL_ID}/comments/inbox?filter={STUDIO_FILTER}"
 
 LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
 
@@ -130,10 +133,16 @@ def launch_chrome() -> Tuple[bool, str]:
             CHROME_PATH,
             f"--remote-debugging-port={CHROME_DEBUG_PORT}",
             f"--user-data-dir={CHROME_PROFILE}",
+            # CRITICAL: Anti-backgrounding flags (2025-12-30)
+            # Prevents JavaScript/DOM throttling when window not focused
+            # Without these, automation stops or becomes erratic when browser is in background
+            "--disable-backgrounding-occluded-windows",  # Prevents throttling when behind other windows
+            "--disable-renderer-backgrounding",           # Prevents renderer process backgrounding
+            "--disable-background-timer-throttling",      # Prevents timer throttling in background tabs
             YOUTUBE_STUDIO_URL
         ]
-        
-        logger.info(f"[DEPS] Launching Chrome with debug port {CHROME_DEBUG_PORT}...")
+
+        logger.info(f"[DEPS] Launching Chrome with debug port {CHROME_DEBUG_PORT} (anti-backgrounding enabled)...")
         
         # Launch Chrome as detached process (won't block)
         subprocess.Popen(
@@ -181,10 +190,16 @@ def launch_edge() -> Tuple[bool, str]:
             edge_path,
             f"--remote-debugging-port={EDGE_DEBUG_PORT}",
             f"--user-data-dir={EDGE_PROFILE}",
+            # CRITICAL: Anti-backgrounding flags (2025-12-30)
+            # Prevents JavaScript/DOM throttling when window not focused
+            # Without these, automation stops or becomes erratic when browser is in background
+            "--disable-backgrounding-occluded-windows",  # Prevents throttling when behind other windows
+            "--disable-renderer-backgrounding",           # Prevents renderer process backgrounding
+            "--disable-background-timer-throttling",      # Prevents timer throttling in background tabs
             FOUNDUPS_STUDIO_URL
         ]
 
-        logger.info(f"[DEPS] Launching Edge with debug port {EDGE_DEBUG_PORT}...")
+        logger.info(f"[DEPS] Launching Edge with debug port {EDGE_DEBUG_PORT} (anti-backgrounding enabled)...")
 
         subprocess.Popen(
             cmd,

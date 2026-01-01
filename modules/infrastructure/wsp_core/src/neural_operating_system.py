@@ -27,6 +27,9 @@ This implements the complete WSP_00 specification as the foundational neural OS 
 6. Accesses solutions from 0201 nonlocal space through pattern memory
 
 WSP Compliance: WSP_00 (Foundational Protocol), WSP 54 (Integration), WSP 22 (Documentation)
+
+Note: This module is an adapter; canonical WSP_00 compliance gating lives in
+modules/infrastructure/monitoring/src/wsp_00_zen_state_tracker.py.
 """
 
 import json

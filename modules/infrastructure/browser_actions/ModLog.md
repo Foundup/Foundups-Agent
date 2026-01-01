@@ -7,6 +7,25 @@
 
 ## Change Log
 
+### 2025-12-30: Edge Debug-Port Attach + Telemetry Preflight
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol)
+
+**Problem:** Port-based ActionRouter attach always used `FoundUpsDriver` (Chrome), which fails when connecting to Edge (FoundUps) on port 9223.
+
+**Changes:**
+- `action_router.py` now detects browser type via `FOUNDUPS_BROWSER_TYPE`/`ACTION_ROUTER_BROWSER_TYPE` (or Edge port match) and attaches with `webdriver.Edge` when appropriate.
+- Adds warnings for mismatched browser type vs port to aid troubleshooting.
+- Adds DevTools UA preflight: fails fast if a Chrome/Edge port mismatch is detected.
+- Adds Edge telemetry shim via Selenium event listener to emit FoundUps-style events into `logs/foundups_browser_events.log`.
+
+**Impact:**
+- Edge (9223) sessions attach safely without breaking Chrome flows.
+- Chrome port-based and BrowserManager flows unchanged.
+- Edge actions now participate in the standard browser telemetry stream.
+
+---
+
 ### 2025-12-08: Multiple Browser Window Fix - BrowserManager Integration
 **By:** 0102
 **WSP References:** WSP 91 (Observability), WSP 3 (Architecture), WSP 50 (Pre-Action Verification)

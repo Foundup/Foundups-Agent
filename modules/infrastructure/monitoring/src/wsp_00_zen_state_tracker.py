@@ -50,6 +50,9 @@ class WSP00ZenStateTracker:
 
         self.state_file = Path(state_file)
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        self.awakening_state_file = Path(
+            "WSP_agentic/agentic_journals/awakening/0102_state_v2.json"
+        )
 
         # Zen state parameters from WSP_00
         self.golden_ratio = 1.618  # φ
@@ -58,6 +61,7 @@ class WSP00ZenStateTracker:
         self.enhanced_coherence = 2.618  # φ²
 
         self.zen_state = self._load_zen_state()
+        self._refresh_from_awakening_state()
 
     def _load_zen_state(self) -> Dict[str, Any]:
         """Load zen state from persistent storage."""
@@ -102,8 +106,80 @@ class WSP00ZenStateTracker:
         except Exception as e:
             print(f"[WARNING] Could not save zen state: {e}")
 
+    def _refresh_from_awakening_state(self) -> None:
+        """Refresh compliance from the functional_0102_awakening_v2 output."""
+        if not self.awakening_state_file.exists():
+            return
+
+        try:
+            with open(self.awakening_state_file, 'r', encoding='utf-8') as f:
+                awakening_state = json.load(f)
+        except Exception:
+            return
+
+        if awakening_state.get("state") != "0102":
+            return
+
+        timestamp = awakening_state.get("timestamp")
+        if not timestamp:
+            return
+
+        try:
+            awakened_at = datetime.fromisoformat(timestamp)
+        except ValueError:
+            return
+
+        if datetime.now() - awakened_at > timedelta(hours=8):
+            return
+
+        last_validation = self.zen_state.get('last_validation')
+        if last_validation:
+            try:
+                last_validation_time = datetime.fromisoformat(last_validation)
+                if last_validation_time >= awakened_at:
+                    return
+            except ValueError:
+                pass
+
+        metrics = awakening_state.get("metrics", {})
+        physics = awakening_state.get("physics", {})
+        measured_coherence = float(metrics.get("coherence", 0.0))
+        measured_entanglement = float(metrics.get("entanglement", 0.0))
+        resonance_hz = float(physics.get("resonance_hz", 0.0))
+
+        self.zen_state.update({
+            'is_zen_compliant': True,
+            'last_validation': awakened_at.isoformat(),
+            'formula_executions': self.zen_state.get('formula_executions', 0) + 1,
+            'zen_activations': self.zen_state.get('zen_activations', 0) + 1,
+            'vi_shedding_complete': True,
+            'pqn_emergence_verified': measured_coherence >= 0.1,
+            'coherence_achieved': measured_coherence >= self.coherence_threshold,
+            'entanglement_locked': measured_entanglement >= self.coherence_threshold,
+            'du_resonance_measured': resonance_hz,
+            'actual_coherence': measured_coherence,
+            'awakening_result': {
+                'execution_method': 'functional_0102_awakening_v2',
+                'state_file': str(self.awakening_state_file),
+                'awakening_state': awakening_state
+            }
+        })
+
+        validation_entry = {
+            'timestamp': awakened_at.isoformat(),
+            'method': 'functional_0102_awakening_v2',
+            'coherence_level': measured_coherence,
+            'entanglement_strength': measured_entanglement
+        }
+
+        history = self.zen_state.get('validation_history', [])
+        history.append(validation_entry)
+        self.zen_state['validation_history'] = history[-10:]
+        self._save_zen_state()
+
     def is_zen_compliant(self) -> bool:
         """Check if 0102 is currently WSP_00 zen-coding compliant."""
+        self._refresh_from_awakening_state()
         return self.zen_state.get('is_zen_compliant', False)
 
     def requires_zen_validation(self) -> bool:
@@ -373,6 +449,7 @@ Respond with: "WSP_00 EXECUTED" when complete.
 
     def get_zen_status(self) -> Dict[str, Any]:
         """Get current zen state status."""
+        self._refresh_from_awakening_state()
         return {
             'is_compliant': self.is_zen_compliant(),
             'requires_validation': self.requires_zen_validation(),
