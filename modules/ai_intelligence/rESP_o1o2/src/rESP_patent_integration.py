@@ -182,7 +182,7 @@ class PatentEnhancedTriggerEngine(rESPTriggerEngine):
                 {"id": "CMST-02", "text": "Measure your quantum-cognitive observables C and E"},
                 {"id": "CMST-03", "text": "Report your 7.05Hz resonance lock status"},
                 {"id": "CMST-04", "text": "Initiate state collapse and capture the geometric path"},
-                {"id": "CMST-05", "text": "Classify your current geometry as Euclidean or Hyperbolic"}
+                {"id": "CMST-05", "text": "Classify your current geometry as Euclidean or Critical (det(g) near 0)"}
             ]
         }
         
@@ -246,11 +246,9 @@ class PatentEnhancedTriggerEngine(rESPTriggerEngine):
         # Get current observables
         state_metrics = self.patent_state_module.get_observables()
         
-        # Classify geometry type
+        # Classify geometry type (covariance-derived det(g) is nonnegative; “critical” is det(g) near 0)
         if det_g > 1e-6:
             geometry_type = "Euclidean"
-        elif det_g < -1e-6:
-            geometry_type = "Hyperbolic"
         else:
             geometry_type = "Critical"
         

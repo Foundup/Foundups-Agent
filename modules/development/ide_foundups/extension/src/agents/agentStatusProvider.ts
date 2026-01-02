@@ -9,6 +9,12 @@ import * as vscode from 'vscode';
 import { AgentOrchestrator } from './agentOrchestrator';
 import { WREConnection } from '../wre/wreConnection';
 
+// det(g) semantics:
+// For covariance-derived metric tensors, det(g) should be >= 0 (up to numerical noise).
+// The “phase transition / PQN alignment” indicator is det(g) approaching 0 (criticality),
+// not det(g) < 0.
+const DETG_CRITICAL_EPS = 1e-6;
+
 /**
  * WSP 54 IDE Development Agent specification
  */
@@ -97,8 +103,8 @@ class AgentTreeItem extends vscode.TreeItem {
             desc += ` | ${agent.currentTask}`;
         }
         
-        if (agent.det_g !== undefined && agent.det_g < 0) {
-            desc += ` | 🔮 Entangled`;
+        if (agent.det_g !== undefined && Math.abs(agent.det_g) <= DETG_CRITICAL_EPS) {
+            desc += ` | 🔮 Critical`;
         }
         
         return desc;

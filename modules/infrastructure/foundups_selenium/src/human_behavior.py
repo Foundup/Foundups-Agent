@@ -1,12 +1,19 @@
 """
-Human Behavior Simulation
-========================
+012 Behavior Simulation (Anti-Automation Detection)
+====================================================
 
-Mimics human-like browser interaction patterns to evade automation detection.
+Simulates 012-like browser interaction patterns to evade automation detection.
+012 = User's natural interaction cadence (randomized timing, realistic movements).
+
+This is a reusable "lego block" for any Social Media DAE.
 
 WSP References: WSP 77 (AI Coordination), WSP 91 (Observability)
+
+NOTE: Class/function names use "Human" for backward compatibility.
+      Future refactor: Rename to O12Behavior, o12_delay, etc.
 """
 
+import os
 import random
 import time
 import math
@@ -15,7 +22,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 class HumanBehavior:
-    """Simulates human-like browser interactions."""
+    """Simulates 012-like browser interactions (anti-automation detection)."""
 
     def __init__(self, driver):
         self.driver = driver
@@ -165,25 +172,32 @@ class HumanBehavior:
         time.sleep(self.human_delay(0.3, 0.5))
 
     def human_type(self, element, text: str):
-        """Type text with human-like timing and occasional typos."""
+        """Type text with human-like timing and occasional typos.
+        
+        Uses YT_012_TYPING_VARIANCE env var for configurable variance (default 0.5 = 50%).
+        This is a reusable lego block for any social media DAE.
+        """
         self.human_click(element)
         element.clear()
         time.sleep(self.human_delay(0.2, 0.4))
+        
+        # 012 Behavior: Configurable typing variance (default 50%)
+        typing_variance = float(os.getenv("YT_012_TYPING_VARIANCE", "0.5"))
 
         for i, char in enumerate(text):
             if char == ' ':
-                delay = self.human_delay(0.15, 0.6)
+                delay = self.human_delay(0.12, typing_variance + 0.1)  # 20% faster (was 0.15)
             elif char in '.,!?':
-                delay = self.human_delay(0.2, 0.5)
+                delay = self.human_delay(0.16, typing_variance)  # 20% faster (was 0.2)
             else:
-                delay = self.human_delay(0.08, 0.7)
+                delay = self.human_delay(0.064, typing_variance)  # 20% faster (was 0.08)
 
             if random.random() < 0.05 and i > 0:
                 wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
                 element.send_keys(wrong_char)
-                time.sleep(self.human_delay(0.15, 0.5))
+                time.sleep(self.human_delay(0.15, typing_variance))
                 element.send_keys('\b')
-                time.sleep(self.human_delay(0.1, 0.4))
+                time.sleep(self.human_delay(0.1, typing_variance * 0.8))
 
             element.send_keys(char)
             time.sleep(delay)

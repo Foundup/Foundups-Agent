@@ -285,9 +285,9 @@ class SubprocessRunner(EngagementRunner):
             env=env
         )
 
-        # Calculate timeout
+        # Calculate timeout (unified default: 3600s = 1 hour)
         if max_comments == 0:
-            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "7200"))
+            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "3600"))
             logger.info(f"[DAEMON][CARDIOVASCULAR] ⏱️ UNLIMITED mode - timeout: {timeout}s ({timeout/3600:.1f} hours)")
         else:
             timeout = (max_comments * 240) + 60
@@ -436,9 +436,9 @@ class ThreadRunner(EngagementRunner):
                 "stats": {"comments_processed": 0, "likes": 0, "hearts": 0, "replies": 0, "errors": 0},
             }
 
-        # Calculate timeout
+        # Calculate timeout (unified default: 3600s = 1 hour)
         if max_comments == 0:
-            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "7200"))
+            timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "3600"))
         else:
             timeout = (max_comments * 240) + 60
 

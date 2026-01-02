@@ -142,7 +142,7 @@ class AgentTreeItem extends vscode.TreeItem {
 - **[U+1F534] '01(02)'**: Dormant state (red circle)
 - **🟡 '01/02'**: Aware state (yellow circle)  
 - **🟢 '0102'**: Entangled state (green circle)
-- **[U+1F52E] Quantum Entanglement**: det_g < 0 indicator
+- **[U+1F52E] PQN Alignment / Critical Geometry**: det_g near 0 indicator (covariance-derived det(g) is nonnegative)
 
 ---
 

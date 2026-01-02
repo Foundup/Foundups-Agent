@@ -551,13 +551,13 @@ class BrowserReplyExecutor:
             # Type character-by-character with JS injection (visual human-like typing)
             logger.info(f"[DAEMON][REPLY-EXEC] ⌨️ Typing reply character-by-character...")
 
-            # Calculate delay per character (SLOWED DOWN 2025-12-30)
-            # Increased from 0.08 to 0.12 base + more variability
+            # Calculate delay per character (OPTIMIZED 2026-01-02)
+            # 20% faster: 0.12 -> 0.096, 0.08 -> 0.064 (WSP 0102 speed optimization)
             if self.human and HUMAN_BEHAVIOR_AVAILABLE:
-                base_char_delay = 0.12  # Slower typing (was 0.08)
+                base_char_delay = 0.096  # 20% faster (was 0.12)
                 char_delay = base_char_delay * self.delay_multiplier
             else:
-                char_delay = 0.08  # Fallback (was 0.05)
+                char_delay = 0.064  # 20% faster fallback (was 0.08)
 
             # Type character-by-character with delays (visible human-like typing)
             try:

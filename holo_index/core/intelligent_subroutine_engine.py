@@ -56,6 +56,7 @@ class IntelligentSubroutineEngine:
         self.duplication_patterns = {}
         self.usage_patterns = {}
         self.last_health_check = None
+        self._module_scoring = None
 
     def get_file_threshold(self, file_path: Path) -> Tuple[int, str]:
         """Agentic file type detection and threshold selection.
@@ -202,6 +203,52 @@ class IntelligentSubroutineEngine:
 
         return is_creating or has_duplication_history
 
+    def should_run_module_scoring(self, query: str, target_module: str = None) -> bool:
+        """Algorithm to determine if module scoring is needed."""
+        trigger_keywords = [
+            "priority",
+            "prioritize",
+            "scoring",
+            "score",
+            "mps",
+            "modules_to_score",
+            "roadmap",
+            "next step",
+            "next steps",
+            "what to do",
+            "what should i do",
+            "what should we do",
+            "what to build",
+            "wsp 15",
+            "wsp15",
+            "wsp 37",
+            "wsp37",
+        ]
+        lower = query.lower()
+        if any(keyword in lower for keyword in trigger_keywords):
+            return True
+
+        # If user asks to score a specific module and we detected one.
+        if target_module and "score" in lower:
+            return True
+
+        return False
+
+    def _get_module_scoring(self):
+        if self._module_scoring is None:
+            try:
+                from .module_scoring_subroutine import ModuleScoringSubroutine
+                self._module_scoring = ModuleScoringSubroutine()
+            except Exception:
+                self._module_scoring = False
+        return self._module_scoring if self._module_scoring else None
+
+    def run_module_scoring(self, target_module: str = None) -> Dict[str, Any]:
+        subroutine = self._get_module_scoring()
+        if not subroutine:
+            return {"error": "module scoring subroutine unavailable"}
+        return subroutine.score(target_module=target_module)
+
     def analyze_module_size(self, target_module: str) -> Dict[str, Any]:
         """Automatically analyze module size with language-specific thresholds.
 
@@ -346,6 +393,9 @@ class IntelligentSubroutineEngine:
 
         if self.should_run_duplication_check(query, target_module):
             results['duplication_check'] = self.detect_code_duplication(target_module)
+
+        if self.should_run_module_scoring(query, target_module):
+            results['module_scoring'] = self.run_module_scoring(target_module)
 
         # Update usage patterns
         if target_module:

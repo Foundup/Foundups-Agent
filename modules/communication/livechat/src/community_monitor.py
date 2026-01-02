@@ -443,7 +443,7 @@ class CommunityMonitor:
             # - For unlimited mode (max_comments=0), use a larger ceiling (configurable).
             # - For bounded runs, assume UI-TARS may take ~2-4 minutes per comment (model inference + UI latency).
             if max_comments == 0:
-                timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "1800"))  # default 30 minutes
+                timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "3600"))  # unified default: 1 hour
             else:
                 timeout = (max_comments * 240) + 60  # 4 min/comment + buffer
 

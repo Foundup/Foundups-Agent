@@ -693,6 +693,41 @@ class AgenticOutputThrottler:
                     dup_content += f"\n  - WSP 40 Status: VIOLATION - {dup_data['recommendation']}"
                     self.add_section('analysis', dup_content, priority=2, tags=['analysis', 'duplication', 'wsp40', 'violation'])
 
+            if 'module_scoring' in intelligent_analysis:
+                score_data = intelligent_analysis['module_scoring']
+                if score_data.get('error'):
+                    score_content = f"[SCORING] Module scoring unavailable: {score_data['error']}"
+                    self.add_section('analysis', score_content, priority=3, tags=['analysis', 'scoring', 'warning'])
+                else:
+                    score_content = "[SCORING] WSP 15/37 Module Priority:"
+
+                    target_score = score_data.get('target_score')
+                    if target_score:
+                        score_content += (
+                            f"\n  - Target: {target_score.get('name')} "
+                            f"({target_score.get('priority')}, {target_score.get('mps_score')})"
+                        )
+
+                    top_active = score_data.get('top_active') or []
+                    if top_active:
+                        score_content += "\n  - Top Active:"
+                        for entry in top_active[:3]:
+                            score_content += (
+                                f"\n    - {entry.get('name')} "
+                                f"({entry.get('priority')}, {entry.get('mps_score')})"
+                            )
+
+                    top_inactive = score_data.get('top_inactive') or []
+                    if top_inactive:
+                        score_content += "\n  - Next Activation:"
+                        for entry in top_inactive[:3]:
+                            score_content += (
+                                f"\n    - {entry.get('name')} "
+                                f"({entry.get('priority')}, {entry.get('mps_score')})"
+                            )
+
+                    self.add_section('analysis', score_content, priority=2, tags=['analysis', 'scoring', 'wsp15', 'wsp37'])
+
         # Health notices - only show violations for target module
         health_notices = result.get('health_notices', [])
         if health_notices:

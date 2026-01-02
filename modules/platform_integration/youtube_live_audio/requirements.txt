@@ -1,1 +1,9 @@
+# YouTube Live Audio - System Audio Capture
+# WSP 49: Module dependencies
+
+# Core: System audio loopback (WASAPI on Windows)
+soundcard>=0.4.2
+numpy>=1.21.0
+
+# Optional: yt-dlp fallback mode (not used in loopback mode)
 yt-dlp>=2024.3.10

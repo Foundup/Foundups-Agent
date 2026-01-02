@@ -98,6 +98,8 @@ Other training verbs: `utf8_scan`, `utf8_summary`, and `batch` (IdleAutomation t
 - `[SUPPORT]` `--support`, `--diagnose`, `--troubleshoot` — quick recipes that bundle multiple skills for recurring incidents.
 - `[LIFECYCLE]` `--stop-holodae`, `--holodae-status` — lifecycle controls for the monitoring loop.
 - `[FEEDBACK]` `--advisor-rating`, `--ack-reminders`, `--no-advisor` — feedback hooks that tune advisor behavior and log compliance actions.
+- `[OFFLINE]` `--offline` — disable model downloads and auto-install; falls back to lexical search when embeddings are unavailable.
+- `[SCORE]` auto module scoring — triggered on queries mentioning priority/roadmap/MPS; uses WSP 15/37 scoring data.
 
 ## Subsystem Map (Quick Orientation)
 - `holo_index/core/` — search engine, intelligent subroutine orchestration, SSD index wiring.

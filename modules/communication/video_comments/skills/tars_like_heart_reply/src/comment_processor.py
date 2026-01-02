@@ -170,6 +170,16 @@ class CommentProcessor:
         enable_wre_monitor = _env_truthy("FOUNDUPS_ENABLE_WRE_MONITOR", "true")
         self.wre_action_learning = _env_truthy("WRE_ACTION_LEARNING", "true") and enable_wre and enable_wre_monitor
         self.wre_action_logs = _env_truthy("WRE_ACTION_LOGS", "false")
+        
+        # 012 Behavior: Configurable action probabilities (human-like randomization)
+        # These control the "should_perform_action()" probability for each action
+        self.like_probability = float(os.getenv("YT_012_LIKE_PROB", "0.85"))      # 85% default
+        self.heart_probability = float(os.getenv("YT_012_HEART_PROB", "0.90"))    # 90% default
+        self.reply_skip_probability = float(os.getenv("YT_012_REPLY_SKIP_PROB", "0.50"))  # 50% skip for Tier 1
+        
+        if tempo == "012" or self.delay_multiplier == 1.0:
+            logger.info(f"[012-BEHAVIOR] Like prob: {self.like_probability}, Heart prob: {self.heart_probability}, Reply skip: {self.reply_skip_probability}")
+        
         self.wre_monitor = None
         if self.wre_action_learning and WRE_MONITOR_AVAILABLE:
             try:
@@ -758,11 +768,11 @@ class CommentProcessor:
         # 1. LIKE
         if do_like:
             action_plan["like"]["intended"] = True
-            # Probabilistic execution (85% chance - humans don't like EVERY comment)
-            if self.human and not self.human.should_perform_action(0.85):
+            # Probabilistic execution (configurable via YT_012_LIKE_PROB, default 85%)
+            if self.human and not self.human.should_perform_action(self.like_probability):
                 action_plan["like"]["intended"] = False
                 action_plan["like"]["reason"] = "random_skip"
-                logger.info(f"  [LIKE] SKIPPED (random selectivity - anti-detection)")
+                logger.info(f"  [LIKE] SKIPPED (012 random: {int(self.like_probability*100)}% prob)")
                 results['like'] = False
             else:
                 logger.info(f"  [LIKE] Executing...")
@@ -825,11 +835,11 @@ class CommentProcessor:
         # 2. HEART
         if do_heart:
             action_plan["heart"]["intended"] = True
-            # Probabilistic execution (90% chance - creator hearts are special but not guaranteed)
-            if self.human and not self.human.should_perform_action(0.90):
+            # Probabilistic execution (configurable via YT_012_HEART_PROB, default 90%)
+            if self.human and not self.human.should_perform_action(self.heart_probability):
                 action_plan["heart"]["intended"] = False
                 action_plan["heart"]["reason"] = "random_skip"
-                logger.info(f"  [HEART] SKIPPED (random selectivity - anti-detection)")
+                logger.info(f"  [HEART] SKIPPED (012 random: {int(self.heart_probability*100)}% prob)")
                 results['heart'] = False
             else:
                 logger.info(f"  [HEART] Executing...")
@@ -941,9 +951,9 @@ class CommentProcessor:
                          tier = 2
                     
                     # 3. Probabilistic Gating (Natural Pace)
-                    # Tier 1 (Regular) -> 50% chance to skip reply (prevent over-engagement)
-                    if tier == 1 and random.random() < 0.5:
-                         logger.info(f"  [STRATEGY] Randomly skipping reply for Tier 1 user (50% gate).")
+                    # Tier 1 (Regular) -> configurable skip probability (YT_012_REPLY_SKIP_PROB)
+                    if tier == 1 and random.random() < self.reply_skip_probability:
+                         logger.info(f"  [STRATEGY] Randomly skipping reply for Tier 1 user ({int(self.reply_skip_probability*100)}% gate).")
                          do_reply = False
                          actual_reply_text = None 
                     

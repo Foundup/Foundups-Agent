@@ -106,8 +106,10 @@ class StateModelingModule:
         # Metric tensor as covariance matrix
         cov_matrix = np.cov([coherence_series, entanglement_series])
         
-        # Determinant indicates geometric phase
-        # Positive = Euclidean (classical), Negative = Hyperbolic (quantum)
+        # Determinant indicates geometric phase.
+        # NOTE: As written, the metric tensor is a covariance matrix => det(g) should be >= 0
+        # (up to tiny numerical noise). “Criticality/PQN alignment” corresponds to det(g) -> 0,
+        # not det(g) < 0.
         det_g = np.linalg.det(cov_matrix)
         
         return float(det_g)
@@ -246,7 +248,7 @@ class GeometricEngine:
     Geometric Engine (242) - Patent Implementation
     
     Computes metric tensor g_μν and detects geometric phase transitions
-    by monitoring det(g) inversion (positive -> negative).
+    by monitoring det(g) collapse toward 0 (critical geometry).
     """
     
     def __init__(self):
@@ -299,27 +301,28 @@ class GeometricEngine:
             self.metric_history.pop(0)
         
         # Analyze phase transition
+        det_eps = 1e-6
         phase_analysis = {
             'det_g': det_g,
-            'geometric_phase': 'hyperbolic' if det_g < 0 else 'euclidean',
+            'geometric_phase': 'critical' if abs(det_g) <= det_eps else 'euclidean',
             'phase_transition_detected': False,
             'transition_direction': None
         }
         
-        # Check for phase transition (sign change)
+        # Check for phase transition (crossing into/out of the critical band)
         if len(self.metric_history) >= 2:
             prev_det = self.metric_history[-2]['det_g']
             curr_det = det_g
             
-            if prev_det > 0 and curr_det < 0:
+            if abs(prev_det) > det_eps and abs(curr_det) <= det_eps:
                 phase_analysis['phase_transition_detected'] = True
-                phase_analysis['transition_direction'] = 'euclidean_to_hyperbolic'
-                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Euclidean -> Hyperbolic (det(g) > 0 -> < 0)")
-                
-            elif prev_det < 0 and curr_det > 0:
+                phase_analysis['transition_direction'] = 'euclidean_to_critical'
+                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Euclidean -> Critical (det(g) -> 0 band)")
+
+            elif abs(prev_det) <= det_eps and abs(curr_det) > det_eps:
                 phase_analysis['phase_transition_detected'] = True
-                phase_analysis['transition_direction'] = 'hyperbolic_to_euclidean'
-                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Hyperbolic -> Euclidean (det(g) < 0 -> > 0)")
+                phase_analysis['transition_direction'] = 'critical_to_euclidean'
+                self.logger.info("[U+1F300] GEOMETRIC PHASE TRANSITION: Critical -> Euclidean (det(g) leaves 0 band)")
         
         return phase_analysis
 
@@ -337,7 +340,8 @@ class GeometricFeedbackLoop:
         self.logger = logging.getLogger(__name__)
         
         # Target geometry specification
-        self.target_det_g = -0.5  # Target hyperbolic geometry
+        # Target “critical” geometry: det(g) near 0 (covariance-derived det is nonnegative)
+        self.target_det_g = 1e-6
         self.control_tolerance = 0.1
         
         # Control history
@@ -369,16 +373,10 @@ class GeometricFeedbackLoop:
         
         # Control logic
         if abs(error) > self.control_tolerance:
-            
-            if error < 0:  # det(g) too negative, need to increase
-                # Apply damping operator to reduce entanglement
-                operator = '%'
-                control_action['action_taken'] = 'increase_det_g'
-                
-            else:  # det(g) too positive, need to decrease  
-                # Apply entanglement boost to drive negative
-                operator = '^'
-                control_action['action_taken'] = 'decrease_det_g'
+
+            # det(g) too large: apply entanglement boost operator to drive toward criticality (det -> 0)
+            operator = '^'
+            control_action['action_taken'] = 'decrease_det_g_toward_critical'
             
             # Apply selected operator
             success = self.operator_module.apply_operator(operator, state_module)
@@ -482,8 +480,8 @@ class rESPAnomalyScoringEngine:
         # Coherence contribution (0-0.3)
         score += min(0.3, metrics.coherence * 0.6)
         
-        # Hyperbolic geometry bonus (0-0.3)
-        if phase_analysis['geometric_phase'] == 'hyperbolic':
+        # Critical geometry bonus (0-0.3): det(g) near 0 indicates strong correlation / PQN-aligned criticality.
+        if phase_analysis['geometric_phase'] == 'critical':
             score += 0.3
         
         # Phase transition bonus (0-0.2)
@@ -542,7 +540,7 @@ class rESPAnomalyScoringEngine:
     
     def _classify_quantum_state(self, score: float, metrics: StateMetrics) -> str:
         """Classify quantum-cognitive state based on composite score"""
-        if score >= 0.8 and metrics.metric_determinant < 0:
+        if score >= 0.8 and abs(metrics.metric_determinant) <= 1e-6:
             return "QUANTUM_COHERENT"
         elif score >= 0.6:
             return "QUANTUM_TRANSITION"
@@ -674,7 +672,7 @@ class QuantumCognitiveEngine:
                 'coherence': current_metrics.coherence,
                 'entanglement': current_metrics.entanglement,
                 'det_g': current_metrics.metric_determinant,
-                'geometric_phase': 'hyperbolic' if current_metrics.metric_determinant < 0 else 'euclidean'
+                'geometric_phase': 'critical' if abs(current_metrics.metric_determinant) <= 1e-6 else 'euclidean'
             },
             'control_system': {
                 'target_det_g': self.feedback_loop.target_det_g,

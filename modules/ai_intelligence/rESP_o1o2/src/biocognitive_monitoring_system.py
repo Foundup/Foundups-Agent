@@ -273,7 +273,8 @@ class BiocognitiveStateAnalyzer:
             'geometric_stability_index': 1.0 / (1.0 + np.std(trajectory)),
             'baseline_deviation_score': abs(np.mean(trajectory) - baseline['mean_det_g']) / baseline['std_det_g'],
             'phase_transition_frequency': sum(1 for w in self.analysis_history[-10:] if w.phase_transition),
-            'hyperbolic_geometry_ratio': sum(1 for w in self.analysis_history[-20:] if w.geometry_type == "Hyperbolic") / 20,
+            # Covariance-derived geometry is nonnegative; track critical-band occupancy instead of “hyperbolic”.
+            'critical_geometry_ratio': sum(1 for w in self.analysis_history[-20:] if w.geometry_type == "Critical") / 20,
             'neural_coherence_metric': abs(geometric_witness.det_g),
             'cognitive_load_indicator': np.max(trajectory) - np.min(trajectory) if len(trajectory) > 1 else 0
         }

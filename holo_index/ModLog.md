@@ -1,5 +1,32 @@
 # HoloIndex Package ModLog
 
+## [2026-01-02] Module Scoring Subroutine (WSP 15/37)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 15 (MPS), WSP 37 (Roadmap Scoring), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - scoring integrated into intelligent subroutines
+
+### Problem
+HoloIndex lacked a built-in module scoring subroutine to surface "what to do next" using WSP 15/37 scoring data.
+
+### Fixes
+- `holo_index/core/module_scoring_subroutine.py`: wrapper around `tools/shared/module_scoring_engine.py` with scoring file resolution.
+- `holo_index/core/intelligent_subroutine_engine.py`: added module scoring triggers and execution.
+- `holo_index/output/agentic_output_throttler.py`: renders scoring results in analysis output.
+- `holo_index/core/__init__.py`: exports ModuleScoringSubroutine for reuse by AI_overseer/Qwen/Gemma.
+
+## [2026-01-02] Offline Search Hardening (Model Cache + Lexical Fallback)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 87 (Size Limits), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - prevent timeouts by avoiding model downloads and embedding auto-installs
+
+### Problem
+HoloIndex searches could hang on restricted networks when SentenceTransformer tried to download a model or Chroma invoked default embeddings.
+
+### Fixes
+- `holo_index/core/holo_index.py`: skip model load when offline and cache is missing, add offline lexical fallback search, and disable auto-pip installs when offline.
+- `holo_index/cli.py`: added `--offline` to set offline guardrails.
+- `holo_index/CLI_REFERENCE.md`, `holo_index/README.md`: documented offline mode usage.
+
 ## [2025-10-26] Agentic Output Stream Guardrails
 **Agent**: 0102 Codex  
 **WSP References**: WSP 87 (Size Limits), WSP 75 (Token Discipline), WSP 90 (UTF-8 Compliance)  

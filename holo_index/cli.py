@@ -71,6 +71,12 @@ if str(project_root) not in sys.path:
 # Temporarily use regular print - safe_print causing scoping issues
 # TODO: Fix safe_print scoping issue
 
+if "--offline" in sys.argv:
+    os.environ.setdefault('HOLO_OFFLINE', '1')
+    os.environ.setdefault('HOLO_DISABLE_PIP_INSTALL', '1')
+    os.environ.setdefault('HF_HUB_OFFLINE', '1')
+    os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
+
 try:
     from holo_index.core import IntelligentSubroutineEngine, HoloIndex
     from holo_index.output import AgenticOutputThrottler
@@ -263,25 +269,33 @@ def _run_codeindex_report(target: str) -> None:
         existing = log_path.read_text(encoding='utf-8')
     else:
         existing = "# CodeIndex Report Log\n\nTracks CodeIndex surgical reports generated via CLI.\n\n"
-    log_path.write_text("\n".join(log_entry) + existing, encoding='utf-8')
-    safe_print(f"[CODEINDEX] Log updated -> {log_path}")
+    # Write log entry
+    new_log = existing + "\n".join(log_entry) + "\n"
+    log_path.write_text(new_log, encoding='utf-8')
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="HoloIndex - Semantic Navigation with WSP guardrails")
-    parser.add_argument('--index', action='store_true', help='Index code + WSP (backward compatible shorthand)')
-    parser.add_argument('--index-code', action='store_true', help='Index NAVIGATION.py entries only')
-    parser.add_argument('--index-wsp', action='store_true', help='Index WSP documentation only')
-    parser.add_argument('--index-all', action='store_true', help='Index both code and WSP documents')
-    parser.add_argument('--wsp-path', nargs='*', help='Additional WSP directories to include in the index')
-    parser.add_argument('--search', type=str, help='Search for code + WSP guidance')
-    parser.add_argument('--limit', type=int, default=5, help='Number of results per category (default: 5, use 3 for console output to prevent truncation)')
-    parser.add_argument('--dae-cubes', action='store_true', help='Enable DAE cube mapping and mermaid flow generation (revolutionary vibecoding prevention)')
-    parser.add_argument('--function-index', action='store_true', help='Enable code index level function indexing with line numbers and complexity analysis')
+
+def main():
+    """Main CLI entry point for HoloIndex."""
+    parser = argparse.ArgumentParser(
+        description='HoloIndex - Dual Semantic Navigation for Code + WSP',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('--search', '-s', type=str, help='Search query')
+    parser.add_argument('--limit', type=int, default=5, help='Number of results (default: 5)')
+    parser.add_argument('--index', action='store_true', help='Index both code and WSP (alias for --index-all)')
+    parser.add_argument('--index-all', action='store_true', help='Index both code and WSP')
+    parser.add_argument('--index-code', action='store_true', help='Index code (NAVIGATION.py)')
+    parser.add_argument('--index-wsp', action='store_true', help='Index WSP documents')
+    parser.add_argument('--index-skills', action='store_true', help='Index SKILLz.md files for agent discovery (Qwen/Gemma/UITars)')
+    parser.add_argument('--wsp-path', type=str, nargs='*', help='Custom WSP paths to index')
     parser.add_argument('--code-index', action='store_true', help='Enable full code index mode: function indexing + inefficiency analysis + detailed mermaid diagrams')
+    parser.add_argument('--dae-cubes', action='store_true', help='Enable DAE cube mapping')
+    parser.add_argument('--function-index', action='store_true', help='Enable function-level indexing')
     parser.add_argument('--code-index-report', type=str, help='Generate CodeIndex report for an alias or module path (e.g., youtube_dae)')
     parser.add_argument('--doc-type', choices=['wsp_protocol', 'module_readme', 'interface', 'documentation', 'roadmap', 'modlog', 'all'], default='all', help='Filter by document type (default: all)')
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
+    parser.add_argument('--offline', action='store_true', help='Disable model downloads and pip installs; use offline lexical search if needed')
 
     parser.add_argument('--llm-advisor', action='store_true', help='Force enable Qwen advisor guidance')
     parser.add_argument('--init-dae', type=str, nargs='?', const='auto', help='Initialize DAE context (auto-detect or specify DAE focus)')
@@ -342,6 +356,18 @@ def main() -> None:
             safe_print(message)
 
     os.environ['HOLO_VERBOSE'] = '1' if verbose else '0'
+    
+    # Quiet third-party loggers when not verbose (prevents noise from chromadb, sentence_transformers, etc.)
+    if not verbose:
+        import logging
+        for logger_name in ['chromadb', 'chromadb.telemetry', 'sentence_transformers', 'httpx', 'httpcore', 'urllib3']:
+            logging.getLogger(logger_name).setLevel(logging.WARNING)
+    
+    if args.offline:
+        os.environ['HOLO_OFFLINE'] = '1'
+        os.environ['HOLO_DISABLE_PIP_INSTALL'] = '1'
+        os.environ.setdefault('HF_HUB_OFFLINE', '1')
+        os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
 
     if args.code_index_report:
         _run_codeindex_report(args.code_index_report)
@@ -470,6 +496,16 @@ def main() -> None:
             print(f"[WARN] Failed to record WSP index refresh: {e}")
 
         indexing_awarded = True
+    
+    # Index SKILLz for agent discovery (Qwen/Gemma/UITars)
+    index_skills = args.index_skills or args.index_all
+    if index_skills:
+        start_time = time.time()
+        holo.index_skillz_entries()
+        duration = time.time() - start_time
+        safe_print(f"[SKILLS] Indexed SKILLz in {duration:.2f}s")
+        indexing_awarded = True
+    
     if indexing_awarded:
         add_reward_event('index_refresh', 5, 'Refreshed indexes', {'query': args.search or ''})
 

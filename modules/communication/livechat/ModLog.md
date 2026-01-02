@@ -12,6 +12,100 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### 2026-01-01 - WSP 62 Phase 2: MultiChannelCoordinator Extraction
+
+**By:** 0102
+**WSP References:** WSP 62 (Large File Refactoring), WSP 72 (Module Independence), WSP 84 (Code Reuse)
+
+**Problem:** `auto_moderator_dae.py` at 1,931 lines still in CRITICAL window (WSP 62: 1500-2000).
+Largest remaining method: `_run_multi_channel_engagement` (479 lines).
+
+**Solution - Phase 2:**
+1. Created `multi_channel_coordinator.py` (566 lines) extracting:
+   - Multi-channel rotation logic (Chrome + Edge)
+   - Account switching via TarsAccountSwapper (Chrome)
+   - Edge parallel scheduling
+   - Session recovery and inbox verification
+   - Live stream signal checking
+
+2. Replaced 479-line method with 32-line delegation:
+   - Lazy-init MultiChannelCoordinator with callbacks
+   - Callbacks for state updates, logging, verification
+   - Preserves all external API contracts
+
+**Architecture Preserved:**
+- Chrome (port 9222): Move2Japan + UnDaoDu (same Google account)
+- Edge (port 9223): FoundUps (separate Google account)
+- Parallel Edge support (`YT_EDGE_PARALLEL=true`)
+
+**Impact:**
+- auto_moderator_dae.py: 1,931 → 1,487 lines (GUIDELINE zone per WSP 62)
+- Phase 2 tested: imports pass, delegation wiring verified
+- Remaining: 2 phases to reach target <1200 lines
+
+**Files Created:**
+- `modules/communication/livechat/src/multi_channel_coordinator.py`
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+
+---
+
+### 2026-01-01 - WSP 62 Phase 1: StreamDiscoveryService Extraction
+
+**By:** 0102
+**WSP References:** WSP 62 (Large File Refactoring), WSP 72 (Module Independence), WSP 50 (Pre-Action Verification)
+
+**Problem:** `auto_moderator_dae.py` at 2,287 lines exceeded WSP 62 hard limit (>=2000 = VIOLATION).
+Massive methods identified: `find_livestream` (338 lines), `monitor_chat` (348 lines),
+`_run_multi_channel_engagement` (479 lines).
+
+**Solution - Phase 1:**
+1. Created `stream_discovery_service.py` (380 lines) extracting:
+   - Multi-channel rotation logic
+   - QWEN prioritization for stream discovery
+   - Social media trigger integration (`_trigger_social_media_posting`)
+   - NoQuotaStreamChecker coordination
+
+2. Replaced 338-line `find_livestream()` with 32-line delegation:
+   - Lazy-init StreamDiscoveryService
+   - State sync (last_stream_id, current_stream_id, high_priority_pending)
+   - Preserves all external API contracts
+
+**WSP 50 Audit (Vibecode Prevention):**
+- Confirmed StreamDiscoveryService is NOT duplicating StreamResolver
+- StreamResolver: single-channel lookup only
+- StreamDiscoveryService: multi-channel rotation + QWEN prioritization (new logic)
+- Confirmed youtube_dae_heartbeat.py is valid (AI Overseer vs telemetry heartbeat)
+
+**Impact:**
+- auto_moderator_dae.py: 2,287 → 1,931 lines (CRITICAL window per WSP 62)
+- Phase 1 tested: imports pass, delegation wiring verified
+- Remaining: 4 more phases to reach target <1200 lines
+
+**Files Created:**
+- `modules/communication/livechat/src/stream_discovery_service.py`
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+
+---
+
+### 2026-01-01 - WSP 62 size audit and voice command routing plan
+
+**By:** 0102  
+**WSP References:** WSP 62 (Large File Enforcement), WSP 84 (Reuse), WSP 22 (ModLog)
+
+**Problem:** Size audit shows multiple oversized files in livechat, and the new voice STT
+pipeline must reuse existing command routing without creating a parallel orchestrator.
+
+**Fix:** Documented the sprint plan and routing reuse in `ROADMAP.md` and the LiveChat
+README voice ingestion section. The plan routes synthetic voice commands through the
+existing MessageProcessor/CommandHandler path.
+
+**Impact:** Clear refactor targets for oversized modules and a single routing path for
+chat and voice commands.
+
 ### URL Log Noise Reduction for Studio Inbox Context
 
 **By:** 0102  

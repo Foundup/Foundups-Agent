@@ -962,26 +962,46 @@ def main():
                     asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
 
                 elif yt_choice == "2":
-                    # 1.2 Comment Engagement DAE
-                    print("\n[DAE] Comment Engagement")
+                    # 1.2 Comment Engagement DAE - Multi-Channel Rotation
+                    # Flow: Move2Japan → UnDaoDu (Chrome 9222) + FoundUps (Edge 9223)
+                    print("\n[DAE] Comment Engagement (Multi-Channel)")
                     print("="*60)
-                    print("Like/Heart/Reply automation for video comments")
+                    print("Auto-rotates through ALL channels:")
+                    print("  Chrome (9222): Move2Japan → UnDaoDu")
+                    print("  Edge (9223): FoundUps")
                     print("Uses 0/1/2 classification (MAGA_TROLL/REGULAR/MODERATOR)")
                     print("="*60)
 
                     try:
-                        from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
+                        from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+                        from modules.communication.livechat.src.engagement_runner import get_runner
 
-                        print("[INFO] Starting Comment Engagement DAE...")
-                        dae = CommentEngagementDAE()
-                        asyncio.run(dae.run())
+                        print("[INFO] Starting Multi-Channel Comment Engagement...")
+                        print("[INFO] Channels: Move2Japan + UnDaoDu (Chrome) + FoundUps (Edge)")
+                        
+                        # Create DAE and runner
+                        dae = AutoModeratorDAE(enable_ai_monitoring=False)
+                        runner = get_runner(mode="subprocess")
+                        
+                        # Run multi-channel engagement loop (10 min intervals)
+                        # This will process all 3 channels then sleep 10 minutes
+                        asyncio.run(dae._comment_engagement_loop(
+                            runner=runner,
+                            max_comments=0,  # UNLIMITED
+                            mode="subprocess",
+                            interval_minutes=10
+                        ))
                     except KeyboardInterrupt:
                         print("\n[STOP] Comment Engagement DAE stopped by user")
                     except ImportError as e:
                         print(f"[ERROR] Could not import: {e}")
-                        print("[TIP] Run: python -m modules.communication.video_comments.skills.tars_like_heart_reply.run_skill")
+                        import traceback
+                        traceback.print_exc()
                     except Exception as e:
                         print(f"[ERROR] Failed: {e}")
+                        import traceback
+                        traceback.print_exc()
+
 
                 elif yt_choice == "3":
                     # 1.3 Shorts Scheduler DAE + Selenium Tests
