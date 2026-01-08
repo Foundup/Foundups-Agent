@@ -491,6 +491,17 @@ class VideoIndexer:
             )
         return self._visual_analyzer
 
+    def _get_multimodal_aligner(self):
+        """Get or create multimodal aligner (lazy load)."""
+        if self._multimodal_aligner is None:
+            from .multimodal_aligner import MultimodalAligner
+            self._multimodal_aligner = MultimodalAligner(
+                alignment_tolerance=float(os.getenv("VIDEO_INDEXER_ALIGNMENT_TOLERANCE", "0.5")),
+                min_moment_duration=float(os.getenv("VIDEO_INDEXER_MIN_MOMENT_DURATION", "3.0")),
+                min_highlight_score=float(os.getenv("VIDEO_INDEXER_MIN_HIGHLIGHT_SCORE", "0.65")),
+            )
+        return self._multimodal_aligner
+
     def _process_audio(self, video_id: str) -> List[Dict]:
         """
         Process audio layer - transcription via AudioAnalyzer.
@@ -544,12 +555,34 @@ class VideoIndexer:
         self,
         video_id: str,
         audio_data: Optional[List],
-        visual_data: Optional[List],
-    ) -> List[Dict]:
-        """Process multimodal layer - audio/visual alignment."""
-        # TODO: Integrate with multimodal_aligner.py
+        visual_data: Optional[Dict],
+    ) -> Dict:
+        """
+        Process multimodal layer - audio/visual alignment.
+
+        Uses MultimodalAligner to sync audio segments with visual shots.
+
+        Args:
+            video_id: YouTube video ID
+            audio_data: List of audio segment dicts
+            visual_data: Dict with visual analysis results
+
+        Returns:
+            Dict with aligned moments and highlights
+        """
         logger.info(f"[INDEXER-MULTIMODAL] Aligning for {video_id}")
-        return []  # Return aligned moments
+
+        aligner = self._get_multimodal_aligner()
+        result = aligner.align_video(audio_data or [], visual_data or {})
+
+        # Convert to dict for pipeline
+        multimodal_data = result.to_dict()
+
+        logger.info(
+            f"[INDEXER-MULTIMODAL] Got {len(result.moments)} moments, "
+            f"{result.highlight_count} highlights"
+        )
+        return multimodal_data
 
     def _process_clips(
         self,

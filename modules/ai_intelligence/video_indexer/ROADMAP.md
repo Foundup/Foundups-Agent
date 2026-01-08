@@ -59,23 +59,31 @@ ffmpeg-python>=0.2.0
 
 ## Phase 3: Multimodal Alignment
 
-**Status**: Not started
+**Status**: COMPLETE (2026-01-09)
 
-### Capabilities to Add
-- [ ] Audio-visual moment alignment
-- [ ] Highlight detection (engagement scoring)
-- [ ] Cross-modal search (query audio, find visual)
-- [ ] Moment embedding (combined representation)
+### Capabilities Added
+- [x] Audio-visual moment alignment (timestamp overlap)
+- [x] Highlight detection (engagement scoring with heuristics)
+- [ ] Cross-modal search (query audio, find visual) - Future
+- [ ] Moment embedding (combined representation) - Future
 
-### Algorithm
+### Implementation
+- `multimodal_aligner.py`: Complete alignment pipeline
+- `MultimodalResult` dataclass with moments, highlights, metrics
+- Heuristic engagement scoring (hook phrases, faces, punctuation)
+- Environment variables for alignment configuration
+
+### Algorithm (Implemented)
 ```python
-def align_moments(audio_segments, visual_frames):
+def align_video(audio_data, visual_data):
     """
-    For each audio segment:
-    1. Find visual frames within timestamp range
-    2. Compute combined embedding
-    3. Score engagement (audio energy + visual motion)
-    4. Return aligned moments
+    1. Extract shots from visual_data
+    2. For each audio segment:
+       - Find overlapping visual shots
+       - Calculate engagement score (heuristics)
+       - Create aligned Moment
+    3. Detect highlights (engagement >= threshold)
+    4. Return MultimodalResult
     """
 ```
 

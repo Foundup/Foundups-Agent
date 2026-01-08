@@ -163,6 +163,44 @@ Searched before implementation:
 
 ---
 
+## V0.4.0 - Phase 3 Multimodal Alignment (2026-01-09)
+
+### Added
+- **multimodal_aligner.py**: Complete audio-visual alignment
+  - `align_video()`: Main pipeline entry point
+  - `MultimodalResult` dataclass with moments, highlights, metrics
+  - Moment alignment based on timestamp overlap
+  - Highlight detection with engagement scoring
+  - Heuristic-based engagement scoring (hook phrases, faces, etc.)
+
+### Changed
+- **video_indexer.py**: Integrated multimodal layer processing
+  - Added `_get_multimodal_aligner()` lazy loader
+  - Updated `_process_multimodal()` to use MultimodalAligner
+  - Added environment variables for multimodal config
+
+- **__init__.py**: Export MultimodalResult
+  - Version bumped to 0.4.0
+
+### Environment Variables Added
+```
+VIDEO_INDEXER_ALIGNMENT_TOLERANCE   - Seconds for time alignment (default: 0.5)
+VIDEO_INDEXER_MIN_MOMENT_DURATION   - Min moment length in seconds (default: 3.0)
+VIDEO_INDEXER_MIN_HIGHLIGHT_SCORE   - Min engagement for highlight (default: 0.65)
+```
+
+### Engagement Scoring Heuristics
+- Hook phrases: "here's what", "the truth is", "most people don't"
+- Punctuation: Questions (+0.05), Exclamations (+0.05)
+- Visual context: Faces (+0.1), Closeups (+0.05)
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (embedding alignment design)
+- **WSP 91**: DAE Observability (telemetry maintained)
+- **WSP 22**: ModLog updated with Phase 3 changes
+
+---
+
 ## Change Template
 
 ```markdown

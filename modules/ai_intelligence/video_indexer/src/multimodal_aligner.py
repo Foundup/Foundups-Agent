@@ -4,16 +4,22 @@ Multimodal Aligner - Cross-modal alignment for audio + visual moments.
 WSP Compliance:
     - WSP 72: Module Independence
     - WSP 77: Agent Coordination (embedding alignment)
+    - WSP 91: DAE Observability (telemetry integration)
 
 Purpose:
     Synchronize audio content (transcript segments) with visual content
     (shots, keyframes) to create unified "moments" that capture the
     full context of video content.
+
+Integration:
+    - Receives audio segments from AudioAnalyzer
+    - Receives visual shots from VisualAnalyzer
+    - Outputs aligned moments for ClipGenerator
 """
 
 import logging
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +57,36 @@ class Highlight:
     suggested_title: Optional[str] = None
 
 
+@dataclass
+class MultimodalResult:
+    """Complete multimodal alignment result for video_indexer pipeline."""
+    moments: List[Moment]
+    highlights: List[Highlight]
+    total_duration: float
+    avg_engagement: float
+    highlight_count: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict for pipeline consumption."""
+        return {
+            "moments": [asdict(m) for m in self.moments],
+            "highlights": [
+                {
+                    "type": h.highlight_type,
+                    "confidence": h.confidence,
+                    "suggested_title": h.suggested_title,
+                    "start_time": h.moment.start_time,
+                    "end_time": h.moment.end_time,
+                    "audio_content": h.moment.audio_content,
+                }
+                for h in self.highlights
+            ],
+            "total_duration": self.total_duration,
+            "avg_engagement": self.avg_engagement,
+            "highlight_count": self.highlight_count,
+        }
+
+
 # =============================================================================
 # Multimodal Aligner
 # =============================================================================
@@ -69,6 +105,7 @@ class MultimodalAligner:
         self,
         alignment_tolerance: float = 0.5,
         min_moment_duration: float = 3.0,
+        min_highlight_score: float = 0.65,
     ):
         """
         Initialize aligner.
@@ -76,11 +113,80 @@ class MultimodalAligner:
         Args:
             alignment_tolerance: Seconds tolerance for time alignment
             min_moment_duration: Minimum moment length in seconds
+            min_highlight_score: Minimum engagement score for highlight
         """
         self.alignment_tolerance = alignment_tolerance
         self.min_moment_duration = min_moment_duration
+        self.min_highlight_score = min_highlight_score
 
         logger.info(f"[MULTIMODAL-ALIGNER] Initialized (tolerance={alignment_tolerance}s)")
+
+    def align_video(
+        self,
+        audio_data: List[Dict],
+        visual_data: Dict,
+    ) -> MultimodalResult:
+        """
+        Main entry point for video_indexer pipeline.
+
+        Aligns audio segments with visual shots and detects highlights.
+
+        Args:
+            audio_data: List of audio segment dicts from AudioAnalyzer
+            visual_data: Visual analysis dict from VisualAnalyzer
+
+        Returns:
+            MultimodalResult with moments, highlights, and metrics
+        """
+        logger.info("[MULTIMODAL-ALIGNER] Starting video alignment...")
+
+        # Extract shots from visual data (handle both dict and empty cases)
+        visual_shots = []
+        if visual_data:
+            # Visual data contains 'shots' list with shot dicts
+            raw_shots = visual_data.get("shots", [])
+            for shot in raw_shots:
+                # Convert shot format to expected format
+                visual_shots.append({
+                    "start_time": shot.get("start_time", 0),
+                    "end_time": shot.get("end_time", 0),
+                    "description": f"shot at {shot.get('start_time', 0):.1f}s",
+                })
+
+        # Normalize audio segment format
+        audio_segments = []
+        for seg in (audio_data or []):
+            audio_segments.append({
+                "start_time": seg.get("start", seg.get("start_time", 0)),
+                "end_time": seg.get("end", seg.get("end_time", 0)),
+                "text": seg.get("text", ""),
+                "speaker": seg.get("speaker"),
+            })
+
+        # Align moments
+        moments = self.align_moments(audio_segments, visual_shots)
+
+        # Detect highlights
+        highlights = self.detect_highlights(moments, min_score=self.min_highlight_score)
+
+        # Calculate metrics
+        total_duration = max([m.end_time for m in moments], default=0)
+        avg_engagement = sum(m.engagement_score for m in moments) / len(moments) if moments else 0
+
+        result = MultimodalResult(
+            moments=moments,
+            highlights=highlights,
+            total_duration=total_duration,
+            avg_engagement=avg_engagement,
+            highlight_count=len(highlights),
+        )
+
+        logger.info(
+            f"[MULTIMODAL-ALIGNER] Alignment complete: "
+            f"{len(moments)} moments, {len(highlights)} highlights, "
+            f"avg engagement={avg_engagement:.2f}"
+        )
+        return result
 
     def align_moments(
         self,
