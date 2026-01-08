@@ -91,13 +91,20 @@ def align_video(audio_data, visual_data):
 
 ## Phase 4: Clip Generation
 
-**Status**: Not started
+**Status**: COMPLETE (2026-01-09)
 
-### Capabilities to Add
-- [ ] Clip candidate extraction (15-60s segments)
-- [ ] Hook detection (strong opening moments)
-- [ ] Virality scoring (engagement + novelty)
-- [ ] Title/description generation (LLM integration)
+### Capabilities Added
+- [x] Clip candidate extraction (15-60s segments)
+- [x] Hook detection (strong opening moments)
+- [x] Virality scoring (engagement + duration + hooks)
+- [x] Title/description generation (heuristic-based)
+- [ ] LLM-powered title generation - Future
+
+### Implementation
+- `clip_generator.py`: Complete clip extraction pipeline
+- `ClipGeneratorResult` dataclass with candidates, metrics
+- Virality scoring with multiple factors
+- Environment variables for clip configuration
 
 ### Output Format
 ```json

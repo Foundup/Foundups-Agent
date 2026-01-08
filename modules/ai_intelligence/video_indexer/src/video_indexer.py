@@ -432,7 +432,9 @@ class VideoIndexer:
             visual_data = visual_result.data or {}
             visual_frames = len(visual_data.get("keyframes", [])) if visual_result.success else 0
 
-            clip_candidates = len(clips_result.data or []) if clips_result.success else 0
+            # Clips data is a dict with candidates list
+            clips_data = clips_result.data or {}
+            clip_candidates = clips_data.get("total_candidates", 0) if clips_result.success else 0
 
             self.telemetry.video_completed(video_id, duration_ms)
 
@@ -501,6 +503,17 @@ class VideoIndexer:
                 min_highlight_score=float(os.getenv("VIDEO_INDEXER_MIN_HIGHLIGHT_SCORE", "0.65")),
             )
         return self._multimodal_aligner
+
+    def _get_clip_generator(self):
+        """Get or create clip generator (lazy load)."""
+        if self._clip_generator is None:
+            from .clip_generator import ClipGenerator
+            self._clip_generator = ClipGenerator(
+                min_duration=float(os.getenv("VIDEO_INDEXER_CLIP_MIN_DURATION", "15.0")),
+                max_duration=float(os.getenv("VIDEO_INDEXER_CLIP_MAX_DURATION", "60.0")),
+                min_virality=float(os.getenv("VIDEO_INDEXER_CLIP_MIN_VIRALITY", "0.6")),
+            )
+        return self._clip_generator
 
     def _process_audio(self, video_id: str) -> List[Dict]:
         """
@@ -587,12 +600,33 @@ class VideoIndexer:
     def _process_clips(
         self,
         video_id: str,
-        moments_data: Optional[List],
-    ) -> List[Dict]:
-        """Process clips layer - generate clip candidates."""
-        # TODO: Integrate with clip_generator.py
+        multimodal_data: Optional[Dict],
+    ) -> Dict:
+        """
+        Process clips layer - generate clip candidates.
+
+        Uses ClipGenerator to extract short-form content candidates.
+
+        Args:
+            video_id: YouTube video ID
+            multimodal_data: Dict with moments and highlights from multimodal layer
+
+        Returns:
+            Dict with clip candidates and metrics
+        """
         logger.info(f"[INDEXER-CLIPS] Generating clips for {video_id}")
-        return []  # Return clip candidates
+
+        generator = self._get_clip_generator()
+        result = generator.generate_clips(multimodal_data or {}, video_id)
+
+        # Convert to dict for pipeline
+        clips_data = result.to_dict()
+
+        logger.info(
+            f"[INDEXER-CLIPS] Generated {result.total_candidates} clips, "
+            f"avg virality={result.avg_virality:.2f}"
+        )
+        return clips_data
 
     def index_channel(
         self,

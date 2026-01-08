@@ -201,6 +201,65 @@ VIDEO_INDEXER_MIN_HIGHLIGHT_SCORE   - Min engagement for highlight (default: 0.6
 
 ---
 
+## V0.5.0 - Phase 4 Clip Generation (2026-01-09)
+
+### Added
+- **clip_generator.py**: Complete clip generation implementation
+  - `generate_clips()`: Main pipeline entry point
+  - `ClipGeneratorResult` dataclass with candidates and metrics
+  - Virality scoring with hook phrases, duration, engagement
+  - Adjacent moment combining for longer clips
+  - Title/description/tag generation
+
+### Changed
+- **video_indexer.py**: Integrated clips layer processing
+  - Added `_get_clip_generator()` lazy loader
+  - Updated `_process_clips()` to use ClipGenerator
+  - Fixed clip count extraction from dict structure
+  - Added environment variables for clip config
+
+- **__init__.py**: Export ClipGeneratorResult
+  - Version bumped to 0.5.0
+
+### Environment Variables Added
+```
+VIDEO_INDEXER_CLIP_MIN_DURATION   - Min clip duration (default: 15.0)
+VIDEO_INDEXER_CLIP_MAX_DURATION   - Max clip duration (default: 60.0)
+VIDEO_INDEXER_CLIP_MIN_VIRALITY   - Min virality score (default: 0.6)
+```
+
+### Virality Scoring Factors
+- Duration: 30-45s optimal (+0.1), <20s or >55s penalty (-0.1)
+- Strong hooks: "nobody tells you", "truth is", etc. (+0.15)
+- Question pattern (+0.05)
+- Base engagement from multimodal layer
+
+### WSP Compliance
+- **WSP 27**: DAE Architecture (clip extraction pipeline)
+- **WSP 91**: DAE Observability (telemetry maintained)
+- **WSP 22**: ModLog updated with Phase 4 changes
+
+---
+
+## COMPLETE: All 4 Phases Implemented (2026-01-09)
+
+### Summary
+- **Phase 1 Audio**: ASR via batch_transcriber (WSP 84 reuse)
+- **Phase 2 Visual**: OpenCV keyframe/shot detection + yt-dlp download
+- **Phase 3 Multimodal**: Timestamp-based alignment + engagement scoring
+- **Phase 4 Clips**: Virality scoring + candidate generation
+
+### Full Pipeline
+```
+YouTube Video ID
+    → Phase 1: Audio (transcription)
+    → Phase 2: Visual (keyframes, shots, faces)
+    → Phase 3: Multimodal (aligned moments, highlights)
+    → Phase 4: Clips (candidates for Shorts)
+```
+
+---
+
 ## Change Template
 
 ```markdown

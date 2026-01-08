@@ -4,16 +4,21 @@ Clip Generator - Generate clip candidates for short-form content.
 WSP Compliance:
     - WSP 72: Module Independence
     - WSP 27: DAE Architecture (clip extraction pipeline)
+    - WSP 91: DAE Observability (telemetry integration)
 
 Purpose:
     Extract potential short-form clips (15-60s) from longer videos.
     Score clips for viral potential and generate metadata for
     YouTube Shorts scheduling pipeline.
+
+Integration:
+    - Receives multimodal moments from MultimodalAligner
+    - Outputs clip candidates for YouTube Shorts scheduling
 """
 
 import logging
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +43,24 @@ class ClipCandidate:
     virality_score: float  # 0-1
     moments: List[dict] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
+
+
+@dataclass
+class ClipGeneratorResult:
+    """Complete clip generation result for video_indexer pipeline."""
+    candidates: List[ClipCandidate]
+    total_candidates: int
+    avg_virality: float
+    best_candidate: Optional[ClipCandidate] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict for pipeline consumption."""
+        return {
+            "candidates": [asdict(c) for c in self.candidates],
+            "total_candidates": self.total_candidates,
+            "avg_virality": self.avg_virality,
+            "best_candidate": asdict(self.best_candidate) if self.best_candidate else None,
+        }
 
 
 # =============================================================================
@@ -80,6 +103,52 @@ class ClipGenerator:
             f"[CLIP-GENERATOR] Initialized (duration={min_duration}-{max_duration}s, "
             f"min_virality={min_virality})"
         )
+
+    def generate_clips(
+        self,
+        multimodal_data: Dict,
+        video_id: str,
+    ) -> ClipGeneratorResult:
+        """
+        Main entry point for video_indexer pipeline.
+
+        Generates clip candidates from multimodal alignment data.
+
+        Args:
+            multimodal_data: Dict with moments and highlights from MultimodalAligner
+            video_id: Source video ID
+
+        Returns:
+            ClipGeneratorResult with candidates and metrics
+        """
+        logger.info(f"[CLIP-GENERATOR] Generating clips for {video_id}...")
+
+        # Extract moments from multimodal data
+        moments = multimodal_data.get("moments", [])
+
+        # Generate candidates
+        candidates = self.generate_candidates(moments, video_id)
+
+        # Calculate metrics
+        avg_virality = (
+            sum(c.virality_score for c in candidates) / len(candidates)
+            if candidates
+            else 0
+        )
+        best_candidate = candidates[0] if candidates else None
+
+        result = ClipGeneratorResult(
+            candidates=candidates,
+            total_candidates=len(candidates),
+            avg_virality=avg_virality,
+            best_candidate=best_candidate,
+        )
+
+        logger.info(
+            f"[CLIP-GENERATOR] Generated {len(candidates)} clips, "
+            f"avg virality={avg_virality:.2f}"
+        )
+        return result
 
     def generate_candidates(
         self,

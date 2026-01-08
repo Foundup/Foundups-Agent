@@ -22,7 +22,7 @@ from .video_indexer import VideoIndexer, IndexResult, SearchResult, LayerResult
 from .audio_analyzer import AudioAnalyzer
 from .visual_analyzer import VisualAnalyzer, VisualResult
 from .multimodal_aligner import MultimodalAligner, MultimodalResult
-from .clip_generator import ClipGenerator
+from .clip_generator import ClipGenerator, ClipGeneratorResult
 from .video_index_store import VideoIndexStore, IndexData
 from .indexer_config import IndexerConfig, get_indexer_config, reload_config
 from .indexer_telemetry import IndexerTelemetry, get_indexer_telemetry
@@ -40,6 +40,7 @@ __all__ = [
     "MultimodalAligner",
     "MultimodalResult",
     "ClipGenerator",
+    "ClipGeneratorResult",
     # Storage
     "VideoIndexStore",
     "IndexData",
@@ -51,4 +52,4 @@ __all__ = [
     "get_indexer_telemetry",
 ]
 
-__version__ = "0.4.0"  # Phase 3 Multimodal Alignment
+__version__ = "0.5.0"  # Phase 4 Clip Generation complete
