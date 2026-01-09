@@ -301,9 +301,9 @@ router.route_action("click_visual", {"element": "submit"})  # → UI_TARS (fallb
 **Files Created:**
 - `src/ai_overseer_integration.py` (~240 lines) - AI Overseer mission coordinator
 - `src/telemetry_dashboard.py` (~210 lines) - Unified telemetry and metrics
-- `skills/youtube_comment_engagement.json` - YouTube engagement workflow
-- `skills/linkedin_feed_engagement.json` - LinkedIn engagement workflow
-- `skills/foundup_livechat_moderation.json` - FoundUp livechat workflow
+- `skillz/youtube_comment_engagement.json` - YouTube engagement workflow
+- `skillz/linkedin_feed_engagement.json` - LinkedIn engagement workflow
+- `skillz/foundup_livechat_moderation.json` - FoundUp livechat workflow
 
 **Files Modified:**
 - `src/action_router.py` - Added `get_pattern_recommendation()` for pattern-based optimization

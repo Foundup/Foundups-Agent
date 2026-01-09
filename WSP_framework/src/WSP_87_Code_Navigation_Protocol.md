@@ -1,4 +1,4 @@
-[U+FEFF]# WSP 87: Code Navigation Protocol
+﻿[U+FEFF]# WSP 87: Code Navigation Protocol
 
 **Protocol Type**: Discovery & Navigation
 **Status**: Active
@@ -191,12 +191,35 @@ python holo_index.py --search "handle item classification" --limit 3 --verbose
 # Output MUST show `[GREEN] [SOLUTION FOUND]` + code previews. If preview missing, rerun --index-code then escalate.
 ```
 
+## Memory-First Retrieval Contract (WSP 60)
+
+HoloIndex output must lead with memory so 0102 reads recall before raw results. Memory cards use the WSP 60 schema and are ordered by MPS-M (WSP 15 adaptation).
+
+**Output Order**:
+1. `[MEMORY]` bundle (3-5 cards)
+2. `[RESULTS]` code/WSP hits
+3. `[ACTIONS]` (if any)
+
+If `[MEMORY]` is missing or empty, the CLI must say why (no memory yet, index stale) and the session watcher should record the gap.
+
+## HoloMemorySentinel (Silent Session Watcher)
+
+AI_overseer runs a silent watcher on first Holo call per session. It never writes to stdout/stderr, only memory. It evaluates:
+- Relevance: matches query intent
+- Coverage: code hits + WSP hits + module docs present
+- Noise: no third-party logging in output stream
+- Drift: repeated queries without new results
+- Action readiness: enough context to edit safely
+
+Escalation rule: emit a single critical alert only when both code hits and WSP hits are zero after a retry.
+
 ## 0102 Usage Checklist (Machine-Language Contract)
 1. **Run HoloIndex First**: `python holo_index.py --search "<need>" --limit 3` (never skip; WSP 50 + WSP 87).
-2. **Confirm `[CODE RESULTS]`**: Output must list at least one code hit with `Preview`, `path`, and `line`. If `[NO SOLUTION FOUND]`, rerun with `--verbose` and inspect HOLO_INDEX_IMPROVEMENT_LOG.md before touching files.
-3. **Read Preview Before Editing**: Follow the provided `path:line`, open the file, and modify in place—no new modules without WSP 49 gating.
-4. **Document Search**: Reference the command + top hit in ModLog/PR description to prove WSP 87 compliance.
-5. **Keep Index Fresh**: If previews look stale, run `python holo_index.py --index-code --index-wsp` then re-search. SSD location must remain `E:\HoloIndex`.
+2. **Confirm `[MEMORY]`**: Must appear before results. If missing, rerun with `--index-wsp` and check AI_overseer memory for gaps.
+3. **Confirm `[CODE RESULTS]`**: Output must list at least one code hit with `Preview`, `path`, and `line`. If `[NO SOLUTION FOUND]`, rerun with `--verbose` and inspect HOLO_INDEX_IMPROVEMENT_LOG.md before touching files.
+4. **Read Preview Before Editing**: Follow the provided `path:line`, open the file, and modify in place (no new modules without WSP 49 gating).
+5. **Document Search**: Reference the command + top hit in ModLog/PR description to prove WSP 87 compliance.
+6. **Keep Index Fresh**: If previews look stale, run `python holo_index.py --index-code --index-wsp` then re-search. SSD location must remain `E:\HoloIndex`.
 
 ## HoloIndex Command Matrix (0102 Execution Modes)
 

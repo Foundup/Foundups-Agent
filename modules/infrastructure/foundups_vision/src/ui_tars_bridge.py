@@ -419,7 +419,11 @@ Rules:
             response_data = response.json()
             model_output = response_data['choices'][0]['message']['content']
 
-            logger.info(f"[UI-TARS] Full model output: {model_output}")
+            # Avoid noisy logs/TTS by default; enable with UI_TARS_VERBOSE_OUTPUT=true
+            if os.getenv("UI_TARS_VERBOSE_OUTPUT", "false").lower() in {"1", "true", "yes"}:
+                logger.info(f"[UI-TARS] Full model output: {model_output}")
+            else:
+                logger.debug(f"[UI-TARS] Model output (suppressed, set UI_TARS_VERBOSE_OUTPUT=true): {model_output[:200]}")
 
             # Parse UI-TARS Desktop format: "Action: click(start_box='<|box_start|>(x,y)<|box_end|>')"
             import re

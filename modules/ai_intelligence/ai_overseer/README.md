@@ -158,6 +158,33 @@ class HoloAdapter:
     """
 ```
 
+### 6. HoloMemorySentinel (Silent Watcher)
+```text
+Purpose:
+  - Silent per-session watcher for Holo searches
+  - Records compact memory bundles + quality metrics
+  - Runs a one-time Holo system wiring check per session (report only)
+  - Never prints to stdout/stderr
+
+Location:
+  modules/ai_intelligence/ai_overseer/src/holo_memory_sentinel.py
+  modules/ai_intelligence/ai_overseer/memory/holo_sentinel/
+```
+
+--- 
+
+## Memory Roadmap (0102-First)
+
+Holo memory should learn like a neural net: reinforce useful recall, decay noise.
+
+Planned feedback signals:
+- Explicit: 0102 rates memory cards (good/noisy/missing) keyed by mem id.
+- Implicit: open/edit/test actions boost trust/salience.
+- Negative implicit: repeated queries without action decay cards.
+- Decay + refresh: time-based decay; refresh on README/INTERFACE/ModLog updates.
+- A/B ordering: alternate memory bundles across sessions; measure time-to-action.
+- Outcome coupling: successful changes (tests pass/commit) boost contributing cards.
+
 ---
 
 ## Workflow Example: YouTube Live Chat Agent Team

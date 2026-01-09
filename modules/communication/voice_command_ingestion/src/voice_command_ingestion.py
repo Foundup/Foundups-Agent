@@ -15,7 +15,7 @@ Architecture:
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, Iterator, Optional, List, Generator
+from typing import Dict, Iterable, Iterator, Optional, List, Generator
 import logging
 import re
 import numpy as np
@@ -392,4 +392,202 @@ def get_voice_ingestion(
         trigger_token=trigger_token,
         model_size=model_size,
         device=device
+    )
+
+
+# =============================================================================
+# PHASE 2: BATCH TRANSCRIPTION PIPELINE (Sprint 6)
+# =============================================================================
+
+@dataclass(frozen=True)
+class TranscriptSegment:
+    """Single transcription segment with timestamp for deep linking."""
+    video_id: str
+    title: str
+    timestamp_sec: float  # Position in video
+    end_sec: float  # End of segment
+    text: str
+    confidence: float
+    url: str  # Deep link URL with timestamp
+
+
+class BatchTranscriber:
+    """Batch transcription pipeline for video archives.
+
+    Connects VideoArchiveExtractor (audio source) with faster-whisper (STT)
+    to produce searchable transcripts with timestamps.
+
+    WSP Compliance:
+    - WSP 84: Reuses FasterWhisperSTT
+    - WSP 72: Independent of youtube_live_audio (imports only)
+    """
+
+    def __init__(
+        self,
+        model_size: str = "base",
+        device: str = "cpu",
+        output_dir: Optional[str] = None
+    ) -> None:
+        """Initialize batch transcriber.
+
+        Args:
+            model_size: Whisper model size (tiny, base, small, medium, large-v3)
+            device: Device for inference (cpu, cuda)
+            output_dir: Directory for transcript JSONL files (default: memory/transcripts)
+        """
+        from pathlib import Path
+        self._stt = FasterWhisperSTT(model_size=model_size, device=device)
+        self.output_dir = Path(output_dir) if output_dir else Path("memory/transcripts")
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self._progress: Dict[str, dict] = {}
+
+    def transcribe_video(
+        self,
+        video_id: str,
+        title: str,
+        audio_chunks: Iterable,  # Generator[AudioChunk, None, None]
+        chunk_duration_sec: float = 30.0
+    ) -> Generator[TranscriptSegment, None, None]:
+        """Transcribe a video's audio chunks to text segments.
+
+        Args:
+            video_id: YouTube video ID
+            title: Video title for metadata
+            audio_chunks: AudioChunk generator from VideoArchiveExtractor
+            chunk_duration_sec: Expected chunk duration for progress tracking
+
+        Yields:
+            TranscriptSegment for each transcribed chunk
+        """
+        logger.info(f"[BATCH] Transcribing video: {title} ({video_id})")
+
+        for chunk in audio_chunks:
+            # Transcribe chunk
+            event = self._stt.transcribe(chunk.audio, chunk.sample_rate)
+
+            if event is None or not event.text.strip():
+                continue
+
+            # Calculate position in video (chunk.timestamp_ms is position in video)
+            timestamp_sec = chunk.timestamp_ms / 1000.0
+            end_sec = timestamp_sec + chunk.duration_sec
+
+            # Create deep link URL
+            url = f"https://youtu.be/{video_id}?t={int(timestamp_sec)}"
+
+            yield TranscriptSegment(
+                video_id=video_id,
+                title=title,
+                timestamp_sec=timestamp_sec,
+                end_sec=end_sec,
+                text=event.text.strip(),
+                confidence=event.confidence,
+                url=url
+            )
+
+    def transcribe_channel(
+        self,
+        channel_id: str,
+        max_videos: int = 10,
+        cache_dir: Optional[str] = None
+    ) -> Generator[TranscriptSegment, None, None]:
+        """Transcribe all videos from a YouTube channel.
+
+        Args:
+            channel_id: YouTube channel ID
+            max_videos: Maximum videos to transcribe
+            cache_dir: Audio cache directory
+
+        Yields:
+            TranscriptSegment for each transcribed segment
+        """
+        # Import VideoArchiveExtractor (lazy to avoid circular imports)
+        try:
+            from modules.platform_integration.youtube_live_audio.src.youtube_live_audio import (
+                VideoArchiveExtractor
+            )
+        except ImportError:
+            logger.error("[BATCH] youtube_live_audio module not found")
+            return
+
+        extractor = VideoArchiveExtractor(cache_dir=cache_dir)
+
+        # Initialize progress tracking
+        self._progress[channel_id] = {
+            "total_videos": 0,
+            "completed_videos": 0,
+            "total_segments": 0,
+            "status": "listing"
+        }
+
+        logger.info(f"[BATCH] Starting channel transcription: {channel_id}")
+
+        # List and process videos
+        video_count = 0
+        for video in extractor.list_channel_videos(channel_id, max_videos):
+            video_count += 1
+            self._progress[channel_id]["total_videos"] = video_count
+            self._progress[channel_id]["status"] = f"transcribing {video.video_id}"
+
+            logger.info(f"[BATCH] Processing video {video_count}: {video.title}")
+
+            # Stream audio chunks and transcribe
+            audio_chunks = extractor.stream_video_chunks(video.video_id)
+
+            for segment in self.transcribe_video(
+                video_id=video.video_id,
+                title=video.title,
+                audio_chunks=audio_chunks
+            ):
+                self._progress[channel_id]["total_segments"] += 1
+                yield segment
+
+            self._progress[channel_id]["completed_videos"] += 1
+
+        self._progress[channel_id]["status"] = "complete"
+        logger.info(f"[BATCH] Channel transcription complete: {video_count} videos")
+
+    def save_transcripts_jsonl(
+        self,
+        segments: Iterable[TranscriptSegment],
+        filename: str
+    ) -> int:
+        """Save transcript segments to JSONL file.
+
+        Args:
+            segments: Iterator of TranscriptSegment
+            filename: Output filename (will be placed in output_dir)
+
+        Returns:
+            Number of segments saved
+        """
+        import json
+        from dataclasses import asdict
+
+        output_path = self.output_dir / filename
+        count = 0
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            for segment in segments:
+                f.write(json.dumps(asdict(segment), ensure_ascii=False) + '\n')
+                count += 1
+
+        logger.info(f"[BATCH] Saved {count} segments to {output_path}")
+        return count
+
+    def get_progress(self, channel_id: str) -> dict:
+        """Get transcription progress for a channel."""
+        return self._progress.get(channel_id, {"status": "not_started"})
+
+
+def get_batch_transcriber(
+    model_size: str = "base",
+    device: str = "cpu",
+    output_dir: Optional[str] = None
+) -> BatchTranscriber:
+    """Get a configured batch transcriber instance."""
+    return BatchTranscriber(
+        model_size=model_size,
+        device=device,
+        output_dir=output_dir
     )

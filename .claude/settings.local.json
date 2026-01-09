@@ -25,7 +25,10 @@
       "Bash(git log:*)",
       "Bash(powershell:*)",
       "Bash(yt-dlp:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(test:*)",
+      "Bash(xargs:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

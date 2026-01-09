@@ -11,6 +11,18 @@
 
 ---
 
+## 2026-01-04 - WSP 60 Memory Feedback Roadmap
+
+**WSP References**: WSP 60 (Module Memory), WSP 15 (MPS-M), WSP 22 (ModLog)
+
+**Type**: Protocol Update - Memory Feedback Roadmap
+
+**Changes Made**:
+- Added memory feedback roadmap for explicit/implicit reinforcement, decay, A/B ordering, and outcome coupling.
+- Clarified that feedback and metrics remain silent in output (memory-only updates).
+
+---
+
 ## 2025-10-14 - Phase 5: Integrated WSP Batch Analysis Validation
 
 **WSP References**: WSP 93 (CodeIndex), WSP 37 (ricDAE), WSP 87 (HoloIndex), WSP 77 (Intelligent Internet), WSP 22 (ModLog)

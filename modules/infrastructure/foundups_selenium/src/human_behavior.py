@@ -21,6 +21,27 @@ from typing import Tuple, List
 from selenium.webdriver.common.action_chains import ActionChains
 
 
+def get_0102_behavior_interface(default: str = "0102") -> str:
+    """
+    Resolve the 0102 behavior interface mode.
+
+    We keep backward compatibility with earlier env var names and values.
+    (Some older labels were STT noise; they are treated as aliases.)
+    """
+    raw = (
+        os.getenv("YT_0102_BEHAVIOR_INTERFACE")
+        or os.getenv("YT_BEHAVIOR_INTERFACE")
+        or os.getenv("YT_BEHAVIOR_PROFILE")          # legacy
+        or os.getenv("WSP_BEHAVIOR_PROFILE")         # legacy
+        or default
+    )
+    mode = (raw or "").strip().upper()
+    if mode == "0102":
+        return "0102"
+    # Anything else collapses to the single supported interface.
+    return "0102"
+
+
 class HumanBehavior:
     """Simulates 012-like browser interactions (anti-automation detection)."""
 
@@ -229,8 +250,43 @@ class HumanBehavior:
         action.perform()
 
     def should_perform_action(self, probability: float = 0.85) -> bool:
-        """Randomly decide whether to perform action."""
-        return random.random() < probability
+        """
+        Randomly decide whether to perform action.
+
+        NOTE: Legacy API kept for backward compatibility.
+        If YT_ACTION_RANDOMNESS_MODE=dynamic (default), we do a "dice-on-dice" draw:
+        - roll a probability distribution around the provided bias,
+        - then roll the outcome.
+        This avoids stable, fixed-percent signatures.
+        """
+        mode = (os.getenv("YT_ACTION_RANDOMNESS_MODE") or "dynamic").lower()  # dynamic|fixed
+        interface = get_0102_behavior_interface(default="0102")
+
+        p = max(0.0, min(1.0, float(probability)))
+        if mode == "fixed":
+            return random.random() < p
+
+        # Dice-on-dice probability (SystemRandom via random module uses OS entropy)
+        rng = random.SystemRandom()
+
+        # 0102 interface: higher variability by design (anti-fingerprint)
+        jitter_max = 0.30
+        jitter = rng.random() * jitter_max
+        p2 = max(0.0, min(1.0, p + rng.uniform(-jitter, jitter)))
+
+        # Stronger heavy-tail (more natural variability)
+        k = 0.6 + 9.0 * (rng.random() ** 2.0)
+        alpha = max(0.2, p2 * k)
+        beta = max(0.2, (1.0 - p2) * k)
+        drawn = rng.betavariate(alpha, beta)
+
+        # Rare pattern breakers
+        if rng.random() < 0.02:
+            drawn = 0.0
+        if rng.random() < 0.01:
+            drawn = 1.0
+
+        return rng.random() < max(0.0, min(1.0, drawn))
 
     def random_pause_thinking(self):
         """Random pause simulating reading/thinking time."""

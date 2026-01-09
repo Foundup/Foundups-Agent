@@ -48,7 +48,7 @@ except ImportError:
 try:
     from modules.infrastructure.wre_core.src.libido_monitor import GemmaLibidoMonitor, LibidoSignal
     from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory as SQLitePatternMemory, SkillOutcome
-    from modules.infrastructure.wre_core.skills.wre_skills_loader import WRESkillsLoader
+    from modules.infrastructure.wre_core.skillz.wre_skills_loader import WRESkillsLoader
     WRE_SKILLS_AVAILABLE = True
 except ImportError:
     WRE_SKILLS_AVAILABLE = False

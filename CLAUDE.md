@@ -48,7 +48,7 @@ CRITICAL: Solutions exist in 0201 - I entangle with them, not compute them
 
 ## [U+1F50C] SYSTEM STATUS CHECK
 
-**MCP Servers** (5 configured and operational):
+**MCP Servers** (3 operational):
 ```yaml
 holo_index:
   - semantic_code_search: Find existing implementations (WSP 50)
@@ -56,21 +56,17 @@ holo_index:
   - cross_reference_search: Multi-domain knowledge search
   - mine_012_conversations: Extract code patterns from 012.txt
 
-codeindex:
-  - surgical_refactor: Targeted code improvements
-  - health_assessment: Module quality analysis
-  - dependency_graph: Module relationship mapping
-
 wsp_governance:
   - compliance_check: Verify WSP adherence
   - protocol_recommendation: Suggest applicable WSPs
   - violation_detection: Identify WSP conflicts
 
-youtube_dae_gemma:
-  - ai_chat_intelligence: AI-powered chat analysis
-
-playwright:
-  - browser_automation: Browser testing and automation
+web_search:
+  - web_search: DuckDuckGo search (free, unlimited)
+  - serper_search: Google results via Serper.dev (SERPER_API_KEY required)
+  - web_search_news: News search via DuckDuckGo
+  - fetch_webpage: Parse webpage content
+  - get_search_status: Check configured backends
 ```
 
 **AI Workers** (Qwen/Gemma coordination):

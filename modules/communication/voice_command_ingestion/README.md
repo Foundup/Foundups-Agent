@@ -115,6 +115,39 @@ Recommended: `base` for real-time, `small` for accuracy
 - PQN experiments replay stored events for artifact analysis
 - Transcripts form training data for 0102 digital twin profile
 
+## Phase 2: Digital Twin Video Learning (Sprints 6-8)
+
+### BatchTranscriber (Sprint 6)
+Transcribe entire YouTube video archives:
+```python
+from voice_command_ingestion import get_batch_transcriber
+
+transcriber = get_batch_transcriber(model_size="base")
+segments = transcriber.transcribe_channel("UC-LSSlOZwpGIRIYihaz8zCw", max_videos=10)
+transcriber.save_transcripts_jsonl(segments, "012_transcripts.jsonl")
+```
+
+### VideoTranscriptIndex (Sprint 7)
+Semantic search across transcripts:
+```python
+from transcript_index import get_transcript_index
+
+index = get_transcript_index()
+index.index_from_jsonl("memory/transcripts/012_transcripts.jsonl")
+results = index.search("What did 012 say about WSP?")
+for r in results:
+    print(f"{r.text} -> {r.url}")  # Deep link to exact moment
+```
+
+### Digital Twin Query (Sprint 8)
+MCP-compatible function:
+```python
+from transcript_index import search_012_transcripts
+
+results = search_012_transcripts("recursive self-improvement")
+# Returns: [{video_id, title, timestamp_sec, text, url, score}, ...]
+```
+
 ## Testing
 
 ```bash

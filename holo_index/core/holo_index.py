@@ -448,8 +448,11 @@ class HoloIndex:
         # SKILLz file locations per WSP 95
         skillz_patterns = [
             str(self.project_root / "modules" / "**" / "skills" / "*" / "SKILLz.md"),
+            str(self.project_root / "modules" / "**" / "skillz" / "*" / "SKILLz.md"),
+            str(self.project_root / "holo_index" / "skillz" / "*" / "SKILLz.md"),
             str(self.project_root / "holo_index" / "qwen_advisor" / "skills" / "*" / "SKILLz.md"),
-            str(self.project_root / ".claude" / "skills" / "*" / "SKILL.md"),
+            str(self.project_root / ".claude" / "skills" / "*" / "SKILLz.md"),
+            str(self.project_root / ".claude" / "skillz" / "*" / "SKILLz.md"),
         ]
         
         files: List[Path] = []
@@ -496,7 +499,7 @@ class HoloIndex:
                 # Create search payload
                 lines = content.strip().split('\n')
                 summary = ' '.join(lines[:10])[:500]
-                doc_payload = f"Skill: {name}\nAgent: {primary_agent}\nType: {intent_type}\nDescription: {description}\n{summary}"
+                doc_payload = f"Skillz: {name}\nAgent: {primary_agent}\nType: {intent_type}\nDescription: {description}\n{summary}"
                 
                 ids.append(f"skill_{idx}")
                 embeddings.append(self._get_embedding(doc_payload))
@@ -510,8 +513,8 @@ class HoloIndex:
                     "intent_type": intent_type,
                     "promotion_state": promotion_state,
                     "path": str(file_path),
-                    "type": "skill",
-                    "priority": 9  # Skills are high priority for agent discovery
+                    "type": "skillz",
+                    "priority": 9  # Skillz are high priority for agent discovery
                 })
                 
             except Exception as e:
@@ -632,23 +635,34 @@ class HoloIndex:
             code_hits = []
             wsp_hits = []
             test_hits = []
+            skill_hits = []
             
             # Search code index if requested
             if doc_type_filter in ["code", "all"]:
                 code_results = self._search_collection(self.code_collection, query, limit, kind="code")
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
-                
-            # Search WSP index if requested  
-            if doc_type_filter in ["wsp", "all"]:
+
+            # Search WSP index if requested
+            if doc_type_filter not in ["code", "test"]:
                 wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
                 
             # Search Test index if requested
             if doc_type_filter in ["test", "all"]:
                 test_hits = self._search_collection(self.test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
+
+            # Search Skillz index for agent discovery (only in full context)
+            if doc_type_filter == "all":
+                try:
+                    skill_hits = self._search_collection(self.skill_collection, query, limit, kind="skill")
+                except Exception:
+                    skill_hits = []
             
             # Log completion
-            self._log_agent_action(f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, {len(test_hits)} Tests")
+            self._log_agent_action(
+                f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, "
+                f"{len(test_hits)} Tests, {len(skill_hits)} Skillz"
+            )
 
             # Backward-compatible payload for CLI/Qwen integrations
             payload = {
@@ -658,11 +672,14 @@ class HoloIndex:
                 'code': code_hits,   # legacy key expected by throttler + advisors
                 'wsps': wsp_hits,    # legacy key expected by throttler + advisors
                 'tests': test_hits,  # new key for test integration
+                'skills': skill_hits,
+                'skill_hits': skill_hits,
                 'metadata': {
                     'query': query,
                     'code_count': len(code_hits),
                     'wsp_count': len(wsp_hits),
                     'test_count': len(test_hits),
+                    'skill_count': len(skill_hits),
                     'timestamp': datetime.now().isoformat()
                 }
             }
@@ -797,6 +814,19 @@ class HoloIndex:
                         "priority": priority,
                         "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
                     }
+                elif kind == "skill":
+                    result = {
+                        "skill_name": meta.get('skill_name'),
+                        "description": meta.get('description'),
+                        "primary_agent": meta.get('primary_agent'),
+                        "intent_type": meta.get('intent_type'),
+                        "promotion_state": meta.get('promotion_state'),
+                        "path": meta.get('path'),
+                        "similarity": f"{similarity*100:.1f}%",
+                        "type": "skillz",
+                        "priority": priority,
+                        "_sort_key": (0.6 * priority + 0.3 * similarity + 0.1 * keyword_score, similarity, priority)
+                    }
                 else:
                     result = {
                         "wsp": meta.get('wsp'),
@@ -907,6 +937,19 @@ class HoloIndex:
                     "type": "test",
                     "priority": priority,
                     "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                }
+            elif kind == "skill":
+                result = {
+                    "skill_name": meta.get('skill_name'),
+                    "description": meta.get('description'),
+                    "primary_agent": meta.get('primary_agent'),
+                    "intent_type": meta.get('intent_type'),
+                    "promotion_state": meta.get('promotion_state'),
+                    "path": meta.get('path'),
+                    "similarity": f"{similarity*100:.1f}%",
+                    "type": "skillz",
+                    "priority": priority,
+                    "_sort_key": (0.6 * priority + 0.3 * similarity + 0.1 * keyword_score, similarity, priority)
                 }
             else:
                 result = {

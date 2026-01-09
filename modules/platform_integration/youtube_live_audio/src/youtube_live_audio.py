@@ -283,3 +283,270 @@ class YouTubeLiveAudioSource:
 def get_audio_source(config: Optional[AudioStreamConfig] = None) -> YouTubeLiveAudioSource:
     """Get a configured audio source instance."""
     return YouTubeLiveAudioSource(config)
+
+
+# =============================================================================
+# PHASE 2: VIDEO ARCHIVE EXTRACTION (Sprint 5)
+# =============================================================================
+
+@dataclass
+class VideoInfo:
+    """Metadata for a YouTube video."""
+    video_id: str
+    title: str
+    duration_sec: float
+    upload_date: str
+    channel_id: str
+    url: str
+
+
+class VideoArchiveExtractor:
+    """Extract audio from YouTube video archives for transcription.
+
+    Uses yt-dlp for:
+    - Listing channel videos (0 API quota cost)
+    - Downloading audio from videos
+    - Converting to WAV format for STT
+
+    WSP Compliance:
+    - WSP 84: Reuses yt-dlp pattern from acoustic_lab
+    - WSP 50: Pre-action verification (checks cache before download)
+    """
+
+    def __init__(
+        self,
+        cache_dir: Optional[str] = None,
+        config: Optional[AudioStreamConfig] = None
+    ) -> None:
+        """Initialize video archive extractor.
+
+        Args:
+            cache_dir: Directory to cache extracted audio (default: memory/audio_cache)
+            config: Audio configuration (sample rate, etc.)
+        """
+        from pathlib import Path
+        self.config = config or AudioStreamConfig()
+        self.cache_dir = Path(cache_dir) if cache_dir else Path("memory/audio_cache")
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self._yt_dlp = None
+
+    def _get_yt_dlp(self):
+        """Lazy initialization of yt-dlp."""
+        if self._yt_dlp is None:
+            try:
+                import yt_dlp
+                self._yt_dlp = yt_dlp
+                logger.info("[ARCHIVE] yt-dlp initialized")
+            except ImportError:
+                logger.error("[ARCHIVE] yt-dlp not installed. Run: pip install yt-dlp")
+                raise ImportError("yt-dlp required for video archive extraction")
+        return self._yt_dlp
+
+    def list_channel_videos(
+        self,
+        channel_id: str,
+        max_videos: int = 50
+    ) -> Generator[VideoInfo, None, None]:
+        """List videos from a YouTube channel using yt-dlp.
+
+        Uses yt-dlp playlist extraction (0 API quota cost).
+
+        Args:
+            channel_id: YouTube channel ID (e.g., "UC-LSSlOZwpGIRIYihaz8zCw")
+            max_videos: Maximum videos to retrieve
+
+        Yields:
+            VideoInfo for each video
+        """
+        yt_dlp = self._get_yt_dlp()
+
+        # Use channel/videos URL for full video list
+        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,  # Don't download, just extract info
+            'playlistend': max_videos,
+        }
+
+        logger.info(f"[ARCHIVE] Listing videos from channel: {channel_id}")
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(channel_url, download=False)
+
+                if not info or 'entries' not in info:
+                    logger.warning("[ARCHIVE] No videos found in channel")
+                    return
+
+                count = 0
+                for entry in info['entries']:
+                    if entry is None:
+                        continue
+                    if count >= max_videos:
+                        break
+
+                    yield VideoInfo(
+                        video_id=entry.get('id', ''),
+                        title=entry.get('title', 'Unknown'),
+                        duration_sec=entry.get('duration', 0) or 0,
+                        upload_date=entry.get('upload_date', ''),
+                        channel_id=channel_id,
+                        url=f"https://www.youtube.com/watch?v={entry.get('id', '')}"
+                    )
+                    count += 1
+
+                logger.info(f"[ARCHIVE] Found {count} videos")
+
+        except Exception as e:
+            logger.error(f"[ARCHIVE] Failed to list videos: {e}")
+
+    def extract_audio(
+        self,
+        video_id: str,
+        use_cache: bool = True
+    ) -> Optional[np.ndarray]:
+        """Extract audio from a YouTube video.
+
+        Args:
+            video_id: YouTube video ID
+            use_cache: Use cached audio if available
+
+        Returns:
+            Float32 audio array, or None on failure
+        """
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        yt_dlp = self._get_yt_dlp()
+
+        # Check cache
+        cache_path = self.cache_dir / f"{video_id}.wav"
+        if use_cache and cache_path.exists():
+            logger.info(f"[ARCHIVE] Using cached audio: {video_id}")
+            return self._load_wav(cache_path)
+
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        logger.info(f"[ARCHIVE] Extracting audio from: {video_id}")
+
+        try:
+            # Download to temp file
+            with tempfile.NamedTemporaryFile(suffix='.m4a', delete=False) as temp_audio:
+                temp_path = temp_audio.name
+
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                # More flexible format: try m4a, then any audio, then best overall
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'outtmpl': temp_path,
+                'postprocessors': [],  # No post-processing, we'll use ffmpeg
+                # Use browser cookies for authenticated content (private/unlisted)
+                'cookiesfrombrowser': ('chrome',),
+            }
+
+            # Download audio
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([video_url])
+
+            # Convert to WAV using ffmpeg
+            ffmpeg_cmd = [
+                'ffmpeg', '-y', '-i', temp_path,
+                '-f', 'wav',
+                '-ac', '1',  # Mono
+                '-ar', str(self.config.sample_rate_hz),  # 16kHz for Whisper
+                str(cache_path)
+            ]
+
+            subprocess.run(ffmpeg_cmd, capture_output=True, check=True)
+            logger.info(f"[ARCHIVE] Audio extracted and cached: {video_id}")
+
+            # Clean up temp file
+            Path(temp_path).unlink(missing_ok=True)
+
+            # Load and return
+            return self._load_wav(cache_path)
+
+        except Exception as e:
+            logger.error(f"[ARCHIVE] Failed to extract audio from {video_id}: {e}")
+            return None
+
+    def _load_wav(self, path) -> Optional[np.ndarray]:
+        """Load WAV file as float32 numpy array."""
+        try:
+            import wave
+            with wave.open(str(path), 'rb') as wav:
+                frames = wav.readframes(wav.getnframes())
+                audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32767.0
+                return audio
+        except Exception as e:
+            logger.error(f"[ARCHIVE] Failed to load WAV: {e}")
+            return None
+
+    def stream_video_chunks(
+        self,
+        video_id: str,
+        chunk_duration_sec: float = 30.0
+    ) -> Generator[AudioChunk, None, None]:
+        """Stream audio chunks from a video for STT processing.
+
+        Args:
+            video_id: YouTube video ID
+            chunk_duration_sec: Duration of each chunk (default 30s for long videos)
+
+        Yields:
+            AudioChunk objects for STT processing
+        """
+        audio = self.extract_audio(video_id)
+        if audio is None:
+            return
+
+        chunk_samples = int(chunk_duration_sec * self.config.sample_rate_hz)
+        total_samples = len(audio)
+        chunk_idx = 0
+
+        logger.info(f"[ARCHIVE] Streaming {total_samples / self.config.sample_rate_hz:.1f}s of audio in {chunk_duration_sec}s chunks")
+
+        for start in range(0, total_samples, chunk_samples):
+            end = min(start + chunk_samples, total_samples)
+            chunk_audio = audio[start:end]
+
+            # Calculate timestamp in video (milliseconds from start)
+            timestamp_ms = int(start / self.config.sample_rate_hz * 1000)
+
+            yield AudioChunk(
+                audio=chunk_audio,
+                sample_rate=self.config.sample_rate_hz,
+                timestamp_ms=timestamp_ms,
+                duration_sec=len(chunk_audio) / self.config.sample_rate_hz,
+                chunk_index=chunk_idx
+            )
+            chunk_idx += 1
+
+        logger.info(f"[ARCHIVE] Yielded {chunk_idx} chunks")
+
+    def get_extraction_progress(self, channel_id: str) -> dict:
+        """Get extraction progress for a channel.
+
+        Returns:
+            Dict with cached_count, total_estimated, cache_size_mb
+        """
+        cached_files = list(self.cache_dir.glob("*.wav"))
+        total_size = sum(f.stat().st_size for f in cached_files)
+
+        return {
+            "cached_count": len(cached_files),
+            "cache_size_mb": total_size / (1024 * 1024),
+            "cache_dir": str(self.cache_dir)
+        }
+
+
+# Convenience function for archive extraction
+def get_archive_extractor(
+    cache_dir: Optional[str] = None,
+    config: Optional[AudioStreamConfig] = None
+) -> VideoArchiveExtractor:
+    """Get a configured video archive extractor instance."""
+    return VideoArchiveExtractor(cache_dir=cache_dir, config=config)

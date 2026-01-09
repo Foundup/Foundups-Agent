@@ -2,6 +2,19 @@
 
 ## Chronological Change Log
 
+### [2026-01-07] - Commenting Submenu (012 → Comment DAE Control Plane)
+**WSP Protocol References**: WSP 60 (Module Memory), WSP 54 (DAE Operations), WSP 22 (ModLog Updates)
+**Impact Analysis**: Adds a lightweight pathway for 012 to publish “broadcast updates” consumed by the commenting DAEs without code edits.
+
+#### Changes Made
+- `run_wre.py`: Added `commenting` interactive command that opens a submenu to:
+  - toggle broadcast enablement
+  - set promo handles (e.g., `@NewChannel`)
+  - set a short promo message
+  - clear/disable broadcast
+- Writes to `modules/communication/video_comments/memory/commenting_broadcast.json` via the video_comments control-plane API (no wre_core-owned state).
+
+
 ### [2025-10-25] - Skills Registry v2 & Metadata Fixes (COMPLETE)
 **Date**: 2025-10-25
 **WSP Protocol References**: WSP 96 (WRE Skills), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)
@@ -124,7 +137,7 @@ Phase 3 completes the autonomous execution chain:
 1. **Created wre_skills_discovery.py** (416 lines):
    - WRESkillsDiscovery class - Filesystem scanner (not registry-dependent)
    - DiscoveredSkill dataclass - Metadata container
-   - discover_all_skills() - Scans modules/*/*/skills/**/SKILL.md
+   - discover_all_skills() - Scans modules/*/*/skillz/**/SKILLz.md
    - discover_by_agent() - Filter by agent type (qwen, gemma, grok, ui-tars)
    - discover_by_module() - Filter by module path
    - discover_production_ready() - Filter by fidelity threshold
@@ -134,7 +147,7 @@ Phase 3 completes the autonomous execution chain:
    - WSP chain extraction via regex
 
 2. **Scan Patterns**:
-   - `modules/*/*/skills/**/SKILL.md` - Production skills (6 found)
+   - `modules/*/*/skillz/**/SKILLz.md` - Production skills (6 found)
    - `.claude/skills/**/SKILL.md` - Prototype skills (9 found)
    - `holo_index/skills/**/SKILL.md` - HoloIndex skills (1 found)
    - Total: 16 SKILL.md files discovered, 5 with valid agent metadata

@@ -87,7 +87,7 @@
 **Type**: Enhancement - Skills-Based AI Orchestration
 
 **Changes Made**:
-1. **Created qwen_gitpush skill** (`modules/infrastructure/git_push_dae/skills/qwen_gitpush/SKILL.md`):
+1. **Created qwen_gitpush skill** (`modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md`):
    - Micro chain-of-thought paradigm (4 steps with Gemma validation)
    - Step 1: Analyze Git Diff (change_type, summary, critical_files, confidence)
    - Step 2: Calculate WSP 15 MPS Score (change_scale + priority_weights)

@@ -116,9 +116,9 @@ class CommunityMonitor:
         self.max_comments_per_run = 5
 
         # Path to engagement script (proper WSP 96 skill location)
-        # NOTE: This is in modules/communication/video_comments/skills/..., not livechat/.
+        # NOTE: This is in modules/communication/video_comments/skillz/..., not livechat/.
         self.engagement_script = (
-            Path(__file__).resolve().parents[2] / "video_comments" / "skills" /
+            Path(__file__).resolve().parents[2] / "video_comments" / "skillz" /
             "tars_like_heart_reply" / "run_skill.py"
         )
 

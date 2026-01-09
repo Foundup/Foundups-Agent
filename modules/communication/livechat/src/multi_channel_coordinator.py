@@ -112,6 +112,7 @@ class MultiChannelCoordinator:
         """
         strict_inbox = _env_truthy("YT_INBOX_STRICT", "true")
         edge_parallel = _env_truthy("YT_EDGE_PARALLEL", "true")
+        edge_first = _env_truthy("YT_EDGE_FIRST", "true")
 
         # CHROME ACCOUNTS (same Google account - can switch via YouTube picker)
         chrome_accounts: List[Tuple[str, str]] = [
@@ -119,15 +120,19 @@ class MultiChannelCoordinator:
             ("UnDaoDu", os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")),
         ]
 
-        # EDGE ACCOUNT (different Google account - requires separate browser)
-        edge_account = ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"))
+        # EDGE ACCOUNTS (different Google account - requires separate browser)
+        # NOTE: RavingANTIFA added 2026-01-09, shares Edge browser with FoundUps
+        edge_accounts: List[Tuple[str, str]] = [
+            ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")),
+            ("RavingANTIFA", os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")),
+        ]
 
-        total_channels = len(chrome_accounts) + 1
+        total_channels = len(chrome_accounts) + len(edge_accounts)
         logger.info("=" * 70)
         logger.info("[ROTATE] MULTI-CHANNEL COMMENT ENGAGEMENT")
         logger.info(f"[ROTATE] Processing {total_channels} channels:")
         logger.info(f"[ROTATE]   Chrome (9222): {', '.join([a[0] for a in chrome_accounts])}")
-        logger.info(f"[ROTATE]   Edge (9223): {edge_account[0]}")
+        logger.info(f"[ROTATE]   Edge (9223): {', '.join([a[0] for a in edge_accounts])}")
         logger.info(f"[ROTATE] Mode: {mode} | Max per channel: {max_comments if max_comments > 0 else 'UNLIMITED'}")
         logger.info("=" * 70)
 
@@ -141,12 +146,19 @@ class MultiChannelCoordinator:
         if edge_parallel:
             try:
                 edge_task = asyncio.create_task(
-                    self._run_edge_engagement(runner, edge_account, max_comments, strict_inbox)
+                    self._run_edge_engagement(runner, edge_accounts, max_comments, strict_inbox)
                 )
                 logger.info("[ROTATE] Edge scheduled in PARALLEL (YT_EDGE_PARALLEL=true)")
             except Exception as e:
                 logger.warning(f"[ROTATE] Failed to schedule Edge task: {e}")
                 edge_task = None
+
+        # Optional ordering: run Edge FIRST when not parallel (matches ops expectation:
+        # FoundUps/RavingANTIFA are often the immediate targets before live chat handoff)
+        if (not edge_parallel) and edge_first:
+            total_processed += await self._run_edge_engagement(
+                runner, edge_accounts, max_comments, strict_inbox
+            )
 
         # Process Chrome channels
         skip_chrome = _env_truthy("YT_SKIP_CHROME", "false")
@@ -161,9 +173,10 @@ class MultiChannelCoordinator:
 
         # Handle Edge result
         if not edge_parallel:
-            total_processed += await self._run_edge_engagement(
-                runner, edge_account, max_comments, strict_inbox
-            )
+            if not edge_first:
+                total_processed += await self._run_edge_engagement(
+                    runner, edge_accounts, max_comments, strict_inbox
+                )
         elif edge_task:
             try:
                 total_processed += await edge_task
@@ -173,7 +186,7 @@ class MultiChannelCoordinator:
         logger.info("=" * 70)
         logger.info("[ROTATE] MULTI-CHANNEL ENGAGEMENT COMPLETE")
         logger.info(f"[ROTATE] Total comments processed: {total_processed}")
-        logger.info(f"[ROTATE] Channels: Chrome ({len(chrome_accounts)}) + Edge (1)")
+        logger.info(f"[ROTATE] Channels: Chrome ({len(chrome_accounts)}) + Edge ({len(edge_accounts)})")
         logger.info("=" * 70)
 
         return total_processed
@@ -181,30 +194,24 @@ class MultiChannelCoordinator:
     async def _run_edge_engagement(
         self,
         runner,
-        edge_account: Tuple[str, str],
+        edge_accounts: List[Tuple[str, str]],
         max_comments: int,
         strict_inbox: bool
     ) -> int:
         """
-        Run FoundUps comment engagement via Edge (port 9223).
+        Run comment engagement via Edge (port 9223) for multiple accounts.
 
         IMPORTANT: Runs independently of Chrome - separate browser session.
+        Processes accounts sequentially. If multiple channels share the same Edge session,
+        we must explicitly switch the active channel in the YouTube account picker to avoid
+        "no permission" pages when navigating directly to a channel inbox URL.
+        
+        Updated 2026-01-09: Now supports multiple Edge accounts (FoundUps + RavingANTIFA).
         """
+        total_processed = 0
         edge_driver = None
-        foundups_name, foundups_channel_id = edge_account
-
-        # Check live stream signal
-        try:
-            from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
-            live_channel = get_live_channel()
-        except ImportError:
-            live_channel = None
-
-        if live_channel == foundups_channel_id:
-            logger.info(f"[SIGNAL] {foundups_name} has live stream - skipping comment processing")
-            return 0
-
-        logger.info(f"\n[ROTATE] [Edge] Processing {foundups_name} comments...")
+        edge_port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
+        edge_swapper = None
 
         try:
             from selenium import webdriver
@@ -212,8 +219,8 @@ class MultiChannelCoordinator:
             from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
                 launch_edge, STUDIO_FILTER
             )
+            from modules.communication.video_comments.skillz.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
 
-            edge_port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
             edge_ok, edge_msg = launch_edge()
             if not edge_ok:
                 logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
@@ -222,70 +229,118 @@ class MultiChannelCoordinator:
             edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
             edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
             logger.info(f"[ROTATE] Connected to Edge on port {edge_port}")
-
-            # Navigate to Studio inbox
-            foundups_studio_url = (
-                f"https://studio.youtube.com/channel/{foundups_channel_id}/comments/inbox?filter={STUDIO_FILTER}"
-            )
-            logger.info(f"[ROTATE] Navigating to {foundups_name} Studio inbox...")
-            await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-            await asyncio.sleep(5)
-
-            self.log_studio_context(foundups_channel_id, f"{foundups_name} comment_engagement", edge_driver)
-
-            result = await runner.run_engagement(
-                channel_id=foundups_channel_id,
-                video_id=None,
-                max_comments=max_comments,
-                browser_port=9223,
-            )
-
-            result = result or {}
-            stats = result.get("stats", {})
-            processed = stats.get("comments_processed", 0)
-
-            self.update_engagement_status(foundups_channel_id, {
-                "all_processed": bool(stats.get("all_processed", False)),
-                "stats": stats,
-                "error": result.get("error"),
-                "updated_at": time.time(),
-            })
-
-            error_text = result.get("error")
-            session_recovered = False
-
-            if error_text:
-                logger.error(f"[ROTATE] {foundups_name} engagement failed: {error_text}")
-            else:
-                logger.info(f"[ROTATE] {foundups_name} complete: {processed} comments processed")
-
-            # Session recovery
-            if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
-                logger.warning(f"[ROTATE] Edge session error on {foundups_name}; attempting reconnect")
-                edge_driver = await self.reconnect_edge_driver(edge_port)
-                if edge_driver:
-                    try:
-                        await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-                        await asyncio.sleep(5)
-                    except Exception as refresh_err:
-                        logger.warning(f"[ROTATE] Edge navigation after reconnect failed: {refresh_err}")
-                    session_recovered = True
-                else:
-                    logger.warning(f"[ROTATE] Edge reconnect failed for {foundups_name}")
-
-            # Inbox verification with retries
-            processed = await self._verify_and_retry_engagement(
-                edge_driver, runner, foundups_channel_id, foundups_name,
-                max_comments, 9223, processed, strict_inbox, error_text, session_recovered
-            )
-
-            return int(processed or 0)
+            edge_swapper = TarsAccountSwapper(edge_driver)
 
         except Exception as e:
             logger.warning(f"[ROTATE] Edge connection failed: {e}")
-            logger.warning(f"[ROTATE] {foundups_name} comments will be skipped")
+            logger.warning("[ROTATE] Edge channels will be skipped")
             logger.warning("[ROTATE] To enable: Launch Edge with --remote-debugging-port=9223")
             return 0
+
+        # Process each Edge account
+        for idx, (account_name, channel_id) in enumerate(edge_accounts, 1):
+            # Check live stream signal
+            try:
+                from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
+                live_channel = get_live_channel()
+            except ImportError:
+                live_channel = None
+
+            if live_channel == channel_id:
+                logger.info(f"[SIGNAL] {account_name} has live stream - skipping comment processing")
+                continue
+
+            logger.info(f"\n[ROTATE] [Edge {idx}/{len(edge_accounts)}] Processing {account_name} comments...")
+
+            try:
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import STUDIO_FILTER
+
+                # Ensure correct active channel in the Edge session
+                if edge_swapper:
+                    logger.info(f"[ROTATE] [Edge] Switching active channel to {account_name}...")
+                    switched = await edge_swapper.swap_to(account_name, navigate_to_comments=False)
+                    if not switched:
+                        if idx == 1:
+                            logger.info(f"[ROTATE] [Edge] Switch failed for first channel; assuming already on {account_name}")
+                        else:
+                            logger.warning(f"[ROTATE] [Edge] Failed to switch to {account_name}; skipping")
+                            continue
+
+                # Navigate to Studio inbox for this channel
+                studio_url = (
+                    f"https://studio.youtube.com/channel/{channel_id}/comments/inbox?filter={STUDIO_FILTER}"
+                )
+                logger.info(f"[ROTATE] Navigating to {account_name} Studio inbox...")
+                await asyncio.to_thread(edge_driver.get, studio_url)
+                await asyncio.sleep(5)
+
+                self.log_studio_context(channel_id, f"{account_name} comment_engagement", edge_driver)
+                self.set_active_channel(channel_id)
+
+                result = await runner.run_engagement(
+                    channel_id=channel_id,
+                    video_id=None,
+                    max_comments=max_comments,
+                    browser_port=9223,
+                )
+
+                result = result or {}
+                stats = result.get("stats", {})
+                processed = stats.get("comments_processed", 0)
+                total_processed += processed
+
+                self.update_engagement_status(channel_id, {
+                    "all_processed": bool(stats.get("all_processed", False)),
+                    "stats": stats,
+                    "error": result.get("error"),
+                    "updated_at": time.time(),
+                })
+
+                error_text = result.get("error")
+                session_recovered = False
+
+                if error_text:
+                    logger.error(f"[ROTATE] {account_name} engagement failed: {error_text}")
+                else:
+                    logger.info(f"[ROTATE] {account_name} complete: {processed} comments processed")
+
+                # Session recovery
+                if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
+                    logger.warning(f"[ROTATE] Edge session error on {account_name}; attempting reconnect")
+                    edge_driver = await self.reconnect_edge_driver(edge_port)
+                    if edge_driver:
+                        try:
+                            await asyncio.to_thread(edge_driver.get, studio_url)
+                            await asyncio.sleep(5)
+                        except Exception as refresh_err:
+                            logger.warning(f"[ROTATE] Edge navigation after reconnect failed: {refresh_err}")
+                        session_recovered = True
+                    else:
+                        logger.warning(f"[ROTATE] Edge reconnect failed for {account_name}")
+
+                # Inbox verification with retries
+                processed = await self._verify_and_retry_engagement(
+                    edge_driver, runner, channel_id, account_name,
+                    max_comments, 9223, processed, strict_inbox, error_text, session_recovered
+                )
+                total_processed += processed - stats.get("comments_processed", 0)  # Add retry delta
+
+            except Exception as e:
+                logger.error(f"[ROTATE] {account_name} exception: {e}", exc_info=True)
+                self.update_engagement_status(channel_id, {
+                    "all_processed": False,
+                    "stats": {},
+                    "error": str(e),
+                    "updated_at": time.time(),
+                })
+
+            # Check live stream pending
+            if self.is_live_stream_pending() and _env_truthy("YT_STOP_ROTATION_ON_LIVE", "true"):
+                logger.info(f"[ROTATE] Live stream pending - stopping Edge rotation after {account_name}")
+                break
+
+        return total_processed
+
 
     async def _run_chrome_engagement(
         self,
@@ -307,7 +362,7 @@ class MultiChannelCoordinator:
         try:
             from selenium import webdriver
             from selenium.webdriver.chrome.options import Options
-            from modules.communication.video_comments.skills.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
+            from modules.communication.video_comments.skillz.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
             from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
 
             chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))

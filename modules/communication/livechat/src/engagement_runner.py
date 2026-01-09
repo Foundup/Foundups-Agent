@@ -152,7 +152,7 @@ class SubprocessRunner(EngagementRunner):
     def __init__(self, repo_root: Path):
         self.repo_root = Path(repo_root).resolve()
 
-        script_rel = Path("modules/communication/video_comments/skills/tars_like_heart_reply/run_skill.py")
+        script_rel = Path("modules/communication/video_comments/skillz/tars_like_heart_reply/run_skill.py")
 
         # Defensive: some callers may pass `.../modules` instead of repo root.
         # Prefer the first candidate that exists.
@@ -476,7 +476,7 @@ class ThreadRunner(EngagementRunner):
         """
         try:
             # Import here to avoid loading in main thread
-            from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import (
+            from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import (
                 CommentEngagementDAE
             )
 
@@ -585,7 +585,7 @@ class InProcessRunner(EngagementRunner):
             }
 
         try:
-            from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import (
+            from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import (
                 execute_skill
             )
 

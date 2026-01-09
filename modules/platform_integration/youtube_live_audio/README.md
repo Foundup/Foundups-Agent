@@ -99,6 +99,31 @@ Every stage emits structured log lines:
 - `[AUDIO] Loopback device initialized: {name}`
 - `[AUDIO] Streaming: {duration}s chunks, {overlap}s overlap`
 
+## Phase 2: Video Archive Extraction (Sprint 5)
+
+Extract audio from YouTube video archives for digital twin learning:
+
+### VideoArchiveExtractor
+```python
+from youtube_live_audio import get_archive_extractor
+
+extractor = get_archive_extractor()
+
+# List channel videos (0 API quota cost)
+for video in extractor.list_channel_videos("UC-LSSlOZwpGIRIYihaz8zCw", max_videos=10):
+    print(f"{video.title} ({video.duration_sec}s)")
+
+# Extract and stream audio chunks
+for chunk in extractor.stream_video_chunks("dQw4w9WgXcQ"):
+    # chunk.timestamp_ms = position in video for deep linking
+    print(f"Chunk at {chunk.timestamp_ms}ms")
+```
+
+### Features
+- yt-dlp for video listing (0 API quota)
+- Audio cached in `memory/audio_cache/`
+- AudioChunk.timestamp_ms enables deep links: `https://youtu.be/VIDEO_ID?t=45`
+
 ## Roadmap
 
-See ROADMAP.md for sprint plan.
+See ROADMAP.md for sprint plan (Sprints 5-8 complete).

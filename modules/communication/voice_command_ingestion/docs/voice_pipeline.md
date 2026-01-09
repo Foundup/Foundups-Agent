@@ -114,11 +114,11 @@ Each stage emits structured log lines:
 - [x] Sprint 1: System audio capture (youtube_live_audio)
 - [x] Sprint 2: faster-whisper STT (voice_command_ingestion)
 - [x] Sprint 3: Trigger detection with pattern variations
+- [x] Sprint 5: End-to-end soak test
+- [x] Sprint 6: Batch transcription pipeline (Phase 2)
 
-### Pending
-- [ ] Sprint 4: LiveChat routing hook
-- [ ] Sprint 5: Skill routing (MVP)
-- [ ] Sprint 6: End-to-end soak test
+### Deferred
+- [ ] Sprint 4: Skill routing (deferred; MessageProcessor already routes commands)
 
 ## Usage
 

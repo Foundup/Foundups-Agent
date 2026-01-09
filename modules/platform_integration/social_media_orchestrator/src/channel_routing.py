@@ -82,6 +82,14 @@ class SocialMediaRouter:
             linkedin_page_id='165749317',
             x_account='undaodu',
             enabled=True
+        ),
+        # RavingANTIFA - Edge browser (9223), different Google account
+        'UCVSmg5aOhP4tnQ9KFUg97qA': ChannelRouting(
+            channel_id='UCVSmg5aOhP4tnQ9KFUg97qA',
+            channel_name='RavingANTIFA',
+            linkedin_page_id='1263645',  # Share FoundUps LinkedIn for now
+            x_account='ravingantifa',
+            enabled=True
         )
     }
 
@@ -90,12 +98,15 @@ class SocialMediaRouter:
     #   UC-LSSlOZwpGIRIYihaz8zCw = Move2Japan (Chrome)
     #   UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu (Chrome, same Google account as Move2Japan)
     #   UCSNTUXjAgpd4sgWYP0xoJgw = FoundUps (Edge, different Google account)
+    # Display names with visual indicators
+    # UPDATED 2026-01-09: Added RavingANTIFA (Edge, same browser as FoundUps)
     DISPLAY_NAMES = {
         'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan [JAPAN]',
         'UCfHM9Fw9HD-NwiS0seD_oIA': 'UnDaoDu [MINDFUL]',
         'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps [LOYAL]',
         'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan-Alt [JAPAN]',
         'UCROkIz1wOCP3tPk-1j3umyQ': 'FoundUps1934 [TEST]',
+        'UCVSmg5aOhP4tnQ9KFUg97qA': 'RavingANTIFA [VOICE]',
     }
 
     @classmethod

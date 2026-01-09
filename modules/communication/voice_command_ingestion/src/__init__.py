@@ -1,4 +1,11 @@
-from .voice_command_ingestion import CommandEvent, STTEvent, VoiceCommandIngestion
+from .voice_command_ingestion import (
+    BatchTranscriber,
+    CommandEvent,
+    STTEvent,
+    TranscriptSegment,
+    VoiceCommandIngestion,
+    get_batch_transcriber,
+)
 from .livechat_router import (
     LiveChatVoiceRouter,
     route_command_event,
@@ -11,6 +18,10 @@ __all__ = [
     "CommandEvent",
     "STTEvent",
     "VoiceCommandIngestion",
+    # Sprint 6: Batch transcription
+    "TranscriptSegment",
+    "BatchTranscriber",
+    "get_batch_transcriber",
     # Sprint 4: LiveChat Routing
     "LiveChatVoiceRouter",
     "route_command_event",

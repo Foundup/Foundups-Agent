@@ -48,27 +48,34 @@ def run_shorts_scheduler(
     
     try:
         # Import scheduler components
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
         from modules.platform_integration.youtube_shorts_scheduler.src.dom_automation import YouTubeStudioDOM
-        from modules.platform_integration.youtube_shorts_scheduler.skills.ffcpln_title_enhance.executor import (
+        from modules.platform_integration.youtube_shorts_scheduler.skillz.ffcpln_title_enhance.executor import (
             FFCPLNTitleEnhanceSkill,
             SkillContext
         )
-        
-        # Connect to Chrome
+
+        # Connect to Chrome via remote debugging
         chrome_port = int(os.getenv("CHROME_PORT", "9222"))
         print(f"\n[CONNECT] Connecting to Chrome on port {chrome_port}...")
-        
-        dom = YouTubeStudioDOM(chrome_port=chrome_port)
-        if not dom.connect():
+
+        try:
+            options = ChromeOptions()
+            options.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
+            driver = webdriver.Chrome(options=options)
+        except Exception as e:
             print("[ERROR] Failed to connect to Chrome. Is it running with remote debugging?")
+            print(f"  Error: {e}")
             print("  Start Chrome with: chrome.exe --remote-debugging-port=9222")
             return
-        
+
+        dom = YouTubeStudioDOM(driver)
         print("[OK] Connected to Chrome")
         
         # Layer 1: Navigate and filter
         print("\n[LAYER 1] Navigating to unlisted shorts...")
-        if not dom.navigate_to_shorts_with_filter("UNLISTED", channel_id):
+        if not dom.navigate_to_shorts_with_fallback(channel_id, "UNLISTED"):
             print("[ERROR] Failed to apply unlisted filter")
             return
         

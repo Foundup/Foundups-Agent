@@ -784,6 +784,20 @@ class AutoModeratorDAE:
 
         logger.info(f"[LOCK] Live stream detected - waiting for inbox clear (timeout: {timeout_seconds}s)")
 
+        # When a live stream is detected, ensure Edge channels (FoundUps → RavingANTIFA) have
+        # at least been ATTEMPTED once before handing off to live chat. Otherwise we can switch
+        # to live chat immediately (no active channel set yet) and starve those channels.
+        # WSP 50: never assume 'no active channel' means work is complete.
+        required_edge_channels = []
+        try:
+            required_edge_channels = [
+                os.getenv("FOUNDUPS_CHANNEL_ID", "").strip(),
+                os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip(),
+            ]
+            required_edge_channels = [c for c in required_edge_channels if c]
+        except Exception:
+            required_edge_channels = []
+
         while True:
             # If engagement is still running, wait it out.
             if self._comment_engagement_task and not self._comment_engagement_task.done():
@@ -797,6 +811,17 @@ class AutoModeratorDAE:
                     return
 
                 if not channel_id:
+                    # If we have required Edge channels, wait until we have at least one status update
+                    # for each (attempted), or until timeout.
+                    if required_edge_channels:
+                        missing = [c for c in required_edge_channels if c not in self._comment_engagement_status]
+                        if missing:
+                            logger.info(
+                                "[LOCK] No active channel yet; waiting for Edge comment attempt(s) before live chat. missing=%s",
+                                missing,
+                            )
+                            await asyncio.sleep(5)
+                            continue
                     logger.warning("[LOCK] No active channel for inbox-clear check; proceeding to live chat")
                     return
 
@@ -1274,6 +1299,8 @@ class AutoModeratorDAE:
         from pathlib import Path
 
         heartbeat_count = 0
+        # Track transitions so we can emit "state change" pulses for AI Overseer
+        last_edge_comments_cleared = False
 
         try:
             while True:
@@ -1340,6 +1367,36 @@ class AutoModeratorDAE:
                     jsonl_path = Path("logs/youtube_dae_heartbeat.jsonl")
                     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
 
+                    # Comment engagement summary (critical for "what next?" orchestration)
+                    foundups_id = os.getenv("FOUNDUPS_CHANNEL_ID", "").strip()
+                    raving_id = os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip()
+                    comment_status = getattr(self, "_comment_engagement_status", {}) or {}
+                    def _channel_summary(cid: str) -> dict:
+                        if not cid:
+                            return {"channel_id": "", "known": False}
+                        s = comment_status.get(cid, {}) or {}
+                        stats = s.get("stats", {}) or {}
+                        return {
+                            "channel_id": cid,
+                            "known": True,
+                            "all_processed": bool(s.get("all_processed", False)),
+                            "comments_processed": int(stats.get("comments_processed", 0) or 0),
+                            "errors": int(stats.get("errors", 0) or 0),
+                            "updated_at": float(s.get("updated_at", 0.0) or 0.0),
+                            "error": s.get("error"),
+                        }
+
+                    foundups_summary = _channel_summary(foundups_id)
+                    raving_summary = _channel_summary(raving_id)
+                    edge_comments_cleared = bool(
+                        foundups_summary.get("known")
+                        and raving_summary.get("known")
+                        and foundups_summary.get("all_processed")
+                        and raving_summary.get("all_processed")
+                        and not foundups_summary.get("error")
+                        and not raving_summary.get("error")
+                    )
+
                     heartbeat_data = {
                         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
                         "status": status,
@@ -1350,11 +1407,34 @@ class AutoModeratorDAE:
                         "uptime_seconds": round(uptime_seconds, 1),
                         "memory_mb": round(memory_mb, 2) if memory_mb else None,
                         "cpu_percent": round(cpu_percent, 2) if cpu_percent else None,
-                        "heartbeat_count": heartbeat_count
+                        "heartbeat_count": heartbeat_count,
+                        "comment_engagement": {
+                            "live_stream_pending": bool(getattr(self, "_live_stream_pending", False)),
+                            "live_chat_active": bool(getattr(self, "_live_chat_active", False)),
+                            "active_channel_id": getattr(self, "_comment_engagement_active_channel", None),
+                            "edge_comments_cleared": edge_comments_cleared,
+                            "foundups": foundups_summary,
+                            "ravingantifa": raving_summary,
+                        },
                     }
                     with open(jsonl_path, 'a', encoding='utf-8') as f:
                         json.dump(heartbeat_data, f)
                         f.write('\n')
+
+                    # Emit a one-time event when Edge comments become fully cleared.
+                    if edge_comments_cleared and not last_edge_comments_cleared:
+                        last_edge_comments_cleared = True
+                        event = {
+                            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                            "event": "edge_comments_cleared",
+                            "channels": [c for c in [foundups_id, raving_id] if c],
+                            "note": "FoundUps + RavingANTIFA all_processed=True; awaiting next action orchestration",
+                        }
+                        with open(jsonl_path, "a", encoding="utf-8") as f:
+                            json.dump(event, f)
+                            f.write("\n")
+                    if not edge_comments_cleared:
+                        last_edge_comments_cleared = False
 
                     # Log heartbeat every 10 pulses (every 5 minutes)
                     if heartbeat_count % 10 == 0:
@@ -1385,7 +1465,7 @@ class AutoModeratorDAE:
                                 bash_output = "".join(recent_log_lines)
 
                                 # Monitor daemon with autonomous fixing enabled
-                                skill_path = repo_root / "modules" / "communication" / "livechat" / "skills" / "youtube_daemon_monitor.json"
+                                skill_path = repo_root / "modules" / "communication" / "livechat" / "skillz" / "youtube_daemon_monitor.json"
 
                                 # Run in executor to avoid blocking async loop
                                 loop = asyncio.get_event_loop()

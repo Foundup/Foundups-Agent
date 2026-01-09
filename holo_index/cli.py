@@ -29,6 +29,7 @@ import re
 import logging
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add project root to path for imports
@@ -286,7 +287,10 @@ def main():
     parser.add_argument('--index-all', action='store_true', help='Index both code and WSP')
     parser.add_argument('--index-code', action='store_true', help='Index code (NAVIGATION.py)')
     parser.add_argument('--index-wsp', action='store_true', help='Index WSP documents')
-    parser.add_argument('--index-skills', action='store_true', help='Index SKILLz.md files for agent discovery (Qwen/Gemma/UITars)')
+    parser.add_argument('--index-skillz', dest='index_skills', action='store_true', help='Index SKILLz.md files for agent discovery (preferred)')
+    parser.add_argument('--index-skills', dest='index_skills', action='store_true', help='Legacy alias for --index-skillz')
+    parser.add_argument('--reindex-skills', dest='index_skills', action='store_true', help='Alias for --index-skillz (WRE automation)')
+    parser.add_argument('--reindex-skillz', dest='index_skills', action='store_true', help='Alias for --index-skillz')
     parser.add_argument('--wsp-path', type=str, nargs='*', help='Custom WSP paths to index')
     parser.add_argument('--code-index', action='store_true', help='Enable full code index mode: function indexing + inefficiency analysis + detailed mermaid diagrams')
     parser.add_argument('--dae-cubes', action='store_true', help='Enable DAE cube mapping')
@@ -310,6 +314,9 @@ def main():
     parser.add_argument('--verbose', action='store_true', help='Show detailed output including low-priority information')
     parser.add_argument('--no-advisor', action='store_true', help='Disable advisor (opt-out for 0102 agents)')
     parser.add_argument('--advisor-rating', choices=['useful', 'needs_more'], help='Provide feedback on advisor output')
+    parser.add_argument('--memory-feedback', type=str, help='Record memory card feedback (mem:id=good|noisy|missing, comma-separated)')
+    parser.add_argument('--memory-query', type=str, help='Query associated with memory feedback (optional)')
+    parser.add_argument('--memory-notes', type=str, help='Optional notes for memory feedback')
     parser.add_argument('--ack-reminders', action='store_true', help='Confirm advisor reminders were acted on')
     parser.add_argument('--adaptive', action='store_true', help='Enable adaptive learning processing (default: off for performance)')
     parser.add_argument('--quiet-root-alerts', action='store_true', help='Suppress root violation alerts')
@@ -339,6 +346,7 @@ def main():
     parser.add_argument('--module-analysis', action='store_true', help='Analyze modules for duplicates and health issues')
     parser.add_argument('--health-check', action='store_true', help='Run health analysis on system architecture')
     parser.add_argument('--performance-metrics', action='store_true', help='View HoloDAE effectiveness and performance scores')
+    parser.add_argument('--system-check', action='store_true', help='Run Holo system check and generate a report')
     parser.add_argument('--slow-mode', action='store_true', help='Enable recursive feedback with 2-3s delays')
     parser.add_argument('--pattern-memory', action='store_true', help='View learned intervention patterns from memory')
     parser.add_argument('--mcp-hooks', action='store_true', help='Inspect MCP connector health and registrations')
@@ -350,18 +358,60 @@ def main():
     args = parser.parse_args()
 
     verbose = bool(getattr(args, 'verbose', False))
+    search_active = bool(getattr(args, 'search', None))
 
     def vprint(message: str) -> None:
         if verbose:
-            safe_print(message)
+            if search_active:
+                logging.getLogger(__name__).debug(message)
+            else:
+                safe_print(message)
 
-    os.environ['HOLO_VERBOSE'] = '1' if verbose else '0'
-    
-    # Quiet third-party loggers when not verbose (prevents noise from chromadb, sentence_transformers, etc.)
-    if not verbose:
-        import logging
-        for logger_name in ['chromadb', 'chromadb.telemetry', 'sentence_transformers', 'httpx', 'httpcore', 'urllib3']:
-            logging.getLogger(logger_name).setLevel(logging.WARNING)
+    detector = None
+    agent_is_0102 = False
+    if ADVISOR_AVAILABLE and AgentEnvironmentDetector:
+        try:
+            detector = AgentEnvironmentDetector()
+            agent_is_0102 = detector.is_0102_agent()
+        except Exception:
+            detector = None
+    else:
+        agent_is_0102 = os.getenv("AGENT_MODE") == "0102" or os.getenv("HOLOINDEX_ADVISOR") == "always"
+
+    os.environ['HOLO_VERBOSE'] = '1' if (verbose and not agent_is_0102) else '0'
+    if agent_is_0102:
+        os.environ.setdefault("HOLO_SILENT", "1")
+
+    # Quiet loggers (0102 memory-first: suppress console noise)
+    quiet_level = None
+    if agent_is_0102:
+        quiet_level = logging.ERROR
+    elif not verbose:
+        quiet_level = logging.WARNING
+
+    if quiet_level is not None:
+        logging.getLogger().setLevel(quiet_level)
+        noisy_loggers = [
+            'chromadb',
+            'chromadb.telemetry',
+            'chromadb.telemetry.product.posthog',
+            'sentence_transformers',
+            'transformers',
+            'torch',
+            'httpx',
+            'httpcore',
+            'urllib3',
+            'posthog',
+            'holo_index',
+            'modules',
+            'holodae_activity',
+            # Suppress agent breadcrumb chatter in CLI output/TTS
+            'agent_0102',
+            'agent_0102::BREADCRUMB',
+            'agent_0102::ARBITRATION',
+        ]
+        for logger_name in noisy_loggers:
+            logging.getLogger(logger_name).setLevel(quiet_level)
     
     if args.offline:
         os.environ['HOLO_OFFLINE'] = '1'
@@ -431,8 +481,7 @@ def main():
     advisor = None
     should_run_advisor = False
 
-    if ADVISOR_AVAILABLE and AgentEnvironmentDetector:
-        detector = AgentEnvironmentDetector()
+    if ADVISOR_AVAILABLE and AgentEnvironmentDetector and detector:
         should_run_advisor = detector.should_run_advisor(args)
 
         # Log detection info if in debug mode
@@ -462,6 +511,30 @@ def main():
             telemetry_path = None
 
     holo = HoloIndex(ssd_path=args.ssd, quiet=not verbose)
+
+    def _safe_count(collection) -> int:
+        try:
+            return collection.count()
+        except Exception:
+            return 0
+
+    def _write_index_state(source: str) -> None:
+        try:
+            state_path = Path(args.ssd) / "indexes" / "index_state.json"
+            state_path.parent.mkdir(parents=True, exist_ok=True)
+            state = {
+                "last_indexed_at": datetime.now(timezone.utc).isoformat(),
+                "ssd_path": str(Path(args.ssd)),
+                "source": source,
+                "code_count": holo.get_code_entry_count(),
+                "wsp_count": holo.get_wsp_entry_count(),
+                "test_count": _safe_count(getattr(holo, "test_collection", None)),
+                "skillz_count": _safe_count(getattr(holo, "skill_collection", None)),
+            }
+            state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        except Exception as e:
+            if verbose:
+                safe_print(f"[WARN] Failed to write index state: {e}")
 
     index_code = args.index_code or args.index or args.index_all
     index_wsp = args.index_wsp or args.index or args.index_all
@@ -507,12 +580,14 @@ def main():
         indexing_awarded = True
     
     if indexing_awarded:
+        _write_index_state("manual_index")
         add_reward_event('index_refresh', 5, 'Refreshed indexes', {'query': args.search or ''})
 
     last_query = args.search or ''
     search_results = None
 
     # Check if indexes need automatic refresh (only if not explicitly indexing)
+    auto_refreshed = False
     if not (index_code or index_wsp or indexing_awarded):
         try:
             from modules.infrastructure.database.src.agent_db import AgentDB
@@ -555,6 +630,7 @@ def main():
                     duration = time.time() - start_time
                     db.record_index_refresh("code", duration, holo.get_code_entry_count())
                     vprint(f"[AUTO-REFRESH] Code index refreshed in {duration:.1f}s")
+                    auto_refreshed = True
                 if needs_wsp_refresh:
                     vprint("[AUTO-REFRESH] Refreshing WSP index...")
                     start_time = time.time()
@@ -562,6 +638,7 @@ def main():
                     duration = time.time() - start_time
                     db.record_index_refresh("wsp", duration, holo.get_wsp_entry_count())
                     vprint(f"[AUTO-REFRESH] WSP index refreshed in {duration:.1f}s")
+                    auto_refreshed = True
                 vprint("[SUCCESS] Automatic index refresh completed")
             else:
                 vprint("[FRESH] All indexes are up to date (< 1 hour old)")
@@ -569,6 +646,8 @@ def main():
         except Exception as e:
             safe_print(f"[WARN] Could not check index freshness: {e}")
             safe_print("[FALLBACK] Manual refresh: python holo_index.py --index-all")
+    if auto_refreshed:
+        _write_index_state("auto_refresh")
 
     # Phase 3: Initialize adaptive learning if available
     adaptive_orchestrator = None
@@ -1165,6 +1244,45 @@ def main():
                 'query': last_query
             })
 
+    memory_feedback = getattr(args, 'memory_feedback', None)
+    if memory_feedback:
+        def _parse_memory_feedback(raw: str) -> List[Tuple[str, str]]:
+            entries: List[Tuple[str, str]] = []
+            for chunk in raw.split(','):
+                token = chunk.strip()
+                if not token:
+                    continue
+                if '=' in token:
+                    mem_id, rating = token.split('=', 1)
+                elif ':' in token:
+                    mem_id, rating = token.rsplit(':', 1)
+                else:
+                    continue
+                mem_id = mem_id.strip()
+                rating = rating.strip().lower()
+                if rating not in {'good', 'noisy', 'missing'}:
+                    continue
+                entries.append((mem_id, rating))
+            return entries
+
+        feedback_query = args.memory_query or args.search or last_query or "unknown"
+        notes = args.memory_notes
+        entries = _parse_memory_feedback(memory_feedback)
+        if not entries:
+            safe_print("[WARN] No valid memory feedback entries parsed")
+        else:
+            try:
+                from modules.ai_intelligence.ai_overseer.src.holo_memory_sentinel import HoloMemorySentinel
+                sentinel = HoloMemorySentinel(project_root)
+                for mem_id, rating in entries:
+                    feedback_id = sentinel.record_memory_feedback(feedback_query, mem_id, rating, notes)
+                    if feedback_id:
+                        safe_print(f"[FEEDBACK] memory {mem_id} -> {rating} ({feedback_id})")
+                    else:
+                        safe_print(f"[FEEDBACK] memory {mem_id} -> {rating}")
+            except Exception as exc:
+                safe_print(f"[WARN] Memory feedback failed: {exc}")
+
     if reward_events:
         print("\n[POINTS] Session Summary:")
         for event, points, note in reward_events:
@@ -1439,6 +1557,27 @@ def main():
             safe_print(f"[ERROR] Performance metrics failed: {e}")
         return
 
+    if args.system_check:
+        safe_print("[SYSTEM-CHECK] Verifying Holo CLI wiring...")
+        try:
+            from holo_index.reports.holo_system_check import run_system_check, write_system_check_report
+            report = run_system_check(project_root)
+            output_dir = Path(__file__).parent / "reports"
+            output_path = write_system_check_report(report, output_dir)
+            summary = report.get("summary") or {}
+            safe_print(
+                "[SYSTEM-CHECK] Summary: ok {ok}, in_dev {in_dev}, missing {missing}, unwired {unwired}".format(
+                    ok=summary.get("ok", 0),
+                    in_dev=summary.get("in_dev", 0),
+                    missing=summary.get("missing", 0),
+                    unwired=summary.get("unwired", 0),
+                )
+            )
+            safe_print(f"[SYSTEM-CHECK] Report saved -> {output_path}")
+        except Exception as e:
+            safe_print(f"[ERROR] System check failed: {e}")
+        return
+
     if args.slow_mode:
         safe_print("[SLOW-MODE] Enabling recursive feedback with 2-3s delays...")
         safe_print("[SLOW-MODE] This mode is for training/observation - not production")
@@ -1524,12 +1663,13 @@ def main():
         return
 
     if not any([index_code, index_wsp, args.search, args.benchmark, args.start_holodae, args.stop_holodae, args.holodae_status, args.link_modules,
-                args.pattern_coach, args.module_analysis, args.health_check, args.performance_metrics, args.slow_mode,
-                args.pattern_memory, args.mcp_hooks, args.mcp_log, args.thought_log, args.monitor_work]):
+                args.pattern_coach, args.module_analysis, args.health_check, args.performance_metrics, args.system_check, args.slow_mode,
+                args.pattern_memory, args.mcp_hooks, args.mcp_log, args.thought_log, args.monitor_work, args.memory_feedback]):
         safe_print("\n[USAGE] Usage:")
         safe_print("  python holo_index.py --index-all             # Index NAVIGATION + WSP")
         safe_print("  python holo_index.py --index-code            # Index NAVIGATION only")
         safe_print("  python holo_index.py --index-wsp             # Index WSP docs")
+        safe_print("  python holo_index.py --index-skillz          # Index SKILLz wardrobe")
         safe_print("  python holo_index.py --check-module 'youtube_auth'  # WSP compliance check")
         safe_print("  python holo_index.py --search 'query'        # Search code + WSP guidance")
         safe_print("  python holo_index.py --search 'query' --limit 3")
@@ -1542,6 +1682,7 @@ def main():
         safe_print("  python holo_index.py --query-modules --module liberty_alert  # Query module docs (DB)")
         safe_print("  python holo_index.py --start-holodae         # Start autonomous HoloDAE monitoring")
         safe_print("  python holo_index.py --holodae-status        # Check HoloDAE status")
+        safe_print("  python holo_index.py --system-check          # Verify CLI wiring and emit report")
         safe_print("  python holo_index.py --benchmark             # Test SSD performance")
         safe_print("  python holo_index.py --organize-docs --index-all   # Refresh indexes and allow DocDAE auto-organization")
 

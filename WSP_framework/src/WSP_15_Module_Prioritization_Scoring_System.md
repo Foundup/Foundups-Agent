@@ -176,3 +176,28 @@ Potential improvements:
 4. **Integration with AgentDB**: Store evaluation history for pattern learning
 5. **Confidence calibration**: Better mapping of Qwen confidence to score adjustments 
 6. **Reusable Template Library (`skills.md`)**: Keep platform-agnostic prompt templates so Qwen/Grok/Claude/UI‑TARS can draft posts or docs consistently before we run MPS scoring.
+
+## 6. Memory Prioritization Scoring (MPS-M) (WSP 60)
+
+MPS-M adapts MPS for memory recall. It scores memory cards (WSP/README/ModLog/INTERFACE/generated) so HoloIndex and AI_overseer can surface the right memory first.
+
+### 6.1 Dimensions (Memory)
+
+-   **Complexity -> Reconstruction Cost**: How hard it is to re-derive.
+-   **Importance -> Correctness/Safety Impact**: Consequence if missing or wrong.
+-   **Deferability -> Time Sensitivity**: How quickly it goes stale.
+-   **Impact -> Decision Leverage**: How strongly it drives "what to do next."
+
+`MPS-M = C + I + D + Im` (range 4-20). Map P0-P4 the same as WSP 15.
+
+### 6.2 Trust Weighting
+
+Apply trust weighting to the MPS-M score before ordering:
+-   WSP > INTERFACE/README > ModLog > generated memory card
+
+`effective_score = MPS-M * trust_weight` (see WSP 60).
+
+### 6.3 Usage
+
+-   Run MPS for modules when planning changes.
+-   Run MPS-M for memory bundles when responding to queries (HoloIndex output contract).

@@ -163,9 +163,145 @@ get_voice_router() -> LiveChatVoiceRouter
 ```
 Get or create singleton voice router instance.
 
+---
+
+# PHASE 2: BATCH TRANSCRIPTION (Sprint 6)
+
+## TranscriptSegment
+```python
+TranscriptSegment(
+    video_id: str,        # YouTube video ID
+    title: str,           # Video title
+    timestamp_sec: float, # Position in video (seconds)
+    end_sec: float,       # End of segment
+    text: str,            # Transcribed text
+    confidence: float,    # STT confidence (0-1)
+    url: str,             # Deep link URL with timestamp
+)
+```
+
+## BatchTranscriber
+```python
+transcriber = BatchTranscriber(
+    model_size: str = "base",      # tiny, base, small, medium, large-v3
+    device: str = "cpu",           # cpu or cuda
+    output_dir: Optional[str] = None,  # Default: memory/transcripts
+)
+```
+
+### transcribe_video
+```python
+transcribe_video(
+    video_id: str,
+    title: str,
+    audio_chunks: Iterable[AudioChunk],
+    chunk_duration_sec: float = 30.0
+) -> Generator[TranscriptSegment, None, None]
+```
+Transcribe a video's audio chunks to text segments with timestamps.
+
+### transcribe_channel
+```python
+transcribe_channel(
+    channel_id: str,
+    max_videos: int = 10,
+    cache_dir: Optional[str] = None
+) -> Generator[TranscriptSegment, None, None]
+```
+Transcribe all videos from a YouTube channel. Uses VideoArchiveExtractor from youtube_live_audio.
+
+### save_transcripts_jsonl
+```python
+save_transcripts_jsonl(
+    segments: Iterable[TranscriptSegment],
+    filename: str
+) -> int
+```
+Save transcript segments to JSONL file. Returns number of segments saved.
+
+### get_progress
+```python
+get_progress(channel_id: str) -> dict
+```
+Get transcription progress: `{total_videos, completed_videos, total_segments, status}`.
+
+## Convenience Function
+```python
+get_batch_transcriber(
+    model_size: str = "base",
+    device: str = "cpu",
+    output_dir: Optional[str] = None
+) -> BatchTranscriber
+```
+
+---
+
+# PHASE 2: TRANSCRIPT INDEX (Sprint 7)
+
+## SearchResult
+```python
+SearchResult(
+    video_id: str,        # YouTube video ID
+    title: str,           # Video title
+    timestamp_sec: float, # Position in video
+    end_sec: float,       # End of segment
+    text: str,            # Transcript text
+    confidence: float,    # STT confidence (0-1)
+    url: str,             # Deep link URL
+    score: float,         # Semantic similarity score (0-1)
+)
+```
+
+## VideoTranscriptIndex
+```python
+index = VideoTranscriptIndex(
+    ssd_path: Optional[str] = None,      # Default: E:/HoloIndex
+    collection_name: str = "video_transcripts"
+)
+```
+
+### index_transcript
+```python
+index_transcript(
+    video_id, title, timestamp_sec, end_sec, text, confidence, url
+) -> bool
+```
+Index a single transcript segment into ChromaDB.
+
+### index_from_jsonl
+```python
+index_from_jsonl(jsonl_path: str) -> int
+```
+Index all transcripts from JSONL file. Returns count indexed.
+
+### search
+```python
+search(
+    query: str,
+    limit: int = 10,
+    min_score: float = 0.3
+) -> List[SearchResult]
+```
+Semantic search across transcripts. Returns results with deep links.
+
+### get_stats / clear
+```python
+get_stats() -> dict     # {collection, segment_count, ssd_path}
+clear() -> bool         # Clear all indexed transcripts
+```
+
+## Convenience Functions
+```python
+get_transcript_index(ssd_path, collection_name) -> VideoTranscriptIndex
+search_012_transcripts(query, limit) -> List[dict]  # MCP-compatible
+```
+
 ## Notes
 - Uses faster-whisper (CTranslate2 optimized, 4x faster)
 - Lazy model loading (loads on first use)
 - VAD filter enabled (skips silence automatically)
 - Route CommandEvent into LiveChat command handling
 - PQN transcripts stored in `memory/voice_transcripts.jsonl`
+- **Batch transcripts** stored in `memory/transcripts/` (JSONL)
+- **Transcript index** stored in `E:/HoloIndex/vectors/` (ChromaDB)
+- Deep link URLs enable "What did 012 say about X?" → `https://youtu.be/VIDEO_ID?t=TIMESTAMP`

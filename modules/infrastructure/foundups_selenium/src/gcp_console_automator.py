@@ -55,7 +55,7 @@ class GCPConsoleAutomator:
             skill_path: Path to gcp_console_automation.json skill definition
         """
         if skill_path is None:
-            skill_path = Path(__file__).parents[3] / "communication" / "livechat" / "skills" / "gcp_console_automation.json"
+            skill_path = Path(__file__).parents[3] / "communication" / "livechat" / "skillz" / "gcp_console_automation.json"
 
         self.skill_path = skill_path
         self.skill_config = self._load_skill_config()

@@ -1,5 +1,42 @@
 # HoloIndex Package ModLog
 
+## [2026-01-05] Holo System Check (CLI Wiring Report)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 70 (Status Reporting), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - system check report added
+
+### Problem
+012 needed a concise, machine-readable way to verify that HoloDAE menu subroutines are wired and discoverable.
+
+### Fixes
+- `holo_index/reports/holo_system_check.py`: added a lightweight wiring audit + report writer.
+- `holo_index/cli.py`: new `--system-check` flag to run the audit and emit a report.
+- `holo_index/qwen_advisor/ui/menu_system.py`: added System Check to the menu and updated prompt.
+- `holo_index/CLI_REFERENCE.md`: documented the new flag and menu snapshot.
+- `holo_index/skillz/`: moved MPS SKILLz into a top-level skillz wardrobe and updated indexing patterns.
+- `holo_index/cli.py`: added `--index-skillz` (canonical) plus aliases for `--index-skills` and `--reindex-skills`.
+
+## [2026-01-04] Memory-First Output Bundles (WSP 60/87)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 60 (Module Memory), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - memory bundles lead output
+
+### Problem
+0102 needed memory recall before results to avoid re-derivation and noise.
+
+### Fixes
+- `holo_index/output/agentic_output_throttler.py`: build and render `[MEMORY]` bundles from WSP hits and module docs, placed before results.
+- Memory cards keep summaries short and machine-first; metrics stay silent by default.
+- `holo_index/core/holo_index.py`: allow `--doc-type` WSP filters (e.g., `wsp_protocol`) to search the WSP index.
+- `holo_index/cli.py`: suppress pre-output freshness chatter during searches so `[MEMORY]` is always first.
+- `holo_index/cli.py`: add `--memory-feedback` hooks to record per-card feedback via HoloMemorySentinel + FeedbackLearner.
+- `holo_index/cli.py`: ensure `--memory-feedback` runs without triggering the usage banner.
+- `holo_index/CLI_REFERENCE.md`: document memory feedback flags.
+- `holo_index/qwen_advisor/ui/menu_system.py`: refresh the HoloDAE menu (stop/status/memory feedback) and remove duplicate start entry.
+- `holo_index/CLI_REFERENCE.md`: update the menu snapshot and observability table for the new flags.
+- `holo_index/tests/test_memory_output_contract.py`: enforce `[MEMORY]` ordering before results.
+- `holo_index/tests/test_doc_type_filtering.py`: lock doc-type filtering behavior.
+
 ## [2026-01-02] Module Scoring Subroutine (WSP 15/37)
 **Agent**: 0102 Codex  
 **WSP References**: WSP 15 (MPS), WSP 37 (Roadmap Scoring), WSP 22 (ModLog Sync)  
@@ -2344,7 +2381,7 @@ Per WSP 50 (Pre-Action Verification) and user feedback (Option B):
 | File | Lines Changed | Change Type | WSP |
 |------|---------------|-------------|-----|
 | holo_index/core/holo_index.py | 120-124 | Uncommented import | WSP 50 |
-| modules/infrastructure/wre_core/skills/wre_skills_loader.py | 58 | Registry path v1→v2 | WSP 96 |
+| modules/infrastructure/wre_core/skillz/wre_skills_loader.py | 58 | Registry path v1→v2 | WSP 96 |
 
 ### Known Operational Issues (Documented Caveats)
 
@@ -4976,3 +5013,7 @@ The complete DAE Memory System has been implemented:
 - Extended the HoloDAE menu with MCP observability options (hook map + action log) so 012 can monitor ricDAE and other connectors.
 - Added MCP activity tracking inside the coordinator with telemetry + breadcrumb logging and surfaced a hook health dashboard.
 - Covered the new behaviour with tests that assert ricDAE activity is captured and the helper outputs render safely.
+
+## [2026-01-04] - Reduce CLI noise for 0102 sessions (breadcrumb suppression)
+- Suppressed `agent_0102::*` breadcrumb loggers in `holo_index/cli.py` when running in quiet/0102 mode, preventing extra INFO lines from polluting Holo output and downstream TTS.
+- Re-validated via `python holo_index.py --search "tars like heart reply" --limit 5` producing only throttler sections (no breadcrumb chatter).

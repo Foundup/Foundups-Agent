@@ -216,7 +216,7 @@ This migration enables Sprint A2 (YouTube Actions) and Sprint V5 (RealtimeCommen
 - **GCP Console Automator**: New `src/gcp_console_automator.py` for autonomous cloud infrastructure tasks
   - Class: `GCPConsoleAutomator` - FoundUpsDriver + Gemini Vision automation
   - Methods: `create_secret_manager_secret()`, `create_cloud_build_trigger()`, `setup_gotjunk_deployment()`
-  - Skills Integration: Reads from `modules/communication/livechat/skills/gcp_console_automation.json`
+  - Skills Integration: Reads from `modules/communication/livechat/skillz/gcp_console_automation.json`
   - Vision DAE Integration: Screenshots saved to `docs/session_backups/gcp_automation/screenshots/`
   - Result Tracking: `AutomationResult` dataclass with success status, steps completed, telemetry
 
@@ -350,3 +350,29 @@ This module now serves as the **execution engine** for AI Overseer infrastructur
 **Current Status**: Sprint 2 complete - Telemetry storage operational
 **Test Coverage**: 17/17 passing (telemetry_store), additional driver tests in test_foundups_driver.py
 **Next Sprint**: MCP Interface Stub (Sprint 3)
+
+---
+
+## 2026-01-04 — Dynamic Randomness Mode + ZERO1 Profile Hook
+
+**WSP References**: WSP 49 (Platform Integration Safety), WSP 77 (Agent Coordination), WSP 91 (Observability), WSP 22 (Change tracking)
+
+### Problem
+Fixed-percent action gating creates stable signatures (e.g., 85% like rate) and makes behavior easier to fingerprint.
+
+### Solution
+- Updated `src/human_behavior.py` to support **dice-on-dice** action gating by default:
+  - The probability itself is re-sampled from an entropy-backed distribution each decision.
+  - **Fixed mode** remains available for deterministic testing.
+- Added 0102 behavior interface hook:
+  - `YT_0102_BEHAVIOR_INTERFACE=0102` enables higher variability and rare pattern-breakers.
+
+### Controls
+```bash
+YT_ACTION_RANDOMNESS_MODE=dynamic          # default
+YT_ACTION_RANDOMNESS_MODE=fixed            # deterministic
+YT_0102_BEHAVIOR_INTERFACE=0102            # recommended
+
+# Legacy name (still supported)
+YT_BEHAVIOR_PROFILE=0102
+```

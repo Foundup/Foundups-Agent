@@ -233,7 +233,7 @@ async def diagnose_edge():
     # Don't close driver - leave it for inspection
     print("ℹ️ Driver left open for manual inspection")
     print("ℹ️ To test full processing, run:")
-    print("   python -m modules.communication.video_comments.skills.tars_like_heart_reply.run_skill --browser-port 9223 --channel UCSNTUXjAgpd4sgWYP0xoJgw --max-comments 1")
+    print("   python -m modules.communication.video_comments.skillz.tars_like_heart_reply.run_skill --browser-port 9223 --channel UCSNTUXjAgpd4sgWYP0xoJgw --max-comments 1")
 
 
 if __name__ == "__main__":

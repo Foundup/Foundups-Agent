@@ -54,11 +54,11 @@ NEED_TO = {
     "coordinate qwen and gemma agents": "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py:WSPOrchestrator.route_to_agent()",
     "mcp server management": "modules/infrastructure/mcp_manager/src/mcp_manager.py:MCPManager",
     "auto-start mcp servers": "modules/infrastructure/mcp_manager/src/mcp_manager.py:MCPManager.ensure_server_running()",
-    "wre skills loading": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader",
-    "progressive disclosure for skills": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
-    "skillz wardrobe": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader - Wardrobe Skills = advanced prompting system (see WSP 96)",
-    "wardrobe skills": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
-    "load skillz": "modules/infrastructure/wre_core/skills/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
+    "wre skills loading": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader",
+    "progressive disclosure for skills": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
+    "skillz wardrobe": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader - Wardrobe Skills = advanced prompting system (see WSP 96)",
+    "wardrobe skills": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
+    "load skillz": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
     "wre skillz protocol": "WSP_framework/src/WSP_96_WRE_Skills_Wardrobe_Protocol.md - Micro Chain-of-Thought paradigm",
 
     # WSP Compliance & Pattern Memory
@@ -127,15 +127,71 @@ NEED_TO = {
     "vision automation sprints": "docs/VISION_AUTOMATION_SPRINT_MAP.md - Vision automation roadmap (A1-A5, V1-V6)",
 
     # Testing & Validation (NEW - 2025-12-05)
-    "test youtube studio vision": "modules/communication/video_comments/skills/qwen_studio_engage/tests/ - Vision automation test suite",
-    "test qwen studio engage": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_qwen_studio_engage.py - Full autonomous flow test",
-    "test gemini vision": "modules/communication/video_comments/skills/qwen_studio_engage/tests/test_gemini_simple.py - Gemini Vision button detection",
+    "test youtube studio vision": "modules/communication/video_comments/skillz/qwen_studio_engage/tests/ - Vision automation test suite",
+    "test qwen studio engage": "modules/communication/video_comments/skillz/qwen_studio_engage/tests/test_qwen_studio_engage.py - Full autonomous flow test",
+    "test gemini vision": "modules/communication/video_comments/skillz/qwen_studio_engage/tests/test_gemini_simple.py - Gemini Vision button detection",
 
     # WRE Skills - Autonomous Engagement (NEW - 2025-12-05)
-    "autonomous youtube engagement": "modules/communication/video_comments/skills/qwen_studio_engage/ - Agentic Studio comment engagement",
-    "youtube studio skillz": "modules/communication/video_comments/skills/qwen_studio_engage/SKILL.md - Qwen+Gemma autonomous engagement",
-    "studio comment like reply": "modules/communication/video_comments/skills/qwen_studio_engage/executor.py - Vision-based engagement execution",
-    "youtube studio ui reference": "modules/communication/video_comments/skills/qwen_studio_engage/VISION_UI_REFERENCE.md - Precise Vision targeting",
+    "autonomous youtube engagement": "modules/communication/video_comments/skillz/qwen_studio_engage/ - Agentic Studio comment engagement",
+    "youtube studio skillz": "modules/communication/video_comments/skillz/qwen_studio_engage/SKILL.md - Qwen+Gemma autonomous engagement",
+    "studio comment like reply": "modules/communication/video_comments/skillz/qwen_studio_engage/executor.py - Vision-based engagement execution",
+    "youtube studio ui reference": "modules/communication/video_comments/skillz/qwen_studio_engage/VISION_UI_REFERENCE.md - Precise Vision targeting",
+
+    # YouTube Live Audio (Phase 1: Loopback, Phase 2: Archive) - NEW 2026-01-07
+    "youtube live audio capture": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:SystemAudioCapture",
+    "system audio loopback": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:SystemAudioCapture - WASAPI loopback capture",
+    "youtube audio source": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:YouTubeLiveAudioSource",
+    "stream audio chunks": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:YouTubeLiveAudioSource.stream_audio_chunks()",
+    "video archive extractor": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:VideoArchiveExtractor",
+    "list channel videos": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:VideoArchiveExtractor.list_channel_videos() - 0 API quota",
+    "extract audio from video": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:VideoArchiveExtractor.extract_audio()",
+    "stream video chunks": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:VideoArchiveExtractor.stream_video_chunks()",
+    "audio chunk timestamp": "modules/platform_integration/youtube_live_audio/src/youtube_live_audio.py:AudioChunk.timestamp_ms - Video position for deep linking",
+
+    # Voice Command Ingestion (STT + Batch Transcription) - NEW 2026-01-07
+    "faster whisper stt": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:FasterWhisperSTT",
+    "transcribe audio whisper": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:FasterWhisperSTT.transcribe()",
+    "voice trigger detection": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:TriggerDetector",
+    "detect 0102 trigger": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:TriggerDetector.detect() - Handles '0102' variations",
+    "voice command ingestion": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:VoiceCommandIngestion",
+    "batch transcriber": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:BatchTranscriber",
+    "transcribe channel videos": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:BatchTranscriber.transcribe_channel()",
+    "transcript segment": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:TranscriptSegment - video_id, timestamp, text, url",
+    "save transcripts jsonl": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:BatchTranscriber.save_transcripts_jsonl()",
+    "what did 012 say": "modules/communication/voice_command_ingestion/src/voice_command_ingestion.py:TranscriptSegment.url - Deep link to exact video moment",
+
+    # Transcript Index (Sprint 7-8) - Semantic Search for Digital Twin - NEW 2026-01-07
+    "video transcript index": "modules/communication/voice_command_ingestion/src/transcript_index.py:VideoTranscriptIndex",
+    "transcript semantic search": "modules/communication/voice_command_ingestion/src/transcript_index.py:VideoTranscriptIndex.search()",
+    "index transcripts jsonl": "modules/communication/voice_command_ingestion/src/transcript_index.py:VideoTranscriptIndex.index_from_jsonl()",
+    "search 012 transcripts": "modules/communication/voice_command_ingestion/src/transcript_index.py:search_012_transcripts() - MCP-compatible",
+    "digital twin query": "modules/communication/voice_command_ingestion/src/transcript_index.py:search_012_transcripts() - What did 012 say about X?",
+
+    # YouTube Channel Indexing (Menu Integration) - NEW 2026-01-08
+    "youtube indexing": "modules/communication/voice_command_ingestion/scripts/index_channel.py:index_channel()",
+    "index youtube channel": "modules/communication/voice_command_ingestion/scripts/index_channel.py:index_channel(channel_key, max_videos)",
+    "index move2japan": "modules/communication/voice_command_ingestion/scripts/index_channel.py:index_channel('move2japan')",
+    "index undaodu": "modules/communication/voice_command_ingestion/scripts/index_channel.py:index_channel('undaodu')",
+    "index foundups": "modules/communication/voice_command_ingestion/scripts/index_channel.py:index_channel('foundups')",
+    "youtube indexing menu": "modules/communication/voice_command_ingestion/scripts/index_channel.py:run_indexing_menu() - main.py option 1.8",
+    "search video transcripts": "modules/communication/voice_command_ingestion/scripts/index_channel.py:search_transcripts(query)",
+    # Video Indexer (Multimodal Content Intelligence) - NEW 2026-01-08
+    "video indexer": "modules/ai_intelligence/video_indexer/src/video_indexer.py:VideoIndexer",
+    "index video content": "modules/ai_intelligence/video_indexer/src/video_indexer.py:VideoIndexer.index_video()",
+    "index channel videos": "modules/ai_intelligence/video_indexer/src/video_indexer.py:VideoIndexer.index_channel()",
+    "search video content": "modules/ai_intelligence/video_indexer/src/video_indexer.py:VideoIndexer.search()",
+    "audio analysis diarization": "modules/ai_intelligence/video_indexer/src/audio_analyzer.py:AudioAnalyzer",
+    "extract video quotes": "modules/ai_intelligence/video_indexer/src/audio_analyzer.py:AudioAnalyzer.extract_quotes()",
+    "identify video topics": "modules/ai_intelligence/video_indexer/src/audio_analyzer.py:AudioAnalyzer.identify_topics()",
+    "visual frame analysis": "modules/ai_intelligence/video_indexer/src/visual_analyzer.py:VisualAnalyzer",
+    "detect video shots": "modules/ai_intelligence/video_indexer/src/visual_analyzer.py:VisualAnalyzer.detect_shots()",
+    "extract keyframes": "modules/ai_intelligence/video_indexer/src/visual_analyzer.py:VisualAnalyzer.extract_keyframes()",
+    "multimodal alignment": "modules/ai_intelligence/video_indexer/src/multimodal_aligner.py:MultimodalAligner",
+    "align audio visual moments": "modules/ai_intelligence/video_indexer/src/multimodal_aligner.py:MultimodalAligner.align_moments()",
+    "detect video highlights": "modules/ai_intelligence/video_indexer/src/multimodal_aligner.py:MultimodalAligner.detect_highlights()",
+    "generate clip candidates": "modules/ai_intelligence/video_indexer/src/clip_generator.py:ClipGenerator.generate_candidates()",
+    "score viral potential": "modules/ai_intelligence/video_indexer/src/clip_generator.py:ClipGenerator._score_virality()",
+    "video index storage": "modules/ai_intelligence/video_indexer/src/video_index_store.py:VideoIndexStore",
 }
 
 # === MODULE_GRAPH: Module Relationships ===
@@ -169,7 +225,7 @@ MODULE_GRAPH = {
         # Infrastructure flows
         ("route_to_agent", "modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py:route_to_agent()"),
         ("ensure_mcp_server", "modules/infrastructure/mcp_manager/src/mcp_manager.py:ensure_server_running()"),
-        ("load_skill_on_demand", "modules/infrastructure/wre_core/skills/wre_skills_loader.py:load_skill_on_demand()"),
+        ("load_skill_on_demand", "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:load_skill_on_demand()"),
     ],
 
     "module_relationships": {

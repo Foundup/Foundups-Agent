@@ -31,7 +31,10 @@ def run_holo_request(holo, args, advisor=None) -> Dict[str, Any]:
     # QWEN ROUTING: Route through orchestrator for intelligent filtering if available
     qwen_orchestrator = None
     try:
-        from .qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+        # NOTE: cli/ is a subpackage; qwen_advisor is a top-level holo_index package.
+        # The previous relative import pointed at a non-existent holo_index.cli.qwen_advisor,
+        # causing orchestrator bypass and noisier output.
+        from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
         qwen_orchestrator = QwenOrchestrator()
         results = holo.search(args.search, limit=args.limit, doc_type_filter=args.doc_type)
 

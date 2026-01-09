@@ -59,7 +59,7 @@ def test_witness_loop_option_a():
         print(f"  {i}. {line[:120]}...")
 
     # Skill path
-    skill_path = repo_root / "modules/communication/livechat/skills/youtube_daemon_monitor.json"
+    skill_path = repo_root / "modules/communication/livechat/skillz/youtube_daemon_monitor.json"
     print(f"\n[SKILL] Loading skill: {skill_path.name}")
     print(f"  Location: {skill_path.relative_to(repo_root)}")
 
@@ -157,7 +157,7 @@ def test_unicode_pattern_detection():
         ("Quota exceeded", "quota_exhausted"),
     ]
 
-    skill_path = repo_root / "modules/communication/livechat/skills/youtube_daemon_monitor.json"
+    skill_path = repo_root / "modules/communication/livechat/skillz/youtube_daemon_monitor.json"
 
     print("\n[TEST] Testing individual patterns:")
     for i, (test_line, expected_pattern) in enumerate(test_patterns, 1):

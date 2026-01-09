@@ -22,20 +22,25 @@ SUPPORT SYSTEMS (Diagnostics)
 8. [BOT] LLM Advisor (with search)                 | --llm-advisor
 
 CONTINUOUS OBSERVABILITY
-9. [EYE] Start Monitoring                          | --start-holodae
-10. [COG] Chain-of-Thought Log                     | --thought-log
-11. [SLOW] Slow Mode                               | --slow-mode
-12. [MEMORY] Pattern Memory                        | --pattern-memory
+9. [EYE] Stop Monitoring                           | --stop-holodae
+10. [STAT] HoloDAE Status                          | --holodae-status
+11. [COG] Chain-of-Thought Log                     | --thought-log
+12. [SLOW] Slow Mode                               | --slow-mode
+13. [MEMORY] Pattern Memory                        | --pattern-memory
+14. [FEEDBACK] Memory Feedback (per card)          | --memory-feedback
 
 MCP RESEARCH BRIDGE
-13. [HOOK] MCP Hook Map                            | --mcp-hooks
-14. [LOG] MCP Action Log                           | --mcp-log
+15. [HOOK] MCP Hook Map                            | --mcp-hooks
+16. [LOG] MCP Action Log                           | --mcp-log
 
 SYSTEM CONTROLS
 17. [PUBLISH] Work Publisher (Auto Git/Social)     | --monitor-work
 
 QWEN/GEMMA AUTONOMOUS TRAINING
 18. [UTF8] UTF-8 Fix (Autonomous Remediation)      | main.py --training-command utf8_fix --targets <scope>
+
+VERIFICATION
+19. [CHECK] System Check                           | --system-check
 
 98. Exit
 ------------------------------------------------------------
@@ -67,9 +72,12 @@ QWEN/GEMMA AUTONOMOUS TRAINING
 | Tag | Skill | CLI Flag | Primary Modules | Output / Notes |
 | --- | --- | --- | --- | --- |
 | `[EYE]` | Start Monitoring | `--start-holodae` | `holo_index/qwen_advisor/autonomous_holodae.py`, `holo_index/qwen_advisor/holodae_coordinator.py` | Launches autonomous monitoring loop (similar to other DAEs) with breadcrumb logging and adaptive throttling. |
+| `[EYE]` | Stop Monitoring | `--stop-holodae` | `holo_index/qwen_advisor/autonomous_holodae.py` | Stops the monitoring loop and exits cleanly. |
+| `[STAT]` | HoloDAE Status | `--holodae-status` | `holo_index/qwen_advisor/holodae_coordinator.py` | Prints current monitoring state, uptime, and watched file count. |
 | `[COG]` | Chain-of-Thought Log | `--thought-log` | `holo_index/adaptive_learning/breadcrumb_tracer.py`, `holo_index/qwen_advisor/chain_of_thought_logger.py` | Streams recent breadcrumb events; currently prints initialization cues and is ready for richer diff output. |
 | `[SLOW]` | Slow Mode | `--slow-mode` | `holo_index/cli.py` (env `HOLODAE_SLOW_MODE`) | Forces 2-3s delays so 012 can observe recursive feedback loops (training / demo only). |
 | `[MEMORY]` | Pattern Memory | `--pattern-memory` | `modules/infrastructure/wre_core/wre_master_orchestrator.py` | Dumps stored intervention patterns Gemma classified as reusable; helpful before new enhancements. |
+| `[FEEDBACK]` | Memory Feedback | `--memory-feedback` | `modules/ai_intelligence/ai_overseer/src/holo_memory_sentinel.py` | Records per-card feedback (good/noisy/missing) into sentinel logs + feedback learner. |
 
 ## MCP Research Bridge
 | Tag | Skill | CLI Flag | Primary Modules | Output / Notes |
@@ -82,7 +90,12 @@ QWEN/GEMMA AUTONOMOUS TRAINING
 | --- | --- | --- | --- | --- |
 | `[PUBLISH]` | Work Publisher | `--monitor-work` | `modules/ai_intelligence/work_completion_publisher/src/monitoring_service.py` | Starts the monitoring daemon that auto-publishes finished work (git + social), wired through MPS scoring. |
 
-*Open slots*: Menu slots 15 (PID Detective) and 16 (Execution Log Analyzer) are still TODO—no CLI entry yet.
+## Verification
+| Tag | Skill | CLI Flag | Primary Modules | Output / Notes |
+| --- | --- | --- | --- | --- |
+| `[CHECK]` | System Check | `--system-check` | `holo_index/reports/holo_system_check.py` | Runs a wiring audit of CLI flags and emits a concise report for 012/0102 review. |
+
+*Note*: PID Detective and Execution Log Analyzer are not wired to CLI yet; keep them in the additional skills list until flags exist.
 
 ## Qwen/Gemma Autonomous Training
 | Tag | Skill | Invocation | Primary Modules | Output / Notes |
@@ -94,10 +107,12 @@ Other training verbs: `utf8_scan`, `utf8_summary`, and `batch` (IdleAutomation t
 ## Additional Skills & Utilities Worth Surfacing
 - `[DOC-LINK]` `--link-modules`, `--list-modules`, `--wsp` — managed by `holo_index/qwen_advisor/module_doc_linker.py` for doc ↔ module cohesion.
 - `[INDEX]` `--dae-cubes`, `--code-index`, `--function-index`, `--code-index-report` — deep code index flows from `holo_index/reports/codeindex_reporter.py`.
+- `[SKILLz]` `--index-skillz` (aliases: `--index-skills`, `--reindex-skills`) — rebuilds the SKILLz wardrobe index for agent discovery.
 - `[DOC-GUARD]` `--docs-file`, `--audit-docs`, `--check-wsp-docs`, `--fix-ascii`, `--rollback-ascii` — documentation guardians driven by `holo_index/qwen_advisor/telemetry.py` and helpers under `holo_index/utils`.
 - `[SUPPORT]` `--support`, `--diagnose`, `--troubleshoot` — quick recipes that bundle multiple skills for recurring incidents.
+- `[CHECK]` `--system-check` — quick wiring audit for HoloDAE menu flags, writes a report under `holo_index/reports/`.
 - `[LIFECYCLE]` `--stop-holodae`, `--holodae-status` — lifecycle controls for the monitoring loop.
-- `[FEEDBACK]` `--advisor-rating`, `--ack-reminders`, `--no-advisor` — feedback hooks that tune advisor behavior and log compliance actions.
+- `[FEEDBACK]` `--advisor-rating`, `--ack-reminders`, `--memory-feedback`, `--memory-query`, `--memory-notes`, `--no-advisor` — feedback hooks that tune advisor/memory behavior and log compliance actions.
 - `[OFFLINE]` `--offline` — disable model downloads and auto-install; falls back to lexical search when embeddings are unavailable.
 - `[SCORE]` auto module scoring — triggered on queries mentioning priority/roadmap/MPS; uses WSP 15/37 scoring data.
 
@@ -108,6 +123,7 @@ Other training verbs: `utf8_scan`, `utf8_summary`, and `batch` (IdleAutomation t
 - `holo_index/module_health/` — size/structure/dependency auditors invoked by module analysis and health checks.
 - `holo_index/adaptive_learning/` — breadcrumb tracer, collaboration signaling, adaptive response optimizer.
 - `holo_index/missions/` — MCP-exposed missions for specialized data pulls (e.g., Selenium run history).
+- `holo_index/skillz/` — HoloIndex SKILLz wardrobe (MPS evaluation prompts, WSP 95).
 - `modules/ai_intelligence/work_completion_publisher/` — work monitoring + auto-publish subsystem used by skill #17.
 - `modules/ai_intelligence/training_system/` — training command bus powering UTF-8 remediation and future autonomous workflows.
 

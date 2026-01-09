@@ -133,7 +133,7 @@ def layer2_navigate_to_edit(driver) -> dict:
     # L2.5: Enhance title/description with FFCPLN SKILLz
     logger.info("[L2.5] Enhancing title with FFCPLN SKILLz...")
     try:
-        from modules.platform_integration.youtube_shorts_scheduler.skills.ffcpln_title_enhance.executor import (
+        from modules.platform_integration.youtube_shorts_scheduler.skillz.ffcpln_title_enhance.executor import (
             FFCPLNTitleEnhanceSkill, SkillContext
         )
         skill = FFCPLNTitleEnhanceSkill()
