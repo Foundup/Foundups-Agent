@@ -17,8 +17,8 @@
 Refactored MetricsAppender into proper WSP-compliant module structure.
 
 **Previous Location** (VIOLATION):
-- `modules/infrastructure/wre_core/skills/metrics_append.py`
-- Problems: In `/skills/` subdirectory, no module structure, mixed with skill templates
+- `modules/infrastructure/wre_core/skillz/metrics_append.py`
+- Problems: In `/skillz/` subdirectory, no module structure, mixed with skill templates
 
 **New Location** (COMPLIANT):
 - `modules/infrastructure/metrics_appender/`

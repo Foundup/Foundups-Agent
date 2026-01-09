@@ -138,7 +138,7 @@ def main():
     # Test 11: comment_engagement_dae.py uses port 9222
     print("\n[TEST 11] comment_engagement_dae.py uses port 9222...")
     results.append(check_code_pattern(
-        "modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py",
+        "modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py",
         'CHROME_PORT = int(os.getenv("FOUNDUPS_CHROME_PORT", "9222"))',
         "CHROME_PORT 9222 configured in comment_engagement_dae.py"
     ))

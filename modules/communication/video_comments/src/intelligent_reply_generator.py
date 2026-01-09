@@ -219,19 +219,19 @@ except Exception:
 
 # Phase 3O-3R Sprint 5: Skill-based reply routing (replaces lines 1017-1056)
 try:
-    from modules.communication.video_comments.skills.skill_0_maga_mockery import (
+    from modules.communication.video_comments.skillz.skill_0_maga_mockery import (
         MagaMockerySkill,
         SkillContext as Skill0Context
     )
-    from modules.communication.video_comments.skills.skill_1_regular_engagement import (
+    from modules.communication.video_comments.skillz.skill_1_regular_engagement import (
         RegularEngagementSkill,
         SkillContext as Skill1Context
     )
-    from modules.communication.video_comments.skills.skill_2_moderator_appreciation import (
+    from modules.communication.video_comments.skillz.skill_2_moderator_appreciation import (
         ModeratorAppreciationSkill,
         SkillContext as Skill2Context
     )
-    from modules.communication.video_comments.skills.skill_3_old_comment_engagement import (
+    from modules.communication.video_comments.skillz.skill_3_old_comment_engagement import (
         OldCommentEngagementSkill,
         SkillContext as Skill3Context
     )
@@ -673,6 +673,42 @@ VARIATION GUIDANCE:
         is_old_comment = comment_age_days is not None and comment_age_days > 7
         if is_old_comment:
             logger.info(f"[SIGNATURE] 📅 Old comment ({comment_age_days} days) - skipping holiday suffix")
+
+        # 012 -> Comment DAE broadcast hook (control plane)
+        # Allows 012 to inject a short promotion/update without hardcoding it into prompts.
+        # Uses non-fixed "dice-on-dice" gating to avoid spam signatures.
+        try:
+            from modules.communication.video_comments.src.commenting_control_plane import load_broadcast
+
+            broadcast = load_broadcast()
+            if (
+                broadcast.enabled
+                and tier in (1, 2)  # no promo for Tier 0 trolls
+                and (broadcast.promo_handles or (broadcast.promo_message or "").strip())
+            ):
+                rng = random.SystemRandom()
+                # Re-sample probability each time (not a fixed percent)
+                p = rng.betavariate(2.0, 6.0)
+                include = rng.random() < p
+
+                if include:
+                    promo_parts: list[str] = []
+                    msg = (broadcast.promo_message or "").strip()
+                    if msg:
+                        promo_parts.append(msg)
+
+                    handles = [h for h in (broadcast.promo_handles or []) if isinstance(h, str) and h.strip()]
+                    handles = [h if h.startswith("@") else f"@{h}" for h in handles]
+                    handles = [h for h in handles if h and h not in reply]  # avoid duplicates
+                    if handles:
+                        promo_parts.append("Check out " + " ".join(handles))
+
+                    promo = " ".join(promo_parts).strip()
+                    if promo:
+                        reply = f"{reply} {promo}".strip()
+        except Exception:
+            # Best-effort only: never block reply generation due to control-plane failures.
+            pass
 
         tier_emoji = self.TIER_EMOJI.get(tier, "")
         prefix = ""
@@ -1919,15 +1955,31 @@ Reply (address their specific point, no generic phrases):"""
         treatment_tier = classification_int  # Start with original
         is_old_comment = False
         days_old = 0
-        if published_time and classification_int == 1:
-            from modules.communication.video_comments.skills.tars_like_heart_reply.src.comment_processor import CommentProcessor
+
+        # DEBUG (2025-12-30): Log all inputs to old comment detection
+        logger.info(f"[OLD-COMMENT-CHECK] 📅 Input: published_time='{published_time}', classification_int={classification_int}")
+
+        # FIX (2025-12-30): Check old comments for ALL tiers (not just Tier 1)
+        # Old comments deserve the "sorry for late post" excuse regardless of classification
+        if published_time:
+            from modules.communication.video_comments.skillz.tars_like_heart_reply.src.comment_processor import CommentProcessor
             comment_age_days = CommentProcessor.parse_comment_age_days(published_time)
+            logger.info(f"[OLD-COMMENT-CHECK] 📅 Parsed: comment_age_days={comment_age_days}")
+
             if comment_age_days and comment_age_days >= 90:
                 is_old_comment = True
                 days_old = comment_age_days
-                logger.info(f"[TIER-ESCALATION] ⬆️ Escalating tier 1 → tier 2 TREATMENT (age: {comment_age_days} days)")
-                profile.commenter_type = CommenterType.MODERATOR  # For reply logic
-                treatment_tier = 2  # Use tier 2 prompt/probability
+                logger.info(f"[OLD-COMMENT-CHECK] ✅ OLD COMMENT DETECTED: {comment_age_days} days (>= 90 threshold)")
+
+                # Only escalate Tier 1 to Tier 2 (don't touch Tier 0 MAGA or Tier 2 MOD)
+                if classification_int == 1:
+                    logger.info(f"[TIER-ESCALATION] ⬆️ Escalating tier 1 → tier 2 TREATMENT (age: {comment_age_days} days)")
+                    profile.commenter_type = CommenterType.MODERATOR  # For reply logic
+                    treatment_tier = 2  # Use tier 2 prompt/probability
+            else:
+                logger.info(f"[OLD-COMMENT-CHECK] ❌ Not old enough: {comment_age_days} days (< 90 threshold)")
+        else:
+            logger.warning(f"[OLD-COMMENT-CHECK] ⚠️ No published_time available - cannot detect old comment")
 
         # PROBABILISTIC ENGAGEMENT: Tier 1 (REGULAR) only gets replies 50% of the time
         if treatment_tier == 1:

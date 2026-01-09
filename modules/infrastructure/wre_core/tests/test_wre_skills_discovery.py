@@ -8,7 +8,7 @@ WSP Compliance: WSP 5 (Test Coverage), WSP 96 (WRE Skills)
 
 import pytest
 from pathlib import Path
-from modules.infrastructure.wre_core.skills.wre_skills_discovery import (
+from modules.infrastructure.wre_core.skillz.wre_skills_discovery import (
     WRESkillsDiscovery,
     DiscoveredSkill
 )
@@ -93,8 +93,8 @@ class TestWRESkillsDiscovery:
 
     def test_promotion_state_inference_production(self, discovery):
         """Test promotion state inference for production skills"""
-        # Production skills should be in modules/*/skills/
-        path = Path("modules/infrastructure/test/skills/test_skill/SKILL.md")
+        # Production skills should be in modules/*/skillz/
+        path = Path("modules/infrastructure/test/skillz/test_skill/SKILLz.md")
         state = discovery._infer_promotion_state(path)
         assert state == "production"
 

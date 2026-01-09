@@ -128,7 +128,7 @@ class YouTubeDAEHeartbeat:
             self.ai_overseer = AIIntelligenceOverseer(repo_root)
 
             # Skill path for YouTube daemon monitoring
-            self.overseer_skill_path = repo_root / "modules" / "communication" / "livechat" / "skills" / "youtube_daemon_monitor.json"
+            self.overseer_skill_path = repo_root / "modules" / "communication" / "livechat" / "skillz" / "youtube_daemon_monitor.json"
 
             logger.info("[HEARTBEAT] AI Overseer connected - proactive monitoring enabled")
 

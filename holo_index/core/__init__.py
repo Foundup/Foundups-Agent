@@ -6,6 +6,7 @@ import io
 """HoloIndex Core Components - WSP 49 Compliant Module Structure"""
 
 from .intelligent_subroutine_engine import IntelligentSubroutineEngine
+from .module_scoring_subroutine import ModuleScoringSubroutine
 from .holo_index import HoloIndex
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
@@ -20,4 +21,4 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
         pass
 # === END UTF-8 ENFORCEMENT ===
 
-__all__ = ['IntelligentSubroutineEngine', 'HoloIndex']
+__all__ = ['IntelligentSubroutineEngine', 'ModuleScoringSubroutine', 'HoloIndex']

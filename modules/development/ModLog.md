@@ -2,6 +2,18 @@
 
 ## Chronological Change Log
 
+### WSP 15/37 Scoring Updates for Voice Pipeline Modules
+**Date**: 2026-01-02  
+**WSP Protocol References**: WSP 15, WSP 37, WSP 22  
+**Impact Analysis**: Adds MPS scores for voice pipeline modules in `modules_to_score.yaml`  
+**Enhancement Tracking**: Establishes P1 priority for YouTube live audio + voice command ingestion
+
+#### Changes
+- Added WSP 15 MPS scoring entries for `modules/platform_integration/youtube_live_audio`
+- Added WSP 15 MPS scoring entries for `modules/communication/voice_command_ingestion`
+
+---
+
 ### Module Creation and Initial Setup
 **Date**: 2025-08-03  
 **WSP Protocol References**: WSP 54, WSP 48, WSP 49, WSP 22  

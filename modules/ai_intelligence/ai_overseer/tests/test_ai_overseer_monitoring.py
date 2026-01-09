@@ -145,12 +145,12 @@ def main():
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║  AI OVERSEER DAEMON MONITORING - LIVE TEST                                 ║
 ║  Bash: 56046d (YouTube daemon --no-lock)                                   ║
-║  Skill: modules/communication/livechat/skills/youtube_daemon_monitor.json  ║
+║  Skill: modules/communication/livechat/skillz/youtube_daemon_monitor.json  ║
 ╚════════════════════════════════════════════════════════════════════════════╝
     """)
 
     # Load YouTube daemon monitoring skill
-    skill_path = Path("O:/Foundups-Agent/modules/communication/livechat/skills/youtube_daemon_monitor.json")
+    skill_path = Path("O:/Foundups-Agent/modules/communication/livechat/skillz/youtube_daemon_monitor.json")
     print(f"[SKILL-LOAD] Loading skill: {skill_path.name}")
 
     try:

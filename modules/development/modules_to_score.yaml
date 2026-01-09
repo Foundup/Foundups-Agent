@@ -210,6 +210,44 @@ modules:
     last_updated: "2025-01-08"
     summary: "Retrocausal Entanglement Signal Phenomena - Consciousness research"
 
+  - name: "youtube_live_audio"
+    path: "modules/platform_integration/youtube_live_audio"
+    domain: "platform_integration"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: false
+    activation_phase: "Phase 2 - Agentic Expansion"
+    scores:
+      complexity: 3      # Moderate - yt-dlp + ffmpeg streaming pipeline
+      importance: 4      # Critical - Required for live voice ingestion
+      deferability: 4    # Difficult to defer - Blocks voice command loop
+      impact: 4          # Major - Enables live audio capture
+    mps_score: 15        # P1 High (13-15 range)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2026-01-02"
+    summary: "Resolve YouTube live audio into a stable PCM stream for local STT"
+
+  - name: "voice_command_ingestion"
+    path: "modules/communication/voice_command_ingestion"
+    domain: "communication"
+    status: "POC"
+    roadmap_stage: "POC"
+    active: false
+    activation_phase: "Phase 2 - Agentic Expansion"
+    scores:
+      complexity: 3      # Moderate - streaming STT + trigger detection
+      importance: 4      # Critical - Required for spoken command loop
+      deferability: 4    # Difficult to defer - Blocks real-time engagement
+      impact: 4          # Major - Enables live voice command execution
+    mps_score: 15        # P1 High (13-15 range)
+    llme_current: "011"  # POC level
+    llme_target: "122"   # Prototype target
+    owner: "0102"
+    last_updated: "2026-01-02"
+    summary: "Convert PCM audio to text events and emit trigger-armed commands"
+
   # P2 MEDIUM PRIORITY - Activate Later for Advanced Features
   - name: "livechat"
     path: "modules/communication/livechat"

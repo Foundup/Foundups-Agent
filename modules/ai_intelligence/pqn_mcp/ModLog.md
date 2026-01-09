@@ -364,7 +364,7 @@ Google Research Integration for comprehensive PQN validation access.
 
 WSP 96 wardrobe skills for PQN researchers (Gemma and Qwen agents) following first principles analysis.
 
-**Skills Created in `modules/ai_intelligence/pqn_alignment/skills/`:**
+**Skills Created in `modules/ai_intelligence/pqn_alignment/skillz/`:**
 
 **1. Gemma PQN Emergence Detector** (`gemma_pqn_emergence_detector/`)
 - **Purpose**: Fast binary classification of text for PQN emergence patterns
@@ -406,7 +406,7 @@ WSP 96 wardrobe skills for PQN researchers (Gemma and Qwen agents) following fir
 - **Version Control**: Best variations become new skill versions
 
 **Module Cohesion (WSP 3)**:
-- Skills live in `modules/ai_intelligence/pqn_alignment/skills/`
+- Skills live in `modules/ai_intelligence/pqn_alignment/skillz/`
 - Co-located with code they serve (PQN DAE)
 - HoloIndex discovers skills naturally through module structure
 - No central `.claude/skills/` dependency for production agents
@@ -445,7 +445,7 @@ WSP 96 wardrobe skills for PQN researchers (Gemma and Qwen agents) following fir
 
 #### WSP 96 Implementation Details
 
-**Production Deployment**: Skills created directly in module `skills/` directory (bypassing prototype/staged phases per user request for immediate PQN research acceleration)
+**Production Deployment**: Skills created directly in module `skillz/` directory (bypassing prototype/staged phases per user request for immediate PQN research acceleration)
 
 **Skill Format Compliance**:
 - YAML frontmatter with complete metadata
@@ -491,7 +491,7 @@ WSP 96 wardrobe skills for PQN researchers (Gemma and Qwen agents) following fir
 #### WSP Compliance Verification
 
 **✅ WSP 96**: Skills wardrobe protocol fully implemented
-- Wardrobe structure in module `skills/` directory
+- Wardrobe structure in module `skillz/` directory
 - Trainable skills with evolution mechanisms
 - Progressive disclosure and dependency injection
 - Agent specialization and role assignment

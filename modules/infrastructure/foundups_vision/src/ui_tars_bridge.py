@@ -177,23 +177,18 @@ class UITarsBridge:
         if tars_base.endswith("/v1"):
             tars_base = tars_base[:-3]
         try:
-            # Health check LM Studio / Responses API (port 1234) if configured
-            tars_base = os.getenv("TARS_API_URL", "http://127.0.0.1:1234").rstrip("/")
-            if tars_base.endswith("/v1"):
-                tars_base = tars_base[:-3]
-            try:
-                import requests  # lightweight check; ignore if missing
-                # Use to_thread for health check to avoid blocking loop
-                resp = await asyncio.to_thread(requests.get, f"{tars_base}/v1/models", timeout=2)
-                if resp.status_code == 200:
-                    self._emit_event("lm_studio_ready", {"base_url": tars_base})
-                    logger.info(f"[UI-TARS] LM Studio ready at {tars_base}")
-                else:
-                    self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "status": resp.status_code})
-                    logger.warning(f"[UI-TARS] LM Studio unreachable ({resp.status_code}) at {tars_base}")
-            except Exception as e:
-                self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "error": str(e)})
-                logger.warning(f"[UI-TARS] LM Studio health check failed: {e}")
+            import requests  # lightweight check; ignore if missing
+            # Use to_thread for health check to avoid blocking loop
+            resp = await asyncio.to_thread(requests.get, f"{tars_base}/v1/models", timeout=2)
+            if resp.status_code == 200:
+                self._emit_event("lm_studio_ready", {"base_url": tars_base})
+                logger.info(f"[UI-TARS] LM Studio ready at {tars_base}")
+            else:
+                self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "status": resp.status_code})
+                logger.warning(f"[UI-TARS] LM Studio unreachable ({resp.status_code}) at {tars_base}")
+        except Exception as e:
+            self._emit_event("lm_studio_unreachable", {"base_url": tars_base, "error": str(e)})
+            logger.warning(f"[UI-TARS] LM Studio health check failed: {e}")
 
         self._connected = True
         self._session_id = f"session_{int(time.time())}"
@@ -424,7 +419,11 @@ Rules:
             response_data = response.json()
             model_output = response_data['choices'][0]['message']['content']
 
-            logger.info(f"[UI-TARS] Full model output: {model_output}")
+            # Avoid noisy logs/TTS by default; enable with UI_TARS_VERBOSE_OUTPUT=true
+            if os.getenv("UI_TARS_VERBOSE_OUTPUT", "false").lower() in {"1", "true", "yes"}:
+                logger.info(f"[UI-TARS] Full model output: {model_output}")
+            else:
+                logger.debug(f"[UI-TARS] Model output (suppressed, set UI_TARS_VERBOSE_OUTPUT=true): {model_output[:200]}")
 
             # Parse UI-TARS Desktop format: "Action: click(start_box='<|box_start|>(x,y)<|box_end|>')"
             import re

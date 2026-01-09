@@ -27,6 +27,13 @@ except Exception:
     HoloIndex = None  # type: ignore
     _HOLOINDEX_AVAILABLE = False
 
+try:
+    from .holo_memory_sentinel import HoloMemorySentinel
+    _SENTINEL_AVAILABLE = True
+except Exception:
+    HoloMemorySentinel = None  # type: ignore
+    _SENTINEL_AVAILABLE = False
+
 
 class HoloAdapter:
     """Thin adapter exposing the minimal surface used by AI Overseer."""
@@ -45,6 +52,7 @@ class HoloAdapter:
 
         # Initialize HoloIndex if available; degrade gracefully otherwise
         self._holo = HoloIndex() if _HOLOINDEX_AVAILABLE else None
+        self._sentinel = HoloMemorySentinel(self.repo_root) if _SENTINEL_AVAILABLE else None
 
     # ------------------- SURFACE: search ------------------- #
     def search(
@@ -55,7 +63,7 @@ class HoloAdapter:
     ) -> Dict[str, Any]:
         """Semantic search via HoloIndex; returns empty result if unavailable."""
         if self._holo is None:
-            return {
+            empty_result = {
                 "query": query,
                 "code": [],
                 "wsps": [],
@@ -63,11 +71,17 @@ class HoloAdapter:
                 "reminders": [],
                 "elapsed_ms": "0.0",
             }
+            if self._sentinel:
+                self._sentinel.observe_search(query, empty_result)
+            return empty_result
         try:
-            return self._holo.search(query, limit=limit, doc_type_filter=doc_type_filter)
+            results = self._holo.search(query, limit=limit, doc_type_filter=doc_type_filter)
+            if self._sentinel:
+                self._sentinel.observe_search(query, results)
+            return results
         except Exception:
             # Never break overseer flow
-            return {
+            fallback = {
                 "query": query,
                 "code": [],
                 "wsps": [],
@@ -75,6 +89,9 @@ class HoloAdapter:
                 "reminders": [],
                 "elapsed_ms": "0.0",
             }
+            if self._sentinel:
+                self._sentinel.observe_search(query, fallback)
+            return fallback
 
     # ------------------- SURFACE: guard ------------------- #
     def guard(
@@ -138,5 +155,4 @@ class HoloAdapter:
             return out_path
         except Exception:
             return None
-
 

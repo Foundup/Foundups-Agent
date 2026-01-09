@@ -116,9 +116,9 @@ class CommunityMonitor:
         self.max_comments_per_run = 5
 
         # Path to engagement script (proper WSP 96 skill location)
-        # NOTE: This is in modules/communication/video_comments/skills/..., not livechat/.
+        # NOTE: This is in modules/communication/video_comments/skillz/..., not livechat/.
         self.engagement_script = (
-            Path(__file__).resolve().parents[2] / "video_comments" / "skills" /
+            Path(__file__).resolve().parents[2] / "video_comments" / "skillz" /
             "tars_like_heart_reply" / "run_skill.py"
         )
 
@@ -443,7 +443,7 @@ class CommunityMonitor:
             # - For unlimited mode (max_comments=0), use a larger ceiling (configurable).
             # - For bounded runs, assume UI-TARS may take ~2-4 minutes per comment (model inference + UI latency).
             if max_comments == 0:
-                timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "1800"))  # default 30 minutes
+                timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "3600"))  # unified default: 1 hour
             else:
                 timeout = (max_comments * 240) + 60  # 4 min/comment + buffer
 

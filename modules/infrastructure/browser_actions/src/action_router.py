@@ -192,14 +192,58 @@ class ActionRouter:
                         logger.warning(f"[ROUTER] Invalid port in FOUNDUPS_CHROME_PORT/BROWSER_DEBUG_PORT: {port_env}")
 
                 if port_val:
-                    # Port-based connection (test/dev): Create driver directly
-                    from modules.infrastructure.foundups_selenium.src.foundups_driver import FoundUpsDriver
-                    self._selenium_driver = FoundUpsDriver(
-                        profile_dir=f"modules/platform_integration/browser_profiles/{self.profile}/chrome" if self.profile else None,
-                        stealth_mode=False,  # Turn off stealth to avoid unsupported options when attaching
-                        port=port_val,
-                    )
-                    logger.info(f"[ROUTER] Selenium driver connected to existing Chrome (port={port_val})")
+                    browser_type_env = (
+                        os.getenv("FOUNDUPS_BROWSER_TYPE")
+                        or os.getenv("ACTION_ROUTER_BROWSER_TYPE")
+                        or os.getenv("BROWSER_TYPE")
+                        or ""
+                    ).strip().lower()
+                    edge_port_env = os.getenv("FOUNDUPS_EDGE_PORT") or os.getenv("EDGE_DEBUG_PORT") or "9223"
+                    try:
+                        edge_port = int(str(edge_port_env).strip())
+                    except ValueError:
+                        edge_port = 9223
+
+                    use_edge = browser_type_env in {"edge", "msedge"} or port_val == edge_port
+                    if browser_type_env and (browser_type_env in {"edge", "msedge"}) and port_val != edge_port:
+                        logger.warning(
+                            f"[ROUTER] Browser type=Edge but port={port_val} (expected {edge_port}); attempting Edge attach anyway"
+                        )
+                    if browser_type_env and (browser_type_env in {"chrome", "chromium"}) and port_val == edge_port:
+                        logger.warning(
+                            f"[ROUTER] Browser type=Chrome but port={port_val} matches Edge port; forcing Edge attach"
+                        )
+
+                    devtools_version = self._probe_devtools_version(port_val)
+                    if devtools_version is not None:
+                        devtools_is_edge = self._devtools_is_edge(devtools_version)
+                        if use_edge and not devtools_is_edge:
+                            raise RuntimeError(
+                                f"DevTools port {port_val} is not Edge (browser={devtools_version.get('Browser')})"
+                            )
+                        if not use_edge and devtools_is_edge:
+                            raise RuntimeError(
+                                f"DevTools port {port_val} is Edge (browser={devtools_version.get('Browser')})"
+                            )
+
+                    if use_edge:
+                        from selenium import webdriver
+                        from selenium.webdriver.edge.options import Options as EdgeOptions
+
+                        edge_options = EdgeOptions()
+                        edge_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{port_val}")
+                        edge_driver = webdriver.Edge(options=edge_options)
+                        self._selenium_driver = self._wrap_edge_with_telemetry(edge_driver, port_val)
+                        logger.info(f"[ROUTER] Selenium driver connected to existing Edge (port={port_val})")
+                    else:
+                        # Port-based connection (test/dev): Create driver directly
+                        from modules.infrastructure.foundups_selenium.src.foundups_driver import FoundUpsDriver
+                        self._selenium_driver = FoundUpsDriver(
+                            profile_dir=f"modules/platform_integration/browser_profiles/{self.profile}/chrome" if self.profile else None,
+                            stealth_mode=False,  # Turn off stealth to avoid unsupported options when attaching
+                            port=port_val,
+                        )
+                        logger.info(f"[ROUTER] Selenium driver connected to existing Chrome (port={port_val})")
                 else:
                     # Profile-based connection (production): Use BrowserManager singleton
                     from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
@@ -213,6 +257,112 @@ class ActionRouter:
                 logger.warning(f"[ROUTER] Selenium driver not available: {e}")
                 return None
         return self._selenium_driver
+
+    @staticmethod
+    def _probe_devtools_version(port: int) -> Optional[Dict[str, Any]]:
+        """Fetch DevTools /json/version payload for browser identity checks."""
+        try:
+            from urllib.request import urlopen
+            import json
+
+            with urlopen(f"http://127.0.0.1:{port}/json/version", timeout=1.0) as resp:
+                payload = resp.read().decode("utf-8", errors="replace")
+            return json.loads(payload)
+        except Exception as exc:
+            logger.debug(f"[ROUTER] DevTools preflight skipped on port {port}: {exc}")
+            return None
+
+    @staticmethod
+    def _devtools_is_edge(version_payload: Dict[str, Any]) -> bool:
+        """Return True when DevTools payload indicates an Edge browser."""
+        user_agent = (version_payload.get("User-Agent") or version_payload.get("userAgent") or "")
+        browser = (version_payload.get("Browser") or "")
+        combined = f"{user_agent} {browser}".lower()
+        return ("edg" in combined) or ("edge" in combined)
+
+    def _wrap_edge_with_telemetry(self, driver: Any, port: int) -> Any:
+        """Attach Edge driver to FoundUps telemetry stream using an event shim."""
+        try:
+            from selenium.webdriver.support.events import EventFiringWebDriver, AbstractEventListener
+        except Exception as exc:
+            logger.debug(f"[ROUTER] Edge telemetry shim unavailable: {exc}")
+            return driver
+
+        observer = None
+        browser_key = f"edge_{self.profile or f'port_{port}'}"
+        try:
+            from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
+            browser_manager = get_browser_manager()
+            observer = browser_manager._get_observer(browser_key)
+        except Exception as exc:
+            logger.warning(f"[ROUTER] Edge telemetry observer unavailable: {exc}")
+            return driver
+
+        if observer is None:
+            return driver
+
+        def emit(event: str, payload: Optional[Dict[str, Any]] = None) -> None:
+            data = dict(payload or {})
+            data.setdefault("browser", "edge")
+            data.setdefault("port", port)
+            data.setdefault("browser_key", browser_key)
+            try:
+                observer(event, data)
+            except Exception:
+                pass
+
+        def describe_element(element: Any) -> Dict[str, Any]:
+            try:
+                return {
+                    "tag": getattr(element, "tag_name", None),
+                    "id": element.get_attribute("id"),
+                    "class": element.get_attribute("class"),
+                }
+            except Exception:
+                return {}
+
+        def script_summary(script: Any) -> str:
+            if script is None:
+                return ""
+            summary = str(script).replace("\n", " ")
+            if len(summary) > 160:
+                summary = summary[:160] + "..."
+            return summary
+
+        class EdgeTelemetryListener(AbstractEventListener):
+            def before_navigate_to(self, url: str, driver_obj: Any) -> None:
+                emit("navigate_start", {"url": url})
+
+            def after_navigate_to(self, url: str, driver_obj: Any) -> None:
+                emit("navigate_done", {"url": url})
+
+            def before_click(self, element: Any, driver_obj: Any) -> None:
+                emit("click_start", describe_element(element))
+
+            def after_click(self, element: Any, driver_obj: Any) -> None:
+                emit("click_done", describe_element(element))
+
+            def before_execute_script(self, script: Any, driver_obj: Any) -> None:
+                emit("execute_script_start", {"script": script_summary(script)})
+
+            def after_execute_script(self, script: Any, driver_obj: Any) -> None:
+                emit("execute_script_done", {"script": script_summary(script)})
+
+            def on_exception(self, exception: Exception, driver_obj: Any) -> None:
+                current_url = None
+                try:
+                    current_url = driver_obj.current_url
+                except Exception:
+                    current_url = None
+                emit("exception", {"error": str(exception), "url": current_url})
+
+        try:
+            wrapped = EventFiringWebDriver(driver, EdgeTelemetryListener())
+            logger.info(f"[ROUTER] Edge telemetry shim attached (key={browser_key})")
+            return wrapped
+        except Exception as exc:
+            logger.warning(f"[ROUTER] Edge telemetry shim failed: {exc}")
+            return driver
 
     async def _ensure_ui_tars(self) -> Any:
         """Ensure UI-TARS Bridge (Tier 1 local vision) is available."""

@@ -9,6 +9,44 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-01-03] Voice STT Pipeline - YouTube Live Audio -> 0102 Commands
+
+**Change Type**: New Multi-Module Feature (Voice -> STT -> Trigger -> LiveChat)
+**By**: 0102
+**WSP References**: WSP 3 (Domain), WSP 11 (Interface), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+### What Changed
+
+**Modules Created/Enhanced**:
+1. `youtube_live_audio` (platform_integration) - WASAPI system audio loopback
+2. `voice_command_ingestion` (communication) - faster-whisper STT + "0102" trigger detection
+
+**Architecture**:
+```
+YouTube LIVE (browser) -> WASAPI loopback -> faster-whisper STT -> TriggerDetector ("0102")
+    -> CommandEvent -> LiveChatVoiceRouter -> MessageProcessor -> PQN memory
+```
+
+**Sprint Status**:
+- Sprint 1: System audio capture (WASAPI) - COMPLETE
+- Sprint 2: faster-whisper STT + trigger detection - COMPLETE
+- Sprint 3: LiveChat routing hook + PQN storage - COMPLETE
+- Sprint 4: Skill routing MVP - PENDING
+- Sprint 5: 30-min soak test - PENDING
+
+**Key Decisions**:
+- Hybrid Option A: System audio loopback (no yt-dlp auth battles)
+- faster-whisper over whisper.cpp (4x faster, pure Python)
+- Reuses existing LiveChat MessageProcessor (WSP 84)
+- Stores transcripts in JSONL for PQN digital twin learning
+
+**WSP Compliance**:
+- HoloIndex searched BEFORE implementation (no duplication found)
+- Module ModLogs updated
+- INTERFACE.md documented for both modules
+
+---
+
 ## [2025-12-25] Phase 4H: Hybrid DOM + UI-TARS Training (Studio Account Switcher)
 
 **Change Type**: Self-Supervised Learning Infrastructure + Multi-Channel Integration
@@ -308,15 +346,15 @@ CREATE TABLE training_examples (
 
 **Breadcrumb Telemetry**:
 - [livechat_core.py](modules/communication/livechat/src/livechat_core.py):200-207, 336-383 - Breadcrumb hub initialization + store_breadcrumb() method
-- [comment_engagement_dae.py](modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py):782-794, 834-847, 1033-1046, 1051-1064, 1071-1082, 1087-1097 - Breadcrumb storage at 6 critical state transitions
+- [comment_engagement_dae.py](modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py):782-794, 834-847, 1033-1046, 1051-1064, 1071-1082, 1087-1097 - Breadcrumb storage at 6 critical state transitions
 
 **Conditional Refresh**:
-- [comment_engagement_dae.py](modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py):900-930 - URL check before driver.refresh()
+- [comment_engagement_dae.py](modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py):900-930 - URL check before driver.refresh()
 
 **Phase 3R: Multi-Channel Live Priority**:
 - [community_monitor.py](modules/communication/livechat/src/community_monitor.py):102-106, 125-150, 152-186, 386-393 - Live priority system (set/clear/get methods + video_id passing)
 - [auto_moderator_dae.py](modules/communication/livechat/src/auto_moderator_dae.py):784-790 - Call set_live_priority() when stream detected
-- [comment_engagement_dae.py](modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py):631-659 - Use watch?v={video_id} instead of @handle/live
+- [comment_engagement_dae.py](modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py):631-659 - Use watch?v={video_id} instead of @handle/live
 
 **!party Randomization Fix**:
 - [party_reactor.py](modules/communication/livechat/src/party_reactor.py):280-312 - Random distribution (not fixed 6 each)
@@ -419,7 +457,7 @@ CREATE TABLE breadcrumbs (
 4. **Anti-detection fragmentation**: LinkedIn/X now use unified human behavior module instead of primitive delays
 
 ### Files Modified
-- [comment_engagement_dae.py](modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py):1740-1770 - Probabilistic refresh
+- [comment_engagement_dae.py](modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py):1740-1770 - Probabilistic refresh
 - [engagement_runner.py](modules/communication/livechat/src/engagement_runner.py):286-321 - Backtrace filtering
 - [community_monitor.py](modules/communication/livechat/src/community_monitor.py):385-420 - Backtrace filtering
 - [refactored_posting_orchestrator.py](modules/platform_integration/social_media_orchestrator/src/refactored_posting_orchestrator.py):48-93, 299-303, 365-369 - Cancellation capability
@@ -604,7 +642,7 @@ CREATE TABLE breadcrumbs (
 - `modules/communication/livechat/src/chat_telemetry_store.py`
 - `modules/communication/video_comments/src/commenter_history_store.py`
 - `modules/communication/video_comments/src/intelligent_reply_generator.py`
-- `modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py`
+- `modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py`
 
 ## [2025-12-14] WSP 44 Semantic Scoring + 012-Visible Debug Tags (YouTube Studio)
 
@@ -621,8 +659,8 @@ CREATE TABLE breadcrumbs (
 ### Files Updated
 - `modules/infrastructure/wsp_core/src/semantic_state_engine.py`
 - `modules/infrastructure/wsp_core/src/__init__.py`
-- `modules/communication/video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py`
-- `modules/communication/video_comments/skills/tars_like_heart_reply/run_skill.py`
+- `modules/communication/video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py`
+- `modules/communication/video_comments/skillz/tars_like_heart_reply/run_skill.py`
 
 ## [2025-12-14] Sprint 1+2 Compliance Audit + Sprint 3+4 Gap Analysis (WSP 3/11/22/27/50/64/77)
 
@@ -872,7 +910,7 @@ CREATE TABLE breadcrumbs (
   - Human-like interaction (random delays, character-by-character typing)
 
 **Automation Skill Registry**:
-- `modules/communication/livechat/skills/gcp_console_automation.json`
+- `modules/communication/livechat/skillz/gcp_console_automation.json`
   - Reusable skill definition for GCP Console workflows
   - Step-by-step automation workflows with Vision validation patterns
   - MCP integration points (HoloIndex, Vision DAE, Secrets MCP)
@@ -904,7 +942,7 @@ CREATE TABLE breadcrumbs (
 **WSP 3 - Module Organization**:
 - GCP automation in `infrastructure/foundups_selenium` (correct domain)
 - Mission definitions in `ai_intelligence/ai_overseer/missions/`
-- Skill registry in `communication/livechat/skills/`
+- Skill registry in `communication/livechat/skillz/`
 
 ### Impact
 
@@ -1165,11 +1203,11 @@ Run option 5 and verify logs show:
    - Integrated libido_monitor, pattern_memory, skills_loader
    - Force override support for 0102 (AI supervisor) decisions
 
-2. `modules/infrastructure/wre_core/skills/skills_registry_v2.py`
+2. `modules/infrastructure/wre_core/skillz/skills_registry_v2.py`
    - Changed table: human_approvals → ai_0102_approvals
    - Clarified 0102 (AI supervisor) vs 012 (human) roles
 
-3. `modules/infrastructure/wre_core/skills/metrics_ingest_v2.py`
+3. `modules/infrastructure/wre_core/skillz/metrics_ingest_v2.py`
    - Updated table creation: ai_0102_approvals
 
 4. `WSP_framework/src/WSP_96_WRE_Skills_Wardrobe_Protocol.md` (v1.2 → v1.3)
@@ -1249,10 +1287,10 @@ WSP Compliance:
 ### Next Steps
 
 **Phase 2: Skills Discovery** (Not Started)
-- Implement WRESkillsRegistry.discover() - Scan modules/*/skills/**/SKILL.md
+- Implement WRESkillsRegistry.discover() - Scan modules/*/skillz/**/SKILLz.md
 - Wire execute_skill() to actual Qwen/Gemma inference
 - Add filesystem watcher for hot reload
-- SKILL.md YAML frontmatter parsing
+- SKILLz.md YAML frontmatter parsing
 
 **Phase 3: Convergence Loop** (Not Started)
 - Implement graduated autonomy progression
@@ -1301,7 +1339,7 @@ WSP Compliance:
 8. **Pattern Storage**: Document methodology in CLAUDE.md for future reuse
 
 **First Implementation**: `qwen_wsp_compliance_auditor` skill
-- **Location**: `modules/ai_intelligence/pqn_alignment/skills/qwen_wsp_compliance_auditor/`
+- **Location**: `modules/ai_intelligence/pqn_alignment/skillz/qwen_wsp_compliance_auditor/`
 - **Purpose**: Automated WSP framework compliance auditing
 - **Agent**: Qwen (32K context, strategic analysis)
 - **Performance**: 150ms execution, 66.7% compliance score detection
@@ -1342,7 +1380,7 @@ WSP Compliance:
 
 **When Database is Better**: Complex relationships, frequent updates, aggregations (like PQN campaign analysis)
 
-**Implementation**: Updated `qwen_wsp_compliance_auditor/SKILL.md` with storage rationale and comparison.
+**Implementation**: Updated `qwen_wsp_compliance_auditor/SKILLz.md` with storage rationale and comparison.
 
 ### [2025-10-23] Machine-Friendly Documentation Mandate - WSP 89 Enhancement
 
@@ -1356,7 +1394,7 @@ WSP Compliance:
 **Added Machine-Friendly Documentation Requirements to WSP 89**:
 - **Structured Formats**: YAML frontmatter, JSON schemas, standardized markdown structures
 - **Parseable Metadata**: Machine-readable headers (skill_id, version, agents, etc.)
-- **Consistent Schema**: Follow established patterns (WSP 96 SKILL.md format, ModLog templates)
+- **Consistent Schema**: Follow established patterns (WSP 96 SKILLz.md format, ModLog templates)
 - **Agent Navigation**: Breadcrumbs, cross-references, indexing markers for agent parsing
 - **Search Optimization**: Consistent terminology and tagging for HoloIndex discovery
 
@@ -1388,7 +1426,7 @@ Designed complete WRE Recursive Skills System using **IBM Selectric typewriter b
    - Implementation roadmap (Phase 1-6)
    - Integration guides for HoloDAE and GitPushDAE
 
-3. `modules/infrastructure/git_push_dae/skills/qwen_gitpush/SKILL.md` (3,500+ words)
+3. `modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md` (3,500+ words)
    - **First production skill** implementing micro chain-of-thought
    - 4-step reasoning chain with Gemma validation at each step
    - WSP 15 MPS custom scoring for git commits (C+I+D+P formula)
@@ -1438,12 +1476,12 @@ Total: ~1 second | Fidelity Target: >90%
 
 2. **Wardrobe Skills** (Typewriter Balls)
    - Discrete, task-specific instructions for Qwen/Gemma
-   - Location: `modules/*/skills/[skill_name]/SKILL.md`
+   - Location: `modules/*/skillz/[skill_name]/SKILLz.md`
    - Trainable weights that evolve via A/B testing
    - Example: qwen_gitpush with WSP 15 MPS scoring
 
 3. **WRE Core** (Mechanical Wiring)
-   - Skill Registry: Discovers skills from `modules/*/skills/`
+   - Skill Registry: Discovers skills from `modules/*/skillz/`
    - Trigger Router: HoloDAE → Correct skill → DAE
    - Pattern Memory: Stores outcomes for learning
    - Evolution Engine: A/B tests variations
@@ -1599,7 +1637,7 @@ Total: ~1 second | Fidelity Target: >90%
 **Created**:
 - `modules/infrastructure/wre_core/WRE_RECURSIVE_ORCHESTRATION_ARCHITECTURE.md`
 - `modules/infrastructure/wre_core/README_RECURSIVE_SKILLS.md`
-- `modules/infrastructure/git_push_dae/skills/qwen_gitpush/SKILL.md`
+- `modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md`
 - `WRE_SKILLS_IMPLEMENTATION_SUMMARY.md`
 
 **Modified**:
@@ -1634,7 +1672,7 @@ Total: ~1 second | Fidelity Target: >90%
 1. HoloDAE triggers skill (git changes, daemon health, etc.)
 2. WRE.execute_skill(skill_name, agent, context)
 3. Libido Monitor: should_execute() → CONTINUE/THROTTLE/ESCALATE
-4. Skills Loader: load_skill() from modules/*/skills/
+4. Skills Loader: load_skill() from modules/*/skillz/
 5. Qwen executes multi-step reasoning (mock for now, TODO: wire inference)
 6. Gemma validates pattern fidelity per step
 7. Pattern Memory stores outcome for recursive learning
@@ -1924,7 +1962,7 @@ Users can manually launch daemon monitoring using the provided Python commands.
 
 This menu option leverages the ubiquitous daemon monitoring architecture added to AI Overseer:
 - `modules/ai_intelligence/ai_overseer/src/ai_overseer.py` - `monitor_daemon()` method
-- `modules/communication/livechat/skills/youtube_daemon_monitor.json` - Error patterns
+- `modules/communication/livechat/skillz/youtube_daemon_monitor.json` - Error patterns
 - See AI Overseer ModLog for complete architecture details
 
 ### Next Steps

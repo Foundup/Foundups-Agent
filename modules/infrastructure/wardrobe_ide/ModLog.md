@@ -50,8 +50,8 @@ Wardrobe IDE
 - Uses same step format as Playwright for interoperability
 
 **Phase 4: Skills Store**
-- JSON-based persistence: `skills/<slug>.<backend>.json`
-- Skills index for fast lookups: `skills/skills_index.json`
+- JSON-based persistence: `skillz/<slug>.<backend>.json`
+- Skills index for fast lookups: `skillz/skills_index.json`
 - Functions: `save_skill()`, `load_skill()`, `list_skills()`
 - Automatic index maintenance
 
@@ -90,7 +90,7 @@ modules/infrastructure/wardrobe_ide/
 │   ├── config.py                       # Configuration
 │   ├── recorder.py                     # Orchestration layer
 │   └── skills_store.py                 # JSON-based storage
-├── skills/                             # Skills library (runtime)
+├── skillz/                             # Skills library (runtime)
 └── tests/
     ├── __init__.py                     # Test package
     ├── test_wardrobe_ide_basic.py     # Unit tests

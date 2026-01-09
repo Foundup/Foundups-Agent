@@ -15,6 +15,25 @@ This module operates within the **communication** enterprise domain following WS
 
 ## [ROCKET] Development Roadmap (WSP 22 Compliant)
 
+### Sprint Plan (Voice STT + WSP 62 Refactor)
+Sprint 0 - Size audit and refactor plan
+- Record WSP 62 violations: auto_moderator_dae.py, message_processor.py, livechat_core.py,
+  intelligent_throttle_manager.py, command_handler.py, community_monitor.py
+- Define split targets and ownership for each oversized file
+
+Sprint 1 - Voice STT command injection
+- Consume CommandEvent from voice_command_ingestion
+- Build synthetic livechat message payload for command routing
+- Route via MessageProcessor or MessageRouter (no new orchestrator)
+
+Sprint 2 - Routing parity tests
+- Add tests to prove voice commands hit the same command paths as chat
+- Verify throttling, flood detection, and command cooldown rules
+
+Sprint 3 - Oversized file refactor (phase 1)
+- Extract cohesive submodules from auto_moderator_dae.py and message_processor.py
+- Preserve public interfaces and keep behavior stable
+
 ### 1️⃣ Proof of Concept (PoC) - **COMPLETED**
 **Status**: [OK] Production Ready
 **Achievement**: Full YouTube DAE Cube operational with 17 WSP-compliant modules
@@ -34,7 +53,7 @@ This module operates within the **communication** enterprise domain following WS
 - [OK] Pluggable execution modes (subprocess/thread/inproc)
 
 #### Architecture Achievements
-- [OK] 17 modular components (all <500 lines per WSP)
+- [OK] 17 modular components; WSP 62 refactor required for oversized files
 - [OK] Full test coverage with 30+ test files
 - [OK] Comprehensive error handling and recovery
 - [OK] Production deployed and operational

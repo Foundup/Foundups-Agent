@@ -7,6 +7,25 @@
 
 ## Change Log
 
+### 2025-12-30: Edge Debug-Port Attach + Telemetry Preflight
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol)
+
+**Problem:** Port-based ActionRouter attach always used `FoundUpsDriver` (Chrome), which fails when connecting to Edge (FoundUps) on port 9223.
+
+**Changes:**
+- `action_router.py` now detects browser type via `FOUNDUPS_BROWSER_TYPE`/`ACTION_ROUTER_BROWSER_TYPE` (or Edge port match) and attaches with `webdriver.Edge` when appropriate.
+- Adds warnings for mismatched browser type vs port to aid troubleshooting.
+- Adds DevTools UA preflight: fails fast if a Chrome/Edge port mismatch is detected.
+- Adds Edge telemetry shim via Selenium event listener to emit FoundUps-style events into `logs/foundups_browser_events.log`.
+
+**Impact:**
+- Edge (9223) sessions attach safely without breaking Chrome flows.
+- Chrome port-based and BrowserManager flows unchanged.
+- Edge actions now participate in the standard browser telemetry stream.
+
+---
+
 ### 2025-12-08: Multiple Browser Window Fix - BrowserManager Integration
 **By:** 0102
 **WSP References:** WSP 91 (Observability), WSP 3 (Architecture), WSP 50 (Pre-Action Verification)
@@ -282,9 +301,9 @@ router.route_action("click_visual", {"element": "submit"})  # → UI_TARS (fallb
 **Files Created:**
 - `src/ai_overseer_integration.py` (~240 lines) - AI Overseer mission coordinator
 - `src/telemetry_dashboard.py` (~210 lines) - Unified telemetry and metrics
-- `skills/youtube_comment_engagement.json` - YouTube engagement workflow
-- `skills/linkedin_feed_engagement.json` - LinkedIn engagement workflow
-- `skills/foundup_livechat_moderation.json` - FoundUp livechat workflow
+- `skillz/youtube_comment_engagement.json` - YouTube engagement workflow
+- `skillz/linkedin_feed_engagement.json` - LinkedIn engagement workflow
+- `skillz/foundup_livechat_moderation.json` - FoundUp livechat workflow
 
 **Files Modified:**
 - `src/action_router.py` - Added `get_pattern_recommendation()` for pattern-based optimization

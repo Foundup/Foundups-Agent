@@ -29,6 +29,7 @@ import re
 import os
 import json
 import threading
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -64,6 +65,8 @@ class AgenticOutputThrottler:
 
         self.skill_manifest = self._load_skill_manifest()
         self.history_path = self._resolve_history_path()
+        self.repo_root = Path(__file__).resolve().parents[2]
+        self._memory_bundle: Optional[Dict[str, Any]] = None
 
     def set_query_context(self, query: str, search_results=None):
         """Set current query for relevance scoring and detect target module."""
@@ -165,6 +168,183 @@ class AgenticOutputThrottler:
             'tags': tags
         })
 
+    def _infer_module_from_hits(self, code_hits: List[Dict[str, Any]]) -> Optional[str]:
+        for hit in code_hits[:3]:
+            location = hit.get('location') or hit.get('path') or ''
+            normalized = location.replace('\\', '/')
+            module_match = re.search(r'modules/([^/]+/[^/]+)', normalized)
+            if module_match:
+                return module_match.group(1)
+        return None
+
+    def _extract_doc_summary(self, path: Path, fallback: str) -> str:
+        try:
+            with path.open("r", encoding="utf-8", errors="ignore") as handle:
+                for line in handle:
+                    stripped = line.strip()
+                    if stripped:
+                        return self._clean_summary(stripped.lstrip('# ').strip(), max_len=120)
+        except Exception:
+            pass
+        return self._clean_summary(fallback, max_len=120)
+
+    def _clean_summary(self, text: str, max_len: int = 120) -> str:
+        cleaned = re.sub(r"[`#*_>]", "", text)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if len(cleaned) > max_len:
+            return cleaned[: max_len - 3] + "..."
+        return cleaned
+
+    def _make_memory_card(
+        self,
+        module: str,
+        doc_type: str,
+        summary: str,
+        pointers: List[str],
+        wsp: Optional[str] = None,
+        trust: float = 0.8,
+        salience: float = 0.7,
+    ) -> Dict[str, Any]:
+        raw = f"{module}|{doc_type}|{wsp or ''}|{summary}|{pointers[:1]}"
+        card_id = "mem:" + hashlib.sha1(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
+        return {
+            "id": card_id,
+            "module": module,
+            "doc_type": doc_type,
+            "wsp": wsp,
+            "intent": "memory",
+            "summary": summary,
+            "pointers": pointers,
+            "salience": round(salience, 2),
+            "trust": round(trust, 2),
+            "last_seen": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def _build_memory_bundle(self, search_results: Dict[str, Any]) -> Dict[str, Any]:
+        wsp_cards: List[Dict[str, Any]] = []
+        doc_cards: List[Dict[str, Any]] = []
+        skill_cards: List[Dict[str, Any]] = []
+        reason = ""
+
+        code_hits = search_results.get('code', [])
+        wsp_hits = search_results.get('wsps', [])
+        skill_hits = search_results.get('skills') or search_results.get('skill_hits') or []
+        module = self.detected_module or self._infer_module_from_hits(code_hits)
+
+        if wsp_hits:
+            for hit in wsp_hits[:2]:
+                raw_summary = (hit.get('summary') or hit.get('content') or '').replace('\n', ' ').strip()
+                summary = self._clean_summary(raw_summary, max_len=120)
+                pointer = hit.get('path') or hit.get('location')
+                if pointer:
+                    pointer = pointer.replace('\\', '/')
+                wsp_cards.append(self._make_memory_card(
+                    module=module or "unknown",
+                    doc_type="wsp",
+                    wsp=hit.get('wsp') or "WSP",
+                    summary=summary or "WSP guidance available for this query.",
+                    pointers=[pointer] if pointer else [],
+                    trust=0.95,
+                    salience=0.8,
+                ))
+
+        if module:
+            parts = module.split('/', 1)
+            if len(parts) == 2:
+                module_root = self.repo_root / "modules" / parts[0] / parts[1]
+                doc_specs = [
+                    ("INTERFACE.md", "interface", 0.9),
+                    ("README.md", "readme", 0.9),
+                    ("ModLog.md", "modlog", 0.7),
+                ]
+                for filename, doc_type, trust in doc_specs:
+                    path = module_root / filename
+                    if path.exists():
+                        summary = self._extract_doc_summary(
+                            path,
+                            f"See {filename} for module context."
+                        )
+                        pointer = str(path.relative_to(self.repo_root)).replace('\\', '/')
+                        doc_cards.append(self._make_memory_card(
+                            module=module,
+                            doc_type=doc_type,
+                            summary=summary,
+                            pointers=[pointer],
+                            trust=trust,
+                            salience=0.7,
+                        ))
+
+        if skill_hits and self._should_include_skillz():
+            for hit in skill_hits[:1]:
+                summary = self._clean_summary(
+                    hit.get('description') or hit.get('skill_name') or "Skillz guidance available.",
+                    max_len=120,
+                )
+                pointer = hit.get('path')
+                if pointer:
+                    pointer = str(pointer).replace('\\', '/')
+                skill_cards.append(self._make_memory_card(
+                    module="skillz",
+                    doc_type="skillz",
+                    summary=summary,
+                    pointers=[pointer] if pointer else [],
+                    trust=0.9,
+                    salience=0.8,
+                ))
+
+        cards = []
+        if skill_cards:
+            cards.extend(skill_cards[:1])
+        if wsp_cards:
+            cards.append(wsp_cards[0])
+        if doc_cards:
+            cards.extend(doc_cards[:2])
+        if wsp_cards:
+            cards.extend(wsp_cards[1:])
+        if doc_cards:
+            cards.extend(doc_cards[2:])
+        if not cards:
+            reason = "no memory sources found (no WSP hits, no module docs)"
+
+        return {
+            "cards": cards[:5],
+            "reason": reason,
+        }
+
+    def _should_include_skillz(self) -> bool:
+        query = self.query_context or ""
+        return any(token in query for token in ["skill", "skillz", "wardrobe", "mps"])
+
+    def _format_memory_bundle(self, bundle: Dict[str, Any], max_cards: int, include_metrics: bool = False) -> List[str]:
+        cards = bundle.get("cards") or []
+        reason = bundle.get("reason") or ""
+        output_lines = ["[MEMORY]"]
+
+        if not cards:
+            output_lines.append("- id: mem:none")
+            output_lines.append(f"  summary: \"{reason or 'memory bundle empty'}\"")
+            return output_lines
+
+        for card in cards[:max_cards]:
+            output_lines.append(f"- id: {card.get('id')}")
+            output_lines.append(f"  module: {card.get('module')}")
+            output_lines.append(f"  doc_type: {card.get('doc_type')}")
+            if card.get('wsp'):
+                output_lines.append(f"  wsp: {card.get('wsp')}")
+            output_lines.append(f"  intent: {card.get('intent')}")
+            output_lines.append(f"  summary: \"{card.get('summary', '')}\"")
+            pointers = card.get("pointers") or []
+            if pointers:
+                output_lines.append("  pointers:")
+                for pointer in pointers:
+                    output_lines.append(f"    - {pointer}")
+            if include_metrics:
+                output_lines.append(f"  salience: {card.get('salience')}")
+                output_lines.append(f"  trust: {card.get('trust')}")
+                output_lines.append(f"  last_seen: {card.get('last_seen')}")
+
+        return output_lines
+
     def _enforce_section_limit(self, verbose: bool) -> None:
         """Ensure only the top priority sections are retained for default output."""
         if verbose or len(self.output_sections) <= self.max_sections:
@@ -265,6 +445,11 @@ class AgenticOutputThrottler:
             if module_match:
                 modules_found.add(module_match.group(1))
 
+        memory_bundle = self._memory_bundle or self._build_memory_bundle(search_results)
+        self._memory_bundle = memory_bundle
+        output_lines.extend(self._format_memory_bundle(memory_bundle, max_cards=5 if verbose else 3))
+        output_lines.append("")
+
         output_lines.append("[GREEN] [SOLUTION FOUND] Existing functionality discovered")
         output_lines.append(f"[MODULES] Found implementations across {len(modules_found)} modules: {', '.join(sorted(modules_found))}")
         output_lines.append("")
@@ -324,6 +509,11 @@ class AgenticOutputThrottler:
         """State 3: [YELLOW] No Solution Found - Allow creation, show guidance."""
         output_lines = []
         query = getattr(self, 'query_context', 'unknown query')
+
+        memory_bundle = self._memory_bundle or self._build_memory_bundle(getattr(self, '_search_results', {}) or {})
+        self._memory_bundle = memory_bundle
+        output_lines.extend(self._format_memory_bundle(memory_bundle, max_cards=3))
+        output_lines.append("")
 
         output_lines.append("[YELLOW] [NO SOLUTION FOUND] No existing implementation discovered")
         output_lines.append("")
@@ -610,6 +800,12 @@ class AgenticOutputThrottler:
         # Get contextual filtering information
         target_module = self.detected_module
 
+        # Memory-first bundle (WSP 60)
+        memory_bundle = self._build_memory_bundle(result)
+        self._memory_bundle = memory_bundle
+        memory_section = "\n".join(self._format_memory_bundle(memory_bundle, max_cards=3))
+        self.add_section('memory', memory_section, priority=1, tags=['memory'])
+
         # Code results - highest priority for search queries
         if code_hits:
             code_content = "[CODE] Code Results:"
@@ -692,6 +888,41 @@ class AgenticOutputThrottler:
                             dup_content += f"\n    - {pair['original']} <-> {pair['duplicate']} ({pair['lines']} lines)"
                     dup_content += f"\n  - WSP 40 Status: VIOLATION - {dup_data['recommendation']}"
                     self.add_section('analysis', dup_content, priority=2, tags=['analysis', 'duplication', 'wsp40', 'violation'])
+
+            if 'module_scoring' in intelligent_analysis:
+                score_data = intelligent_analysis['module_scoring']
+                if score_data.get('error'):
+                    score_content = f"[SCORING] Module scoring unavailable: {score_data['error']}"
+                    self.add_section('analysis', score_content, priority=3, tags=['analysis', 'scoring', 'warning'])
+                else:
+                    score_content = "[SCORING] WSP 15/37 Module Priority:"
+
+                    target_score = score_data.get('target_score')
+                    if target_score:
+                        score_content += (
+                            f"\n  - Target: {target_score.get('name')} "
+                            f"({target_score.get('priority')}, {target_score.get('mps_score')})"
+                        )
+
+                    top_active = score_data.get('top_active') or []
+                    if top_active:
+                        score_content += "\n  - Top Active:"
+                        for entry in top_active[:3]:
+                            score_content += (
+                                f"\n    - {entry.get('name')} "
+                                f"({entry.get('priority')}, {entry.get('mps_score')})"
+                            )
+
+                    top_inactive = score_data.get('top_inactive') or []
+                    if top_inactive:
+                        score_content += "\n  - Next Activation:"
+                        for entry in top_inactive[:3]:
+                            score_content += (
+                                f"\n    - {entry.get('name')} "
+                                f"({entry.get('priority')}, {entry.get('mps_score')})"
+                            )
+
+                    self.add_section('analysis', score_content, priority=2, tags=['analysis', 'scoring', 'wsp15', 'wsp37'])
 
         # Health notices - only show violations for target module
         health_notices = result.get('health_notices', [])

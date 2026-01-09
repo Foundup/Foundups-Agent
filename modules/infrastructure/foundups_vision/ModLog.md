@@ -167,6 +167,22 @@
 **Files Modified:**
 - `modules/infrastructure/foundups_vision/src/ui_tars_bridge.py`
 
+---
+
+### 2026-01-04: UI-TARS Output Noise Gate (TTS Friendly)
+
+**WSP References:** WSP 91 (Observability), WSP 77 (Agent Coordination), WSP 22 (ModLog Protocol)
+
+**Problem:** UI-TARS model raw outputs can be verbose and pollute console/TTS streams.
+
+**Solution:** `ui_tars_bridge.py` now suppresses full model output logs by default.
+
+**Control:**
+```bash
+UI_TARS_VERBOSE_OUTPUT=true   # show full model output
+UI_TARS_VERBOSE_OUTPUT=false  # default (suppressed)
+```
+
 ### 2025-12-12: UI-TARS Bridge Stabilization (Click/Type/Verify + DPI Mapping)
 **By:** 0102
 **WSP References:** WSP 77 (Agent Coordination), WSP 91 (Observability)

@@ -31,7 +31,7 @@ class TestDaemonMonitor(DaemonMonitorMixin):
 """
 
         # Load the YouTube daemon monitor skill (WSP 3 compliant path)
-        skill_path = project_root / "modules" / "communication" / "livechat" / "skills" / "youtube_daemon_monitor.json"
+        skill_path = project_root / "modules" / "communication" / "livechat" / "skillz" / "youtube_daemon_monitor.json"
         skill = self._load_daemon_skill(skill_path)
 
         if not skill:

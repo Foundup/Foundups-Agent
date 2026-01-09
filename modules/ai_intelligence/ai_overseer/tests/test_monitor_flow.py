@@ -24,7 +24,7 @@ repo_root = Path(__file__).parent
 overseer = AIIntelligenceOverseer(repo_root)
 
 # Skill path
-skill_path = repo_root / "modules/communication/livechat/skills/youtube_daemon_monitor.json"
+skill_path = repo_root / "modules/communication/livechat/skillz/youtube_daemon_monitor.json"
 
 print(f"\n[TEST] Calling monitor_daemon with sample log...")
 print(f"  Skill: {skill_path.name}")

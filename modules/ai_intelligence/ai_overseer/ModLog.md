@@ -6,6 +6,42 @@
 
 ---
 
+## 2026-01-05 - Holo System Check (Silent Wiring Audit)
+
+**Change Type**: Enhancement
+**WSP Compliance**: WSP 60 (Module Memory), WSP 77 (Agent Coordination), WSP 22 (ModLog)
+
+### What Changed
+
+- HoloMemorySentinel now runs a one-time Holo system wiring check per session.
+- System check reports are stored under `memory/holo_sentinel/system_checks/` with a summary record in the sentinel log.
+- README updated to reflect the new sentinel behavior.
+
+**Files Modified**:
+- `src/holo_memory_sentinel.py`
+- `README.md`
+
+---
+
+## 2026-01-04 - Holo Memory Sentinel + Memory Roadmap
+
+**Change Type**: Enhancement
+**WSP Compliance**: WSP 60 (Module Memory), WSP 77 (Agent Coordination), WSP 22 (ModLog)
+
+### What Changed
+
+- Added silent HoloMemorySentinel to record per-session memory bundles and quality metrics.
+- Wired HoloAdapter search paths to invoke the sentinel on success and fallback.
+- Added explicit per-card memory feedback recording via FeedbackLearner.
+- Documented memory feedback roadmap in module README for 0102 usage.
+
+**Files Modified**:
+- `src/holo_memory_sentinel.py` (new)
+- `src/holo_adapter.py`
+- `README.md`
+
+---
+
 ## 2025-10-20 - Autonomous Code Patching with Daemon Restart
 
 **Change Type**: Feature Enhancement
@@ -99,7 +135,7 @@ Per user's micro-sprint plan:
 - WSP 90 (UTF-8 Enforcement): UTF-8 header insertion for Unicode fixes
 - PatchExecutor Module: `modules/infrastructure/patch_executor/`
 - MetricsAppender Module: `modules/infrastructure/metrics_appender/`
-- Skill JSON: `modules/communication/livechat/skills/youtube_daemon_monitor.json`
+- Skill JSON: `modules/communication/livechat/skillz/youtube_daemon_monitor.json`
 
 ---
 
@@ -124,7 +160,7 @@ Updated MetricsAppender import to use WSP 3 compliant module path.
 
 **First Principles Analysis Revealed**:
 - MetricsAppender is cross-cutting infrastructure (used by multiple modules)
-- OLD location violated WSP 3 (buried in `/skills/` subdirectory)
+- OLD location violated WSP 3 (buried in `/skillz/` subdirectory)
 - NEW location follows WSP 3 (proper module in `modules/infrastructure/`)
 - MetricsAppender now has proper WSP 49 structure (README, INTERFACE, src/, tests/)
 
@@ -334,7 +370,7 @@ Completed **Option A** implementation of autonomous daemon monitoring "witness l
 - `docs/WITNESS_LOOP_IMPLEMENTATION_STATUS.md` - Implementation status (450 lines)
 
 **Skills Updated**:
-- `modules/communication/livechat/skills/youtube_daemon_monitor.json` - v2.0.0 with WSP 15 MPS scoring
+- `modules/communication/livechat/skillz/youtube_daemon_monitor.json` - v2.0.0 with WSP 15 MPS scoring
 
 ### Why This Change
 
@@ -390,7 +426,7 @@ Added **UBIQUITOUS daemon monitoring** to AI Overseer - works with ANY daemon us
   - `MissionType.AUTO_REMEDIATION`: Auto-fix low-hanging fruit
 
 **Files Created**:
-- `modules/communication/livechat/skills/youtube_daemon_monitor.json` - YouTube error patterns (production skill per WSP 96)
+- `modules/communication/livechat/skillz/youtube_daemon_monitor.json` - YouTube error patterns (production skill per WSP 96)
 
 ### Why This Change
 
@@ -417,7 +453,7 @@ WHAT_TO_DO: Auto-fix or report (skill-driven)
 # Works with ANY daemon
 overseer.monitor_daemon(
     bash_id="7f81b9",  # Any bash shell
-    skill_path=Path("modules/communication/livechat/skills/youtube_daemon_monitor.json")
+    skill_path=Path("modules/communication/livechat/skillz/youtube_daemon_monitor.json")
 )
 ```
 
@@ -561,7 +597,7 @@ from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOv
 overseer = AIIntelligenceOverseer(Path("O:/Foundups-Agent"))
 results = overseer.monitor_daemon(
     bash_id="7f81b9",
-    skill_path=Path("modules/communication/livechat/skills/youtube_daemon_monitor.json")
+    skill_path=Path("modules/communication/livechat/skillz/youtube_daemon_monitor.json")
 )
 ```
 
@@ -647,7 +683,7 @@ results = overseer.monitor_daemon(
 ### References
 
 - **Working Pattern**: First Principles + Occam's Razor (this session)
-- **YouTube Skill**: `modules/communication/livechat/skills/youtube_daemon_monitor.json`
+- **YouTube Skill**: `modules/communication/livechat/skillz/youtube_daemon_monitor.json`
 - **WSP 96**: `WSP_framework/src/WSP_96_WRE_Skills_Wardrobe_Protocol.md`
 
 ---

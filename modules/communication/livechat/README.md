@@ -30,6 +30,13 @@ The module supports **37 distinct command patterns** including:
 
 **See `docs/COMMAND_REFERENCE.md` for complete documentation.**
 
+### Voice Command Ingestion (Local STT)
+Voice commands are injected as synthetic chat messages from
+`modules/communication/voice_command_ingestion`. Routing is handled by the
+existing `MessageProcessor` and `CommandHandler` paths (no new orchestrator).
+Default local STT backend is whisper.cpp; Vosk is a fallback for low-resource
+streaming.
+
 ### [U+1F4B0] API Token Management
 All commands go through `intelligent_throttle_manager.py`:
 - **Local commands** (MAGADOOM): No API cost, light throttling
@@ -422,4 +429,3 @@ python modules/communication/livechat/tools/demo_enhanced_auto_moderation.py
 ---
 
 *This README follows WSP architectural principles to prevent future violations and ensure autonomous development ecosystem compatibility.*
-

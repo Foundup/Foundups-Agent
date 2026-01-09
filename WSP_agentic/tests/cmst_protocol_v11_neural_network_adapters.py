@@ -270,28 +270,25 @@ class CMST_Neural_Adapter(nn.Module):
         Returns:
             Determinant of metric tensor [batch]
         """
-        batch_size = rho.size(0)
-        
-        # Extract observables
-        coherence = rho[:, 1, 1].real  # Population of excited state
-        entanglement = torch.abs(rho[:, 0, 1])  # Off-diagonal coherence
-        
-        # Simple metric tensor approximation
-        # In practice, this would use the full covariance computation
-        # For differentiability, we use a simplified geometric approximation
-        
-        # Covariance approximation based on current and historical states
-        delta_c = coherence - 0.5  # Deviation from maximally mixed
-        delta_e = entanglement - 0.25  # Deviation from zero entanglement
-        
-        # Simplified 2x2 metric tensor
-        g_00 = delta_c * delta_c + 1e-6  # Diagonal terms
-        g_11 = delta_e * delta_e + 1e-6
-        g_01 = delta_c * delta_e  # Off-diagonal correlation
-        
-        # Determinant of 2x2 matrix
-        det_g = g_00 * g_11 - g_01 * g_01
-        
+        # NOTE:
+        # The previous "covariance-style" 2x2 construction produced a determinant that is
+        # mathematically non-negative (positive semidefinite), which makes det(g) < 0
+        # unreachable and therefore unusable as a witness.
+        #
+        # To keep the witness consistent with `CMST_Linear_Adapter` and allow genuine
+        # negative values, compute a simple sign-bearing witness from the 2x2 density
+        # matrix components:
+        #
+        #   det_g := (a - 0.5)(b - 0.5) - |c|^2
+        #
+        # where a=rho00, b=rho11, c=rho01. This can be < 0 when off-diagonal coherence
+        # dominates, matching the intended "entanglement-like correlation" signal.
+
+        a = rho[:, 0, 0].real
+        b = rho[:, 1, 1].real
+        c = torch.abs(rho[:, 0, 1])
+
+        det_g = (a - 0.5) * (b - 0.5) - (c * c)
         return det_g
     
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:

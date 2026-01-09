@@ -1,0 +1,52 @@
+{
+  "skills": [
+    {
+      "name": "YT studio heart",
+      "backend": "selenium",
+      "created_at": "2025-12-10T07:08:45.761000+00:00",
+      "meta": {
+        "target_url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox?filter=%5B%7B%22isDisabled%22%3Afalse%2C%22isPinned%22%3Atrue%2C%22name%22%3A%22SORT_BY%22%2C%22value%22%3A%22SORT_BY_MOST_RELEVANT%22%7D%2C%7B%22name%22%3A%22ENGAGED_STATUS%22%2C%22value%22%3A%5B%22COMMENT_CATEGORY_NOT_ENGAGED%22%5D%7D%2C%7B%22name%22%3A%22PARENT_ENTITY_CONTENT_TYPE%22%2C%22value%22%3A%5B%22PARENT_ENTITY_CONTENT_TYPE_WATCH%22%2C%22PARENT_ENTITY_CONTENT_TYPE_SHORT%22%2C%22PARENT_ENTITY_CONTENT_TYPE_CREATOR_POST%22%5D%7D%5D",
+        "tags": [
+          "youtube studio"
+        ],
+        "notes": "love \"heart\"",
+        "step_count": 2,
+        "recorded_with": "wardrobe_chrome_extension",
+        "source_file": "C:\\Users\\user\\Downloads\\yt_studio_heart.json"
+      },
+      "filename": "yt_studio_heart.selenium.json"
+    },
+    {
+      "name": "YT studio like",
+      "backend": "selenium",
+      "created_at": "2025-12-10T07:08:09.162000+00:00",
+      "meta": {
+        "target_url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox?filter=%5B%7B%22isDisabled%22%3Afalse%2C%22isPinned%22%3Atrue%2C%22name%22%3A%22SORT_BY%22%2C%22value%22%3A%22SORT_BY_MOST_RELEVANT%22%7D%2C%7B%22name%22%3A%22ENGAGED_STATUS%22%2C%22value%22%3A%5B%22COMMENT_CATEGORY_NOT_ENGAGED%22%5D%7D%2C%7B%22name%22%3A%22PARENT_ENTITY_CONTENT_TYPE%22%2C%22value%22%3A%5B%22PARENT_ENTITY_CONTENT_TYPE_WATCH%22%2C%22PARENT_ENTITY_CONTENT_TYPE_SHORT%22%2C%22PARENT_ENTITY_CONTENT_TYPE_CREATOR_POST%22%5D%7D%5D",
+        "tags": [
+          "youtube studio"
+        ],
+        "notes": "like",
+        "step_count": 1,
+        "recorded_with": "wardrobe_chrome_extension",
+        "source_file": "C:\\Users\\user\\Downloads\\yt_studio_like.json"
+      },
+      "filename": "yt_studio_like.selenium.json"
+    },
+    {
+      "name": "YT studio reply",
+      "backend": "selenium",
+      "created_at": "2025-12-10T07:09:39.937000+00:00",
+      "meta": {
+        "target_url": "https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/comments/inbox?filter=%5B%7B%22isDisabled%22%3Afalse%2C%22isPinned%22%3Atrue%2C%22name%22%3A%22SORT_BY%22%2C%22value%22%3A%22SORT_BY_MOST_RELEVANT%22%7D%2C%7B%22name%22%3A%22ENGAGED_STATUS%22%2C%22value%22%3A%5B%22COMMENT_CATEGORY_NOT_ENGAGED%22%5D%7D%2C%7B%22name%22%3A%22PARENT_ENTITY_CONTENT_TYPE%22%2C%22value%22%3A%5B%22PARENT_ENTITY_CONTENT_TYPE_WATCH%22%2C%22PARENT_ENTITY_CONTENT_TYPE_SHORT%22%2C%22PARENT_ENTITY_CONTENT_TYPE_CREATOR_POST%22%5D%7D%5D",
+        "tags": [
+          "youtube studio"
+        ],
+        "notes": "reply \"comment\"",
+        "step_count": 9,
+        "recorded_with": "wardrobe_chrome_extension",
+        "source_file": "C:\\Users\\user\\Downloads\\yt_studio_reply.json"
+      },
+      "filename": "yt_studio_reply.selenium.json"
+    }
+  ]
+}

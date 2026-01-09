@@ -32,7 +32,7 @@ import argparse
 import json
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 import psutil
@@ -116,6 +116,222 @@ def _env_truthy(name: str, default: str = "false") -> bool:
 def _env_flag(name: str, default_on: bool = True) -> bool:
     default = "true" if default_on else "false"
     return _env_truthy(name, default)
+
+def _maybe_clear_screen() -> None:
+    if not _env_flag("FOUNDUPS_CLEAR_SCREEN", False):
+        return
+    try:
+        if not sys.stdout.isatty():
+            return
+    except Exception:
+        return
+    os.system("cls" if os.name == "nt" else "clear")
+
+def _parse_index_timestamp(value: str) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+def _should_auto_index_holo(state_path: Path, max_age_hours: int) -> bool:
+    if max_age_hours <= 0:
+        return True
+    if not state_path.exists():
+        return True
+    try:
+        payload = json.loads(state_path.read_text(encoding="utf-8"))
+        last_value = str(payload.get("last_indexed_at", ""))
+        last_ts = _parse_index_timestamp(last_value)
+        if not last_ts:
+            return True
+        now = datetime.now(timezone.utc)
+        if last_ts.tzinfo is None:
+            last_ts = last_ts.replace(tzinfo=timezone.utc)
+        age_hours = (now - last_ts).total_seconds() / 3600.0
+        return age_hours >= max_age_hours
+    except Exception:
+        return True
+
+def _maybe_auto_index_holo(verbose: bool) -> None:
+    if not _env_flag("FOUNDUPS_HOLO_AUTO_INDEX", False):
+        return
+    try:
+        max_age_hours = int(os.getenv("FOUNDUPS_HOLO_AUTO_INDEX_MAX_HOURS", "6").strip())
+    except ValueError:
+        max_age_hours = 6
+    ssd_path = os.getenv("HOLO_SSD_PATH", "E:/HoloIndex")
+    state_path = Path(ssd_path) / "indexes" / "index_state.json"
+    if not _should_auto_index_holo(state_path, max_age_hours):
+        return
+    try:
+        import subprocess
+
+        env = os.environ.copy()
+        if not verbose:
+            env.setdefault("HOLO_SILENT", "1")
+        cmd = [sys.executable, "holo_index.py", "--index-all", "--ssd", ssd_path]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", env=env)
+        if result.returncode != 0:
+            logger.warning(f"[HOLO] Auto-index failed: {result.stderr.strip() or result.stdout.strip()}")
+        elif verbose:
+            logger.info("[HOLO] Auto-index complete")
+    except Exception as e:
+        logger.warning(f"[HOLO] Auto-index failed: {e}")
+
+def _format_env_value(value: str) -> str:
+    if any(ch.isspace() for ch in value):
+        return f"\"{value}\""
+    return value
+
+def _update_env_file(key: str, value: str) -> None:
+    env_path = Path(__file__).resolve().parent / ".env"
+    new_line = f"{key}={_format_env_value(value)}"
+
+    if not env_path.exists():
+        env_path.write_text(new_line + "\n", encoding="utf-8")
+        return
+
+    lines = env_path.read_text(encoding="utf-8").splitlines()
+    updated = False
+    next_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            next_lines.append(line)
+            continue
+        key_part = stripped.split("=", 1)[0].strip()
+        if key_part.startswith("export "):
+            key_part = key_part[len("export "):].strip()
+        if key_part == key:
+            if not updated:
+                next_lines.append(new_line)
+                updated = True
+            continue
+        next_lines.append(line)
+
+    if not updated:
+        next_lines.append(new_line)
+
+    env_path.write_text("\n".join(next_lines) + "\n", encoding="utf-8")
+
+def _holo_controls_menu() -> None:
+    while True:
+        auto_index_on = _env_flag("FOUNDUPS_HOLO_AUTO_INDEX", False)
+        max_hours_raw = os.getenv("FOUNDUPS_HOLO_AUTO_INDEX_MAX_HOURS", "6").strip() or "6"
+        ssd_path = os.getenv("HOLO_SSD_PATH", "E:/HoloIndex")
+        clear_screen_on = _env_flag("FOUNDUPS_CLEAR_SCREEN", False)
+
+        print("\n[MENU] Holo Controls (012)")
+        print("=" * 60)
+        print(f"Auto-index: {'ON' if auto_index_on else 'OFF'} | Max age hours: {max_hours_raw} (0=always)")
+        print(f"SSD path: {ssd_path}")
+        print(f"Clear screen on startup: {'ON' if clear_screen_on else 'OFF'}")
+        print("-" * 60)
+        print("1) Toggle auto-index")
+        print("2) Set max age hours (0=always)")
+        print("3) Set SSD path")
+        print("4) Toggle clear screen")
+        print("5) Back")
+
+        choice = input("holo-controls> ").strip()
+
+        if choice == "1":
+            new_value = "0" if auto_index_on else "1"
+            os.environ["FOUNDUPS_HOLO_AUTO_INDEX"] = new_value
+            _update_env_file("FOUNDUPS_HOLO_AUTO_INDEX", new_value)
+        elif choice == "2":
+            raw = input("Enter max age hours (0=always): ").strip()
+            if not raw:
+                continue
+            try:
+                hours = int(raw)
+                if hours < 0:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Enter a non-negative integer.")
+                continue
+            os.environ["FOUNDUPS_HOLO_AUTO_INDEX_MAX_HOURS"] = str(hours)
+            _update_env_file("FOUNDUPS_HOLO_AUTO_INDEX_MAX_HOURS", str(hours))
+        elif choice == "3":
+            raw = input("Enter SSD path (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_SSD_PATH"] = raw
+            _update_env_file("HOLO_SSD_PATH", raw)
+        elif choice == "4":
+            new_value = "0" if clear_screen_on else "1"
+            os.environ["FOUNDUPS_CLEAR_SCREEN"] = new_value
+            _update_env_file("FOUNDUPS_CLEAR_SCREEN", new_value)
+        elif choice == "5":
+            break
+        else:
+            print("[ERROR] Invalid choice.")
+
+def _set_env_bool(key: str, enabled: bool) -> None:
+    value = "true" if enabled else "false"
+    os.environ[key] = value
+    _update_env_file(key, value)
+
+def _yt_switch_summary() -> str:
+    tempo = os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper()
+    comment_engagement = "ON" if _env_truthy("YT_COMMENT_ENGAGEMENT_ENABLED", "true") else "OFF"
+    comment_only = "ON" if _env_truthy("YT_COMMENT_ONLY_MODE", "false") else "OFF"
+    replies = "ON" if _env_truthy("YT_COMMENT_REPLY_ENABLED", "true") else "OFF"
+    return f"tempo={tempo} | engagement={comment_engagement} | comment_only={comment_only} | replies={replies}"
+
+def _yt_controls_menu() -> None:
+    toggles = [
+        ("YT_AUTOMATION_ENABLED", "Automation master switch", True),
+        ("YT_COMMENT_ENGAGEMENT_ENABLED", "Enable comment engagement loop", True),
+        ("YT_COMMENT_ONLY_MODE", "Comment-only mode (no live chat)", False),
+        ("YT_COMMENT_REACTIONS_ENABLED", "Enable reactions (like/heart)", True),
+        ("YT_COMMENT_LIKE_ENABLED", "Allow like action", True),
+        ("YT_COMMENT_HEART_ENABLED", "Allow heart action", True),
+        ("YT_COMMENT_REPLY_ENABLED", "Allow reply action", True),
+        ("YT_COMMENT_INTELLIGENT_REPLY_ENABLED", "Use intelligent replies", True),
+        ("YT_REPLY_BASIC_ONLY", "Basic replies only", False),
+        ("YT_OCCAM_MODE", "Occam mode (minimal replies)", False),
+        ("YT_REPLY_DEBUG_TAGS", "Append debug tags to replies", False),
+    ]
+
+    while True:
+        tempo = os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper()
+
+        print("\n[MENU] YouTube Controls (012)")
+        print("=" * 60)
+        for idx, (key, desc, default_on) in enumerate(toggles, start=1):
+            default_str = "true" if default_on else "false"
+            enabled = _env_truthy(key, default_str)
+            status = "ON" if enabled else "OFF"
+            print(f"{idx}) {desc} [{key}] = {status}")
+        set_idx = len(toggles) + 1
+        back_idx = len(toggles) + 2
+        print(f"{set_idx}) Set engagement tempo (YT_ENGAGEMENT_TEMPO) = {tempo}")
+        print(f"{back_idx}) Back")
+
+        choice = input("yt-controls> ").strip().lower()
+        if choice in {str(back_idx), "b", "back", "exit", "quit"}:
+            break
+        if choice == str(set_idx):
+            raw = input("tempo (012/FAST/MEDIUM): ").strip().upper()
+            if raw not in {"012", "FAST", "MEDIUM"}:
+                print("[ERROR] Invalid tempo. Use 012, FAST, or MEDIUM.")
+                continue
+            os.environ["YT_ENGAGEMENT_TEMPO"] = raw
+            _update_env_file("YT_ENGAGEMENT_TEMPO", raw)
+            continue
+        if choice.isdigit():
+            idx = int(choice)
+            if 1 <= idx <= len(toggles):
+                key, _, default_on = toggles[idx - 1]
+                default_str = "true" if default_on else "false"
+                current = _env_truthy(key, default_str)
+                _set_env_bool(key, not current)
+                continue
+        print("[ERROR] Invalid choice.")
 
 def _read_piped_mode_token(timeout_seconds: float = 0.05) -> Optional[str]:
     """
@@ -366,6 +582,9 @@ def search_with_holoindex(query: str):
         # Check if HoloIndex is available (prefer root version)
         if os.path.exists("holo_index.py"):
             holo_cmd = ['python', 'holo_index.py', '--search', query]
+            ssd_path = os.getenv("HOLO_SSD_PATH", "").strip()
+            if ssd_path:
+                holo_cmd.extend(["--ssd", ssd_path])
         elif os.path.exists(r"E:\HoloIndex\enhanced_holo_index.py"):
             # Fallback to E: drive version
             holo_cmd = ['python', r"E:\HoloIndex\enhanced_holo_index.py", '--search', query]
@@ -374,12 +593,16 @@ def search_with_holoindex(query: str):
             print("Install HoloIndex to prevent vibecoding!")
             return None
 
+        env = os.environ.copy()
+        env.setdefault("HOLO_SILENT", "1")
+
         # Run HoloIndex search
         result = subprocess.run(
             holo_cmd,
             capture_output=True,
             text=True,
-            encoding='utf-8'
+            encoding='utf-8',
+            env=env
         )
 
         if result.returncode == 0:
@@ -450,12 +673,19 @@ from modules.infrastructure.git_social_posting.scripts.posting_utilities import 
 # Extracted to modules/infrastructure/git_push_dae/scripts/launch.py per WSP 62
 from modules.infrastructure.git_push_dae.scripts.launch import launch_git_push_dae
 
+# Extracted to modules/platform_integration/youtube_shorts_scheduler/scripts/launch.py per WSP 62
+from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import (
+    run_shorts_scheduler,
+    show_shorts_scheduler_menu
+)
+
 # Re-enable normal logging after all imports are complete
 logging.root.setLevel(original_level)
 
 
 def main():
     """Main entry point with command line arguments."""
+    _maybe_clear_screen()
     # Logger already configured at module level
     logger.info("0102 FoundUps Agent starting...")
 
@@ -664,6 +894,7 @@ def main():
         show_mcp_services_menu()
     else:
         # Interactive menu - Check instances once at startup, then loop main menu
+        _maybe_auto_index_holo(args.verbose)
         print("\n" + "="*60)
         print("0102 FoundUps Agent - DAE Test Menu")
         print("="*60)
@@ -804,9 +1035,9 @@ def main():
             print("[DEBUG-MAIN] Top of menu loop - displaying options")
 
             # Show the main menu
-            print("0. Push to Git and Post to LinkedIn + X (FoundUps)  | --git")
-            print("1. YouTube Live DAE (Move2Japan/UnDaoDu/FoundUps)   | --youtube")
-            print("2. HoloDAE (Code Intelligence & Monitoring)        | --holodae")
+            print("0. Git Operations (Push + Post + History)          | --git")
+            print("1. YouTube DAEs (Live/Comments/Shorts/Indexing)    | --youtube")
+            print("2. HoloDAE (Code Intelligence & Search)            | --holodae")
             print("3. AMO DAE (Autonomous Moderation Operations)      | --amo")
             print("4. Social Media DAE (012 Digital Twin)             | --smd")
             print("5. Liberty Alert DAE (Community Protection)        | --liberty-dae")
@@ -817,11 +1048,9 @@ def main():
             print("10. Exit")
             print("-"*60)
             print("00. Check Instance Status & Health                 | --status")
-            print("11. HoloIndex Search (Find code semantically)")
-            print("12. View Git Post History")
-            print("13. Qwen/Gemma Training System (Pattern Learning)")
-            print("14. MCP Services (Model Context Protocol Gateway)  | --mcp")
-            print("15. Automation Dependencies (Chrome + LM Studio)  | --deps")
+            print("11. Qwen/Gemma Training System (Pattern Learning)")
+            print("12. MCP Services (Model Context Protocol Gateway)  | --mcp")
+            print("13. Automation Dependencies (Chrome + LM Studio)  | --deps")
             print("="*60)
             print("CLI: --youtube --no-lock (bypass menu + instance lock)")
             print("="*60)
@@ -836,26 +1065,54 @@ def main():
                 choice = "10"  # Default to exit on interrupt
 
             if choice == "0":
-                # Launch GitPushDAE daemon (WSP 91 compliant)
-                print("[DEBUG-MAIN] Calling launch_git_push_dae()...")
-                # Run-once so the interactive menu is not blocked by a long-running daemon.
-                launch_git_push_dae(run_once=True)
-                print("[DEBUG-MAIN] Returned from launch_git_push_dae()")
+                # Git Operations Submenu (WSP 91 compliant)
+                print("\n[MENU] Git Operations")
+                print("="*60)
+                print("1. Push to Git + Post to LinkedIn/X")
+                print("2. View Git Post History")
+                print("0. Back to Main Menu")
+                print("="*60)
+
+                git_choice = input("\nSelect Git option: ").strip()
+
+                if git_choice == "1":
+                    print("[DEBUG-MAIN] Calling launch_git_push_dae()...")
+                    # Run-once so the interactive menu is not blocked by a long-running daemon.
+                    launch_git_push_dae(run_once=True)
+                    print("[DEBUG-MAIN] Returned from launch_git_push_dae()")
+                elif git_choice == "2":
+                    view_git_post_history()
+                elif git_choice == "0":
+                    print("[BACK] Returning to main menu...")
+                else:
+                    print("[ERROR] Invalid choice")
                 # Will return to menu after completion
 
             elif choice == "1":
-                # YouTube DAE Menu - Live Chat OR Shorts
-                print("\n[MENU] YouTube DAE Menu")
+                # YouTube DAEs Menu - Each is an independent DAE at 1.x level (ADR-013)
+                print("\n[MENU] YouTube DAEs")
                 print("="*60)
-                print("1. [ALERT] YouTube Live Chat Monitor (AutoModeratorDAE)")
-                print("2. [MENU] YouTube Shorts Generator (Gemini/Veo 3)")
-                print("3. [MENU] YouTube Shorts Generator (Sora2 Live Action)")
-                print("4. [INFO] YouTube Stats & Info")
-                print("5. [AI] Launch with AI Overseer Monitoring (Qwen/Gemma Bug Detection)")
-                print("0. [BACK] Back to Main Menu")
+                print(f"Active switches: {_yt_switch_summary()} (00=Controls)")
+                print("")
+                print("== LIVE OPERATIONS ==")
+                print("1. [DAE] Live Chat Monitor (AutoModeratorDAE)")
+                print("2. [DAE] Comment Engagement (Broadcast Controls)")
+                print("6. [ALL] Full Production Mode (Live+Comments+Scheduler)")
+                print("7. [AI] AI Overseer Mode (Qwen/Gemma Monitoring)")
+                print("")
+                print("== CONTENT AUTOMATION ==")
+                print("3. [DAE] Shorts Scheduler (Enhance + Schedule)")
+                print("4. [DAE] Shorts Generator (Veo3/Sora2)")
+                print("")
+                print("== KNOWLEDGE INDEXING ==")
+                print("8. [INDEX] YouTube Indexing (Digital Twin Learning)")
+                print("5. [INFO] YouTube Stats")
+                print("")
+                print("00. Controls (Local Switches)")
+                print("0. Back to Main Menu")
                 print("="*60)
 
-                yt_choice = input("\nSelect YouTube option: ")
+                yt_choice = input("\nSelect YouTube DAE: ")
 
                 def run_shorts_flow(engine_label: str, system_label: str, mode_label: str, duration_label: str, engine_key: str) -> None:
                     print(f"\n[MENU] YouTube Shorts Generator [{engine_label}]")
@@ -923,102 +1180,200 @@ def main():
 
                             traceback.print_exc()
 
-                if yt_choice == "1":
-                    print("\n[MENU] YouTube Auto-Moderator Profiles")
-                    print("="*60)
-                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI) [CONFIRMED]")
-                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
-                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
-                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
-                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
-                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
-                    print("0. [CANCEL]      Back to YouTube Menu")
+                # ============================================================
+                # YOUTUBE DAEs HANDLERS (ADR-013: Independent DAEs at 1.x level)
+                # 1=Live Chat, 2=Comments, 3=Scheduler, 4=Generator, 5=Stats, 6=Full, 7=AI
+                # ============================================================
+
+                if yt_choice == "00":
+                    _yt_controls_menu()
+                elif yt_choice == "1":
+                    # 1.1 Live Chat Monitor DAE - Direct launch with 012 profile (ADR-013)
+                    print("\n[DAE] Live Chat Monitor - 012 Operational Profile")
                     print("="*60)
 
-                    profile_choice = input("\nSelect Run Profile: ").strip()
-                    
-                    env_overrides = {}
-                    if profile_choice == "1":
-                        # Operational (012)
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
-                    elif profile_choice == "2":
-                        # Testing (FAST) - Speed only, all layers enabled
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "FAST",
-                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
-                        }
-                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
-                    elif profile_choice == "3":
-                        # Diagnostic (MEDIUM)
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "MEDIUM", 
-                            "COMMUNITY_DEBUG_SUBPROCESS": "true"
-                        }
-                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
-                    elif profile_choice == "4":
-                        # Minimal
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
-                    elif profile_choice == "5":
-                        # OCCAM Mode
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "012",
-                            "YT_REPLY_BASIC_ONLY": "true",
-                            "YT_OCCAM_MODE": "true"
-                        }
-                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
-                    elif profile_choice == "6":
-                        # COMMENT-ONLY Mode (Skip stream detection)
-                        env_overrides = {
-                            "YT_ENGAGEMENT_TEMPO": "012",
-                            "YT_REPLY_BASIC_ONLY": "false",
-                            "YT_COMMENT_ONLY_MODE": "true"
-                        }
-                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
-                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
-                    elif profile_choice == "0":
-                        continue # Back to YT menu
-                    else:
-                        print("[WARN] Invalid choice - using 012 standard")
+                    env_overrides = {
+                        "YT_ENGAGEMENT_TEMPO": "012",
+                        "YT_REPLY_BASIC_ONLY": "false",
+                        "YT_COMMENT_ONLY_MODE": "false"
+                    }
 
-                    # Auto-kill any existing YouTube DAE before launching new profile
-                    print("[MENU] Starting YouTube Live Chat Monitor...")
+                    # Auto-kill existing instances
                     try:
                         from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
                         lock = get_instance_lock("youtube_monitor")
                         duplicates = lock.check_duplicates(quiet=True)
                         if duplicates:
-                            print(f"[MENU] Killing {len(duplicates)} existing YouTube DAE instance(s)...")
-                            result = lock.kill_pids(duplicates)
-                            killed = len(result.get("killed", []) or [])
-                            if killed > 0:
-                                print(f"[MENU] ✅ Killed {killed} instance(s)")
-                                import time
-                                time.sleep(1)  # Wait for cleanup
+                            print(f"[MENU] Killing {len(duplicates)} existing instance(s)...")
+                            lock.kill_pids(duplicates)
+                            time.sleep(1)
                     except Exception as e:
-                        logger.debug(f"Pre-launch cleanup check failed: {e}")
+                        logger.debug(f"Cleanup failed: {e}")
 
                     asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
 
                 elif yt_choice == "2":
-                    run_shorts_flow(
-                        engine_label="Gemini/Veo 3",
-                        system_label="3-Act Story (Setup  -> Shock  -> 0102 Reveal)",
-                        mode_label="Emergence Journal POC",
-                        duration_label="~16s (2.5s clips merged)",
-                        engine_key="veo3"
-                    )
+                    # 1.2 Comment Engagement - 012 Control Plane (broadcast settings)
+                    print("\n[MENU] Comment Engagement (Broadcast Controls)")
+                    print("="*60)
+                    try:
+                        from modules.communication.video_comments.src.commenting_control_plane import (
+                            load_broadcast,
+                            set_promo,
+                            clear_promo,
+                        )
+                    except Exception as e:
+                        print(f"[ERROR] Commenting control plane unavailable: {e}")
+                        continue
 
+                    def _summary(cfg) -> str:
+                        enabled = "ON" if cfg.enabled else "OFF"
+                        handles = " ".join(cfg.promo_handles) if cfg.promo_handles else "(none)"
+                        msg = (cfg.promo_message or "").strip() or "(none)"
+                        return f"enabled={enabled} | handles={handles} | message={msg}"
+
+                    while True:
+                        cfg = load_broadcast()
+                        print("\n" + "-" * 60)
+                        print("COMMENTING SUBMENU (012 -> Comment DAE)")
+                        print("Broadcast controls (promo injection) - use 6 to start DAE")
+                        print(f"Switches: {_yt_switch_summary()} (00=Controls)")
+                        print(f"Current: {_summary(cfg)}")
+                        print("-" * 60)
+                        print("  1) Toggle enabled (promo injection on replies)")
+                        print("  2) Set promo handles (space-separated, e.g. @NewChannel @Other)")
+                        print("  3) Set promo message (free text)")
+                        print("  4) Clear promo + disable")
+                        print("  5) Back")
+                        print("  6) Start Comment Engagement DAE (multi-channel)")
+                        print("  00) Controls (local switches)")
+
+                        choice = input("commenting> ").strip().lower()
+                        if choice in {"5", "back", "b", "exit", "quit"}:
+                            break
+                        if choice in {"00", "controls", "c"}:
+                            _yt_controls_menu()
+                            continue
+                        if choice in {"1", "toggle"}:
+                            set_promo(enabled=not cfg.enabled, updated_by="012")
+                            continue
+                        if choice in {"2", "handles"}:
+                            raw = input("handles> ").strip()
+                            handles = [h for h in raw.split() if h.strip()]
+                            set_promo(promo_handles=handles, updated_by="012")
+                            continue
+                        if choice in {"3", "message", "msg"}:
+                            msg = input("message> ").strip()
+                            set_promo(promo_message=msg, updated_by="012")
+                            continue
+                        if choice in {"4", "clear"}:
+                            clear_promo()
+                            continue
+                        if choice in {"6", "start", "run"}:
+                            print("\n[DAE] Comment Engagement (Multi-Channel)")
+                            print("="*60)
+                            print("Auto-rotates through ALL channels:")
+                            print("  Chrome (9222): Move2Japan + UnDaoDu")
+                            print("  Edge (9223): FoundUps + RavingANTIFA")
+                            print("Uses 0/1/2 classification (MAGA_TROLL/REGULAR/MODERATOR)")
+                            print("")
+                            print("After Edge comment inboxes are cleared, the YouTube DAE continues")
+                            print("into stream monitoring and will transition to live chat when a stream is found.")
+                            print("="*60)
+
+                            try:
+                                from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+
+                                print("[INFO] Starting YouTube DAE (comments → stream monitoring → live chat)...")
+                                print("[INFO] Comments: Move2Japan + UnDaoDu (Chrome) + FoundUps + RavingANTIFA (Edge)")
+                                print("[INFO] Stream resolver: enabled (will monitor and hand off to live chat)")
+
+                                dae = AutoModeratorDAE(enable_ai_monitoring=False)
+                                asyncio.run(dae.run())
+                            except KeyboardInterrupt:
+                                print("\n[STOP] Comment Engagement DAE stopped by user")
+                            except ImportError as e:
+                                print(f"[ERROR] Could not import: {e}")
+                                import traceback
+                                traceback.print_exc()
+                            except Exception as e:
+                                print(f"[ERROR] Failed: {e}")
+                                import traceback
+                                traceback.print_exc()
+                            continue
+                        print("Unknown option")
                 elif yt_choice == "3":
-                    run_shorts_flow(
-                        engine_label="Sora2 Live Action",
-                        system_label="3-Act Story (Cinematic Reveal)",
-                        mode_label="Cinematic Sora2 (live-action focus)",
-                        duration_label="15s cinematic (single clip)",
-                        engine_key="sora2"
-                    )
+
+                    # 1.3 Shorts Scheduler DAE + Selenium Tests
+                    from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import run_selenium_test
+                    
+                    while True:
+                        sched_choice = show_shorts_scheduler_menu()
+
+                        if sched_choice == "1":
+                            run_shorts_scheduler(mode="enhance", dry_run=False)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "2":
+                            run_shorts_scheduler(mode="enhance", dry_run=True)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "3":
+                            run_shorts_scheduler(mode="schedule", dry_run=False)
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "4":
+                            # Full Chain Test
+                            run_selenium_test("full_chain")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "5":
+                            # Layer 0 Test
+                            run_selenium_test("layer0")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "6":
+                            # Layer 1 Test - Filter
+                            run_selenium_test("layer1")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "7":
+                            # Layer 2 Test - Edit
+                            run_selenium_test("layer2")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "8":
+                            # Layer 3 Test - Schedule
+                            run_selenium_test("layer3")
+                            input("\nPress Enter to continue...")
+                        elif sched_choice == "0":
+                            break
+                        else:
+                            print("[ERROR] Invalid choice")
 
                 elif yt_choice == "4":
-                    # YouTube Stats
+                    # 1.4 Shorts Generator DAE (submenu for Veo3/Sora2)
+                    print("\n[DAE] Shorts Generator")
+                    print("="*60)
+                    print("1. Veo3 (Gemini - 3-Act Story)")
+                    print("2. Sora2 (Live Action Cinematic)")
+                    print("0. Back")
+                    print("="*60)
+
+                    engine_choice = input("Select engine: ").strip()
+
+                    if engine_choice == "1":
+                        run_shorts_flow(
+                            engine_label="Gemini/Veo 3",
+                            system_label="3-Act Story (Setup -> Shock -> 0102 Reveal)",
+                            mode_label="Emergence Journal POC",
+                            duration_label="~16s (2.5s clips merged)",
+                            engine_key="veo3"
+                        )
+                    elif engine_choice == "2":
+                        run_shorts_flow(
+                            engine_label="Sora2 Live Action",
+                            system_label="3-Act Story (Cinematic Reveal)",
+                            mode_label="Cinematic Sora2 (live-action focus)",
+                            duration_label="15s cinematic (single clip)",
+                            engine_key="sora2"
+                        )
+
+                elif yt_choice == "5":
+                    # 1.5 YouTube Stats
                     print("\n[INFO] YouTube Stats")
                     try:
                         from modules.communication.youtube_shorts.src.shorts_orchestrator import ShortsOrchestrator
@@ -1039,60 +1394,94 @@ def main():
                                 print(f"    - {s.get('topic', 'N/A')[:40]}...")
                                 print(f"      {s.get('youtube_url', 'N/A')}")
                     except Exception as e:
-                        print(f"[ERROR]Failed to get stats: {e}")
+                        print(f"[ERROR] Failed to get stats: {e}")
 
-                elif yt_choice == "5":
-                    # Launch YouTube DAE with AI Overseer monitoring + Profile Selection
-                    print("\n[AI] YouTube DAE with AI Overseer Monitoring")
-                    print("[AI] Qwen/Gemma will monitor for errors and auto-fix issues")
+                elif yt_choice == "6":
+                    # 1.6 Full Production Mode (runs Live Chat + Comments)
+                    print("\n[ALL] Full YouTube Production Mode")
                     print("="*60)
-                    print("1. [OPERATIONAL] 012 System (Standard speed, Fault-Tolerant AI)")
-                    print("2. [TESTING]     FAST Mode (10x faster, All AI layers)")
-                    print("3. [DIAGNOSTIC]  MEDIUM Mode (4x faster, All AI layers, Verbose)")
-                    print("4. [MINIMAL]     Standard speed, Basic DOM only (No AI)")
-                    print("5. [DEBUG]       Occam's Razor (Stripped AI/DB Layers regression test)")
-                    print("6. [FAST-START]  Comment-Only (Skip stream detection, ~90s faster)")
-                    print("0. [CANCEL]      Back to YouTube Menu")
+                    print("This will start:")
+                    print("  - Live Chat Monitor (AutoModeratorDAE)")
+                    print("  - Comment Engagement DAE (Like/Heart/Reply)")
+                    print("="*60)
+                    print("[INFO] Starting Full Production Mode with 012 profile...")
+
+                    env_overrides = {
+                        "YT_ENGAGEMENT_TEMPO": "012",
+                        "YT_REPLY_BASIC_ONLY": "false",
+                        "YT_COMMENT_ONLY_MODE": "false"
+                    }
+
+                    # Auto-kill any existing instances
+                    try:
+                        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+                        lock = get_instance_lock("youtube_monitor")
+                        duplicates = lock.check_duplicates(quiet=True)
+                        if duplicates:
+                            print(f"[MENU] Killing {len(duplicates)} existing instance(s)...")
+                            lock.kill_pids(duplicates)
+                            time.sleep(1)
+                    except Exception as e:
+                        logger.debug(f"Pre-launch cleanup failed: {e}")
+
+                    asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=False, env_overrides=env_overrides))
+
+                elif yt_choice == "7":
+                    # 1.7 AI Overseer Mode
+                    print("\n[AI] AI Overseer Mode (Qwen/Gemma Monitoring)")
+                    print("="*60)
+                    print("Profiles: 1=012  2=FAST  3=MEDIUM  4=Minimal  5=Occam  6=Comment-Only")
                     print("="*60)
 
-                    ai_profile_choice = input("\nSelect Run Profile: ").strip()
+                    ai_profile = input("Select profile [1-6, default=1]: ").strip() or "1"
 
-                    env_overrides = {}
-                    if ai_profile_choice == "1":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"}
-                    elif ai_profile_choice == "2":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "FAST", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
-                        print("[INFO] Profile: TESTING (10x Speed + All Reply Layers Enabled)")
-                    elif ai_profile_choice == "3":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "MEDIUM", "COMMUNITY_DEBUG_SUBPROCESS": "true"}
-                        print("[INFO] Profile: DIAGNOSTIC (4x Speed + Verbose Logs)")
-                    elif ai_profile_choice == "4":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"}
-                    elif ai_profile_choice == "5":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true", "YT_OCCAM_MODE": "true"}
-                        print("[INFO] Profile: OCCAM'S RAZOR (All AI/DB Layers Bypassed)")
-                    elif ai_profile_choice == "6":
-                        env_overrides = {"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false", "YT_COMMENT_ONLY_MODE": "true"}
-                        print("[INFO] Profile: COMMENT-ONLY (Stream detection DISABLED)")
-                        print("[INFO] ~90 seconds faster startup - Comments only, no livechat")
-                    elif ai_profile_choice == "0":
-                        continue  # Back to YT menu
+                    env_overrides = {"YT_COMMENT_ONLY_MODE": "false"}
+                    if ai_profile == "2":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "FAST", "COMMUNITY_DEBUG_SUBPROCESS": "true"})
+                    elif ai_profile == "3":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "MEDIUM", "COMMUNITY_DEBUG_SUBPROCESS": "true"})
+                    elif ai_profile == "4":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true"})
+                    elif ai_profile == "5":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "true", "YT_OCCAM_MODE": "true"})
+                    elif ai_profile == "6":
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false", "YT_COMMENT_ONLY_MODE": "true"})
                     else:
-                        print("[WARN] Invalid choice - using 012 standard")
+                        env_overrides.update({"YT_ENGAGEMENT_TEMPO": "012", "YT_REPLY_BASIC_ONLY": "false"})
 
-                    print("[AI] Starting with AI Overseer monitoring enabled...")
+                    print("[AI] Starting with AI Overseer monitoring...")
                     try:
                         asyncio.run(monitor_youtube(disable_lock=False, enable_ai_monitoring=True, env_overrides=env_overrides))
                     except KeyboardInterrupt:
-                        print("\n[STOP] YouTube daemon stopped by user")
+                        print("\n[STOP] Stopped by user")
                     except Exception as e:
-                        print(f"\n[ERROR] Failed to start YouTube daemon: {e}")
-                        logger.error(f"YouTube daemon error: {e}", exc_info=True)
+                        print(f"\n[ERROR] Failed: {e}")
+
+                elif yt_choice == "8":
+                    # 1.8 YouTube Indexing (Digital Twin Learning)
+                    print("\n[INDEX] YouTube Channel Indexing")
+                    print("="*60)
+                    print("Creates searchable knowledge base from 012's videos")
+                    print("Pipeline: yt-dlp → faster-whisper → ChromaDB")
+                    print("="*60)
+
+                    try:
+                        from modules.communication.voice_command_ingestion.scripts.index_channel import (
+                            run_indexing_menu
+                        )
+                        run_indexing_menu()
+                    except ImportError as e:
+                        print(f"[ERROR] Could not import indexing module: {e}")
+                        print("[TIP] Install: pip install faster-whisper yt-dlp chromadb sentence-transformers")
+                    except Exception as e:
+                        print(f"[ERROR] Indexing menu failed: {e}")
+                        import traceback
+                        traceback.print_exc()
 
                 elif yt_choice == "0":
                     print("[BACK] Returning to main menu...")
                 else:
-                    print("[ERROR]Invalid choice")
+                    print("[ERROR] Invalid choice")
 
             elif choice == "2":
                 # HoloDAE - Code Intelligence & Monitoring
@@ -1131,13 +1520,28 @@ def main():
                                 print("[WARN]HoloDAE daemon still running in background")
                             break
                         elif choice == "1":
-                            print("[INFO] Running semantic code search...")
-                            # Could integrate with HoloIndex CLI
-                            print("Use: python holo_index.py --search 'your query'")
+                            # Semantic Code Search - directly integrated
+                            print("\n[HOLOINDEX] Semantic Code Search")
+                            print("=" * 60)
+                            print("This prevents vibecoding by finding existing code!")
+                            print("Examples: 'send messages', 'handle timeouts', 'consciousness'")
+                            print("=" * 60)
+                            query = input("\nWhat code are you looking for? ")
+                            if query:
+                                search_with_holoindex(query)
+                                input("\nPress Enter to continue...")
+                            else:
+                                print("No search query provided")
                         elif choice == "2":
-                            print("[INFO] Running dual search (code + WSP)...")
-                            # Could integrate with HoloIndex CLI
-                            print("Use: python holo_index.py --search 'your query'")
+                            # Dual Search (Code + WSP)
+                            print("\n[HOLOINDEX] Dual Search (Code + WSP)")
+                            print("=" * 60)
+                            query = input("\nSearch query: ")
+                            if query:
+                                search_with_holoindex(query)
+                                input("\nPress Enter to continue...")
+                            else:
+                                print("No search query provided")
                         elif choice == "3":
                             print("[INFO]Running module existence check...")
                             # Could integrate with HoloIndex CLI
@@ -1228,7 +1632,9 @@ def main():
                             print("[INFO] Running WSP compliance functions...")
                             # These would trigger compliance checking
                             print("Use HoloIndex search to trigger compliance analysis")
-                        elif choice in ["19", "20", "21", "22", "23"]:
+                        elif choice == "20":
+                            _holo_controls_menu()
+                        elif choice in ["19", "21", "22", "23"]:
                             print("[MENU]Running AI advisor functions...")
                             # Could integrate with HoloIndex CLI
                             print("Use: python holo_index.py --search 'query' --llm-advisor")
@@ -1333,34 +1739,17 @@ def main():
                 input("\nPress Enter to continue...")
 
             elif choice == "11":
-                # HoloIndex search
-                print("\n[HOLOINDEX] Semantic Code Search")
-                print("=" * 60)
-                print("This prevents vibecoding by finding existing code!")
-                print("Examples: 'send messages', 'handle timeouts', 'consciousness'")
-                print("=" * 60)
-                query = input("\nWhat code are you looking for? ")
-                if query:
-                    search_with_holoindex(query)
-                    input("\nPress Enter to continue...")
-                else:
-                    print("No search query provided")
-
-            elif choice == "12":
-                # View git post history
-                view_git_post_history()
-
-            elif choice == "13":
-                # Qwen/Gemma Training System
+                # Qwen/Gemma Training System (was 13)
                 run_training_system()
 
-            elif choice == "14":
-                # MCP Services Gateway
+            elif choice == "12":
+                # MCP Services Gateway (was 14)
                 print("[MCP] Launching MCP Services Gateway...")
                 from modules.infrastructure.mcp_manager.src.mcp_manager import show_mcp_services_menu
                 show_mcp_services_menu()
 
-            elif choice == "15":
+            elif choice == "13":
+                # Automation Dependencies (was 15)
                 print("[DEPS] Checking/launching local automation dependencies (Chrome + LM Studio)...")
                 try:
                     from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies

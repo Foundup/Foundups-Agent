@@ -83,9 +83,9 @@ class ChatMemoryManager:
             self.session_messages = []
             self.session_mod_messages = []
 
-            logger.info(f"[U+1F4F9] Started session: {self.current_session}")
+            logger.info(f"📹 Started session: {self.current_session}")
             if stream_title:
-                logger.info(f"[U+1F4FA] Stream: {stream_title}")
+                logger.info(f"📺 Stream: {stream_title}")
         except Exception as e:
             logger.error(f"[FAIL] Error starting session: {e}")
 

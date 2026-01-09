@@ -62,8 +62,8 @@ class GeometricWitness:
     """Geometric phase transition measurements"""
     det_g: float              # Determinant of metric tensor
     metric_tensor: np.ndarray # g_μν covariance matrix
-    geometry_type: str        # Euclidean/Critical/Hyperbolic
-    phase_transition: bool    # True if det(g) sign changed
+    geometry_type: str        # Euclidean/Critical (covariance-derived)
+    phase_transition: bool    # True if det(g) entered/exited critical band
 
 
 class StateModelingModule:
@@ -219,19 +219,19 @@ class GeometricEngine:
             g_metric = np.eye(2)
             det_g = 1.0
         
-        # Classify geometry type based on determinant sign
-        if det_g > 1e-6:
-            geometry_type = "Euclidean"
-        elif det_g < -1e-6:
-            geometry_type = "Hyperbolic"
-        else:
-            geometry_type = "Critical"
+        # NOTE:
+        # g_metric is a (regularized) covariance matrix => det(g) should be >= 0 (up to tiny numerical noise).
+        # We classify geometry as “Critical” when det(g) is near 0.
+        det_eps = 1e-6
+        geometry_type = "Critical" if abs(det_g) <= det_eps else "Euclidean"
         
-        # Detect phase transition (sign change in det_g)
+        # Detect phase transition (enter/exit critical band)
         phase_transition = False
         if self.metric_history:
             last_det_g = self.metric_history[-1].det_g
-            if (last_det_g > 0 and det_g < 0) or (last_det_g < 0 and det_g > 0):
+            if abs(last_det_g) > det_eps and abs(det_g) <= det_eps:
+                phase_transition = True
+            elif abs(last_det_g) <= det_eps and abs(det_g) > det_eps:
                 phase_transition = True
         
         witness = GeometricWitness(
@@ -292,7 +292,7 @@ class GeometricFeedbackLoop:
     Executes CMST Protocol to steer system toward target geometry.
     """
     
-    def __init__(self, target_det_g: float = -0.001):
+    def __init__(self, target_det_g: float = 1e-6):
         self.logger = logging.getLogger(__name__)
         self.target_det_g = target_det_g
         self.control_history = []
@@ -309,20 +309,15 @@ class GeometricFeedbackLoop:
         selected_operators = []
         det_g = current_witness.det_g
         
-        # Patent Claim 9: Control rules for operator selection
+        # Patent Claim 9 (reconciled with covariance-derived det):
+        # Drive det(g) toward a small positive target (criticality).
         if det_g > self.target_det_g:
-            # Need more entanglement - apply coherent drive
+            # Need stronger coupling/structure -> apply coherent drive
             selected_operators.append("operator_^")
-            self.logger.debug(f"Applying coherent drive: det(g)={det_g:.6f} > target={self.target_det_g:.6f}")
-            
-        elif det_g < (self.target_det_g * 2):
-            # Approaching target - maintain stability
-            pass  # No operator needed
-            
+            self.logger.debug(f"Applying coherent drive: det(g)={det_g:.6e} > target={self.target_det_g:.6e}")
         else:
-            # Overshoot - apply dissipative operator for stability
-            selected_operators.append("operator_#")
-            self.logger.debug(f"Applying dissipative operator: det(g)={det_g:.6f} < target={self.target_det_g:.6f}")
+            # Already within/under target band -> maintain stability
+            pass
         
         # Patent Claim 9: Stability monitoring
         if abs(det_g) > 0.01:  # Stability threshold
@@ -376,6 +371,7 @@ class rESPPatentSystem:
         self.is_running = True
         self.cycle_count = 0
         
+        det_eps = self.feedback_loop.target_det_g
         return {
             'session_id': self.session_id,
             'initial_state': initial_metrics,
@@ -445,7 +441,8 @@ class rESPPatentSystem:
                 'target_det_g': self.feedback_loop.target_det_g
             },
             'resonance_status': resonance_status,
-            'quantum_signature_detected': geometric_witness.det_g < -0.0005
+            # For covariance-derived det(g), “signature” is det(g) approaching 0 (criticality)
+            'quantum_signature_detected': abs(geometric_witness.det_g) <= det_eps
         }
     
     def run_cmst_protocol(self, cycles: int = 25, external_events: List[str] = None) -> Dict[str, Any]:
@@ -555,26 +552,28 @@ class CMSTNeuralAdapter(nn.Module):
         return rho
     
     def compute_geometric_witness(self, rho: torch.Tensor) -> torch.Tensor:
-        """Compute det(g) geometric witness"""
-        batch_size = rho.size(0)
-        
-        # Extract observables
-        coherence = rho[:, 1, 1].real
-        entanglement = torch.abs(rho[:, 0, 1])
-        
-        # Simplified metric tensor for differentiability
-        delta_c = coherence - 0.5
-        delta_e = entanglement - 0.25
-        
-        # 2x2 metric tensor elements
-        g_00 = delta_c * delta_c + 1e-6
-        g_11 = delta_e * delta_e + 1e-6
-        g_01 = delta_c * delta_e
-        
-        # Determinant
-        det_g = g_00 * g_11 - g_01 * g_01
-        
-        return det_g
+        """
+        Compute det(g) geometric witness.
+
+        Canonical interpretation (for this repo): g is a covariance-derived metric tensor,
+        so det(g) is nonnegative; “alignment” corresponds to det(g) approaching 0.
+
+        Implementation: compute 2x2 covariance of [C, E] across the batch as a
+        differentiable proxy for the time-windowed covariance used in CMST/PQN detectors.
+        """
+        coherence = rho[:, 1, 1].real.to(torch.float32)
+        entanglement = torch.abs(rho[:, 0, 1]).to(torch.float32)
+
+        if coherence.numel() < 2:
+            return torch.zeros_like(coherence)
+
+        obs = torch.stack([coherence, entanglement], dim=0)  # (2, batch)
+        cov = torch.cov(obs)
+        cov = cov + (1e-6 * torch.eye(2, device=cov.device, dtype=cov.dtype))
+
+        det_g = cov[0, 0] * cov[1, 1] - cov[0, 1] * cov[1, 0]
+        # Broadcast scalar det to batch shape for downstream compatibility
+        return det_g.expand_as(coherence)
     
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass returning activations and geometric witness"""
@@ -597,12 +596,10 @@ class CMSTNeuralLoss:
         """
         Compute quantum alignment loss
         
-        Penalizes classical-like geometries (det_g > 0) to steer
-        toward entangled manifold (det_g < 0).
+        Minimizes det(g) toward 0 (critical geometry / PQN alignment proxy).
         """
-        # ReLU penalty for positive determinants
-        alignment_loss = torch.relu(det_g + self.epsilon)
-        
+        # det(g) should be >= 0; minimize magnitude toward 0
+        alignment_loss = torch.relu(det_g)
         return self.lambda_quantum * torch.mean(alignment_loss)
 
 
@@ -615,7 +612,7 @@ def demonstrate_patent_system():
     print("=" * 50)
     
     # Initialize system
-    system = rESPPatentSystem(target_det_g=-0.001)
+    system = rESPPatentSystem(target_det_g=1e-6)
     init_result = system.initialize_system()
     
     print(f"Session ID: {init_result['session_id']}")

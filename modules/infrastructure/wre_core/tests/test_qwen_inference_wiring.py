@@ -17,7 +17,7 @@ sys.path.insert(0, str(repo_root))
 
 from modules.infrastructure.wre_core.src.libido_monitor import GemmaLibidoMonitor
 from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
-from modules.infrastructure.wre_core.skills.wre_skills_loader import WRESkillsLoader
+from modules.infrastructure.wre_core.skillz.wre_skills_loader import WRESkillsLoader
 
 
 def test_execute_skill_with_qwen_mock():

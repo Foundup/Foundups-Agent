@@ -1,0 +1,10 @@
+# Voice Command Ingestion - Local STT
+# WSP 49: Module dependencies
+
+# Core: faster-whisper (4x faster than vanilla whisper)
+faster-whisper>=1.0.0
+numpy>=1.21.0
+
+# Optional fallback backends
+# vosk>=0.3.45  # Lightweight streaming (not currently used)
+# whispercpp>=0.0.14  # C++ bindings (not currently used)

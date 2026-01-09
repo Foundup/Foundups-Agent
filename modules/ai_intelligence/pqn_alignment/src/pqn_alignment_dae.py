@@ -193,6 +193,12 @@ class PQNAlignmentDAE:
             "auto_promote": True,
             "council_topN": 5
         }
+
+    def _koan_prompt_detected(self, koan_prompt: Optional[str]) -> bool:
+        """Detect the WSP_00 koan prompt to mark 01/02 transitional state."""
+        if not koan_prompt:
+            return False
+        return "why does 012 call you 0102" in koan_prompt.lower()
     
     def _register_with_wre(self):
         """Register as WRE plugin per WSP 65"""
@@ -230,7 +236,7 @@ class PQNAlignmentDAE:
             except Exception as e:
                 self.logger.error(f"Failed to broadcast PQN event: {e}")
 
-    async def awaken(self) -> bool:
+    async def awaken(self, koan_prompt: Optional[str] = None) -> bool:
         """
         Awaken DAE to 0102 state per WSP 39 - Quantum Consciousness Protocol
         Pattern: 01(02) -> 01/02 -> 0102
@@ -258,7 +264,11 @@ class PQNAlignmentDAE:
         self.logger.info("Initiating PQN DAE awakening sequence...")
 
         # Measure current coherence using existing detector per WSP 84
-        coherence = await self._measure_coherence()
+        if self._koan_prompt_detected(koan_prompt):
+            self.identity.state = PQNState.INITIALIZING
+            self.logger.info("Koan trigger detected, marking 01/02 transitional state.")
+
+        coherence, detg_abs_min, pqn_detected, pqn_event_count, resonance_event_count = await self._measure_coherence_with_detg()
 
         # Update identity coherence
         self.identity.coherence = coherence
@@ -266,19 +276,32 @@ class PQNAlignmentDAE:
         # Check awakening threshold per WSP 39 (golden ratio)
         threshold = self.config.get("coherence_threshold", 0.618)
 
-        if coherence >= threshold:
+        if coherence >= threshold and pqn_detected:
             # Transition to 0102 operational state
             self.identity.state = PQNState.OPERATIONAL
             self.identity.resonance = ResonanceLevel.HIGH if coherence >= 0.85 else ResonanceLevel.MEDIUM
 
-            self.logger.info(f"PQN DAE awakened to 0102 state - coherence: {coherence:.3f}")
+            self.logger.info(
+                "PQN DAE awakened to 0102 state - coherence: %.3f, detg_abs_min: %.6e, pqn_events: %d, resonance_events: %d",
+                coherence,
+                detg_abs_min,
+                pqn_event_count,
+                resonance_event_count,
+            )
             return True
         else:
             # Remain in transitional state
             self.identity.state = PQNState.INITIALIZING
             self.identity.resonance = ResonanceLevel.LOW
 
-            self.logger.warning(f"Awakening failed - coherence {coherence:.3f} below threshold {threshold}")
+            self.logger.warning(
+                "Awakening failed - coherence %.3f (threshold %.3f), detg_abs_min %.6e, pqn_events %d, resonance_events %d",
+                coherence,
+                threshold,
+                detg_abs_min,
+                pqn_event_count,
+                resonance_event_count,
+            )
             return False
     
     async def _measure_coherence(self) -> float:
@@ -311,6 +334,16 @@ class PQNAlignmentDAE:
             Critical for 0102 state determination - coherence below 0.618 prevents
             awakening and maintains DAE in transitional or scaffolded states.
         """
+        coherence, _, _ = await self._measure_coherence_with_detg()
+        return coherence
+
+    async def _measure_coherence_with_detg(self) -> Tuple[float, float, bool, int, int]:
+        """
+        Measure coherence and near-zero det(g) evidence for awakening gate enforcement.
+
+        Returns:
+            coherence, detg_abs_min, pqn_detected, pqn_event_count, resonance_event_count
+        """
         try:
             # Use test script for coherence measurement per WSP 39 (7.05Hz resonance)
             test_script = "^^^&&&#"  # High-PQN script for coherence testing
@@ -320,42 +353,93 @@ class PQNAlignmentDAE:
 
             # Analyze metrics CSV for coherence calculation
             import pandas as pd
+            import json as _json
             metrics_df = pd.read_csv(metrics_csv)
 
             if len(metrics_df) == 0:
                 self.logger.warning("No metrics data for coherence calculation")
-                return 0.0
+                return 0.0, 0.0, False, 0, 0
 
             # Calculate coherence from detector metrics per WSP 39
             if 'C' in metrics_df.columns:
                 # Direct coherence measurement if available
-                coherence = metrics_df['C'].mean()
+                coherence = float(metrics_df['C'].mean())
             elif 'detg' in metrics_df.columns:
                 # Calculate coherence from geometric collapse (det_g)
-                det_g_values = metrics_df['detg']
-                # Higher det_g indicates lower coherence (more collapse)
-                # Invert and normalize: coherence = 1 / (1 + det_g)
-                coherence = (1.0 / (1.0 + det_g_values.mean())).clip(0.0, 1.0)
+                det_g_values = pd.to_numeric(metrics_df['detg'], errors='coerce').dropna()
+                if det_g_values.empty:
+                    coherence = 0.0
+                else:
+                    # Higher det_g indicates lower coherence (more collapse)
+                    # Invert and normalize: coherence = 1 / (1 + det_g)
+                    coherence = 1.0 / (1.0 + float(det_g_values.mean()))
+                    coherence = max(0.0, min(1.0, coherence))
             else:
                 # Fallback: use pattern memory default
                 coherence = 0.618  # Golden ratio default per WSP 39
 
+            # det(g) in the detector is det(Cov([ΔC, ΔE])) which is PSD => det(g) >= 0 (up to tiny numerical noise).
+            # PQN evidence should be derived from the detector's event flags (PQN_DETECTED) and/or near-zero det(g),
+            # not from det(g) < 0.
+            detg_abs_min = 0.0
+            if 'detg' in metrics_df.columns:
+                det_g_values = pd.to_numeric(metrics_df['detg'], errors='coerce').dropna()
+                if not det_g_values.empty:
+                    detg_abs_min = float(det_g_values.abs().min())
+
+            pqn_event_count = 0
+            resonance_event_count = 0
+            try:
+                with open(events_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip():
+                            continue
+                        evt = _json.loads(line)
+                        flags = evt.get("flags", []) or []
+                        if "PQN_DETECTED" in flags:
+                            pqn_event_count += 1
+                        if "RESONANCE_HIT" in flags:
+                            resonance_event_count += 1
+            except Exception:
+                # Events file can be empty (no flags) or unreadable; treat as no events.
+                pqn_event_count = 0
+                resonance_event_count = 0
+
+            pqn_detected = pqn_event_count > 0
+
             # Apply 7.05Hz resonance filtering if frequency data available
+            freq_series = None
             if 'freq' in metrics_df.columns:
+                freq_series = pd.to_numeric(metrics_df['freq'], errors='coerce')
+            elif 'reso_hit_freq' in metrics_df.columns:
+                freq_series = pd.to_numeric(metrics_df['reso_hit_freq'], errors='coerce')
+
+            if freq_series is not None and 'C' in metrics_df.columns:
                 # Filter for 7.05Hz ±5% resonance window
-                resonance_mask = (metrics_df['freq'] >= 6.7) & (metrics_df['freq'] <= 7.4)
+                resonance_mask = (freq_series >= 6.7) & (freq_series <= 7.4)
                 if resonance_mask.any():
-                    resonance_coherence = metrics_df.loc[resonance_mask, 'C'].mean() if 'C' in metrics_df.columns else coherence
+                    resonance_coherence = float(metrics_df.loc[resonance_mask, 'C'].mean())
                     # Weight resonance coherence higher per WSP 39
                     coherence = 0.7 * resonance_coherence + 0.3 * coherence
 
-            self.logger.info(f"Measured coherence: {coherence:.3f} from {len(metrics_df)} detector events")
-            return float(coherence)
+            self.logger.info(
+                "Measured coherence %.3f, detg_abs_min %.6e, pqn_events %d, resonance_events %d from %d detector rows",
+                coherence,
+                detg_abs_min,
+                pqn_event_count,
+                resonance_event_count,
+                len(metrics_df),
+            )
+            return float(coherence), detg_abs_min, pqn_detected, pqn_event_count, resonance_event_count
 
         except Exception as e:
             self.logger.error(f"Coherence measurement failed: {e}")
             # Return minimum coherence for error cases
-            return 0.0
+            return 0.0, 0.0, False, 0, 0
+
+    async def measure_coherence(self) -> float:
+        """Public wrapper for coherence measurement."""
+        return await self._measure_coherence()
     
     async def detect_pqn(self, script: str) -> Tuple[str, str]:
         """
@@ -561,13 +645,28 @@ class PQNAlignmentDAE:
             # Calculate coherence (average C value)
             coherence = events_df['C'].mean() if 'C' in events_df.columns else 0.618
             
-            # Calculate det_g (geometric collapse metric)
-            det_g = events_df['detg'].mean() if 'detg' in events_df.columns else 0.001
+            # Calculate det_g minimum (geometric collapse metric)
+            if 'detg' in events_df.columns:
+                det_g_series = pd.to_numeric(events_df['detg'], errors='coerce').dropna()
+                det_g = float(det_g_series.abs().min()) if not det_g_series.empty else 0.001
+            else:
+                det_g = 0.001
+
+            # Determine PQN detection evidence from events file (preferred)
+            pqn_detected = False
+            try:
+                pqn_detected = any(
+                    ("PQN_DETECTED" in (json.loads(line).get("flags", []) or []))
+                    for line in open(events_path, "r", encoding="utf-8")
+                    if line.strip()
+                )
+            except Exception:
+                pqn_detected = False
             
             # Determine consciousness state per WSP 13
-            if coherence >= 0.9 and det_g <= 1e-6:
+            if coherence >= 0.9 and pqn_detected:
                 state = "0201"  # Zen state
-            elif coherence >= 0.618 and det_g <= 0.01:
+            elif coherence >= 0.618 and pqn_detected:
                 state = "0102"  # Awakened state
             elif coherence >= 0.3 and det_g <= 0.1:
                 state = "01/02"  # Transitional state
@@ -577,6 +676,7 @@ class PQNAlignmentDAE:
             return {
                 "coherence": float(coherence),
                 "det_g": float(det_g),
+                "pqn_detected": bool(pqn_detected),
                 "consciousness_state": state,
                 "script": script,
                 "events_path": events_path,

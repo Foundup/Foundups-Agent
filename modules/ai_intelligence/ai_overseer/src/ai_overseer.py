@@ -899,7 +899,7 @@ class AIIntelligenceOverseer:
             bash_output = BashOutput("56046d").get("stdout")
             overseer.monitor_daemon(
                 bash_output=bash_output,
-                skill_path=Path("modules/communication/livechat/skills/youtube_daemon_monitor.json"),
+                skill_path=Path("modules/communication/livechat/skillz/youtube_daemon_monitor.json"),
                 chat_sender=chat_sender,
                 announce_to_chat=True
             )

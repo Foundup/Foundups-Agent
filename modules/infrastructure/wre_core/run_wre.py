@@ -40,7 +40,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 # Import modular components - WSP 65: Component consolidation
 from modules.infrastructure.wre_core.wre_gateway.src.dae_gateway import DAEGateway
 from modules.infrastructure.wre_core.dae_cube_assembly.src.dae_cube_assembler import DAECubeAssembler
-from modules.infrastructure.wre_core.recursive_improvement.src.recursive_engine import RecursiveLearningEngine
+from modules.infrastructure.wre_core.recursive_improvement.src.learning import RecursiveLearningEngine
 from modules.infrastructure.wre_core.wre_sdk_implementation import WRESDK, WREConfig
 
 # Configure logging
@@ -201,6 +201,7 @@ class WREOrchestrator:
             "spawn": "Spawn new FoundUp DAE",
             "route": "Route operation to DAE",
             "validate": "Validate WSP compliance",
+            "commenting": "Commenting submenu (012 broadcast → Comment DAE)",
             "status": "Show system status",
             "metrics": "Show performance metrics",
             "exit": "Exit WRE"
@@ -237,6 +238,9 @@ class WREOrchestrator:
                     })
                     print(f"Validation: {json.dumps(result, indent=2)}")
                 
+                elif command == "commenting":
+                    await self.commenting_menu()
+
                 elif command == "status":
                     status = self.gateway.list_available_daes()
                     print(f"DAEs: {json.dumps(status, indent=2)}")
@@ -254,6 +258,59 @@ class WREOrchestrator:
                 # WSP 48: Learn from error
                 improvement = await self.learn_from_error(e)
                 print(f"Error handled - Improvement: {improvement['improvement_id']}")
+
+    async def commenting_menu(self) -> None:
+        """
+        Commenting submenu: 012 can update shared broadcast config consumed by comment DAEs.
+        Stored in module memory under modules/communication/video_comments/memory/.
+        """
+        try:
+            from modules.communication.video_comments.src.commenting_control_plane import (
+                load_broadcast,
+                set_promo,
+                clear_promo,
+            )
+        except Exception as e:
+            print(f"[ERROR] Commenting control plane unavailable: {e}")
+            return
+
+        def _summary(cfg) -> str:
+            enabled = "ON" if cfg.enabled else "OFF"
+            handles = " ".join(cfg.promo_handles) if cfg.promo_handles else "(none)"
+            msg = (cfg.promo_message or "").strip() or "(none)"
+            return f"enabled={enabled} | handles={handles} | message={msg}"
+
+        while True:
+            cfg = load_broadcast()
+            print("\n" + "-" * 60)
+            print("COMMENTING SUBMENU (012 → Comment DAE)")
+            print(f"Current: {_summary(cfg)}")
+            print("-" * 60)
+            print("  1) Toggle enabled")
+            print("  2) Set promo handles (space-separated, e.g. @NewChannel @Other)")
+            print("  3) Set promo message (free text)")
+            print("  4) Clear promo + disable")
+            print("  5) Back")
+
+            choice = input("commenting> ").strip().lower()
+            if choice in {"5", "back", "b", "exit", "quit"}:
+                return
+            if choice in {"1", "toggle"}:
+                set_promo(enabled=not cfg.enabled, updated_by="012")
+                continue
+            if choice in {"2", "handles"}:
+                raw = input("handles> ").strip()
+                handles = [h for h in raw.split() if h.strip()]
+                set_promo(promo_handles=handles, updated_by="012")
+                continue
+            if choice in {"3", "message", "msg"}:
+                msg = input("message> ").strip()
+                set_promo(promo_message=msg, updated_by="012")
+                continue
+            if choice in {"4", "clear"}:
+                clear_promo()
+                continue
+            print("Unknown option")
     
     # ========== System Status (WSP 70) ==========
     

@@ -84,13 +84,13 @@ Pattern Analysis + Summaries
    - Quick navigation guide
    - Document relationships mapped
 
-5. **`skills/qwen_wsp_enhancement.md`** (850+ lines)
+5. **`skillz/qwen_wsp_enhancement.md`** (850+ lines)
    - Complete Qwen training guide for WSP enhancement
    - Gemma pattern memory integration detailed
    - Quality checklists and anti-patterns
    - Learning progression framework
 
-6. **`skills/youtube_dae.md`** (200+ lines)
+6. **`skillz/youtube_dae.md`** (200+ lines)
    - YouTube Live stream content generation patterns
    - Consciousness response templates
    - Community engagement strategies

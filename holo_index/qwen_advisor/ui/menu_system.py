@@ -28,16 +28,18 @@ class HoloDAEMenuSystem:
             '6': ('[GHOST] Orphan Analysis', 'Find dead code and unused modules (--wsp88)'),
             '7': ('[DATA] Performance Metrics', 'View effectiveness scores (--performance-metrics)'),
             '8': ('[BOT] LLM Advisor', 'Get AI-powered guidance (--llm-advisor with search)'),
-            '9': ('[EYE] Start Monitoring', 'Toggle continuous operation (--start-holodae)'),
-            '10': ('[COG] Chain-of-Thought Log', 'View AI decision process (--thought-log)'),
-            '11': ('[SLOW] Slow Mode', 'Enable recursive feedback 2-3s delays (--slow-mode)'),
-            '12': ('[MEMORY] Pattern Memory', 'View learned interventions (--pattern-memory)'),
-            '13': ('[HOOK] MCP Hook Map', 'Inspect registered connectors and health (--mcp-hooks)'),
-            '14': ('[LOG] MCP Action Log', 'Review recent MCP tool activity (--mcp-log)'),
-            '15': ('[TOOL] PID Detective', 'Detect & manage HoloDAE processes'),
-            '16': ('[DATA] Execution Log Analyzer', 'Process massive logs for HoloDAE improvement'),
+            '9': ('[EYE] Stop Monitoring', 'Stop autonomous monitoring (--stop-holodae)'),
+            '10': ('[STAT] HoloDAE Status', 'Show monitoring status (--holodae-status)'),
+            '11': ('[COG] Chain-of-Thought Log', 'View AI decision process (--thought-log)'),
+            '12': ('[SLOW] Slow Mode', 'Enable recursive feedback 2-3s delays (--slow-mode)'),
+            '13': ('[MEMORY] Pattern Memory', 'View learned interventions (--pattern-memory)'),
+            '14': ('[FEEDBACK] Memory Feedback', 'Rate memory cards (good/noisy/missing) (--memory-feedback)'),
+            '15': ('[HOOK] MCP Hook Map', 'Inspect registered connectors and health (--mcp-hooks)'),
+            '16': ('[LOG] MCP Action Log', 'Review recent MCP tool activity (--mcp-log)'),
             '17': ('[PUBLISH] Work Publisher', 'Monitor work completion for auto-publish (--monitor-work)'),
-            '18': ('[UTF8] UTF-8 Fix', 'Auto-fix UTF-8 violations with Qwen/Gemma (main.py --training-command utf8_fix --targets <scope>)')
+            '18': ('[UTF8] UTF-8 Fix', 'Auto-fix UTF-8 violations with Qwen/Gemma (main.py --training-command utf8_fix --targets <scope>)'),
+            '19': ('[CHECK] System Check', 'Verify CLI wiring and generate report (--system-check)'),
+            '20': ('[CTRL] Holo Controls', 'Toggle auto-index, SSD path, and startup quieting')
         }
 
     def show_main_menu(self) -> None:
@@ -60,20 +62,28 @@ class HoloDAEMenuSystem:
         print("8. [BOT] LLM Advisor (with search)                 | --llm-advisor")
         print()
         print("CONTINUOUS OBSERVABILITY")
-        print("9. [EYE] Start Monitoring                          | --start-holodae")
-        print("10. [COG] Chain-of-Thought Log                     | --thought-log")
-        print("11. [SLOW] Slow Mode                               | --slow-mode")
-        print("12. [MEMORY] Pattern Memory                        | --pattern-memory")
+        print("9. [EYE] Stop Monitoring                           | --stop-holodae")
+        print("10. [STAT] HoloDAE Status                          | --holodae-status")
+        print("11. [COG] Chain-of-Thought Log                     | --thought-log")
+        print("12. [SLOW] Slow Mode                               | --slow-mode")
+        print("13. [MEMORY] Pattern Memory                        | --pattern-memory")
+        print("14. [FEEDBACK] Memory Feedback (per card)          | --memory-feedback")
         print()
         print("MCP RESEARCH BRIDGE")
-        print("13. [HOOK] MCP Hook Map                            | --mcp-hooks")
-        print("14. [LOG] MCP Action Log                           | --mcp-log")
+        print("15. [HOOK] MCP Hook Map                            | --mcp-hooks")
+        print("16. [LOG] MCP Action Log                           | --mcp-log")
         print()
         print("SYSTEM CONTROLS")
         print("17. [PUBLISH] Work Publisher (Auto Git/Social)     | --monitor-work")
         print()
         print("QWEN/GEMMA AUTONOMOUS TRAINING")
         print("18. [UTF8] UTF-8 Fix (Autonomous Remediation)      | main.py --training-command utf8_fix --targets <scope>")
+        print()
+        print("VERIFICATION")
+        print("19. [CHECK] System Check                           | --system-check")
+        print()
+        print("CONTROLS")
+        print("20. [CTRL] Holo Controls                           | menu only")
         print()
         print("98. Exit")
         print("------------------------------------------------------------")
@@ -152,7 +162,7 @@ class HoloDAEMenuSystem:
             }
         }
 
-    def get_menu_choice(self, prompt: str = "Select option (0-12, 98-99): ") -> str:
+    def get_menu_choice(self, prompt: str = "Select option (0-20, 98-99): ") -> str:
         """Get menu choice from user"""
         try:
             choice = input(f"\n012> {prompt}").strip()

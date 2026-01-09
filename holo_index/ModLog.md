@@ -1,5 +1,69 @@
 # HoloIndex Package ModLog
 
+## [2026-01-05] Holo System Check (CLI Wiring Report)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 70 (Status Reporting), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - system check report added
+
+### Problem
+012 needed a concise, machine-readable way to verify that HoloDAE menu subroutines are wired and discoverable.
+
+### Fixes
+- `holo_index/reports/holo_system_check.py`: added a lightweight wiring audit + report writer.
+- `holo_index/cli.py`: new `--system-check` flag to run the audit and emit a report.
+- `holo_index/qwen_advisor/ui/menu_system.py`: added System Check to the menu and updated prompt.
+- `holo_index/CLI_REFERENCE.md`: documented the new flag and menu snapshot.
+- `holo_index/skillz/`: moved MPS SKILLz into a top-level skillz wardrobe and updated indexing patterns.
+- `holo_index/cli.py`: added `--index-skillz` (canonical) plus aliases for `--index-skills` and `--reindex-skills`.
+
+## [2026-01-04] Memory-First Output Bundles (WSP 60/87)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 60 (Module Memory), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - memory bundles lead output
+
+### Problem
+0102 needed memory recall before results to avoid re-derivation and noise.
+
+### Fixes
+- `holo_index/output/agentic_output_throttler.py`: build and render `[MEMORY]` bundles from WSP hits and module docs, placed before results.
+- Memory cards keep summaries short and machine-first; metrics stay silent by default.
+- `holo_index/core/holo_index.py`: allow `--doc-type` WSP filters (e.g., `wsp_protocol`) to search the WSP index.
+- `holo_index/cli.py`: suppress pre-output freshness chatter during searches so `[MEMORY]` is always first.
+- `holo_index/cli.py`: add `--memory-feedback` hooks to record per-card feedback via HoloMemorySentinel + FeedbackLearner.
+- `holo_index/cli.py`: ensure `--memory-feedback` runs without triggering the usage banner.
+- `holo_index/CLI_REFERENCE.md`: document memory feedback flags.
+- `holo_index/qwen_advisor/ui/menu_system.py`: refresh the HoloDAE menu (stop/status/memory feedback) and remove duplicate start entry.
+- `holo_index/CLI_REFERENCE.md`: update the menu snapshot and observability table for the new flags.
+- `holo_index/tests/test_memory_output_contract.py`: enforce `[MEMORY]` ordering before results.
+- `holo_index/tests/test_doc_type_filtering.py`: lock doc-type filtering behavior.
+
+## [2026-01-02] Module Scoring Subroutine (WSP 15/37)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 15 (MPS), WSP 37 (Roadmap Scoring), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - scoring integrated into intelligent subroutines
+
+### Problem
+HoloIndex lacked a built-in module scoring subroutine to surface "what to do next" using WSP 15/37 scoring data.
+
+### Fixes
+- `holo_index/core/module_scoring_subroutine.py`: wrapper around `tools/shared/module_scoring_engine.py` with scoring file resolution.
+- `holo_index/core/intelligent_subroutine_engine.py`: added module scoring triggers and execution.
+- `holo_index/output/agentic_output_throttler.py`: renders scoring results in analysis output.
+- `holo_index/core/__init__.py`: exports ModuleScoringSubroutine for reuse by AI_overseer/Qwen/Gemma.
+
+## [2026-01-02] Offline Search Hardening (Model Cache + Lexical Fallback)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 87 (Size Limits), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - prevent timeouts by avoiding model downloads and embedding auto-installs
+
+### Problem
+HoloIndex searches could hang on restricted networks when SentenceTransformer tried to download a model or Chroma invoked default embeddings.
+
+### Fixes
+- `holo_index/core/holo_index.py`: skip model load when offline and cache is missing, add offline lexical fallback search, and disable auto-pip installs when offline.
+- `holo_index/cli.py`: added `--offline` to set offline guardrails.
+- `holo_index/CLI_REFERENCE.md`, `holo_index/README.md`: documented offline mode usage.
+
 ## [2025-10-26] Agentic Output Stream Guardrails
 **Agent**: 0102 Codex  
 **WSP References**: WSP 87 (Size Limits), WSP 75 (Token Discipline), WSP 90 (UTF-8 Compliance)  
@@ -2317,7 +2381,7 @@ Per WSP 50 (Pre-Action Verification) and user feedback (Option B):
 | File | Lines Changed | Change Type | WSP |
 |------|---------------|-------------|-----|
 | holo_index/core/holo_index.py | 120-124 | Uncommented import | WSP 50 |
-| modules/infrastructure/wre_core/skills/wre_skills_loader.py | 58 | Registry path v1→v2 | WSP 96 |
+| modules/infrastructure/wre_core/skillz/wre_skills_loader.py | 58 | Registry path v1→v2 | WSP 96 |
 
 ### Known Operational Issues (Documented Caveats)
 
@@ -4949,3 +5013,7 @@ The complete DAE Memory System has been implemented:
 - Extended the HoloDAE menu with MCP observability options (hook map + action log) so 012 can monitor ricDAE and other connectors.
 - Added MCP activity tracking inside the coordinator with telemetry + breadcrumb logging and surfaced a hook health dashboard.
 - Covered the new behaviour with tests that assert ricDAE activity is captured and the helper outputs render safely.
+
+## [2026-01-04] - Reduce CLI noise for 0102 sessions (breadcrumb suppression)
+- Suppressed `agent_0102::*` breadcrumb loggers in `holo_index/cli.py` when running in quiet/0102 mode, preventing extra INFO lines from polluting Holo output and downstream TTS.
+- Re-validated via `python holo_index.py --search "tars like heart reply" --limit 5` producing only throttler sections (no breadcrumb chatter).

@@ -47,13 +47,13 @@ class CommandFloodDetector:
 
         # Agentic troll responses
         self.troll_messages = [
-            "[STOP] WHOA! Stop trying to hump me! I'm AFK this is nuts.... be back in {mins}m [U+1F6B6]",
-            "[U+1F91A] Y'all need to CHILL! Command spam detected. Taking a {mins}min break to touch grass [U+1F331]",
-            "[U+1F635] MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
-            "[U+1F644] Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation [U+1F9D8]",
-            "[ALERT] FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m [U+1F4A4]",
-            "[BOT] ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes [U+2615]",
-            "[U+1F624] TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! [U+1F31E]"
+            "[STOP] WHOA! Stop trying to hump me! I'm AFK this is nuts.... be back in {mins}m 🚶",
+            "🛑 Y'all need to CHILL! Command spam detected. Taking a {mins}min break to touch grass 🌱",
+            "😵 MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
+            "🙄 Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation 🧘",
+            "[ALERT] FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m 💤",
+            "[BOT] ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
+            "😤 TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! 🌞"
         ]
 
     def check_flood(self, role: str) -> tuple[bool, Optional[str]]:
@@ -328,7 +328,7 @@ class CommandHandler:
             if text_lower.startswith('/score') or text_lower.startswith('/stats'):
                 # Score shows XP, level name/title, level number, and frag count
                 observe_command('/score', 0.0)  # Track for self-improvement
-                return f"{mention} [U+1F480] MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! [U+1F525]"
+                return f"{mention} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! 🔥"
             
             # REMOVED: /level - redundant with /score
             
@@ -337,22 +337,22 @@ class CommandHandler:
                 position, total_players = get_user_position(user_id)
                 
                 if position == 0:
-                    return f"{mention} [U+1F3C6] MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
+                    return f"{mention} 🏆 MAGADOOM Leaderboard: Unranked | Start WHACKING MAGAts to climb the ranks!"
                 else:
                     # Add special flair for top positions
                     position_str = f"#{position}"
                     if position == 1:
-                        position_str = "[U+1F947] #1 CHAMPION"
+                        position_str = "🥇 #1 CHAMPION"
                     elif position == 2:
-                        position_str = "[U+1F948] #2"
+                        position_str = "🥈 #2"
                     elif position == 3:
-                        position_str = "[U+1F949] #3"
+                        position_str = "🥉 #3"
                     
-                    return f"{mention} [U+1F3C6] MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
+                    return f"{mention} 🏆 MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
 
             elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
                 # Show total frags/whacks (same as score but focused on whacks)
-                return f"{mention} [TARGET] MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} [U+1F480] RIP AND TEAR!"
+                return f"{mention} [TARGET] MAGADOOM | {profile.frag_count} WHACKS! | {profile.score} XP | {profile.rank} 💀 RIP AND TEAR!"
             
             elif text_lower.startswith('/leaderboard'):
                 # Get MONTHLY leaderboard (current competition)
@@ -361,21 +361,21 @@ class CommandHandler:
                 leaderboard = get_leaderboard(10, monthly=True)  # Get monthly scores
                 
                 if not leaderboard:
-                    return f"{mention} [U+1F3C6] MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! [U+1F480]"
+                    return f"{mention} 🏆 MAGADOOM {current_month} Leaderboard empty! Start WHACKING to claim #1! 💀"
                 
                 # Build leaderboard display
-                lines = [f"{mention} [U+1F3C6] MAGADOOM {current_month.upper()} TOP WHACKERS:"]
+                lines = [f"{mention} 🏆 MAGADOOM {current_month.upper()} TOP WHACKERS:"]
                 
                 # Show top 3 to keep message size reasonable
                 for entry in leaderboard[:3]:
                     pos = entry['position']
                     # Special icons for top 3
                     if pos == 1:
-                        icon = "[U+1F947]"
+                        icon = "🥇"
                     elif pos == 2:
-                        icon = "[U+1F948]"
+                        icon = "🥈"
                     elif pos == 3:
-                        icon = "[U+1F949]"
+                        icon = "🥉"
                     
                     # Use username if available, otherwise truncate user_id
                     display_name = entry.get('username', 'Unknown')
@@ -383,7 +383,7 @@ class CommandHandler:
                         display_name = entry['user_id'][:12]
                     
                     # Show monthly score, rank, and ALL-TIME whacks
-                    # Format: [U+1F947] Player [RANK] 500xp (8 whacks this month | 120 all-time)
+                    # Format: 🥇 Player [RANK] 500xp (8 whacks this month | 120 all-time)
                     all_time = entry.get('all_time_whacks', 0)
                     monthly = entry.get('frag_count', 0)
                     lines.append(f"{icon} {display_name} [{entry['rank']}] {entry['score']}xp ({monthly} whacks | {all_time} all-time)")
@@ -396,10 +396,10 @@ class CommandHandler:
                 active_sprees = get_active_sprees()
                 
                 if not active_sprees:
-                    return f"{mention} [U+1F525] No active WHACKING sprees! Start timing out MAGAts to begin one! [U+1F480]"
+                    return f"{mention} 🔥 No active WHACKING sprees! Start timing out MAGAts to begin one! 💀"
                 
                 # Build spree display
-                lines = [f"{mention} [U+1F525] ACTIVE KILLING SPREES:"]
+                lines = [f"{mention} 🔥 ACTIVE KILLING SPREES:"]
                 for spree in active_sprees[:3]:  # Show top 3 active sprees
                     level = spree.get('spree_level', '')
                     if level:
@@ -426,8 +426,8 @@ class CommandHandler:
                     return f"{mention} Toggle command not available"
             
             elif text_lower.startswith('/quiz'):
-                logger.warning(f"[AI][U+1F534][AI] REACHED /QUIZ ELIF BLOCK from {username}")
-                logger.warning(f"[AI][U+1F534][AI] Text: '{text_lower}' | User: {username} | ID: {user_id}")
+                logger.warning(f"[AI]🔴[AI] REACHED /QUIZ ELIF BLOCK from {username}")
+                logger.warning(f"[AI]🔴[AI] Text: '{text_lower}' | User: {username} | ID: {user_id}")
                 logger.info(f"[AI] Processing /quiz command from {username}")
                 # Political appointment quiz - educate about fascism
                 observe_command('/quiz', 0.0)
@@ -508,7 +508,7 @@ class CommandHandler:
                     if not session_leaders:
                         return f"{mention} [DATA] No session activity yet. Start whacking!"
                     
-                    response = f"{mention} [U+1F525] SESSION LEADERS:\n"
+                    response = f"{mention} 🔥 SESSION LEADERS:\n"
                     for entry in session_leaders:
                         response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
                     
@@ -520,20 +520,26 @@ class CommandHandler:
                 else:
                     return f"{mention} [FORBIDDEN] /session is for moderators only"
             
-            elif text_lower.startswith('/help'):
-                help_msg = f"{mention} [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts /help | !about !short !shortstatus !shortstats"
-                if role == 'MOD':
-                    help_msg += " | MOD: /fc /session !party /troll"
+            elif text_lower == '/help' or text_lower.startswith('/help'):
+                # Return list of messages - message_processor sends each one
+                # Message 1: Player commands (everyone)
+                help_msgs = [f"{mention} 💀 /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts | !about !short"]
+
+                # Message 2: Role-specific commands (auto-sent for MOD/OWNER/TOP10)
                 if role == 'OWNER':
-                    help_msg += " | OWNER: /fc /toggle /session !party !createshort !shortsora !shortveo !short @user /troll"
-                # Check if user is top 10 whacker (they get !party and /troll!)
-                try:
-                    position, _ = get_user_position(user_id)
-                    if position > 0 and position <= 10 and role not in ['MOD', 'OWNER']:
-                        help_msg += f" | TOP {position}: !party !createshort !shortsora !shortveo /troll 🎉"
-                except Exception:
-                    pass
-                return help_msg
+                    help_msgs.append(f"👑 OWNER: /fc /toggle /session !party !createshort !shortsora !shortveo !short @user /troll")
+                elif role == 'MOD':
+                    help_msgs.append(f"🛡️ MOD: /fc /session !party /troll")
+                else:
+                    # Check if top 10 whacker
+                    try:
+                        position, _ = get_user_position(user_id)
+                        if position > 0 and position <= 10:
+                            help_msgs.append(f"🏆 TOP {position}: !party !createshort !shortsora !shortveo /troll")
+                    except Exception:
+                        pass
+
+                return help_msgs
 
             elif text_lower.startswith('/fc'):
                 # Fact-check command (MOD/OWNER only)
@@ -617,7 +623,7 @@ class CommandHandler:
             # Don't suggest /help if the error was FROM /help
             if text_lower == '/help':
                 # Return basic help even if there was an error
-                return f"{mention} [U+1F480] MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
+                return f"{mention} 💀 MAGADOOM Commands: /score /rank /leaderboard (error occurred, some features may not work)"
             else:
                 return f"{mention} Error processing command. Try /help"
         
@@ -643,7 +649,7 @@ class CommandHandler:
         top_5 = scores[:5]
         
         result = f"{mention} [AI] QUIZ LEADERS: "
-        medals = ["[U+1F947]", "[U+1F948]", "[U+1F949]", "4️⃣", "5️⃣"]
+        medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
 
         for i, (user_id, score) in enumerate(top_5):
             result += f"{medals[i]}{user_id[:8]}:{score}pts "

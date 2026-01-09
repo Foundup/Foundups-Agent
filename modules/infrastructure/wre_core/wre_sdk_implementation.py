@@ -39,7 +39,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 from modules.infrastructure.wre_core.dae_cube_assembly.src.dae_cube_assembler import DAECubeAssembler
-from modules.infrastructure.wre_core.recursive_improvement.src.recursive_engine import RecursiveLearningEngine as RecursiveEngine
+from modules.infrastructure.wre_core.recursive_improvement.src.learning import RecursiveLearningEngine as RecursiveEngine
 from modules.infrastructure.dae_components.dae_prompting.src.dae_envelope_system import DAEEnvelopeSystem
 
 

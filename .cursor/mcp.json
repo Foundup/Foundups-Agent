@@ -21,6 +21,15 @@
         "WSP_FRAMEWORK_PATH": "O:/Foundups-Agent/WSP_framework",
         "PYTHONPATH": "O:/Foundups-Agent"
       }
+    },
+    "web_search": {
+      "command": "O:/Foundups-Agent/foundups-mcp-p1/foundups-mcp-env/Scripts/python.exe",
+      "args": [
+        "O:/Foundups-Agent/foundups-mcp-p1/servers/web_search/server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "O:/Foundups-Agent"
+      }
     }
   }
 }

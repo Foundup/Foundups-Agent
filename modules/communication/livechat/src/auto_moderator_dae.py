@@ -1,4 +1,4 @@
-﻿"""
+"""
 Auto Moderator DAE (Domain Autonomous Entity)
 WSP-Compliant: WSP 27 (Universal DAE Architecture), WSP 3 (Module Organization)
 
@@ -25,6 +25,9 @@ from modules.platform_integration.stream_resolver.src.stream_resolver import Str
 
 # Import WSP-compliant livechat_core
 from .livechat_core import LiveChatCore
+# Import extracted services (WSP 72: Module Independence, WSP 62: Large File Refactoring)
+from .stream_discovery_service import StreamDiscoveryService
+from .multi_channel_coordinator import MultiChannelCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +93,9 @@ class AutoModeratorDAE:
         self._comment_engagement_status = {}
         self._comment_engagement_active_channel = None
         self._live_stream_pending = False
+
+        # Extracted services (WSP 62: Large File Refactoring)
+        self.multi_channel_coordinator = None  # Lazy init
 
         # YouTube DAE Telemetry Store (WSP 91: DAEMON Observability)
         try:
@@ -171,6 +177,9 @@ class AutoModeratorDAE:
         self.studio_runner = None
         self.studio_repo_root = None
 
+        # Extracted services (WSP 72: Module Independence)
+        self.stream_discovery_service: Optional[StreamDiscoveryService] = None  # Lazy init
+
         logger.info("[OK] Auto Moderator DAE initialized")
 
     @staticmethod
@@ -204,7 +213,8 @@ class AutoModeratorDAE:
         label_text = f" {label}" if label else ""
         if url:
             url_channel_id = self._studio_channel_id_from_url(url) or "unknown"
-            logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url={url} url_channel_id={url_channel_id}")
+            url_base = url.split("#", 1)[0].split("?", 1)[0]
+            logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url={url_base} url_channel_id={url_channel_id}")
         else:
             logger.info(f"[STUDIO]{label_text} channel_id={channel_id} url=unknown")
 
@@ -358,397 +368,36 @@ class AutoModeratorDAE:
     def find_livestream(self) -> Optional[Dict[str, Optional[str]]]:
         """
         Find active livestream on the channel.
-        Can check multiple channels if configured.
-        QWEN intelligence decides HOW to search based on patterns.
+        Delegates to StreamDiscoveryService (WSP 72: Module Independence).
 
         Returns:
             Stream metadata dict containing video_id, live_chat_id, channel_id, and channel_name, or None
         """
-        # WSP 91: Component Isolation (Zero-down)
-        if not _env_truthy("YT_STREAM_RESOLVER_ENABLED", "true"):
-            logger.debug("[SEARCH] Stream resolver DISABLED via YT_STREAM_RESOLVER_ENABLED")
-            return None
+        # Lazy init StreamDiscoveryService
+        if not self.stream_discovery_service:
+            self.stream_discovery_service = StreamDiscoveryService(
+                service=self.service,
+                telemetry=self.telemetry,
+                qwen_monitor=self.qwen_monitor,
+                qwen_youtube=self.qwen_youtube,
+                monitoring_context_class=self.MonitoringContext,
+            )
+            # Sync last stream ID for duplicate detection
+            self.stream_discovery_service.set_last_stream_id(self._last_stream_id)
 
-        logger.info("[SEARCH] Looking for livestream...")
+        # Delegate to service
+        result = self.stream_discovery_service.find_livestream()
 
-        # QWEN Intelligence: Analyze context before searching
-        logger.info("[BOT][AI] [QWEN-ANALYZE] QWEN analyzing stream detection strategy...")
-        if self.qwen_monitor and self.MonitoringContext:
-            try:
-                context = self.MonitoringContext(
-                    query="youtube_stream_detection",
-                    search_results=[],
-                    patterns_detected=["channel_rotation", "no_quota_mode"]
-                )
-                monitoring_result = self.qwen_monitor.monitor(context)
+        # Sync state back from service
+        if result:
+            self._last_stream_id = result.get('video_id')
+            self.current_stream_id = self.stream_discovery_service.get_current_stream_id()
+            self.high_priority_pending = self.stream_discovery_service.high_priority_pending
+            self.priority_reason = self.stream_discovery_service.priority_reason
+            # Share stream_resolver for monitor_chat
+            self.stream_resolver = self.stream_discovery_service.stream_resolver
 
-                # Log QWEN's decision-making process with robot+brain emojis
-                health_status = getattr(monitoring_result, 'health_status', None)
-                if health_status:
-                    logger.info(f"[BOT][AI] [QWEN-HEALTH] [UP] System health: {health_status}")
-                    insights = getattr(monitoring_result, 'insights', None)
-                    if insights:
-                        logger.info(f"[BOT][AI] [QWEN-INSIGHT] [SEARCH] {insights}")
-                analysis = getattr(monitoring_result, 'analysis', None)
-                if analysis:
-                    logger.info(f"[BOT][AI] [QWEN-ANALYSIS] {analysis}")
-            except Exception as e:
-                logger.info(f"[BOT][AI] [QWEN-MONITOR] [WARN] Monitor analysis incomplete: {e}")
-
-        if not self.stream_resolver:
-            # Initialize StreamResolver with service if available, otherwise None to trigger NO-QUOTA mode
-            try:
-                self.stream_resolver = StreamResolver(self.service)
-                # WSP 3 Phase 4: circuit_breaker removed from StreamResolver (moved to youtube_api_ops)
-                logger.info("[REFRESH] StreamResolver initialized")
-            except Exception as e:
-                logger.warning(f"Failed to initialize StreamResolver with service: {e}")
-                logger.info("[REFRESH] Falling back to NO-QUOTA mode initialization")
-                # Initialize without service to force NO-QUOTA mode
-                self.stream_resolver = StreamResolver(None)
-
-        # Reset priority tracking for this rotation
-        self.high_priority_pending = False
-        self.priority_reason = None
-
-        # List of channels to check - PRIORITIZE MOVE2JAPAN FIRST (WSP 3: Multi-channel support)
-        channels_override = os.getenv("YT_CHANNELS_TO_CHECK", "").strip()
-        if channels_override:
-            channels_to_check = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
-            logger.info(f"[CONFIG] Using YT_CHANNELS_TO_CHECK override ({len(channels_to_check)} channels)")
-        else:
-            channels_to_check = [
-                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan channel - PRIORITY 1 - FIXED!
-                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps channel - PRIORITY 2
-                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu channel - PRIORITY 3 - FIXED!
-                os.getenv('TEST_CHANNEL_ID', ''),  # Optional: safe test channel (disabled for social posting by default)
-            ]
-        
-        # Filter out None values and remove duplicates
-        channels_to_check = [ch for ch in channels_to_check if ch]
-
-        # Show rotation header with clear channel list
-        logger.info("="*60)
-        logger.info("[REFRESH] CHANNEL ROTATION CHECK (NO-QUOTA MODE with QWEN Intelligence)")
-        logger.info("[BOT][AI] [QWEN-INIT] Starting intelligent channel rotation analysis")
-
-        # PRIORITY 0: [BOT][AI] First Principles - "Is the last video still live?"
-        # Check cache + DB BEFORE any channel rotation logic
-        logger.info("[BOT][AI] [QWEN-FIRST-PRINCIPLES] Is the last video still live?")
-        try:
-            # Call resolve_stream with None to trigger Priority 1 (cache) and Priority 1.5 (Qwen DB check)
-            # This checks: 1) session_cache.json, 2) last stream in DB with lenient threshold + API
-            pre_check_result = self.stream_resolver.resolve_stream(channel_id=None)
-            if pre_check_result and pre_check_result[0]:
-                logger.info(f"[BOT][AI] [QWEN-SUCCESS] [OK] Last known stream still live! Instant reconnection.")
-                logger.info(f"[ROCKET] Skipping ALL channel rotation - already found active stream: {pre_check_result[0]}")
-
-                # Convert tuple to dict format (resolve_stream returns tuple, but monitor_chat expects dict)
-                video_id = pre_check_result[0]
-                live_chat_id = pre_check_result[1] if len(pre_check_result) > 1 else None
-
-                # Build dict with required keys
-                stream_dict = {
-                    'video_id': video_id,
-                    'live_chat_id': live_chat_id,
-                    'channel_id': None,  # Unknown from cache - will be resolved during authentication
-                    'channel_name': 'Cached Stream'
-                }
-                logger.info(f"[FLOW-TRACE] Converted cache result to dict: {stream_dict}")
-                return stream_dict
-            else:
-                logger.info(f"[BOT][AI] [QWEN-INFO] [FAIL] No cached stream or last stream ended - need full channel scan")
-        except Exception as e:
-            logger.warning(f"[BOT][AI] [QWEN-ERROR] First principles check failed: {e} - proceeding to channel rotation")
-
-        # Use QWEN to prioritize channels if available
-        if hasattr(self, 'qwen_youtube') and self.qwen_youtube:
-            # First check if QWEN recommends checking at all
-            should_check, reason = self.qwen_youtube.should_check_now()
-            logger.info(f"[BOT][AI] [QWEN-GLOBAL] Global check decision: {should_check} - {reason}")
-
-            if not should_check:
-                logger.warning(f"[BOT][AI] [QWEN-DECISION] Skipping channel checks: {reason}")
-                return None
-
-            # Build channel list with proper names
-            channel_list = []
-            for ch_id in channels_to_check:
-                ch_name = self.stream_resolver._get_channel_display_name(ch_id) if self.stream_resolver else ch_id
-                channel_list.append((ch_id, ch_name))
-
-            # Get QWEN's prioritized order
-            prioritized = self.qwen_youtube.prioritize_channels(channel_list)
-            logger.info(f"[BOT][AI] [QWEN-PRIORITY] [TARGET] Analyzed and reordered {len(prioritized)} channels")
-
-            if prioritized:
-                top_channel_id, top_channel_name, top_score = prioritized[0]
-                if top_score >= 1.05:
-                    self.high_priority_pending = True
-                    self.priority_reason = f"High-confidence window for {top_channel_name} (score {top_score:.2f})"
-                else:
-                    self.high_priority_pending = False
-                    self.priority_reason = None
-            else:
-                self.high_priority_pending = False
-                self.priority_reason = None
-
-            # Reorder channels based on QWEN priority (extract channel IDs from tuples)
-            channels_to_check = [ch_id for ch_id, _, _ in prioritized]
-
-            # Log the optimized order with scores
-            for ch_id, ch_name, score in prioritized[:3]:  # Show top 3
-                logger.info(f"[BOT][AI] [QWEN-SCORE] {ch_name}: Priority score {score:.2f}")
-
-            logger.info(f"[BOT][AI] [QWEN-ORDER] Optimized check order based on heat levels and patterns")
-
-        logger.info(f"   Checking {len(channels_to_check)} channels in QWEN-optimized sequence:")
-        for idx, ch_id in enumerate(channels_to_check, 1):
-            ch_name = self.stream_resolver._get_channel_display_name(ch_id) if self.stream_resolver else ch_id
-            logger.info(f"   {idx}. {ch_name}")
-        logger.info("="*60)
-
-        # Try each channel and collect all active streams
-        found_streams = []  # Collect all found streams for social media posting
-        first_stream_to_monitor = None  # The stream we'll actually monitor
-        check_results = {}  # Track results for summary
-
-        for i, channel_id in enumerate(channels_to_check, 1):
-            channel_name = self.stream_resolver._get_channel_display_name(channel_id)
-            logger.info(f"\n[[SEARCH] Channel {i}/{len(channels_to_check)}] Checking {channel_name}...")
-            logger.info(f"[BOT][AI] [QWEN-SCAN] Initiating channel scan #{i}")
-            try:
-                result = self.stream_resolver.resolve_stream(channel_id)
-                if result and result[0]:
-                    check_results[channel_name] = '[OK] LIVE'
-                    # Get channel-specific emoji
-                    channel_tag = "MOVE2JAPAN" if "Move2Japan" in channel_name else ("UNDAODU" if "UnDaoDu" in channel_name else ("FOUNDUPS" if "FoundUps" in channel_name else "CHANNEL"))
-                    logger.info(f"[{channel_tag} Channel {i}/{len(channels_to_check)}] {channel_name}: STREAM FOUND!")
-                else:
-                    check_results[channel_name] = "offline"
-                    logger.info(f"[CHECK Channel {i}/{len(channels_to_check)}] {channel_name}: No active stream")
-            except Exception as e:
-                logger.error(f"[CHECK {i}/{len(channels_to_check)}] {channel_name}... ERROR: {e}")
-                result = None
-                # Continue checking other channels even if one fails
-                continue
-
-            if result and result[0]:  # Accept stream even without chat_id
-                logger.info(f"[FLOW-TRACE] Stream found! result={result}")
-                video_id = result[0]
-                live_chat_id = result[1] if len(result) > 1 else None
-                logger.info(f"[FLOW-TRACE] video_id={video_id}, chat_id={live_chat_id}")
-
-                channel_name = self.stream_resolver._get_channel_display_name(channel_id)
-                logger.info(f"[FLOW-TRACE] channel_name={channel_name}")
-                if not live_chat_id:
-                    logger.info(f"[WARN] Found stream on {channel_name} but chat_id not available (likely quota exhausted)")
-
-                    # CRITICAL: Attempt to get chat_id with credential rotation
-                    logger.info(f"[REFRESH] Attempting to get chat_id with credential rotation...")
-                    try:
-                        # Reuse existing stream_resolver to avoid rapid re-initialization loop
-                        # Creating new StreamResolver() every retry causes 20+ inits/sec (StreamDB migration spam)
-                        retry_result = self.stream_resolver.resolve_stream(channel_id=channel_id)
-
-                        if retry_result and len(retry_result) > 1 and retry_result[1]:
-                            live_chat_id = retry_result[1]
-                            logger.info(f"[OK] Got chat_id after credential rotation: {live_chat_id}")
-                        else:
-                            logger.warning("[WARN] Credential rotation failed - still no chat_id")
-                            logger.info(f"[OK] Accepting stream anyway - video ID: {video_id} [CELEBRATE]")
-                    except Exception as e:
-                        logger.error(f"[FAIL] Error during credential rotation: {e}")
-                        logger.info(f"[OK] Accepting stream anyway - video ID: {video_id} [CELEBRATE]")
-                else:
-                    logger.info(f"[OK] Found stream on {channel_name} with video ID: {video_id} [CELEBRATE]")
-
-                # === CARDIOVASCULAR: Record stream start (WSP 91) ===
-                if self.telemetry:
-                    try:
-                        self.current_stream_id = self.telemetry.record_stream_start(
-                            video_id=video_id,
-                            channel_name=channel_name,
-                            channel_id=channel_id
-                        )
-                        logger.info(f"[HEART] Stream session started (SQLite ID: {self.current_stream_id})")
-                    except Exception as e:
-                        logger.warning(f"Failed to record stream start: {e}")
-
-                # QWEN learns from successful detection
-                if self.qwen_youtube:
-                    self.qwen_youtube.record_stream_found(channel_id, channel_name, video_id)
-                    logger.info(f"[BOT][AI] [QWEN-LEARN] [BOOKS] Recorded successful stream detection pattern")
-
-                # Social media posting is handled by social media DAE orchestrator
-                # Store stream info for later posting coordination
-                logger.info(f"[NOTE] Detected stream on {channel_name} - queueing for social media posting")
-
-                # Get stream title for social media posting
-                stream_title = None
-                if self.stream_resolver:
-                    # Try to get title from stream resolver
-                    stream_title = self.stream_resolver._get_stream_title(video_id)
-
-                if not stream_title:
-                    # Fallback: Use channel name + "Live Stream"
-                    stream_title = f"{channel_name} is LIVE!"
-
-                logger.info(f"[STREAM] Stream title: {stream_title}")
-
-                # Store the stream info
-                stream_info = {
-                    'video_id': video_id,
-                    'live_chat_id': live_chat_id,
-                    'channel_id': channel_id,
-                    'channel_name': channel_name,
-                    'title': stream_title  # Add actual title for social media posting
-                }
-                logger.info(f"[FLOW-TRACE] Created stream_info: {stream_info}")
-                found_streams.append(stream_info)
-                logger.info(f"[FLOW-TRACE] Appended to found_streams, count={len(found_streams)}")
-
-                # Remember the first stream found for monitoring
-                if not first_stream_to_monitor:
-                    first_stream_to_monitor = stream_info
-                    logger.info(f"[FLOW-TRACE] Set first_stream_to_monitor")
-
-                # CRITICAL FIX: Break out of channel checking loop immediately when we find streams
-                # We only need ONE stream to monitor, so stop wasting time checking other channels
-                logger.info(f"[TARGET] Found active stream on {channel_name} - stopping channel scan to post immediately")
-                logger.info(f"[FLOW-TRACE] About to break from channel loop")
-                break  # Exit the channel checking loop
-
-        # Report results
-        logger.info(f"[FLOW-TRACE] After channel loop: found_streams count={len(found_streams)}")
-        logger.info("[BOT][AI] [QWEN-EVALUATE] Analyzing search results...")
-        if found_streams:
-            logger.info(f"[FLOW-TRACE] Entering found_streams block, count={len(found_streams)}")
-            # Deduplicate streams by video_id (same stream may appear on multiple channels)
-            unique_streams = {}
-            for stream in found_streams:
-                video_id = stream['video_id']
-                if video_id not in unique_streams:
-                    unique_streams[video_id] = stream
-                else:
-                    # Log that we found a duplicate
-                    logger.info(f"[DUPLICATE] Same stream {video_id} found on {stream['channel_name']} (already found on {unique_streams[video_id]['channel_name']})")
-
-            # Use only unique streams
-            found_streams = list(unique_streams.values())
-            logger.info(f"[FLOW-TRACE] After dedup: unique streams count={len(found_streams)}")
-
-            if found_streams and not first_stream_to_monitor:
-                first_stream_to_monitor = found_streams[0]
-                logger.info(f"[FLOW-TRACE] Updated first_stream_to_monitor after dedup")
-
-            logger.info(f"\n[OK] Found {len(found_streams)} unique stream(s):")
-            for stream in found_streams:
-                logger.info(f"  - {stream['channel_name']}: {stream['video_id']}")
-
-            # SEMANTIC SWITCHING: Only post if this is a NEW stream (not same one we're already monitoring)
-            should_post = True
-            for stream in found_streams:
-                if stream['video_id'] == self._last_stream_id:
-                    logger.info(f"[REFRESH] [SEMANTIC-SWITCH] Already monitoring/posted stream {stream['video_id']} - skipping duplicate post")
-                    should_post = False
-                    break
-
-            # Only trigger social media posting if we have NEW unique streams
-            if should_post:
-                if len(found_streams) == 1:
-                    logger.info(f"[NOTE] Single NEW stream detected on {found_streams[0]['channel_name']} - posting to social media")
-                elif len(found_streams) > 1:
-                    logger.info(f"[NOTE] Multiple NEW unique streams detected - posting all to social media")
-
-                # Trigger social media posting for new unique streams only
-                logger.info(f"[FINGERPRINT-HANDOFF-1] About to call _trigger_social_media_posting_for_streams with {len(found_streams)} streams")
-                import time
-                time.sleep(0.5)  # Brief pause for visibility
-                self._trigger_social_media_posting_for_streams(found_streams)
-                logger.info(f"[FINGERPRINT-HANDOFF-2] Returned from _trigger_social_media_posting_for_streams")
-            else:
-                logger.info("[SEMANTIC-SWITCH] Skipped posting - stream already active in current session")
-
-            logger.info(f"[STREAM] Will monitor first stream: {found_streams[0]['channel_name']}")
-            logger.info("[BOT][AI] [QWEN-SUCCESS] Stream detection successful - transitioning to monitor phase")
-            return first_stream_to_monitor
-        else:
-            # Show rotation summary
-            logger.info("\n" + "="*60)
-            logger.info("[CLIPBOARD] ROTATION SUMMARY:")
-            for channel, status in check_results.items():
-                logger.info(f"   {channel}: {status}")
-            logger.info(f"\n[FAIL] No active livestreams found (checked {len(channels_to_check)} channels)")
-
-            # QWEN provides intelligence summary
-            if self.qwen_youtube:
-                logger.info("[BOT][AI] [QWEN-LEARN] Recording no-stream pattern for time optimization")
-                summary = self.qwen_youtube.get_intelligence_summary()
-                logger.info(f"[BOT][AI] [QWEN-SUMMARY] Current intelligence state:")
-                for line in summary.split('\n')[:5]:  # Show first 5 lines
-                    if line.strip():
-                        logger.info(f"    {line}")
-
-            logger.info("Will check again in 30 minutes...")
-            logger.info("="*60)
-            return None
-
-    def _trigger_social_media_posting_for_streams(self, found_streams):
-        """
-        Trigger social media posting for detected streams using proper orchestration.
-        Handles sequential posting and channel-specific logic.
-        """
-        import time
-        logger.info("[FINGERPRINT-HANDOFF-3] === ENTERED _trigger_social_media_posting_for_streams ===")
-        time.sleep(0.5)
-        logger.info(f"[FINGERPRINT-HANDOFF-4] Received {len(found_streams)} streams")
-        logger.info("="*80)
-        logger.info("[SOCIAL] SOCIAL MEDIA POSTING ORCHESTRATION")
-        logger.info("="*80)
-
-        try:
-            logger.info("[FINGERPRINT-HANDOFF-5] Importing refactored_posting_orchestrator...")
-            time.sleep(0.5)
-            # Import the refactored posting orchestrator
-            from modules.platform_integration.social_media_orchestrator.src.refactored_posting_orchestrator import get_orchestrator
-            logger.info("[FINGERPRINT-HANDOFF-6] Calling get_orchestrator()...")
-            time.sleep(0.5)
-            orchestrator = get_orchestrator()
-            logger.info(f"[FINGERPRINT-HANDOFF-7] Orchestrator loaded: {type(orchestrator).__name__}")
-            time.sleep(0.5)
-            logger.info("[OK] Social media orchestrator loaded")
-
-            # Hand off ALL streams to social media orchestrator
-            # The orchestrator handles priority, sequencing, browser selection, and LinkedIn page mapping
-            logger.info(f"[HANDOFF] Sending {len(found_streams)} stream(s) to Social Media Orchestrator")
-            logger.info(f"[FINGERPRINT-HANDOFF-8] About to call handle_multiple_streams_detected()...")
-            time.sleep(0.5)
-
-            # Use the new multi-stream handler method (WSP 3 compliant)
-            result = orchestrator.handle_multiple_streams_detected(found_streams)
-            logger.info(f"[FINGERPRINT-HANDOFF-9] Orchestrator returned: success={result.get('success')}")
-            time.sleep(0.5)
-
-            if result.get('success'):
-                logger.info(f"[SUCCESS] Orchestrator processed {result.get('streams_processed')} streams")
-            else:
-                logger.warning(f"[WARNING] Orchestrator reported issues: {result.get('errors')}")
-
-            # All posting now handled by orchestrator
-            logger.info("[COMPLETE] Social media posting handoff complete")
-            logger.info("[FINGERPRINT-HANDOFF-10] === EXITING _trigger_social_media_posting_for_streams ===")
-            logger.info("[FLOW-TRACE] === EXITING _trigger_social_media_posting_for_streams (success) ===")
-
-        except ImportError as e:
-            logger.error(f"[FLOW-TRACE] ImportError in _trigger_social_media_posting_for_streams: {e}")
-            logger.error(f"[FAIL] Failed to import social media orchestrator: {e}")
-        except Exception as e:
-            logger.error(f"[FLOW-TRACE] Exception in _trigger_social_media_posting_for_streams: {e}")
-            logger.error(f"[FAIL] Social media posting orchestration failed: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            logger.error("[FLOW-TRACE] === EXITING _trigger_social_media_posting_for_streams (error) ===")
+        return result
 
     async def monitor_chat(self):
         """
@@ -1125,11 +774,29 @@ class AutoModeratorDAE:
 
         This prevents account rotation or live chat takeover from interrupting
         a partially processed comments backlog.
+        
+        FIX (2025-12-31): Changed default from 0 (infinite) to 60 seconds.
+        With UNLIMITED comment mode having 2-hour timeout, 0 would block live chat forever.
         """
-        timeout_seconds = int(os.getenv("YT_INBOX_CLEAR_TIMEOUT", "0"))
+        # FIX: Default to 60 seconds instead of 0 (infinite) to prevent blocking live chat forever
+        timeout_seconds = int(os.getenv("YT_INBOX_CLEAR_TIMEOUT", "60"))
         start_time = time.time()
 
-        logger.info("[LOCK] Live stream detected - waiting for inbox clear before switching to live chat")
+        logger.info(f"[LOCK] Live stream detected - waiting for inbox clear (timeout: {timeout_seconds}s)")
+
+        # When a live stream is detected, ensure Edge channels (FoundUps → RavingANTIFA) have
+        # at least been ATTEMPTED once before handing off to live chat. Otherwise we can switch
+        # to live chat immediately (no active channel set yet) and starve those channels.
+        # WSP 50: never assume 'no active channel' means work is complete.
+        required_edge_channels = []
+        try:
+            required_edge_channels = [
+                os.getenv("FOUNDUPS_CHANNEL_ID", "").strip(),
+                os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip(),
+            ]
+            required_edge_channels = [c for c in required_edge_channels if c]
+        except Exception:
+            required_edge_channels = []
 
         while True:
             # If engagement is still running, wait it out.
@@ -1144,6 +811,17 @@ class AutoModeratorDAE:
                     return
 
                 if not channel_id:
+                    # If we have required Edge channels, wait until we have at least one status update
+                    # for each (attempted), or until timeout.
+                    if required_edge_channels:
+                        missing = [c for c in required_edge_channels if c not in self._comment_engagement_status]
+                        if missing:
+                            logger.info(
+                                "[LOCK] No active channel yet; waiting for Edge comment attempt(s) before live chat. missing=%s",
+                                missing,
+                            )
+                            await asyncio.sleep(5)
+                            continue
                     logger.warning("[LOCK] No active channel for inbox-clear check; proceeding to live chat")
                     return
 
@@ -1340,433 +1018,30 @@ class AutoModeratorDAE:
     ):
         """
         Run comment engagement across ALL channels with account switching.
+        Delegates to MultiChannelCoordinator (WSP 62: Large File Refactoring).
 
         Architecture (2025-12-28 Refactor):
         - Chrome (port 9222): Move2Japan + UnDaoDu (SAME Google account)
         - Edge (port 9223): FoundUps (DIFFERENT Google account)
-
-        Flow:
-        1. Process Move2Japan comments (Chrome)
-        2. Switch to UnDaoDu (Chrome - same account picker)
-        3. Process FoundUps comments (Edge - separate browser)
-        4. Check live stream signal before each channel
-        5. If live detected → pause rotation for that channel
-
-        Uses TarsAccountSwapper for Chrome channels only (same Google account).
-        FoundUps requires direct Edge connection.
         """
-        strict_inbox = _env_truthy("YT_INBOX_STRICT", "true")
+        # Lazy init MultiChannelCoordinator with callbacks
+        if not self.multi_channel_coordinator:
+            self.multi_channel_coordinator = MultiChannelCoordinator(
+                log_studio_context=self._log_studio_context,
+                verify_studio_inbox_clear=self._verify_studio_inbox_clear,
+                reconnect_chrome_driver=self._reconnect_chrome_driver,
+                reconnect_edge_driver=self._reconnect_edge_driver,
+                detect_current_channel_id=self._detect_current_channel_id,
+                update_engagement_status=lambda cid, status: self._comment_engagement_status.update({cid: status}),
+                set_active_channel=lambda cid: setattr(self, '_comment_engagement_active_channel', cid),
+                is_live_stream_pending=lambda: self._live_stream_pending,
+            )
 
-        # CHROME ACCOUNTS (same Google account - can switch via YouTube picker)
-        chrome_accounts = [
-            ("Move2Japan", os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")),
-            ("UnDaoDu", os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")),
-        ]
-
-        # EDGE ACCOUNT (different Google account - requires separate browser)
-        edge_account = ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"))
-
-        total_channels = len(chrome_accounts) + 1  # Chrome accounts + FoundUps (Edge)
-        logger.info("=" * 70)
-        logger.info("[ROTATE] MULTI-CHANNEL COMMENT ENGAGEMENT")
-        logger.info(f"[ROTATE] Processing {total_channels} channels:")
-        logger.info(f"[ROTATE]   Chrome (9222): {', '.join([a[0] for a in chrome_accounts])}")
-        logger.info(f"[ROTATE]   Edge (9223): {edge_account[0]}")
-        logger.info(f"[ROTATE] Mode: {mode} | Max per channel: {max_comments if max_comments > 0 else 'UNLIMITED'}")
-        logger.info("=" * 70)
-
-        total_processed = 0
-        chrome_driver = None
-        swapper = None
-        rotation_halt = False
-
-        # ═══════════════════════════════════════════════════════════════════
-        # PHASE 1: CHROME CHANNELS (Move2Japan + UnDaoDu - same Google account)
-        # ═══════════════════════════════════════════════════════════════════
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from modules.communication.video_comments.skills.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
-
-            chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
-            chrome_ok, chrome_msg = launch_chrome()
-            if not chrome_ok:
-                logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
-            opts = Options()
-            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
-            chrome_driver = webdriver.Chrome(options=opts)
-            swapper = TarsAccountSwapper(chrome_driver)
-            logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port}")
-
-            # SMART ROTATION: Detect current account state to minimize switching
-            # Check current URL to see if we are already on one of the target channels
-            try:
-                current_url = chrome_driver.current_url
-                logger.info(f"[ROTATE] Current Chrome URL: {current_url}")
-                current_channel_id = await self._detect_current_channel_id(chrome_driver)
-                
-                if current_channel_id:
-                    # Find if this channel ID is in our list
-                    current_account = next((acc for acc in chrome_accounts if acc[1] == current_channel_id), None)
-                    
-                    if current_account:
-                        logger.info(f"[ROTATE] [SMART] Detected active session on {current_account[0]}")
-                        logger.info(f"[ROTATE] [SMART] Reordering queue: {current_account[0]} -> Others")
-                        
-                        # Move current account to front
-                        chrome_accounts.remove(current_account)
-                        chrome_accounts.insert(0, current_account)
-                    else:
-                        logger.info(f"[ROTATE] [SMART] Current channel {current_channel_id} not in rotation list")
-                else:
-                    logger.info("[ROTATE] [SMART] Not currently on a Studio channel page")
-                    
-            except Exception as e:
-                logger.warning(f"[ROTATE] [SMART] Failed to detect current state: {e}")
-
-        except Exception as e:
-            logger.error(f"[ROTATE] ❌ Failed to connect to Chrome: {e}")
-            logger.warning(f"[ROTATE] Chrome channels (Move2Japan, UnDaoDu) will be skipped")
-
-        # Check live stream signal before processing
-        if swapper:
-            for idx, (account_name, channel_id) in enumerate(chrome_accounts, 1):
-                # FRESH SIGNAL CHECK: Check if this channel has a live stream (pause rotation)
-                try:
-                    from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
-                    live_channel = get_live_channel()
-                except ImportError:
-                    live_channel = None
-
-                if live_channel == channel_id:
-                    logger.info(f"[SIGNAL] {account_name} has live stream - prioritizing live chat over comments")
-                    continue
-
-                logger.info(f"\n[ROTATE] [Chrome {idx}/{len(chrome_accounts)}] Processing {account_name} comments...")
-
-                try:
-                    logger.info(f"[ROTATE] Switching to {account_name}...")
-                    success = await swapper.swap_to(account_name)
-
-                    if not success:
-                        logger.warning(f"[ROTATE] ⚠️ Failed to switch to {account_name}")
-                        if idx == 1:
-                            logger.info(f"[ROTATE] Assuming already on {account_name}, continuing...")
-                        else:
-                            logger.warning(f"[ROTATE] Skipping {account_name}")
-                            continue
-                    else:
-                        logger.info(f"[ROTATE] ✅ Switched to {account_name} successfully")
-
-                    # HUMAN-LIKE: Refresh page for fresh comments
-                    logger.info(f"[ROTATE] Refreshing page for {account_name}...")
-                    chrome_driver.refresh()
-                    await asyncio.sleep(5)
-
-                except Exception as e:
-                    logger.error(f"[ROTATE] ❌ Account switch error: {e}")
-                    if idx > 1:
-                        continue
-
-                # Process comments
-                try:
-                    self._comment_engagement_active_channel = channel_id
-                    self._log_studio_context(channel_id, label=f"{account_name} comment_engagement", driver=chrome_driver)
-                    result = await runner.run_engagement(
-                        channel_id=channel_id,
-                        video_id=None,
-                        max_comments=max_comments
-                    )
-
-                    result = result or {}
-                    stats = result.get('stats', {})
-                    processed = stats.get('comments_processed', 0)
-                    total_processed += processed
-
-                    self._comment_engagement_status[channel_id] = {
-                        "all_processed": bool(stats.get("all_processed", False)),
-                        "stats": stats,
-                        "error": result.get('error'),
-                        "updated_at": time.time(),
-                    }
-
-                    error_text = result.get('error')
-                    session_recovered = False
-
-                    if result.get('error'):
-                        logger.error(f"[ROTATE] ❌ {account_name} engagement failed: {result.get('error')}")
-                    else:
-                        logger.info(f"[ROTATE] ✅ {account_name} complete: {processed} comments processed")
-
-                    if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
-                        logger.warning(f"[ROTATE] Chrome session error on {account_name}; attempting reconnect")
-                        chrome_driver = await self._reconnect_chrome_driver(chrome_port)
-                        if chrome_driver:
-                            swapper = TarsAccountSwapper(chrome_driver)
-                            try:
-                                await swapper.swap_to(account_name)
-                            except Exception as swap_err:
-                                logger.warning(f"[ROTATE] Chrome reconnect swap failed: {swap_err}")
-                            try:
-                                chrome_driver.refresh()
-                                await asyncio.sleep(5)
-                            except Exception as refresh_err:
-                                logger.warning(f"[ROTATE] Chrome refresh after reconnect failed: {refresh_err}")
-                            session_recovered = True
-                        else:
-                            logger.warning(f"[ROTATE] Chrome reconnect failed for {account_name}")
-
-                    verify_retries = int(os.getenv("YT_INBOX_VERIFY_RETRIES", "1"))
-                    verify_timeout = float(os.getenv("YT_INBOX_VERIFY_TIMEOUT", "15"))
-                    verify_result = None
-                    for attempt in range(1, verify_retries + 1):
-                        verify_result = await self._verify_studio_inbox_clear(
-                            chrome_driver,
-                            channel_id,
-                            account_name,
-                            timeout_seconds=verify_timeout,
-                        )
-                        if verify_result is True:
-                            break
-                        if verify_result is False:
-                            logger.warning(
-                                f"[VERIFY] {account_name} inbox not clear; re-running engagement "
-                                f"(attempt {attempt}/{verify_retries})"
-                            )
-                            self._comment_engagement_active_channel = channel_id
-                            self._log_studio_context(
-                                channel_id,
-                                label=f"{account_name} comment_engagement_retry",
-                                driver=chrome_driver,
-                            )
-                            retry_result = await runner.run_engagement(
-                                channel_id=channel_id,
-                                video_id=None,
-                                max_comments=max_comments
-                            )
-
-                            retry_result = retry_result or {}
-                            retry_stats = retry_result.get('stats', {})
-                            retry_processed = retry_stats.get('comments_processed', 0)
-                            total_processed += retry_processed
-
-                            self._comment_engagement_status[channel_id] = {
-                                "all_processed": bool(retry_stats.get("all_processed", False)),
-                                "stats": retry_stats,
-                                "error": retry_result.get('error'),
-                                "updated_at": time.time(),
-                            }
-
-                            if retry_result.get('error'):
-                                logger.error(
-                                    f"[ROTATE] ❌ {account_name} retry failed: {retry_result.get('error')}"
-                                )
-                            else:
-                                logger.info(
-                                    f"[ROTATE] ✅ {account_name} retry complete: {retry_processed} comments processed"
-                                )
-                            continue
-
-                        logger.warning(
-                            f"[VERIFY] {account_name} inbox verification inconclusive; will recheck next cycle"
-                        )
-                        break
-
-
-                    if strict_inbox:
-                        if error_text and not session_recovered:
-                            logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {account_name} (error)")
-                            rotation_halt = True
-                        elif verify_result is not True:
-                            logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {account_name} (verify)")
-                            rotation_halt = True
-                except Exception as e:
-                    logger.error(f"[ROTATE] ❌ {account_name} exception: {e}", exc_info=True)
-                    self._comment_engagement_status[channel_id] = {
-                        "all_processed": False,
-                        "stats": {},
-                        "error": str(e),
-                        "updated_at": time.time(),
-                    }
-                    if strict_inbox:
-                        rotation_halt = True
-
-                if rotation_halt:
-                    logger.warning(f"[ROTATE] Rotation halted after {account_name}")
-                    break
-
-                # Check for live stream signal after each channel
-                if self._live_stream_pending and _env_truthy("YT_STOP_ROTATION_ON_LIVE", "true"):
-                    logger.info(f"[ROTATE] Live stream pending - stopping Chrome rotation after {account_name}")
-                    break
-
-        # ═══════════════════════════════════════════════════════════════════
-        # PHASE 2: EDGE CHANNEL (FoundUps - different Google account)
-        # ═══════════════════════════════════════════════════════════════════
-        if rotation_halt:
-            logger.warning("[ROTATE] Rotation halted; skipping remaining channels")
-            logger.info("[ROTATE] Pending channels will be retried next cycle")
-            return
-
-        edge_driver = None
-        foundups_name, foundups_channel_id = edge_account
-
-        # FRESH SIGNAL CHECK for FoundUps
-        try:
-            from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
-            live_channel = get_live_channel()
-        except ImportError:
-            live_channel = None
-
-        # Check if FoundUps has a live stream (skip if so)
-        if live_channel == foundups_channel_id:
-            logger.info(f"[SIGNAL] {foundups_name} has live stream - skipping comment processing")
-        else:
-            logger.info(f"\n[ROTATE] [Edge] Processing {foundups_name} comments...")
-
-            try:
-                from selenium import webdriver
-                from selenium.webdriver.edge.options import Options as EdgeOptions
-                from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
-
-                edge_port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
-                edge_ok, edge_msg = launch_edge()
-                if not edge_ok:
-                    logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
-                edge_opts = EdgeOptions()
-                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
-                
-                # Phase 2R: Non-blocking Edge connection
-                edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
-                logger.info(f"[ROTATE] Connected to Edge on port {edge_port}")
-
-                # Navigate to FoundUps Studio comments
-                foundups_studio_url = f"https://studio.youtube.com/channel/{foundups_channel_id}/comments/inbox"
-                logger.info(f"[ROTATE] Navigating to {foundups_name} Studio inbox...")
-                # Phase 2R: Non-blocking navigation
-                await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-                await asyncio.sleep(5)
-
-                # Process FoundUps comments (subprocess uses Edge port 9223)
-                self._comment_engagement_active_channel = foundups_channel_id
-                self._log_studio_context(foundups_channel_id, label=f"{foundups_name} comment_engagement", driver=edge_driver)
-                result = await runner.run_engagement(
-                    channel_id=foundups_channel_id,
-                    video_id=None,
-                    max_comments=max_comments,
-                    browser_port=9223  # Edge browser for FoundUps account
-                )
-
-                result = result or {}
-                stats = result.get('stats', {})
-                processed = stats.get('comments_processed', 0)
-                total_processed += processed
-
-                self._comment_engagement_status[foundups_channel_id] = {
-                    "all_processed": bool(stats.get("all_processed", False)),
-                    "stats": stats,
-                    "error": result.get('error'),
-                    "updated_at": time.time(),
-                }
-
-                error_text = result.get('error')
-                session_recovered = False
-
-                if result.get('error'):
-                    logger.error(f"[ROTATE] ❌ {foundups_name} engagement failed: {result.get('error')}")
-                else:
-                    logger.info(f"[ROTATE] ✅ {foundups_name} complete: {processed} comments processed")
-
-                if error_text and _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
-                    logger.warning(f"[ROTATE] Edge session error on {foundups_name}; attempting reconnect")
-                    edge_driver = await self._reconnect_edge_driver(edge_port)
-                    if edge_driver:
-                        try:
-                            await asyncio.to_thread(edge_driver.get, foundups_studio_url)
-                            await asyncio.sleep(5)
-                        except Exception as refresh_err:
-                            logger.warning(f"[ROTATE] Edge refresh after reconnect failed: {refresh_err}")
-                        session_recovered = True
-                    else:
-                        logger.warning(f"[ROTATE] Edge reconnect failed for {foundups_name}")
-
-                verify_retries = int(os.getenv("YT_INBOX_VERIFY_RETRIES", "1"))
-                verify_timeout = float(os.getenv("YT_INBOX_VERIFY_TIMEOUT", "15"))
-                verify_result = None
-                for attempt in range(1, verify_retries + 1):
-                    verify_result = await self._verify_studio_inbox_clear(
-                        edge_driver,
-                        foundups_channel_id,
-                        foundups_name,
-                        timeout_seconds=verify_timeout,
-                    )
-                    if verify_result is True:
-                        break
-                    if verify_result is False:
-                        logger.warning(
-                            f"[VERIFY] {foundups_name} inbox not clear; re-running engagement "
-                            f"(attempt {attempt}/{verify_retries})"
-                        )
-                        self._comment_engagement_active_channel = foundups_channel_id
-                        self._log_studio_context(
-                            foundups_channel_id,
-                            label=f"{foundups_name} comment_engagement_retry",
-                            driver=edge_driver,
-                        )
-                        retry_result = await runner.run_engagement(
-                            channel_id=foundups_channel_id,
-                            video_id=None,
-                            max_comments=max_comments,
-                            browser_port=9223
-                        )
-
-                        retry_result = retry_result or {}
-                        retry_stats = retry_result.get('stats', {})
-                        retry_processed = retry_stats.get('comments_processed', 0)
-                        total_processed += retry_processed
-
-                        self._comment_engagement_status[foundups_channel_id] = {
-                            "all_processed": bool(retry_stats.get("all_processed", False)),
-                            "stats": retry_stats,
-                            "error": retry_result.get('error'),
-                            "updated_at": time.time(),
-                        }
-
-                        if retry_result.get('error'):
-                            logger.error(
-                                f"[ROTATE] ❌ {foundups_name} retry failed: {retry_result.get('error')}"
-                            )
-                        else:
-                            logger.info(
-                                f"[ROTATE] ✅ {foundups_name} retry complete: {retry_processed} comments processed"
-                            )
-                        continue
-
-                    logger.warning(
-                        f"[VERIFY] {foundups_name} inbox verification inconclusive; will recheck next cycle"
-                    )
-                    break
-
-
-                if strict_inbox:
-                    if error_text and not session_recovered:
-                        logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (error)")
-                        rotation_halt = True
-                    elif verify_result is not True:
-                        logger.warning(f"[VERIFY] Strict inbox mode: holding rotation on {foundups_name} (verify)")
-                        rotation_halt = True
-            except Exception as e:
-                logger.warning(f"[ROTATE] ⚠️ Edge connection failed: {e}")
-                logger.warning(f"[ROTATE] {foundups_name} comments will be skipped")
-                logger.warning(f"[ROTATE] To enable: Launch Edge with --remote-debugging-port=9223")
-
-        logger.info("=" * 70)
-        logger.info(f"[ROTATE] ✅ MULTI-CHANNEL ENGAGEMENT COMPLETE")
-        logger.info(f"[ROTATE] Total comments processed: {total_processed}")
-        logger.info(f"[ROTATE] Channels: Chrome ({len(chrome_accounts)}) + Edge (1)")
-        logger.info("=" * 70)
-
+        await self.multi_channel_coordinator.run_multi_channel_engagement(
+            runner=runner,
+            max_comments=max_comments,
+            mode=mode
+        )
     async def run(self):
         """
         Main entry point - full DAE lifecycle.
@@ -2024,6 +1299,8 @@ class AutoModeratorDAE:
         from pathlib import Path
 
         heartbeat_count = 0
+        # Track transitions so we can emit "state change" pulses for AI Overseer
+        last_edge_comments_cleared = False
 
         try:
             while True:
@@ -2090,6 +1367,36 @@ class AutoModeratorDAE:
                     jsonl_path = Path("logs/youtube_dae_heartbeat.jsonl")
                     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
 
+                    # Comment engagement summary (critical for "what next?" orchestration)
+                    foundups_id = os.getenv("FOUNDUPS_CHANNEL_ID", "").strip()
+                    raving_id = os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip()
+                    comment_status = getattr(self, "_comment_engagement_status", {}) or {}
+                    def _channel_summary(cid: str) -> dict:
+                        if not cid:
+                            return {"channel_id": "", "known": False}
+                        s = comment_status.get(cid, {}) or {}
+                        stats = s.get("stats", {}) or {}
+                        return {
+                            "channel_id": cid,
+                            "known": True,
+                            "all_processed": bool(s.get("all_processed", False)),
+                            "comments_processed": int(stats.get("comments_processed", 0) or 0),
+                            "errors": int(stats.get("errors", 0) or 0),
+                            "updated_at": float(s.get("updated_at", 0.0) or 0.0),
+                            "error": s.get("error"),
+                        }
+
+                    foundups_summary = _channel_summary(foundups_id)
+                    raving_summary = _channel_summary(raving_id)
+                    edge_comments_cleared = bool(
+                        foundups_summary.get("known")
+                        and raving_summary.get("known")
+                        and foundups_summary.get("all_processed")
+                        and raving_summary.get("all_processed")
+                        and not foundups_summary.get("error")
+                        and not raving_summary.get("error")
+                    )
+
                     heartbeat_data = {
                         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
                         "status": status,
@@ -2100,11 +1407,34 @@ class AutoModeratorDAE:
                         "uptime_seconds": round(uptime_seconds, 1),
                         "memory_mb": round(memory_mb, 2) if memory_mb else None,
                         "cpu_percent": round(cpu_percent, 2) if cpu_percent else None,
-                        "heartbeat_count": heartbeat_count
+                        "heartbeat_count": heartbeat_count,
+                        "comment_engagement": {
+                            "live_stream_pending": bool(getattr(self, "_live_stream_pending", False)),
+                            "live_chat_active": bool(getattr(self, "_live_chat_active", False)),
+                            "active_channel_id": getattr(self, "_comment_engagement_active_channel", None),
+                            "edge_comments_cleared": edge_comments_cleared,
+                            "foundups": foundups_summary,
+                            "ravingantifa": raving_summary,
+                        },
                     }
                     with open(jsonl_path, 'a', encoding='utf-8') as f:
                         json.dump(heartbeat_data, f)
                         f.write('\n')
+
+                    # Emit a one-time event when Edge comments become fully cleared.
+                    if edge_comments_cleared and not last_edge_comments_cleared:
+                        last_edge_comments_cleared = True
+                        event = {
+                            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                            "event": "edge_comments_cleared",
+                            "channels": [c for c in [foundups_id, raving_id] if c],
+                            "note": "FoundUps + RavingANTIFA all_processed=True; awaiting next action orchestration",
+                        }
+                        with open(jsonl_path, "a", encoding="utf-8") as f:
+                            json.dump(event, f)
+                            f.write("\n")
+                    if not edge_comments_cleared:
+                        last_edge_comments_cleared = False
 
                     # Log heartbeat every 10 pulses (every 5 minutes)
                     if heartbeat_count % 10 == 0:
@@ -2135,7 +1465,7 @@ class AutoModeratorDAE:
                                 bash_output = "".join(recent_log_lines)
 
                                 # Monitor daemon with autonomous fixing enabled
-                                skill_path = repo_root / "modules" / "communication" / "livechat" / "skills" / "youtube_daemon_monitor.json"
+                                skill_path = repo_root / "modules" / "communication" / "livechat" / "skillz" / "youtube_daemon_monitor.json"
 
                                 # Run in executor to avoid blocking async loop
                                 loop = asyncio.get_event_loop()

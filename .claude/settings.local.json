@@ -1,8 +1,34 @@
 {
   "permissions": {
     "allow": [
+      "Bash(/o/Foundups-Agent/.venv/Scripts/python.exe:*)",
+      "Bash(cat:*)",
+      "Bash(O:/.venv/Scripts/python.exe:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(find:*)",
+      "Bash(python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer1_filter:*)",
+      "Bash(python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer2_edit:*)",
       "Bash(python:*)",
-      "Bash(dir:*)"
+      "Bash(cmd /c \"start launch_chrome_youtube_studio.bat\")",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(start \"\" \"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe\" --remote-debugging-port=9223 --user-data-dir=\"%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling \"https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/videos/short\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git merge origin/main -m \"$(cat <<''EOF''\nMerge origin/main into local main\n\nMerging remote merge commit to sync branches\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git log:*)",
+      "Bash(powershell:*)",
+      "Bash(yt-dlp:*)",
+      "Bash(pip install:*)",
+      "Bash(test:*)",
+      "Bash(xargs:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

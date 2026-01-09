@@ -18,12 +18,18 @@ WSP Compliance:
 from .foundups_driver import FoundUpsDriver
 from .browser_manager import BrowserManager, get_browser_manager
 from .telemetry_store import TelemetryStore
+from .foundup_typer import FoundupsTyper, get_typer
+from .human_behavior import HumanBehavior, get_human_behavior
 
 __all__ = [
     "FoundUpsDriver",
     "BrowserManager",
     "get_browser_manager",
     "TelemetryStore",
+    "FoundupsTyper",
+    "get_typer",
+    "HumanBehavior",
+    "get_human_behavior",
 ]
 
 __version__ = "1.0.0"

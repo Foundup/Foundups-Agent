@@ -106,12 +106,12 @@ def test_community_monitor():
 def test_comment_engagement_dae():
     """Test 5: Can we import CommentEngagementDAE?"""
     try:
-        from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import (
+        from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import (
             CommentEngagementDAE
         )
 
         # Check Chrome port configuration
-        from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import (
+        from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import (
             CHROME_PORT
         )
 

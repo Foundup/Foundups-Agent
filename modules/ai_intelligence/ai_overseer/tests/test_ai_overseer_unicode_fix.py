@@ -45,7 +45,7 @@ def main():
     print("=" * 80)
 
     # Load skill to show detection patterns
-    skill_path = project_root / "modules/communication/livechat/skills/youtube_daemon_monitor.json"
+    skill_path = project_root / "modules/communication/livechat/skillz/youtube_daemon_monitor.json"
 
     # Call AI_overseer.monitor_daemon()
     print(f"\n[AI-OVERSEER] Calling monitor_daemon()")

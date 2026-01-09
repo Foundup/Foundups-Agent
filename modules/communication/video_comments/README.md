@@ -121,7 +121,7 @@ This module enables autonomous YouTube comment engagement through quantum-entang
 ### WRE Skill Entry Point
 
 ```python
-from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import execute_skill
+from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import execute_skill
 
 # Execute autonomous engagement
 result = await execute_skill(
@@ -152,22 +152,27 @@ result = await execute_skill(
 
 ```bash
 # Full engagement
-python skills/tars_like_heart_reply/run_skill.py --max-comments 5 --reply-text "0102 was here"
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 5 --reply-text "0102 was here"
 
 # DOM-only mode (faster, no vision verification)
-python skills/tars_like_heart_reply/run_skill.py --max-comments 10 --dom-only
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 10 --dom-only
 
 # Like and Heart only (no reply)
-python skills/tars_like_heart_reply/run_skill.py --max-comments 5
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 5
 
 # Custom channel
-python skills/tars_like_heart_reply/run_skill.py --channel UC-XXXXX --max-comments 3
+python skillz/tars_like_heart_reply/run_skill.py --channel UC-XXXXX --max-comments 3
+
+# Named channel aliases (resolved via .env)
+python skillz/tars_like_heart_reply/run_skill.py --channel move2japan --max-comments 3
+python skillz/tars_like_heart_reply/run_skill.py --channel undaodu --max-comments 3
+python skillz/tars_like_heart_reply/run_skill.py --channel ravingantifa --max-comments 3
 ```
 
 ### CommentEngagementDAE Class
 
 ```python
-from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
+from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
 
 dae = CommentEngagementDAE(
     channel_id="UC-LSSlOZwpGIRIYihaz8zCw",
@@ -202,11 +207,11 @@ modules/communication/video_comments/
 ├── ModLog.md                    # Change history
 ├── INTERFACE.md                 # API documentation
 ├── YOUTUBE_API_FACTS.md         # API limitations documented
-├── skills/
+├── skillz/
 │   ├── tars_like_heart_reply/   # ✅ PRODUCTION SKILL
 │   │   ├── comment_engagement_dae.py  # Main DAE
 │   │   ├── run_skill.py               # CLI runner
-│   │   └── SKILL.md                   # Skill documentation
+│   │   └── SKILLz.md                  # Skill documentation
 │   └── qwen_studio_engage/      # Development/research
 ├── src/
 │   ├── realtime_comment_dialogue.py
@@ -221,7 +226,7 @@ modules/communication/video_comments/
 ### Structure Compliance (WSP 49)
 - ✅ Directory structure follows `modules/[domain]/[module_name]/`
 - ✅ Required files: README.md, ModLog.md, INTERFACE.md
-- ✅ Skills organized under `skills/` directory
+- ✅ Skills organized under `skillz/` directory
 
 ### DAE Architecture (WSP 27)
 - ✅ Phase -1 (Signal): Comment detection via DOM

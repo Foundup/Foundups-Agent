@@ -54,7 +54,7 @@ def format_time(seconds):
 
 def load_registry() -> dict:
     """Load skills registry (permissions + metadata)"""
-    registry_path = project_root / "modules" / "infrastructure" / "wre_core" / "skills" / "skills_registry.json"
+    registry_path = project_root / "modules" / "infrastructure" / "wre_core" / "skillz" / "skills_registry.json"
     if not registry_path.exists():
         return {"skills": {}}
     try:

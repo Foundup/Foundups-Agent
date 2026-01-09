@@ -77,7 +77,7 @@ async def verify_account_swapper():
     
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    from modules.communication.video_comments.skills.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
+    from modules.communication.video_comments.skillz.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
     
     try:
         port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))

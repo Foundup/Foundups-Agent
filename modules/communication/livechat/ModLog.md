@@ -12,6 +12,141 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### 2026-01-09: Heartbeat emits comment-cleared state for AI Overseer orchestration
+
+**By:** 0102  
+**WSP References:** WSP 91 (DAEMON Observability), WSP 77 (Agent Coordination), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+**Problem:** After FoundUps comment engagement cleared the inbox, the browser could appear idle on an empty Studio inbox with no explicit orchestration signal for what should happen next.
+
+**Solution:**
+- Extended heartbeat JSONL (`logs/youtube_dae_heartbeat.jsonl`) to include a compact `comment_engagement` summary (FoundUps + RavingANTIFA) and emit a one-time `edge_comments_cleared` event when both Edge inboxes reach `all_processed=True`.
+- Updated `main.py` commenting submenu “Start Comment Engagement DAE” to launch the existing `AutoModeratorDAE.run()` orchestration (comments → stream monitoring → live chat) instead of running a comment-only loop.
+
+---
+
+### 2026-01-01 - WSP 62 Phase 2: MultiChannelCoordinator Extraction
+
+**By:** 0102
+**WSP References:** WSP 62 (Large File Refactoring), WSP 72 (Module Independence), WSP 84 (Code Reuse)
+
+**Problem:** `auto_moderator_dae.py` at 1,931 lines still in CRITICAL window (WSP 62: 1500-2000).
+Largest remaining method: `_run_multi_channel_engagement` (479 lines).
+
+**Solution - Phase 2:**
+1. Created `multi_channel_coordinator.py` (566 lines) extracting:
+   - Multi-channel rotation logic (Chrome + Edge)
+   - Account switching via TarsAccountSwapper (Chrome)
+   - Edge parallel scheduling
+   - Session recovery and inbox verification
+   - Live stream signal checking
+
+2. Replaced 479-line method with 32-line delegation:
+   - Lazy-init MultiChannelCoordinator with callbacks
+   - Callbacks for state updates, logging, verification
+   - Preserves all external API contracts
+
+**Architecture Preserved:**
+- Chrome (port 9222): Move2Japan + UnDaoDu (same Google account)
+- Edge (port 9223): FoundUps (separate Google account)
+- Parallel Edge support (`YT_EDGE_PARALLEL=true`)
+
+**Impact:**
+- auto_moderator_dae.py: 1,931 → 1,487 lines (GUIDELINE zone per WSP 62)
+- Phase 2 tested: imports pass, delegation wiring verified
+- Remaining: 2 phases to reach target <1200 lines
+
+**Files Created:**
+- `modules/communication/livechat/src/multi_channel_coordinator.py`
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+
+---
+
+### 2026-01-01 - WSP 62 Phase 1: StreamDiscoveryService Extraction
+
+**By:** 0102
+**WSP References:** WSP 62 (Large File Refactoring), WSP 72 (Module Independence), WSP 50 (Pre-Action Verification)
+
+**Problem:** `auto_moderator_dae.py` at 2,287 lines exceeded WSP 62 hard limit (>=2000 = VIOLATION).
+Massive methods identified: `find_livestream` (338 lines), `monitor_chat` (348 lines),
+`_run_multi_channel_engagement` (479 lines).
+
+**Solution - Phase 1:**
+1. Created `stream_discovery_service.py` (380 lines) extracting:
+   - Multi-channel rotation logic
+   - QWEN prioritization for stream discovery
+   - Social media trigger integration (`_trigger_social_media_posting`)
+   - NoQuotaStreamChecker coordination
+
+2. Replaced 338-line `find_livestream()` with 32-line delegation:
+   - Lazy-init StreamDiscoveryService
+   - State sync (last_stream_id, current_stream_id, high_priority_pending)
+   - Preserves all external API contracts
+
+**WSP 50 Audit (Vibecode Prevention):**
+- Confirmed StreamDiscoveryService is NOT duplicating StreamResolver
+- StreamResolver: single-channel lookup only
+- StreamDiscoveryService: multi-channel rotation + QWEN prioritization (new logic)
+- Confirmed youtube_dae_heartbeat.py is valid (AI Overseer vs telemetry heartbeat)
+
+**Impact:**
+- auto_moderator_dae.py: 2,287 → 1,931 lines (CRITICAL window per WSP 62)
+- Phase 1 tested: imports pass, delegation wiring verified
+- Remaining: 4 more phases to reach target <1200 lines
+
+**Files Created:**
+- `modules/communication/livechat/src/stream_discovery_service.py`
+
+**Files Modified:**
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+
+---
+
+### 2026-01-01 - WSP 62 size audit and voice command routing plan
+
+**By:** 0102  
+**WSP References:** WSP 62 (Large File Enforcement), WSP 84 (Reuse), WSP 22 (ModLog)
+
+**Problem:** Size audit shows multiple oversized files in livechat, and the new voice STT
+pipeline must reuse existing command routing without creating a parallel orchestrator.
+
+**Fix:** Documented the sprint plan and routing reuse in `ROADMAP.md` and the LiveChat
+README voice ingestion section. The plan routes synthetic voice commands through the
+existing MessageProcessor/CommandHandler path.
+
+**Impact:** Clear refactor targets for oversized modules and a single routing path for
+chat and voice commands.
+
+### URL Log Noise Reduction for Studio Inbox Context
+
+**By:** 0102  
+**WSP References:** WSP 91 (Observability), WSP 00 (Occam's Razor), WSP 22 (ModLog Protocol)
+
+**Problem:** Rotation telemetry logged the full Studio inbox URL including long `?filter=...` query payloads. This is high-entropy noise that obscures the stable navigation context (only `/comments/inbox` matters for debugging).
+
+**Fix:** `AutoModeratorDAE._run_multi_channel_engagement()` now logs only the **stable base** of the current Studio URL (strips `?query` + `#fragment`) for the `[ROTATE] Current Chrome URL:` line.
+
+**Impact:** Cleaner logs; no behavior change for Chrome/Edge automation.
+
+### 2025-12-31 - Parallel Edge (FoundUps) Comment Engagement (No Chrome Regression)
+
+**By:** 0102  
+**WSP References:** WSP 27 (DAE Architecture), WSP 77 (Agent Coordination), WSP 22 (ModLog Protocol)
+
+**Problem:** When running Chrome + Edge together, FoundUps (Edge) comment processing could appear “not working” because `_run_multi_channel_engagement()` ran **sequentially** (Chrome Move2Japan → Chrome UnDaoDu → Edge FoundUps). If a Chrome subprocess runs long, Edge was effectively starved.
+
+**Fix:** Updated `AutoModeratorDAE._run_multi_channel_engagement()` to schedule FoundUps/Edge as an **independent async task** (separate browser + port), so Chrome and Edge can run **together**.
+
+**Config:**
+- `YT_EDGE_PARALLEL=true` (default): run Edge concurrently with Chrome rotation.
+- `YT_EDGE_PARALLEL=false`: fall back to legacy sequential Edge execution.
+
+**Impact:**
+- Chrome behavior unchanged (same subprocess + swapper flow).
+- FoundUps/Edge no longer blocked behind long Chrome runs.
+
 ### 2025-12-28 - Holiday Awareness WSP 96 Skill Pattern Refactor
 
 **By:** 0102
@@ -22,7 +157,7 @@ This log tracks changes specific to the **livechat** module in the **communicati
 **Problem:** Initial implementation created standalone `holiday_awareness.py` with hardcoded responses. User correctly identified this violates WSP 96 - responses should be in JSON skill file, Python should only be executor.
 
 **Solution:** Refactored to WSP 96 compliant pattern:
-1. **JSON Skill** (`skills/holiday_awareness.json`): Contains holiday dates, themes, and MAGA-trolling responses
+1. **JSON Skill** (`skillz/holiday_awareness.json`): Contains holiday dates, themes, and MAGA-trolling responses
 2. **Python Executor** (`src/holiday_awareness.py`): Date calculation, context detection, JSON loading
 
 **Implementation Details:**
@@ -33,7 +168,7 @@ This log tracks changes specific to the **livechat** module in the **communicati
 - `greeting_generator.py:163` already wired to use `get_session_holiday_greeting()` (50% chance)
 
 **Files Created:**
-- `modules/communication/livechat/skills/holiday_awareness.json`
+- `modules/communication/livechat/skillz/holiday_awareness.json`
 
 **Files Modified:**
 - `modules/communication/livechat/src/holiday_awareness.py`
@@ -60,8 +195,8 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 **Files Modified:**
 - `modules/communication/livechat/src/auto_moderator_dae.py`
-- `modules/communication/video_comments/skills/tars_account_swapper/account_swapper_skill.py`
-- `modules/communication/video_comments/skills/tars_like_heart_reply/src/comment_processor.py`
+- `modules/communication/video_comments/skillz/tars_account_swapper/account_swapper_skill.py`
+- `modules/communication/video_comments/skillz/tars_like_heart_reply/src/comment_processor.py`
 - `modules/infrastructure/foundups_vision/src/studio_account_switcher.py`
 
 **Status:** IMPLEMENTED - Rotation is now context-aware and respects existing browser state.
@@ -108,7 +243,7 @@ if channel_id != _community_monitor_instance.channel_id:
 - [auto_moderator_dae.py:784-790](../auto_moderator_dae.py#L784-L790) - Calls `set_live_priority()` when stream detected
 - [community_monitor.py:152-186](src/community_monitor.py#L152-L186) - `get_next_channel()` checks live priority
 - [community_monitor.py:386-393](src/community_monitor.py#L386-L393) - Passes `--video {video_id}` flag
-- [comment_engagement_dae.py:631-659](../../video_comments/skills/tars_like_heart_reply/comment_engagement_dae.py#L631-L659) - Navigates to actual video_id
+- [comment_engagement_dae.py:631-659](../../video_comments/skillz/tars_like_heart_reply/comment_engagement_dae.py#L631-L659) - Navigates to actual video_id
 
 **Status**: FIXED - Singleton now updates channel_id when live stream switches
 
@@ -825,7 +960,7 @@ Used UI-TARS grid overlay to discover exact pixel coordinates for the reaction p
    - Optional click count: `!party 50` (max 100)
    - Added to `/help` message
 
-3. **skills/party_reactions.json** (NEW)
+3. **skillz/party_reactions.json** (NEW)
    - Skill definition with all coordinates
    - Flow documentation
    - Party mode parameters
@@ -899,7 +1034,7 @@ dep_status = await ensure_dependencies(require_lm_studio=True)
 
 **Fix:**
 1. `modules/communication/livechat/src/community_monitor.py`
-   - Fixed `engagement_script` path to `modules/communication/video_comments/skills/tars_like_heart_reply/run_skill.py`
+   - Fixed `engagement_script` path to `modules/communication/video_comments/skillz/tars_like_heart_reply/run_skill.py`
    - Vision verification enabled by default when LM Studio is reachable (port 1234)
    - Added `COMMUNITY_DOM_ONLY=1` override to force DOM-only
    - Updated `get_community_monitor()` to attach `chat_sender`/`telemetry_store` when LiveChatCore becomes available
@@ -958,7 +1093,7 @@ Announcements:
 
 #### Integration Points
 - **Menu Option 5**: "Launch with AI Overseer Monitoring"
-- **Skill**: `modules/communication/livechat/skills/youtube_daemon_monitor.json`
+- **Skill**: `modules/communication/livechat/skillz/youtube_daemon_monitor.json`
 - **BanterEngine**: Unicode tag to emoji conversion
 - **ChatSender**: Async message posting with throttling
 
@@ -1102,7 +1237,7 @@ health = heartbeat.get_health_status()
 - AMO Heartbeat Service: [modules/communication/auto_meeting_orchestrator/src/heartbeat_service.py](../../auto_meeting_orchestrator/src/heartbeat_service.py)
 - AI Overseer: [modules/ai_intelligence/ai_overseer/src/ai_overseer.py](../../ai_intelligence/ai_overseer/src/ai_overseer.py)
 - PatchExecutor: [modules/infrastructure/patch_executor/src/patch_executor.py](../../infrastructure/patch_executor/src/patch_executor.py)
-- Skill JSON: [skills/youtube_daemon_monitor.json](skills/youtube_daemon_monitor.json)
+- Skill JSON: [skillz/youtube_daemon_monitor.json](skillz/youtube_daemon_monitor.json)
 
 ---
 

@@ -8,6 +8,8 @@
 
 This module provides autonomous YouTube Studio comment engagement through the `CommentEngagementDAE` class and `execute_skill()` function. All engagement actions (Like, Heart, Reply) are performed via Selenium DOM automation with optional UI-TARS vision verification.
 
+It also provides a lightweight **012 → Comment DAE control plane** for “broadcast” updates (e.g., promote a new channel) stored in module memory and injected into replies probabilistically to avoid spam signatures.
+
 ## Primary Interface: execute_skill()
 
 ### Function Signature
@@ -63,7 +65,7 @@ async def execute_skill(
 ### Example Usage
 
 ```python
-from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import execute_skill
+from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import execute_skill
 
 # Full engagement
 result = await execute_skill(
@@ -144,7 +146,7 @@ dae.close()
 ### Full Example
 
 ```python
-from modules.communication.video_comments.skills.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
+from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import CommentEngagementDAE
 
 async def engage_channel_comments():
     dae = CommentEngagementDAE(
@@ -174,26 +176,50 @@ async def engage_channel_comments():
 
 ```bash
 # Basic usage
-python skills/tars_like_heart_reply/run_skill.py --max-comments 5
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 5
 
 # With reply
-python skills/tars_like_heart_reply/run_skill.py --max-comments 5 --reply-text "0102"
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 5 --reply-text "0102"
 
 # DOM-only (no vision)
-python skills/tars_like_heart_reply/run_skill.py --max-comments 10 --dom-only
+python skillz/tars_like_heart_reply/run_skill.py --max-comments 10 --dom-only
 
 # Skip actions
-python skills/tars_like_heart_reply/run_skill.py --no-like --no-heart
+python skillz/tars_like_heart_reply/run_skill.py --no-like --no-heart
 
 # Custom channel
-python skills/tars_like_heart_reply/run_skill.py --channel UC-XXXXX
+python skillz/tars_like_heart_reply/run_skill.py --channel UC-XXXXX
+
+# Named channel aliases (resolved via .env)
+python skillz/tars_like_heart_reply/run_skill.py --channel move2japan
+python skillz/tars_like_heart_reply/run_skill.py --channel undaodu
+python skillz/tars_like_heart_reply/run_skill.py --channel ravingantifa
+
+## 012 → Comment DAE Control Plane (Broadcast Updates)
+
+```python
+from modules.communication.video_comments.src.commenting_control_plane import (
+    load_broadcast,
+    set_promo,
+    clear_promo,
+)
+
+# Enable promotion of a new channel
+set_promo(enabled=True, promo_handles=["@MyNewChannel"], promo_message="New channel drop:", updated_by="012")
+
+cfg = load_broadcast()
+print(cfg.enabled, cfg.promo_handles, cfg.promo_message)
+
+# Disable/clear
+clear_promo()
+```
 ```
 
 ### CLI Arguments
 
 | Argument | Type | Default | Description |
 |----------|------|---------|-------------|
-| `--channel` | str | Move2Japan | YouTube channel ID |
+| `--channel` | str | `MOVE2JAPAN_CHANNEL_ID` | YouTube channel ID (`UC...`) **or alias**: `move2japan`, `undaodu`, `ravingantifa` |
 | `--max-comments` | int | 5 | Max comments to process |
 | `--reply-text` | str | "" | Reply text |
 | `--no-like` | flag | False | Skip like action |

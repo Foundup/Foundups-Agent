@@ -37,7 +37,9 @@ import time
 # Dependency bootstrap for this module
 try:
     import chromadb
-except ImportError:
+except ImportError as exc:
+    if os.getenv("HOLO_DISABLE_PIP_INSTALL") == "1" or os.getenv("HOLO_OFFLINE") == "1":
+        raise ImportError("chromadb is required but auto-install is disabled (HOLO_OFFLINE/HOLO_DISABLE_PIP_INSTALL).") from exc
     print("Installing required dependencies...")
     import subprocess
     subprocess.check_call([__import__('sys').executable, "-m", "pip", "install", "chromadb"])
@@ -124,13 +126,21 @@ class HoloIndex:
         self.code_collection = self._ensure_collection("navigation_code")
         self.wsp_collection = self._ensure_collection("navigation_wsp")
         self.test_collection = self._ensure_collection("navigation_tests")
+        self.skill_collection = self._ensure_collection("navigation_skills")
 
         self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
 
+        model_name = "all-MiniLM-L6-v2"
+        offline = os.getenv("HOLO_OFFLINE") == "1"
+        model_cached = self._model_cache_present(model_name)
+
         # Optional fast-start skip to prevent long imports (set HOLO_SKIP_MODEL=1)
         if os.environ.get("HOLO_SKIP_MODEL") == "1":
             self._log_agent_action("HOLO_SKIP_MODEL=1 -> skipping sentence transformer load", "WARN")
+            self.model = None
+        elif offline and not model_cached:
+            self._log_agent_action("HOLO_OFFLINE=1 and model cache missing -> skipping model load", "WARN")
             self.model = None
         else:
             global SentenceTransformer
@@ -146,7 +156,7 @@ class HoloIndex:
 
             if SentenceTransformer:
                 try:
-                    self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                    self.model = SentenceTransformer(model_name)
                 except KeyboardInterrupt:
                     self._log_agent_action("SentenceTransformer load interrupted; continuing without model", "WARN")
                     self.model = None
@@ -248,10 +258,26 @@ class HoloIndex:
                 self._log_agent_action("WSP summary cache corrupted; rebuilding will overwrite on next index", "WARN")
                 self.wsp_summary = {}
 
+    def _model_cache_present(self, model_name: str) -> bool:
+        candidates = [
+            self.models_path / "sentence_transformers" / model_name,
+            self.models_path / model_name,
+        ]
+        for candidate in candidates:
+            if (candidate / "config.json").exists() or (candidate / "modules.json").exists():
+                return True
+            if candidate.exists() and candidate.is_dir():
+                return True
+        return False
+
+    def _tokenize_query(self, query: str) -> List[str]:
+        return [token for token in re.findall(r"[a-z0-9_]+", query.lower()) if token]
+
     def _get_embedding(self, text: str) -> List[float]:
         """Generate embedding or return dummy vector if model unavailable."""
         if self.model:
-            return self.model.encode(text).tolist()
+            # show_progress_bar=False prevents 'Batches' noise in output
+            return self.model.encode(text, show_progress_bar=False).tolist()
         # Return 384-dim zero vector (matches all-MiniLM-L6-v2)
         return [0.0] * 384
 
@@ -409,6 +435,98 @@ class HoloIndex:
         else:
              self._log_agent_action("No test entries indexed", "WARN")
 
+    def index_skillz_entries(self) -> None:
+        """
+        WSP 95: Index SKILLz files for agent discovery.
+        
+        Indexes all SKILLz.md files so 0102/Overseers can discover Qwen, Gemma,
+        and UITars skills via semantic search.
+        """
+        import glob
+        import yaml
+        
+        # SKILLz file locations per WSP 95
+        skillz_patterns = [
+            str(self.project_root / "modules" / "**" / "skills" / "*" / "SKILLz.md"),
+            str(self.project_root / "modules" / "**" / "skillz" / "*" / "SKILLz.md"),
+            str(self.project_root / "holo_index" / "skillz" / "*" / "SKILLz.md"),
+            str(self.project_root / "holo_index" / "qwen_advisor" / "skills" / "*" / "SKILLz.md"),
+            str(self.project_root / ".claude" / "skills" / "*" / "SKILLz.md"),
+            str(self.project_root / ".claude" / "skillz" / "*" / "SKILLz.md"),
+        ]
+        
+        files: List[Path] = []
+        for pattern in skillz_patterns:
+            found = glob.glob(pattern, recursive=True)
+            files.extend(Path(f) for f in found)
+        
+        if not files:
+            self._log_agent_action("No SKILLz files found to index", "WARN")
+            return
+        
+        self._log_agent_action(f"Indexing {len(files)} SKILLz files...", "INDEX")
+        self.skill_collection = self._reset_collection("navigation_skills")
+        
+        ids, embeddings, documents, metadatas = [], [], [], []
+        
+        for idx, file_path in enumerate(files, start=1):
+            try:
+                text = file_path.read_text(encoding='utf-8', errors='ignore')
+                
+                # Parse YAML frontmatter
+                frontmatter = {}
+                if text.startswith('---'):
+                    parts = text.split('---', 2)
+                    if len(parts) >= 3:
+                        try:
+                            frontmatter = yaml.safe_load(parts[1]) or {}
+                        except:
+                            pass
+                        content = parts[2]
+                    else:
+                        content = text
+                else:
+                    content = text
+                
+                # Extract key metadata
+                name = frontmatter.get('name', file_path.parent.name)
+                description = frontmatter.get('description', '')
+                agents = frontmatter.get('agents', [])
+                primary_agent = frontmatter.get('primary_agent', 'unknown')
+                intent_type = frontmatter.get('intent_type', 'unknown')
+                promotion_state = frontmatter.get('promotion_state', 'prototype')
+                
+                # Create search payload
+                lines = content.strip().split('\n')
+                summary = ' '.join(lines[:10])[:500]
+                doc_payload = f"Skillz: {name}\nAgent: {primary_agent}\nType: {intent_type}\nDescription: {description}\n{summary}"
+                
+                ids.append(f"skill_{idx}")
+                embeddings.append(self._get_embedding(doc_payload))
+                documents.append(doc_payload)
+                
+                metadatas.append({
+                    "skill_name": name,
+                    "description": description[:500],
+                    "agents": ','.join(agents) if isinstance(agents, list) else str(agents),
+                    "primary_agent": primary_agent,
+                    "intent_type": intent_type,
+                    "promotion_state": promotion_state,
+                    "path": str(file_path),
+                    "type": "skillz",
+                    "priority": 9  # Skillz are high priority for agent discovery
+                })
+                
+            except Exception as e:
+                self._log_agent_action(f"Failed to parse SKILLz {file_path}: {e}", "WARN")
+                continue
+        
+        if embeddings:
+            self.skill_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
+            self._log_agent_action(f"SKILLz index refreshed: {len(embeddings)} skills indexed", "OK")
+        else:
+            self._log_agent_action("No SKILLz entries were indexed", "WARN")
+
     def _classify_document_type(self, file_path: Path, title: str, lines: List[str]) -> str:
         """
         Classify document type based on filename, path, and content patterns.
@@ -517,23 +635,34 @@ class HoloIndex:
             code_hits = []
             wsp_hits = []
             test_hits = []
+            skill_hits = []
             
             # Search code index if requested
             if doc_type_filter in ["code", "all"]:
                 code_results = self._search_collection(self.code_collection, query, limit, kind="code")
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
-                
-            # Search WSP index if requested  
-            if doc_type_filter in ["wsp", "all"]:
+
+            # Search WSP index if requested
+            if doc_type_filter not in ["code", "test"]:
                 wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
                 
             # Search Test index if requested
             if doc_type_filter in ["test", "all"]:
                 test_hits = self._search_collection(self.test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
+
+            # Search Skillz index for agent discovery (only in full context)
+            if doc_type_filter == "all":
+                try:
+                    skill_hits = self._search_collection(self.skill_collection, query, limit, kind="skill")
+                except Exception:
+                    skill_hits = []
             
             # Log completion
-            self._log_agent_action(f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, {len(test_hits)} Tests")
+            self._log_agent_action(
+                f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, "
+                f"{len(test_hits)} Tests, {len(skill_hits)} Skillz"
+            )
 
             # Backward-compatible payload for CLI/Qwen integrations
             payload = {
@@ -543,11 +672,14 @@ class HoloIndex:
                 'code': code_hits,   # legacy key expected by throttler + advisors
                 'wsps': wsp_hits,    # legacy key expected by throttler + advisors
                 'tests': test_hits,  # new key for test integration
+                'skills': skill_hits,
+                'skill_hits': skill_hits,
                 'metadata': {
                     'query': query,
                     'code_count': len(code_hits),
                     'wsp_count': len(wsp_hits),
                     'test_count': len(test_hits),
+                    'skill_count': len(skill_hits),
                     'timestamp': datetime.now().isoformat()
                 }
             }
@@ -582,20 +714,157 @@ class HoloIndex:
         except:
             pass  # Don't fail if notification fails
 
+    def _lexical_search_collection(self, collection, query: str, limit: int, kind: str, doc_type_filter: str = "all") -> List[Dict[str, Any]]:
+        tokens = self._tokenize_query(query)
+        if not tokens:
+            return []
+
+        try:
+            total = collection.count()
+        except Exception:
+            return []
+        if total == 0:
+            return []
+
+        batch_size = int(os.getenv("HOLO_LEXICAL_BATCH", "500"))
+        max_docs_env = os.getenv("HOLO_LEXICAL_MAX_DOCS")
+        max_docs = int(max_docs_env) if max_docs_env else total
+
+        raw_results: List[Dict[str, Any]] = []
+        offset = 0
+        scanned = 0
+        include = ["documents", "metadatas"]
+
+        while offset < total and scanned < max_docs:
+            batch_limit = min(batch_size, total - offset, max_docs - scanned)
+            try:
+                chunk = collection.get(include=include, limit=batch_limit, offset=offset)
+            except TypeError:
+                # Older Chroma versions may not support offset; fallback to single full fetch.
+                chunk = collection.get(include=include)
+                offset = total
+                scanned = total
+            docs = chunk.get("documents", [])
+            metas = chunk.get("metadatas", [])
+
+            if docs and isinstance(docs[0], list):
+                docs = docs[0]
+            if metas and isinstance(metas[0], list):
+                metas = metas[0]
+
+            for doc, meta in zip(docs, metas):
+                meta = meta or {}
+                doc_type = meta.get('type', 'other')
+
+                if doc_type_filter != "all" and doc_type != doc_type_filter:
+                    continue
+
+                keyword_score = 0.0
+                title = (meta.get('title') or '').lower()
+                path = (meta.get('path') or '').lower()
+                summary = (meta.get('summary') or '').lower()
+                test_id = (meta.get('test_id') or '').lower()
+                capabilities = (meta.get('capabilities') or '').lower()
+                description = (meta.get('description') or '').lower()
+                need = (meta.get('need') or '').lower()
+                doc_text = (doc or '').lower()
+
+                for token in tokens:
+                    if token in title:
+                        keyword_score += 2.0
+                    if token in path:
+                        keyword_score += 1.0
+                    if token in summary:
+                        keyword_score += 0.5
+                    if token in need:
+                        keyword_score += 2.0
+                    if token in doc_text:
+                        keyword_score += 0.25
+                    if token in test_id:
+                        keyword_score += 3.0
+                    if token in capabilities:
+                        keyword_score += 1.5
+                    if token in description:
+                        keyword_score += 0.5
+
+                if keyword_score <= 0:
+                    continue
+
+                similarity = min(1.0, keyword_score / max(1.0, len(tokens) * 2.5))
+                priority = meta.get('priority', 1)
+
+                if kind == "code":
+                    result = {
+                        "need": meta.get('need'),
+                        "location": doc,
+                        "similarity": f"{similarity*100:.1f}%",
+                        "cube": meta.get('cube'),
+                        "type": doc_type,
+                        "priority": priority,
+                        "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                    }
+                elif kind == "test":
+                    result = {
+                        "test_id": meta.get('test_id'),
+                        "path": meta.get('path'),
+                        "description": meta.get('description'),
+                        "capabilities": meta.get('capabilities'),
+                        "similarity": f"{similarity*100:.1f}%",
+                        "type": "test",
+                        "priority": priority,
+                        "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                    }
+                elif kind == "skill":
+                    result = {
+                        "skill_name": meta.get('skill_name'),
+                        "description": meta.get('description'),
+                        "primary_agent": meta.get('primary_agent'),
+                        "intent_type": meta.get('intent_type'),
+                        "promotion_state": meta.get('promotion_state'),
+                        "path": meta.get('path'),
+                        "similarity": f"{similarity*100:.1f}%",
+                        "type": "skillz",
+                        "priority": priority,
+                        "_sort_key": (0.6 * priority + 0.3 * similarity + 0.1 * keyword_score, similarity, priority)
+                    }
+                else:
+                    result = {
+                        "wsp": meta.get('wsp'),
+                        "title": meta.get('title'),
+                        "summary": meta.get('summary'),
+                        "path": meta.get('path'),
+                        "similarity": f"{similarity*100:.1f}%",
+                        "cube": meta.get('cube'),
+                        "type": doc_type,
+                        "priority": priority,
+                        "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                    }
+
+                raw_results.append(result)
+
+            offset += batch_limit
+            scanned += batch_limit
+
+        if not raw_results:
+            return []
+
+        raw_results.sort(key=lambda x: x["_sort_key"], reverse=True)
+        formatted = []
+        for result in raw_results[:limit]:
+            result_copy = result.copy()
+            del result_copy["_sort_key"]
+            formatted.append(result_copy)
+        return formatted
+
     def _search_collection(self, collection, query: str, limit: int, kind: str, doc_type_filter: str = "all") -> List[Dict[str, Any]]:
         if collection.count() == 0:
             return []
 
         if self.model is None:
-            self._log_agent_action("Embedding model not available - attempting keyword search via ChromaDB", "WARN")
-            try:
-                # Try letting ChromaDB handle embedding or use simple text matching if available
-                results = collection.query(query_texts=[query], n_results=limit)
-            except Exception as e:
-                self._log_agent_action(f"Keyword search failed: {e}", "ERROR")
-                return []
+            self._log_agent_action("Embedding model not available - using offline lexical scan", "WARN")
+            return self._lexical_search_collection(collection, query, limit, kind, doc_type_filter)
         else:
-            embedding = self.model.encode(query).tolist()
+            embedding = self.model.encode(query, show_progress_bar=False).tolist()
             results = collection.query(query_embeddings=[embedding], n_results=limit)
 
         formatted: List[Dict[str, Any]] = []
@@ -615,7 +884,9 @@ class HoloIndex:
             meta = metas[i]
             distance = dists[i]
             
-            similarity = max(0.0, 1 - float(distance))
+            # Fix: L2 distance ranges 0→∞, convert to similarity 0→1
+            # Using inverse formula: 1/(1+d) gives 1.0 for d=0, approaches 0 for large d
+            similarity = 1.0 / (1.0 + float(distance))
             doc_type = meta.get('type', 'other')
             priority = meta.get('priority', 1)
 
@@ -666,6 +937,19 @@ class HoloIndex:
                     "type": "test",
                     "priority": priority,
                     "_sort_key": (0.5 * priority + 0.3 * similarity + 0.2 * keyword_score, similarity, priority)
+                }
+            elif kind == "skill":
+                result = {
+                    "skill_name": meta.get('skill_name'),
+                    "description": meta.get('description'),
+                    "primary_agent": meta.get('primary_agent'),
+                    "intent_type": meta.get('intent_type'),
+                    "promotion_state": meta.get('promotion_state'),
+                    "path": meta.get('path'),
+                    "similarity": f"{similarity*100:.1f}%",
+                    "type": "skillz",
+                    "priority": priority,
+                    "_sort_key": (0.6 * priority + 0.3 * similarity + 0.1 * keyword_score, similarity, priority)
                 }
             else:
                 result = {

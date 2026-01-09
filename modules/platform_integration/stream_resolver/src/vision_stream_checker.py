@@ -34,10 +34,12 @@ class VisionStreamChecker:
     """
     
     # Channel handles to check
+    # FIXED 2025-12-31: Corrected channel ID to handle mapping
     CHANNEL_HANDLES = {
-        'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',
-        'UCSNTUXjAgpd4sgWYP0xoJgw': '@UnDaoDu',
-        'UC-LSSlOZwpGIRIYihaz8zCw': '@Foundups',
+        'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',   # Move2Japan (primary)
+        'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',   # Move2Japan (alternate)
+        'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',      # UnDaoDu
+        'UCSNTUXjAgpd4sgWYP0xoJgw': '@FoundUps',     # FoundUps
     }
     
     def __init__(self):

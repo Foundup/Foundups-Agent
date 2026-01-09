@@ -253,7 +253,7 @@ class LiveChatCore:
         # Start memory manager session for automatic logging
         stream_title = getattr(self.session_manager, 'stream_title', None)
         self.memory_manager.start_session(self.video_id, stream_title)
-        logger.info(f"[U+1F4F9] Started automatic session logging for video {self.video_id}")
+        logger.info(f"📹 Started automatic session logging for video {self.video_id}")
 
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)
@@ -311,7 +311,7 @@ class LiveChatCore:
         if issues:
             for issue in issues:
                 if issue.issue_type == 'duplicate' and issue.severity in ['high', 'critical']:
-                    logger.warning(f"[U+26A0]️ Duplicate message detected, skipping: {message_text[:50]}...")
+                    logger.warning(f"⚠️ Duplicate message detected, skipping: {message_text[:50]}...")
                     # Integrate with self-improvement
                     if hasattr(self.message_processor, 'self_improvement'):
                         self.message_processor.self_improvement.observe_system_issue(
@@ -502,9 +502,9 @@ class LiveChatCore:
                 return
 
             # Log ALL messages and their processing result
-            logger.info(f"[U+1F4E8] [{author_name}] ({author_id}): {display_message[:100]}")
+            logger.info(f"📨 [{author_name}] ({author_id}): {display_message[:100]}")
             if processed.get("has_consciousness"):
-                logger.info(f"[U+2728] CONSCIOUSNESS DETECTED from {author_name}!")
+                logger.info(f"✨ CONSCIOUSNESS DETECTED from {author_name}!")
             if processed.get("has_whack_command"):
                 logger.info(f"[GAME] WHACK COMMAND DETECTED from {author_name}!")
                 logger.info(f"[SEARCH] DEBUG: Whack command message text: '{display_message}'")
@@ -550,7 +550,7 @@ class LiveChatCore:
                         skip_delay=True,  # Priority message
                         response_type="timeout_announcement"  # Mark as priority
                     )
-                    logger.info(f"[LIGHTNING][U+1F3C6] Sent level up: {processed['level_up']}")
+                    logger.info(f"[LIGHTNING]🏆 Sent level up: {processed['level_up']}")
                 return  # Skip normal processing for events
             
             # Skip if marked to skip
@@ -561,30 +561,37 @@ class LiveChatCore:
             response = await self.message_processor.generate_response(processed)
             
             if response:
-                logger.info(f"[U+1F4E4] Generated response for {author_name}: {response[:100]}")
-                # Check if this is a consciousness response or slash command
-                response_type = processed.get("response_type", "general")
-                
-                # SLASH COMMANDS go through intelligent throttling
-                if processed.get("has_whack_command") or display_message.startswith('/'):
-                    logger.info(f"[GAME] Sending slash command response (throttled)")
-                    # Commands use intelligent throttle with 'whack' priority
-                    success = await self.send_chat_message(response, response_type="whack")
-                elif response_type == "consciousness":
-                    logger.info(f"[AI] Sending consciousness response (throttled)")
-                    # Consciousness responses use intelligent throttle
-                    success = await self.send_chat_message(response, response_type="consciousness")
-                else:
-                    # All other responses go through throttle with proper type
-                    actual_type = response_type if response_type != "general" else "maga" if "maga" in response.lower() else "general"
-                    success = await self.send_chat_message(response, response_type=actual_type)
-                if success:
-                    logger.info(f"[U+1F4AC] Sent response to {author_name}")
+                # Handle list responses (e.g., /help sends multiple messages)
+                responses = response if isinstance(response, list) else [response]
+
+                for i, single_response in enumerate(responses):
+                    if i > 0:
+                        await asyncio.sleep(1.5)  # Small delay between multi-messages
+
+                    logger.info(f"📤 Generated response for {author_name}: {single_response[:100]}")
+                    # Check if this is a consciousness response or slash command
+                    response_type = processed.get("response_type", "general")
+
+                    # SLASH COMMANDS go through intelligent throttling
+                    if processed.get("has_whack_command") or display_message.startswith('/'):
+                        logger.info(f"[GAME] Sending slash command response (throttled)")
+                        # Commands use intelligent throttle with 'whack' priority
+                        success = await self.send_chat_message(single_response, response_type="whack")
+                    elif response_type == "consciousness":
+                        logger.info(f"[AI] Sending consciousness response (throttled)")
+                        # Consciousness responses use intelligent throttle
+                        success = await self.send_chat_message(single_response, response_type="consciousness")
+                    else:
+                        # All other responses go through throttle with proper type
+                        actual_type = response_type if response_type != "general" else "maga" if "maga" in single_response.lower() else "general"
+                        success = await self.send_chat_message(single_response, response_type=actual_type)
+                    if success:
+                        logger.info(f"💬 Sent response to {author_name}")
             else:
                 # Debug: log why no response
                 if display_message.startswith('/'):
-                    logger.warning(f"[U+26A0]️ NO RESPONSE for command: '{display_message}' from {author_name}")
-                    logger.warning(f"[U+26A0]️ Processed flags: has_whack={processed.get('has_whack_command')}, has_trigger={processed.get('has_trigger')}")
+                    logger.warning(f"⚠️ NO RESPONSE for command: '{display_message}' from {author_name}")
+                    logger.warning(f"⚠️ Processed flags: has_whack={processed.get('has_whack_command')}, has_trigger={processed.get('has_trigger')}")
             
             # Log to user file
             self._log_to_user_file(message)
@@ -625,11 +632,11 @@ class LiveChatCore:
                     logger.info(f"[GAME] Sending timeout announcement: {processed['announcement'][:50]}...")
                 await self.send_chat_message(processed["announcement"], response_type="timeout_announcement")
             else:
-                logger.warning("[U+26A0]️ No announcement generated for timeout event")
+                logger.warning("⚠️ No announcement generated for timeout event")
             
             if processed.get("level_up"):
                 await asyncio.sleep(1)  # Small delay between messages
-                logger.info(f"[U+1F3C6] Sending level up: {processed['level_up']}")
+                logger.info(f"🏆 Sending level up: {processed['level_up']}")
                 await self.send_chat_message(processed["level_up"])
                 
         except Exception as e:
@@ -703,7 +710,7 @@ class LiveChatCore:
         priority_queue = owner_messages + mod_messages + user_messages
 
         if owner_messages:
-            logger.info(f"[U+1F451] Processing {len(owner_messages)} OWNER message(s) FIRST (bypassing queue of {len(messages) - len(owner_messages)} others)")
+            logger.info(f"👑 Processing {len(owner_messages)} OWNER message(s) FIRST (bypassing queue of {len(messages) - len(owner_messages)} others)")
 
         for message in priority_queue:
             await self.process_message(message)
@@ -736,7 +743,7 @@ class LiveChatCore:
                 if time.time() - last_health_check > health_check_interval:
                     health_report = self.health_analyzer.get_health_report()
                     if health_report['health_score'] < 80:
-                        logger.warning(f"[U+26A0]️ System health degraded: {health_report['health_score']:.1f}/100")
+                        logger.warning(f"⚠️ System health degraded: {health_report['health_score']:.1f}/100")
                         for recommendation in health_report['recommendations']:
                             logger.info(f"[IDEA] Health recommendation: {recommendation}")
                     last_health_check = time.time()
@@ -783,14 +790,14 @@ class LiveChatCore:
 
                             items = response.get('items', [])
                             if not items:
-                                logger.warning("[U+26A0]️ Stream not found - may have ended")
+                                logger.warning("⚠️ Stream not found - may have ended")
                                 consecutive_poll_errors = 5  # Trigger exit
                             else:
                                 live_details = items[0].get('liveStreamingDetails', {})
                                 actual_end_time = live_details.get('actualEndTime')
                                 if actual_end_time:
-                                    logger.warning(f"[U+26A0]️ Stream has ended at {actual_end_time}")
-                                    logger.info("[U+1F51A] Exiting polling loop - stream ended")
+                                    logger.warning(f"⚠️ Stream has ended at {actual_end_time}")
+                                    logger.info("🔚 Exiting polling loop - stream ended")
                                     self.is_running = False
                                     break
                                 else:
@@ -798,7 +805,7 @@ class LiveChatCore:
                                     consecutive_poll_errors = 0  # Reset error counter
                         else:
                             # NO-QUOTA mode - use web scraping to check
-                            logger.info("[U+1F310] NO-QUOTA mode: Checking stream via web scraping...")
+                            logger.info("🌐 NO-QUOTA mode: Checking stream via web scraping...")
                             from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
 
                             checker = NoQuotaStreamChecker()
@@ -806,15 +813,15 @@ class LiveChatCore:
                             is_live = is_live_result.get('is_live', False)
 
                             if not is_live:
-                                logger.warning("[U+26A0]️ Stream appears to have ended (NO-QUOTA check)")
-                                logger.info("[U+1F51A] Exiting polling loop - stream ended")
+                                logger.warning("⚠️ Stream appears to have ended (NO-QUOTA check)")
+                                logger.info("🔚 Exiting polling loop - stream ended")
                                 self.is_running = False
                                 break
                             else:
                                 logger.info("[OK] Stream is still live (NO-QUOTA check)")
                                 consecutive_poll_errors = 0  # Reset error counter
                     except Exception as e:
-                        logger.warning(f"[U+26A0]️ Error checking stream status: {e}")
+                        logger.warning(f"⚠️ Error checking stream status: {e}")
                     
                     last_stream_check = time.time()
                 
@@ -872,7 +879,7 @@ class LiveChatCore:
                             if urgency == 'critical':
                                 logger.critical(f"[REFRESH][ALERT] CREDENTIAL ROTATION TRIGGERED: {reason}")
                             elif urgency == 'high':
-                                logger.warning(f"[REFRESH][U+26A0]️ CREDENTIAL ROTATION TRIGGERED: {reason}")
+                                logger.warning(f"[REFRESH]⚠️ CREDENTIAL ROTATION TRIGGERED: {reason}")
                             else:
                                 logger.info(f"[REFRESH] CREDENTIAL ROTATION TRIGGERED: {reason}")
 
@@ -930,11 +937,11 @@ class LiveChatCore:
                                     # No need to stop - next poll will use new service
                                 else:
                                     logger.error(f"[FAIL] ROTATION FAILED: Could not get service for Set {target_set}")
-                                    logger.warning(f"[U+26A0]️ Continuing with Set {current_set} credentials")
+                                    logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
 
                             except Exception as rotation_error:
                                 logger.error(f"[FAIL] ROTATION FAILED: {rotation_error}", exc_info=True)
-                                logger.warning(f"[U+26A0]️ Continuing with Set {current_set} credentials")
+                                logger.warning(f"⚠️ Continuing with Set {current_set} credentials")
 
                     except Exception as e:
                         logger.error(f"[REFRESH][FAIL] Rotation check failed: {e}", exc_info=True)
@@ -967,14 +974,14 @@ class LiveChatCore:
                     if messages:
                         last_activity = time.time()
                         consecutive_empty_polls = 0
-                        logger.debug(f"[U+1F4EC] Got {len(messages)} messages - chat is active")
+                        logger.debug(f"📬 Got {len(messages)} messages - chat is active")
                     else:
                         consecutive_empty_polls += 1
                         time_since_activity = time.time() - last_activity
                         
                         # Agentic detection: Stream might be inactive/ended
                         if time_since_activity > inactivity_timeout:
-                            logger.warning(f"[U+26A0]️ No chat activity for {time_since_activity:.0f}s - checking stream status")
+                            logger.warning(f"⚠️ No chat activity for {time_since_activity:.0f}s - checking stream status")
 
                             # Quick stream validation
                             try:
@@ -987,19 +994,19 @@ class LiveChatCore:
 
                                     items = response.get('items', [])
                                     if not items:
-                                        logger.warning("[U+1F51A] Stream disappeared - likely ended")
+                                        logger.warning("🔚 Stream disappeared - likely ended")
                                         self.is_running = False
                                         break
 
                                     live_details = items[0].get('liveStreamingDetails', {})
                                     actual_end_time = live_details.get('actualEndTime')
                                     if actual_end_time:
-                                        logger.info(f"[U+1F51A] Stream confirmed ended at {actual_end_time}")
+                                        logger.info(f"🔚 Stream confirmed ended at {actual_end_time}")
                                         self.is_running = False
                                         break
                                 else:
                                     # NO-QUOTA mode - use web scraping
-                                    logger.info("[U+1F310] NO-QUOTA mode: Checking if stream ended...")
+                                    logger.info("🌐 NO-QUOTA mode: Checking if stream ended...")
                                     from modules.platform_integration.stream_resolver.src.no_quota_stream_checker import NoQuotaStreamChecker
 
                                     checker = NoQuotaStreamChecker()
@@ -1007,7 +1014,7 @@ class LiveChatCore:
                                     is_live = is_live_result.get('is_live', False)
 
                                     if not is_live:
-                                        logger.warning("[U+1F51A] Stream ended (NO-QUOTA check)")
+                                        logger.warning("🔚 Stream ended (NO-QUOTA check)")
                                         self.is_running = False
                                         break
 
@@ -1019,7 +1026,7 @@ class LiveChatCore:
                                     break
 
                             except Exception as e:
-                                logger.warning(f"[U+26A0]️ Could not verify stream: {e}")
+                                logger.warning(f"⚠️ Could not verify stream: {e}")
                                 if consecutive_empty_polls > 30:  # Give up after ~150 seconds
                                     logger.info("[REFRESH] Assuming stream ended due to prolonged inactivity")
                                     self.is_running = False
@@ -1056,18 +1063,18 @@ class LiveChatCore:
                             break
                     # Check if it's a "live chat ended" error
                     elif "liveChatEnded" in error_details or "forbidden" in error_details.lower():
-                        logger.warning(f"[U+1F51A] Live chat has ended: {e}")
+                        logger.warning(f"🔚 Live chat has ended: {e}")
                         self.is_running = False
                         break
                     elif "notFound" in error_details:
-                        logger.warning(f"[U+1F51A] Live chat not found - stream may have ended: {e}")
+                        logger.warning(f"🔚 Live chat not found - stream may have ended: {e}")
                         self.is_running = False
                         break
                     else:
                         logger.error(f"[FAIL] Polling error #{consecutive_poll_errors}: {e}")
                         # Only exit after many consecutive API errors (not just quiet chat)
                         if consecutive_poll_errors >= 10:
-                            logger.warning("[U+1F51A] Too many API errors - checking if stream ended")
+                            logger.warning("🔚 Too many API errors - checking if stream ended")
                             # Do one final check before giving up
                             try:
                                 response = self.youtube.videos().list(
@@ -1076,7 +1083,7 @@ class LiveChatCore:
                                 ).execute()
                                 items = response.get('items', [])
                                 if not items or items[0].get('liveStreamingDetails', {}).get('actualEndTime'):
-                                    logger.warning("[U+1F51A] Confirmed: Stream has ended")
+                                    logger.warning("🔚 Confirmed: Stream has ended")
                                     self.is_running = False
                                     break
                             except:
