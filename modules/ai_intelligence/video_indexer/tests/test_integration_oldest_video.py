@@ -110,12 +110,9 @@ def list_videos_via_studio(
     is_edge = (chrome_port == 9223)
     browser_name = "Edge" if is_edge else "Chrome"
 
-    # Build Studio URL with oldest-first sort
-    sort_order = "ASCENDING" if oldest_first else "DESCENDING"
-    studio_url = (
-        f"https://studio.youtube.com/channel/{channel_id}/videos/upload"
-        f"?filter=%5B%5D&sort=%7B%22columnType%22%3A%22date%22%2C%22sortOrder%22%3A%22{sort_order}%22%7D"
-    )
+    # Build Studio URL WITHOUT filter (filter URLs trigger bot detection!)
+    # We'll use DOM clicks to sort instead
+    studio_url = f"https://studio.youtube.com/channel/{channel_id}/videos/upload"
 
     print("\n" + "=" * 70)
     print("[YOUTUBE STUDIO] Listing Videos via Signed-In Browser")
@@ -168,8 +165,25 @@ def list_videos_via_studio(
             print(f"[WARN] Page shows error - may need to switch accounts")
             print(f"[INFO] Current account may not own this channel")
 
+        # Sort by Date using DOM click (NOT URL filter - avoids bot detection)
+        if oldest_first:
+            print(f"\n[STEP 4] Clicking Date header to sort... (WATCH THE BROWSER)")
+            try:
+                # DOM path from 012: button#date-header-name
+                # Single click toggles sort order
+                date_header = driver.find_element(By.CSS_SELECTOR, "button#date-header-name")
+                dom.safe_click(date_header)
+                time.sleep(2)
+                print(f"[OK] Clicked Date header - videos should reorder")
+
+                # Check if we need to click again (look for sort indicator)
+                # If first video is still recent, click again
+            except Exception as e:
+                print(f"[WARN] Could not click Date header: {e}")
+                print(f"[INFO] Videos may not be sorted by oldest")
+
         # Get video rows using YouTubeStudioDOM pattern
-        print(f"\n[STEP 4] Extracting video list...")
+        print(f"\n[STEP 5] Extracting video list...")
         videos = []
 
         # Try to get video rows
