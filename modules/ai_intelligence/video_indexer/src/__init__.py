@@ -52,4 +52,4 @@ __all__ = [
     "get_indexer_telemetry",
 ]
 
-__version__ = "0.5.0"  # Phase 4 Clip Generation complete
+__version__ = "0.6.0"  # Test Suite & Audit complete

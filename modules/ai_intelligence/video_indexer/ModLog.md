@@ -260,6 +260,57 @@ YouTube Video ID
 
 ---
 
+## V0.6.0 - Test Suite & Audit (2026-01-09)
+
+### Added
+- **tests/README.md**: Comprehensive test documentation
+  - Test categories (Unit, Integration, Component)
+  - Prerequisites and running instructions
+  - Fixtures and environment variables
+  - WSP compliance checklist
+
+- **test_integration_oldest_video.py**: E2E integration test
+  - Uses yt-dlp to find oldest UnDaoDu video (2009)
+  - Navigates Chrome to video via Selenium
+  - Tests full indexing pipeline
+  - Saves JSON artifacts to memory/video_index/test_results/
+
+- **test_selenium_navigation.py**: Visible browser demo
+  - Demonstrates Selenium navigation for 012 observation
+  - Uses existing Chrome port 9222 (signed-in session)
+  - Shows visible scrolling and page navigation
+
+### Fixed
+- **video_indexer.py**: UnDaoDu channel_id corrected
+  - Was: `UC-LSSlOZwpGIRIYihaz8zCw` (Move2Japan - wrong)
+  - Now: `UCfHM9Fw9HD-NwiS0seD_oIA` (UnDaoDu - correct)
+
+- **audio_analyzer.py**: API mismatch with BatchTranscriber
+  - Fixed transcribe_video() to properly call VideoArchiveExtractor
+  - Now passes video_id, title, and audio_chunks correctly
+  - Fetches video metadata via yt_dlp before transcription
+
+### Known Issues
+- **yt-dlp bot detection**: YouTube's "Sign in to confirm you're not a bot"
+  - Browser cookies configured (`cookiesfrombrowser: ('chrome',)`)
+  - May require browser profile path adjustment for Windows
+  - Pipeline structure works - just content download blocked
+
+### WSP Compliance
+- **WSP 5**: Test Coverage (integration tests added)
+- **WSP 6**: Test Audit (tests/README.md created)
+- **WSP 11**: Interface Protocol (API mismatch fixed)
+- **WSP 84**: Code Reuse (uses existing Selenium/yt-dlp patterns)
+
+### Audit Findings (012 Vision Check)
+- README.md: GOOD
+- INTERFACE.md: GOOD
+- ModLog.md: GOOD (now complete)
+- Tests: NOW EXISTS (was missing)
+- tests/README.md: NOW EXISTS (was missing)
+
+---
+
 ## Change Template
 
 ```markdown

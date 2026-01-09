@@ -91,7 +91,7 @@ CHANNEL_CONFIG = {
         "port": 9222,
     },
     "undaodu": {
-        "channel_id": "UC-LSSlOZwpGIRIYihaz8zCw",  # Shared profile
+        "channel_id": "UCfHM9Fw9HD-NwiS0seD_oIA",  # UnDaoDu consciousness channel
         "browser": "chrome",
         "port": 9222,
     },

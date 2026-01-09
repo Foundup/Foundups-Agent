@@ -133,7 +133,11 @@ class AudioAnalyzer:
         """
         Transcribe YouTube video by ID using existing infrastructure.
 
-        Uses get_batch_transcriber() from voice_command_ingestion (WSP 84).
+        Uses VideoArchiveExtractor + BatchTranscriber from voice_command_ingestion (WSP 84).
+
+        Pipeline:
+            1. VideoArchiveExtractor.stream_video_chunks() - Download audio
+            2. BatchTranscriber.transcribe_video() - Transcribe audio chunks
 
         Args:
             video_id: YouTube video ID
@@ -146,9 +150,44 @@ class AudioAnalyzer:
 
         transcriber = self._get_batch_transcriber()
 
-        # Use batch transcriber to get segments
-        # This handles: download audio -> faster-whisper -> segments
-        segments_raw = list(transcriber.transcribe_video(video_id))
+        # Get audio chunks using VideoArchiveExtractor (WSP 84 - reuse existing infrastructure)
+        try:
+            from modules.platform_integration.youtube_live_audio.src.youtube_live_audio import (
+                VideoArchiveExtractor,
+            )
+            extractor = VideoArchiveExtractor()
+        except ImportError as e:
+            logger.error(f"[AUDIO-ANALYZER] VideoArchiveExtractor not available: {e}")
+            return TranscriptResult(
+                segments=[],
+                full_text="",
+                duration=0,
+                language="unknown",
+            )
+
+        # First, get video metadata (title, duration)
+        logger.info(f"[AUDIO-ANALYZER] Fetching video metadata for {video_id}")
+        video_title = f"Video {video_id}"  # Default title
+        try:
+            # Try to get video info - this also validates the video exists
+            import yt_dlp
+            ydl_opts = {'quiet': True, 'no_warnings': True}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                video_title = info.get('title', video_title)
+                logger.info(f"[AUDIO-ANALYZER] Video title: {video_title[:50]}...")
+        except Exception as e:
+            logger.warning(f"[AUDIO-ANALYZER] Could not get video title: {e}")
+
+        # Stream audio chunks and transcribe
+        logger.info(f"[AUDIO-ANALYZER] Streaming audio chunks for {video_id}")
+        audio_chunks = extractor.stream_video_chunks(video_id)
+
+        segments_raw = list(transcriber.transcribe_video(
+            video_id=video_id,
+            title=video_title,
+            audio_chunks=audio_chunks,
+        ))
 
         if not segments_raw:
             logger.warning(f"[AUDIO-ANALYZER] No segments returned for {video_id}")
