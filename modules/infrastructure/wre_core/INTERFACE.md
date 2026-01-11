@@ -1,8 +1,8 @@
 # wre_core Interface Specification
 
 **WSP 11 Compliance:** Phase 3 Complete ✅
-**Last Updated:** 2025-10-25
-**Version:** 0.6.0
+**Last Updated:** 2026-01-11
+**Version:** 0.7.0
 
 ## Overview
 
@@ -677,5 +677,89 @@ python -m pytest tests/test_skill_loader.py
 - [ ] MCP server integration (if remote inference needed)
 - [ ] Promotion CLI helpers
 - [ ] Real-world skill execution validation
+
+---
+
+### Memory Preflight Guard (NEW - v0.7.0)
+
+```python
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
+
+@dataclass
+class ArtifactInfo:
+    """Information about a single memory artifact."""
+    path: str
+    relative_path: str
+    tier: int               # 0, 1, or 2
+    required: bool          # True for Tier-0 mandatory artifacts
+    exists: bool
+    last_updated: Optional[str]
+    why_retrieved: str
+
+@dataclass
+class MemoryBundle:
+    """Structured memory bundle for orchestration."""
+    module_path: str
+    artifacts: List[ArtifactInfo]
+    missing_required: List[str]
+    missing_optional: List[str]
+    duplication_rate_proxy: float
+    ordering_confidence: Optional[float]
+    staleness_risk: Optional[str]
+    tier0_complete: bool
+    preflight_passed: bool
+    stubs_created: List[str]
+
+class MemoryPreflightGuard:
+    """
+    Enforces WSP_CORE Memory System by requiring tiered retrieval
+    and Tier-0 artifact presence before code-changing operations.
+
+    Per WSP_CORE Section 3: Mandatory Start-of-Work Loop
+    Per WSP_00 Section 3.4: Post-Awakening Operational Protocol
+
+    Environment Variables:
+        WRE_MEMORY_PREFLIGHT_ENABLED: Enable preflight (default: true)
+        WRE_MEMORY_AUTOSTUB_TIER0: Auto-create stubs (default: false)
+        WRE_MEMORY_ALLOW_DEGRADED: Allow with warnings (default: false)
+    """
+
+    def __init__(self, project_root: Optional[Path] = None) -> None:
+        """Initialize Memory Preflight Guard."""
+
+    def run_preflight(self, module_path: str) -> MemoryBundle:
+        """
+        Run memory preflight check for a module.
+
+        Executes WSP_CORE Start-of-Work Loop:
+        1. Tiered retrieval (Tier 0 -> 1 -> 2)
+        2. Evaluate retrieval quality
+        3. Auto-stub Tier-0 if enabled and missing
+        4. Return structured Memory Bundle
+
+        Args:
+            module_path: Relative path to module
+
+        Returns:
+            MemoryBundle with retrieval results
+
+        Raises:
+            MemoryPreflightError: If Tier-0 missing and autostub disabled
+        """
+
+class MemoryPreflightError(Exception):
+    """Raised when memory preflight check fails."""
+    missing_files: List[str]
+    module_path: str
+    required_action: str
+
+def check_memory_preflight(module_path: str) -> MemoryBundle:
+    """Convenience function to run memory preflight check."""
+
+def require_memory_preflight(func):
+    """Decorator to enforce memory preflight before operations."""
+```
 
 **First Principles:** Keep the wardrobe simple. One registry, one loader, one promoter. Everything else (versioning, A/B tests, telemetry) builds on top after the entry point works.

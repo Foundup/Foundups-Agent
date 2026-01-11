@@ -43,6 +43,18 @@ from modules.infrastructure.wre_core.dae_cube_assembly.src.dae_cube_assembler im
 from modules.infrastructure.wre_core.recursive_improvement.src.learning import RecursiveLearningEngine
 from modules.infrastructure.wre_core.wre_sdk_implementation import WRESDK, WREConfig
 
+# WSP_CORE Memory System: Memory Preflight Guard
+try:
+    from modules.infrastructure.wre_core.recursive_improvement.src.memory_preflight import (
+        MemoryPreflightGuard,
+        MemoryPreflightError,
+        check_memory_preflight,
+    )
+    MEMORY_PREFLIGHT_AVAILABLE = True
+except ImportError:
+    MEMORY_PREFLIGHT_AVAILABLE = False
+    logging.warning("[WRE] Memory Preflight Guard not available - running without enforcement")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -68,7 +80,16 @@ class WREOrchestrator:
         self.assembler = DAECubeAssembler()  # WSP 80: DAE spawning
         self.pattern_engine = RecursiveLearningEngine()  # WSP 48: Learning
         self.sdk = WRESDK(self.config)  # Enhanced Claude Code SDK
-        
+
+        # WSP_CORE Memory System: Memory Preflight Guard
+        self.memory_preflight = None
+        if MEMORY_PREFLIGHT_AVAILABLE:
+            try:
+                self.memory_preflight = MemoryPreflightGuard()
+                logger.info("[WRE] Memory Preflight Guard initialized")
+            except Exception as e:
+                logger.warning(f"[WRE] Memory Preflight Guard init failed: {e}")
+
         logger.info(f"WRE initialized - State: {self.state}, Coherence: {self.coherence}")
     
     # ========== Modular Operations (can be enhanced) ==========
@@ -98,14 +119,36 @@ class WREOrchestrator:
         """
         WSP 54: Route operation to DAE.
         Modular block - can be enhanced with new routing logic.
+
+        WSP_CORE Memory System: If module_path provided, run Memory Preflight Guard.
         """
+        # WSP_CORE: Memory Preflight Guard (hard gate)
+        module_path = kwargs.get("module_path") or kwargs.get("context", {}).get("module_path")
+        memory_bundle = None
+
+        if module_path and self.memory_preflight:
+            try:
+                memory_bundle = self.memory_preflight.run_preflight(module_path)
+                logger.info(f"[WRE] Memory preflight passed for {module_path}")
+            except MemoryPreflightError as e:
+                logger.error(f"[WRE] Memory preflight BLOCKED: {e}")
+                return {
+                    "status": "blocked",
+                    "reason": "memory_preflight_failed",
+                    "missing_files": e.missing_files,
+                    "module": e.module_path,
+                    "required_action": e.required_action,
+                    "hint": "Enable WRE_MEMORY_AUTOSTUB_TIER0=true to auto-create stubs",
+                }
+
         envelope = {
             "objective": objective,
             "context": kwargs.get("context", {}),
             "wsp_protocols": kwargs.get("wsp_protocols", ["WSP 54"]),
-            "token_budget": kwargs.get("token_budget", 1000)
+            "token_budget": kwargs.get("token_budget", 1000),
+            "memory_bundle": memory_bundle.to_dict() if memory_bundle else None,
         }
-        
+
         return await self.gateway.route_to_dae(dae_name, envelope)
     
     async def learn_from_error(self, error: Exception, context: Dict = None) -> Dict:
