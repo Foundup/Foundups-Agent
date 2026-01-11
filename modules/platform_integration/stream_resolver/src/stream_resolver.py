@@ -549,7 +549,7 @@ class StreamResolver:
             if not is_chrome_debug_port_open(port=stream_chrome_port, timeout=1.0):
                 logger.info(f"[VISION] [WARN] Chrome debug port {stream_chrome_port} NOT reachable (< 1s check)")
                 logger.info("[VISION] Tip: Start Chrome with remote debugging:")
-                logger.info("[VISION]    - launch_chrome_youtube_studio.bat")
+                logger.info("[VISION]    - scripts/launch/launch_chrome_youtube_studio.bat")
                 logger.info(f"[VISION]    OR chrome.exe --remote-debugging-port={stream_chrome_port}")
                 logger.info("[VISION] Skipping vision mode - falling back to NO-QUOTA scraping...")
                 raise RuntimeError("Chrome not available")  # Skip to scraping fallback

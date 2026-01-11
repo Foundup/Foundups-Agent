@@ -9,6 +9,51 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-01-11] Root Directory Cleanup - WSP 85 Compliance
+
+**Change Type**: Codebase Organization (File Reorganization)
+**By**: 0102
+**WSP References**: WSP 3 (Domain), WSP 49 (Structure), WSP 85 (Root Protection), WSP 50 (Pre-Action Verification)
+
+### What Changed
+
+**HoloIndex Research First**: Analyzed 50+ root files to determine proper destinations.
+
+**Files Deleted** (temporary logs):
+- `registry_log.txt`, `sentinel_unit_out.txt`, `test_results.txt`, `test_write.txt`
+- `verification_log.txt`, `test_ad_prevention.html`, `interferometry.png`, `nul`
+
+**Files Moved**:
+| From (root) | To | Reason |
+|-------------|-----|--------|
+| `AUDIT_FINDINGS_SUMMARY.txt` | `docs/audits/` | WSP 22 archive |
+| `EXTRACTION_AUDIT_REPORT.txt` | `docs/audits/` | WSP 22 archive |
+| `COMMENT_*.txt/md` (7 files) | `docs/investigations/` | Investigation docs |
+| `FLOW_SUMMARY.txt` | `docs/sessions/` | Session log |
+| `PHASE_1A_*.md`, `SPRINT_*.md` | `docs/sessions/` | Sprint docs |
+| `launch_chrome_*.bat` (5 files) | `scripts/launch/` | Launcher scripts |
+| `TRIGGER_DEPLOY.sh` | `scripts/deployment/` | Deploy script |
+| `Modelfile.qwen-overseer` | `models/` | Model config |
+| `012.txt` | `holo_index/data/` | Pattern memory corpus |
+| `moderators_list.json` | `modules/communication/livechat/data/` | Module data |
+
+**References Updated**:
+- `.claude/settings.local.json`: Updated launch script path
+- `chrome_preflight_check.py`: Updated recommendation path
+- `stream_resolver.py`: Updated log message path
+
+**Files Kept in Root** (per WSP 85):
+- Entry points: `main.py`, `NAVIGATION.py`, `holo_index.py`
+- Config: `.gitignore`, `requirements.txt`, `pytest.ini`, `Dockerfile`
+- Docs: `README.md`, `CLAUDE.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `ModLog.md`
+
+**WSP Compliance**:
+- HoloIndex search performed BEFORE any moves
+- All file references verified and updated
+- WSP 85 (Root Protection) now enforced
+
+---
+
 ## [2026-01-03] Voice STT Pipeline - YouTube Live Audio -> 0102 Commands
 
 **Change Type**: New Multi-Module Feature (Voice -> STT -> Trigger -> LiveChat)

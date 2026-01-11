@@ -9,7 +9,7 @@
       "Bash(python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer1_filter:*)",
       "Bash(python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer2_edit:*)",
       "Bash(python:*)",
-      "Bash(cmd /c \"start launch_chrome_youtube_studio.bat\")",
+      "Bash(cmd /c \"start scripts/launch/launch_chrome_youtube_studio.bat\")",
       "Bash(timeout:*)",
       "Bash(curl:*)",
       "Bash(start \"\" \"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe\" --remote-debugging-port=9223 --user-data-dir=\"%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling \"https://studio.youtube.com/channel/UC-LSSlOZwpGIRIYihaz8zCw/videos/short\")",
@@ -28,7 +28,11 @@
       "Bash(pip install:*)",
       "Bash(test:*)",
       "Bash(xargs:*)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "Bash(where:*)",
+      "Bash(start \"\" \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --remote-debugging-port=9222 --user-data-dir=\"%LOCALAPPDATA%\\Google\\Chrome\\User Data\" \"https://studio.youtube.com\")",
+      "Bash(done)",
+      "Bash(sort:*)"
     ],
     "deny": [],
     "ask": []
