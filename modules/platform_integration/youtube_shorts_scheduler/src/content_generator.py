@@ -6,7 +6,7 @@ FFCPLN (F*** Fake Christian Pedo-Lovin' Nazi) playlist promotion.
 """
 
 import random
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # Title templates for FFCPLN music shorts
 TITLE_TEMPLATES = [
@@ -30,7 +30,7 @@ FFCPLN_DESCRIPTION = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playli
 
 160+ anti-fascist songs exposing ICE cruelty & MAGA hypocrisy!
 
-🎵 FULL PLAYLIST: https://ffcpln.foundups.com
+🎵 FULL PLAYLIST: https://ffc.ravingANTIFA.com
 
 #FFCPLN #MAGA #ICE #Antifascist #Resistance #TrumpFiles #Epstein #Music #Shorts #Viral
 
@@ -40,7 +40,7 @@ FFCPLN_DESCRIPTION = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playli
 ALT_DESCRIPTIONS = [
     """🎵 From the FFCPLN Playlist - 160+ songs fighting fascism!
 
-🔗 Full playlist: https://ffcpln.foundups.com
+🔗 Full playlist: https://ffc.ravingANTIFA.com
 
 #FFCPLN #MAGA #Resistance #Music #Shorts""",
 
@@ -48,7 +48,7 @@ ALT_DESCRIPTIONS = [
 
 F*** Fake Christian Pedo-Lovin' Nazis - 160 songs exposing the truth!
 
-🎶 https://ffcpln.foundups.com
+🎶 https://ffc.ravingANTIFA.com
 
 #FFCPLN #AntiMAGA #ICE #Shorts""",
 
@@ -101,6 +101,69 @@ def generate_clickbait_title(
         title = title[:97] + "..."
 
     return title
+
+
+def extract_title_hint_from_index(index_json: Dict[str, Any], fallback_title: Optional[str] = None) -> str:
+    """
+    Extract a compact hint from a video index artifact to inform title generation.
+
+    Occam: deterministic extraction only (no network / no LLM).
+    """
+    if not isinstance(index_json, dict):
+        return (fallback_title or "").strip()
+
+    metadata = index_json.get("metadata") or {}
+    if isinstance(metadata, dict):
+        summary = metadata.get("summary")
+        if isinstance(summary, str) and summary.strip():
+            s = summary.strip()
+            # Common stub prefix: "FFCPLN music short: <title>"
+            for prefix in ("FFCPLN music short:", "FFCPLN music short"):
+                if s.lower().startswith(prefix.lower()):
+                    s = s[len(prefix):].strip(" :.-")
+                    break
+            # Keep it short; title generator enforces final 100-char max.
+            return s[:48].strip()
+
+        topics = metadata.get("topics") or []
+        if isinstance(topics, list):
+            for t in topics:
+                if not isinstance(t, str):
+                    continue
+                candidate = t.strip()
+                if not candidate:
+                    continue
+                if candidate.lower() in {"ffcpln", "music", "shorts"}:
+                    continue
+                return candidate[:32].strip()
+
+    classification = index_json.get("classification") or {}
+    if isinstance(classification, dict):
+        cats = classification.get("discovered_categories") or []
+        if isinstance(cats, list):
+            for c in cats:
+                if not isinstance(c, str):
+                    continue
+                candidate = c.strip()
+                if not candidate:
+                    continue
+                if candidate.lower() in {"ffcpln", "music", "shorts"}:
+                    continue
+                return candidate[:32].strip()
+
+    return (fallback_title or "").strip()[:48]
+
+
+def generate_clickbait_title_from_index(
+    *,
+    original_title: str,
+    index_json: Dict[str, Any],
+) -> str:
+    """
+    Generate a clickbait title where the index artifact informs the hint.
+    """
+    hint = extract_title_hint_from_index(index_json, fallback_title=original_title)
+    return generate_clickbait_title(original_title=original_title, song_hint=hint or None)
 
 
 def get_standard_description(template: str = "ffcpln") -> str:
@@ -223,14 +286,17 @@ def enhance_description(original_desc: str) -> str:
         Enhanced description with SEO optimization
     """
     # Check if already has FFCPLN link
-    has_ffcpln_link = "ffcpln.foundups.com" in original_desc.lower()
+    has_ffcpln_link = (
+        "ffcpln.foundups.com" in original_desc.lower()
+        or "ffc.ravingantifa.com" in original_desc.lower()
+    )
     
     # Build enhanced description
     enhanced = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playlist 🔥
 
 160+ anti-fascist songs exposing ICE cruelty & MAGA hypocrisy!
 
-🎵 FULL PLAYLIST: https://ffcpln.foundups.com
+🎵 FULL PLAYLIST: https://ffc.ravingANTIFA.com
 
 #FFCPLN #MAGA #ICE #Antifascist #Resistance #TrumpFiles #Epstein #Music #Shorts #Viral
 

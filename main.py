@@ -185,6 +185,12 @@ def _format_env_value(value: str) -> str:
         return f"\"{value}\""
     return value
 
+def _mask_secret(value: str) -> str:
+    if not value:
+        return "unset"
+    tail = value[-4:] if len(value) > 4 else value
+    return f"set (len={len(value)} tail=...{tail})"
+
 def _update_env_file(key: str, value: str) -> None:
     env_path = Path(__file__).resolve().parent / ".env"
     new_line = f"{key}={_format_env_value(value)}"
@@ -222,19 +228,56 @@ def _holo_controls_menu() -> None:
         auto_index_on = _env_flag("FOUNDUPS_HOLO_AUTO_INDEX", False)
         max_hours_raw = os.getenv("FOUNDUPS_HOLO_AUTO_INDEX_MAX_HOURS", "6").strip() or "6"
         ssd_path = os.getenv("HOLO_SSD_PATH", "E:/HoloIndex")
+        cache_path = os.getenv("HOLO_CACHE_PATH", "E:/HoloIndex/cache")
+        reward_variant = os.getenv("HOLO_REWARD_VARIANT", "A").strip() or "A"
+        reward_variant = reward_variant.upper()
         clear_screen_on = _env_flag("FOUNDUPS_CLEAR_SCREEN", False)
+        holo_silent_on = _env_truthy("HOLO_SILENT", "false")
+        holo_skip_model_on = _env_truthy("HOLO_SKIP_MODEL", "false")
+        holo_verbose_on = _env_truthy("HOLO_VERBOSE", "false")
+        holo_offline_on = _env_truthy("HOLO_OFFLINE", "false")
+        holo_disable_pip_on = _env_truthy("HOLO_DISABLE_PIP_INSTALL", "false")
+        holo_breadcrumbs_on = _env_truthy("HOLO_BREADCRUMB_ENABLED", "true")
+        holo_breadcrumb_logs_on = _env_truthy("HOLO_BREADCRUMB_LOGS", "true")
+        overseer_breadcrumbs_on = _env_truthy("AI_OVERSEER_BREADCRUMBS", "true")
 
         print("\n[MENU] Holo Controls (012)")
         print("=" * 60)
         print(f"Auto-index: {'ON' if auto_index_on else 'OFF'} | Max age hours: {max_hours_raw} (0=always)")
         print(f"SSD path: {ssd_path}")
+        print(f"Cache path: {cache_path}")
+        print(f"Reward variant: {reward_variant}")
         print(f"Clear screen on startup: {'ON' if clear_screen_on else 'OFF'}")
+        print(
+            "Holo: "
+            f"silent={'ON' if holo_silent_on else 'OFF'} | "
+            f"verbose={'ON' if holo_verbose_on else 'OFF'} | "
+            f"skip_model={'ON' if holo_skip_model_on else 'OFF'} | "
+            f"offline={'ON' if holo_offline_on else 'OFF'}"
+        )
+        print(
+            "Breadcrumbs: "
+            f"holo={'ON' if holo_breadcrumbs_on else 'OFF'} | "
+            f"logs={'ON' if holo_breadcrumb_logs_on else 'OFF'} | "
+            f"overseer={'ON' if overseer_breadcrumbs_on else 'OFF'}"
+        )
         print("-" * 60)
         print("1) Toggle auto-index")
         print("2) Set max age hours (0=always)")
         print("3) Set SSD path")
-        print("4) Toggle clear screen")
-        print("5) Back")
+        print("4) Set cache path (HOLO_CACHE_PATH)")
+        print("5) Set reward variant (HOLO_REWARD_VARIANT)")
+        print("6) Toggle clear screen")
+        print("7) Toggle Holo verbose output (HOLO_VERBOSE)")
+        print("8) Toggle Holo silent output (HOLO_SILENT)")
+        print("9) Toggle skip model load (HOLO_SKIP_MODEL)")
+        print("10) Toggle offline mode (HOLO_OFFLINE)")
+        print("11) Toggle disable pip auto-install (HOLO_DISABLE_PIP_INSTALL)")
+        print("12) Toggle Holo breadcrumbs (HOLO_BREADCRUMB_ENABLED)")
+        print("13) Toggle breadcrumb logs (HOLO_BREADCRUMB_LOGS)")
+        print("14) Toggle AI Overseer breadcrumbs")
+        print("15) Advanced Holo controls")
+        print("16) Back")
 
         choice = input("holo-controls> ").strip()
 
@@ -262,10 +305,214 @@ def _holo_controls_menu() -> None:
             os.environ["HOLO_SSD_PATH"] = raw
             _update_env_file("HOLO_SSD_PATH", raw)
         elif choice == "4":
+            raw = input("Enter cache path (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_CACHE_PATH"] = raw
+            _update_env_file("HOLO_CACHE_PATH", raw)
+        elif choice == "5":
+            raw = input("Enter reward variant (A/B): ").strip().upper()
+            if not raw:
+                continue
+            if raw not in {"A", "B"}:
+                print("[ERROR] Reward variant must be A or B.")
+                continue
+            os.environ["HOLO_REWARD_VARIANT"] = raw
+            _update_env_file("HOLO_REWARD_VARIANT", raw)
+        elif choice == "6":
             new_value = "0" if clear_screen_on else "1"
             os.environ["FOUNDUPS_CLEAR_SCREEN"] = new_value
             _update_env_file("FOUNDUPS_CLEAR_SCREEN", new_value)
+        elif choice == "7":
+            new_value = "false" if holo_verbose_on else "true"
+            os.environ["HOLO_VERBOSE"] = new_value
+            _update_env_file("HOLO_VERBOSE", new_value)
+        elif choice == "8":
+            new_value = "false" if holo_silent_on else "true"
+            os.environ["HOLO_SILENT"] = new_value
+            _update_env_file("HOLO_SILENT", new_value)
+        elif choice == "9":
+            new_value = "false" if holo_skip_model_on else "true"
+            os.environ["HOLO_SKIP_MODEL"] = new_value
+            _update_env_file("HOLO_SKIP_MODEL", new_value)
+        elif choice == "10":
+            new_value = "false" if holo_offline_on else "true"
+            os.environ["HOLO_OFFLINE"] = new_value
+            _update_env_file("HOLO_OFFLINE", new_value)
+        elif choice == "11":
+            new_value = "false" if holo_disable_pip_on else "true"
+            os.environ["HOLO_DISABLE_PIP_INSTALL"] = new_value
+            _update_env_file("HOLO_DISABLE_PIP_INSTALL", new_value)
+        elif choice == "12":
+            new_value = "false" if holo_breadcrumbs_on else "true"
+            os.environ["HOLO_BREADCRUMB_ENABLED"] = new_value
+            _update_env_file("HOLO_BREADCRUMB_ENABLED", new_value)
+        elif choice == "13":
+            new_value = "false" if holo_breadcrumb_logs_on else "true"
+            os.environ["HOLO_BREADCRUMB_LOGS"] = new_value
+            _update_env_file("HOLO_BREADCRUMB_LOGS", new_value)
+        elif choice == "14":
+            new_value = "false" if overseer_breadcrumbs_on else "true"
+            os.environ["AI_OVERSEER_BREADCRUMBS"] = new_value
+            _update_env_file("AI_OVERSEER_BREADCRUMBS", new_value)
+        elif choice == "15":
+            _holo_advanced_controls_menu()
+        elif choice == "16":
+            break
+        else:
+            print("[ERROR] Invalid choice.")
+
+def _holo_advanced_controls_menu() -> None:
+    while True:
+        qwen_model = os.getenv("HOLO_QWEN_MODEL", "E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+        qwen_tokens = os.getenv("HOLO_QWEN_MAX_TOKENS", "512").strip() or "512"
+        qwen_temp = os.getenv("HOLO_QWEN_TEMPERATURE", "0.2").strip() or "0.2"
+        qwen_cache_on = _env_truthy("HOLO_QWEN_CACHE", "true")
+        qwen_telemetry = os.getenv("HOLO_QWEN_TELEMETRY", "E:/HoloIndex/indexes/holo_usage.json")
+        base_url = os.getenv("HOLO_LLM_BASE_URL", "").strip()
+        api_key_masked = _mask_secret(os.getenv("HOLO_LLM_API_KEY", "").strip())
+        agent_id = os.getenv("HOLO_AGENT_ID", "").strip() or "unset"
+        holo_id = os.getenv("0102_HOLO_ID", "").strip() or "unset"
+        mcp_enabled_on = _env_truthy("HOLO_MCP_ENABLED", "true")
+        mcp_warn_on = _env_truthy("HOLO_MCP_WARNINGS", "true")
+        pattern_logs_on = _env_truthy("HOLO_PATTERN_MEMORY_LOGS", "true")
+        monitor_interval = os.getenv("HOLO_MONITOR_INTERVAL", "5.0").strip() or "5.0"
+        monitor_heartbeat = os.getenv("HOLO_MONITOR_HEARTBEAT", "60.0").strip() or "60.0"
+
+        print("\n[MENU] Advanced Holo Controls (012)")
+        print("=" * 60)
+        print(f"Qwen model: {qwen_model}")
+        print(f"Qwen max tokens: {qwen_tokens} | temp: {qwen_temp} | cache: {'ON' if qwen_cache_on else 'OFF'}")
+        print(f"Qwen telemetry: {qwen_telemetry}")
+        print(f"Overseer URL: {base_url or 'unset'} | API key: {api_key_masked}")
+        print(f"Agent IDs: HOLO_AGENT_ID={agent_id} | 0102_HOLO_ID={holo_id}")
+        print(f"MCP: enabled={'ON' if mcp_enabled_on else 'OFF'} | warnings={'ON' if mcp_warn_on else 'OFF'}")
+        print(f"Monitor: interval={monitor_interval}s | heartbeat={monitor_heartbeat}s")
+        print(f"Pattern memory logs: {'ON' if pattern_logs_on else 'OFF'}")
+        print("-" * 60)
+        print("1) Set Qwen model path (HOLO_QWEN_MODEL)")
+        print("2) Set Qwen max tokens (HOLO_QWEN_MAX_TOKENS)")
+        print("3) Set Qwen temperature (HOLO_QWEN_TEMPERATURE)")
+        print("4) Toggle Qwen cache (HOLO_QWEN_CACHE)")
+        print("5) Set Qwen telemetry path (HOLO_QWEN_TELEMETRY)")
+        print("6) Set Overseer base URL (HOLO_LLM_BASE_URL)")
+        print("7) Set Overseer API key (HOLO_LLM_API_KEY)")
+        print("8) Clear Overseer API key")
+        print("9) Set HOLO_AGENT_ID")
+        print("10) Set 0102_HOLO_ID")
+        print("11) Toggle MCP enabled (HOLO_MCP_ENABLED)")
+        print("12) Toggle MCP warnings (HOLO_MCP_WARNINGS)")
+        print("13) Set monitor interval seconds (HOLO_MONITOR_INTERVAL)")
+        print("14) Set monitor heartbeat seconds (HOLO_MONITOR_HEARTBEAT)")
+        print("15) Toggle pattern memory logs (HOLO_PATTERN_MEMORY_LOGS)")
+        print("16) Back")
+
+        choice = input("holo-advanced> ").strip()
+
+        if choice == "1":
+            raw = input("Enter Qwen model path (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_QWEN_MODEL"] = raw
+            _update_env_file("HOLO_QWEN_MODEL", raw)
+        elif choice == "2":
+            raw = input("Enter max tokens (positive int): ").strip()
+            if not raw:
+                continue
+            try:
+                value = int(raw)
+                if value <= 0:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Enter a positive integer.")
+                continue
+            os.environ["HOLO_QWEN_MAX_TOKENS"] = str(value)
+            _update_env_file("HOLO_QWEN_MAX_TOKENS", str(value))
+        elif choice == "3":
+            raw = input("Enter temperature (0.0-2.0): ").strip()
+            if not raw:
+                continue
+            try:
+                value = float(raw)
+                if value < 0 or value > 2:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Enter a number between 0 and 2.")
+                continue
+            os.environ["HOLO_QWEN_TEMPERATURE"] = str(value)
+            _update_env_file("HOLO_QWEN_TEMPERATURE", str(value))
+        elif choice == "4":
+            new_value = "0" if qwen_cache_on else "1"
+            os.environ["HOLO_QWEN_CACHE"] = new_value
+            _update_env_file("HOLO_QWEN_CACHE", new_value)
         elif choice == "5":
+            raw = input("Enter telemetry path (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_QWEN_TELEMETRY"] = raw
+            _update_env_file("HOLO_QWEN_TELEMETRY", raw)
+        elif choice == "6":
+            raw = input("Enter base URL (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_LLM_BASE_URL"] = raw
+            _update_env_file("HOLO_LLM_BASE_URL", raw)
+        elif choice == "7":
+            raw = input("Enter API key (blank=cancel): ").strip()
+            if not raw:
+                continue
+            os.environ["HOLO_LLM_API_KEY"] = raw
+            _update_env_file("HOLO_LLM_API_KEY", raw)
+        elif choice == "8":
+            os.environ["HOLO_LLM_API_KEY"] = ""
+            _update_env_file("HOLO_LLM_API_KEY", "")
+        elif choice == "9":
+            raw = input("Enter HOLO_AGENT_ID (blank=clear): ").strip()
+            os.environ["HOLO_AGENT_ID"] = raw
+            _update_env_file("HOLO_AGENT_ID", raw)
+        elif choice == "10":
+            raw = input("Enter 0102_HOLO_ID (blank=clear): ").strip()
+            os.environ["0102_HOLO_ID"] = raw
+            _update_env_file("0102_HOLO_ID", raw)
+        elif choice == "11":
+            new_value = "false" if mcp_enabled_on else "true"
+            os.environ["HOLO_MCP_ENABLED"] = new_value
+            _update_env_file("HOLO_MCP_ENABLED", new_value)
+        elif choice == "12":
+            new_value = "false" if mcp_warn_on else "true"
+            os.environ["HOLO_MCP_WARNINGS"] = new_value
+            _update_env_file("HOLO_MCP_WARNINGS", new_value)
+        elif choice == "13":
+            raw = input("Enter monitor interval seconds (positive number): ").strip()
+            if not raw:
+                continue
+            try:
+                value = float(raw)
+                if value <= 0:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Enter a positive number.")
+                continue
+            os.environ["HOLO_MONITOR_INTERVAL"] = str(value)
+            _update_env_file("HOLO_MONITOR_INTERVAL", str(value))
+        elif choice == "14":
+            raw = input("Enter heartbeat seconds (positive number): ").strip()
+            if not raw:
+                continue
+            try:
+                value = float(raw)
+                if value <= 0:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Enter a positive number.")
+                continue
+            os.environ["HOLO_MONITOR_HEARTBEAT"] = str(value)
+            _update_env_file("HOLO_MONITOR_HEARTBEAT", str(value))
+        elif choice == "15":
+            new_value = "false" if pattern_logs_on else "true"
+            os.environ["HOLO_PATTERN_MEMORY_LOGS"] = new_value
+            _update_env_file("HOLO_PATTERN_MEMORY_LOGS", new_value)
+        elif choice == "16":
             break
         else:
             print("[ERROR] Invalid choice.")
@@ -275,12 +522,138 @@ def _set_env_bool(key: str, enabled: bool) -> None:
     os.environ[key] = value
     _update_env_file(key, value)
 
+def _select_channel() -> str:
+    """Display numbered channel selection menu and return channel name."""
+    print("\nSelect channel:")
+    print("  1. UnDaoDu")
+    print("  2. FoundUps")
+    print("  3. Move2Japan")
+    print("  4. RavingANTIFA")
+    choice = input("Channel [1]: ").strip() or "1"
+    channel_map = {"1": "undaodu", "2": "foundups", "3": "move2japan", "4": "ravingantifa"}
+    return channel_map.get(choice, "undaodu")
+
 def _yt_switch_summary() -> str:
     tempo = os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper()
     comment_engagement = "ON" if _env_truthy("YT_COMMENT_ENGAGEMENT_ENABLED", "true") else "OFF"
     comment_only = "ON" if _env_truthy("YT_COMMENT_ONLY_MODE", "false") else "OFF"
     replies = "ON" if _env_truthy("YT_COMMENT_REPLY_ENABLED", "true") else "OFF"
-    return f"tempo={tempo} | engagement={comment_engagement} | comment_only={comment_only} | replies={replies}"
+    persona = os.getenv("YT_ACTIVE_PERSONA", "").strip() or "auto"
+    forced_set = os.getenv("YT_FORCE_CREDENTIAL_SET", "").strip() or "auto"
+    return (
+        f"tempo={tempo} | engagement={comment_engagement} | comment_only={comment_only} "
+        f"| replies={replies} | persona={persona} | cred={forced_set}"
+    )
+
+
+def _yt_scheduler_controls_menu() -> None:
+    """
+    Scheduler control plane (0102-first).
+
+    Design:
+    - Centralize scheduler env switches in one submenu.
+    - Provide a content-type selector placeholder (shorts vs videos) for the next layer.
+      NOTE: "videos" is a placeholder surface only until DOM selectors are implemented.
+    """
+    while True:
+        content_type = os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts"
+        verify_mode = os.getenv("YT_SCHEDULER_VERIFY_MODE", "none").strip().lower() or "none"
+        sched_channel = os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan"
+        sched_max = os.getenv("YT_SHORTS_SCHEDULER_MAX_VIDEOS", "1").strip() or "1"
+
+        index_weave_enabled = _env_truthy("YT_SCHEDULER_INDEX_WEAVE_ENABLED", "true")
+        index_mode = os.getenv("YT_SCHEDULER_INDEX_MODE", "stub").strip().lower() or "stub"
+        enhance_desc = _env_truthy("YT_SCHEDULER_INDEX_ENHANCE_DESCRIPTION", "true")
+        inform_title = _env_truthy("YT_SCHEDULER_INDEX_INFORM_TITLE", "false")
+        pre_save_delay = os.getenv("YT_SCHEDULER_PRE_SAVE_DELAY_SEC", "1.0").strip() or "1.0"
+
+        print("\n[MENU] Scheduler Controls (012)")
+        print("=" * 60)
+        print(f"Content type (placeholder): {content_type}")
+        print(f"Verify mode (placeholder): {verify_mode}")
+        print(f"Active channel: {sched_channel} | max_videos: {sched_max}")
+        print("-" * 60)
+        print(f"1) Set content type (YT_SCHEDULER_CONTENT_TYPE) = {content_type}  [shorts/videos]")
+        print(f"2) Set active channel (YT_SHORTS_SCHEDULER_CHANNEL_KEY) = {sched_channel}")
+        print(f"3) Set max videos (YT_SHORTS_SCHEDULER_MAX_VIDEOS) = {sched_max}")
+        print("-" * 60)
+        print(f"4) Toggle index weave (YT_SCHEDULER_INDEX_WEAVE_ENABLED) = {'ON' if index_weave_enabled else 'OFF'}")
+        print(f"5) Set index mode (YT_SCHEDULER_INDEX_MODE) = {index_mode}  [stub/gemini]")
+        print(f"6) Toggle enhance description (YT_SCHEDULER_INDEX_ENHANCE_DESCRIPTION) = {'ON' if enhance_desc else 'OFF'}")
+        print(f"7) Toggle index-informed title (YT_SCHEDULER_INDEX_INFORM_TITLE) = {'ON' if inform_title else 'OFF'}")
+        print(f"8) Set pre-save delay sec (YT_SCHEDULER_PRE_SAVE_DELAY_SEC) = {pre_save_delay}")
+        print("-" * 60)
+        print(f"9) Set verify mode (YT_SCHEDULER_VERIFY_MODE) = {verify_mode}  [none/wre-tars]")
+        print("0) Back")
+        print("=" * 60)
+
+        choice = input("scheduler-controls> ").strip().lower()
+        if choice in {"0", "b", "back", "exit", "quit"}:
+            break
+        if choice == "1":
+            raw = input("content type (shorts/videos): ").strip().lower() or "shorts"
+            if raw not in {"shorts", "videos"}:
+                print("[ERROR] Invalid content type. Use shorts or videos.")
+                continue
+            os.environ["YT_SCHEDULER_CONTENT_TYPE"] = raw
+            _update_env_file("YT_SCHEDULER_CONTENT_TYPE", raw)
+            continue
+        if choice == "2":
+            raw = input("shorts channel (move2japan/undaodu/foundups/ravingantifa): ").strip().lower()
+            if raw not in {"move2japan", "undaodu", "foundups", "ravingantifa"}:
+                print("[ERROR] Invalid channel key.")
+                continue
+            os.environ["YT_SHORTS_SCHEDULER_CHANNEL_KEY"] = raw
+            _update_env_file("YT_SHORTS_SCHEDULER_CHANNEL_KEY", raw)
+            continue
+        if choice == "3":
+            raw = input("max videos per run (default 1): ").strip() or "1"
+            if not raw.isdigit() or int(raw) <= 0:
+                print("[ERROR] Invalid max. Use a positive integer.")
+                continue
+            os.environ["YT_SHORTS_SCHEDULER_MAX_VIDEOS"] = raw
+            _update_env_file("YT_SHORTS_SCHEDULER_MAX_VIDEOS", raw)
+            continue
+        if choice == "4":
+            _set_env_bool("YT_SCHEDULER_INDEX_WEAVE_ENABLED", not index_weave_enabled)
+            continue
+        if choice == "5":
+            raw = input("index mode (stub/gemini): ").strip().lower() or "stub"
+            if raw not in {"stub", "gemini"}:
+                print("[ERROR] Invalid index mode. Use stub or gemini.")
+                continue
+            os.environ["YT_SCHEDULER_INDEX_MODE"] = raw
+            _update_env_file("YT_SCHEDULER_INDEX_MODE", raw)
+            continue
+        if choice == "6":
+            _set_env_bool("YT_SCHEDULER_INDEX_ENHANCE_DESCRIPTION", not enhance_desc)
+            continue
+        if choice == "7":
+            _set_env_bool("YT_SCHEDULER_INDEX_INFORM_TITLE", not inform_title)
+            continue
+        if choice == "8":
+            raw = input("pre-save delay seconds (e.g., 1.0): ").strip() or "1.0"
+            try:
+                value = float(raw)
+                if value < 0:
+                    raise ValueError
+            except ValueError:
+                print("[ERROR] Invalid number. Use a non-negative float (e.g., 1.0).")
+                continue
+            os.environ["YT_SCHEDULER_PRE_SAVE_DELAY_SEC"] = str(value)
+            _update_env_file("YT_SCHEDULER_PRE_SAVE_DELAY_SEC", str(value))
+            continue
+        if choice == "9":
+            raw = input("verify mode (none/wre-tars): ").strip().lower() or "none"
+            if raw not in {"none", "wre-tars"}:
+                print("[ERROR] Invalid verify mode. Use none or wre-tars.")
+                continue
+            os.environ["YT_SCHEDULER_VERIFY_MODE"] = raw
+            _update_env_file("YT_SCHEDULER_VERIFY_MODE", raw)
+            continue
+
+        print("[ERROR] Invalid choice.")
+
 
 def _yt_controls_menu() -> None:
     toggles = [
@@ -295,10 +668,16 @@ def _yt_controls_menu() -> None:
         ("YT_REPLY_BASIC_ONLY", "Basic replies only", False),
         ("YT_OCCAM_MODE", "Occam mode (minimal replies)", False),
         ("YT_REPLY_DEBUG_TAGS", "Append debug tags to replies", False),
+        ("YT_VIDEO_INDEXING_ENABLED", "Video indexing (post-comments)", False),
     ]
 
     while True:
         tempo = os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper()
+        persona = os.getenv("YT_ACTIVE_PERSONA", "").strip() or "auto"
+        forced_set = os.getenv("YT_FORCE_CREDENTIAL_SET", "").strip() or "auto"
+        sched_channel = os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan"
+        sched_max = os.getenv("YT_SHORTS_SCHEDULER_MAX_VIDEOS", "1").strip() or "1"
+        sched_type = os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts"
 
         print("\n[MENU] YouTube Controls (012)")
         print("=" * 60)
@@ -308,8 +687,14 @@ def _yt_controls_menu() -> None:
             status = "ON" if enabled else "OFF"
             print(f"{idx}) {desc} [{key}] = {status}")
         set_idx = len(toggles) + 1
-        back_idx = len(toggles) + 2
+        persona_idx = len(toggles) + 2
+        credential_idx = len(toggles) + 3
+        scheduler_idx = len(toggles) + 4
+        back_idx = len(toggles) + 5
         print(f"{set_idx}) Set engagement tempo (YT_ENGAGEMENT_TEMPO) = {tempo}")
+        print(f"{persona_idx}) Set active persona (YT_ACTIVE_PERSONA) = {persona}")
+        print(f"{credential_idx}) Force credential set (YT_FORCE_CREDENTIAL_SET) = {forced_set}")
+        print(f"{scheduler_idx}) Scheduler Controls (Shorts/Videos) = type:{sched_type} channel:{sched_channel} max:{sched_max}")
         print(f"{back_idx}) Back")
 
         choice = input("yt-controls> ").strip().lower()
@@ -322,6 +707,33 @@ def _yt_controls_menu() -> None:
                 continue
             os.environ["YT_ENGAGEMENT_TEMPO"] = raw
             _update_env_file("YT_ENGAGEMENT_TEMPO", raw)
+            continue
+        if choice == str(persona_idx):
+            raw = input("persona (auto/foundups/undaodu/move2japan/ravingantifa): ").strip().lower()
+            if raw in {"", "auto"}:
+                os.environ.pop("YT_ACTIVE_PERSONA", None)
+                _update_env_file("YT_ACTIVE_PERSONA", "")
+                continue
+            if raw not in {"foundups", "undaodu", "move2japan", "ravingantifa"}:
+                print("[ERROR] Invalid persona. Use foundups, undaodu, move2japan, ravingantifa, or auto.")
+                continue
+            os.environ["YT_ACTIVE_PERSONA"] = raw
+            _update_env_file("YT_ACTIVE_PERSONA", raw)
+            continue
+        if choice == str(credential_idx):
+            raw = input("credential set (blank=auto): ").strip()
+            if not raw:
+                os.environ.pop("YT_FORCE_CREDENTIAL_SET", None)
+                _update_env_file("YT_FORCE_CREDENTIAL_SET", "")
+                continue
+            if not raw.isdigit() or int(raw) <= 0:
+                print("[ERROR] Invalid credential set. Use a positive integer or leave blank.")
+                continue
+            os.environ["YT_FORCE_CREDENTIAL_SET"] = raw
+            _update_env_file("YT_FORCE_CREDENTIAL_SET", raw)
+            continue
+        if choice == str(scheduler_idx):
+            _yt_scheduler_controls_menu()
             continue
         if choice.isdigit():
             idx = int(choice)
@@ -585,9 +997,13 @@ def search_with_holoindex(query: str):
             ssd_path = os.getenv("HOLO_SSD_PATH", "").strip()
             if ssd_path:
                 holo_cmd.extend(["--ssd", ssd_path])
+            if _env_truthy("HOLO_VERBOSE", "false"):
+                holo_cmd.append("--verbose")
         elif os.path.exists(r"E:\HoloIndex\enhanced_holo_index.py"):
             # Fallback to E: drive version
             holo_cmd = ['python', r"E:\HoloIndex\enhanced_holo_index.py", '--search', query]
+            if _env_truthy("HOLO_VERBOSE", "false"):
+                holo_cmd.append("--verbose")
         else:
             print("[WARN]HoloIndex not found")
             print("Install HoloIndex to prevent vibecoding!")
@@ -773,6 +1189,13 @@ def main():
     enable_key_hygiene = _env_flag("FOUNDUPS_ENABLE_KEY_HYGIENE", True)
     holo_skip_model = _env_flag("HOLO_SKIP_MODEL", False)
     holo_silent = _env_flag("HOLO_SILENT", False)
+    holo_verbose = _env_flag("HOLO_VERBOSE", False)
+    holo_auto_index = _env_flag("FOUNDUPS_HOLO_AUTO_INDEX", False)
+    ai_overseer_breadcrumbs = _env_flag("AI_OVERSEER_BREADCRUMBS", True)
+    holo_offline = _env_flag("HOLO_OFFLINE", False)
+    holo_disable_pip_install = _env_flag("HOLO_DISABLE_PIP_INSTALL", False)
+    holo_breadcrumbs = _env_flag("HOLO_BREADCRUMB_ENABLED", True)
+    holo_breadcrumb_logs = _env_flag("HOLO_BREADCRUMB_LOGS", True)
     startup_switchboard = {
         "pattern_memory": bool(PATTERN_MEMORY_AVAILABLE and enable_pattern_memory),
         "wre": bool(enable_wre),
@@ -783,6 +1206,13 @@ def main():
         "key_hygiene": bool(enable_key_hygiene),
         "holo_skip_model": bool(holo_skip_model),
         "holo_silent": bool(holo_silent),
+        "holo_verbose": bool(holo_verbose),
+        "holo_auto_index": bool(holo_auto_index),
+        "holo_offline": bool(holo_offline),
+        "holo_disable_pip_install": bool(holo_disable_pip_install),
+        "holo_breadcrumbs": bool(holo_breadcrumbs),
+        "holo_breadcrumb_logs": bool(holo_breadcrumb_logs),
+        "ai_overseer_breadcrumbs": bool(ai_overseer_breadcrumbs),
         "verbose": bool(args.verbose),
     }
     logger.info(f"[SWITCHBOARD] {json.dumps(startup_switchboard, sort_keys=True)}")
@@ -1236,7 +1666,7 @@ def main():
                         cfg = load_broadcast()
                         print("\n" + "-" * 60)
                         print("COMMENTING SUBMENU (012 -> Comment DAE)")
-                        print("Broadcast controls (promo injection) - use 6 to start DAE")
+                        print("Broadcast controls (promo injection) - use 6 for comment-only")
                         print(f"Switches: {_yt_switch_summary()} (00=Controls)")
                         print(f"Current: {_summary(cfg)}")
                         print("-" * 60)
@@ -1245,8 +1675,10 @@ def main():
                         print("  3) Set promo message (free text)")
                         print("  4) Clear promo + disable")
                         print("  5) Back")
-                        print("  6) Start Comment Engagement DAE (multi-channel)")
+                        print("  6) Start COMMENT-ONLY (NO live chat agent)")
                         print("  00) Controls (local switches)")
+                        print("")
+                        print("  TIP: For full DAE (comments+stream+livechat), use main menu 1→1")
 
                         choice = input("commenting> ").strip().lower()
                         if choice in {"5", "back", "b", "exit", "quit"}:
@@ -1269,29 +1701,32 @@ def main():
                         if choice in {"4", "clear"}:
                             clear_promo()
                             continue
-                        if choice in {"6", "start", "run"}:
-                            print("\n[DAE] Comment Engagement (Multi-Channel)")
+                        if choice in {"6", "start", "run", "comment-only", "comments-only", "co"}:
+                            print("\n[DAE] COMMENT-ONLY MODE (NO Live Chat Agent)")
                             print("="*60)
                             print("Auto-rotates through ALL channels:")
                             print("  Chrome (9222): Move2Japan + UnDaoDu")
                             print("  Edge (9223): FoundUps + RavingANTIFA")
-                            print("Uses 0/1/2 classification (MAGA_TROLL/REGULAR/MODERATOR)")
                             print("")
-                            print("After Edge comment inboxes are cleared, the YouTube DAE continues")
-                            print("into stream monitoring and will transition to live chat when a stream is found.")
+                            print("🔒 Stream detection: DISABLED")
+                            print("🔒 Live chat agent: DISABLED")
+                            print("✅ Comment engagement: RUNS CONTINUOUSLY")
                             print("="*60)
 
                             try:
                                 from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
 
-                                print("[INFO] Starting YouTube DAE (comments → stream monitoring → live chat)...")
-                                print("[INFO] Comments: Move2Japan + UnDaoDu (Chrome) + FoundUps + RavingANTIFA (Edge)")
-                                print("[INFO] Stream resolver: enabled (will monitor and hand off to live chat)")
+                                # Set comment-only mode BEFORE launching
+                                os.environ["YT_COMMENT_ONLY_MODE"] = "true"
+
+                                print("[INFO] Starting COMMENT-ONLY DAE...")
+                                print("[INFO] YT_COMMENT_ONLY_MODE=true (no stream detection, no live chat)")
+                                print("[INFO] Press Ctrl+C to stop")
 
                                 dae = AutoModeratorDAE(enable_ai_monitoring=False)
                                 asyncio.run(dae.run())
                             except KeyboardInterrupt:
-                                print("\n[STOP] Comment Engagement DAE stopped by user")
+                                print("\n[STOP] Comment-Only DAE stopped by user")
                             except ImportError as e:
                                 print(f"[ERROR] Could not import: {e}")
                                 import traceback
@@ -1300,44 +1735,75 @@ def main():
                                 print(f"[ERROR] Failed: {e}")
                                 import traceback
                                 traceback.print_exc()
+                            finally:
+                                # Reset the env var after exit
+                                os.environ.pop("YT_COMMENT_ONLY_MODE", None)
                             continue
                         print("Unknown option")
                 elif yt_choice == "3":
 
                     # 1.3 Shorts Scheduler DAE + Selenium Tests
-                    from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import run_selenium_test
+                    # Hot-reload Shorts Scheduler launcher for long-lived menu sessions (0102-first).
+                    import importlib
+                    import modules.platform_integration.youtube_shorts_scheduler.scripts.launch as shorts_launch
+                    shorts_launch = importlib.reload(shorts_launch)
+                    show_shorts_scheduler_menu = shorts_launch.show_shorts_scheduler_menu
+                    run_multi_channel_scheduler = shorts_launch.run_multi_channel_scheduler
                     
                     while True:
                         sched_choice = show_shorts_scheduler_menu()
 
                         if sched_choice == "1":
-                            run_shorts_scheduler(mode="enhance", dry_run=False)
+                            # Shorts (production): schedule NEXT unlisted short (full cake)
+                            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
+                            if content_type != "shorts":
+                                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
+                                input("\nPress Enter to continue...")
+                                continue
+                            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
+                            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
+                            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=1, dry_run=False))
+                            print(f"\n[RESULT] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
                             input("\nPress Enter to continue...")
                         elif sched_choice == "2":
-                            run_shorts_scheduler(mode="enhance", dry_run=True)
+                            # Shorts (production): schedule ALL unlisted shorts (safety: capped by max_videos)
+                            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
+                            if content_type != "shorts":
+                                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
+                                input("\nPress Enter to continue...")
+                                continue
+                            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
+                            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
+                            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=9999, dry_run=False))
+                            print(f"\n[RESULT] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
                             input("\nPress Enter to continue...")
                         elif sched_choice == "3":
-                            run_shorts_scheduler(mode="schedule", dry_run=False)
+                            # Preview Only (DRY RUN)
+                            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
+                            if content_type != "shorts":
+                                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
+                                input("\nPress Enter to continue...")
+                                continue
+                            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
+                            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
+                            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=1, dry_run=True))
+                            print(f"\n[DRY RUN] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
                             input("\nPress Enter to continue...")
                         elif sched_choice == "4":
-                            # Full Chain Test
-                            run_selenium_test("full_chain")
+                            # Chrome rotation (Move2Japan <-> UnDaoDu)
+                            run_multi_channel_scheduler(browser="chrome", mode="schedule", max_per_channel=9999)
                             input("\nPress Enter to continue...")
                         elif sched_choice == "5":
-                            # Layer 0 Test
-                            run_selenium_test("layer0")
+                            # Edge rotation (FoundUps <-> RavingANTIFA)
+                            run_multi_channel_scheduler(browser="edge", mode="schedule", max_per_channel=9999)
                             input("\nPress Enter to continue...")
                         elif sched_choice == "6":
-                            # Layer 1 Test - Filter
-                            run_selenium_test("layer1")
+                            # Indexing handoff (use the dedicated Indexing menu)
+                            print("\n[HANDOFF] Use: YouTube DAEs → 8 [INDEX] YouTube Indexing (Digital Twin Learning)")
                             input("\nPress Enter to continue...")
                         elif sched_choice == "7":
-                            # Layer 2 Test - Edit
-                            run_selenium_test("layer2")
-                            input("\nPress Enter to continue...")
-                        elif sched_choice == "8":
-                            # Layer 3 Test - Schedule
-                            run_selenium_test("layer3")
+                            # Full Videos (future layer)
+                            print("\n[PLACEHOLDER] Full video scheduling not yet implemented (content_type=videos)")
                             input("\nPress Enter to continue...")
                         elif sched_choice == "0":
                             break
@@ -1458,25 +1924,204 @@ def main():
                         print(f"\n[ERROR] Failed: {e}")
 
                 elif yt_choice == "8":
-                    # 1.8 YouTube Indexing (Digital Twin Learning)
+                    # 1.8 YouTube Indexing (Digital Twin Learning) - Enhanced with Gemini
                     print("\n[INDEX] YouTube Channel Indexing")
                     print("="*60)
                     print("Creates searchable knowledge base from 012's videos")
-                    print("Pipeline: yt-dlp → faster-whisper → ChromaDB")
+                    print("Each video saved as JSON with transcripts, topics, timestamps")
+                    print("="*60)
+                    print("1. [GEMINI] Gemini AI Indexing (fast, no download)")
+                    print("2. [LOCAL] Whisper Indexing (yt-dlp + faster-whisper)")
+                    print("3. [TEST] Test Video Indexing (single video)")
+                    print("4. [BATCH] Batch Index Channel (bulk process)")
+                    print("5. [TRAIN] Extract Training Data (Gemma quality filter)")
+                    print("0. Back")
                     print("="*60)
 
-                    try:
-                        from modules.communication.voice_command_ingestion.scripts.index_channel import (
-                            run_indexing_menu
-                        )
-                        run_indexing_menu()
-                    except ImportError as e:
-                        print(f"[ERROR] Could not import indexing module: {e}")
-                        print("[TIP] Install: pip install faster-whisper yt-dlp chromadb sentence-transformers")
-                    except Exception as e:
-                        print(f"[ERROR] Indexing menu failed: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    idx_choice = input("\nSelect indexing method: ").strip()
+
+                    if idx_choice == "1":
+                        # Gemini-based indexing - BROWSER-AWARE like commenting
+                        print("\n[GEMINI] Autonomous Video Indexing")
+                        print("="*60)
+                        print("Browser rotation (same as comment engagement):")
+                        print("  Chrome (9222): UnDaoDu → Move2Japan")
+                        print("  Edge (9223): FoundUps")
+                        print("Indexes ALL videos per channel until complete")
+                        print("="*60)
+
+                        try:
+                            from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
+
+                            # Browser-grouped channels (mirrors commenting architecture)
+                            # Chrome (port 9222): Same Google account
+                            chrome_channels = [
+                                os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
+                                os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
+                            ]
+                            # Edge (port 9223): Different Google account
+                            edge_channels = [
+                                os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
+                            ]
+
+                            total_indexed = 0
+
+                            # Phase 1: Chrome channels (UnDaoDu, Move2Japan)
+                            print("\n[PHASE 1] Chrome (9222): UnDaoDu + Move2Japan")
+                            result = asyncio.run(run_video_indexing_cycle(
+                                channels=chrome_channels,
+                                max_videos_per_channel=9999,  # Index ALL
+                                browser="chrome"
+                            ))
+                            total_indexed += result.get('total_indexed', 0)
+                            print(f"[CHROME] Indexed {result.get('total_indexed', 0)} videos")
+
+                            # Phase 2: Edge channels (FoundUps)
+                            print("\n[PHASE 2] Edge (9223): FoundUps")
+                            result = asyncio.run(run_video_indexing_cycle(
+                                channels=edge_channels,
+                                max_videos_per_channel=9999,  # Index ALL
+                                browser="edge"
+                            ))
+                            total_indexed += result.get('total_indexed', 0)
+                            print(f"[EDGE] Indexed {result.get('total_indexed', 0)} videos")
+
+                            print(f"\n[RESULT] Total indexed: {total_indexed} videos across all channels")
+                        except ImportError as e:
+                            print(f"[ERROR] studio_ask_indexer not available: {e}")
+                        except Exception as e:
+                            print(f"[ERROR] Indexing failed: {e}")
+                            import traceback
+                            traceback.print_exc()
+
+                    elif idx_choice == "2":
+                        # Legacy whisper-based indexing
+                        try:
+                            from modules.communication.voice_command_ingestion.scripts.index_channel import (
+                                run_indexing_menu
+                            )
+                            run_indexing_menu()
+                        except ImportError as e:
+                            print(f"[ERROR] Could not import indexing module: {e}")
+                            print("[TIP] Install: pip install faster-whisper yt-dlp chromadb sentence-transformers")
+                        except Exception as e:
+                            print(f"[ERROR] Indexing menu failed: {e}")
+                            import traceback
+                            traceback.print_exc()
+
+                    elif idx_choice == "3":
+                        # Test single video indexing
+                        print("\n[TEST] Single Video Indexing Test")
+                        video_id = input("Enter YouTube video ID: ").strip()
+                        if video_id:
+                            try:
+                                from modules.ai_intelligence.video_indexer.src.gemini_video_analyzer import GeminiVideoAnalyzer
+                                from modules.ai_intelligence.video_indexer.src.video_index_store import VideoIndexStore, IndexData
+                                from datetime import datetime
+
+                                print(f"[INFO] Analyzing video {video_id}...")
+                                analyzer = GeminiVideoAnalyzer()
+                                result = analyzer.analyze_video(video_id)
+
+                                if result.success:
+                                    # Save to JSON
+                                    store = VideoIndexStore(base_path="video_index")
+                                    index_data = IndexData(
+                                        video_id=result.video_id,
+                                        channel="test",
+                                        title=result.title,
+                                        duration=result.duration or 0,
+                                        indexed_at=datetime.now().isoformat(),
+                                        audio={"segments": [s.__dict__ for s in result.segments], "transcript_summary": result.transcript_summary},
+                                        visual={"description": result.visual_description},
+                                        moments=[],
+                                        clips=[],
+                                        metadata={"topics": result.topics, "speakers": result.speakers, "key_points": result.key_points}
+                                    )
+                                    path = store.save_index(video_id, index_data)
+                                    print(f"\n[SUCCESS] Video indexed!")
+                                    print(f"  Title: {result.title}")
+                                    print(f"  Topics: {', '.join(result.topics[:5])}")
+                                    print(f"  Saved to: {path}")
+                                else:
+                                    print(f"[ERROR] Analysis failed: {result.error}")
+                            except Exception as e:
+                                print(f"[ERROR] Test failed: {e}")
+                                import traceback
+                                traceback.print_exc()
+
+                    elif idx_choice == "4":
+                        # Batch index channel
+                        print("\n[BATCH] Batch Index Channel Videos")
+                        print("="*60)
+                        channel = _select_channel()
+                        batch_size = input("Batch size [50]: ").strip() or "50"
+                        delay = input("Delay between API calls (seconds) [10]: ").strip() or "10"
+
+                        video_file = f"data/{channel}_video_ids.txt"
+                        if not os.path.exists(video_file):
+                            print(f"[ERROR] Video ID file not found: {video_file}")
+                            print("[TIP] Create video ID file or fetch from YouTube API")
+                        else:
+                            try:
+                                import subprocess
+                                cmd = [
+                                    sys.executable,
+                                    "scripts/batch_index_videos.py",
+                                    "--batch-size", batch_size,
+                                    "--delay", delay,
+                                    "--channel", channel,
+                                    "--video-file", video_file,
+                                    "--max-retries", "3"
+                                ]
+                                print(f"[INFO] Running: {' '.join(cmd)}")
+                                subprocess.run(cmd)
+                            except Exception as e:
+                                print(f"[ERROR] Batch indexing failed: {e}")
+                                import traceback
+                                traceback.print_exc()
+
+                    elif idx_choice == "5":
+                        # Extract training data with Gemma quality filter
+                        print("\n[TRAIN] Extract Training Data for Digital Twin")
+                        print("="*60)
+                        channel = _select_channel()
+                        use_gemma = input("Use Gemma quality filter? (y/n) [y]: ").strip().lower() != "n"
+
+                        input_dir = f"memory/video_index/{channel}"
+                        output_dir = f"memory/training_data/{channel}"
+
+                        if not os.path.exists(input_dir):
+                            print(f"[ERROR] No indexed videos found: {input_dir}")
+                            print("[TIP] Run indexing first (Option 1 or 4)")
+                        else:
+                            try:
+                                from modules.ai_intelligence.video_indexer.src.dataset_builder import DatasetBuilder
+                                from pathlib import Path
+
+                                print(f"[INFO] Processing {input_dir}...")
+                                builder = DatasetBuilder(use_gemma=use_gemma)
+                                result = builder.process_folder(input_dir, output_dir)
+
+                                print("\n[SUCCESS] Training data extracted!")
+                                print(f"  Videos processed: {result['videos_processed']}")
+                                print(f"  Training rows: {result['training_rows']}")
+                                print(f"  Voice clips: {result['voice_clips']}")
+                                print(f"  Training-worthy (HIGH tier): {result['training_worthy']}")
+                                print(f"  Output: {output_dir}/")
+
+                                # Show output files
+                                output_path = Path(output_dir)
+                                for f in output_path.glob("*"):
+                                    size = f.stat().st_size / 1024
+                                    print(f"    - {f.name} ({size:.1f} KB)")
+                            except Exception as e:
+                                print(f"[ERROR] Training data extraction failed: {e}")
+                                import traceback
+                                traceback.print_exc()
+
+                    elif idx_choice == "0":
+                        pass  # Back to YT menu
 
                 elif yt_choice == "0":
                     print("[BACK] Returning to main menu...")

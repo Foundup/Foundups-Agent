@@ -7,6 +7,7 @@ Connects to Chrome (9222) or Edge (9223) debug sessions.
 
 import asyncio
 import logging
+import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -19,8 +20,21 @@ from selenium.common.exceptions import WebDriverException
 from .channel_config import get_channel_config, CHANNELS
 from .dom_automation import YouTubeStudioDOM
 from .schedule_tracker import ScheduleTracker
+from .schedule_dba import record_schedule_outcome
+from .index_weave import (
+    ensure_index_json,
+    load_index_json,
+    save_index_json,
+    build_topic_hashtags,
+    build_human_description_context,
+    inject_context_into_description,
+    build_digital_twin_index_block,
+    weave_description,
+    update_index_after_schedule,
+)
 from .content_generator import (
     generate_clickbait_title,
+    generate_clickbait_title_from_index,
     get_standard_description,
     generate_description_with_context,
 )
@@ -36,6 +50,7 @@ class YouTubeShortsScheduler:
     - Move2Japan (Chrome 9222)
     - UnDaoDu (Chrome 9222)
     - FoundUps (Edge 9223)
+    - RavingANTIFA (Edge 9223)
 
     Usage:
         scheduler = YouTubeShortsScheduler("move2japan")
@@ -52,7 +67,7 @@ class YouTubeShortsScheduler:
         Initialize scheduler for a channel.
 
         Args:
-            channel_key: "move2japan", "undaodu", or "foundups"
+            channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
             storage_dir: Optional custom storage directory
             dry_run: If True, don't actually make changes
         """
@@ -221,13 +236,52 @@ class YouTubeShortsScheduler:
 
                     # Update metadata if requested
                     if update_metadata:
-                        await self._update_video_metadata(original_title)
+                        await self._update_video_metadata(
+                            video_id=video_id,
+                            original_title=original_title,
+                            date_str=date_str,
+                            time_str=time_str,
+                        )
 
                     # Schedule the video
                     success = self.dom.schedule_video(date_str, time_str)
 
                     if success:
                         self.tracker.increment(date_str, video_id)
+
+                        # Update local index JSON with scheduling + description sync (best-effort)
+                        try:
+                            idx = load_index_json(channel_key=self.channel_key, video_id=video_id)
+                            if isinstance(idx, dict):
+                                block = build_digital_twin_index_block(
+                                    channel_key=self.channel_key,
+                                    video_id=video_id,
+                                    index_json=idx,
+                                )
+                                idx2 = update_index_after_schedule(
+                                    index_json=idx,
+                                    channel_key=self.channel_key,
+                                    video_id=video_id,
+                                    date_str=date_str,
+                                    time_str=time_str,
+                                    scheduled_by="0102",
+                                    description_index_block=block,
+                                )
+                                save_index_json(channel_key=self.channel_key, video_id=video_id, data=idx2)
+                        except Exception as exc:
+                            logger.debug("[SCHEDULER] Index JSON update skipped: %s", exc)
+
+                        # Record into DBA (PatternMemory) for 0102 recall.
+                        record_schedule_outcome(
+                            channel_id=self.channel_id,
+                            video_id=video_id,
+                            date_str=date_str,
+                            time_str=time_str,
+                            mode="schedule",
+                            success=True,
+                            agent="selenium",
+                            details={"channel_key": self.channel_key},
+                        )
                         results["scheduled"].append({
                             "video_id": video_id,
                             "date": date_str,
@@ -235,6 +289,16 @@ class YouTubeShortsScheduler:
                         })
                         logger.info(f"[SCHEDULER] Scheduled {video_id} for {date_str} at {time_str}")
                     else:
+                        record_schedule_outcome(
+                            channel_id=self.channel_id,
+                            video_id=video_id,
+                            date_str=date_str,
+                            time_str=time_str,
+                            mode="schedule",
+                            success=False,
+                            agent="selenium",
+                            details={"channel_key": self.channel_key, "error": "Schedule failed"},
+                        )
                         results["errors"].append({
                             "video_id": video_id,
                             "error": "Schedule failed",
@@ -288,16 +352,75 @@ class YouTubeShortsScheduler:
         except Exception as e:
             logger.warning(f"[SCHEDULER] Sync warning: {e}")
 
-    async def _update_video_metadata(self, original_title: str):
-        """Update video title and description with FFCPLN content."""
+    async def _update_video_metadata(
+        self,
+        *,
+        video_id: str,
+        original_title: str,
+        date_str: str,
+        time_str: str,
+    ):
+        """Update video title and description (optionally weave index)."""
         try:
             # Generate new title
             new_title = generate_clickbait_title(original_title=original_title)
 
             # Generate description
-            new_description = get_standard_description(
+            base_description = get_standard_description(
                 self.config.get("description_template", "ffcpln")
             )
+
+            new_description = base_description
+
+            # Optional: weave Digital Twin index into description.
+            # Default ON; disable with YT_SCHEDULER_INDEX_WEAVE_ENABLED=false
+            if os.getenv("YT_SCHEDULER_INDEX_WEAVE_ENABLED", "true").lower() in ("1", "true", "yes"):
+                # For NEW unlisted Shorts, default to a local stub index (no API calls).
+                # Override to "gemini" when you explicitly want full indexing.
+                index_mode = os.getenv("YT_SCHEDULER_INDEX_MODE", "stub").strip().lower() or "stub"
+                ensure = ensure_index_json(
+                    channel_key=self.channel_key,
+                    video_id=video_id,
+                    allow_indexing_if_missing=True,
+                    index_to_holoindex=True,
+                    mode=index_mode,
+                    stub_title=new_title,
+                    stub_base_description=base_description,
+                )
+                if ensure.ok:
+                    idx = load_index_json(channel_key=self.channel_key, video_id=video_id)
+                    if isinstance(idx, dict):
+                        # Optional: allow index artifact to inform the title (best-effort).
+                        if os.getenv("YT_SCHEDULER_INDEX_INFORM_TITLE", "false").lower() in ("1", "true", "yes"):
+                            try:
+                                new_title = generate_clickbait_title_from_index(
+                                    original_title=original_title,
+                                    index_json=idx,
+                                )
+                            except Exception as exc:
+                                logger.debug("[SCHEDULER] Index-informed title skipped: %s", exc)
+
+                        # Use indexing to enhance the human-facing description.
+                        # Default ON; disable with YT_SCHEDULER_INDEX_ENHANCE_DESCRIPTION=false
+                        enhanced_base = base_description
+                        if os.getenv("YT_SCHEDULER_INDEX_ENHANCE_DESCRIPTION", "true").lower() in ("1", "true", "yes"):
+                            context = build_human_description_context(idx)
+                            enhanced_base = inject_context_into_description(
+                                base_description=base_description,
+                                context_block=context,
+                            )
+
+                        tags = build_topic_hashtags(idx, max_tags=5)
+                        block = build_digital_twin_index_block(
+                            channel_key=self.channel_key,
+                            video_id=video_id,
+                            index_json=idx,
+                        )
+                        new_description = weave_description(
+                            base_description=enhanced_base,
+                            index_block=block,
+                            extra_hashtags=tags,
+                        )
 
             # Update via DOM
             self.dom.edit_title(new_title)
@@ -364,7 +487,7 @@ async def run_scheduler_dae(
     DAE entry point for YouTube Shorts scheduling.
 
     Args:
-        channel_key: "move2japan", "undaodu", or "foundups"
+        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
         max_videos: Maximum videos to schedule
         dry_run: Preview mode without actual changes
 
@@ -396,7 +519,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="YouTube Shorts Scheduler")
     parser.add_argument(
         "channel",
-        choices=["move2japan", "undaodu", "foundups"],
+        choices=["move2japan", "undaodu", "foundups", "ravingantifa"],
         help="Channel to schedule for",
     )
     parser.add_argument(

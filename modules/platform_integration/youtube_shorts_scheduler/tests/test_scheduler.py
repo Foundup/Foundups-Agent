@@ -22,9 +22,24 @@ from modules.platform_integration.youtube_shorts_scheduler.src.schedule_tracker 
 )
 from modules.platform_integration.youtube_shorts_scheduler.src.content_generator import (
     generate_clickbait_title,
+    extract_title_hint_from_index,
+    generate_clickbait_title_from_index,
     get_standard_description,
     generate_description_with_context,
     get_hashtags,
+)
+from modules.platform_integration.youtube_shorts_scheduler.src.schedule_dba import (
+    record_schedule_outcome,
+)
+from modules.platform_integration.youtube_shorts_scheduler.src.index_weave import (
+    build_digital_twin_index_block,
+    build_topic_hashtags,
+    build_human_description_context,
+    create_stub_index_json,
+    inject_context_into_description,
+    remove_existing_index_block,
+    weave_description,
+    update_index_after_schedule,
 )
 
 
@@ -173,11 +188,21 @@ class TestContentGenerator:
         title = generate_clickbait_title(song_hint="Test Song")
         assert len(title) <= 100
 
+    def test_extract_title_hint_from_index_prefers_summary(self):
+        idx = {"metadata": {"summary": "FFCPLN music short: My Song Title"}}
+        hint = extract_title_hint_from_index(idx, fallback_title="Fallback")
+        assert "My Song Title" in hint
+
+    def test_generate_clickbait_title_from_index_under_100(self):
+        idx = {"metadata": {"summary": "FFCPLN music short: My Song Title"}}
+        title = generate_clickbait_title_from_index(original_title="Orig", index_json=idx)
+        assert len(title) <= 100
+
     def test_get_standard_description_ffcpln(self):
         """Test FFCPLN description."""
         desc = get_standard_description("ffcpln")
         assert "FFCPLN" in desc
-        assert "https://ffcpln.foundups.com" in desc
+        assert "https://ffc.ravingANTIFA.com" in desc
 
     def test_get_standard_description_alt(self):
         """Test alternative description."""
@@ -228,3 +253,102 @@ class TestSchedulerIntegration:
             dry_run=True,
         ))
         assert "channel" in results
+
+
+class TestScheduleDBA:
+    """Tests for schedule DBA (PatternMemory integration)."""
+
+    def test_record_schedule_outcome_no_crash(self, tmp_path):
+        """Record should not crash; it should return bool."""
+        db_path = tmp_path / "pattern_memory.db"
+        ok = record_schedule_outcome(
+            channel_id="UC_TEST",
+            video_id="vid123",
+            date_str="Jan 19, 2026",
+            time_str="5:30 PM",
+            mode="test",
+            success=True,
+            agent="pytest",
+            details={"note": "unit test"},
+            db_path=db_path,
+        )
+        assert ok in (True, False)
+
+
+class TestIndexWeave:
+    """Unit tests for schedule→index weave helpers (no browser)."""
+
+    def test_build_topic_hashtags(self):
+        idx = {"metadata": {"topics": ["Education Singularity", "0102", "EDUIT.org"]}}
+        tags = build_topic_hashtags(idx, max_tags=5)
+        assert tags
+        assert all(t.startswith("#") for t in tags)
+
+    def test_build_digital_twin_index_block_contains_header_and_id(self):
+        idx = {
+            "indexed_at": "2026-01-17T00:00:00Z",
+            "metadata": {"topics": ["Education"], "key_points": ["The key insight is X."]},
+            "audio": {"segments": [{"start": 0, "end": 10, "text": "hi"}]},
+        }
+        block = build_digital_twin_index_block(channel_key="undaodu", video_id="abc123", index_json=idx)
+        assert "0102 DIGITAL TWIN INDEX v1" in block
+        assert "abc123" in block
+
+    def test_weave_description_removes_existing_block(self):
+        idx = {
+            "indexed_at": "2026-01-17T00:00:00Z",
+            "metadata": {"topics": ["Education"], "key_points": ["The key insight is X."]},
+            "audio": {"segments": [{"start": 0, "end": 10, "text": "hi"}]},
+        }
+        block = build_digital_twin_index_block(channel_key="undaodu", video_id="abc123", index_json=idx)
+        base = f"hello\n\n{block}\n"
+        cleaned = remove_existing_index_block(base)
+        assert "0102 DIGITAL TWIN INDEX v1" not in cleaned
+
+        rewoven = weave_description(base_description=base, index_block=block, extra_hashtags=["#Education"])
+        # should only contain one header instance
+        assert rewoven.count("0102 DIGITAL TWIN INDEX v1") == 1
+
+    def test_update_index_after_schedule_adds_fields(self):
+        idx = {"metadata": {}, "audio": {"segments": []}}
+        updated = update_index_after_schedule(
+            index_json=idx,
+            channel_key="move2japan",
+            video_id="vid999",
+            date_str="Jan 19, 2026",
+            time_str="5:30 PM",
+            scheduled_by="0102",
+            description_index_block="INDEX",
+        )
+        assert updated["scheduling"]["is_scheduled"] is True
+        assert updated["description_sync"]["condensed_index"] == "INDEX"
+
+    def test_build_human_description_context_nonempty(self):
+        idx = {
+            "metadata": {
+                "summary": "This video discusses the education singularity.",
+                "topics": ["Education", "Technology"],
+                "key_points": ["Education must be democratized."],
+            }
+        }
+        ctx = build_human_description_context(idx)
+        assert "Summary" in ctx
+        assert "education singularity" in ctx.lower()
+
+    def test_inject_context_into_description_inserts_before_hashtags(self):
+        base = "Line1\n\n#TAG1 #TAG2"
+        out = inject_context_into_description(base_description=base, context_block="Summary:\nX")
+        assert "Summary:\nX" in out
+        # context should appear before the hashtag line
+        assert out.index("Summary:\nX") < out.index("#TAG1")
+
+    def test_create_stub_index_json_has_expected_fields(self):
+        stub = create_stub_index_json(
+            channel_key="move2japan",
+            video_id="vid123",
+            title="My Song",
+            base_description="Base",
+        )
+        assert stub["video_id"] == "vid123"
+        assert stub["indexer"] == "scheduler_stub"
+        assert stub["metadata"]["summary"]

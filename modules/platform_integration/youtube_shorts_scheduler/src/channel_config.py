@@ -1,7 +1,11 @@
 """
 Channel Configuration for YouTube Shorts Scheduler
 
-Multi-channel support for Move2Japan, UnDaoDu, and FoundUps.
+Multi-channel support for Move2Japan, UnDaoDu, FoundUps, and RavingANTIFA.
+
+Browser Port Routing:
+- Chrome (9222): Move2Japan, UnDaoDu
+- Edge (9223): FoundUps, RavingANTIFA
 """
 
 from typing import Dict, Any, Optional
@@ -40,6 +44,16 @@ CHANNELS: Dict[str, Dict[str, Any]] = {
         "chrome_port": 9223,  # Edge browser
         "description_template": "ffcpln",
     },
+    "ravingantifa": {
+        "id": "UCVSmg5aOhP4tnQ9KFUg97qA",
+        "name": "RavingANTIFA",
+        "handle": "@ravingANTIFA",
+        "timezone": "America/New_York",
+        "time_slots": ["9:00 AM", "3:00 PM", "9:00 PM"],
+        "max_per_day": 3,
+        "chrome_port": 9223,  # Edge browser - shared with FoundUps
+        "description_template": "ffcpln",
+    },
 }
 
 
@@ -48,7 +62,7 @@ def get_channel_config(channel_key: str) -> Optional[Dict[str, Any]]:
     Get configuration for a channel.
 
     Args:
-        channel_key: "move2japan", "undaodu", or "foundups"
+        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
 
     Returns:
         Channel config dict or None
@@ -99,7 +113,7 @@ def get_studio_urls(channel_key: str) -> Dict[str, str]:
     Get all pre-built Studio URLs for a channel.
 
     Args:
-        channel_key: "move2japan", "undaodu", or "foundups"
+        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
 
     Returns:
         Dict with URL keys: unlisted_shorts, scheduled_shorts, all_shorts

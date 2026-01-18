@@ -7,6 +7,7 @@ Based on live DOM inspection of YouTube Studio pages.
 
 import asyncio
 import logging
+import os
 from typing import Optional, List, Dict, Any, Tuple
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -99,10 +100,22 @@ class DOMSelectors:
     DATE_DROPDOWN_XPATH = "//div[contains(@class,'date')]//ytcp-dropdown-trigger"
     DATE_INPUT_XPATH = "//input[contains(@aria-label,'Date')]"
     DATE_TEXT_XPATH = "//div[contains(@class,'date')]//span[@class='text']"
+    # Current Studio variant: date is a left-container div inside datepicker-trigger
+    DATE_TRIGGER_CSS = (
+        "ytcp-visibility-scheduler ytcp-text-dropdown-trigger#datepicker-trigger "
+        "ytcp-dropdown-trigger div.left-container"
+    )
+    # Date picker popup input (ytcp-date-picker dialog)
+    DATE_PICKER_INPUT_CSS = "ytcp-date-picker tp-yt-paper-dialog#dialog input.tp-yt-paper-input"
 
     # L3: Time
     TIME_INPUT_XPATH = "//input[contains(@aria-label,'time') or contains(@placeholder,'time')]"
     TIME_TEXTBOX_XPATH = "//ytcp-form-input-container[contains(.,'Time')]//input"
+    # Current Studio variant: time input lives under ytcp-datetime-picker form#form time-of-day-container
+    TIME_OF_DAY_INPUT_CSS = (
+        "ytcp-visibility-scheduler ytcp-datetime-picker form#form "
+        "ytcp-form-input-container#time-of-day-container input.tp-yt-paper-input"
+    )
 
     # L4: Done
     DONE_BUTTON_XPATH = "//button[.//span[text()='Done']]"
@@ -208,6 +221,10 @@ class YouTubeStudioDOM:
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
         self.selectors = DOMSelectors()
+        # 012 digital twin (Occam): slow + deterministic + stable.
+        # No Bezier cursor paths, no jitter offsets, no mouse jumping.
+        self._pre_click_delay = float(os.getenv("YT_SCHEDULER_PRE_CLICK_DELAY_SEC", "0.25"))
+        self._post_click_delay = float(os.getenv("YT_SCHEDULER_POST_CLICK_DELAY_SEC", "0.25"))
 
     # =========================================
     # UTILITY METHODS
@@ -225,20 +242,79 @@ class YouTubeStudioDOM:
 
     def safe_click(self, element, use_js: bool = False):
         """
-        Click element with fallback to JavaScript click.
+        012-modeled click (slow + deterministic) with robust fallbacks.
 
         Args:
             element: WebElement to click
             use_js: Force JavaScript click
         """
+        import time
         try:
             if use_js:
                 self.driver.execute_script("arguments[0].click();", element)
             else:
+                try:
+                    self.driver.execute_script(
+                        "arguments[0].scrollIntoView({block:'center', inline:'center'});",
+                        element,
+                    )
+                except Exception:
+                    pass
+                time.sleep(self._pre_click_delay)
                 element.click()
+                time.sleep(self._post_click_delay)
         except Exception:
-            # Fallback to JS click
-            self.driver.execute_script("arguments[0].click();", element)
+            # Fallback order: ActionChains (often works on custom elements) -> JS click
+            try:
+                time.sleep(self._pre_click_delay)
+                ActionChains(self.driver).move_to_element(element).click().perform()
+                time.sleep(self._post_click_delay)
+            except Exception:
+                try:
+                    self.driver.execute_script("arguments[0].click();", element)
+                    time.sleep(self._post_click_delay)
+                except Exception:
+                    raise
+
+    def _focus_and_select_all_input(self, el) -> None:
+        """
+        Ensure an <input> has focus and its entire value is selected.
+        This prevents Ctrl+A being applied to the wrong surface (e.g., the page).
+        """
+        import time
+        try:
+            self.safe_click(el)
+        except Exception:
+            try:
+                el.click()
+            except Exception:
+                pass
+        time.sleep(0.2)
+        try:
+            self.driver.execute_script(
+                """
+                const el = arguments[0];
+                if (!el) return false;
+                try { el.focus(); } catch (e) {}
+                try {
+                  const v = el.value || '';
+                  if (typeof el.setSelectionRange === 'function') {
+                    el.setSelectionRange(0, v.length);
+                    return true;
+                  }
+                } catch (e) {}
+                return false;
+                """,
+                el,
+            )
+        except Exception:
+            pass
+        try:
+            # Keyboard fallback if setSelectionRange isn't available.
+            ActionChains(self.driver).key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
+        except Exception:
+            pass
+        time.sleep(0.2)
 
     def human_delay(self, base: float = 0.5, variance: float = 0.3) -> float:
         """Return randomized delay for human-like behavior."""
@@ -296,20 +372,26 @@ class YouTubeStudioDOM:
         try:
             # Wait for page load
             self.wait_for_element(self.selectors.VIDEO_TABLE, timeout=10)
-            time.sleep(1)  # Allow filter chip to render
+            # Allow filter chip to render (UI can be slow/async)
+            start = time.time()
+            chip_found = False
+            visibility_label = visibility.capitalize()  # "UNLISTED" -> "Unlisted"
+            while time.time() - start < 8.0:
+                chip_found = self.driver.execute_script(f"""
+                    const chips = document.querySelectorAll('ytcp-chip');
+                    for (let chip of chips) {{
+                        const text = (chip.textContent || '').trim();
+                        if (text.includes('Visibility:') && text.includes('{visibility_label}')) {{
+                            return true;
+                        }}
+                    }}
+                    return false;
+                """)
+                if chip_found:
+                    break
+                time.sleep(0.4)
 
             # Verify filter chip is present using JavaScript (checks text content)
-            visibility_label = visibility.capitalize()  # "UNLISTED" -> "Unlisted"
-            chip_found = self.driver.execute_script(f"""
-                const chips = document.querySelectorAll('ytcp-chip');
-                for (let chip of chips) {{
-                    const text = chip.textContent.trim();
-                    if (text.includes('Visibility:') && text.includes('{visibility_label}')) {{
-                        return true;
-                    }}
-                }}
-                return false;
-            """)
             if chip_found:
                 logger.info(f"[DOM] URL filter applied successfully - chip 'Visibility: {visibility_label}' detected")
                 return True
@@ -320,6 +402,57 @@ class YouTubeStudioDOM:
         
         # Step 2: DOM fallback - click through filter UI
         return self._apply_filter_via_dom(visibility)
+
+    def _click_viewport_point(self, x: int, y: int) -> None:
+        """
+        Click a viewport coordinate reliably.
+        Uses ActionChains with element offset to avoid mouse drift from move_by_offset().
+        """
+        body = self.driver.find_element(By.TAG_NAME, "body")
+        ActionChains(self.driver).move_to_element_with_offset(body, x, y).click().perform()
+
+    def _open_filter_ui(self) -> bool:
+        """
+        Open the filter UI on the Shorts list page.
+
+        YouTube Studio UI changes frequently; do not rely on a single selector.
+        """
+        selectors = [
+            "input#text-input[placeholder='Filter']",
+            "input[placeholder='Filter']",
+            "ytcp-chip-bar input#text-input",
+            "#text-input[placeholder='Filter']",
+        ]
+
+        for sel in selectors:
+            try:
+                elem = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, sel))
+                )
+                if elem and elem.is_displayed():
+                    self.safe_click(elem)
+                    return True
+            except Exception:
+                continue
+
+        # Fallback 1: click known toolbar coords (from module ModLog ADR-008)
+        try:
+            x, y = self.selectors.FILTER_ICON_COORDS
+            self._click_viewport_point(int(x), int(y))
+            return True
+        except Exception:
+            pass
+
+        # Fallback 2: JS click element under point (sometimes enough to open dropdown)
+        try:
+            x, y = self.selectors.FILTER_ICON_COORDS
+            self.driver.execute_script(
+                "const el = document.elementFromPoint(arguments[0], arguments[1]); if (el) el.click();",
+                int(x), int(y)
+            )
+            return True
+        except Exception:
+            return False
 
     def _apply_filter_via_dom(self, visibility: str = "UNLISTED") -> bool:
         """
@@ -346,60 +479,104 @@ class YouTubeStudioDOM:
         try:
             logger.info(f"[DOM] Applying {visibility} filter via UI interaction")
 
-            # Step 1: Wait for and click Filter input
-            logger.info("[DOM] Step 1: Waiting for Filter input...")
+            # Step 1: Open filter UI (multi-selector + coords fallback)
+            logger.info("[DOM] Step 1: Opening filter UI...")
+            if not self._open_filter_ui():
+                logger.error("[DOM] Could not open filter UI (no filter input/button found)")
+                return False
+            time.sleep(1.0)
+
+            # Step 2: Click Visibility menu item (test-id first, then XPath)
+            visibility_result = {"success": False}
+
+            # Some Studio variants render a listbox with menu items (Visibility is often near the bottom).
+            # Prefer scanning the listbox for an item whose text includes "Visibility".
             try:
-                filter_input = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='Filter']"))
-                )
-                # Also wait for it to be visible
-                WebDriverWait(self.driver, 5).until(
-                    EC.visibility_of(filter_input)
-                )
-                filter_input.click()
-                filter_input.focus() if hasattr(filter_input, 'focus') else None
-                logger.info("[DOM] Filter input clicked")
-            except TimeoutException:
-                logger.error("[DOM] Filter input not found after waiting")
-                return False
-            time.sleep(1.5)
+                visibility_result = self.driver.execute_script("""
+                    const tryClick = (el) => {
+                        try { el.click(); return true; } catch (e) { return false; }
+                    };
 
-            # Step 2: Click Visibility item using test-id (from deep dive)
-            visibility_result = self.driver.execute_script("""
-                const item = document.querySelector('[test-id*="VISIBILITY"]');
-                if (item) {
-                    item.click();
-                    return {success: true};
-                }
-                return {success: false};
-            """)
+                    // 1) listbox menu
+                    const listbox = document.querySelector('tp-yt-paper-listbox[role="listbox"]');
+                    if (listbox) {
+                        const items = listbox.querySelectorAll('tp-yt-paper-item, [role="option"], *');
+                        for (let item of items) {
+                            const text = (item.textContent || '').trim();
+                            if (!text) continue;
+                            if (item.offsetParent === null) continue;
+                            if (text.toLowerCase() === 'visibility' || text.toLowerCase().includes('visibility')) {
+                                if (tryClick(item)) return {success: true, method: 'listbox'};
+                            }
+                        }
+                    }
+
+                    // 2) test-id hooks
+                    const testItem = document.querySelector('[test-id*="VISIBILITY"]');
+                    if (testItem && testItem.offsetParent !== null) {
+                        if (tryClick(testItem)) return {success: true, method: 'test-id'};
+                    }
+
+                    // 3) deep visible text scan (last resort)
+                    const all = document.querySelectorAll('*');
+                    for (let el of all) {
+                        if (el.offsetParent === null) continue;
+                        if (el.children && el.children.length > 0) continue;
+                        const text = (el.textContent || '').trim();
+                        if (text === 'Visibility') {
+                            if (tryClick(el)) return {success: true, method: 'deep-text'};
+                        }
+                    }
+
+                    return {success: false};
+                """)
+            except Exception:
+                visibility_result = {"success": False}
+
             if not visibility_result.get('success'):
-                logger.error("[DOM] Visibility menu item not found")
+                # Fallback: explicit XPath
+                try:
+                    item = WebDriverWait(self.driver, 4).until(
+                        EC.element_to_be_clickable((By.XPATH, self.selectors.VISIBILITY_MENU_ITEM_XPATH))
+                    )
+                    item.click()
+                    visibility_result = {"success": True, "method": "xpath"}
+                except Exception:
+                    visibility_result = {"success": False}
+            if not visibility_result.get('success'):
+                logger.error("[DOM] Visibility menu item not found/clickable")
                 return False
             time.sleep(0.5)
 
-            # Step 3: Force-open the filter dialog (ADR-007)
-            dialog_result = self.driver.execute_script("""
-                const filterDialog = document.querySelector('ytcp-filter-dialog');
-                if (!filterDialog) return {success: false, error: 'no filter dialog'};
+            # Step 3: Wait for dialog to open naturally; force-open only if needed.
+            dialog_open = False
+            try:
+                dialog_open = WebDriverWait(self.driver, 4).until(lambda d: d.execute_script("""
+                    const dialog = document.querySelector('ytcp-filter-dialog #dialog');
+                    if (!dialog) return false;
+                    const style = window.getComputedStyle(dialog);
+                    return style && style.display !== 'none' && dialog.getAttribute('aria-hidden') !== 'true';
+                """))
+            except Exception:
+                dialog_open = False
+            if not dialog_open:
+                # Last resort (ADR-007): force-open for visibility, but this may not apply without native handlers.
+                try:
+                    self.driver.execute_script("""
+                        const filterDialog = document.querySelector('ytcp-filter-dialog');
+                        if (!filterDialog) return;
+                        const paperDialog = filterDialog.querySelector('#dialog');
+                        if (!paperDialog) return;
+                        paperDialog.opened = true;
+                        paperDialog.setAttribute('opened', '');
+                        paperDialog.removeAttribute('aria-hidden');
+                        paperDialog.style.display = 'block';
+                    """)
+                except Exception:
+                    pass
+            time.sleep(0.4)
 
-                const paperDialog = filterDialog.querySelector('#dialog');
-                if (!paperDialog) return {success: false, error: 'no paper dialog'};
-
-                // Force open the dialog
-                paperDialog.opened = true;
-                paperDialog.setAttribute('opened', '');
-                paperDialog.removeAttribute('aria-hidden');
-                paperDialog.style.display = 'block';
-
-                return {success: true};
-            """)
-            if not dialog_result.get('success'):
-                logger.error(f"[DOM] Could not open filter dialog: {dialog_result.get('error')}")
-                return False
-            time.sleep(0.5)
-
-            # Step 4: Find checkbox using ActionChains (ADR-006)
+            # Step 4: Select checkbox (ActionChains often required for ytcp-checkbox-lit)
             visibility_label = visibility.capitalize()
             checkbox_coords = self.driver.execute_script(f"""
                 const filterDialog = document.querySelector('ytcp-filter-dialog');
@@ -428,16 +605,28 @@ class YouTubeStudioDOM:
             """)
 
             if not checkbox_coords.get('success'):
-                logger.error(f"[DOM] Checkbox not found: {checkbox_coords.get('error')}")
-                return False
+                # Fallback: click visible 'Unlisted' label directly (some UIs auto-apply)
+                clicked_label = self.driver.execute_script(f"""
+                    const spans = document.querySelectorAll('span');
+                    for (let span of spans) {{
+                        if (span.offsetParent !== null && span.textContent.trim() === '{visibility_label}') {{
+                            span.click();
+                            return true;
+                        }}
+                    }}
+                    return false;
+                """)
+                if not clicked_label:
+                    logger.error(f"[DOM] Checkbox/label not found for {visibility_label}")
+                    return False
+            else:
+                # ActionChains click at coordinates (required for ytcp-checkbox-lit)
+                actions = ActionChains(self.driver)
+                actions.move_by_offset(checkbox_coords['x'], checkbox_coords['y']).click().perform()
+                actions.move_by_offset(-checkbox_coords['x'], -checkbox_coords['y']).perform()
+                time.sleep(0.4)
 
-            # ActionChains click at coordinates (required for ytcp-checkbox-lit)
-            actions = ActionChains(self.driver)
-            actions.move_by_offset(checkbox_coords['x'], checkbox_coords['y']).click().perform()
-            actions.move_by_offset(-checkbox_coords['x'], -checkbox_coords['y']).perform()
-            time.sleep(0.5)
-
-            # Step 5: Find and click Apply button
+            # Step 5: Click Apply button if present (some Studio variants auto-apply)
             apply_coords = self.driver.execute_script("""
                 const filterDialog = document.querySelector('ytcp-filter-dialog');
                 if (!filterDialog) return {error: 'no dialog'};
@@ -466,7 +655,22 @@ class YouTubeStudioDOM:
             self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
             time.sleep(0.5)
 
-            logger.info(f"[DOM] DOM fallback filter applied")
+            # Step 6: Verify chip (best-effort)
+            chip_ok = self.driver.execute_script(f"""
+                const chips = document.querySelectorAll('ytcp-chip');
+                for (let chip of chips) {{
+                    const text = (chip.textContent || '').trim();
+                    if (text.includes('Visibility:') && text.includes('{visibility_label}')) {{
+                        return true;
+                    }}
+                }}
+                return false;
+            """)
+            if chip_ok:
+                logger.info(f"[DOM] DOM fallback filter applied - chip verified")
+                return True
+
+            logger.warning("[DOM] DOM fallback executed but filter chip not verified (UI may differ)")
             return True
 
         except Exception as e:
@@ -728,32 +932,168 @@ class YouTubeStudioDOM:
         url = f"https://studio.youtube.com/video/{video_id}/edit"
         logger.info(f"[DOM] Navigating to video: {video_id}")
         self.driver.get(url)
-        self.wait_for_element(self.selectors.VISIBILITY_BTN)
+        # Wait for edit page readiness (Studio variants render different visibility controls).
+        # We wait for ANY stable marker rather than a single brittle selector.
+        wait = WebDriverWait(self.driver, 12)
+
+        def _is_ready(drv) -> bool:
+            try:
+                candidates = [
+                    "ytcp-video-metadata-visibility",
+                    "ytcp-video-metadata-visibility #select-button",
+                    "button[aria-label='Edit video visibility status']",
+                    "#select-button",
+                    "#title-textarea",
+                    "#description-textarea",
+                ]
+                for css in candidates:
+                    if drv.find_elements(By.CSS_SELECTOR, css):
+                        return True
+            except Exception:
+                return False
+            return False
+
+        wait.until(lambda d: _is_ready(d))
 
     def edit_title(self, new_title: str):
         """Edit video title."""
+        import time
         title_input = self.wait_for_element(
             self.selectors.TITLE_INPUT_XPATH, By.XPATH
         )
-        title_input.click()
-        title_input.send_keys(Keys.CONTROL + "a")  # Select all
-        title_input.send_keys(new_title)
+        self.safe_click(title_input)
+        try:
+            # 012-modeled: focus is handled by safe_click; replace via Ctrl+A.
+            ActionChains(self.driver).key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
+            time.sleep(self.human_delay(0.25, 0.15))
+            title_input.send_keys(new_title)
+        except Exception as e:
+            # ChromeDriver may fail on non-BMP characters (emoji). Fallback to JS assignment.
+            logger.warning(f"[DOM] Title send_keys failed, falling back to JS: {type(e).__name__}: {e}")
+            self.driver.execute_script(
+                """
+                const el = arguments[0];
+                const text = arguments[1];
+                el.focus();
+                el.textContent = text;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                """,
+                title_input,
+                new_title,
+            )
 
     def edit_description(self, new_description: str):
         """Edit video description."""
+        import time
         desc_input = self.wait_for_element(
             self.selectors.DESCRIPTION_INPUT_XPATH, By.XPATH
         )
-        desc_input.click()
-        desc_input.send_keys(Keys.CONTROL + "a")  # Select all
-        desc_input.send_keys(new_description)
+        self.safe_click(desc_input)
+        try:
+            ActionChains(self.driver).key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).perform()
+            time.sleep(self.human_delay(0.25, 0.15))
+            desc_input.send_keys(new_description)
+        except Exception as e:
+            # ChromeDriver may fail on non-BMP characters (emoji). Fallback to JS assignment.
+            logger.warning(f"[DOM] Description send_keys failed, falling back to JS: {type(e).__name__}: {e}")
+            self.driver.execute_script(
+                """
+                const el = arguments[0];
+                const text = arguments[1];
+                el.focus();
+                el.textContent = text;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                """,
+                desc_input,
+                new_description,
+            )
 
     def click_save(self):
-        """Click save button."""
-        save_btn = self.wait_for_clickable(self.selectors.SAVE_BTN)
-        self.safe_click(save_btn)
+        """Click page-level Save button (not dialog Done/Save)."""
         import time
-        time.sleep(1)  # Wait for save
+
+        # Allow dialog close animation to complete (Done/Save just clicked).
+        pre_save_delay = float(os.getenv("YT_SCHEDULER_PRE_SAVE_DELAY_SEC", "1.0"))
+        time.sleep(pre_save_delay)
+
+        # Best-effort: wait for the visibility dialog to disappear so it doesn't intercept clicks.
+        try:
+            WebDriverWait(self.driver, 6).until(
+                lambda d: not d.find_elements(By.CSS_SELECTOR, "tp-yt-paper-dialog#dialog")
+            )
+        except Exception:
+            pass
+
+        candidates = [
+            (By.CSS_SELECTOR, "ytcp-button#save-button button"),
+            (By.CSS_SELECTOR, "ytcp-button#save-button"),
+            (By.CSS_SELECTOR, "button#save-button"),
+            (By.XPATH, "//ytcp-button[@id='save-button']//button"),
+            (By.XPATH, "//button[@id='save-button']"),
+            (By.XPATH, "//button[.//span[normalize-space(text())='Save']]"),
+        ]
+
+        last_err: Exception | None = None
+        for by, sel in candidates:
+            try:
+                el = self.wait_for_clickable(sel, by, timeout=5)
+                try:
+                    self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+                except Exception:
+                    pass
+                self.safe_click(el)
+                time.sleep(2.0)
+                return
+            except Exception as exc:
+                last_err = exc
+                continue
+
+        # JS fallback: Studio sometimes renders Save as a custom element without stable ids,
+        # or behind wrappers that Selenium "clickable" heuristics miss.
+        try:
+            clicked = self.driver.execute_script(
+                """
+                function isVisible(el) {
+                  if (!el) return false;
+                  if (el.offsetParent === null) return false;
+                  const r = el.getBoundingClientRect();
+                  return r.width > 0 && r.height > 0;
+                }
+                function textOf(el) {
+                  return ((el && el.textContent) ? el.textContent : '').trim();
+                }
+                function clickBest(el) {
+                  if (!el) return false;
+                  // Prefer inner <button> when present.
+                  try {
+                    const inner = el.querySelector && el.querySelector('button');
+                    if (inner && isVisible(inner)) { inner.click(); return true; }
+                  } catch (e) {}
+                  try { el.click(); return true; } catch (e) {}
+                  return false;
+                }
+
+                const root = document;
+                const all = Array.from(root.querySelectorAll('ytcp-button, button, tp-yt-paper-button, ytcp-button-shape'));
+                const saveLike = all
+                  .filter(isVisible)
+                  .map(el => ({ el, t: textOf(el).toLowerCase(), id: (el.id||'') }))
+                  .filter(x => x.t === 'save' || x.id === 'save-button');
+
+                // Prefer explicit id, then visible text Save.
+                const preferred = saveLike.find(x => x.id === 'save-button') || saveLike.find(x => x.t === 'save');
+                if (preferred && clickBest(preferred.el)) return { clicked: true, id: preferred.id, text: preferred.t };
+
+                return { clicked: false, found: saveLike.slice(0, 8).map(x => ({id:x.id, text:x.t})) };
+                """
+            )
+            if isinstance(clicked, dict) and clicked.get("clicked"):
+                time.sleep(2.0)
+                return
+        except Exception as exc:
+            last_err = exc
+
+        raise TimeoutException(f"Save button not found/clickable: {last_err}")
 
     # =========================================
     # PAGE 3: SCHEDULING DIALOG METHODS
@@ -761,33 +1101,155 @@ class YouTubeStudioDOM:
 
     def open_visibility_dialog(self):
         """Open the visibility/scheduling dialog."""
-        vis_btn = self.wait_for_clickable(
-            self.selectors.VISIBILITY_BTN_XPATH, By.XPATH
-        )
-        self.safe_click(vis_btn)
         import time
-        time.sleep(0.5)
-        # Wait for dialog to appear
-        self.wait_for_element(self.selectors.VISIBILITY_DIALOG)
+
+        # YouTube Studio variants render this control as:
+        # - <button aria-label="Edit video visibility status">
+        # - <ytcp-icon-button id="select-button" aria-label="Edit video visibility status">
+        # Prefer robust multi-selector approach.
+        vis_btn = None
+
+        # 1) Strict XPath for the known aria-label (button)
+        try:
+            vis_btn = self.wait_for_clickable(self.selectors.VISIBILITY_BTN_XPATH, By.XPATH, timeout=6)
+        except Exception:
+            vis_btn = None
+
+        # 2) CSS for the icon button inside the visibility section
+        if vis_btn is None:
+            try:
+                vis_btn = self.wait_for_clickable(
+                    "ytcp-video-metadata-visibility #select-button",
+                    By.CSS_SELECTOR,
+                    timeout=6,
+                )
+            except Exception:
+                vis_btn = None
+
+        # 3) Final XPath fallback: any element with id=select-button and a visibility aria-label
+        if vis_btn is None:
+            try:
+                vis_btn = self.wait_for_clickable(
+                    "//*[@id='select-button' and contains(@aria-label,'visibility')]",
+                    By.XPATH,
+                    timeout=6,
+                )
+            except Exception:
+                vis_btn = None
+
+        if vis_btn is None:
+            raise TimeoutException("Visibility button not found/clickable")
+
+        self.safe_click(vis_btn)
+        time.sleep(0.6)
+
+        # Wait for the visibility dialog surface (tp-yt-paper-dialog variant is most common)
+        try:
+            self.wait_for_element(self.selectors.VISIBILITY_DIALOG_XPATH, By.XPATH, timeout=8)
+            return
+        except Exception:
+            pass
+
+        # Fallback: if dialog selector changes, wait for schedule/date/time inputs to exist
+        WebDriverWait(self.driver, 8).until(lambda d: d.execute_script("""
+            const hasSchedule =
+              !!document.querySelector('tp-yt-paper-radio-button[name=\"SCHEDULE\"], tp-yt-paper-radio-button[name=\"SCHEDULED\"], tp-yt-paper-radio-button[name=\"SCHEDULE\"]');
+            const hasDate = !!document.querySelector('input[aria-label*=\"Date\"]');
+            const hasTime = !!document.querySelector('input[aria-label*=\"Time\"], input[aria-label*=\"time\"]');
+            return hasSchedule || (hasDate && hasTime);
+        """))
 
     def select_schedule_option(self):
         """Select the 'Schedule' radio button in visibility dialog."""
-        # First expand the schedule section if needed
-        try:
-            expand_btn = self.driver.find_element(
-                By.XPATH, self.selectors.SCHEDULE_EXPAND
-            )
-            self.safe_click(expand_btn)
-            import time
-            time.sleep(0.3)
-        except NoSuchElementException:
-            pass  # Already expanded
+        import time
 
-        # Select schedule radio
-        schedule_radio = self.wait_for_clickable(
-            self.selectors.SCHEDULE_RADIO, By.XPATH
-        )
-        self.safe_click(schedule_radio)
+        # YouTube Studio has at least two variants:
+        # - Variant A: explicit "Schedule" radio button
+        # - Variant B: a "Schedule" section (often #second-container) that expands to show date/time inputs
+        #
+        # We treat "select schedule" as: ensure the schedule section is expanded and date/time inputs exist.
+
+        # Variant A: try schedule radio if present
+        radio_xpaths = [
+            getattr(self.selectors, "SCHEDULE_RADIO_XPATH", "//tp-yt-paper-radio-button[@name='SCHEDULE']"),
+            getattr(self.selectors, "RADIO_SCHEDULE", "//tp-yt-paper-radio-button[.//span[contains(text(),'Schedule')]]"),
+            "//tp-yt-paper-radio-button[contains(translate(., 'SCHEDULE', 'schedule'), 'schedule')]",
+        ]
+        for xp in radio_xpaths:
+            try:
+                schedule_radio = self.wait_for_clickable(xp, By.XPATH, timeout=3)
+                self.safe_click(schedule_radio)
+                time.sleep(0.3)
+                break
+            except Exception:
+                continue
+
+        # Variant B: expand schedule section (common in current Studio)
+        expanded = False
+        try:
+            sched = self.driver.find_element(By.ID, "second-container")
+            if sched and sched.is_displayed():
+                self.driver.execute_script(
+                    "arguments[0].scrollIntoView({behavior:'smooth', block:'center'});",
+                    sched,
+                )
+                time.sleep(0.2)
+
+                # Only click to expand if there is an explicit expanded state and it's currently collapsed.
+                toggler = self.driver.execute_script("""
+                    const root = document.querySelector('#second-container');
+                    if (!root) return null;
+                    const candidates = root.querySelectorAll('[aria-expanded]');
+                    for (const el of candidates) {
+                      if (el.offsetParent === null) continue;
+                      const v = el.getAttribute('aria-expanded');
+                      if (v === 'false' || v === 'true') return el;
+                    }
+                    return root;
+                """)
+                if toggler:
+                    # If toggler has aria-expanded=true already, don't click (prevents open->close).
+                    try:
+                        state = self.driver.execute_script(
+                            "return arguments[0].getAttribute('aria-expanded');",
+                            toggler,
+                        )
+                    except Exception:
+                        state = None
+
+                    if state == "true":
+                        expanded = True
+                    else:
+                        # 012-modeled click preferred; safe_click has JS fallback if needed.
+                        self.safe_click(toggler)
+                        time.sleep(0.5)
+                        expanded = True
+        except Exception:
+            expanded = False
+
+        if not expanded:
+            # Fallback: legacy expand button selector
+            try:
+                expand_btn = self.driver.find_element(By.XPATH, self.selectors.SCHEDULE_EXPAND)
+                if expand_btn and expand_btn.is_displayed():
+                    self.safe_click(expand_btn)
+                    time.sleep(0.5)
+            except Exception:
+                pass
+
+        # Wait for a time input to exist (date may be text until clicked).
+        WebDriverWait(self.driver, 8).until(lambda d: d.execute_script("""
+            const inputs = Array.from(document.querySelectorAll('input'));
+            const visible = inputs.filter(i => i && i.offsetParent !== null);
+            // Most common: time input has a value like "12:00 AM" and no aria-label.
+            const hasTimeLike = visible.some(i => {
+              const v = (i.value || '').trim();
+              return /\\d{1,2}:\\d{2}/.test(v);
+            });
+            // Alternative: aria-labeled time input exists.
+            const hasAriaTime = !!document.querySelector('input[aria-label*="Time"], input[aria-label*="time"]');
+            return hasTimeLike || hasAriaTime;
+        """))
 
     def set_schedule_date(self, date_str: str):
         """
@@ -796,21 +1258,149 @@ class YouTubeStudioDOM:
         Args:
             date_str: Date string like "Jan 5, 2026"
         """
-        # Click date picker to activate
-        date_btn = self.wait_for_clickable(
-            self.selectors.DATE_PICKER_BTN, By.XPATH
-        )
-        self.safe_click(date_btn)
         import time
-        time.sleep(0.3)
+        import os
 
-        # Find and fill date input
-        date_input = self.wait_for_element(
-            self.selectors.DATE_INPUT, By.XPATH
-        )
-        date_input.send_keys(Keys.CONTROL + "a")
-        date_input.send_keys(date_str)
-        date_input.send_keys(Keys.ENTER)
+        pre_type_delay = float(os.getenv("YT_SCHEDULER_PRE_TYPE_DELAY_SEC", "0.6"))
+        key_delay = float(os.getenv("YT_SCHEDULER_KEY_DELAY_SEC", "0.06"))
+
+        def slow_type(el, text: str):
+            # Methodical per-char typing to avoid Studio dropping keystrokes.
+            for ch in text:
+                el.send_keys(ch)
+                time.sleep(key_delay)
+
+        def commit_input(el):
+            """
+            YouTube Studio sometimes doesn't "commit" until Enter/blur.
+            Do Enter + Tab, then dispatch input/change/blur events.
+            """
+            try:
+                el.send_keys(Keys.ENTER)
+            except Exception:
+                try:
+                    ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+                except Exception:
+                    pass
+            time.sleep(pre_type_delay)
+            try:
+                el.send_keys(Keys.TAB)
+            except Exception:
+                try:
+                    ActionChains(self.driver).send_keys(Keys.TAB).perform()
+                except Exception:
+                    pass
+            time.sleep(pre_type_delay)
+            try:
+                self.driver.execute_script(
+                    """
+                    const el = arguments[0];
+                    if (!el) return;
+                    try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+                    try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                    try { el.blur(); } catch (e) {}
+                    """,
+                    el,
+                )
+            except Exception:
+                pass
+            time.sleep(pre_type_delay)
+
+        # In current Studio variants, date is often rendered as text (e.g. "Jan 19, 2026")
+        # until you click it. We must click the *date field* first, then Ctrl+A replace.
+        try:
+            # Try an actual Date input first (when already expanded)
+            date_input = self.wait_for_element(self.selectors.DATE_INPUT_XPATH, By.XPATH, timeout=3)
+        except Exception:
+            date_input = None
+
+        if date_input is None:
+            # Current Studio variant:
+            # - The schedule section shows a date *text* ("Jan 19, 2026") inside
+            #   `ytcp-text-dropdown-trigger#datepicker-trigger div.left-container`.
+            # - Clicking that opens a `ytcp-date-picker` popup with an <input> we can Ctrl+A replace.
+            try:
+                date_trigger = self.wait_for_clickable(
+                    self.selectors.DATE_TRIGGER_CSS,
+                    By.CSS_SELECTOR,
+                    timeout=6,
+                )
+                # Critical: click DATE first (not time/timezone).
+                # Occam: deterministic click with slow delays.
+                self.safe_click(date_trigger)
+                time.sleep(pre_type_delay)
+            except Exception:
+                # Fallback: click the visible date text inside the schedule container to activate the picker/input.
+                self.driver.execute_script("""
+                    const root = document.querySelector('#second-container');
+                    if (!root) return;
+                    const candidates = Array.from(root.querySelectorAll('span, div'))
+                      .filter(e => e.offsetParent !== null && e.children.length === 0)
+                      .map(e => ({el: e, t: (e.textContent||'').trim()}))
+                      .filter(x => /\\b\\w{3}\\b\\s+\\d{1,2},\\s+\\d{4}/.test(x.t));
+                    if (candidates.length) candidates[0].el.click();
+                """)
+                time.sleep(pre_type_delay)
+
+            # Try the date-picker popup input first
+            for attempt in range(2):
+                try:
+                    picker_input = self.wait_for_clickable(
+                        self.selectors.DATE_PICKER_INPUT_CSS,
+                        By.CSS_SELECTOR,
+                        timeout=8,
+                    )
+                    self._focus_and_select_all_input(picker_input)
+                    time.sleep(pre_type_delay)
+
+                    # Replace selected value by typing.
+                    slow_type(picker_input, date_str)
+                    time.sleep(0.15)
+                    commit_input(picker_input)
+
+                    # Verify the value "stuck" (some variants keep value in activeElement)
+                    try:
+                        val = (picker_input.get_attribute("value") or "").strip()
+                        if val and val.lower() == date_str.strip().lower():
+                            return
+                    except Exception:
+                        pass
+
+                    # If verification failed, retry once after an extra delay.
+                    if attempt == 0:
+                        time.sleep(pre_type_delay)
+                        continue
+                    return
+                except Exception:
+                    picker_input = None
+
+            # Alternate variant: aria-labeled Date input exists after clicking trigger
+            try:
+                date_input = self.wait_for_element(self.selectors.DATE_INPUT_XPATH, By.XPATH, timeout=3)
+            except Exception:
+                date_input = None
+
+        if date_input is not None:
+            self._focus_and_select_all_input(date_input)
+            time.sleep(pre_type_delay)
+            slow_type(date_input, date_str)
+            time.sleep(0.15)
+            commit_input(date_input)
+            return
+
+        # Fallback: legacy date picker trigger then input (older Studio variants)
+        try:
+            date_btn = self.wait_for_clickable(self.selectors.DATE_PICKER_BTN, By.XPATH, timeout=6)
+            self.safe_click(date_btn)
+            time.sleep(0.3)
+            date_input = self.wait_for_element(self.selectors.DATE_INPUT, By.XPATH, timeout=6)
+            self._focus_and_select_all_input(date_input)
+            time.sleep(pre_type_delay)
+            slow_type(date_input, date_str)
+            time.sleep(0.15)
+            commit_input(date_input)
+        except Exception as exc:
+            raise TimeoutException(f"Date input not found/usable: {exc}")
 
     def set_schedule_time(self, time_str: str):
         """
@@ -819,21 +1409,180 @@ class YouTubeStudioDOM:
         Args:
             time_str: Time string like "5:00 AM"
         """
-        time_input = self.wait_for_element(
-            self.selectors.TIME_INPUT_TEXTBOX, By.XPATH
-        )
-        time_input.click()
-        time_input.send_keys(Keys.CONTROL + "a")
-        time_input.send_keys(time_str)
+        import time
+        import os
+
+        pre_type_delay = float(os.getenv("YT_SCHEDULER_PRE_TYPE_DELAY_SEC", "0.5"))
+        key_delay = float(os.getenv("YT_SCHEDULER_KEY_DELAY_SEC", "0.05"))
+
+        def slow_type(el, text: str):
+            for ch in text:
+                el.send_keys(ch)
+                time.sleep(key_delay)
+
+        def commit_input(el):
+            """
+            YouTube Studio time field sometimes requires Enter/blur to stick.
+            """
+            try:
+                el.send_keys(Keys.ENTER)
+            except Exception:
+                try:
+                    ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+                except Exception:
+                    pass
+            time.sleep(pre_type_delay)
+            try:
+                el.send_keys(Keys.TAB)
+            except Exception:
+                try:
+                    ActionChains(self.driver).send_keys(Keys.TAB).perform()
+                except Exception:
+                    pass
+            time.sleep(pre_type_delay)
+            try:
+                self.driver.execute_script(
+                    """
+                    const el = arguments[0];
+                    if (!el) return;
+                    try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+                    try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                    try { el.blur(); } catch (e) {}
+                    """,
+                    el,
+                )
+            except Exception:
+                pass
+            time.sleep(pre_type_delay)
+
+        # Prefer direct input replacement (no dropdown selection).
+        time_input = None
+
+        # 0) Current Studio variant (explicit DOM path)
+        try:
+            time_input = self.wait_for_element(
+                self.selectors.TIME_OF_DAY_INPUT_CSS,
+                By.CSS_SELECTOR,
+                timeout=3,
+            )
+        except Exception:
+            time_input = None
+
+        # 1) aria-labeled time inputs (some variants)
+        if time_input is None:
+            for xp in [self.selectors.TIME_INPUT_XPATH, self.selectors.TIME_INPUT_TEXTBOX]:
+                try:
+                    time_input = self.wait_for_element(xp, By.XPATH, timeout=2)
+                    break
+                except Exception:
+                    time_input = None
+
+        # 2) common variant: visible input with a value like "12:00 AM" and no aria-label
+        if time_input is None:
+            try:
+                time_input = WebDriverWait(self.driver, 4).until(lambda d: d.execute_script("""
+                    const inputs = Array.from(document.querySelectorAll('input'));
+                    const visible = inputs.filter(i => i && i.offsetParent !== null);
+                    for (const i of visible) {
+                      const v = (i.value || '').trim();
+                      if (/\\d{1,2}:\\d{2}/.test(v) && (v.toUpperCase().includes('AM') || v.toUpperCase().includes('PM'))) {
+                        return i;
+                      }
+                    }
+                    return null;
+                """))
+            except Exception:
+                time_input = None
+
+        if time_input is None:
+            raise TimeoutException("Time input not found/usable")
+
+        # Critical: click the actual input field first, then Ctrl+A replace.
+        self._focus_and_select_all_input(time_input)
+        time.sleep(pre_type_delay)
+        slow_type(time_input, time_str)
+        time.sleep(0.15)
+        commit_input(time_input)
 
     def click_done(self):
         """Click Done button to confirm scheduling."""
-        done_btn = self.wait_for_clickable(
-            self.selectors.DONE_BTN, By.XPATH
-        )
-        self.safe_click(done_btn)
         import time
-        time.sleep(1)  # Wait for dialog to close
+
+        # YouTube Studio variants:
+        # - native <button> with inner <span>Done</span>
+        # - <ytcp-button id="done-button"> wrapper with an internal <button>
+        # - dialog "Save" button (some variants replace Done with Save inside dialog)
+        # - different DOM/shadow structures
+        candidates = [
+            (By.XPATH, self.selectors.DONE_BTN),
+            (By.XPATH, "//button[.//span[normalize-space(text())='Done']]"),
+            (By.XPATH, "//ytcp-button[.//span[normalize-space(text())='Done']]"),
+            # Dialog Save button (observed path: tp-yt-paper-dialog#dialog div.button-area ... ytcp-button#save-button)
+            # IMPORTANT: scope to button-area to avoid timezone-select-button misclicks.
+            (By.CSS_SELECTOR, "tp-yt-paper-dialog#dialog div.button-area ytcp-button#save-button button"),
+            (By.CSS_SELECTOR, "tp-yt-paper-dialog#dialog div.button-area ytcp-button#save-button"),
+            (By.CSS_SELECTOR, "ytcp-button#done-button"),
+            (By.CSS_SELECTOR, "ytcp-button#done-button button"),
+            (By.CSS_SELECTOR, "button#done-button"),
+        ]
+
+        for by, sel in candidates:
+            try:
+                el = self.wait_for_clickable(sel, by, timeout=4)
+
+                # Safety: never click timezone selector by accident.
+                try:
+                    is_timezone = self.driver.execute_script(
+                        "return !!(arguments[0] && arguments[0].closest && arguments[0].closest('#timezone-select-button'));",
+                        el,
+                    )
+                    if is_timezone:
+                        continue
+                except Exception:
+                    pass
+
+                # Prefer clicking the inner <button> when wrapped by ytcp-button.
+                try:
+                    if (el.tag_name or "").lower() == "ytcp-button":
+                        inner = el.find_element(By.CSS_SELECTOR, "button")
+                        el = inner
+                except Exception:
+                    pass
+
+                try:
+                    # Ensure it's in view (some Studio dialogs require scroll)
+                    self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
+                except Exception:
+                    pass
+                self.safe_click(el)
+                time.sleep(1)
+                return
+            except Exception:
+                continue
+
+        # Last resort: JS click inside dialog (STRICT scope).
+        try:
+            clicked = self.driver.execute_script(
+                """
+                const root = document.querySelector('tp-yt-paper-dialog#dialog') || document;
+                // Prefer explicit ids.
+                const done = root.querySelector('ytcp-button#done-button button, ytcp-button#done-button, button#done-button');
+                if (done) { done.click(); return true; }
+
+                // Studio variant: dialog Save button is the "Done" equivalent.
+                const save = root.querySelector('div.button-area ytcp-button#save-button button, div.button-area ytcp-button#save-button');
+                if (save) { save.click(); return true; }
+
+                return false;
+                """
+            )
+            if clicked:
+                time.sleep(1)
+                return
+        except Exception:
+            pass
+
+        raise TimeoutException("Done/Save button not found/clickable")
 
     def schedule_video(self, date_str: str, time_str: str) -> bool:
         """
@@ -846,30 +1595,30 @@ class YouTubeStudioDOM:
         Returns:
             True if successful
         """
-        try:
-            logger.info(f"[DOM] Scheduling for {date_str} at {time_str}")
+        logger.info(f"[DOM] Scheduling for {date_str} at {time_str}")
 
-            # Open dialog
-            self.open_visibility_dialog()
+        steps = [
+            ("open_visibility_dialog", lambda: self.open_visibility_dialog()),
+            ("select_schedule_option", lambda: self.select_schedule_option()),
+            ("set_schedule_date", lambda: self.set_schedule_date(date_str)),
+            ("set_schedule_time", lambda: self.set_schedule_time(time_str)),
+            ("click_done", lambda: self.click_done()),
+            ("click_save", lambda: self.click_save()),
+        ]
 
-            # Select schedule option
-            self.select_schedule_option()
+        for step_name, fn in steps:
+            try:
+                fn()
+            except Exception as e:
+                logger.error(f"[DOM] Scheduling failed at {step_name}: {type(e).__name__}: {e}")
+                # Best-effort cleanup: close dialog so the next loop isn't blocked.
+                try:
+                    ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                    import time
+                    time.sleep(0.5)
+                except Exception:
+                    pass
+                return False
 
-            # Set date
-            self.set_schedule_date(date_str)
-
-            # Set time
-            self.set_schedule_time(time_str)
-
-            # Confirm
-            self.click_done()
-
-            # Save changes
-            self.click_save()
-
-            logger.info(f"[DOM] Successfully scheduled for {date_str} {time_str}")
-            return True
-
-        except Exception as e:
-            logger.error(f"[DOM] Scheduling failed: {e}")
-            return False
+        logger.info(f"[DOM] Successfully scheduled for {date_str} {time_str}")
+        return True

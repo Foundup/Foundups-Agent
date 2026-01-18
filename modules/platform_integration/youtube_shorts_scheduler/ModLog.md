@@ -40,6 +40,180 @@
 - [ ] Queue management for multi-channel scheduling
 - [ ] Add memory/ directory for schedule persistence
 
+## V0.8.1 - Filter UI Regression Fix (2026-01-17)
+
+### Problem
+- Shorts Scheduler failed at Layer 1 fallback with: `[DOM] Filter input not found after waiting`.
+- Root cause: production fallback in `src/dom_automation.py` relied on a **single** selector (`input[placeholder='Filter']`) while Studio UI variants sometimes render a different filter control (or require a coordinate click to open the dropdown).
+
+### Fix
+- `src/dom_automation.py`:
+  - `navigate_to_shorts_with_fallback()` now waits longer (up to ~8s) for the **Visibility chip** to appear before declaring URL-filter failure.
+  - `_apply_filter_via_dom()` now uses a multi-strategy opener (`_open_filter_ui()`):
+    - multiple selectors for the filter input
+    - coordinate click fallback (`FILTER_ICON_COORDS`)
+    - JS `elementFromPoint` fallback
+  - Added best-effort chip verification after DOM fallback.
+ - `scripts/launch.py`:
+   - Hot-reload `src/dom_automation.py` inside `run_shorts_scheduler()` to prevent stale in-memory imports when running from a long-lived `main.py` menu session.
+
+## V0.8.2 - Schedule Inputs Stabilized + Schedule DBA Write (2026-01-18)
+
+### Scheduling Fix (Current Studio DOM)
+- Scheduling date/time inputs are not reliably exposed as aria-labeled inputs until clicked.
+- Implemented selector-backed flow:
+  - Click date trigger (`ytcp-text-dropdown-trigger#datepicker-trigger div.left-container`)
+  - Type into date picker popup (`ytcp-date-picker ... input.tp-yt-paper-input`) using Ctrl+A replace
+  - Type into time-of-day input (`ytcp-form-input-container#time-of-day-container ... input.tp-yt-paper-input`) using Ctrl+A replace
+
+### DBA Write (PatternMemory)
+- Added `src/schedule_dba.py` to record scheduling outcomes to the existing WRE SQLite DBA:
+  - DB: `modules/infrastructure/wre_core/data/pattern_memory.db`
+  - Skill name: `youtube_shorts_scheduler_schedule`
+- Wired into:
+  - `src/scheduler.py` (DAE orchestration path)
+  - `scripts/launch.py` (main.py submenu path)
+
+### WSP Notes
+- Uses SKILLz naming (WSP 95) for fast skill discovery.
+- Adds machine-readable recall of schedule events for 0102 (WSP 60 / WSP 48 via PatternMemory).
+
+## V0.8.3 - Schedule → Index Weave (Digital Twin Description Block) (2026-01-18)
+
+### Added
+- `src/index_weave.py`:
+  - Ensures `memory/video_index/{channel}/{video_id}.json` exists (Gemini Tier 1) when enabled
+  - Builds compact `0102 DIGITAL TWIN INDEX v1` JSON block for description-as-cloud-memory
+  - Updates index JSON with `scheduling` + `description_sync` after successful schedule
+
+### Changed
+- `src/scheduler.py`:
+  - When `YT_SCHEDULER_INDEX_WEAVE_ENABLED=true` (default), scheduler weaves index block into the description during metadata update.
+  - After successful schedule, updates the local index JSON with scheduling fields.
+
+### Tests
+- `tests/test_scheduler.py`:
+  - Added unit tests for `index_weave` helpers (no browser required).
+
+### WSP Compliance
+- **WSP 60**: Index JSON is a memory artifact (`memory/video_index/...`)
+- **WSP 73**: Digital Twin memory block embedded in description (“cloud memory”)
+- **WSP 27**: Scheduler triggers indexing as a secondary layer (Occam layering)
+
+## V0.8.4 - Dialog Done/Save Click Scoped (Avoid Timezone Misclick) (2026-01-18)
+
+### Problem
+- In some current Studio variants, after setting date/time, the script could click the **timezone selector** instead of the dialog’s **Done/Save** action.
+- This blocks completion of the schedule layer (dialog never commits).
+
+### Fix
+- `src/dom_automation.py` `click_done()`:
+  - Scoped dialog Save selector to `tp-yt-paper-dialog#dialog div.button-area ytcp-button#save-button` (the actual dialog action area)
+  - Added a safety guard to skip any element inside `#timezone-select-button`
+  - Tightened the JS fallback to only click `#done-button` or dialog `#save-button` (no generic “Save” text search)
+
+### Test
+- `tests/test_layer3_schedule.py`:
+  - Added `--click-done` flag to click dialog Done/Save **without** performing page-level Save (safe validation of dialog action)
+
+### WSP Notes
+- WSP 50: Pre-action verification using DOM-path evidence from live Studio
+- WSP 22: This ModLog memory artifact for DOM drift + mitigation
+
+## V0.8.5 - 012 Digital Twin Interaction Wiring (human_behavior) (2026-01-18)
+
+### Problem
+- Several UI actions still used raw Selenium `.click()` / direct field `.click()` patterns.
+- This produces brittle interaction timing and a detectable automation signature.
+
+### Fix
+- `src/dom_automation.py`:
+  - `YouTubeStudioDOM` now binds to `modules.infrastructure.foundups_selenium.src.human_behavior` when available.
+  - `safe_click()` now prefers `human_behavior.human_click()` (+ human scroll) and falls back to Selenium/JS only when needed.
+  - Added a 012-modeled coordinate click path for viewport clicks (Bezier cursor path), used by legacy coordinate fallbacks.
+  - Scheduling flow (date/time) and metadata edits now use `safe_click()` for focus/click.
+
+### WSP Notes
+- WSP 91: anti-detection + observability alignment via reusable 012 interaction lego block
+- WSP 84: reuse infrastructure behavior module rather than re-implementing ad hoc click logic
+
+## V0.8.6 - 012 Scheduler Speed + Date-First Precise Click (2026-01-18)
+
+### Problem
+- With 012-modeled movement enabled, the schedule UI is dense (date/time/timezone adjacent).
+- Observed behavior: scheduler sometimes clicks **time/timezone before date**, causing the date picker not to open and Ctrl+A/select-all to target the wrong surface.
+
+### Fix
+- `src/dom_automation.py`:
+  - Added scheduler-scoped tuning:
+    - `YT_SCHEDULER_O12_SPEED_MULT` (default `0.75`) to speed up 012 movement pauses without impacting other DAEs.
+    - `YT_SCHEDULER_O12_PRECISE_CLICK` (default `true`) to use a position-stable click path.
+  - `set_schedule_date()` now uses a **precise date-trigger click** first to avoid drifting onto time/timezone.
+
+## V0.8.7 - Occam 012: Deterministic Clicks (No Mouse Jumping) (2026-01-18)
+
+### Problem
+- Bezier/jitter-based mouse paths can “jump” across dense schedule UI (date/time/timezone cluster).
+- This can mis-target controls and destabilize the date picker open → type cycle.
+
+### Fix
+- `src/dom_automation.py`:
+  - Removed scheduler coupling to `human_behavior` for clicks (kept slow/steady 012 cadence).
+  - `safe_click()` now uses:
+    - `scrollIntoView` → delay → `.click()` → delay
+    - ActionChains/JS fallbacks only if needed
+  - Added scheduler knobs:
+    - `YT_SCHEDULER_PRE_CLICK_DELAY_SEC` (default `0.25`)
+    - `YT_SCHEDULER_POST_CLICK_DELAY_SEC` (default `0.25`)
+
+### Result
+- Live Layer 3 `--click-done` validated: date/time set, then dialog Done/Save clicked (no timezone misclick).
+
+## V0.8.8 - Page Save Button Hardening + Full-Cake Runner Uses Production Scheduler (2026-01-18)
+
+### Problem
+- Full-cake automation could complete indexing + title + description + schedule dialog Done/Save, but fail at the final **page-level Save** due to DOM drift (custom elements, missing stable ids).
+
+### Fix
+- `src/dom_automation.py`:
+  - Hardened `click_save()`:
+    - waits for dialog close
+    - multi-selector cascade (`ytcp-button#save-button` wrappers + `button#save-button`)
+    - JS fallback: find visible elements with text `Save` and click inner button if present
+  - Added `YT_SCHEDULER_PRE_SAVE_DELAY_SEC` to let dialog close animation complete before save attempt.
+- `tests/test_full_chain.py`:
+  - Now runs the production orchestrator (`run_scheduler_dae`) with feature flags enabled (no duplicated selectors).
+
+### Result
+- Live full cake validated: scheduler returned `total_scheduled: 1` (includes save).
+
+## V0.8.9 - Launcher Stability: Close Session-Restore Extra Tabs (2026-01-18)
+
+### Problem
+- Chrome/Edge session restore can open multiple tabs, which can confuse Selenium focus and cause DOM actions to target the wrong tab.
+
+### Fix
+- `scripts/launch.py`:
+  - Close all extra tabs on connect and keep only the primary tab handle before starting automation.
+
+## V0.9.0 - Scheduler Control Plane (Content-Type Placeholder + Index Switches) (2026-01-18)
+
+### Problem
+- Scheduler switches were scattered (some in module submenu, some in main controls), increasing the odds of misconfigured runs.
+- Next layer requires a **content-type selection** surface (Shorts vs Videos) before implementing new DOM selectors.
+
+### Fix
+- `main.py`:
+  - Added a dedicated `Scheduler Controls` submenu under YouTube Controls.
+  - Introduced placeholder control-plane env vars:
+    - `YT_SCHEDULER_CONTENT_TYPE=shorts|videos` (videos is placeholder until implemented)
+    - `YT_SCHEDULER_VERIFY_MODE=none|wre-tars` (intent flag; production does not hard-require UI‑TARS)
+  - Centralized index weave switches: enable/disable, mode, description weave, title hint, and pre-save delay.
+
+### WSP Notes
+- WSP 15: Control-plane enables high-impact work sequencing without destabilizing Shorts PoC
+- WSP 22: ModLog captures control-plane memory for 0102 recall
+
 ## V0.2.0 - Layer Cake Testing (2026-01-01)
 
 ### Layer 1: Navigation + Filter - COMPLETE
@@ -480,3 +654,109 @@ python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer
 - Outcomes stored in `wre_core/data/pattern_memory.db`
 - Skill name: `youtube_schedule_l3`
 - Fields: step name, verify prompt, success, screenshot path, execution_ms
+
+## V0.9.0 - Edge Browser + Multi-Channel Rotation (2026-01-18)
+
+### Added
+- **RavingANTIFA channel support** in `channel_config.py`
+  - Channel ID: `UCVSmg5aOhP4tnQ9KFUg97qA`
+  - Uses Edge browser (port 9223) like FoundUps
+  - Same timezone/slots as FoundUps (America/New_York)
+
+- **Edge browser support** in `scripts/launch.py`
+  - Auto-detects browser from channel config (port 9223 = Edge)
+  - Uses EdgeOptions for Edge connections
+  - Provides correct startup instructions for each browser
+
+- **Multi-channel rotation** function `run_multi_channel_scheduler()`
+  - Chrome (9222): Move2Japan -> UnDaoDu rotation
+  - Edge (9223): FoundUps -> RavingANTIFA rotation
+  - Uses TarsAccountSwapper for account switching between channels
+  - Reuses single browser connection for full rotation
+
+### Changed
+- **Menu restructure** for multi-channel rotation:
+  - Option C: Chrome Rotation (Move2Japan -> UnDaoDu)
+  - Option E: Edge Rotation (FoundUps -> RavingANTIFA)
+- **Docstrings updated** in scheduler.py for RavingANTIFA support
+- **CLI updated** with `--browser` flag for multi-channel mode
+
+### Browser Port Routing
+```
+Chrome (9222): Move2Japan, UnDaoDu
+Edge (9223): FoundUps, RavingANTIFA
+```
+
+### Architecture Decision
+- **ADR-017**: Multi-Channel Rotation with Account Swapper
+  - Single browser session for entire rotation (efficiency)
+  - TarsAccountSwapper handles channel switching via YouTube's account picker
+  - Each channel gets `max_per_channel` videos scheduled before rotation
+  - Account switch uses DOM-based avatar -> Switch account -> Select channel flow
+
+### CLI Usage
+```bash
+# Multi-channel rotation
+python -m modules.platform_integration.youtube_shorts_scheduler.scripts.launch --browser edge --mode schedule
+
+# Single channel (legacy)
+python -m modules.platform_integration.youtube_shorts_scheduler.scripts.launch --channel UCfHM9Fw9HD-NwiS0seD_oIA
+
+# From main.py menu: 1 (YouTube DAEs) -> 3 (Scheduler) -> 5 (Edge rotation)
+```
+
+### WSP Compliance
+- WSP 3: Platform Integration domain
+- WSP 49: Standard module structure maintained
+- WSP 22: This ModLog entry
+
+## V0.9.1 - Menu Simplified for 0102 Clarity (2026-01-19)
+
+### Changed
+- **Menu restructure** in `scripts/launch.py` → `show_shorts_scheduler_menu()`:
+  - Removed letter-coded choices (no `C`/`E`) for 012 clarity
+  - Production actions only:
+    - `1` NEXT short (full cake)
+    - `2` ALL shorts (safety: bounded by `max_videos` in orchestrator)
+    - `3` DRY RUN preview (no save)
+    - `4-5` browser-grouped multi-channel rotation
+    - `6` indexing handoff (use YouTube DAEs → `8` [INDEX])
+    - `7` full-videos placeholder (future layer)
+  - Tests remain in `tests/` and are run directly via `python -m ...` (WSP 34)
+
+- **Handler updated** in `main.py` (L1755-1817):
+  - Options `1-3` now use the production orchestrator `src/scheduler.run_scheduler_dae`
+  - Options `4-5` run browser-grouped rotation via `run_multi_channel_scheduler`
+  - Option `6` prints indexing handoff (keeps domains functionally distributed)
+  - Option `7` remains a placeholder until videos DOM selectors exist
+
+### Added
+- **Orchestration SKILLz template** at `.agent/skills/orchestration_template/SKILL.md`
+  - Documents LEGO layered test pattern
+  - Provides reusable template for building automation systems
+
+### Architecture Decision
+- **ADR-018**: Simplified 0102 Menu
+  - Dev tests hidden behind D submenu (not cluttering main menu)
+  - Auto-detect replaces manual channel key setting
+  - Numeric options only (no C/E letter confusion)
+  - Placeholders signal future work without blocking current use
+
+## V0.9.2 - Hardened Rotation with Oops Detection (2026-01-19)
+
+### Added
+- **Oops page detection** in `run_multi_channel_scheduler()`:
+  - Imports `_is_oops_page()` and `CHANNEL_FALLBACKS` from `multi_channel_coordinator.py` (no vibecoding - reuses existing LEGO block)
+  - When permission error detected, tries bidirectional fallback channel
+  - Only skips if both target and fallback fail
+
+### Changed
+- **max_per_channel default**: Changed from 5 to 9999 (run until complete)
+- **No prompts**: Automation runs without user input
+
+### Architecture Decision
+- **ADR-019**: Reuse LEGO Blocks
+  - `_is_oops_page()` already battle-tested in comment engagement
+  - `CHANNEL_FALLBACKS` provides bidirectional recovery
+  - No duplicate code - import and reuse
+```

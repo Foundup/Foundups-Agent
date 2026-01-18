@@ -143,7 +143,8 @@ class ScheduleTracker:
 
         while current <= end_date:
             # Format date like YouTube Studio shows it: "Jan 5, 2026"
-            date_str = current.strftime("%b %-d, %Y") if hasattr(current, 'strftime') else current.strftime("%b %d, %Y").replace(" 0", " ")
+            # Windows-safe formatting (avoid %-d which is unsupported on Windows)
+            date_str = f"{current.strftime('%b')} {current.day}, {current.year}"
 
             count = self.get_count(date_str)
 

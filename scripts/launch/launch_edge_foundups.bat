@@ -4,7 +4,8 @@ echo.
 
 REM Launch Edge with remote debugging
 REM CRITICAL: Anti-backgrounding flags prevent JavaScript throttling when window not focused
-start "" "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9223 --user-data-dir="%LOCALAPPDATA%\Microsoft\Edge\User Data" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling "https://studio.youtube.com/channel/UCSNTUXjAgpd4sgWYP0xoJgw/videos/upload"
+REM FIX: --no-restore-session-state prevents Edge from restoring previous tabs after force-kill (2026-01-18)
+start "" "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --remote-debugging-port=9223 --user-data-dir="%LOCALAPPDATA%\Microsoft\Edge\User Data" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling --no-restore-session-state "https://studio.youtube.com/channel/UCSNTUXjAgpd4sgWYP0xoJgw/videos/upload"
 
 echo.
 echo Edge is starting with remote debugging on port 9223...

@@ -13,8 +13,12 @@ Automated scheduling system for YouTube Shorts across multiple channels:
 
 - Selenium/UI-TARS DOM automation for YouTube Studio
 - Multi-channel scheduling with time slot management
-- Smart slot allocation (max 3 per day, 3 hours apart)
+- Smart slot allocation (max 3 per day, ~6 hours apart)
 - Automatic title/description generation (FFCPLN format)
+- Optional **Schedule → Index Weave**:
+  - Ensures `memory/video_index/{channel}/{video_id}.json` exists (Gemini Tier 1)
+  - Appends a compact `0102 DIGITAL TWIN INDEX v1` JSON block to the description (cloud memory)
+  - Updates local index JSON with `scheduling` + `description_sync` after successful schedule
 - Schedule tracking with JSON persistence
 - Visibility workflow automation (Unlisted -> Scheduled -> Public)
 
@@ -32,6 +36,7 @@ youtube_shorts_scheduler/
 │   ├── channel_config.py      # Multi-channel configuration
 │   ├── dom_automation.py      # Selenium DOM interactions
 │   ├── schedule_tracker.py    # Schedule state management
+│   ├── index_weave.py         # Schedule ↔ Index ↔ Description integration
 │   └── content_generator.py   # Title/description templates
 └── tests/
     ├── __init__.py
@@ -68,15 +73,18 @@ See `src/dom_automation.py` for comprehensive selector documentation:
 - Page 2: Video Details/Edit Page
 - Page 3: Visibility/Scheduling Dialog
 
-## CLI Usage (V0.5.0)
+## CLI Usage (V0.9.x)
 
 ```bash
 python main.py
-# Select 1 (YouTube) → 6 (Shorts Scheduler)
+# Select 1 (YouTube DAEs) → 3 (Shorts Scheduler)
 # Options:
-#   1. Enhance First Unlisted Short (Layer 1+2)
-#   2. Dry Run (preview only)
-#   3. Schedule First Unlisted Short (Layer 1+2+3)
+#   1. Schedule NEXT unlisted Short (full cake)
+#   2. Schedule ALL unlisted Shorts (until empty; safety stops on no slots)
+#   3. DRY RUN preview (no save)
+#   4-5. Multi-channel rotation (browser-grouped)
+#   6. Indexing handoff (use YouTube DAEs → 8 [INDEX])
+#   7. Full videos placeholder (future layer)
 ```
 
 ## WRE Layer Stack
@@ -102,4 +110,23 @@ L5.5: REFRESH (F5) ← CRITICAL before loop
 - WSP 62: scripts/launch.py extraction
 - WSP 80: DAE pattern for autonomous scheduling
 - WSP 95: SKILLz.md for content enhancement
+- WSP 60 / WSP 73: Index JSON + description-as-cloud-memory (Digital Twin weave)
 
+## Feature Flags
+
+- **`YT_SCHEDULER_INDEX_WEAVE_ENABLED`**: default `true`
+  - When enabled, scheduler attempts to index each video (if missing) and append the Digital Twin index block to the description.
+
+- **`YT_SCHEDULER_CONTENT_TYPE`**: default `shorts`
+  - Control-plane selector for what the scheduler targets: `shorts` or `videos`.
+  - **`videos` is a placeholder surface only** until DOM selectors are implemented (next layer after Shorts stability).
+
+- **`YT_SCHEDULER_VERIFY_MODE`**: default `none`
+  - Control-plane placeholder for verification gating: `none` or `wre-tars`.
+  - Currently used as a run-intent switch only (tests may consume it); production Shorts scheduling does not hard-require UI‑TARS.
+
+- **`YT_SCHEDULER_INDEX_INFORM_TITLE`**: default `false`
+  - When enabled, the local index artifact informs the clickbait title hint (deterministic extraction; no LLM).
+
+- **`YT_SCHEDULER_PRE_SAVE_DELAY_SEC`**: default `1.0`
+  - Delay between dialog Done/Save and page-level Save click (stabilizes Studio animation timing).
