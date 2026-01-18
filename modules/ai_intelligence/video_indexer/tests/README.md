@@ -6,6 +6,54 @@
 
 This test suite validates the video_indexer module's ability to index 012's YouTube channels for knowledge extraction. Tests verify the complete pipeline from Selenium navigation to multimodal indexing.
 
+## Stage Test Plan (Video DAE System)
+
+The Video Indexer uses a staged validation approach to ensure each component works before proceeding to the next. This allows 012 to observe progress visually in the browser.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     VIDEO DAE STAGE TEST PIPELINE                        │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Stage 1 ──► Stage 2 ──► Stage 3 ──► Stage 4 ──► [Future Stages]        │
+│  Navigate    Batch       Index       Validate    Full Channel            │
+│  (1 video)   (10 videos) (single)    (quality)   + Viral Learning        │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 1: Navigation (COMPLETE)
+**File**: `test_integration_oldest_video.py`
+- Find oldest video via YouTube Studio DOM clicks
+- Verify video ID matches known oldest (8_DUQaqY6Tc)
+- Uses YouTubeStudioDOM pattern from commenting system
+
+### Stage 2: Batch Navigation (COMPLETE)
+**File**: `test_stage2_batch_navigation.py`
+- Navigate to YouTube Studio with clean URL (no filter params)
+- Click Date header to sort oldest first (DOM click avoids bot detection)
+- Extract 10+ video IDs and metadata
+- Validates batch discovery for channel indexing
+
+### Stage 3: Single Video Indexing (COMPLETE)
+**File**: `test_stage3_video_indexing.py`
+- Full 4-phase indexing pipeline on single video
+- Audio (ASR), Visual (keyframes), Multimodal (alignment), Clips (candidates)
+- Saves index to `memory/video_index/{channel}/{video_id}.json`
+
+### Stage 4: Indexing Validation (COMPLETE)
+**File**: `test_stage4_validation.py`
+- Load saved index and validate structure
+- Check audio segments have timestamps and text
+- Check visual keyframes have frame data
+- Check clip candidates have virality scores
+- Calculate quality score for indexed video
+
+### Future Stages (PLANNED)
+- **Stage 5**: Full Channel Indexing (all 2321 UnDaoDu videos)
+- **Stage 6**: Viral Video Learning (analyze videos with 1M+ views)
+- **Stage 7**: Apply to 012's Content (repurpose insights)
+
 ## Test Categories
 
 ### 1. Unit Tests (Offline)
@@ -17,7 +65,11 @@ Test individual components without external dependencies:
 
 ### 2. Integration Tests (Requires Browser)
 Test full pipeline with Selenium automation:
-- `test_integration_oldest_video.py` - Navigate to oldest UnDaoDu video and index
+- `test_integration_oldest_video.py` - Stage 1: Navigate to oldest video
+- `test_stage2_batch_navigation.py` - Stage 2: Find 10+ videos
+- `test_stage3_video_indexing.py` - Stage 3: Full indexing pipeline
+- `test_stage4_validation.py` - Stage 4: Validate index quality
+- `test_selenium_navigation.py` - Visual browser demo for 012
 
 ### 3. Component Tests
 Test individual analyzers with mocked inputs:
@@ -147,7 +199,74 @@ from modules.ai_intelligence.video_indexer.src.video_indexer import VideoIndexer
 
 | Date | Test Added | Purpose |
 |------|------------|---------|
-| 2026-01-09 | test_integration_oldest_video.py | Initial E2E test for oldest UnDaoDu video |
+| 2026-01-09 | test_integration_oldest_video.py | Stage 1: Navigate to oldest UnDaoDu video |
+| 2026-01-10 | test_selenium_navigation.py | Visual browser demo for 012 observation |
+| 2026-01-10 | test_stage2_batch_navigation.py | Stage 2: Find 10+ videos with DOM clicks |
+| 2026-01-10 | test_stage3_video_indexing.py | Stage 3: Full 4-phase indexing pipeline |
+| 2026-01-10 | test_stage4_validation.py | Stage 4: Index quality validation |
+| 2026-01-10 | test_gemini_video_analyzer.py | Gemini AI video analysis (Tier 1 method) |
+
+## Gemini Video Analyzer (PRIMARY METHOD)
+
+**File**: `test_gemini_video_analyzer.py`
+
+**Discovery**: Gemini 2.0 Flash can analyze YouTube videos directly via URL:
+```python
+Part.from_uri(youtube_url, mime_type='video/mp4')
+```
+
+**Usage**:
+```bash
+# Run all Gemini tests
+python modules/ai_intelligence/video_indexer/tests/test_gemini_video_analyzer.py
+
+# Run with pytest
+python -m pytest modules/ai_intelligence/video_indexer/tests/test_gemini_video_analyzer.py -v
+```
+
+**Requirements**: `GOOGLE_API_KEY` environment variable
+
+**Test Results**:
+- Analyzes 6-minute video in ~25 seconds
+- Returns 14-16 timestamped segments
+- Identifies speakers, topics, key points
+- Works with both VOD and LIVE streams
+
+## Running Stage Tests Sequentially
+
+Run each stage to validate the complete Video DAE pipeline:
+
+```bash
+# Stage 1: Can we find the oldest video?
+python modules/ai_intelligence/video_indexer/tests/test_integration_oldest_video.py
+
+# Stage 2: Can we find 10+ videos?
+python modules/ai_intelligence/video_indexer/tests/test_stage2_batch_navigation.py
+
+# Stage 3: Can we index a video? (requires Stage 2 success)
+python modules/ai_intelligence/video_indexer/tests/test_stage3_video_indexing.py
+
+# Stage 4: Is the index valid? (requires Stage 3 success)
+python modules/ai_intelligence/video_indexer/tests/test_stage4_validation.py
+```
+
+## Browser Requirements
+
+The tests use YouTubeStudioDOM pattern from commenting system (WSP 84: Code Reuse):
+
+```bash
+# Chrome for UnDaoDu/Move2Japan (port 9222)
+"C:\Program Files\Google\Chrome\Application\chrome.exe" ^
+    --remote-debugging-port=9222 ^
+    --user-data-dir="%LOCALAPPDATA%\Google\Chrome\User Data"
+
+# Edge for FoundUps/ravingANTIFA (port 9223)
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" ^
+    --remote-debugging-port=9223 ^
+    --user-data-dir="%LOCALAPPDATA%\Microsoft\Edge\User Data"
+```
+
+**IMPORTANT**: URL filters trigger YouTube bot detection (CAPTCHA). Tests use clean URLs + DOM clicks on the Date header to sort videos.
 
 ---
 

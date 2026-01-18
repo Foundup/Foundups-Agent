@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Comprehensive video content indexing for 012's YouTube channels (FoundUps, UnDaoDu, Move2Japan). Transforms raw video content into searchable knowledge artifacts that enable 0102 to learn from and recall 012's teachings.
+Comprehensive video content indexing for 012's YouTube channels (FoundUps, UnDaoDu, Move2Japan, RavingANTIFA). Transforms raw video content into searchable knowledge artifacts that enable 0102 to learn from and recall 012's teachings.
 
 ## Architecture
 
@@ -90,5 +90,6 @@ results = indexer.search("012 talks about Japan visa requirements")
 | Channel | Browser | Port | Channel ID |
 |---------|---------|------|------------|
 | Move2Japan | Chrome | 9222 | UC-LSSlOZwpGIRIYihaz8zCw |
-| UnDaoDu | Chrome | 9222 | (shared profile) |
+| UnDaoDu | Chrome | 9222 | UCfHM9Fw9HD-NwiS0seD_oIA |
 | FoundUps | Edge | 9223 | UCSNTUXjAgpd4sgWYP0xoJgw |
+| RavingANTIFA | Edge | 9223 | UCVSmg5aOhP4tnQ9KFUg97qA |

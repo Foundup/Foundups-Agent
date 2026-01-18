@@ -14,6 +14,12 @@ Feature Flags:
     VIDEO_INDEXER_DRY_RUN       - Log actions without executing (default: false)
     VIDEO_INDEXER_VERBOSE       - Verbose debug logging (default: false)
 
+API Toggles (quota protection):
+    YOUTUBE_API_ENABLED         - YouTube Data API v3 (default: false - OFF)
+    GEMINI_VIDEO_API_ENABLED    - Gemini native video analysis (default: true)
+
+    NOTE: yt-dlp and Selenium DOM scraping are ALWAYS available (no API quota)
+
 STOP File:
     Create `memory/STOP_VIDEO_INDEXER` to immediately halt processing.
     No code edit required - file presence triggers stop.
@@ -128,6 +134,10 @@ class IndexerConfig:
         self.dry_run = _env_truthy("VIDEO_INDEXER_DRY_RUN", "false")
         self.verbose = _env_truthy("VIDEO_INDEXER_VERBOSE", "false")
 
+        # API toggles (quota protection) - YouTube API OFF by default
+        self.youtube_api_enabled = _env_truthy("YOUTUBE_API_ENABLED", "false")
+        self.gemini_video_enabled = _env_truthy("GEMINI_VIDEO_API_ENABLED", "true")
+
         # Layer configurations
         self.audio = LayerConfig(
             name="audio",
@@ -174,7 +184,9 @@ class IndexerConfig:
         ))
         self.artifact_path = Path(os.getenv(
             "VIDEO_INDEXER_ARTIFACT_PATH",
-            "video_index"
+            # Canonical storage for video intelligence artifacts (per module docs + ModLog):
+            #   memory/video_index/{channel}/{video_id}.json
+            "memory/video_index"
         ))
 
     def _log_config(self):
@@ -222,6 +234,11 @@ class IndexerConfig:
             "master_enabled": self.enabled,
             "dry_run": self.dry_run,
             "verbose": self.verbose,
+            "apis": {
+                "youtube_api": self.youtube_api_enabled,  # OFF by default (quota protection)
+                "gemini_video": self.gemini_video_enabled,  # ON by default
+                # yt-dlp and Selenium always available (no quota)
+            },
             "layers": {
                 "audio": self.audio.enabled,
                 "visual": self.visual.enabled,

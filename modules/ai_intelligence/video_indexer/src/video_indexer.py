@@ -150,7 +150,9 @@ class VideoIndexer:
 
         # Paths (may be overridden by config)
         self.chroma_path = Path(chroma_path) if chroma_path else Path("holo_index/chroma_store")
-        self.artifact_path = Path(artifact_path) if artifact_path else self.config.artifact_path
+        # Canonical artifact root is a directory. Gemini indexing stores to:
+        #   {artifact_root}/{channel}/{video_id}.json
+        self.artifact_path = Path(artifact_path) if artifact_path else Path(self.config.artifact_path)
 
         # Lazy-loaded components
         self._audio_analyzer = None
@@ -323,15 +325,136 @@ class VideoIndexer:
         self._layer_results[layer_name] = layer_result
         return layer_result
 
+    def index_video_gemini(
+        self,
+        video_id: str,
+        force_reindex: bool = False,
+        is_live: bool = False,
+    ) -> IndexResult:
+        """
+        Index video using Gemini AI (Tier 1 - preferred method).
+
+        Uses Gemini 2.0 Flash to analyze YouTube videos directly via URL.
+        No download required - works with VOD and LIVE streams.
+
+        This is the PRIMARY method for:
+        - Live YouTube stream indexing (012's consciousness streams)
+        - Quick video analysis (single API call)
+        - Timestamp-aware indexing
+
+        Args:
+            video_id: YouTube video ID or URL
+            force_reindex: Re-process even if exists
+            is_live: True if analyzing a live stream
+
+        Returns:
+            IndexResult with indexing status
+        """
+        logger.info(f"[VIDEO-INDEXER] Gemini indexing: {video_id} (live={is_live})")
+        self.telemetry.video_started(video_id, self.channel)
+        start_time = time.perf_counter()
+
+        # Check if already indexed
+        if not force_reindex and self._is_indexed(video_id):
+            logger.info(f"[VIDEO-INDEXER] Video {video_id} already indexed")
+            return IndexResult(
+                video_id=video_id,
+                channel=self.channel,
+                title="(cached)",
+                duration=0,
+                indexed_at=datetime.now(),
+                audio_segments=0,
+                visual_frames=0,
+                clip_candidates=0,
+                success=True,
+                error="Already indexed (use force_reindex=True to re-process)",
+            )
+
+        try:
+            from .gemini_video_analyzer import GeminiVideoAnalyzer, save_analysis_result
+
+            analyzer = GeminiVideoAnalyzer()
+            result = analyzer.analyze_video(video_id, is_live=is_live)
+
+            if result.success:
+                # Save to index storage
+                # Canonical layout: {artifact_root}/{channel}/{video_id}.json
+                save_analysis_result(result, output_dir=str(self.artifact_path), channel=self.channel)
+
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                self.telemetry.video_completed(video_id, duration_ms)
+
+                return IndexResult(
+                    video_id=video_id,
+                    channel=self.channel,
+                    title=result.title,
+                    duration=result.latency_ms / 1000,
+                    indexed_at=datetime.now(),
+                    audio_segments=len(result.segments),
+                    visual_frames=0,  # Gemini doesn't return frames
+                    clip_candidates=0,
+                    success=True,
+                )
+            else:
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                self.telemetry.video_failed(video_id, Exception(result.error or "Unknown error"))
+                return IndexResult(
+                    video_id=video_id,
+                    channel=self.channel,
+                    title="",
+                    duration=duration_ms / 1000,
+                    indexed_at=datetime.now(),
+                    audio_segments=0,
+                    visual_frames=0,
+                    clip_candidates=0,
+                    success=False,
+                    error=result.error,
+                )
+
+        except ImportError as e:
+            logger.warning(f"[VIDEO-INDEXER] Gemini not available: {e}")
+            return IndexResult(
+                video_id=video_id,
+                channel=self.channel,
+                title="",
+                duration=0,
+                indexed_at=datetime.now(),
+                audio_segments=0,
+                visual_frames=0,
+                clip_candidates=0,
+                success=False,
+                error=f"Gemini not available: {e}",
+            )
+        except Exception as e:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self.telemetry.video_failed(video_id, e)
+            return IndexResult(
+                video_id=video_id,
+                channel=self.channel,
+                title="",
+                duration=duration_ms / 1000,
+                indexed_at=datetime.now(),
+                audio_segments=0,
+                visual_frames=0,
+                clip_candidates=0,
+                success=False,
+                error=str(e),
+            )
+
     def index_video(
         self,
         video_id: str,
         force_reindex: bool = False,
+        use_gemini: bool = True,
     ) -> IndexResult:
         """
         Index single video across all modalities with hardening.
 
-        Layer Processing Order:
+        Tiered Approach:
+            Tier 1 (default): Gemini AI - Single API call, no download
+            Tier 2 (fallback): Local pipeline - yt-dlp + whisper + opencv
+
+        Layer Processing Order (Tier 2):
             1. audio (REQUIRED) - Transcription via batch_transcriber
             2. visual (optional) - Keyframe extraction
             3. multimodal (optional) - Audio/visual alignment
@@ -344,10 +467,17 @@ class VideoIndexer:
         Args:
             video_id: YouTube video ID
             force_reindex: Re-process even if exists
+            use_gemini: Use Gemini AI (Tier 1) if available
 
         Returns:
             IndexResult with indexing status
         """
+        # Tier 1: Try Gemini first (preferred for live streams)
+        if use_gemini:
+            result = self.index_video_gemini(video_id, force_reindex)
+            if result.success:
+                return result
+            logger.warning(f"[VIDEO-INDEXER] Gemini failed, falling back to local: {result.error}")
         # Check master switch
         if not self.config.is_enabled:
             reason = "Master switch disabled" if not self.config.enabled else "STOP file active"
@@ -669,6 +799,27 @@ class VideoIndexer:
 
         return []
 
+    def index_live_stream(
+        self,
+        stream_url: str,
+        force_reindex: bool = True,
+    ) -> IndexResult:
+        """
+        Index a live YouTube stream using Gemini AI.
+
+        This is the PRIMARY USE CASE for 012's consciousness streams.
+        Gemini analyzes the live stream directly without downloading.
+
+        Args:
+            stream_url: YouTube live stream URL
+            force_reindex: Always re-analyze live content (default True)
+
+        Returns:
+            IndexResult with live stream analysis
+        """
+        logger.info(f"[VIDEO-INDEXER] Live stream indexing: {stream_url}")
+        return self.index_video_gemini(stream_url, force_reindex=force_reindex, is_live=True)
+
     def search(
         self,
         query: str,
@@ -699,8 +850,14 @@ class VideoIndexer:
 
     def _is_indexed(self, video_id: str) -> bool:
         """Check if video is already indexed."""
-        artifact_file = self.artifact_path / f"{video_id}.json"
-        return artifact_file.exists()
+        # Canonical: memory/video_index/{channel}/{video_id}.json
+        canonical = self.artifact_path / self.channel / f"{video_id}.json"
+        if canonical.exists():
+            return True
+
+        # Legacy fallback: artifact_root/{video_id}.json (some older runs used flat layout)
+        legacy = self.artifact_path / f"{video_id}.json"
+        return legacy.exists()
 
     # =========================================================================
     # Health & Status (WSP 91)

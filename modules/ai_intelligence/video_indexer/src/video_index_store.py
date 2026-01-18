@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 class IndexData:
     """
     Complete index data for a video.
+    
+    V0.11.0: Added stacking fields for transcript sources:
+    - gemini_summary: Semantic analysis from Gemini API
+    - youtube_transcript: Verbatim from YouTube DOM (free)
+    - whisper_transcript: Word-level from Whisper (HIGH-tier only)
     """
     video_id: str
     channel: str
@@ -39,6 +44,13 @@ class IndexData:
     moments: List[Dict[str, Any]]  # Aligned moments
     clips: List[Dict[str, Any]]  # Clip candidates
     metadata: Dict[str, Any]  # Additional metadata
+    quality_metrics: Optional[Dict[str, Any]] = None  # V0.9.0: Resolution, bitrate, fps
+    # V0.11.0: Stacked transcript sources
+    gemini_summary: Optional[Dict[str, Any]] = None  # Semantic (always)
+    youtube_transcript: Optional[List[Dict[str, Any]]] = None  # DOM verbatim (free)
+    whisper_transcript: Optional[List[Dict[str, Any]]] = None  # Whisper verbatim (HIGH-tier)
+    transcript_source: Optional[str] = None  # "gemini" | "youtube" | "whisper" | "stacked"
+    quality_tier: Optional[int] = None  # 0=LOW, 1=MED, 2=HIGH (from gemma classifier)
 
 
 # =============================================================================

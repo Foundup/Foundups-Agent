@@ -2,6 +2,453 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.18.1 - Canonical Artifact Path + Gemini Save Fix (2026-01-18)
+
+### Problem
+- `IndexerConfig` default artifact path drifted from canonical storage described in module docs:
+  - Canonical: `memory/video_index/{channel}/{video_id}.json`
+- `VideoIndexer.index_video_gemini()` saved Gemini artifacts under the wrong base directory by passing `self.artifact_path.parent` to `save_analysis_result()`.
+
+### Fix
+- `src/indexer_config.py`:
+  - Default `VIDEO_INDEXER_ARTIFACT_PATH` → `memory/video_index`
+- `src/video_indexer.py`:
+  - Gemini save now calls `save_analysis_result(..., output_dir=str(self.artifact_path), channel=self.channel)`
+  - `_is_indexed()` now checks canonical path first (`{artifact_root}/{channel}/{video_id}.json`) with a flat-layout fallback for legacy runs
+
+### WSP Compliance
+- **WSP 60**: Canonical memory artifact location is stable and machine-discoverable
+- **WSP 73**: Enables scheduler description-as-cloud-memory weave to anchor on a predictable local index JSON
+- **WSP 22**: ModLog updated for traceability
+
+## V0.18.0 - WRE Feedback Loop Complete (2026-01-14)
+
+### FEATURE: Recall Historical Repair Patterns Before Repair
+
+**Purpose**: Complete the WRE feedback loop per WSP 48, WSP 60 - now module can both STORE outcomes and RECALL historical patterns to adapt behavior.
+
+### Implementation
+
+**1. Added `_recall_repair_patterns()` method** (lines 516-614):
+```python
+def _recall_repair_patterns(self) -> Dict[str, Any]:
+    """Recall historical repair patterns from WRE PatternMemory.
+
+    Per WSP 48, WSP 60: Enable recall instead of computation.
+    Returns metrics about past repair success rates for adaptive learning.
+    """
+    successful = memory.recall_successful_patterns(
+        skill_name="video_indexer_json_repair",
+        min_fidelity=0.5,  # Include partial successes
+        limit=20,
+    )
+    failures = memory.recall_failure_patterns(
+        skill_name="video_indexer_json_repair",
+        max_fidelity=0.70,
+        limit=20,
+    )
+    # Calculate metrics: success_rate, avg_fidelity, degradation_alert
+```
+
+Returns:
+- `execution_count`: Total repairs tracked
+- `success_rate`: Percentage of successful repairs (0.0-1.0)
+- `avg_fidelity`: Average pattern fidelity (0.0-1.0)
+- `avg_segments`: Average segments extracted per repair
+- `degradation_alert`: True if success_rate < 80% with >= 5 samples
+
+**2. Integrated recall into `_parse_response()`** (lines 632-640):
+```python
+# WRE Phase 0: Recall historical repair patterns (WSP 48, WSP 60)
+repair_metrics = self._recall_repair_patterns()
+if repair_metrics["degradation_alert"]:
+    logger.warning(
+        f"[GEMINI-VIDEO] WRE degradation detected - "
+        f"success_rate={repair_metrics['success_rate']:.1%}, "
+        f"may need repair strategy tuning"
+    )
+```
+
+### Complete Feedback Loop
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    WRE FEEDBACK LOOP                         │
+├──────────────────────────────────────────────────────────────┤
+│  1. RECALL  → _recall_repair_patterns() queries history      │
+│  2. DETECT  → degradation_alert if success_rate < 80%        │
+│  3. REPAIR  → Apply JSON repair (strip_control, fix_commas)  │
+│  4. STORE   → _store_repair_outcome() saves result           │
+│  5. LEARN   → Future recalls inform adaptive behavior        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Test Results
+```
+WRE Recall test:
+  execution_count: 0  (no history yet - expected)
+  success_rate: 0.0
+  avg_fidelity: 0.0
+  avg_segments: 0.0
+  degradation_alert: False
+
+[OK] WRE recall integration working
+```
+
+### WSP Compliance
+- **WSP 48**: Recursive Self-Improvement (complete feedback loop)
+- **WSP 60**: Module Memory Architecture (recall + store)
+- **WSP 77**: Agent Coordination (Gemma repair tracked in WRE)
+- **WSP 91**: DAE Observability (structured logging for metrics)
+- **WSP 22**: ModLog updated
+
+### Files Modified
+- `src/gemini_video_analyzer.py`:
+  - Added `_recall_repair_patterns()` method
+  - Added recall call at start of `_parse_response()`
+
+### Architecture Significance
+This makes video_indexer the **first module** with complete WRE feedback loop:
+- Can STORE outcomes (V0.17.0)
+- Can RECALL history (V0.18.0)
+- Has degradation detection
+- Enables future adaptive behavior (e.g., adjust repair strategies based on historical success)
+
+---
+
+## V0.17.0 - WRE PatternMemory Integration (2026-01-14)
+
+### FEATURE: Adaptive Learning from JSON Repair Outcomes
+
+**Purpose**: Enable recursive self-improvement per WSP 48 by tracking JSON repair success/failure patterns for future learning.
+
+### SWOT Analysis (Pre-Implementation)
+
+| Factor | Analysis |
+|--------|----------|
+| **Strengths** | SQLite storage, lazy loading (no overhead when unused), existing WRE infrastructure, 13-field SkillOutcome dataclass |
+| **Weaknesses** | Additional import complexity, cross-module dependency (wre_core), pattern fidelity heuristics need tuning |
+| **Opportunities** | Recall successful repair patterns (WSP 60), A/B testing via skill_variations table, feed into Gemma classifier training |
+| **Threats** | Import failures in batch processing, SQLite locking in parallel execution, storage bloat if not pruned |
+
+**Decision**: Proceed with lazy loading pattern to mitigate import failure risks.
+
+### Implementation
+
+**1. Added WRE import with fallback** (lines 40-50):
+```python
+# WRE PatternMemory import for adaptive learning (WSP 48)
+_WRE_IMPORT_ERROR = None
+try:
+    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory, SkillOutcome
+    import uuid
+except ImportError as e:
+    PatternMemory = None
+    SkillOutcome = None
+    _WRE_IMPORT_ERROR = e
+```
+
+**2. Added lazy initialization in `__init__`** (line 278):
+```python
+self._pattern_memory = None  # Lazy-loaded
+```
+
+**3. Added `_get_pattern_memory()` method** (lines 449-460):
+- Lazy loads PatternMemory on first use
+- Returns None if WRE unavailable (graceful degradation)
+
+**4. Added `_store_repair_outcome()` method** (lines 462-514):
+```python
+def _store_repair_outcome(
+    self,
+    video_id: str,
+    repair_type: str,
+    segment_count: int,
+    latency_ms: float,
+    success: bool,
+    error_type: str = None,
+) -> None:
+    """Store JSON repair outcome to WRE PatternMemory."""
+    outcome = SkillOutcome(
+        execution_id=str(uuid.uuid4()),
+        skill_name="video_indexer_json_repair",
+        agent="gemma",  # Heuristic repair
+        pattern_fidelity=1.0 if success and segment_count > 0 else 0.0,
+        outcome_quality=min(1.0, segment_count / 10.0) if success else 0.0,
+        step_count=2,  # strip_control_chars + fix_trailing_commas
+        ...
+    )
+    memory.store_outcome(outcome)
+```
+
+**5. Updated `_parse_response()` to call `_store_repair_outcome`** (lines 568-577):
+- Called after successful JSON repair
+- Tracks: repair_type, segment_count, latency_ms, success
+
+### Test Results
+```
+WRE Integration Test: PASS
+- PatternMemory imported: OK
+- SkillOutcome imported: OK
+- Lazy loading: OK (_pattern_memory = None until first use)
+- Database: wre_core/data/pattern_memory.db
+- Syntax check: PASS
+```
+
+### WSP Compliance
+- **WSP 48**: Recursive Self-Improvement (outcome tracking enables learning)
+- **WSP 60**: Module Memory Architecture (recall instead of compute)
+- **WSP 77**: Agent Coordination (Gemma repair → WRE storage)
+- **WSP 22**: ModLog updated
+
+### Files Modified
+- `src/gemini_video_analyzer.py` (4 additions: import, init, get_pattern_memory, store_repair_outcome, parse_response hook)
+
+---
+
+## V0.16.0 - Enhanced JSON Repair Pipeline (2026-01-14)
+
+### Problem Identified
+Batch 39b9cf indexing revealed 2 new failure types:
+- "Expecting ',' delimiter" (trailing commas) - 2 videos
+- "Invalid control character" (0x00-0x1F chars) - 2 videos: `fIMGq4izGdM`, `dNr9gtanXYo`
+
+### Implementation
+
+**1. Added `_strip_control_characters()` method** (lines 390-414):
+```python
+def _strip_control_characters(self, json_str: str) -> str:
+    """Remove invalid control characters from JSON strings.
+
+    WSP 77 Phase 2b: Handle 'Invalid control character' errors.
+    Control chars 0x00-0x1F are invalid in JSON strings (except \t, \n, \r).
+    """
+    def clean_string_content(match):
+        content = match.group(1)
+        cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', content)
+        return f'"{cleaned}"'
+    fixed = re.sub(r'"((?:[^"\\]|\\.)*)"', clean_string_content, json_str)
+    return fixed
+```
+
+**2. Added `_fix_json_syntax()` combined pipeline** (lines 416-431):
+```python
+def _fix_json_syntax(self, json_str: str) -> str:
+    """Apply all JSON repair strategies in sequence.
+
+    WSP 77 Phase 2: Multi-stage repair pipeline.
+    Order: control chars first, then trailing commas.
+    """
+    fixed = self._strip_control_characters(json_str)
+    fixed = self._fix_trailing_commas(fixed)
+    return fixed
+```
+
+**3. Updated `_parse_response()` Phase 2** (lines 457-471):
+- On `JSONDecodeError`, apply `_fix_json_syntax()` (combined pipeline)
+- Handles both trailing commas AND control characters in one pass
+
+### Test Results
+```
+Repair Pipeline Verification:
+- Control char stripping: PASS (\x0b, \x1f removed from strings)
+- Combined pipeline: PASS (trailing comma + control chars fixed)
+- JSON parsing: PASS (repaired JSON parses correctly)
+
+Failed Video Re-test:
+- xBeZP1s--1Y (trailing comma): NOW OK - 13 segments
+- Sgvp4O8A0s0 (trailing comma): NOW OK - 14 segments
+- fIMGq4izGdM (control char): 429 rate limit (repair untested)
+- dNr9gtanXYo (control char): 429 rate limit (repair untested)
+```
+
+### WRE Integration Research
+Identified WRE `PatternMemory` for future outcome tracking:
+- `SkillOutcome` dataclass in `wre_core/src/pattern_memory.py`
+- SQLite storage for fidelity scoring
+- Future: Track repair success rates for adaptive learning
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (multi-stage repair pipeline)
+- **WSP 84**: Code Reuse (pattern from batch failure analysis)
+- **WSP 22**: ModLog updated
+
+---
+
+## V0.15.0 - WSP 77 Validation Gate Implementation (2026-01-14)
+
+### Implemented
+**Validation gate in `_parse_response()` method of `gemini_video_analyzer.py`**
+
+### Changes to `gemini_video_analyzer.py`
+
+1. **Added `_fix_trailing_commas()` method** (lines 379-388):
+   ```python
+   def _fix_trailing_commas(self, json_str: str) -> str:
+       """Remove trailing commas from JSON (common Gemini output issue)."""
+       import re
+       fixed = re.sub(r',(\s*[}\]])', r'\1', json_str)
+       return fixed
+   ```
+
+2. **Phase 2 Auto-repair** (lines 414-421):
+   - Try `json.loads()` first
+   - On `JSONDecodeError`, apply `_fix_trailing_commas()` and retry
+   - Log repair when successful
+
+3. **Phase 3 Empty segments validation** (lines 435-456):
+   - After parsing, check if `segments` is empty
+   - If empty, return `success=False` with error message
+   - No more silent failures with `success=True` and empty segments
+
+4. **Exception handler fixed** (lines 477-499):
+   - Changed `success=True` to `success=False`
+   - Added error message explaining parse failure
+   - WSP 77 compliance: No silent failures
+
+### Test Results
+```
+All tests passed:
+- Trailing comma fix: PASS ({"key": "value",} now parses)
+- Valid JSON unchanged: PASS
+- Empty segments detection: PASS
+```
+
+### Pattern Source
+- `fix_trailing_commas()` from `scripts/repair_zero_segment_videos.py`
+- Two-phase validation from `gemma_segment_classifier.py`
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (validation layer using LOCAL patterns)
+- **WSP 84**: Code Reuse (reused repair_zero_segment_videos.py pattern)
+- **WSP 50**: Pre-Action Verification (searched HoloIndex first)
+- **WSP 22**: ModLog updated
+
+---
+
+## V0.14.0 - WSP 77 Validation Layer Design (2026-01-14)
+
+### Problem Identified
+During video index audit, found 13/395 videos (3.4%) with `segments: []` despite `success: True`.
+
+### Root Cause Analysis
+Bug in `gemini_video_analyzer.py` lines 428-449:
+- When `json.loads()` fails due to trailing commas, catches exception
+- Returns empty segments `[]` with `success=True`
+- Raw Gemini response stored in `transcript_summary` field
+
+### Actions Taken
+1. **Created `repair_zero_segment_videos.py`**:
+   - `fix_trailing_commas()` regex to handle Gemini quirks
+   - `extract_json_from_text()` to parse markdown code blocks
+   - Repaired 4 videos, deleted 9 corrupt videos for re-indexing
+
+2. **Updated ROADMAP.md with Phase 10 design**:
+   - WSP 77 validation layer architecture
+   - Gemma Gate (Phase 1) for <5ms structural validation
+   - Repair Attempt (Phase 2) for trailing comma fixes
+   - Qwen Strategy (Phase 3) for repair vs re-index decisions
+
+### Existing Components Identified for Reuse
+| Component | Reuse For |
+|-----------|-----------|
+| `gemma_segment_classifier.py` | Heuristic + binary classification pattern |
+| `ai_overseer.py` | WSP 77 mission coordination |
+| `fix_trailing_commas()` | JSON syntax repair |
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (Gemma + Qwen + 0102)
+- **WSP 50**: Pre-Action Verification (HoloIndex search)
+- **WSP 22**: ModLog Updates (this entry)
+
+---
+
+## V0.13.0 - NeMo Training Data Builder (2026-01-13)
+
+### Added
+- **nemo_data_builder.py**: Convert enhanced video JSON to NeMo formats
+  - SFT training rows (voice_sft.jsonl)
+  - DPO preference pairs (dpo_pairs.jsonl)
+  - Decision training data (decision_sft.jsonl)
+
+### Fixed
+- **video_enhancer.py**: Escaped JSON curly braces in prompts for .format()
+
+### WSP Compliance
+- **WSP 73**: Digital Twin Architecture
+- **WSP 77**: Agent Coordination (NeMo training)
+
+---
+
+## V0.12.0 - Video Enhancer for Digital Twin Training (2026-01-13)
+
+### Added
+- **video_enhancer.py**: Enhance existing video JSON with training data
+  - 8 enhancement prompts for Gemini
+  - Extracts: style fingerprint, voice patterns, intent labels, quotables
+  - Quality tier calculation (0=LOW, 1=MED, 2=HIGH)
+  - Batch processing support
+
+### Enhancement Prompts
+| Prompt | Purpose |
+|--------|---------|
+| Q1: verbatim_quotes | Exact words for voice cloning |
+| Q2: intent_labels | Segment intent classification |
+| Q3: quotable_moments | Memorable phrases for RAG |
+| Q4: comment_triggers | Engagement prediction |
+| Q5: qa_moments | Question-answer pairs |
+| Q6: reply_signals | Reply-worthy content |
+| Q7: teaching_moments | Concepts explained |
+| Q8: style_fingerprint | Formality, energy, humor scores |
+
+### New Schema Fields
+```python
+training_data = {
+    "is_012_content": True,
+    "quality_tier": 2,
+    "voice_patterns": {...},
+    "style_fingerprint": {...},
+    "intent_labels": [...],
+    "quotable_moments": [...]
+}
+```
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (Digital Twin training)
+- **WSP 84**: Code Reuse (GeminiVideoAnalyzer patterns)
+
+---
+
+## V0.11.0 - Transcript Stacking Architecture (2026-01-13)
+
+### Added
+- **youtube_transcript_scraper.py**: DOM-based transcript extraction
+  - Scrapes YouTube's transcript panel via Selenium
+  - Integrates with `foundups_selenium` HumanBehavior (WSP 84 reuse)
+  - Free, no API limits, verbatim text
+
+### Modified
+- **video_index_store.py**: Added stacking fields to IndexData
+  - `gemini_summary`: Semantic analysis (always)
+  - `youtube_transcript`: DOM verbatim (free)
+  - `whisper_transcript`: Word-level (HIGH-tier only)
+  - `transcript_source`: Source identifier
+  - `quality_tier`: 0/1/2 from gemma classifier
+
+### Architecture: Transcript Stacking
+```
+TIER 1: Gemini API     → Semantic (RAG, search)
+TIER 2: YouTube DOM    → Verbatim (free fallback)
+TIER 3: Whisper Local  → Gold standard (5.7% HIGH-tier)
+```
+
+### WSP Compliance
+- **WSP 72**: Module Independence
+- **WSP 84**: Code Reuse (foundups_selenium infrastructure)
+- **WSP 77**: Agent Coordination (Digital Twin training)
+
+---
+
 ## V0.1.0 - Module Creation (2026-01-08)
 
 ### Created
@@ -308,6 +755,352 @@ YouTube Video ID
 - ModLog.md: GOOD (now complete)
 - Tests: NOW EXISTS (was missing)
 - tests/README.md: NOW EXISTS (was missing)
+
+---
+
+## V0.7.0 - Gemini Video Analyzer (2026-01-10)
+
+### MAJOR BREAKTHROUGH: Direct YouTube Analysis via Gemini AI
+
+**Discovery**: Gemini 2.0 Flash can analyze YouTube videos directly via URL using:
+```python
+Part.from_uri(youtube_url, mime_type='video/mp4')
+```
+
+This eliminates the need for video downloads and provides timestamped analysis in a single API call.
+
+### Added
+- **gemini_video_analyzer.py**: Direct YouTube video analysis
+  - `GeminiVideoAnalyzer` class using google.genai SDK
+  - `analyze_video()`: Single API call for complete video analysis
+  - `analyze_live_stream()`: Live stream analysis (PRIMARY USE CASE)
+  - `batch_analyze()`: Multiple videos with rate limiting
+  - Returns: timestamped segments, transcript, topics, speakers, key points
+  - Automatic JSON parsing with fallback to raw text
+  - Storage in video indexer format
+
+- **test_gemini_video_analyzer.py**: Comprehensive test suite
+  - Unit tests for response parsing (no API calls)
+  - Integration tests for actual Gemini API
+  - Mock response fixtures
+  - Both pytest and direct execution modes
+
+### Changed
+- **video_indexer.py**: Gemini as Tier 1 indexing method
+  - Added `index_video_gemini()`: Direct Gemini-based indexing
+  - Added `index_live_stream()`: Convenience for live streams (PRIMARY USE)
+  - Modified `index_video()`: Now uses Gemini first, falls back to local
+  - New `use_gemini=True` parameter for tier selection
+
+### Tiered Approach
+```
+Tier 1 (default): Gemini AI
+  - Single API call, no download required
+  - Works with VOD and LIVE streams
+  - Returns timestamped segments
+  - ~25-30 seconds for analysis
+
+Tier 2 (fallback): Local Pipeline
+  - yt-dlp download + whisper + opencv
+  - Used when Gemini unavailable
+  - Full visual frame extraction
+```
+
+### API Key Configuration
+```
+GOOGLE_API_KEY  - Preferred (works with google.genai SDK)
+GEMINI_API_KEY  - Alternative (may have issues on some keys)
+```
+
+### Test Results (2026-01-10)
+```
+Video: 8_DUQaqY6Tc (Education Singularity)
+  Title: The Education Singularity
+  Duration: 6:01
+  Segments: 14-16 timestamped sections
+  Topics: Education, Technology, eLearning, Accessibility
+  Speakers: Michael Trauth
+  Latency: ~25,000ms (single API call)
+```
+
+### PRIMARY USE CASE
+Live YouTube stream indexing for 012's consciousness streams.
+```python
+indexer = VideoIndexer(channel="undaodu")
+result = indexer.index_live_stream(stream_url)
+```
+
+### WSP Compliance
+- **WSP 72**: Module Independence (Gemini analyzer is standalone)
+- **WSP 84**: Code Reuse (follows veo3_generator.py patterns)
+- **WSP 91**: DAE Observability (telemetry integration)
+- **WSP 5**: Test Coverage (unit + integration tests)
+- **WSP 22**: ModLog updated with breakthrough
+
+### Files Added
+- `src/gemini_video_analyzer.py` (450+ lines)
+- `tests/test_gemini_video_analyzer.py` (320+ lines)
+
+---
+
+## V0.8.0 - Studio Ask Indexer & Menu Integration (2026-01-11)
+
+### FEATURE: Browser-Based Video Indexing via YouTube's Ask Gemini
+
+**Approach**: Use YouTube's built-in "Ask" Gemini feature via browser automation.
+This is FREE (no API quota) and mirrors 012's own behavior of using the Ask button.
+
+### Added
+- **studio_ask_indexer.py**: Browser automation for video indexing
+  - `StudioAskIndexer` class using Selenium
+  - `ask_about_video()`: Navigate to video, click Ask, parse response
+  - `index_channel_videos()`: Batch index videos for a channel
+  - `run_video_indexing_cycle()`: Entry point for auto_moderator_dae
+  - Stores results in VideoContentIndex (ChromaDB)
+
+- **YT_VIDEO_INDEXING_ENABLED**: Menu toggle in main.py
+  - Added to `_yt_controls_menu()` toggles list
+  - Default: OFF (opt-in feature)
+  - Controlled via Environment variable
+
+### Changed
+- **auto_moderator_dae.py**: Hook at line 1000
+  - Video indexing runs after comment engagement completes
+  - Only runs when `YT_VIDEO_INDEXING_ENABLED=true`
+  - Import is lazy (no impact if disabled)
+
+- **main.py**: YouTube Controls menu updated
+  - New toggle: "Video indexing (post-comments)"
+  - Position: After "Append debug tags to replies"
+
+### Integration Flow
+```
+Comment Engagement Loop:
+  1. Process all channel comments
+  2. [NEW] Run video indexing cycle (if enabled)
+  3. Sleep 10 minutes
+  4. Repeat
+```
+
+### WSP Compliance
+- **WSP 27**: DAE Architecture (follows comment DAE patterns)
+- **WSP 22**: ModLog updated
+- **WSP 91**: DAE Observability (logging integrated)
+
+### Files Added/Modified
+- `src/studio_ask_indexer.py` (NEW - 350+ lines)
+- `main.py` (toggle added to menu)
+- `auto_moderator_dae.py` (hook added at line 1000)
+
+---
+
+## V0.9.0 - Quality Analyzer & Digital Twin Prep (2026-01-11)
+
+### FEATURE: Video Quality Metrics for Digital Twin Training
+
+**Purpose**: Capture video quality (resolution, bitrate, fps) to:
+1. Identify low-quality videos needing enhancement
+2. Train Digital Twin on quality-aware content
+3. Integrate with pattern matching system
+
+### Added
+- **quality_analyzer.py**: Video quality analysis using yt-dlp
+  - `analyze_video_quality_yt()`: No-download quality extraction
+  - `QualityMetrics` dataclass with resolution, bitrate, fps
+  - `quality_score`: Normalized 0-1 score
+  - `quality_tier`: high/medium/low/poor classification
+  - `issues`: List of detected quality problems
+
+- **video_index_store.py**: Added `quality_metrics` field to `IndexData`
+
+### Research (for future modules)
+- **Video Enhancement**: Real-ESRGAN, Video2X (GAN-based upscaling)
+- **NVIDIA NeMo Stack**: Framework 2.0, Curator, Guardrails, Agent Toolkit
+- **Speaker Diarization**: pyannote.audio for "who spoke when"
+
+### Digital Twin Architecture (Planned)
+```
+Phase 0: RAG + Guardrails MVP (no training)
+Phase 1: Video indexing with quality metrics
+Phase 2: Comment export + NeMo Curator
+Phase 3: LoRA fine-tuning on 012's voice
+```
+
+### WSP Compliance
+- **WSP 72**: Module Independence (quality_analyzer is standalone)
+- **WSP 77**: Agent Coordination (feeds Digital Twin training)
+- **WSP 22**: ModLog updated
+
+### Files Added
+- `src/quality_analyzer.py` (250+ lines)
+
+---
+
+## V0.10.0 - Gemma Segment Classifier (2026-01-12)
+
+### FEATURE: Training-Worthy Segment Identification
+
+**Purpose**: Filter video segments by quality tier for Digital Twin training:
+- Tier 0 (LOW): Noise, "um/uh", music, inaudible → skip
+- Tier 1 (REGULAR): Normal speech → voice clips
+- Tier 2 (HIGH): Key insights, paradigm shifts → training-worthy
+
+### Added
+- **gemma_segment_classifier.py**: Two-phase quality classification
+  - Phase 1: Heuristic pre-filter (<5ms per segment)
+  - Phase 2: Gemma 3 270M validation (<50ms via llama_cpp)
+  - `SegmentClassification` dataclass with tier, confidence, reason
+  - `get_training_worthy_segments()` for batch filtering
+  - Model: `E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf`
+
+- **dataset_builder.py**: Training data generation with Gemma
+  - `DatasetBuilder` class with Gemma integration
+  - Outputs: `training_rows.jsonl`, `voice_clips_manifest.jsonl`, `training_worthy.jsonl`
+  - Style stats extraction (WPM, sentence length)
+  - Deep links with YouTube timestamps
+
+### Changed
+- **__init__.py**: Export GemmaSegmentClassifier, SegmentClassification
+  - Version bumped to 0.10.0
+
+### Results (366 indexed videos)
+```
+Total segments:    ~3,500
+Training-worthy:   ~200 (5.7%)
+Voice clips:       ~3,200 (Tier 1+)
+```
+
+### WSP Compliance
+- **WSP 77**: Agent Coordination (Gemma Phase 1 fast pattern)
+- **WSP 84**: Code Reuse (follows gemma_validator.py pattern)
+- **WSP 22**: ModLog updated
+
+---
+
+## V0.11.0 - Batch Indexing & WSL Fix (2026-01-13)
+
+### FEATURE: Production Batch Indexing
+
+**Problem**: WSL/ChromaDB cross-filesystem access caused segfaults (Exit 139)
+**Solution**: `--skip-holoindex` flag bypasses ChromaDB during save
+
+### Added
+- **scripts/batch_index_videos.py**: Batch indexing with rate limiting
+  - `--batch-size`: Videos per batch (default: 50)
+  - `--delay`: Seconds between API calls (default: 1.5)
+  - `--skip-holoindex`: Bypass ChromaDB (WSL-safe)
+  - `--use-holoindex`: Force HoloIndex dedup (may crash via WSL)
+  - Progress tracking: `memory/batch_index_state.json`
+  - Resume from where left off
+  - Exponential backoff on 429 rate limits
+
+- **File-based deduplication**: `get_indexed_videos_from_files()`
+  - Checks `memory/video_index/{channel}/*.json`
+  - No SQLite/ChromaDB dependency
+
+### Current Progress (2026-01-13)
+```
+UnDaoDu:     366/2,321 indexed (15.8%)
+Foundups:    0/1,332 (pending)
+Move2Japan:  0/583 (pending)
+```
+
+### Known Issues
+- 13 videos failed (private/deleted)
+- Some JSON parse warnings from Gemini (non-fatal)
+
+### WSP Compliance
+- **WSP 72**: Module Independence (file-based fallback)
+- **WSP 91**: DAE Observability (batch state tracking)
+- **WSP 22**: ModLog updated
+
+---
+
+## ARCHITECTURE: Gemini vs Whisper vs Browser Transcripts
+
+### Current System (Gemini API - Tier 1)
+```
+YouTube Video URL
+    |
+    +-> Gemini 2.0 Flash API (gemini_video_analyzer.py)
+        |
+        +-> Internal speech-to-text (Gemini does this)
+        +-> Semantic analysis (topics, speakers, key points)
+        +-> Returns: SUMMARIZED descriptions (not verbatim)
+        +-> Storage: memory/video_index/{channel}/{video_id}.json
+```
+
+**What Gemini provides**:
+- Timestamped segments with descriptions
+- Topic extraction
+- Speaker identification
+- Key points summary
+
+**What Gemini does NOT provide**:
+- Verbatim word-for-word transcripts
+- Exact timing per word
+- Voice style characteristics (pace, pauses)
+
+### Local Pipeline (Whisper - Tier 2 Fallback)
+```
+YouTube Video URL
+    |
+    +-> yt-dlp download (audio_analyzer.py)
+    +-> Whisper ASR (batch_transcriber.py)
+        |
+        +-> Verbatim transcripts
+        +-> Word-level timestamps
+        +-> Used for: TTS training, voice cloning
+```
+
+### Browser-Based (Antigravity - Future)
+```
+YouTube Studio "Ask Gemini" button (studio_ask_indexer.py)
+    |
+    +-> Selenium/Antigravity DOM automation
+    +-> Free (no API quota)
+    +-> May provide different transcript format
+    +-> Can scrape YouTube's auto-captions
+```
+
+### RECOMMENDED STACKED APPROACH
+```
+Phase 1: Gemini API (current - semantic indexing)
+    - Fast (~30s per video)
+    - No download
+    - Good for search/RAG
+
+Phase 2: Whisper on HIGH-tier segments only
+    - Run Whisper ONLY on training-worthy segments (5.7%)
+    - Get verbatim text for Digital Twin voice training
+    - Saves 95% of Whisper processing time
+
+Phase 3: Browser transcript scrape (Antigravity)
+    - Use YouTube's auto-captions as fallback
+    - DOM actions to extract transcript panel
+    - Free, no API limits
+```
+
+### Files for Handoff
+```
+INDEXING:
+  scripts/batch_index_videos.py          - Batch indexing CLI
+  src/gemini_video_analyzer.py           - Gemini API analysis
+  src/gemma_segment_classifier.py        - Quality tier classification
+  src/dataset_builder.py                 - Training data generation
+
+STORAGE:
+  memory/video_index/{channel}/*.json    - Indexed video JSONs
+  memory/batch_index_state.json          - Progress tracking
+
+DOM AUTOMATION (for Antigravity):
+  src/studio_ask_indexer.py              - Browser-based indexing
+  modules/platform_integration/foundups_selenium/  - Selenium patterns
+
+MODELS:
+  E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf  - Gemma classifier
+  E:/HoloIndex/vectors/video_segments             - ChromaDB vectors
+```
 
 ---
 
