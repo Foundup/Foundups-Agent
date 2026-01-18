@@ -24,6 +24,8 @@ Key Insight: Replace log spam with intelligent alerts
 
 import logging
 import asyncio
+import os
+from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 
@@ -56,6 +58,16 @@ class BreadcrumbMonitor:
         self.livechat = livechat_sender
         self.alerted_patterns = set()  # Deduplicate alerts (session-level)
         self.monitoring = False
+        self.breadcrumbs_enabled = os.getenv("AI_OVERSEER_BREADCRUMBS", "true").lower() in {"1", "true", "yes", "on"}
+        self._breadcrumb_counter = 0
+        self._breadcrumb_session_id = f"ai_overseer_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self._breadcrumb_emitter = None
+
+        try:
+            from holo_index.utils.agent_logger import log_breadcrumb_activity
+            self._breadcrumb_emitter = log_breadcrumb_activity
+        except Exception:
+            self._breadcrumb_emitter = None
 
         # Import telemetry
         try:
@@ -101,6 +113,7 @@ class BreadcrumbMonitor:
 
         self.monitoring = True
         logger.info(f"[BREADCRUMB-MONITOR] Started monitoring (interval: {interval_seconds}s)")
+        self._emit_breadcrumb("overseer_monitoring_start", data={"description": "monitoring_start", "impact": f"interval={interval_seconds}s"})
 
         while self.monitoring:
             try:
@@ -114,6 +127,7 @@ class BreadcrumbMonitor:
         """Stop monitoring breadcrumb patterns."""
         self.monitoring = False
         logger.info("[BREADCRUMB-MONITOR] Stopped monitoring")
+        self._emit_breadcrumb("overseer_monitoring_stop", data={"description": "monitoring_stop", "impact": "stopped"})
 
     async def _check_patterns(self):
         """Check for repeated patterns and send alerts if critical."""
@@ -145,7 +159,7 @@ class BreadcrumbMonitor:
                 if self.livechat and alert:
                     try:
                         await self.livechat.send_chat_message(
-                            message_text=f"⚠️ [AI OVERSEER] {alert} ✊✋🖐️",
+                            message_text=f"[AI OVERSEER] {alert}",
                             response_type='general',
                             skip_delay=True
                         )
@@ -154,6 +168,8 @@ class BreadcrumbMonitor:
                         logger.error(f"[BREADCRUMB-MONITOR] Failed to send alert: {e}")
 
                 # Mark as alerted
+                if alert:
+                    self._emit_breadcrumb("overseer_alert", task_id=pattern_key, data={"description": alert, "impact": f"{source_dae}:{event_type}:{count}"})
                 self.alerted_patterns.add(pattern_key)
 
     async def _classify_pattern_criticality(
@@ -250,6 +266,19 @@ class BreadcrumbMonitor:
         # return alert
 
         return None
+
+    def _emit_breadcrumb(self, action: str, **kwargs) -> None:
+        """Emit high-signal breadcrumbs for 0102 coordination (no stdout noise)."""
+        if not self.breadcrumbs_enabled or not self._breadcrumb_emitter:
+            return
+        try:
+            self._breadcrumb_counter += 1
+            payload = dict(kwargs)
+            payload.setdefault("agent_id", "AI_OVERSEER")
+            payload.setdefault("session_id", self._breadcrumb_session_id)
+            self._breadcrumb_emitter(action, self._breadcrumb_counter, **payload)
+        except Exception:
+            pass
 
     def get_pattern_summary(self, minutes: int = 30) -> Dict:
         """

@@ -115,6 +115,14 @@ class MissionType(Enum):
     BUG_DETECTION = "bug_detection"              # Detect bugs in daemon output
     AUTO_REMEDIATION = "auto_remediation"        # Auto-fix low-hanging fruit
     CUSTOM = "custom"
+    # Activity Routing Types (WSP 15 MPS Priority) - 2026-01-19
+    ACTIVITY_ROUTING = "activity_routing"        # Meta: orchestrate activity transitions
+    LIVE_STREAM = "live_stream"                  # P0: Critical - always wins
+    COMMENT_PROCESSING = "comment_processing"    # P1: High priority
+    VIDEO_INDEXING = "video_indexing"            # P1: Default when idle
+    SCHEDULING = "scheduling"                    # P2: Medium priority (triggers indexing)
+    SOCIAL_MEDIA = "social_media"                # P3: Low priority
+    MAINTENANCE = "maintenance"                  # P4: Lowest priority
 
 
 @dataclass
@@ -867,6 +875,146 @@ class AIIntelligenceOverseer:
             # Do not block on DB issues
             pass
 
+    # ==================== ACTIVITY ROUTING (WSP 15 MPS) ====================
+
+    # Activity MPS Scores (WSP 15 priority scoring)
+    ACTIVITY_MPS_SCORES = {
+        MissionType.LIVE_STREAM: 20,         # P0: Critical - always wins
+        MissionType.COMMENT_PROCESSING: 15,  # P1: High priority
+        MissionType.VIDEO_INDEXING: 14,      # P1: Default when idle
+        MissionType.SCHEDULING: 12,          # P2: Medium (triggers indexing via index_weave)
+        MissionType.SOCIAL_MEDIA: 8,         # P3: Low priority
+        MissionType.MAINTENANCE: 4,          # P4: Lowest priority
+    }
+
+    def get_next_activity(self, current_state: Dict[str, Any]) -> MissionType:
+        """
+        WSP 15 MPS-based activity routing.
+
+        Determines next activity based on system state and priority scoring.
+        Uses pattern from multi_channel_coordinator.py for done detection.
+
+        Args:
+            current_state: Dict with keys:
+                - is_live: bool - Is stream currently live (P0 override)
+                - unprocessed_comments: int - Comments awaiting processing
+                - all_processed: bool - Multi-channel done signal
+                - schedule_queue: int - Videos awaiting scheduling
+                - social_queue: int - Social media posts pending
+                - maintenance_due: bool - System maintenance needed
+
+        Returns:
+            MissionType - Next activity to execute
+        """
+        # P0: Live stream ALWAYS wins (critical engagement)
+        if current_state.get("is_live", False):
+            logger.info("[ACTIVITY] P0 Override: Live stream active")
+            return MissionType.LIVE_STREAM
+
+        # P1: Comments if unprocessed (from multi_channel_coordinator pattern)
+        if not current_state.get("all_processed", False):
+            unprocessed = current_state.get("unprocessed_comments", 0)
+            if unprocessed > 0:
+                logger.info(f"[ACTIVITY] P1: {unprocessed} comments pending")
+                return MissionType.COMMENT_PROCESSING
+
+        # P2: Scheduling if queue exists (triggers indexing via index_weave.py)
+        if current_state.get("schedule_queue", 0) > 0:
+            logger.info("[ACTIVITY] P2: Schedule queue active (will trigger indexing)")
+            return MissionType.SCHEDULING
+
+        # P3: Social media if posts pending
+        if current_state.get("social_queue", 0) > 0:
+            logger.info("[ACTIVITY] P3: Social media queue active")
+            return MissionType.SOCIAL_MEDIA
+
+        # P4: Maintenance if due
+        if current_state.get("maintenance_due", False):
+            logger.info("[ACTIVITY] P4: Maintenance due")
+            return MissionType.MAINTENANCE
+
+        # P1 Default: Indexing when all else complete
+        logger.info("[ACTIVITY] P1 Default: Falling back to video indexing")
+        return MissionType.VIDEO_INDEXING
+
+    def detect_activity_state(self, daemon_results: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Detect current activity state from daemon monitoring results.
+
+        Extracts state signals for activity routing decisions.
+        Pattern: Reuses multi_channel_coordinator's all_processed detection.
+
+        Args:
+            daemon_results: Optional results from monitor_daemon()
+
+        Returns:
+            Dict with activity state for get_next_activity()
+        """
+        state = {
+            "is_live": False,
+            "unprocessed_comments": 0,
+            "all_processed": False,
+            "schedule_queue": 0,
+            "social_queue": 0,
+            "maintenance_due": False,
+        }
+
+        if not daemon_results:
+            return state
+
+        # Extract signals from daemon monitoring
+        signals = daemon_results.get("signals", [])
+        for signal in signals:
+            pattern = signal.get("pattern", "")
+
+            # Live stream detection
+            if "live" in pattern.lower() and "active" in pattern.lower():
+                state["is_live"] = True
+
+            # Comments cleared detection (from youtube_daemon_monitor.json)
+            if "comments_cleared" in pattern or "edge_comments_cleared" in pattern:
+                state["all_processed"] = True
+
+        # Check for remaining bugs as work indicator
+        bugs_detected = daemon_results.get("bugs_detected", 0)
+        if bugs_detected == 0 and daemon_results.get("signals_detected", 0) == 0:
+            # Quiet daemon = all_processed likely true
+            state["all_processed"] = True
+
+        return state
+
+    def route_activity(self, daemon_results: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Complete activity routing cycle.
+
+        1. Detect current state
+        2. Route to next activity
+        3. Return routing decision with metadata
+
+        Args:
+            daemon_results: Optional results from monitor_daemon()
+
+        Returns:
+            Dict with:
+                - next_activity: MissionType
+                - state: Current detected state
+                - mps_score: Priority score of selected activity
+        """
+        state = self.detect_activity_state(daemon_results)
+        next_activity = self.get_next_activity(state)
+        mps_score = self.ACTIVITY_MPS_SCORES.get(next_activity, 0)
+
+        logger.info(
+            f"[ACTIVITY-ROUTING] Selected: {next_activity.value} (MPS: {mps_score})"
+        )
+
+        return {
+            "next_activity": next_activity,
+            "state": state,
+            "mps_score": mps_score,
+            "routing_reason": f"WSP 15 MPS routing: {next_activity.value} scored {mps_score}"
+        }
+
     # ==================== UBIQUITOUS DAEMON MONITORING ====================
 
     def monitor_daemon(self, bash_id: str = None, skill_path: Path = None,
@@ -921,12 +1069,27 @@ class AIIntelligenceOverseer:
         if not bash_output:
             return {"success": False, "error": "No bash output provided"}
 
+        # Phase 0 (Signal): Non-error operational signals (state transitions)
+        # This enables Qwen/0102 orchestration without misclassifying healthy state as a "bug".
+        detected_signals = self._gemma_detect_signals(bash_output, skill)
+        if detected_signals:
+            logger.info(f"[SIGNAL-DETECT] Detected {len(detected_signals)} operational signal(s)")
+            for sig in detected_signals[:5]:
+                logger.info(f"[SIGNAL] {sig.get('pattern_name')}")
+
         # Phase 1 (Gemma): Fast error detection using skill patterns
         detected_bugs = self._gemma_detect_errors(bash_output, skill)
 
         if not detected_bugs:
             logger.info(f"[DAEMON-MONITOR] No bugs detected in bash {bash_id}")
-            return {"success": True, "bugs_detected": 0, "bugs_fixed": 0, "reports_generated": 0}
+            return {
+                "success": True,
+                "bugs_detected": 0,
+                "bugs_fixed": 0,
+                "reports_generated": 0,
+                "signals_detected": len(detected_signals),
+                "signals": detected_signals,
+            }
 
         logger.info(f"[GEMMA-ASSOCIATE] Detected {len(detected_bugs)} potential bugs")
 
@@ -939,7 +1102,9 @@ class AIIntelligenceOverseer:
             "bugs_fixed": 0,
             "reports_generated": 0,
             "fixes_applied": [],
-            "reports": []
+            "reports": [],
+            "signals_detected": len(detected_signals),
+            "signals": detected_signals,
         }
 
         # Phase 3 (0102): Execute fixes or generate reports
@@ -1070,6 +1235,37 @@ class AIIntelligenceOverseer:
 
         error_patterns = skill.get("error_patterns", {})
         for pattern_name, pattern_config in error_patterns.items():
+            regex = pattern_config.get("regex", "")
+            if not regex:
+                continue
+
+            matches = re.findall(regex, bash_output, re.IGNORECASE | re.MULTILINE)
+            if matches:
+                detected.append({
+                    "pattern_name": pattern_name,
+                    "matches": matches,
+                    "config": pattern_config
+                })
+
+        return detected
+
+    def _gemma_detect_signals(self, bash_output: str, skill: Dict) -> List[Dict]:
+        """
+        Phase 0 (Gemma): Detect operational state signals (non-errors).
+
+        Skills may define `signal_patterns` to surface orchestration-relevant state
+        transitions (e.g., "comments_cleared") without treating them as bugs.
+        """
+        import re
+
+        detected: List[Dict[str, Any]] = []
+        signal_patterns = skill.get("signal_patterns", {}) or {}
+        if not isinstance(signal_patterns, dict):
+            return detected
+
+        for pattern_name, pattern_config in signal_patterns.items():
+            if not isinstance(pattern_config, dict):
+                continue
             regex = pattern_config.get("regex", "")
             if not regex:
                 continue
@@ -1778,6 +1974,19 @@ index 0000000..1111111 100644
                     print(f"  - {alert}")
                 if len(alerts) > 3:
                     print(f"  ... and {len(alerts) - 3} more")
+                # Root violations are a special-case: optionally auto-correct via root monitor.
+                if source == "gemma_root_monitor" and os.getenv("AI_OVERSEER_ROOT_AUTOCORRECT", "false").lower() in ("true", "1", "yes"):
+                    try:
+                        from holo_index.monitoring.root_violation_monitor import scan_and_correct_violations
+                        result = await scan_and_correct_violations()
+                        logger.warning("[AI-OVERSEER] Root auto-correct attempted | applied=%d failed=%d",
+                                       len(result.get("corrections_applied", [])),
+                                       len(result.get("failed_corrections", [])))
+                        print("[AI-OVERSEER] Root auto-correct attempted (AI_OVERSEER_ROOT_AUTOCORRECT=true)")
+                    except Exception as exc:
+                        logger.error("[AI-OVERSEER] Root auto-correct failed: %s", exc)
+                        print("[AI-OVERSEER] Root auto-correct failed (see logs)")
+
                 print("[AI-OVERSEER] Run 'python holo_index.py --check-module <module>' for details\n")
 
         else:

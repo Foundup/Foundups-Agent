@@ -1,10 +1,84 @@
 # AI Intelligence Overseer - ModLog
 
 **Module**: `modules/ai_intelligence/ai_overseer/`
-**Status**: Active (Autonomous Code Patching + Daemon Restart)
-**Version**: 0.5.0
+**Status**: Active (Autonomous Code Patching + Daemon Restart + Activity Routing)
+**Version**: 0.6.0
 
 ---
+
+## 2026-01-19 - Activity Orchestration Audit & Enhancement
+
+**Change Type**: Enhancement + Documentation
+**WSP Compliance**: WSP 50 (Pre-Action), WSP 77 (Agent Coordination), WSP 15 (MPS Scoring), WSP 22 (ModLog)
+
+### What Changed
+
+HoloIndex audit identified 5 existing modules for activity orchestration (~80% functionality exists):
+
+1. **ai_overseer.py** - Mission coordination, Qwen/Gemma integration
+2. **multi_channel_coordinator.py** - Done detection (`all_processed: True`)
+3. **pattern_memory.py** - SQLite outcome storage, A/B testing
+4. **libido_monitor.py** - Gemma pattern frequency control
+5. **index_weave.py** - Already unifies scheduler ↔ indexer (WSP 27)
+
+**Key Finding**: Scheduling + Indexing already unified in `index_weave.py`!
+
+### Enhancement Plan
+
+Added activity routing capabilities:
+- `MissionType.ACTIVITY_ROUTING` for orchestration missions
+- `get_next_activity()` method with WSP 15 MPS priority
+- Activity state detection using existing `all_processed` pattern
+- LibidoMonitor integration for activity throttling
+
+### Activity Priority Matrix (WSP 15)
+
+| Activity | Priority | MPS Score |
+|----------|----------|-----------|
+| Live Stream | P0 | 20 |
+| Comments | P1 | 15 |
+| Indexing | P1 (default) | 14 |
+| Scheduling | P2 | 12 |
+| Social Media | P3 | 8 |
+| Maintenance | P4 | 4 |
+
+**Files Created**:
+- `docs/ACTIVITY_ORCHESTRATION_AUDIT.md` - Full audit documentation
+
+**Anti-Vibecoding Compliance**:
+- HoloIndex search performed FIRST
+- Existing modules identified (5 found)
+- Enhancement (~50 lines) vs new implementation (~500+ lines)
+
+---
+
+## 2026-01-09 - Overseer Breadcrumb Emission (High-Signal Only)
+
+**Change Type**: Enhancement
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON observability), WSP 22 (ModLog)
+
+### What Changed
+
+- AI_overseer now emits high-signal breadcrumbs (start/stop monitoring, alerts) to the unified agent log for 0102 coordination.
+- Breadcrumb emission is silent by default and gated by `AI_OVERSEER_BREADCRUMBS` (default true).
+- Fixed alert chat message text to ASCII-only for Windows console safety.
+
+**Files Modified**:
+- `src/breadcrumb_monitor.py`
+
+---
+
+## 2026-01-10 - Root Violation Auto-Correct Trigger (Telemetry → Action)
+
+**Change Type**: Enhancement  
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON observability), WSP 85 (Root Protection), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+### What Changed
+- `ai_overseer` now recognizes `system_alerts` from `source="gemma_root_monitor"` and can optionally trigger root auto-correction.
+- New environment flag: `AI_OVERSEER_ROOT_AUTOCORRECT` (default false). When enabled, the overseer invokes `scan_and_correct_violations()` and logs applied/failed corrections.
+
+**Files Modified**:
+- `src/ai_overseer.py`
 
 ## 2026-01-05 - Holo System Check (Silent Wiring Audit)
 
@@ -22,6 +96,7 @@
 - `README.md`
 
 ---
+
 
 ## 2026-01-04 - Holo Memory Sentinel + Memory Roadmap
 
@@ -517,6 +592,20 @@ Phase_4_Learning: Pattern storage
   - Duplicate posts (needs 0102)
   - API quota exhausted (auto-fixable)
   - Stream not found (ignore - normal)
+
+---
+
+## 2026-01-09 - Signal Patterns (Non-Error) for Next-Step Orchestration
+
+**Change Type**: Enhancement  
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON Observability), WSP 96 (Skills Wardrobe), WSP 22 (ModLog)
+
+Added optional `signal_patterns` to daemon monitoring skills so operational state transitions can be surfaced to Qwen/0102 without being misclassified as “bugs”.
+
+- `AIIntelligenceOverseer.monitor_daemon()` now returns:
+  - `signals_detected`
+  - `signals` (pattern name + matches + config)
+- `modules/communication/livechat/skillz/youtube_daemon_monitor.json` now includes `signal_patterns.edge_comments_cleared` (FoundUps + RavingANTIFA comment inboxes cleared).
   - LiveChat connection errors (auto-fixable)
 
 **Future** (same architecture, just add skills):
