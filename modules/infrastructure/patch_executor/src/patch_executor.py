@@ -21,12 +21,13 @@ Safety Guarantees:
     - Full rollback capability via git
 """
 
+import os
 import subprocess
 import tempfile
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,8 @@ class PatchExecutor:
         self,
         patch_content: str,
         patch_description: str = "Autonomous patch",
-        dry_run: bool = False
+        dry_run: bool = False,
+        memory_bundle: Optional[Dict] = None
     ) -> Dict:
         """
         Apply git patch with safety validation
@@ -135,6 +137,27 @@ class PatchExecutor:
 
             logger.info(f"[PATCH-EXECUTOR] Validation passed - {len(validation['files'])} files")
 
+            # Step 1.5: WSP_CORE Memory System gate (Tier-0 enforcement)
+            # - Canonical: WRE MemoryPreflightGuard consumes HoloIndex bundle JSON.
+            # - PatchExecutor blocks patch application if Tier-0 is missing (unless override enabled).
+            memory_guard_enabled = (
+                str(os.getenv("PATCH_EXECUTOR_MEMORY_GUARD", "true")).lower() in ("true", "1", "yes")
+            )
+            allow_no_memory = (
+                str(os.getenv("PATCH_EXECUTOR_ALLOW_NO_MEMORY", "false")).lower() in ("true", "1", "yes")
+            )
+            if memory_guard_enabled and not allow_no_memory:
+                guard_ok, guard_details = self._enforce_memory_preflight(
+                    files_modified=validation["files"],
+                    provided_bundle=memory_bundle
+                )
+                result["memory_preflight"] = guard_details
+                if not guard_ok:
+                    result["error"] = "Memory preflight blocked patch application"
+                    result["violations"].append("memory_preflight_failed")
+                    logger.warning(f"[PATCH-EXECUTOR] {result['error']}")
+                    return result
+
             if dry_run:
                 result["success"] = True
                 logger.info(f"[PATCH-EXECUTOR] Dry-run only - validation complete")
@@ -166,6 +189,74 @@ class PatchExecutor:
             result["error"] = f"Unexpected error: {str(e)}"
             logger.error(f"[PATCH-EXECUTOR] {result['error']}", exc_info=True)
             return result
+
+    def _infer_module_paths(self, files_modified: List[str]) -> List[str]:
+        """
+        Infer module roots for memory preflight from modified file paths.
+
+        Returns module paths like:
+          - modules/<domain>/<module>
+          - holo_index
+        """
+        module_paths: Set[str] = set()
+        for fp in files_modified:
+            norm = (fp or "").replace("\\", "/").lstrip("/")
+            if norm.startswith("modules/"):
+                parts = norm.split("/")
+                if len(parts) >= 3:
+                    module_paths.add("/".join(parts[:3]))
+            elif norm.startswith("holo_index/") or norm == "holo_index.py":
+                module_paths.add("holo_index")
+        return sorted(module_paths)
+
+    def _enforce_memory_preflight(self, files_modified: List[str], provided_bundle: Optional[Dict]) -> Tuple[bool, Dict]:
+        """
+        Enforce Tier-0 memory presence for modules touched by a patch.
+
+        If a valid bundle dict is provided, it is recorded but Tier-0 checks still run
+        per module (disk existence is enforced by MemoryPreflightGuard).
+        """
+        details: Dict = {
+            "enforced": True,
+            "provided_bundle": bool(provided_bundle),
+            "module_paths": [],
+            "results": [],
+            "blocked": False,
+        }
+
+        module_paths = self._infer_module_paths(files_modified)
+        details["module_paths"] = module_paths
+
+        if not module_paths:
+            # If we can't infer a module, block unless explicitly allowed.
+            details["blocked"] = True
+            details["results"].append({"status": "blocked", "reason": "no_module_inferred"})
+            return False, details
+
+        try:
+            from modules.infrastructure.wre_core.recursive_improvement.src.memory_preflight import MemoryPreflightGuard
+        except Exception as exc:
+            details["blocked"] = True
+            details["results"].append({"status": "blocked", "reason": f"memory_guard_import_failed: {exc}"})
+            return False, details
+
+        guard = MemoryPreflightGuard(project_root=self.repo_root)
+        for mp in module_paths:
+            try:
+                bundle = guard.run_preflight(mp)
+                details["results"].append({
+                    "module_path": mp,
+                    "tier0_complete": bool(bundle.tier0_complete),
+                    "preflight_passed": bool(bundle.preflight_passed),
+                    "stubs_created": list(bundle.stubs_created or []),
+                })
+                if not bundle.preflight_passed:
+                    details["blocked"] = True
+            except Exception as exc:
+                details["blocked"] = True
+                details["results"].append({"module_path": mp, "status": "blocked", "error": str(exc)})
+
+        return (not details["blocked"]), details
 
     def _validate_patch(self, patch_content: str) -> Dict:
         """

@@ -7,6 +7,17 @@
 
 ## Change Log
 
+### 2026-01-09: Root violation cleanup - relocate account switch test into module tests
+
+**By:** 0102  
+**WSP References:** WSP 34 (Test Documentation), WSP 49 (Module Structure), WSP 85 (Root Protection), WSP 22 (ModLog)
+
+**Change:** Moved root-level `test_account_switch.py` into `modules/infrastructure/foundups_vision/tests/` to keep test artifacts module-scoped and discoverable by 0102 automation.
+
+**Docs:** Updated `modules/infrastructure/foundups_vision/tests/README.md` to list the test.
+
+---
+
 ### 2025-12-28: Active Session Prioritization & Robust Detection
 **By:** Antigravity (Agent)
 **WSP References:** WSP 3 (Architecture), WSP 27 (DAE), WSP 77 (Vision), WSP 00 (Occam's Razor)

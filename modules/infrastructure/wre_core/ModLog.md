@@ -2,6 +2,17 @@
 
 ## Chronological Change Log
 
+### [2026-01-17] - Memory Preflight uses HoloIndex Bundle JSON (Canonical Retrieval)
+**WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)  
+**Impact Analysis**: Makes HoloIndex the canonical, machine-readable retrieval emitter (`--bundle-json`) for WRE memory preflight; Tier-0 enforcement now executes from bundle output rather than ad-hoc stdout parsing.
+
+#### Changes Made
+- `recursive_improvement/src/memory_preflight.py`:
+  - Added `WRE_MEMORY_USE_HOLO_BUNDLE` (default: true).
+  - Preflight now calls `holo_index.py --bundle-json` and translates the result into a structured `MemoryBundle`.
+  - Preflight sets `HOLO_SKIP_MODEL=1` for the bundle subprocess to prefer the fast lexical path (0102 speed knob).
+  - Added `ROADMAP.md` into Tier-1 optional artifacts (retrieval visibility, not hard gate).
+
 ### [2026-01-11] - Memory Preflight Guard (WSP_CORE Tier-0 Enforcement)
 **WSP Protocol References**: WSP_CORE (WSP Memory System), WSP_00 Section 3.4 (Post-Awakening Operational Protocol), WSP 50 (Pre-Action Verification), WSP 87 (Code Navigation), WSP 22 (ModLog Updates)
 **Impact Analysis**: Automates Tier-0 artifact enforcement as a hard gate before code-changing operations. Turns HoloIndex retrieval from advisory to mandatory.

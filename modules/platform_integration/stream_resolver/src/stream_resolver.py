@@ -381,6 +381,7 @@ class StreamResolver:
                 os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
                 os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
                 os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
+                os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
             ]
         if preferred_channel_id and preferred_channel_id not in allowed:
             allowed.insert(0, preferred_channel_id)
@@ -496,7 +497,11 @@ class StreamResolver:
         # PRIORITY 1: Try cached stream first for instant reconnection
         cache = self._load_session_cache()
         if cache:
-            allowed_channel_ids = self._get_allowed_channel_ids(search_channel_id)
+            # When a specific channel is requested, only accept cache hits for that channel.
+            # This prevents a cached stream from masking other live channels during rotation.
+            allowed_channel_ids = (
+                [search_channel_id] if channel_id else self._get_allowed_channel_ids(search_channel_id)
+            )
             self.logger.info("[RESET] Attempting cached stream reconnection...")
             video_id, chat_id = self._try_cached_stream(
                 cache,
@@ -569,6 +574,7 @@ class StreamResolver:
                         os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
                         os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
                         os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
+                        os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
                     ]
                     channels_to_check = [ch for ch in channels_to_check if ch]
 

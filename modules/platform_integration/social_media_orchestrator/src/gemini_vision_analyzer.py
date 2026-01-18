@@ -17,6 +17,11 @@ class GeminiVisionAnalyzer:
         load_dotenv()
         self.api_key = api_key or os.getenv('GOOGLE_AISTUDIO_API_KEY')
 
+        if not self.api_key:
+            print("[GEMINI-VISION] No API key configured; skipping vision analysis")
+            self.model = None
+            return
+
         try:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
@@ -24,6 +29,9 @@ class GeminiVisionAnalyzer:
             print("[GEMINI-VISION] Initialized with AI Studio API")
         except ImportError:
             print("[ERROR] Install: pip install google-generativeai")
+            self.model = None
+        except Exception as e:
+            print(f"[GEMINI-VISION] Initialization failed: {e}")
             self.model = None
 
     def analyze_posting_ui(self, screenshot_bytes: bytes) -> Dict[str, Any]:
@@ -42,7 +50,7 @@ class GeminiVisionAnalyzer:
         try:
             import io
             from PIL import Image
-            img = Image.open(io.BytesIO(screenshot_bytes, encoding="utf-8"))
+            img = Image.open(io.BytesIO(screenshot_bytes))
 
             prompt = """Analyze this social media posting interface.
 

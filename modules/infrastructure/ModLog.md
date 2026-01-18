@@ -8,6 +8,17 @@ Active - Clean WRE Structure Achieved
 
 ## Chronological Change Log
 
+### Instance Lock Self-Healing + Status Hardening
+**Date**: 2026-01-18
+**WSP Protocol References**: WSP 22, WSP 84, WSP 91
+**Impact Analysis**: Prevents stale lock noise, restores meaningful health status
+
+#### [OK] Implementation Details
+- `instance_lock`: Added stale lock cleanup helper and lock-derived health status (no os.stat dependency).
+- `instance_lock`: Auto-clean stale lockfiles during cleanup (`INSTANCE_LOCK_AUTO_CLEAN_STALE=true`).
+- `instance_monitoring/status_check.py`: Auto-removes stale locks and reports action in status output.
+- `.env.example`: Documented `INSTANCE_LOCK_AUTO_CLEAN_STALE` toggle.
+
 ### WSP 44 Semantic State Engine (Scoring Primitive)
 **Date**: 2025-12-14
 **WSP Protocol References**: WSP 44, WSP 22, WSP 3

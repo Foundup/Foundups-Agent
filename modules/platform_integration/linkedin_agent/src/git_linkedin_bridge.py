@@ -17,7 +17,7 @@ import subprocess
 import json
 import time
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 # Removed direct LinkedIn import - now using unified interface
 
@@ -44,6 +44,7 @@ class GitLinkedInBridge:
         """
         self.company_id = company_id
         self.repo_root = Path(__file__).resolve().parents[4]
+        self.last_post_result: Optional[Dict[str, str]] = None
 
         # Initialize Qwen for 0102-branded content generation
         if QWEN_AVAILABLE:
@@ -118,6 +119,10 @@ class GitLinkedInBridge:
             self.x_posted_commits_file = "modules/platform_integration/linkedin_agent/data/x_posted_commits.json"
             self.x_posted_commits = self._load_x_posted_commits()
             self.db = None
+
+        # Retry queue for failed social posts (lightweight)
+        self.retry_queue_file = self.repo_root / "modules/platform_integration/linkedin_agent/data/social_post_retry_queue.json"
+        self.retry_queue = self._load_retry_queue()
         
     def _load_posted_commits(self) -> set:
         """Load set of already posted commit hashes"""
@@ -201,6 +206,103 @@ class GitLinkedInBridge:
             os.makedirs(os.path.dirname(self.x_posted_commits_file), exist_ok=True)
             with open(self.x_posted_commits_file, 'w', encoding="utf-8") as f:
                 json.dump(list(self.x_posted_commits), f)
+
+    def _env_truthy(self, name: str, default: str = "false") -> bool:
+        return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+    def _load_retry_queue(self) -> List[Dict[str, str]]:
+        """Load pending social post retries from disk."""
+        try:
+            if self.retry_queue_file.exists():
+                with open(self.retry_queue_file, 'r', encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception as e:
+            print(f"[WARN] Failed to load retry queue: {e}")
+        return []
+
+    def _save_retry_queue(self) -> None:
+        """Persist retry queue to disk."""
+        try:
+            self.retry_queue_file.parent.mkdir(parents=True, exist_ok=True)
+            temp_file = self.retry_queue_file.with_suffix(".tmp")
+            with open(temp_file, 'w', encoding="utf-8") as f:
+                json.dump(self.retry_queue, f, indent=2)
+            temp_file.replace(self.retry_queue_file)
+        except Exception as e:
+            print(f"[WARN] Failed to save retry queue: {e}")
+
+    def _enqueue_retry(self, commit_hash: str, commit_msg: str, linkedin_content: str,
+                       x_content: str, pr_url: Optional[str], error: str) -> None:
+        """Add a failed social post to the retry queue."""
+        if not self._env_truthy("FOUNDUPS_RETRY_POSTS", "true"):
+            return
+
+        for item in self.retry_queue:
+            if item.get("commit_hash") == commit_hash:
+                item["last_error"] = error
+                item["last_attempt"] = datetime.now().isoformat()
+                self._save_retry_queue()
+                return
+
+        self.retry_queue.append({
+            "commit_hash": commit_hash,
+            "commit_msg": commit_msg,
+            "linkedin_content": linkedin_content,
+            "x_content": x_content,
+            "pr_url": pr_url,
+            "attempts": 0,
+            "last_error": error,
+            "created_at": datetime.now().isoformat(),
+        })
+        self._save_retry_queue()
+
+    def _retry_failed_posts(self) -> None:
+        """Attempt to re-post queued social updates."""
+        if not self.retry_queue or not self._env_truthy("FOUNDUPS_RETRY_POSTS", "true"):
+            return
+
+        max_items = int(os.getenv("FOUNDUPS_RETRY_MAX_ITEMS", "2"))
+        max_attempts = int(os.getenv("FOUNDUPS_RETRY_MAX_ATTEMPTS", "3"))
+        remaining: List[Dict[str, str]] = []
+
+        for item in self.retry_queue:
+            if max_items <= 0:
+                remaining.append(item)
+                continue
+
+            attempts = int(item.get("attempts", 0))
+            if attempts >= max_attempts:
+                remaining.append(item)
+                continue
+
+            commit_hash = item.get("commit_hash")
+            if commit_hash and commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
+                continue
+
+            success, message, duplicate = self._post_social(
+                commit_hash=commit_hash,
+                commit_msg=item.get("commit_msg", ""),
+                linkedin_content=item.get("linkedin_content", ""),
+                x_content=item.get("x_content", ""),
+                pr_url=item.get("pr_url"),
+                staged_file_count=0,
+                allow_duplicates=True,
+            )
+
+            if success or duplicate:
+                max_items -= 1
+                continue
+
+            item["attempts"] = attempts + 1
+            item["last_error"] = message
+            item["last_attempt"] = datetime.now().isoformat()
+            remaining.append(item)
+            max_items -= 1
+
+        self.retry_queue = remaining
+        self._save_retry_queue()
     
     def get_recent_commits(self, count: int = 5) -> List[Dict]:
         """
@@ -722,11 +824,262 @@ class GitLinkedInBridge:
         print(f"[0102] Direct X content: {len(content)} chars")
         return content
 
-    def push_and_post(self) -> bool:
+    def _record_post_success(self, commit_hash: str, commit_msg: str, linkedin_content: str,
+                              x_content: str, result_message: str) -> None:
+        """Record successful social posting in memory/DB."""
+        if commit_hash:
+            if self.db:
+                self.db.execute_write("""
+                    INSERT OR REPLACE INTO modules_git_linkedin_posts
+                    (commit_hash, commit_message, post_content, success, posted_at)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (commit_hash, commit_msg, linkedin_content, 1, datetime.now()))
+            self.posted_commits.add(commit_hash)
+            self._save_posted_commits()
+
+            if "X:" in (result_message or ""):
+                if self.db:
+                    self.db.execute_write("""
+                        INSERT OR REPLACE INTO modules_git_x_posts
+                        (commit_hash, commit_message, post_content, success, posted_at)
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (commit_hash, commit_msg, x_content, 1, datetime.now()))
+                self.x_posted_commits.add(commit_hash)
+                self._save_x_posted_commits()
+
+    def _post_social(self, commit_hash: str, commit_msg: str, linkedin_content: str,
+                     x_content: str, pr_url: Optional[str], staged_file_count: int,
+                     allow_duplicates: bool = False) -> tuple[bool, str, bool]:
+        """Post to LinkedIn/X and return (success, message, duplicate)."""
+        if not commit_hash:
+            return False, "missing_commit_hash", False
+
+        if not allow_duplicates and commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
+            return True, "already_posted", True
+
+        try:
+            from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
+            import asyncio
+
+            result = asyncio.run(post_git_commits(
+                linkedin_content,
+                [commit_hash],
+                x_content=x_content,
+                auto_post_to_x=True
+            ))
+
+            duplicate = bool(getattr(result, "duplicate_prevented", False))
+            if result.success or duplicate:
+                self._record_post_success(commit_hash, commit_msg, linkedin_content, x_content, result.message)
+                return result.success, result.message, duplicate
+
+            return False, result.message, False
+        except Exception as e:
+            return False, str(e), False
+
+    def _extract_paths_from_status(self, status_lines: List[str]) -> List[str]:
+        """Extract file paths from git status porcelain output."""
+        paths: List[str] = []
+        for raw in status_lines:
+            line = (raw or "").rstrip("\r\n")
+            if len(line) < 3:
+                continue
+            path_part = line[3:].strip()
+            if " -> " in path_part:
+                path_part = path_part.split(" -> ", 1)[1].strip()
+            rel = path_part.strip().strip('"')
+            if rel:
+                paths.append(rel)
+        seen = set()
+        ordered: List[str] = []
+        for path in paths:
+            if path not in seen:
+                seen.add(path)
+                ordered.append(path)
+        return ordered
+
+    def _filter_paths_for_plan(self, paths: List[str]) -> List[str]:
+        excluded_prefixes = [
+            "node_modules/",
+            "modules/platform_integration/browser_profiles/",
+            "telemetry/",
+            "modules/telemetry/feedback/",
+            "holo_index/holo_index/output/",
+        ]
+        filtered: List[str] = []
+        for path in paths:
+            if path.endswith(".db-wal") or path.endswith(".db-shm"):
+                continue
+            if any(path == prefix.rstrip("/") or path.startswith(prefix) for prefix in excluded_prefixes):
+                continue
+            filtered.append(path)
+        return filtered
+
+    def _chunk_paths(self, paths: List[str], max_size: int) -> List[List[str]]:
+        return [paths[i:i + max_size] for i in range(0, len(paths), max_size)]
+
+    def _parse_json_list(self, text: str) -> Optional[List[Dict[str, Any]]]:
+        start = text.find("[")
+        end = text.rfind("]")
+        if start == -1 or end == -1 or end <= start:
+            return None
+        try:
+            data = json.loads(text[start:end + 1])
+        except Exception:
+            return None
+        return data if isinstance(data, list) else None
+
+    def _qwen_plan_batches(self, paths: List[str], max_files_per_batch: int,
+                            max_batches: int) -> Optional[List[Dict[str, Any]]]:
+        if not self.qwen or not self._env_truthy("FOUNDUPS_QWEN_BATCH_PLAN", "true"):
+            return None
+
+        prompt_lines = [
+            "Create a git commit batching plan for these paths.",
+            f"Constraints: max_batches={max_batches}, max_files_per_batch={max_files_per_batch}.",
+            "Output JSON array of objects with keys: label, paths.",
+            "Use only the provided paths (exact matches).",
+            "Paths:",
+        ]
+        prompt_lines.extend([f"- {p}" for p in paths])
+        response = self.qwen.generate_response("\n".join(prompt_lines))
+        plan = self._parse_json_list(response)
+        if not plan:
+            return None
+
+        normalized: List[Dict[str, Any]] = []
+        for item in plan:
+            if not isinstance(item, dict):
+                continue
+            batch_paths = item.get("paths") or item.get("files")
+            if not isinstance(batch_paths, list):
+                continue
+            label = str(item.get("label") or item.get("name") or "batch")
+            normalized.append({
+                "label": label,
+                "paths": [str(p) for p in batch_paths],
+                "reason": "qwen_plan",
+            })
+        return normalized or None
+
+    def _heuristic_plan_batches(self, paths: List[str], max_files_per_batch: int) -> List[Dict[str, Any]]:
+        groups: Dict[str, List[str]] = {}
+        for path in paths:
+            parts = Path(path).parts
+            if len(parts) >= 3 and parts[0] == "modules":
+                key = f"{parts[0]}/{parts[1]}/{parts[2]}"
+            elif parts:
+                key = parts[0]
+            else:
+                key = "misc"
+            groups.setdefault(key, []).append(path)
+
+        plan: List[Dict[str, Any]] = []
+        for key, group in sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+            chunks = self._chunk_paths(group, max_files_per_batch)
+            for idx, chunk in enumerate(chunks):
+                label = key if len(chunks) == 1 else f"{key} ({idx + 1})"
+                plan.append({"label": label, "paths": chunk, "reason": "grouped_by_scope"})
+        return plan
+
+    def _audit_push_plan(self, plan: List[Dict[str, Any]], all_paths: List[str],
+                         max_files_per_batch: int, max_batches: int) -> List[Dict[str, Any]]:
+        """Gemma-style audit: validate plan coverage and enforce batch limits."""
+        if not plan:
+            return [{"label": "batch_all", "paths": all_paths, "reason": "fallback"}] if all_paths else []
+
+        seen = set()
+        audited: List[Dict[str, Any]] = []
+        for batch in plan:
+            raw_paths = batch.get("paths") if isinstance(batch, dict) else None
+            if not isinstance(raw_paths, list):
+                continue
+            unique = []
+            for path in raw_paths:
+                if path in all_paths and path not in seen:
+                    seen.add(path)
+                    unique.append(path)
+            if not unique:
+                continue
+            chunks = self._chunk_paths(unique, max_files_per_batch)
+            for idx, chunk in enumerate(chunks):
+                label = batch.get("label") or "batch"
+                if len(chunks) > 1:
+                    label = f"{label} ({idx + 1})"
+                audited.append({"label": label, "paths": chunk, "reason": batch.get("reason", "audit")})
+
+        missing = [path for path in all_paths if path not in seen]
+        if missing:
+            audited.append({"label": "catch_all", "paths": missing, "reason": "audit_fill"})
+
+        # Keep plans small and safe for git automation.
+        if len(audited) > max_batches:
+            return [{"label": "batch_all", "paths": all_paths, "reason": "max_batches"}]
+
+        return audited
+
+    def _build_push_plan(self, paths: List[str], max_files_per_batch: int,
+                         max_batches: int) -> List[Dict[str, Any]]:
+        candidates = self._filter_paths_for_plan(paths)
+        if not candidates:
+            return []
+        plan = self._qwen_plan_batches(candidates, max_files_per_batch, max_batches)
+        if not plan:
+            plan = self._heuristic_plan_batches(candidates, max_files_per_batch)
+        return self._audit_push_plan(plan, candidates, max_files_per_batch, max_batches)
+
+    def push_and_post_planned(self) -> bool:
+        """Plan and batch commits before pushing + posting."""
+        try:
+            status = subprocess.run(
+                ['git', 'status', '--porcelain=v1'],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+                cwd=str(self.repo_root),
+            )
+            if not status.stdout.strip():
+                print("[OK] No changes to commit")
+                self.last_post_result = {"status": "no_changes", "message": "No changes to commit"}
+                return False
+
+            paths = self._extract_paths_from_status(status.stdout.splitlines())
+            max_files = int(os.getenv("FOUNDUPS_PUSH_PLAN_MAX_FILES", "30"))
+            max_batches = int(os.getenv("FOUNDUPS_PUSH_PLAN_MAX_BATCHES", "4"))
+            plan = self._build_push_plan(paths, max_files, max_batches)
+
+            if len(plan) <= 1:
+                return self.push_and_post()
+
+            print(f"[PLAN] {len(plan)} batch commits (max_files={max_files})")
+            self._retry_failed_posts()
+            post_each = self._env_truthy("FOUNDUPS_PUSH_PLAN_POST_EACH", "false")
+
+            for idx, batch in enumerate(plan):
+                label = batch.get("label") or f"batch_{idx + 1}"
+                paths_batch = batch.get("paths", [])
+                print(f"[PLAN] Batch {idx + 1}/{len(plan)}: {label} ({len(paths_batch)} files)")
+                post_social = post_each or (idx == len(plan) - 1)
+                if not self.push_and_post(paths_filter=paths_batch, post_social=post_social, retry_queue=False):
+                    return False
+
+            return True
+        except Exception as e:
+            print(f"[FAIL] Planned push failed: {e}")
+            return False
+
+    def push_and_post(self, paths_filter: Optional[List[str]] = None,
+                      post_social: bool = True,
+                      retry_queue: bool = True) -> bool:
         """Main function to push to git and post to both LinkedIn and X"""
         try:
             import subprocess
             from datetime import datetime
+
+            if retry_queue:
+                self._retry_failed_posts()
 
             # Check git status
             status = subprocess.run(
@@ -741,6 +1094,7 @@ class GitLinkedInBridge:
 
             if not status.stdout.strip():
                 print("[OK] No changes to commit")
+                self.last_post_result = {"status": "no_changes", "message": "No changes to commit"}
                 return False
 
             # Show changes
@@ -764,7 +1118,27 @@ class GitLinkedInBridge:
                 'holo_index/holo_index/output',
             ]
 
-            add_cmd = ['git', 'add', '-A', '--', '.'] + [f':(exclude){p}' for p in excluded_paths]
+            add_cmd: List[str]
+            if paths_filter:
+                subprocess.run(
+                    ['git', 'restore', '--staged', '.'],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    cwd=str(self.repo_root),
+                )
+                filtered_paths = [
+                    p for p in paths_filter
+                    if not any(p == prefix.rstrip("/") or p.startswith(prefix) for prefix in excluded_paths)
+                ]
+                if not filtered_paths:
+                    print("[OK] No eligible files to stage after filtering")
+                    self.last_post_result = {"status": "no_staged_changes", "message": "No eligible files to stage"}
+                    return False
+                add_cmd = ['git', 'add', '--'] + filtered_paths
+            else:
+                add_cmd = ['git', 'add', '-A', '--', '.'] + [f':(exclude){p}' for p in excluded_paths]
             add_result = subprocess.run(
                 add_cmd,
                 capture_output=True,
@@ -804,6 +1178,7 @@ class GitLinkedInBridge:
                 if add_failure_detail:
                     print(f"[WARN] git add returned {add_result.returncode}: {add_failure_detail}")
                 print("[OK] No staged changes to commit (only excluded paths changed?)")
+                self.last_post_result = {"status": "no_staged_changes", "message": "No staged changes to commit"}
                 return False
 
             # Get commit message (handle both interactive and auto mode)
@@ -1114,10 +1489,16 @@ class GitLinkedInBridge:
                 print("[NOTE] PR-required push succeeded, but no PR was created; skipping social media posting.")
                 return True
 
+            if not post_social:
+                print("[NOTE] Social media posting disabled for this batch")
+                self.last_post_result = {"status": "skipped", "message": "Batch commit; social posting deferred"}
+                return True
+
             # Skip posting if this commit was already posted to both platforms.
             if commit_hash in self.posted_commits and commit_hash in self.x_posted_commits:
                 print(f"[U+26A0]️  Commit {commit_hash[:10]} already posted to both platforms")
                 print("[OK] Git push complete; skipping social media.")
+                self.last_post_result = {"status": "already_posted", "message": "Commit already posted to both platforms"}
                 return True
 
             # Prepare commit info
@@ -1155,61 +1536,36 @@ class GitLinkedInBridge:
 
             if confirm != 'y':
                 print("[NOTE] Skipped social media posting")
+                self.last_post_result = {"status": "skipped", "message": "User skipped social media posting"}
                 return True
 
             # Post via Unified Interface (auto-triggers both LinkedIn AND X)
             # All anti-detection timing, delays, and logging handled in daemon
             if commit_hash not in self.posted_commits:
-                try:
-                    from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
-                    import asyncio
+                print("\n[U+1F4F1] Posting via Social Media DAE (LinkedIn -> Auto X)...")
+                success, message, duplicate = self._post_social(
+                    commit_hash=commit_hash,
+                    commit_msg=commit_msg,
+                    linkedin_content=linkedin_content,
+                    x_content=x_content,
+                    pr_url=pr_url,
+                    staged_file_count=staged_file_count,
+                )
 
-                    print("\n[U+1F4F1] Posting via Social Media DAE (LinkedIn -> Auto X)...")
-
-                    # Single call posts to BOTH platforms with human-like timing
-                    result = asyncio.run(post_git_commits(
-                        linkedin_content,
-                        [commit_hash],
-                        x_content=x_content,
-                        auto_post_to_x=True
-                    ))
-
-                    if result.success:
-                        print(f"[OK] {result.message}")
-
-                        # Mark LinkedIn as posted
-                        if self.db:
-                            from datetime import datetime
-                            self.db.execute_write("""
-                                INSERT OR REPLACE INTO modules_git_linkedin_posts
-                                (commit_hash, commit_message, post_content, success, posted_at)
-                                VALUES (?, ?, ?, ?, ?)
-                            """, (commit_hash, commit_msg, linkedin_content, 1, datetime.now()))
-                        self.posted_commits.add(commit_hash)
-                        self._save_posted_commits()
-
-                        # Mark X as posted (auto-triggered by unified interface)
-                        if "X:" in result.message:
-                            if self.db:
-                                from datetime import datetime
-                                self.db.execute_write("""
-                                    INSERT OR REPLACE INTO modules_git_x_posts
-                                    (commit_hash, commit_message, post_content, success, posted_at)
-                                    VALUES (?, ?, ?, ?, ?)
-                                """, (commit_hash, commit_msg, x_content, 1, datetime.now()))
-                            self.x_posted_commits.add(commit_hash)
-                            self._save_x_posted_commits()
-                    else:
-                        # Log failure - daemon has full details
-                        print(f"[U+26A0]️  {result.message}")
-                        print("   See daemon logs for anti-detection timing and full trace")
-
-                except Exception as e:
-                    # Log exception - daemon has full stack trace
-                    print(f"[FAIL] {e}")
-                    print("   See daemon logs for complete error details")
+                if success:
+                    print(f"[OK] {message}")
+                    self.last_post_result = {"status": "success", "message": message}
+                elif duplicate:
+                    print("[OK] Duplicate detected; skipping social media.")
+                    self.last_post_result = {"status": "already_posted", "message": message}
+                else:
+                    print(f"[WARN] {message}")
+                    print("   See daemon logs for anti-detection timing and full trace")
+                    self.last_post_result = {"status": "failed", "message": message}
+                    self._enqueue_retry(commit_hash, commit_msg, linkedin_content, x_content, pr_url, message)
             else:
                 print("[OK] Already posted")
+                self.last_post_result = {"status": "already_posted", "message": "Already posted"}
 
             return True
 

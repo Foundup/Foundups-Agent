@@ -596,7 +596,16 @@ class GitPushDAE:
                 return
 
             # Execute push
-            success = self.git_bridge.push_and_post()
+            if self._should_use_push_plan(context) and hasattr(self.git_bridge, "push_and_post_planned"):
+                self.logger.info(f"[{self.daemon_name}] Using planned batch push")
+                success = self.git_bridge.push_and_post_planned()
+            else:
+                success = self.git_bridge.push_and_post()
+            post_result = getattr(self.git_bridge, "last_post_result", None)
+            if post_result:
+                status = post_result.get("status", "unknown")
+                message = post_result.get("message", "")
+                self.logger.info(f"[{self.daemon_name}] Social post status: {status} {message}".strip())
 
             if success:
                 self.last_push_time = datetime.now()
@@ -613,6 +622,15 @@ class GitPushDAE:
             self.circuit_breaker.record_failure()
             self.logger.error(f"[{self.daemon_name}] [FAIL] Push execution failed: {e}")
             raise
+
+    def _should_use_push_plan(self, context: PushContext) -> bool:
+        """Decide when to batch commits instead of pushing everything at once."""
+        env_setting = os.getenv("FOUNDUPS_PUSH_PLAN", "").strip().lower()
+        if env_setting:
+            return env_setting in ("1", "true", "yes", "y", "on")
+
+        min_files = int(os.getenv("FOUNDUPS_PUSH_PLAN_MIN_FILES", "40"))
+        return len(context.uncommitted_changes) >= min_files
 
     def health_check(self) -> HealthStatus:
         """WSP 91 compliant health check - cardiovascular system monitoring."""

@@ -2,6 +2,16 @@
 
 ## Latest Changes
 
+### V049 - Planned Batch Push + Social Retry Queue
+**Date**: 2026-01-09
+**Changes**: Added batch-aware commit planning and a lightweight retry queue for failed social posts. `push_and_post()` now supports optional path filtering and can defer social posting for intermediate batches.
+**Impact**: Avoids single mega-commit pushes and prevents MCP hiccups from dropping social posts.
+**WSP**: WSP 91 (DAEMON observability), WSP 15 (MPS), WSP 50 (Pre-action verification)
+**Details**:
+- New `push_and_post_planned()` uses Qwen batching + audit fallback to split commits by scope.
+- Retry queue persists failed LinkedIn/X posts to `modules/platform_integration/linkedin_agent/data/social_post_retry_queue.json`.
+- `push_and_post()` supports `paths_filter`, `post_social`, and `retry_queue` for batch orchestration.
+
 ### V048 - Autonomous PR Auto-Merge (012 Observer Mode)
 **Date**: 2025-12-14
 **Changes**: When GH013 rules require a PR, `push_and_post()` now attempts to merge the created PR automatically via `gh pr merge` when running in `auto_mode` (GitPushDAE). If immediate merge is blocked (checks/reviews), it falls back to enabling auto-merge (`--auto`).

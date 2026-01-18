@@ -27,6 +27,7 @@ Environment Variables:
 import os
 import sys
 import logging
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
@@ -62,7 +63,7 @@ TIER_DEFINITIONS = {
         tier=1,
         name="Evolution/Verification",
         required=[],
-        optional=["ModLog.md", "tests/TestModLog.md", "tests/README.md", "GOLDENS/"],
+        optional=["ROADMAP.md", "ModLog.md", "tests/TestModLog.md", "tests/README.md", "GOLDENS/"],
         purpose="What changed + what's verified + how to reproduce"
     ),
     2: TierDefinition(
@@ -251,13 +252,15 @@ class MemoryPreflightGuard:
         self.enabled = os.getenv("WRE_MEMORY_PREFLIGHT_ENABLED", "true").lower() in ("true", "1", "yes")
         self.autostub_tier0 = os.getenv("WRE_MEMORY_AUTOSTUB_TIER0", "false").lower() in ("true", "1", "yes")
         self.allow_degraded = os.getenv("WRE_MEMORY_ALLOW_DEGRADED", "false").lower() in ("true", "1", "yes")
+        self.use_holo_bundle = os.getenv("WRE_MEMORY_USE_HOLO_BUNDLE", "true").lower() in ("true", "1", "yes")
 
         logger.info(
             f"[MEMORY-PREFLIGHT] Initialized: enabled={self.enabled}, "
-            f"autostub={self.autostub_tier0}, allow_degraded={self.allow_degraded}"
+            f"autostub={self.autostub_tier0}, allow_degraded={self.allow_degraded}, "
+            f"use_holo_bundle={self.use_holo_bundle}"
         )
 
-    def run_preflight(self, module_path: str) -> MemoryBundle:
+    def run_preflight(self, module_path: str, task: Optional[str] = None) -> MemoryBundle:
         """
         Run memory preflight check for a module.
 
@@ -269,6 +272,7 @@ class MemoryPreflightGuard:
 
         Args:
             module_path: Relative path to module (e.g., "modules/communication/livechat")
+            task: Optional task/objective string for HoloIndex bundle (defaults to module-scoped preflight)
 
         Returns:
             MemoryBundle with retrieval results and preflight status
@@ -281,6 +285,50 @@ class MemoryPreflightGuard:
             return self._create_passthrough_bundle(module_path)
 
         full_module_path = self.project_root / module_path
+
+        # Canonical retrieval: HoloIndex emits machine-readable bundle JSON
+        if self.use_holo_bundle:
+            holo_task = (task or f"memory preflight for {module_path}").strip()
+            bundle = self._retrieve_via_holo_bundle(module_path=module_path, task=holo_task)
+
+            # Tier-0 enforcement (disk is source of truth for existence)
+            missing_required, missing_optional, duplication_proxy = self._evaluate_quality(bundle.artifacts)
+            tier0_complete = len([m for m in missing_required if "Tier-0" in m]) == 0
+
+            stubs_created: List[str] = []
+            if not tier0_complete and self.autostub_tier0:
+                stubs_created = self._create_tier0_stubs(full_module_path, module_path, missing_required)
+                # Re-run canonical retrieval after stub creation
+                bundle = self._retrieve_via_holo_bundle(module_path=module_path, task=holo_task)
+                missing_required, missing_optional, duplication_proxy = self._evaluate_quality(bundle.artifacts)
+                tier0_complete = len([m for m in missing_required if "Tier-0" in m]) == 0
+
+            preflight_passed = tier0_complete or self.allow_degraded
+
+            out = MemoryBundle(
+                module_path=module_path,
+                artifacts=bundle.artifacts,
+                missing_required=[m for m in missing_required],
+                missing_optional=missing_optional,
+                duplication_rate_proxy=duplication_proxy,
+                ordering_confidence=None,
+                staleness_risk=None,
+                tier0_complete=tier0_complete,
+                preflight_passed=preflight_passed,
+                stubs_created=stubs_created,
+            )
+
+            self._emit_telemetry(out)
+
+            if not preflight_passed:
+                tier0_missing = [m for m in missing_required if "Tier-0" in m]
+                raise MemoryPreflightError(
+                    f"Tier-0 artifacts missing for {module_path}: {tier0_missing}",
+                    missing_files=tier0_missing,
+                    module_path=module_path
+                )
+
+            return out
 
         # Step 1: Tiered retrieval
         artifacts = self._retrieve_tiered_artifacts(full_module_path, module_path)
@@ -327,6 +375,104 @@ class MemoryPreflightGuard:
             )
 
         return bundle
+
+    def _retrieve_via_holo_bundle(self, module_path: str, task: str) -> "MemoryBundle":
+        """
+        Call `holo_index.py --bundle-json` and translate output into MemoryBundle-like shape.
+
+        This makes HoloIndex the canonical retrieval emitter (WSP_CORE Memory System).
+        """
+        cmd = [
+            sys.executable,
+            str(self.project_root / "holo_index.py"),
+            "--bundle-json",
+            "--search",
+            task,
+            "--bundle-module-hint",
+            module_path,
+            "--limit",
+            "5",
+            "--quiet-root-alerts",
+        ]
+        env = os.environ.copy()
+        env.setdefault("HOLO_SILENT", "1")
+        # 0102 speed knob: prefer lexical retrieval for bundle-json preflight.
+        # This avoids heavy Chroma/model imports when Tier-0 enforcement is the primary goal.
+        env.setdefault("HOLO_SKIP_MODEL", "1")
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=str(self.project_root),
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=env,
+            )
+        except Exception as exc:
+            raise MemoryPreflightError(
+                f"HoloIndex bundle call failed: {exc}",
+                missing_files=["Tier-0: (unknown)"],
+                module_path=module_path,
+            )
+
+        stdout = (proc.stdout or "").strip()
+        if proc.returncode != 0 or not stdout:
+            raise MemoryPreflightError(
+                f"HoloIndex bundle call failed (exit={proc.returncode}): {(proc.stderr or '').strip()[:500]}",
+                missing_files=["Tier-0: (unknown)"],
+                module_path=module_path,
+            )
+
+        try:
+            payload = json.loads(stdout)
+        except Exception as exc:
+            raise MemoryPreflightError(
+                f"HoloIndex bundle returned non-JSON output: {exc}",
+                missing_files=["Tier-0: (unknown)"],
+                module_path=module_path,
+            )
+
+        # Translate structured_memory.artifacts → ArtifactInfo list.
+        artifacts: List[ArtifactInfo] = []
+        structured = payload.get("structured_memory") or {}
+        for a in (structured.get("artifacts") or []):
+            try:
+                tier = int(a.get("tier", 2))
+            except Exception:
+                tier = 2
+            rel = a.get("relative_path") or ""
+            abs_path = a.get("path") or ""
+            required = bool(a.get("required", False))
+            exists = bool(a.get("exists", False))
+            artifacts.append(ArtifactInfo(
+                path=abs_path,
+                relative_path=f"{module_path}/{rel}".replace("\\", "/").replace("//", "/").strip("/"),
+                tier=tier,
+                required=required,
+                exists=exists,
+                last_updated=None,
+                key_snippets=[],
+                why_retrieved=f"bundle-json tier-{tier} {'required' if required else 'optional'}",
+            ))
+
+        # If bundle couldn't resolve module, fall back to filesystem tier scan (still blocks Tier-0).
+        if not artifacts:
+            full_module_path = self.project_root / module_path
+            artifacts = self._retrieve_tiered_artifacts(full_module_path, module_path)
+
+        return MemoryBundle(
+            module_path=module_path,
+            artifacts=artifacts,
+            missing_required=[],
+            missing_optional=[],
+            duplication_rate_proxy=0.0,
+            ordering_confidence=None,
+            staleness_risk=None,
+            tier0_complete=True,
+            preflight_passed=True,
+            stubs_created=[],
+        )
 
     def _retrieve_tiered_artifacts(
         self,

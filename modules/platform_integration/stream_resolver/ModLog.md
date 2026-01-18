@@ -12,6 +12,20 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### 2026-01-18 - Channel-Scoped Cache for Multi-Stream Scans
+
+**By:** 0102  
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 91 (Observability)
+
+**Problem:** Cached stream reconnection could mask other live channels during rotation because cache hits were accepted for any allowed channel, even when a specific `channel_id` was requested.
+
+**Fix:**
+- When `resolve_stream(channel_id=...)` is used, cache allowlist is restricted to that channel.
+- Added `RAVINGANTIFA_CHANNEL_ID` to cache allowlists and vision scan defaults.
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py`
+
 ### Read-Only Stream Detection Decoupled From Action Automation Gate
 
 **By:** 0102  

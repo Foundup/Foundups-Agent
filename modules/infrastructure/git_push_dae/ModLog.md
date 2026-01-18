@@ -3,6 +3,18 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Planned Batch Push Execution
+**WSP References**: WSP 15 (MPS), WSP 91 (DAEMON observability)
+
+**Type**: Enhancement - Batch Push Orchestration
+
+**Changes Made**:
+1. GitPushDAE now selects a planned batch push when changes exceed the threshold or `FOUNDUPS_PUSH_PLAN=1`.
+2. Uses `GitLinkedInBridge.push_and_post_planned()` to avoid single mega-commit pushes.
+
+**Impact**:
+- Reduces oversized commits and improves change isolation for social posts and audits.
+
 ## Stabilize Push Time Window + Unit Tests
 **WSP References**: WSP 34 (Testing), WSP 91 (DAEMON observability)
 

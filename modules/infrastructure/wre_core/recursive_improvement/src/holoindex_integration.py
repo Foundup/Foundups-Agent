@@ -127,6 +127,105 @@ class HoloIndexIntegration:
                 "vibecoding_risk": "UNKNOWN"
             }
 
+    def retrieve_structured_memory(self, module_hint: str) -> Dict[str, Any]:
+        """
+        WSP Memory System (WSP_CORE): enforce structured-memory retrieval for a module.
+
+        This is intentionally lightweight and CLI-driven:
+        - uses `python holo_index.py --search ...` as the canonical retrieval interface
+        - returns a machine-first summary suitable for orchestration logs
+        """
+        artifacts = [
+            "README.md",
+            "INTERFACE.md",
+            "ROADMAP.md",
+            "ModLog.md",
+            "tests/README.md",
+            "tests/TestModLog.md",
+            "memory/README.md",
+            "requirements.txt",
+        ]
+
+        retrieval: Dict[str, Any] = {
+            "module_hint": module_hint,
+            "artifacts": {},
+            "missing": [],
+        }
+
+        for artifact in artifacts:
+            query = f"{module_hint} {artifact}"
+            result = self.search_before_code(query)
+            retrieval["artifacts"][artifact] = {
+                "query": query,
+                "ok": "error" not in result,
+                "matches": result.get("matches", []),
+            }
+            # Consider artifact "present" if we got at least one match location back
+            if not result.get("matches"):
+                retrieval["missing"].append(artifact)
+
+        return retrieval
+
+    def evaluate_retrieval_quality(self, retrieval: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Proxy metrics per WSP_CORE Retrieval Quality Metrics.
+        (Used-chunks cannot be observed here; we measure structural completeness + duplication.)
+        """
+        artifacts = retrieval.get("artifacts", {}) or {}
+        returned = 0
+        locations: List[str] = []
+        for info in artifacts.values():
+            matches = info.get("matches") or []
+            returned += len(matches)
+            for m in matches:
+                loc = (m or {}).get("location")
+                if loc:
+                    locations.append(str(loc))
+
+        unique_locations = set(locations)
+        duplication_rate = 0.0
+        if returned > 0:
+            duplication_rate = max(0.0, (len(locations) - len(unique_locations)) / float(returned))
+
+        return {
+            "returned_chunks_proxy": returned,
+            "missing_artifacts": retrieval.get("missing", []),
+            "duplication_rate_proxy": round(duplication_rate, 3),
+            "ordering_correctness_proxy": None,  # not observable in CLI-only mode
+            "staleness_risk_proxy": None,        # requires git/log correlation
+            "pattern_recall_ok": len(retrieval.get("missing", [])) == 0,
+        }
+
+    def start_of_work_loop(self, task: str, module_hint: str) -> Dict[str, Any]:
+        """
+        WRE Start-of-Work Loop (WSP_CORE):
+        1) retrieve structured memory
+        2) evaluate retrieval quality
+        3) (optional) improve retrieval (not implemented here; delegated to HoloIndex/WRE plugins)
+        4) return a structured bundle for orchestration decisions
+        """
+        structured = self.retrieve_structured_memory(module_hint)
+        quality = self.evaluate_retrieval_quality(structured)
+
+        # Improvement iteration hook: keep explicit, even if no-op in this adapter.
+        improvement = {
+            "attempted": False,
+            "actions": [],
+            "note": "Improvement iteration delegated (HoloIndex/WRE plugin layer).",
+        }
+
+        # Always retrieve task-level code context too (existing WSP 87 guard)
+        task_retrieval = self.search_before_code(task)
+
+        return {
+            "task": task,
+            "module_hint": module_hint,
+            "structured_memory": structured,
+            "retrieval_quality": quality,
+            "improvement_iteration": improvement,
+            "task_retrieval": task_retrieval,
+        }
+
     def enforce_wsp_87(self, code_task: str) -> bool:
         """
         Enforce WSP 87: MANDATORY semantic search before code.

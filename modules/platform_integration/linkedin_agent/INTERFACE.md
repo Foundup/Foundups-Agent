@@ -35,7 +35,10 @@ class GitLinkedInBridge:
     def generate_x_content(self, commit_msg: str, file_count: int) -> str
 
     # Posting Operations
-    def push_and_post(self) -> bool  # Main method: git push + social posting
+    def push_and_post(self, paths_filter: Optional[List[str]] = None,
+                      post_social: bool = True,
+                      retry_queue: bool = True) -> bool  # Main method: git push + social posting
+    def push_and_post_planned(self) -> bool  # Batch commits before pushing/posting
     def post_recent_commits(self, count: int = 1, batch: bool = False) -> bool
 
     # Tracking and History
