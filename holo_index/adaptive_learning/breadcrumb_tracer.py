@@ -186,7 +186,7 @@ class BreadcrumbTracer:
         self.agent_id = raw_agent_id if raw_agent_id else "0102"
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_id = f"{self.agent_id}_{timestamp}"
-        if _breadcrumb_logs_enabled():
+        if _breadcrumb_logs_enabled() and os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes", "on"}:
             logger.info("[BREADCRUMB] Session started for agent %s (%s)", self.agent_id, self.session_id)
 
         # In-memory caches for performance (synced with database)
@@ -221,7 +221,7 @@ class BreadcrumbTracer:
         self.task_discovery_monitor.start()
         self.coordination_processor.start()
 
-        if _breadcrumb_logs_enabled():
+        if _breadcrumb_logs_enabled() and os.getenv("HOLO_SILENT", "0").lower() not in {"1", "true", "yes", "on"}:
             logger.info(
                 "[BRAIN] AUTONOMOUS Breadcrumb Tracer initialized - WSP 78 database enabled - 0102/0102 coordination active"
             )
@@ -287,7 +287,7 @@ class BreadcrumbTracer:
                 details.append(f"task={task_direct}")
             detail_text = " | ".join(details) if details else "recorded"
             timestamp = datetime.now().strftime("%H:%M:%S")
-            if not _breadcrumb_logs_enabled():
+            if not _breadcrumb_logs_enabled() or os.getenv("HOLO_SILENT", "0").lower() in {"1", "true", "yes", "on"}:
                 return
             message = f"[{timestamp}] [BREADCRUMB][{self.agent_id}][{self.session_id}][{breadcrumb_id}] {action}: {detail_text}"
             logger.info(message)

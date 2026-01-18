@@ -57,8 +57,21 @@ class HoloIndexMCPClient:
         self.server_script = Path(server_script_path)
         self.process = None
         self.request_id = 0
+        self.last_error = None
 
         print(f"[MCP-CLIENT] Initialized with server: {self.server_script}")
+
+    async def _read_stream(self, stream: asyncio.StreamReader, timeout: float = 1.0) -> str:
+        """Read remaining stream output with timeout."""
+        try:
+            data = await asyncio.wait_for(stream.read(), timeout=timeout)
+            return data.decode(errors="replace").strip()
+        except Exception:
+            return ""
+
+    def _set_error(self, message: str) -> None:
+        self.last_error = message
+        print(f"[MCP-CLIENT] Error: {message}")
 
     async def connect(self):
         """
@@ -94,10 +107,18 @@ class HoloIndexMCPClient:
             # Wait for server initialization (read startup banner)
             await asyncio.sleep(2)  # Give server time to start
 
+            if self.process.returncode is not None:
+                returncode = self.process.returncode
+                stderr = await self._read_stream(self.process.stderr)
+                stdout = await self._read_stream(self.process.stdout)
+                detail = stderr or stdout or "No output from server"
+                self.process = None
+                raise RuntimeError(f"FastMCP server exited early (code {returncode}): {detail}")
+
             print("[MCP-CLIENT] Connected to FastMCP server")
 
         except Exception as e:
-            print(f"[MCP-CLIENT] Error starting server: {e}")
+            self._set_error(f"Error starting server: {e}")
             raise
 
     async def disconnect(self):
@@ -120,8 +141,11 @@ class HoloIndexMCPClient:
         Returns:
             Tool execution result
         """
-        if not self.process:
-            await self.connect()
+        if not self.process or (self.process and self.process.returncode is not None):
+            try:
+                await self.connect()
+            except Exception as e:
+                return {"error": f"MCP connect failed: {e}"}
 
         self.request_id += 1
 
@@ -142,7 +166,10 @@ class HoloIndexMCPClient:
 
             # Read response
             response_line = await self.process.stdout.readline()
-            response = json.loads(response_line.decode())
+            if not response_line:
+                return {"error": "MCP connection closed (no response)"}
+            response_text = response_line.decode(errors="replace")
+            response = json.loads(response_text)
 
             if "error" in response:
                 print(f"[MCP-CLIENT] Tool error: {response['error']}")
@@ -151,7 +178,7 @@ class HoloIndexMCPClient:
             return response.get("result", {})
 
         except Exception as e:
-            print(f"[MCP-CLIENT] Error calling tool {tool_name}: {e}")
+            self._set_error(f"Error calling tool {tool_name}: {e}")
             return {"error": str(e)}
 
     async def semantic_code_search(self, query: str, limit: int = 5) -> Dict[str, Any]:

@@ -12,7 +12,11 @@ import re
 from pathlib import Path
 
 # Add project root to sys.path
-repo_root = Path(__file__).resolve().parent
+repo_root = Path(__file__).resolve()
+for parent in [repo_root] + list(repo_root.parents):
+    if (parent / "modules").exists() and (parent / "holo_index.py").exists():
+        repo_root = parent
+        break
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 

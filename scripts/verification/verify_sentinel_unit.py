@@ -2,11 +2,14 @@ import os
 import sys
 import logging
 from unittest.mock import MagicMock
+from pathlib import Path
 
 # Add project root to sys.path
-PROJECT_ROOT = os.path.abspath("O:/Foundups-Agent")
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
+_here = Path(__file__).resolve()
+for _parent in [_here] + list(_here.parents):
+    if (_parent / "modules").exists() and (_parent / "holo_index.py").exists():
+        sys.path.insert(0, str(_parent))
+        break
 
 from modules.infrastructure.human_interaction.src.interaction_controller import InteractionController
 from modules.infrastructure.human_interaction.src.platform_profiles import PlatformProfile

@@ -1,5 +1,30 @@
 # HoloIndex Package ModLog
 
+## [2026-01-17] Machine-Readable Memory Bundle Output (`--bundle-json`)
+**Agent**: 0102 Codex  
+**WSP References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - JSON-only stdout bundle for WRE automation
+
+### Problem
+WRE enforcement needed a deterministic, machine-readable retrieval bundle from HoloIndex without parsing human-formatted stdout.
+
+### Fixes
+- `holo_index/cli.py`:
+  - Added `--bundle-json` early-exit path that guarantees stdout is JSON only.
+  - Added `--bundle-module-hint` and `--bundle-task` to emit a module-scoped WSP memory bundle + task retrieval results.
+  - When `HOLO_SKIP_MODEL=1`, `--bundle-json` uses a **fast lexical retrieval path** and avoids importing the full Chroma/model stack at CLI import time.
+
+## [2026-01-17] Breadcrumb Console Silence (HOLO_SILENT)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 77 (Agent Coordination), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - breadcrumb chatter suppressed when silent
+
+### Problem
+HOLO_SILENT=1 still leaked breadcrumb INFO lines to stdout via logger propagation.
+
+### Fixes
+- `holo_index/utils/agent_logger.py`: stop logger propagation to root and gate breadcrumb console output behind `HOLO_BREADCRUMB_LOGS`.
+
 ## [2026-01-05] Holo System Check (CLI Wiring Report)
 **Agent**: 0102 Codex  
 **WSP References**: WSP 70 (Status Reporting), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
@@ -20,6 +45,35 @@
 **Agent**: 0102 Codex  
 **WSP References**: WSP 60 (Module Memory), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
 **Status**: [OK] COMPLETE - memory bundles lead output
+
+## [2026-01-10] Root Violation Auto-Correct Safety + Windows Compatibility (Qwen Orchestration)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 50 (Pre-Action Verification), WSP 85 (Root Protection), WSP 77 (Agent Coordination), WSP 91 (Observability), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - safe single-file relocation + no `grep` dependency
+
+## [2026-01-10] Optional Video Search Feature Isolation (Import Hygiene)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 72 (Module Independence), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - video search remains opt-in
+
+### Problem
+`holo_index.core.__init__` imported `VideoContentIndex`, making `video_search.py` load during core imports (non-optional).
+
+### Fixes
+- `holo_index/core/__init__.py`: removed `VideoContentIndex` from default imports / `__all__`.
+  - Optional usage remains: `from holo_index.core.video_search import VideoContentIndex`
+
+### Problem
+- Root violation auto-correct routed into Qwen refactoring, but the refactoring planner treated a single file path as a “module directory” and could trigger **bulk moves**.
+- The Qwen orchestrator relied on `grep`, which is not available by default on Windows shells.
+
+### Fixes
+- `holo_index/qwen_advisor/orchestration/autonomous_refactoring.py`:
+  - Replaced `grep` subprocess usage with a Windows-safe Python scan for import references.
+  - Added a **single-file relocation plan** (`generate_file_relocation_plan`) to prevent accidental directory-wide moves.
+  - `move_file` execution now prefers `git mv` (when available) and falls back to filesystem move.
+- `holo_index/monitoring/root_violation_monitor/src/root_violation_monitor.py`:
+  - Auto-correct now uses the **single-file relocation plan** instead of module relocation.
 
 ### Problem
 0102 needed memory recall before results to avoid re-derivation and noise.

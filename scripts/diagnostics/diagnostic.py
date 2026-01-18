@@ -4,7 +4,14 @@ Run this while Chrome/Edge are open on YouTube Studio inbox.
 """
 import asyncio
 import sys
-sys.path.insert(0, 'O:/Foundups-Agent')
+from pathlib import Path
+
+# Add repo root to sys.path (WSP 50: never assume cwd)
+_here = Path(__file__).resolve()
+for _parent in [_here] + list(_here.parents):
+    if (_parent / "modules").exists() and (_parent / "holo_index.py").exists():
+        sys.path.insert(0, str(_parent))
+        break
 
 from selenium import webdriver
 

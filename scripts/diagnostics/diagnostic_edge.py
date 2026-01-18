@@ -4,7 +4,7 @@ Edge Comment Processing Diagnostic
 Tests Edge browser connection and comment detection independently.
 
 Usage:
-    python diagnostic_edge.py
+    python scripts/diagnostics/diagnostic_edge.py
 """
 
 import asyncio
@@ -20,8 +20,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add repo root to path
-repo_root = Path(__file__).resolve().parent
+# Add repo root to path (WSP 50: never assume cwd)
+repo_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(repo_root))
 
 

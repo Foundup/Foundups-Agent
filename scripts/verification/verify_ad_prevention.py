@@ -2,13 +2,21 @@ import os
 import asyncio
 import logging
 import time
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 # Mock the imports for the test environment
 import sys
-sys.path.append(os.path.abspath("O:/Foundups-Agent"))
+_here = Path(__file__).resolve()
+for _parent in [_here] + list(_here.parents):
+    if (_parent / "modules").exists() and (_parent / "holo_index.py").exists():
+        sys.path.insert(0, str(_parent))
+        repo_root = _parent
+        break
+else:
+    repo_root = Path.cwd()
 
 from modules.infrastructure.human_interaction.src.interaction_controller import InteractionController
 from modules.infrastructure.human_interaction.src.platform_profiles import PlatformProfile
@@ -28,12 +36,12 @@ async def test_ad_prevention():
     
     try:
         # Load the mock HTML
-        file_path = "file://" + os.path.abspath("O:/Foundups-Agent/test_ad_prevention.html")
+        file_path = "file://" + str((repo_root / "test_ad_prevention.html").resolve())
         logger.info(f"Loading {file_path}")
         driver.get(file_path)
         
         # Load the YouTube Chat profile
-        profile = PlatformProfile("O:/Foundups-Agent/modules/infrastructure/human_interaction/platforms/youtube_chat.json")
+        profile = PlatformProfile(str(repo_root / "modules" / "infrastructure" / "human_interaction" / "platforms" / "youtube_chat.json"))
         controller = InteractionController(driver, profile)
         
         # Test 1: Try to click a 'safe' element (a reaction)

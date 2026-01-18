@@ -53,6 +53,7 @@ class AgentLogger:
         formatter = logging.Formatter('%(message)s')  # Handler formats message
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        self.logger.propagate = False
 
         # Log agent initialization
         self.logger.info(
@@ -220,7 +221,13 @@ class UnifiedAgentHandler(logging.Handler):
         try:
             verbose_mode = os.getenv('HOLO_VERBOSE', '').lower() in {'1', 'true', 'yes'}
             important = any(tag in message for tag in ("[WARN]", "[ERROR]", "[FAIL]"))
-            if verbose_mode or important:
+            silent = os.getenv('HOLO_SILENT', '').lower() in {'1', 'true', 'yes', 'on'}
+            breadcrumb_logs = os.getenv('HOLO_BREADCRUMB_LOGS', '').lower() in {'1', 'true', 'yes', 'on'}
+            is_breadcrumb_logger = "BREADCRUMB" in self.agent_label
+            allow_console = (not silent) and (verbose_mode or important)
+            if is_breadcrumb_logger and not breadcrumb_logs:
+                allow_console = False
+            if allow_console:
                 print(formatted_message)
         except Exception:
             pass
