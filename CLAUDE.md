@@ -119,6 +119,17 @@ python holo_index.py --search "[task]"
 - Examples: "test orchestration" -> autonomous_refactoring.py
 - NEVER vibecode - always search first
 
+### Step 2.1: Mandatory Start-of-Work Loop (WRE Memory Rule)
+**Canonical spec**: `WSP_framework/src/WSP_CORE.md` → **“WSP Memory System (0102)”**
+
+- **Holo retrieval (Structured Memory)**:
+  - Retrieve module docs: `README.md`, `INTERFACE.md`, `ROADMAP.md`, `ModLog.md`, `tests/README.md`, `tests/TestModLog.md`, `memory/README.md`, `requirements.txt`
+- **Retrieval evaluation** (must be explicit in output/logs):
+  - noise, ordering, missing artifacts, staleness risk, duplication
+- **Improve retrieval** if needed:
+  - rerank, dedup, “must-include” artifacts, chunking/metadata fixes (HoloIndex/WSP 60)
+- **Only then execute** scoped changes
+
 ### Step 3: Deep Think - "Can Qwen/Gemma Do This?"
 **Resources Available**:
 - **WSP Orchestrator**: `modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py`
@@ -140,7 +151,7 @@ python holo_index.py --search "[task]"
 
 ### Step 4: Research
 1. Check NAVIGATION.py (verify HoloIndex results)
-2. Read docs: README -> INTERFACE -> tests -> ModLog
+2. Read docs: README -> INTERFACE -> ROADMAP -> tests/README -> tests/TestModLog -> ModLog
 3. Understand architecture before touching code
 
 ### Step 5: Execute Micro-Sprint

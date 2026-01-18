@@ -36,6 +36,8 @@
    - Full error handling
    - Documentation
    - Tests
+   - Customer-validated: at least one real external user (not 0102/012)
+   - MVP gateway: explicit sign-up/usage entry path documented per module
    - Example: Complete module with all WSP compliance
 
 **VIOLATION**: Jumping to MVP without PoC/Prototype = OVERKILL

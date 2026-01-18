@@ -2,6 +2,7 @@
 
 ## Purpose
 Defines the structure and requirements for Module ModLogs and Roadmaps to maintain traceable narrative across the system.
+HoloIndex is the memory retrieval system for 0102; ModLogs are indexed as memory cards and should remain concise and machine-readable.
 
 ## ModLog Structure Requirements
 

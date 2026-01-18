@@ -11,6 +11,18 @@
 
 ---
 
+## 2026-01-09 - MVP Gateway + HoloIndex Navigation Clarifications
+
+**WSP References**: WSP 22a (ModLog/Roadmap), WSP CORE, WSP 87 (Code Navigation)
+
+**Type**: Protocol Update - MVP Definition + Navigation Guidance
+
+**Changes Made**:
+- Defined MVP as customer-validated with a documented module gateway (sign-up/usage path).
+- Clarified HoloIndex vs grep/glob usage boundaries and noted STT "hollow" alias for Holo prompts.
+
+---
+
 ## 2026-01-04 - WSP 60 Memory Feedback Roadmap
 
 **WSP References**: WSP 60 (Module Memory), WSP 15 (MPS-M), WSP 22 (ModLog)

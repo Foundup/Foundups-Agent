@@ -9,6 +9,29 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-01-18] Instance Lock Self-Healing + Status Cleanup
+
+**Change Type**: Infrastructure Hardening (Locks + Health)
+**By**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 84 (Enhance Existing), WSP 91 (Observability)
+
+### What Changed
+
+- `modules/infrastructure/instance_lock/src/instance_manager.py`: added stale lock cleanup helper, lock-derived health status, and safer heartbeat/uptime handling (no os.stat dependency).
+- `modules/infrastructure/instance_monitoring/scripts/status_check.py`: auto-cleans stale lockfiles and reports the action.
+- `.env.example`: added `INSTANCE_LOCK_AUTO_CLEAN_STALE` toggle.
+
+## [2026-01-17] Holo Controls Expansion + Env Documentation
+
+**Change Type**: System Controls (Menu + Env)
+**By**: 0102
+**WSP References**: WSP 60 (Memory), WSP 77 (Agent Coordination), WSP 87 (Code Navigation), WSP 22 (ModLog)
+
+### What Changed
+
+- `main.py`: Holo Controls menu now exposes cache path, reward variant, verbose toggle, and an Advanced Holo submenu for Qwen/Overseer/MCP/agent identity settings; Holo search forwards `--verbose` when enabled; switchboard logs include `holo_verbose` + `holo_auto_index`.
+- `.env.example`: documented Holo/Overseer advanced control variables so 012 can see defaults.
+
 ## [2026-01-11] Root Directory Cleanup - WSP 85 Compliance
 
 **Change Type**: Codebase Organization (File Reorganization)
