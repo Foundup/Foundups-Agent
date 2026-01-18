@@ -7,6 +7,45 @@
 
 ## Change Log
 
+### 2026-01-18 - Reply Submit Button Selector Hardening
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 49 (DOM Resilience)
+
+**Problem:** Reply text was entered into the comment reply box but the "Reply" button was never clicked to submit. Screenshot showed reply text sitting in box with Cancel/Reply buttons visible but unclicked.
+
+**Root Cause:**
+- `reply_executor.py` submit button selector `#submit-button button` was not finding the current YouTube Studio DOM element
+- YouTube Studio's comment reply submit button may have different selectors depending on context
+
+**Solution (6-Strategy Selector Cascade):**
+
+1. **Strategy 1**: Direct ID selectors (legacy working paths)
+2. **Strategy 2**: Look in comment-creator section
+3. **Strategy 3**: iron-pages / slot buttons
+4. **Strategy 4**: Shadow DOM deep search
+5. **Strategy 5**: Text-based fallback (finds button with text "Reply")
+6. **Strategy 6**: Global search in ytcp-comment-creator
+
+**Files Changed:**
+- `src/reply_executor.py` - Completely rewrote submit button finder with multiple fallback strategies + forced mouse event dispatch for custom element compatibility
+
+**Key Code Pattern:**
+```javascript
+// Text-based fallback - find button with text "Reply"
+function findButtonByText(root, text) {
+    const buttons = root.querySelectorAll('button, ytcp-button');
+    for (const btn of buttons) {
+        if ((btn.textContent || '').trim().toLowerCase() === text.toLowerCase()) {
+            return btn.querySelector('button') || btn;
+        }
+    }
+    return null;
+}
+```
+
+---
+
 ### 2026-01-01 - ADR-012: Cross-Comment Loop Prevention
 
 **By:** 0102

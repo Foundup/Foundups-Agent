@@ -206,9 +206,21 @@ class TarsAccountSwapper:
             return False
 
     async def select_account(self, target_name: str, match_terms: Optional[list] = None) -> bool:
-        """Step 3: Select the target account by name (UnDaoDu, Move2Japan, or FoundUps)."""
+        """Step 3: Select the target account by name (Move2Japan, UnDaoDu, FoundUps, or RavingANTIFA)."""
         logger.info(f"[TARS-SWAP] Selecting account: {target_name}...")
         try:
+            # Debug: List all available accounts in the picker
+            available_accounts = self.driver.execute_script("""
+                const accounts = [];
+                const items = document.querySelectorAll('ytd-account-item-renderer, ytcp-account-item-renderer, tp-yt-paper-icon-item');
+                for (const item of items) {
+                    const text = (item.textContent || '').trim().replace(/\\s+/g, ' ').substring(0, 60);
+                    if (text) accounts.push(text);
+                }
+                return accounts;
+            """)
+            logger.info(f"[TARS-SWAP] Available accounts in picker: {available_accounts}")
+
             # Text-based search is most reliable since account order varies
             success = self.driver.execute_script("""
                 const target = (arguments[0] || '').toLowerCase();

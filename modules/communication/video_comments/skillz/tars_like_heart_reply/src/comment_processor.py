@@ -189,20 +189,29 @@ class CommentProcessor:
             self.behavior_profile = (os.getenv("YT_0102_BEHAVIOR_INTERFACE") or os.getenv("YT_BEHAVIOR_INTERFACE") or os.getenv("YT_BEHAVIOR_PROFILE") or os.getenv("WSP_BEHAVIOR_PROFILE") or "0102").upper()
         self.randomness_mode = (os.getenv("YT_ACTION_RANDOMNESS_MODE") or "dynamic").lower()  # dynamic|fixed
 
-        # Tempo mode: Controls interaction speed (FAST | MEDIUM | 012)
+        # Tempo mode: Controls interaction speed with RANDOMIZED ranges
+        # Each tempo mode has a (min, max) delay multiplier range for unpredictability
         tempo = os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper()
         # Backward compatibility for fast mode env var
         if os.getenv("YT_ENGAGEMENT_FAST_MODE", "0").lower() in {"1", "true", "yes"}:
             tempo = "MEDIUM"
 
+        # Define tempo ranges: (min_multiplier, max_multiplier)
         if tempo == "FAST":
-            self.delay_multiplier = 0.1  # 10x faster - rapid testing
+            self.delay_range = (0.05, 0.20)   # 5-20x faster - rapid testing with variance
         elif tempo == "MEDIUM":
-            self.delay_multiplier = 0.25  # 4x faster - quick diagnostics
-        else:
-            self.delay_multiplier = 1.0  # Human-like (012 long-term operation)
+            self.delay_range = (0.15, 0.40)   # 2.5-7x faster - quick diagnostics with variance
+        else:  # 012 mode - human-like with natural variance
+            self.delay_range = (0.6, 1.5)     # Sometimes faster, sometimes slower than baseline
 
-        logger.info(f"[CommentProcessor] TEMPO set to {tempo} (multiplier: {self.delay_multiplier}x)")
+        # Legacy compatibility: use midpoint for fixed calculations
+        self.delay_multiplier = (self.delay_range[0] + self.delay_range[1]) / 2
+
+        # Randomize order of Like/Heart/Reply operations (anti-detection)
+        self.randomize_action_order = os.getenv("YT_RANDOMIZE_ACTION_ORDER", "true").lower() in ("1", "true", "yes")
+
+        logger.info(f"[CommentProcessor] TEMPO set to {tempo} (range: {self.delay_range[0]:.2f}x-{self.delay_range[1]:.2f}x)")
+        logger.info(f"[CommentProcessor] Action order randomization: {'ENABLED' if self.randomize_action_order else 'DISABLED'}")
 
         # Reply layer switches (for incremental testing of refactored code)
         from modules.communication.livechat.src.automation_gates import _env_truthy
@@ -256,6 +265,47 @@ class CommentProcessor:
 
     def _clamp01(self, x: float) -> float:
         return 0.0 if x < 0.0 else (1.0 if x > 1.0 else x)
+
+    def _get_random_delay_multiplier(self) -> float:
+        """
+        Get a randomized delay multiplier from the configured range.
+        Uses beta distribution for natural human-like variance (more likely near middle).
+        """
+        min_mult, max_mult = self.delay_range
+        # Beta distribution biased slightly toward middle (alpha=2, beta=2)
+        # but with random shape for unpredictability
+        alpha = 1.5 + self._rng.random() * 1.5  # 1.5-3.0
+        beta = 1.5 + self._rng.random() * 1.5   # 1.5-3.0
+        normalized = self._rng.betavariate(alpha, beta)
+        multiplier = min_mult + (max_mult - min_mult) * normalized
+        return multiplier
+
+    def _randomize_action_queue(self, actions: list) -> list:
+        """
+        Shuffle action order to avoid detectable patterns.
+        Sometimes Like first, sometimes Heart first, etc.
+        Reply is typically last (needs comment data) but 20% chance it moves earlier.
+        """
+        if not self.randomize_action_order or len(actions) <= 1:
+            return actions
+
+        # Separate reply from reactions (reply usually needs to be later)
+        reactions = [a for a in actions if a in ('like', 'heart')]
+        reply = [a for a in actions if a == 'reply']
+
+        # Shuffle reactions
+        self._rng.shuffle(reactions)
+
+        # 20% chance to interleave reply among reactions (human unpredictability)
+        if reply and self._rng.random() < 0.20 and len(reactions) >= 2:
+            insert_pos = self._rng.randint(1, len(reactions))  # After at least 1 reaction
+            reactions.insert(insert_pos, reply[0])
+            result = reactions
+        else:
+            result = reactions + reply
+
+        logger.debug(f"[ANTI-DETECT] Action order randomized: {result}")
+        return result
 
     def _dynamic_probability(self, base_bias: float) -> float:
         """
@@ -610,7 +660,7 @@ class CommentProcessor:
                 return False
 
             logger.info(f"[ANTI-SPAM] ✓ Action menu opened")
-            await asyncio.sleep(0.5 * self.delay_multiplier)  # Wait for menu to appear
+            await asyncio.sleep(0.5 * self._get_random_delay_multiplier())  # Wait for menu to appear
 
             # STEP 2: Click "Hide user from channel" option
             # Find the menu item with text "Hide user from channel"
@@ -631,7 +681,7 @@ class CommentProcessor:
                 return False
 
             logger.warning(f"[ANTI-SPAM] ☢️ USER HIDDEN: @{username} banned from channel")
-            await asyncio.sleep(1.0 * self.delay_multiplier)  # Wait for action to complete
+            await asyncio.sleep(1.0 * self._get_random_delay_multiplier())  # Wait for action to complete
 
             return True
 
@@ -1006,11 +1056,10 @@ class CommentProcessor:
         # Reply will be added to queue later after intelligent reply generation
 
         # Shuffle action order (humans don't always like→heart→reply in same sequence)
-        if self.human and len(action_queue) > 1:
-            random.shuffle(action_queue)
-            logger.info(f"  [ANTI-DETECT] Initial action order: {' → '.join(action_queue)}")
-        elif self.action_debug and action_queue:
-            logger.info(f"  [ANTI-DETECT] Action order: {' → '.join(action_queue)}")
+        if do_reply:
+            action_queue.append('reply')
+        action_queue = self._randomize_action_queue(action_queue)
+        logger.info(f"  [ANTI-DETECT] Randomized action order: {' → '.join(action_queue)}")
 
         # 1. LIKE
         if do_like:
@@ -1062,12 +1111,13 @@ class CommentProcessor:
                         if self.action_debug:
                             logger.info(f"  [LIKE] DOM click result={like_ok}")
                         if like_ok:
-                            # Min 0.8s delay for YouTube API persistence
+                            # Min 0.8s delay for YouTube API persistence (randomized tempo)
+                            random_mult = self._get_random_delay_multiplier()
                             if self.human:
-                                calculated_delay = self.human.human_delay(0.5, 0.3) * self.delay_multiplier
+                                calculated_delay = self.human.human_delay(0.5, 0.3) * random_mult
                                 await asyncio.sleep(max(calculated_delay, 0.8))
                             else:
-                                calculated_delay = 0.5 * self.delay_multiplier
+                                calculated_delay = 0.5 * random_mult
                                 await asyncio.sleep(max(calculated_delay, 0.8))
                             like_ok = await self._verify_action_with_vision(
                                 "LIKE",
@@ -1100,11 +1150,12 @@ class CommentProcessor:
             action_plan["like"]["reason"] = "disabled"
             logger.info("  [LIKE] DISABLED (do_like=False)")
 
-            # Human-like delay between actions (randomized 0.4s-1.6s, 0.1s-0.4s in fast mode)
+            # Human-like delay between actions with randomized tempo
+            random_mult = self._get_random_delay_multiplier()
             if self.human:
-                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * self.delay_multiplier)
+                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * random_mult)
             else:
-                await asyncio.sleep(1 * self.delay_multiplier)
+                await asyncio.sleep(1 * random_mult)
 
         action_plan["like"]["success"] = bool(results.get("like"))
 
@@ -1157,11 +1208,13 @@ class CommentProcessor:
                         if self.action_debug:
                             logger.info(f"  [HEART] DOM click result={heart_ok}")
                         if heart_ok:
+                            # Randomized tempo for unpredictability
+                            random_mult = self._get_random_delay_multiplier()
                             if self.human:
-                                calculated_delay = self.human.human_delay(1.0, 0.6) * self.delay_multiplier
+                                calculated_delay = self.human.human_delay(1.0, 0.6) * random_mult
                                 await asyncio.sleep(max(calculated_delay, 0.8))
                             else:
-                                calculated_delay = 1 * self.delay_multiplier
+                                calculated_delay = 1 * random_mult
                                 await asyncio.sleep(max(calculated_delay, 0.8))
                             heart_ok = await self._verify_action_with_vision(
                                 "HEART",
@@ -1194,11 +1247,12 @@ class CommentProcessor:
             action_plan["heart"]["reason"] = "disabled"
             logger.info("  [HEART] DISABLED (do_heart=False)")
 
-            # Human-like delay between actions (randomized 0.4s-1.6s, 0.1s-0.4s in fast mode)
+            # Human-like delay between actions with randomized tempo
+            random_mult = self._get_random_delay_multiplier()
             if self.human:
-                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * self.delay_multiplier)
+                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * random_mult)
             else:
-                await asyncio.sleep(1 * self.delay_multiplier)
+                await asyncio.sleep(1 * random_mult)
 
         action_plan["heart"]["success"] = bool(results.get("heart"))
 

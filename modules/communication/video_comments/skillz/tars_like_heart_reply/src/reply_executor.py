@@ -658,7 +658,7 @@ class BrowserReplyExecutor:
         else:
             await asyncio.sleep(0.8 * self.delay_multiplier)
 
-        # Submit
+        # Submit - HARDENED 2026-01-18: Multiple selector strategies + text-based fallback
         submit_result = self.driver.execute_script(
             """
             const threadSelector = arguments[0];
@@ -667,16 +667,87 @@ class BrowserReplyExecutor:
             const thread = threads[threadIndex];
             if (!thread) return {success: false, error: 'Thread not found'};
 
-            let submitBtn =
-              thread.querySelector('#submit-button button') ||
-              thread.querySelector('ytcp-button#submit-button button') ||
-              document.querySelector('ytcp-comment-creator #submit-button button');
+            // Helper to find button by text content (case-insensitive)
+            function findButtonByText(root, text) {
+                if (!root) return null;
+                const buttons = root.querySelectorAll('button, ytcp-button');
+                for (const btn of buttons) {
+                    const btnText = (btn.textContent || btn.innerText || '').trim().toLowerCase();
+                    if (btnText === text.toLowerCase()) {
+                        // Return the actual clickable element (button inside ytcp-button or the button itself)
+                        return btn.querySelector('button') || btn;
+                    }
+                }
+                return null;
+            }
+
+            // Helper to search in shadow DOM recursively
+            function findInShadow(root, selector) {
+                if (!root) return null;
+                try {
+                    const el = root.querySelector(selector);
+                    if (el) return el;
+                } catch(e) {}
+                const children = root.querySelectorAll('*');
+                for (const child of children) {
+                    if (child.shadowRoot) {
+                        const found = findInShadow(child.shadowRoot, selector);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+
+            let submitBtn = null;
+
+            // Strategy 1: Direct ID selectors (legacy working paths)
+            submitBtn = thread.querySelector('#submit-button button');
+            if (!submitBtn) submitBtn = thread.querySelector('ytcp-button#submit-button button');
+            if (!submitBtn) submitBtn = document.querySelector('ytcp-comment-creator #submit-button button');
+
+            // Strategy 2: Look for Reply button in comment-creator section
+            if (!submitBtn) {
+                const creator = thread.querySelector('ytcp-comment-creator');
+                if (creator) {
+                    submitBtn = creator.querySelector('#submit-button button');
+                    if (!submitBtn) submitBtn = findButtonByText(creator, 'Reply');
+                }
+            }
+
+            // Strategy 3: Look in iron-pages or paper-button wrappers
+            if (!submitBtn) submitBtn = thread.querySelector('iron-pages #submit-button button');
+            if (!submitBtn) submitBtn = thread.querySelector('[slot="buttons"] button');
+
+            // Strategy 4: Shadow DOM deep search
+            if (!submitBtn) submitBtn = findInShadow(thread, '#submit-button button');
+
+            // Strategy 5: Text-based fallback - find button with text "Reply"
+            if (!submitBtn) {
+                submitBtn = findButtonByText(thread, 'Reply');
+            }
+
+            // Strategy 6: Global search in comment creator (when thread scope fails)
+            if (!submitBtn) {
+                const globalCreator = document.querySelector('ytcp-comment-creator');
+                if (globalCreator) {
+                    submitBtn = globalCreator.querySelector('#submit-button button');
+                    if (!submitBtn) submitBtn = findButtonByText(globalCreator, 'Reply');
+                }
+            }
 
             if (submitBtn && !submitBtn.disabled) {
-              submitBtn.click();
-              return {success: true};
+                // FORCE CLICK: dispatch mouse events for custom element compatibility
+                try {
+                    submitBtn.scrollIntoView({behavior: 'instant', block: 'center'});
+                    ['mousedown', 'mouseup', 'click'].forEach(type => {
+                        submitBtn.dispatchEvent(new MouseEvent(type, {bubbles: true, cancelable: true, view: window}));
+                    });
+                } catch(e) {
+                    submitBtn.click();
+                }
+                return {success: true, strategy: 'found'};
             }
-            return {success: false, error: 'Submit button not found/disabled'};
+            return {success: false, error: 'Submit button not found/disabled', searched: ['#submit-button', 'text:Reply', 'shadow-dom']};
             """,
             thread_selector,
             comment_idx - 1,
