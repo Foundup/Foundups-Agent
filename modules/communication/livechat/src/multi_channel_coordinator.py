@@ -4,14 +4,31 @@ Multi-Channel Comment Engagement Coordinator
 Extracted from AutoModeratorDAE per WSP 62 (Large File Refactoring).
 Handles Chrome + Edge browser rotation for multi-channel comment engagement.
 
-Architecture (2025-12-28):
+Architecture (2025-12-28, Hardened 2026-01-18):
 - Chrome (port 9222): Move2Japan + UnDaoDu (SAME Google account)
-- Edge (port 9223): FoundUps (DIFFERENT Google account)
+- Edge (port 9223): FoundUps + RavingANTIFA (SAME Edge session)
+
+Hardening Features (2026-01-18):
+1. BIDIRECTIONAL FALLBACK:
+   - Chrome: Move2Japan ↔ UnDaoDu
+   - Edge: FoundUps ↔ RavingANTIFA
+   - If target channel shows "Oops" page, try fallback before account switch
+
+2. OOPS PAGE DETECTION:
+   - Detects "don't have permission" / "Oops" / "access denied" pages
+   - Triggers fallback logic automatically
+
+3. BROWSER SESSION RECOVERY:
+   - Handles NoSuchWindowException (window closed)
+   - Step 1: Try reconnect to existing browser
+   - Step 2: If reconnect fails, relaunch browser
+   - Step 3: If relaunch fails, skip remaining channels
 
 WSP References:
 - WSP 62: Large File Refactoring Enforcement Protocol
 - WSP 72: Module Independence (single responsibility)
 - WSP 84: Code Reuse (delegates to existing browser infrastructure)
+- WSP 73: Digital Twin Architecture (browser routing)
 """
 
 import os
@@ -40,7 +57,52 @@ def _is_session_error(error_text: str) -> bool:
         "target closed",
         "connection refused",
         "not connected",
+        "no such window",  # NoSuchWindowException
+        "window already closed",
+        "web view not found",
     ])
+
+
+def _is_oops_page(driver) -> bool:
+    """
+    Detect if current page is an 'Oops' permission error page.
+
+    Returns True if page shows permission error (wrong account logged in).
+    """
+    try:
+        page_text = driver.execute_script("return document.body?.innerText || '';")
+        page_lower = page_text.lower()
+        return (
+            "don't have permission" in page_lower or
+            "oops" in page_lower or
+            "you need permission" in page_lower or
+            "access denied" in page_lower
+        )
+    except Exception:
+        return False
+
+
+# Bidirectional fallback mapping
+# When target channel shows Oops, try fallback first before account switch
+CHANNEL_FALLBACKS = {
+    # Chrome channels (same Google account)
+    "Move2Japan": "UnDaoDu",
+    "UnDaoDu": "Move2Japan",
+    # Edge channels (same Edge session)
+    "FoundUps": "RavingANTIFA",
+    "RavingANTIFA": "FoundUps",
+}
+
+# Channel name to ID mapping
+CHANNEL_IDS = {
+    "Move2Japan": os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
+    "UnDaoDu": os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
+    "FoundUps": os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
+    "RavingANTIFA": os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+}
+
+# Reverse mapping
+CHANNEL_NAMES = {v: k for k, v in CHANNEL_IDS.items()}
 
 
 class MultiChannelCoordinator:
@@ -255,28 +317,65 @@ class MultiChannelCoordinator:
             try:
                 from modules.infrastructure.dependency_launcher.src.dae_dependencies import STUDIO_FILTER
 
-                # Ensure correct active channel in the Edge session
-                if edge_swapper:
-                    logger.info(f"[ROTATE] [Edge] Switching active channel to {account_name}...")
-                    switched = await edge_swapper.swap_to(account_name, navigate_to_comments=False)
-                    if not switched:
-                        if idx == 1:
-                            logger.info(f"[ROTATE] [Edge] Switch failed for first channel; assuming already on {account_name}")
-                        else:
-                            logger.warning(f"[ROTATE] [Edge] Failed to switch to {account_name}; skipping")
-                            continue
-
-                # Navigate to Studio inbox for this channel
+                # Navigate directly to Studio inbox for this channel
+                # (Account picker swap is optional - direct URL navigation often works if both accounts signed in)
                 studio_url = (
                     f"https://studio.youtube.com/channel/{channel_id}/comments/inbox?filter={STUDIO_FILTER}"
                 )
-                logger.info(f"[ROTATE] Navigating to {account_name} Studio inbox...")
+                logger.info(f"[ROTATE] [Edge] Navigating directly to {account_name} Studio inbox...")
+                logger.info(f"[ROTATE] [Edge] URL: {studio_url}")
                 await asyncio.to_thread(edge_driver.get, studio_url)
                 await asyncio.sleep(5)
+
+                # Check for permission error (wrong account signed in)
+                # HARDENED: Use bidirectional fallback before account switch
+                try:
+                    if _is_oops_page(edge_driver):
+                        logger.warning(f"[ROTATE] [Edge] 🚨 OOPS PAGE detected for {account_name}")
+
+                        # STEP 1: Try bidirectional fallback first (no account switch needed)
+                        fallback_channel = CHANNEL_FALLBACKS.get(account_name)
+                        if fallback_channel:
+                            logger.info(f"[ROTATE] [Edge] 🔄 Trying fallback channel: {fallback_channel}")
+                            fallback_id = CHANNEL_IDS.get(fallback_channel)
+                            fallback_url = (
+                                f"https://studio.youtube.com/channel/{fallback_id}/comments/inbox?filter={STUDIO_FILTER}"
+                            )
+                            await asyncio.to_thread(edge_driver.get, fallback_url)
+                            await asyncio.sleep(5)
+
+                            if not _is_oops_page(edge_driver):
+                                # Fallback works! Process fallback channel instead
+                                logger.info(f"[ROTATE] [Edge] ✅ Fallback to {fallback_channel} successful!")
+                                # Update to process fallback channel
+                                account_name = fallback_channel
+                                channel_id = fallback_id
+                                studio_url = fallback_url
+                            else:
+                                logger.warning(f"[ROTATE] [Edge] 🚨 Fallback {fallback_channel} also shows OOPS")
+
+                        # STEP 2: If still on Oops (or no fallback), try account switch
+                        if _is_oops_page(edge_driver):
+                            logger.warning(f"[ROTATE] [Edge] Attempting account switch for {account_name}...")
+                            if edge_swapper:
+                                switched = await edge_swapper.swap_to(account_name, navigate_to_comments=True)
+                                if not switched:
+                                    logger.error(f"[ROTATE] [Edge] Account swap failed for {account_name}; skipping")
+                                    logger.warning(f"[ROTATE] [Edge] FIX: Sign into {account_name} in Edge browser")
+                                    continue
+                                await asyncio.sleep(3)
+
+                                # STEP 3: Verify after account switch
+                                if _is_oops_page(edge_driver):
+                                    logger.error(f"[ROTATE] [Edge] Still on OOPS after account switch; skipping {account_name}")
+                                    continue
+                except Exception as perm_err:
+                    logger.debug(f"[ROTATE] [Edge] Permission check error: {perm_err}")
 
                 self.log_studio_context(channel_id, f"{account_name} comment_engagement", edge_driver)
                 self.set_active_channel(channel_id)
 
+                logger.info(f"[ROTATE] [Edge] 🚀 Launching comment processor for {account_name}...")
                 result = await runner.run_engagement(
                     channel_id=channel_id,
                     video_id=None,
@@ -326,13 +425,43 @@ class MultiChannelCoordinator:
                 total_processed += processed - stats.get("comments_processed", 0)  # Add retry delta
 
             except Exception as e:
+                error_str = str(e)
                 logger.error(f"[ROTATE] {account_name} exception: {e}", exc_info=True)
                 self.update_engagement_status(channel_id, {
                     "all_processed": False,
                     "stats": {},
-                    "error": str(e),
+                    "error": error_str,
                     "updated_at": time.time(),
                 })
+
+                # HARDENED: Try browser relaunch on window closed errors
+                if _is_session_error(error_str):
+                    logger.warning(f"[ROTATE] [Edge] 🔄 Session error detected - attempting browser recovery...")
+
+                    # Step 1: Try reconnect first
+                    edge_driver = await self.reconnect_edge_driver(edge_port)
+
+                    # Step 2: If reconnect fails, try relaunch
+                    if edge_driver is None:
+                        logger.warning(f"[ROTATE] [Edge] Reconnect failed - attempting relaunch...")
+                        try:
+                            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
+                            relaunch_ok, relaunch_msg = launch_edge(force=True)
+                            if relaunch_ok:
+                                await asyncio.sleep(5)  # Wait for browser to start
+                                edge_opts = EdgeOptions()
+                                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
+                                edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
+                                edge_swapper = TarsAccountSwapper(edge_driver)
+                                logger.info(f"[ROTATE] [Edge] ✅ Browser relaunched successfully")
+                            else:
+                                logger.error(f"[ROTATE] [Edge] ❌ Browser relaunch failed: {relaunch_msg}")
+                        except Exception as relaunch_err:
+                            logger.error(f"[ROTATE] [Edge] ❌ Relaunch exception: {relaunch_err}")
+
+                    if edge_driver is None:
+                        logger.error(f"[ROTATE] [Edge] ❌ Cannot recover browser session - skipping remaining Edge channels")
+                        break
 
             # Check live stream pending
             if self.is_live_stream_pending() and _env_truthy("YT_STOP_ROTATION_ON_LIVE", "true"):
@@ -414,10 +543,37 @@ class MultiChannelCoordinator:
                 else:
                     logger.info(f"[ROTATE] Switched to {account_name} successfully")
 
-                # Refresh for fresh comments
+                # Refresh for fresh comments (async to not block event loop)
                 logger.info(f"[ROTATE] Refreshing page for {account_name}...")
-                chrome_driver.refresh()
+                await asyncio.to_thread(chrome_driver.refresh)
                 await asyncio.sleep(5)
+
+                # HARDENED: Check for Oops page after switch/refresh
+                if _is_oops_page(chrome_driver):
+                    logger.warning(f"[ROTATE] [Chrome] 🚨 OOPS PAGE detected for {account_name}")
+
+                    # Try bidirectional fallback first
+                    fallback_channel = CHANNEL_FALLBACKS.get(account_name)
+                    if fallback_channel:
+                        logger.info(f"[ROTATE] [Chrome] 🔄 Trying fallback channel: {fallback_channel}")
+                        fallback_id = CHANNEL_IDS.get(fallback_channel)
+                        fallback_success = await swapper.swap_to(fallback_channel)
+                        if fallback_success:
+                            await asyncio.to_thread(chrome_driver.refresh)
+                            await asyncio.sleep(5)
+                            if not _is_oops_page(chrome_driver):
+                                logger.info(f"[ROTATE] [Chrome] ✅ Fallback to {fallback_channel} successful!")
+                                account_name = fallback_channel
+                                channel_id = fallback_id
+                            else:
+                                logger.warning(f"[ROTATE] [Chrome] 🚨 Fallback {fallback_channel} also shows OOPS - skipping")
+                                continue
+                        else:
+                            logger.warning(f"[ROTATE] [Chrome] Fallback switch failed - skipping {account_name}")
+                            continue
+                    else:
+                        logger.warning(f"[ROTATE] [Chrome] No fallback available - skipping {account_name}")
+                        continue
 
             except Exception as e:
                 logger.error(f"[ROTATE] Account switch error: {e}")
@@ -429,6 +585,7 @@ class MultiChannelCoordinator:
                 self.set_active_channel(channel_id)
                 self.log_studio_context(channel_id, f"{account_name} comment_engagement", chrome_driver)
 
+                logger.info(f"[ROTATE] [Chrome] 🚀 Launching comment processor for {account_name}...")
                 result = await runner.run_engagement(
                     channel_id=channel_id,
                     video_id=None,
@@ -466,7 +623,7 @@ class MultiChannelCoordinator:
                         except Exception as swap_err:
                             logger.warning(f"[ROTATE] Chrome reconnect swap failed: {swap_err}")
                         try:
-                            chrome_driver.refresh()
+                            await asyncio.to_thread(chrome_driver.refresh)
                             await asyncio.sleep(5)
                         except Exception as refresh_err:
                             logger.warning(f"[ROTATE] Chrome refresh after reconnect failed: {refresh_err}")

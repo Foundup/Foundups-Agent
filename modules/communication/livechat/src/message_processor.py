@@ -45,6 +45,7 @@ from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import Age
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.persona_registry import get_persona_config, get_persona_greeting
 from modules.gamification.whack_a_magat.src.self_improvement import get_self_improvement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
@@ -66,10 +67,29 @@ logger = logging.getLogger(__name__)
 class MessageProcessor:
     """Handles processing of chat messages and generating responses."""
     
-    def __init__(self, youtube_service=None, memory_manager=None, chat_sender=None):
+    def __init__(
+        self,
+        youtube_service=None,
+        memory_manager=None,
+        chat_sender=None,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+    ):
         self.youtube_service = youtube_service
         self.memory_manager = memory_manager  # WSP-compliant hybrid storage
         self.chat_sender = chat_sender  # To access bot channel ID and prevent self-responses
+        self.persona_key = persona_key
+        self.channel_name = channel_name
+        self.channel_id = channel_id
+        self.bot_channel_id = bot_channel_id
+        self.persona_config = get_persona_config(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
         self.banter_engine = get_banter_engine()
         self.llm_bypass_engine = LLMBypassEngine()
         self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
@@ -92,7 +112,12 @@ class MessageProcessor:
         self.self_improvement = get_self_improvement()
         
         # NEW: Intelligent livechat reply generator (Grok-powered)
-        self.intelligent_reply = get_livechat_reply_generator()
+        self.intelligent_reply = get_livechat_reply_generator(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
         
         # NEW: Intelligent throttling systems
         self.emoji_limiter = EmojiResponseLimiter() if EmojiResponseLimiter else None
@@ -302,7 +327,10 @@ class MessageProcessor:
             has_whack_command = self._check_whack_command(message_text)
 
             # Check for MAGA content (WSP: use existing detector)
-            maga_response = self.greeting_generator.get_response_to_maga(message_text)
+            maga_response = None
+            allow_maga = self.persona_config.get("allow_maga_trolling", True)
+            if allow_maga:
+                maga_response = self.greeting_generator.get_response_to_maga(message_text)
             has_maga = maga_response is not None
 
             processed_message = {
@@ -733,7 +761,13 @@ class MessageProcessor:
             # Send ONE greeting per stream, not per user, to avoid spam
             if not hasattr(self, 'stream_greeting_sent') or not self.stream_greeting_sent:
                 # Generate a general stream greeting, not user-specific
-                greeting = self.greeting_generator.generate_greeting()
+                persona_greeting = get_persona_greeting(
+                    persona_key=self.persona_key,
+                    channel_name=self.channel_name,
+                    channel_id=self.channel_id,
+                    bot_channel_id=self.bot_channel_id,
+                )
+                greeting = persona_greeting or self.greeting_generator.generate_greeting()
                 if greeting:
                     # Qwen Message Diversity Check - Prevent repetitive greeting messages
                     if self.intelligent_throttle:

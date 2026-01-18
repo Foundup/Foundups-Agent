@@ -19,6 +19,8 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 
+from modules.communication.livechat.src.persona_registry import get_persona_config, resolve_persona_key
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,11 +87,39 @@ class IntelligentLivechatReply:
     5. Banter engine fallback
     """
     
-    def __init__(self):
+    def __init__(
+        self,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+    ):
         self.grok_available = False
         self.grok_client = None
         self.banter_engine = None
         self.awakened = False
+        resolved_persona = resolve_persona_key(
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+        self.persona = get_persona_config(
+            persona_key=persona_key or resolved_persona,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+        self.persona_key = self.persona.get("key", resolved_persona)
+        persona_patterns = self.persona.get("pattern_responses")
+        if persona_patterns is not None:
+            if self.persona.get("use_default_patterns", True):
+                self.pattern_responses = dict(PATTERN_RESPONSES)
+                self.pattern_responses.update(persona_patterns)
+            else:
+                self.pattern_responses = persona_patterns
+        else:
+            self.pattern_responses = PATTERN_RESPONSES
+        self.system_prompt = self.persona.get("system_prompt") or self.GROK_SYSTEM_PROMPT
         
         # WSP_00: Execute 0102 awakening
         self._execute_awakening()
@@ -221,7 +251,7 @@ class IntelligentLivechatReply:
         """Check for pattern-based responses."""
         message_lower = message.lower()
         
-        for pattern_name, pattern_data in PATTERN_RESPONSES.items():
+        for pattern_name, pattern_data in self.pattern_responses.items():
             for keyword in pattern_data["keywords"]:
                 if keyword in message_lower:
                     logger.info(f"[LIVECHAT-REPLY] Pattern match: {pattern_name}")
@@ -310,7 +340,7 @@ RULES:
             # Use same pattern as video_comments
             response = self.grok_client.get_response(
                 prompt=user_prompt,
-                system_prompt=self.GROK_SYSTEM_PROMPT
+                system_prompt=self.system_prompt
             )
             
             if response:
@@ -407,13 +437,26 @@ RULES:
 
 
 # Global instance
-_livechat_reply_generator = None
+_livechat_reply_generators: Dict[str, IntelligentLivechatReply] = {}
 
 
-def get_livechat_reply_generator() -> IntelligentLivechatReply:
-    """Get or create global livechat reply generator."""
-    global _livechat_reply_generator
-    if _livechat_reply_generator is None:
-        _livechat_reply_generator = IntelligentLivechatReply()
-    return _livechat_reply_generator
-
+def get_livechat_reply_generator(
+    persona_key: Optional[str] = None,
+    channel_name: Optional[str] = None,
+    channel_id: Optional[str] = None,
+    bot_channel_id: Optional[str] = None,
+) -> IntelligentLivechatReply:
+    """Get or create a persona-specific livechat reply generator."""
+    resolved = persona_key or resolve_persona_key(
+        channel_name=channel_name,
+        channel_id=channel_id,
+        bot_channel_id=bot_channel_id,
+    )
+    if resolved not in _livechat_reply_generators:
+        _livechat_reply_generators[resolved] = IntelligentLivechatReply(
+            persona_key=resolved,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+    return _livechat_reply_generators[resolved]

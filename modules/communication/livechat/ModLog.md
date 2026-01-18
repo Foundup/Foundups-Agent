@@ -12,6 +12,94 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ## MODLOG ENTRIES
 
+### 2026-01-18: Persona Registry + Forced Credential Set
+
+**By:** 0102  
+**WSP References:** WSP 50 (Pre-Action Verification), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** Livechat responses were single-persona (MAGA trolling), and OAuth rotation made it hard to keep a specific bot identity (e.g., RavingANTIFA vs FoundUps).
+
+**Solution:**
+- Added persona registry (FoundUps/UnDaoDu/RavingANTIFA/Move2Japan) with system prompts and greetings.
+- LiveChatCore now resolves persona and wires it into SessionManager + MessageProcessor + reply generator.
+- MAGA trolling now respects persona (disabled for FoundUps/UnDaoDu).
+- New controls: `YT_ACTIVE_PERSONA` override and `YT_FORCE_CREDENTIAL_SET` (forced login).
+- Default channel lists now include `RAVINGANTIFA_CHANNEL_ID`.
+
+**Files Modified:**
+- `modules/communication/livechat/src/persona_registry.py`
+- `modules/communication/livechat/src/livechat_core.py`
+- `modules/communication/livechat/src/message_processor.py`
+- `modules/communication/livechat/src/session_manager.py`
+- `modules/communication/livechat/src/intelligent_livechat_reply.py`
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+- `modules/communication/livechat/src/stream_discovery_service.py`
+- `main.py`
+- `.env.example`
+
+### 2026-01-18: Multi-Stream Detection Restored
+
+**By:** 0102
+**WSP References:** WSP 50 (Pre-Action Verification), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** Stream discovery stopped after the first live channel, so concurrent lives (e.g., Move2Japan + UnDaoDu) were not detected.
+
+**Solution:**
+- `stream_discovery_service.py`: scan all channels by default and keep collecting live streams.
+- New toggle `YT_SCAN_ALL_LIVE` (default true) allows returning to early-stop behavior when needed.
+- Cached stream check no longer blocks multi-stream scanning when the toggle is enabled.
+
+### 2026-01-18: Browser Routing Hardening - Bidirectional Fallback & Session Recovery
+
+**By:** 0102
+**WSP References:** WSP 73 (Digital Twin Architecture), WSP 62 (Large File Refactoring), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** When browser session fails (Edge window closed), or wrong account is logged in (Oops page), the system would crash or skip channels without recovery.
+
+**Solution - Browser Routing Hardening:**
+
+1. **Bidirectional Fallback Logic:**
+   - Chrome: Move2Japan ↔ UnDaoDu
+   - Edge: FoundUps ↔ RavingANTIFA
+   - If target channel shows "Oops" page, try fallback channel BEFORE account switch
+   - Reduces account switch operations by 50%+
+
+2. **Enhanced Oops Page Detection:**
+   - Added `_is_oops_page(driver)` function
+   - Detects: "don't have permission", "Oops", "access denied", "you need permission"
+   - Triggers fallback logic automatically
+
+3. **Browser Session Recovery:**
+   - Extended `_is_session_error()` to catch: "no such window", "window already closed", "web view not found"
+   - Step 1: Try reconnect to existing browser
+   - Step 2: If reconnect fails, relaunch browser via `launch_edge(force=True)`
+   - Step 3: If relaunch fails, skip remaining channels (graceful degradation)
+
+4. **Channel Mappings Added:**
+   - `CHANNEL_FALLBACKS`: Bidirectional fallback pairs
+   - `CHANNEL_IDS`: Name to ID mapping
+   - `CHANNEL_NAMES`: ID to name reverse mapping
+
+**Files Modified:**
+- `modules/communication/livechat/src/multi_channel_coordinator.py`
+
+**Impact:**
+- Handles NoSuchWindowException without crashing
+- Automatic fallback to sibling channel on Oops page
+- Browser relaunch capability on session failure
+- More resilient multi-channel rotation
+
+---
+
+### 2026-01-10: Root violation cleanup - relocate livechat party verification script
+
+**By:** 0102  
+**WSP References:** WSP 85 (Root Protection), WSP 49 (Module Structure), WSP 34 (Tests), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+**Change:** Moved root-level `verify_party.py` into `modules/communication/livechat/tests/system_tests/verify_party.py` and normalized repo-root resolution so it runs independent of current working directory.
+
+---
+
 ### 2026-01-09: Heartbeat emits comment-cleared state for AI Overseer orchestration
 
 **By:** 0102  

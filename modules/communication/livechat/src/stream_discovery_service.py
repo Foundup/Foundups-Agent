@@ -95,6 +95,7 @@ class StreamDiscoveryService:
             os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
             os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
             os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
+            os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
             os.getenv('TEST_CHANNEL_ID', ''),
         ]
         return [ch for ch in channels if ch]
@@ -244,11 +245,28 @@ class StreamDiscoveryService:
         self.high_priority_pending = False
         self.priority_reason = None
 
+        # Multi-stream scan toggle (default ON to detect concurrent live streams)
+        scan_all_streams = _env_truthy("YT_SCAN_ALL_LIVE", "true")
+
         # Priority 0: Check if last stream is still live
         cached_result = self._check_cached_stream()
+        found_streams: List[Dict] = []
+        first_stream_to_monitor: Optional[Dict] = None
+        check_results: Dict[str, str] = {}
         if cached_result:
-            logger.info(f"[ROCKET] Skipping channel rotation - already found active stream: {cached_result['video_id']}")
-            return cached_result
+            logger.info(f"[ROCKET] Cached stream still live: {cached_result['video_id']}")
+            cached_stream_info = {
+                'video_id': cached_result['video_id'],
+                'live_chat_id': cached_result.get('live_chat_id'),
+                'channel_id': cached_result.get('channel_id'),
+                'channel_name': cached_result.get('channel_name', 'Cached Stream'),
+                'title': cached_result.get('title') or 'Cached Stream'
+            }
+            found_streams.append(cached_stream_info)
+            first_stream_to_monitor = cached_stream_info
+            if not scan_all_streams:
+                logger.info("[ROCKET] Skipping channel rotation (YT_SCAN_ALL_LIVE=false)")
+                return cached_result
 
         # Get channels to check
         channels_to_check = self._get_channels_to_check()
@@ -270,10 +288,6 @@ class StreamDiscoveryService:
         logger.info("=" * 60)
 
         # Check each channel
-        found_streams: List[Dict] = []
-        first_stream_to_monitor: Optional[Dict] = None
-        check_results: Dict[str, str] = {}
-
         for i, channel_id in enumerate(channels_to_check, 1):
             channel_name = self.stream_resolver._get_channel_display_name(channel_id)
             logger.info(f"\n[SEARCH Channel {i}/{len(channels_to_check)}] Checking {channel_name}...")
@@ -341,8 +355,10 @@ class StreamDiscoveryService:
                 if not first_stream_to_monitor:
                     first_stream_to_monitor = stream_info
 
-                logger.info(f"[TARGET] Found active stream on {channel_name} - stopping channel scan")
-                break
+                if not scan_all_streams:
+                    logger.info(f"[TARGET] Found active stream on {channel_name} - stopping channel scan")
+                    break
+                logger.info(f"[TARGET] Found active stream on {channel_name} - continuing scan for other live channels")
 
         # Process results
         logger.info(f"[QWEN-EVALUATE] Analyzing search results...")

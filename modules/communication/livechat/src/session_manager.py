@@ -23,6 +23,7 @@ import random
 from typing import Optional, Dict, Any
 import googleapiclient.errors
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.persona_registry import get_persona_greeting
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,15 @@ class SessionManager:
     Handles authentication, stream discovery, and session lifecycle.
     """
     
-    def __init__(self, youtube_service, video_id: str):
+    def __init__(
+        self,
+        youtube_service,
+        video_id: str,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+    ):
         self.youtube = youtube_service
         self.video_id = video_id
         self.live_chat_id = None
@@ -50,6 +59,10 @@ class SessionManager:
         self.stream_title_short = None
         self.viewer_count = 0
         self.is_active = False
+        self.persona_key = persona_key
+        self.channel_name = channel_name
+        self.channel_id = channel_id
+        self.bot_channel_id = bot_channel_id
         # WSP 84 compliant: Use existing greeting generator
         self.greeting_generator = GrokGreetingGenerator()
         self.greeting_message = None  # Will be generated dynamically
@@ -162,10 +175,17 @@ class SessionManager:
             # NO-QUOTA mode - continue without chat ID
             logger.info("NO-QUOTA mode: Continuing without chat ID for social media posting")
         
-        # Generate dynamic greeting based on stream title
+        # Generate dynamic greeting based on stream title and persona
         if self.stream_title:
             self.greeting_generator.stream_title = self.stream_title
-        self.greeting_message = self.greeting_generator.generate_greeting()
+        persona_greeting = get_persona_greeting(
+            persona_key=self.persona_key,
+            stream_title=self.stream_title,
+            channel_name=self.channel_title if hasattr(self, "channel_title") else self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.greeting_message = persona_greeting or self.greeting_generator.generate_greeting()
         
         logger.info(f"Session initialized successfully for: {self.stream_title_short}")
         return True

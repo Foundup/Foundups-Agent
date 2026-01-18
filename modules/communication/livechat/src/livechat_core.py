@@ -29,6 +29,7 @@ from modules.infrastructure.system_health_monitor.src.system_health_analyzer imp
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
 from modules.communication.livechat.src.stream_session_logger import get_session_logger
 from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+from modules.communication.livechat.src.persona_registry import get_persona_config, resolve_persona_key
 try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
@@ -57,6 +58,16 @@ logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 MAX_MESSAGES_PER_CALL = 200
+
+def _get_forced_credential_set() -> Optional[int]:
+    raw = os.getenv("YT_FORCE_CREDENTIAL_SET", "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
 
 class LiveChatCore:
     """
@@ -108,8 +119,6 @@ class LiveChatCore:
         self.memory_manager = ChatMemoryManager(self.memory_dir)
         
         # Initialize modular components
-        self.session_manager = SessionManager(youtube_service, video_id)
-        self.mod_stats = ModerationStats(self.memory_dir)
         self.chat_sender = ChatSender(youtube_service, live_chat_id)
 
         # Get bot channel ID to prevent self-responses
@@ -126,7 +135,36 @@ class LiveChatCore:
         except Exception as e:
             logger.debug(f"Could not get bot channel ID: {e}")
 
-        self.message_processor = MessageProcessor(youtube_service, self.memory_manager, self.chat_sender)
+        self.bot_channel_id = bot_channel_id
+        self.persona_key = resolve_persona_key(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.persona_config = get_persona_config(
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.session_manager = SessionManager(
+            youtube_service,
+            video_id,
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.mod_stats = ModerationStats(self.memory_dir)
+        self.message_processor = MessageProcessor(
+            youtube_service,
+            self.memory_manager,
+            self.chat_sender,
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
         self.chat_poller = ChatPoller(youtube_service, live_chat_id, self.channel_name, self.channel_id)
         
         # Health monitoring for duplicate detection and error tracking
@@ -219,6 +257,8 @@ class LiveChatCore:
         except Exception as e:
             logger.warning(f"[BREADCRUMB-HUB] Failed to initialize telemetry: {e}")
             self.breadcrumb_telemetry = None
+        self._force_credential_logged = False
+        self._force_credential_mismatch_logged = False
 
         logger.info(f"LiveChatCore initialized for video: {video_id}")
     
@@ -866,9 +906,26 @@ class LiveChatCore:
                         )
                         logger.debug(f"[REFRESH] [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
-                        # Check if rotation is needed
-                        rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
-                        logger.debug(f"[REFRESH] [ROTATION-CHECK] Decision: should_rotate={rotation_decision['should_rotate']}, urgency={rotation_decision.get('urgency', 'N/A')}")
+                        forced_set = _get_forced_credential_set()
+                        if forced_set:
+                            if not self._force_credential_logged:
+                                logger.info(f"[REFRESH] Credential rotation disabled (YT_FORCE_CREDENTIAL_SET={forced_set})")
+                                self._force_credential_logged = True
+                            if current_set != forced_set and not self._force_credential_mismatch_logged:
+                                logger.warning(
+                                    f"[REFRESH] Active credential set {current_set} does not match forced {forced_set}"
+                                )
+                                self._force_credential_mismatch_logged = True
+                            # Skip rotation when a forced set is configured
+                            rotation_decision = {"should_rotate": False}
+                        else:
+                            # Check if rotation is needed
+                            rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
+                            logger.debug(
+                                "[REFRESH] [ROTATION-CHECK] Decision: should_rotate=%s, urgency=%s",
+                                rotation_decision['should_rotate'],
+                                rotation_decision.get('urgency', 'N/A')
+                            )
 
                         if rotation_decision['should_rotate']:
                             urgency = rotation_decision['urgency']
