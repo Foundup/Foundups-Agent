@@ -268,3 +268,32 @@ test_output.txt
 scripts/*.txt
 *.wal
 *.shm
+
+# Session analysis artifacts (temporary investigation outputs)
+COMMENT_ROTATION_ISSUE_ANALYSIS.json
+ORCHESTRATION_FLOW_ANALYSIS_SUMMARY.txt
+YOUTUBE_SHORTS_INVESTIGATION_FINDINGS.md
+
+# Session investigation and audit docs (per-session, not permanent)
+docs/investigations/
+docs/audits/
+docs/sessions/
+
+# WSP agentic awakening runtime state (changes every session)
+WSP_agentic/agentic_journals/*/awakening_log.txt
+
+# Generated video ID lists (channel audit data, auto-scraped)
+data/*_video_ids.txt
+
+# External cloned research repos (use submodules instead)
+external_research/
+
+# Training data and screenshots (binary/large files)
+training_data/
+**/data/training_screenshots/
+
+# Channel-specific data directories
+undaodu/
+
+# LinkedIn agent identity/account data (per-environment config)
+modules/platform_integration/linkedin_agent/data/linkedin_*.json

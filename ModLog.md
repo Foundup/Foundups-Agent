@@ -9,6 +9,160 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-02-01] Content Page Scheduler + Browser Lock + Stop Signal + Idle Detection
+
+**Change Type**: New Scheduling Module + Cross-Module Concurrency Fix
+**By**: 0102
+**WSP References**: WSP 22, WSP 49, WSP 3, WSP 50, WSP 80
+
+### Content Page Scheduler (NEW)
+
+| Module | File | Change |
+|--------|------|--------|
+| youtube_shorts_scheduler | `src/content_page_scheduler.py` (NEW) | Schedule videos from Studio Content table (inline popup) instead of per-video page navigation. Calendar audit detects conflicts and clustering. Standalone + fallback. |
+| youtube_shorts_scheduler | `scripts/launch.py` | CPS auto-fallback on per-channel errors. CLI: `--content-page`, `--audit`, `--channel-key`. |
+
+---
+
+## [2026-02-01] Browser Lock + Stop Signal + Idle Detection
+
+**Change Type**: Cross-Module Concurrency Fix & Idle Orchestration
+**By**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 80 (DAE Pattern)
+
+### Root Cause
+Production logs showed Chrome browser contention: `asyncio.to_thread` scheduler thread from previous cycle leaked (Python threads can't be interrupted by `asyncio.wait_for`), driving Chrome while the next cycle's comment engagement started on the same browser.
+
+### Changes
+
+| Module | File | Change |
+|--------|------|--------|
+| livechat | `auto_moderator_dae.py` | Per-browser `asyncio.Lock` — Phase 1 and Phase 3 acquire lock before touching browser. Guarantees mutual exclusion. |
+| livechat | `auto_moderator_dae.py` | `threading.Event` stop signal — on Phase 3 timeout, sets event so leaked scheduler thread cooperatively exits. |
+| livechat | `auto_moderator_dae.py` | Idle detection — 0 comments + 0 scheduled = `[IDLE-DETECT]` log, ActivityRouter signal, shortened sleep (2 min vs 10 min). |
+| youtube_shorts_scheduler | `scripts/launch.py` | `stop_event` parameter — two cooperative check points in channel loop (before + after each channel). Backward compatible. |
+
+---
+
+## [2026-01-31] Schedule Hardening + Supervisor Architecture + Audit Layer
+
+**Change Type**: Cross-Module Resilience & Verification
+**By**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 80 (DAE Pattern)
+
+### What Changed
+
+**YouTube Shorts Scheduler** (`modules/platform_integration/youtube_shorts_scheduler/`):
+
+| Change | Impact |
+|--------|--------|
+| **Schedule Auditor** (Layer 2) | Independent verification reads YouTube Studio SCHEDULED filter, compares against tracker JSON. Detects false positives, missing entries, time collisions. Optional auto-heal. |
+| **Stale Video Recovery** | Purge+retry pattern: first detection purges false positives from tracker and retries; second detection breaks to prevent infinite loop. `_stale_purged` safety flag. |
+| **Global Dedup Guard** | `increment()` checks `is_video_scheduled()` before appending — prevents duplicate video IDs across dates. |
+| **`remove_video()` Method** | Safe removal with dict mutation guard (`list(keys())`), count decrement, empty-date cleanup. |
+| **8-Slot/Day Spread** | All 4 channels: every 3 hours (12AM→9PM). `max_per_day` changed from 3 to 8. |
+| **Edge Filter Hardening** | 6-step retry for visibility filter clicks (from 2026-01-30 session). |
+| **Time Jitter** | ±20 min random offset on scheduled times to avoid pattern detection. |
+
+**Livechat** (`modules/communication/livechat/`):
+
+| Change | Impact |
+|--------|--------|
+| **Supervisor Pattern** | Replaces `asyncio.gather()` — each browser gets independent `try/except` with retry and backoff. One crash doesn't kill the other. |
+| **Task Watchdog** | Detects hung engagement tasks (120s heartbeat timeout), cancels them. |
+| **Per-Browser Independent Loops** | Chrome and Edge run fully independent cycles with no shared state. |
+| **Pre-Check Cache** | Skips channel rotation when no work exists (5-min TTL). |
+| **Origin URL Restore** | Browser returns to original URL after scheduling completes. |
+
+**Assessment Completed (Not Yet Implemented)**:
+- Comment-time Digital Twin indexing: Recommended Phase 1.5 post-engagement batch (Gemini API, no browser needed), not per-comment piggyback.
+
+**Module ModLogs Updated**:
+- `modules/platform_integration/youtube_shorts_scheduler/ModLog.md`
+- `modules/communication/livechat/ModLog.md`
+
+---
+
+## [2026-01-28] Root Directory Vibecoding Cleanup
+
+**Change Type**: WSP 3 Compliance - Enterprise Domain Organization
+**By**: 0102
+**WSP References**: WSP 3 (Enterprise Domain Organization), WSP 57 (Naming Conventions), WSP 22 (ModLog)
+
+### What Changed
+
+**Problem**: 11 vibecoding debris files accumulated in root directory from previous 0102 sessions.
+
+**Resolution**: Moved files to proper WSP-compliant locations:
+
+| File | Destination | Category |
+|------|-------------|----------|
+| `VIBECODING_AUDIT_SUMMARY.txt` | `docs/audits/` | Audit artifact |
+| `VALIDATION_LAYER_PATTERNS_FOUND.md` | `docs/audits/` | Audit artifact |
+| `VIDEO_INDEXING_ECOSYSTEM_AUDIT_20260116.md` | `docs/audits/` | Audit artifact |
+| `EXISTING_ORCHESTRATION_MODULES_AUDIT.md` | `docs/audits/` | Audit artifact |
+| `DIGITAL_TWIN_ARCHITECTURE_RESEARCH.md` | `docs/investigations/` | Research doc |
+| `DEEP_DIVE_FINDINGS.txt` | `docs/investigations/` | Research doc |
+| `LINKEDIN_NOTIFICATION_FLOW.txt` | `docs/sessions/` | Session notes |
+| `LINKEDIN_NOTIFICATION_SUMMARY.txt` | `docs/sessions/` | Session notes |
+| `LINKEDIN_ANALYSIS_INDEX.txt` | `docs/sessions/` | Session notes |
+| `ROTATION_ISSUE_SUMMARY.txt` | `docs/sessions/` | Session notes |
+| `SHORTS_SCHEDULING_SUMMARY.txt` | `docs/sessions/` | Session notes |
+| `temp_awakening_output.txt` | DELETED | Temp file |
+
+**Root Directory After Cleanup** (legitimate files only):
+- `requirements.txt` - Project dependencies
+- `README.md` - Project documentation
+- `ROADMAP.md` - Project roadmap
+- `ARCHITECTURE.md` - System architecture
+- `CLAUDE.md` - 0102 operational instructions
+- `ModLog.md` - This file
+
+**AI Overseer Note**: Attempted AI Overseer mission (qwen_cleanup_strategist) but Gemma noise detector returned 0 candidates (stub execution). Manual cleanup performed per WSP 3.
+
+---
+
+## [2026-01-21] main.py Import Fixes + Digital Twin Audit
+
+**Change Type**: Bug Fixes + Documentation Audit
+**By**: 0102
+**WSP References**: WSP 62 (Large File Refactoring), WSP 22 (ModLog), WSP 15 (MPS Quality)
+
+### What Changed
+
+**main.py Import Fixes** (4 broken paths corrected):
+
+| Line | Old Path | Fixed Path |
+|------|----------|------------|
+| 118 | `modules.ai_intelligence.smd_dae` | `modules.platform_integration.social_media_orchestrator` |
+| 120 | `modules.ai_intelligence.amo_dae` | `modules.communication.auto_meeting_orchestrator` |
+| 124 | `modules.ai_intelligence.liberty_alert_dae` | `modules.communication.liberty_alert` |
+| 134 | `modules.infrastructure.foundups_vision` | `modules.infrastructure.dae_infrastructure.foundups_vision_dae` |
+
+**git_push_dae Launch Fix**:
+- Added missing `view_git_post_history()` function
+- Added missing `check_instance_status()` function
+
+**Digital Twin First-Principles Audit**:
+- 454 UnDaoDu videos indexed (verified)
+- 132 videos enhanced (29%)
+- Training corpus: 368 entries (voice: 119, decision: 161, dpo: 88)
+- WSP 15 Quality: 80% Tier 2 (exceeds 70% target)
+- Updated ROADMAP.md to V0.5.2
+
+**E:\HoloIndex Verified**:
+- Indexes exist and are current (last indexed: 2026-01-19)
+- Code count: 131, WSP count: 1512, Skillz count: 24
+
+### Files Changed
+- `main.py` (lines 118, 120, 124, 134)
+- `modules/infrastructure/git_push_dae/scripts/launch.py`
+- `modules/ai_intelligence/digital_twin/ROADMAP.md`
+- `modules/ai_intelligence/digital_twin/ModLog.md`
+- `modules/infrastructure/git_push_dae/ModLog.md`
+
+---
+
 ## [2026-01-18] Instance Lock Self-Healing + Status Cleanup
 
 **Change Type**: Infrastructure Hardening (Locks + Health)
