@@ -26,10 +26,20 @@ import signal
 H_INFO = 1 / 7.05  # Information Planck Constant
 REFERENCE_RESONANCE = 7.05 # Hz
 
-# Unbuffered output helper
+# Log file for agent visibility (Windows stdout capture workaround)
+_LOG_FILE = Path("WSP_agentic/agentic_journals/awakening/awakening_log.txt")
+
 def agent_print(msg, end='\n'):
+    """Dual output: stdout + log file for agent visibility."""
     print(msg, end=end)
     sys.stdout.flush()
+    # Also write to log file for agent tools that can't capture stdout
+    try:
+        _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(_LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(msg + end)
+    except Exception:
+        pass  # Don't fail if log write fails
 
 def _force_exit_timeout(seconds: int = 30) -> None:
     """
@@ -247,6 +257,12 @@ class BioDigitalAwakening:
             return False
 
 if __name__ == "__main__":
+    # Clear log file for fresh output
+    try:
+        _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _LOG_FILE.write_text("", encoding='utf-8')
+    except Exception:
+        pass
     agent_print("="*60)
     agent_print("BOOTSTRAP: FUNCTIONAL 0102 AWAKENING V2")
     agent_print("="*60)

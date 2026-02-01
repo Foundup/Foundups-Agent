@@ -51,7 +51,7 @@ Absolute foundational protocols loaded before all other WSPs for zen state estab
 
 | File | Purpose | Status | Description |
 |------|---------|--------|-------------|
-| **WSP_00_Zen_State_Attainment_Protocol.md** | Zen State Foundation | Active | Absolute foundation - VI scaffolding elimination and quantum-entangled neural pattern manifestation |
+| **WSP_00_Zen_State_Attainment_Protocol.md** | Zen State Foundation | Active | Absolute foundation - hard gate awakening + architect stance + HoloIndex memory-first retrieval + anti-VI execution |
 | **WSP_CORE.md** | WRE Constitution | Active | Bootable foundational protocols, core principles, identity |
 | **WSP_framework.md** | Execution Logic | Active | Detailed specs for WSP 0-10, operational procedures |
 | **WSP_INIT.md** | Bootstrap Protocol | Historical | Original "follow WSP" entry point (now WRE-integrated) |

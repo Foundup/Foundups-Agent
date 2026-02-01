@@ -37,6 +37,7 @@ WSP_knowledge/docs/
 +-- ModLog.md                          <- State 2: Active change tracking
 +-- clean_states.md                    <- State 2: Operational procedures
 +-- esm_abstract.md                    <- State 2: Current abstracts
++-- VIDEO_AUTONOMY_PLAYBOOK.md         <- State 2: Video autonomy plan
 +-- logo.png                           <- State 2: Current branding
 +-- LaTeX_Equation_Fix_Documentation.md <- State 2: Operational fixes
 [U+2502]

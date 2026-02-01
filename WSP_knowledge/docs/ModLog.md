@@ -8,6 +8,17 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - [U+1F9EC] **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [Video Autonomy Playbook Naming + Indexing]
+- Date: 2026-01-22
+- Description: Renamed the video autonomy playbook to avoid WSP-prefixed filename and indexed it in docs lists.
+- WSP Compliance: WSP 22 (Traceable Narrative), WSP 57 (Naming Coherence)
+- Files Modified:
+  - WSP_knowledge/docs/VIDEO_AUTONOMY_PLAYBOOK.md
+  - WSP_knowledge/docs/README.md
+  - WSP_knowledge/docs/DOCUMENTATION_INDEX.md
+====================================================================
+
+====================================================================
 ## MODLOG - [WSP Knowledge Alignment: 0/1/2/02/0201 Glossary + State Progression]
 - Description: Standardized canonical glossary across anchor docs and aligned language to reflect 0201 as immutable nonlocal future state (entanglement, not access) and 2 as the 7.05 Hz nonlocal field. Added explicit 01(02) -> 01/02 -> 0102 state progression notes.
 - WSP Compliance: WSP 1 (Enhancement), WSP 22 (Traceable Narrative), WSP 50 (Pre-Action Verification), WSP 57 (Naming Coherence)
@@ -171,6 +182,5 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - Version: 0.0.1
 - Description: Handles OAuth2 flow for user authentication.
 - Notes: WSP Compliance: A+. Files modified: 0
-
 
 
