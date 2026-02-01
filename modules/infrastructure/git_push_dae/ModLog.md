@@ -3,6 +3,54 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Launch Script Fix - 2026-01-21
+**WSP References**: WSP 62 (Large File Refactoring), WSP 22 (ModLog)
+
+**Type**: Bug Fix - Missing Functions
+
+**Problem**: main.py imports failed due to missing functions in `scripts/launch.py`:
+- `view_git_post_history` - Not implemented
+- `check_instance_status` - Not implemented
+
+**Changes Made**:
+1. Added `view_git_post_history()` - Reads last 20 git push/commit entries from logs
+2. Added `check_instance_status()` - Checks if GitPushDAE is running via instance lock
+
+**Files Changed**:
+- `scripts/launch.py` (lines 98-132)
+
+**Impact**:
+- main.py now imports successfully
+- CLI menu option for GitPushDAE works
+
+---
+
+## AI Overseer Integration (Phase 2) - 2026-01-19
+**WSP References**: WSP 77 (Agent Coordination), WSP 15 (MPS), WSP 91 (DAEMON observability)
+
+**Type**: Enhancement - AI Overseer Activity Routing
+
+**Changes Made**:
+1. Added `MissionType.GIT_PUSH` to AI Overseer activity routing (P2 priority, MPS: 12)
+2. Implemented `execute_git_push_activity()` method in AI Overseer for autonomous commits
+3. Added `check_git_status()` method for activity state detection
+4. Updated INTERFACE.md with AI Overseer integration documentation
+5. Updated ROADMAP.md with Phase 2: AI Overseer Integration roadmap
+6. Created `docs/0102_PUSH_PROTOCOL_MEMORY.md` for 0102 session recall
+
+**New Files**:
+- `docs/0102_PUSH_PROTOCOL_MEMORY.md` - WSP memory pattern for autonomous push protocol
+
+**Integration Points**:
+- AI Overseer `route_activity()` returns `MissionType.GIT_PUSH` when staged files detected
+- qwen_gitpush skill wiring documented for 4-step chain-of-thought analysis
+- Module-by-module batching pattern documented for WSP-aligned commits
+
+**Impact**:
+- 0102 can now execute autonomous git push operations via AI Overseer
+- Activity routing prioritizes git push at P2 level (after live stream, comments, indexing)
+- Future sessions can recall push protocol via memory pattern document
+
 ## Planned Batch Push Execution
 **WSP References**: WSP 15 (MPS), WSP 91 (DAEMON observability)
 

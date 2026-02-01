@@ -1,0 +1,596 @@
+"""
+Main Menu - Core CLI dispatcher for FoundUps Agent.
+
+Extracted from main.py per WSP 62 (file size enforcement).
+Contains: argument parsing, switchboard, main loop, instance management.
+"""
+
+import os
+import sys
+import json
+import time
+import logging
+import asyncio
+import argparse
+import threading
+from pathlib import Path
+from typing import Optional, Dict, Any
+
+import psutil
+
+from modules.infrastructure.cli.src.utilities import (
+    env_truthy,
+    env_flag,
+    maybe_clear_screen,
+    maybe_auto_index_holo,
+)
+from modules.infrastructure.cli.src.git_menu import handle_git_menu
+from modules.infrastructure.cli.src.youtube_menu import handle_youtube_menu
+from modules.infrastructure.cli.src.holodae_menu import handle_holodae_menu
+
+logger = logging.getLogger(__name__)
+
+
+def run_main_menu(
+    monitor_youtube,
+    monitor_all_platforms,
+    search_with_holoindex,
+    check_instance_status,
+    launch_git_push_dae,
+    view_git_post_history,
+    run_holodae,
+    run_amo_dae,
+    run_social_media_dae,
+    run_vision_dae,
+    run_pqn_dae,
+    run_evade_net,
+    run_liberty_alert_dae,
+    run_training_system,
+    execute_training_command,
+    show_mcp_services_menu,
+    PATTERN_MEMORY_AVAILABLE: bool,
+    PatternMemory,
+) -> None:
+    """
+    Main entry point for interactive CLI.
+    
+    This function receives all external dependencies as parameters to avoid
+    circular imports and maintain clean module boundaries.
+    """
+    maybe_clear_screen()
+    logger.info("0102 FoundUps Agent starting...")
+
+    # Define parser for early argument parsing
+    parser = argparse.ArgumentParser(description='0102 FoundUps Agent')
+    parser.add_argument('--verbose', '-v', action='store_true', help='Show detailed diagnostic information')
+
+    # Startup diagnostics (verbose mode shows details)
+    args, remaining = parser.parse_known_args()
+
+    # Essential startup diagnostics (always log for troubleshooting)
+    if args.verbose:
+        logger.info(f"[DIAG] Python {sys.version.split()[0]} on {sys.platform}")
+        logger.info(f"[DIAG] Working directory: {os.getcwd()}")
+        logger.info(f"[DIAG] UTF-8 stdout: {getattr(sys.stdout, 'encoding', 'unknown')}")
+        logger.info(f"[DIAG] UTF-8 stderr: {getattr(sys.stderr, 'encoding', 'unknown')}")
+    else:
+        logger.debug(f"[DIAG] Python {sys.version.split()[0]} on {sys.platform}")
+        logger.debug(f"[DIAG] Working directory: {os.getcwd()}")
+
+    # Check critical systems
+    try:
+        import modules
+        if args.verbose:
+            logger.info("[DIAG] modules/ directory accessible")
+        else:
+            logger.debug("[DIAG] modules/ directory accessible")
+    except ImportError as e:
+        logger.error(f"[STARTUP] modules/ directory not accessible: {e}")
+
+    try:
+        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+        if args.verbose:
+            logger.info("[DIAG] Instance lock system available")
+        else:
+            logger.debug("[DIAG] Instance lock system available")
+    except ImportError as e:
+        logger.warning(f"[STARTUP] Instance lock system unavailable: {e}")
+
+    # UTF-8 encoding is critical for Windows CLI compatibility
+    stdout_enc = getattr(sys.stdout, 'encoding', 'unknown')
+    stderr_enc = getattr(sys.stderr, 'encoding', 'unknown')
+    if stdout_enc != 'utf-8' or stderr_enc != 'utf-8':
+        logger.warning(f"[STARTUP] UTF-8 encoding issue - stdout:{stdout_enc} stderr:{stderr_enc}")
+    else:
+        if args.verbose:
+            logger.info("[DIAG] UTF-8 encoding confirmed")
+        else:
+            logger.debug("[DIAG] UTF-8 encoding confirmed")
+
+    # Add remaining arguments to existing parser
+    parser.add_argument('--git', action='store_true', help='Run GitPushDAE once (autonomous git push + social posting)')
+    parser.add_argument('--git-daemon', action='store_true', help='Run GitPushDAE continuously (daemon mode)')
+    parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
+    parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
+    parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
+    parser.add_argument('--smd', action='store_true', help='Run Social Media DAE (012 Digital Twin)')
+    parser.add_argument('--vision', action='store_true', help='Run FoundUps Vision DAE (Pattern Sensorium)')
+    parser.add_argument('--pqn', action='store_true', help='Run PQN Orchestration (Research & Alignment)')
+    parser.add_argument('--liberty', action='store_true', help='Run Liberty Alert Mesh Alert System (Community Protection)')
+    parser.add_argument('--liberty-dae', action='store_true', help='Run Liberty Alert DAE (Community Protection Autonomous Entity)')
+    parser.add_argument('--all', action='store_true', help='Monitor all platforms')
+    parser.add_argument('--mcp', action='store_true', help='Launch MCP Services Gateway (Model Context Protocol)')
+    parser.add_argument('--deps', action='store_true', help='Start/check local automation dependencies (Chrome + LM Studio)')
+    parser.add_argument('--no-lock', action='store_true', help='Disable instance lock (allow multiple instances)')
+    parser.add_argument('--status', action='store_true', help='Check instance status and health')
+    parser.add_argument('--training-command', type=str, help='Execute training command via Holo (e.g., utf8_scan, batch)')
+    parser.add_argument('--targets', type=str, help='Comma-separated target paths for training command')
+    parser.add_argument('--json-output', action='store_true', help='Return training command result as JSON')
+    parser.add_argument('--training-menu', action='store_true', help='Launch interactive training submenu (option 12)')
+
+    # Re-parse with all arguments now that they're defined
+    args = parser.parse_args()
+
+    # Switchboard (feature flags + key env toggles)
+    enable_pattern_memory = env_flag("FOUNDUPS_ENABLE_PATTERN_MEMORY", True)
+    enable_wre = env_flag("FOUNDUPS_ENABLE_WRE", True)
+    enable_wre_monitor = env_flag("FOUNDUPS_ENABLE_WRE_MONITOR", True)
+    enable_qwen = env_flag("FOUNDUPS_ENABLE_QWEN", True)
+    enable_self_improvement = env_flag("FOUNDUPS_ENABLE_SELF_IMPROVEMENT", True)
+    enable_shorts_commands = env_flag("FOUNDUPS_ENABLE_SHORTS_COMMANDS", True) and not env_flag("FOUNDUPS_DISABLE_SHORTS_COMMANDS", False)
+    enable_key_hygiene = env_flag("FOUNDUPS_ENABLE_KEY_HYGIENE", True)
+    holo_skip_model = env_flag("HOLO_SKIP_MODEL", False)
+    holo_silent = env_flag("HOLO_SILENT", False)
+    holo_verbose = env_flag("HOLO_VERBOSE", False)
+    holo_auto_index = env_flag("FOUNDUPS_HOLO_AUTO_INDEX", False)
+    ai_overseer_breadcrumbs = env_flag("AI_OVERSEER_BREADCRUMBS", True)
+    holo_offline = env_flag("HOLO_OFFLINE", False)
+    holo_disable_pip_install = env_flag("HOLO_DISABLE_PIP_INSTALL", False)
+    holo_breadcrumbs = env_flag("HOLO_BREADCRUMB_ENABLED", True)
+    holo_breadcrumb_logs = env_flag("HOLO_BREADCRUMB_LOGS", True)
+    startup_switchboard = {
+        "pattern_memory": bool(PATTERN_MEMORY_AVAILABLE and enable_pattern_memory),
+        "wre": bool(enable_wre),
+        "wre_monitor": bool(enable_wre and enable_wre_monitor),
+        "qwen": bool(enable_qwen),
+        "self_improvement": bool(enable_self_improvement),
+        "shorts_commands": bool(enable_shorts_commands),
+        "key_hygiene": bool(enable_key_hygiene),
+        "holo_skip_model": bool(holo_skip_model),
+        "holo_silent": bool(holo_silent),
+        "holo_verbose": bool(holo_verbose),
+        "holo_auto_index": bool(holo_auto_index),
+        "holo_offline": bool(holo_offline),
+        "holo_disable_pip_install": bool(holo_disable_pip_install),
+        "holo_breadcrumbs": bool(holo_breadcrumbs),
+        "holo_breadcrumb_logs": bool(holo_breadcrumb_logs),
+        "ai_overseer_breadcrumbs": bool(ai_overseer_breadcrumbs),
+        "verbose": bool(args.verbose),
+    }
+    logger.info(f"[SWITCHBOARD] {json.dumps(startup_switchboard, sort_keys=True)}")
+
+    # Initialize PatternMemory once for false-positive gating (WSP 48/60)
+    pm = PatternMemory() if (PATTERN_MEMORY_AVAILABLE and enable_pattern_memory) else None
+    if PATTERN_MEMORY_AVAILABLE and not enable_pattern_memory:
+        logger.info("[SWITCHBOARD] PatternMemory disabled (FOUNDUPS_ENABLE_PATTERN_MEMORY=0)")
+
+    def should_skip(task_key: str, entity_type: str = "task") -> Optional[Dict[str, Any]]:
+        if not pm:
+            return None
+        try:
+            return pm.get_false_positive_reason(entity_type, task_key)
+        except Exception:
+            return None
+
+    # Handle CLI dispatch (non-interactive mode)
+    if args.training_command:
+        execute_training_command(args.training_command, args.targets, args.json_output)
+        return
+    if args.training_menu:
+        run_training_system()
+        return
+
+    if args.status:
+        check_instance_status()
+        return
+    if args.deps:
+        try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+            asyncio.run(ensure_dependencies(require_lm_studio=True))
+        except Exception as e:
+            print(f"[ERROR] Dependency launcher failed: {e}")
+        return
+    elif args.git_daemon:
+        skip = should_skip("gitpush_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
+            return
+        launch_git_push_dae(run_once=False)
+        return
+    elif args.git:
+        skip = should_skip("gitpush_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: gitpush_dae :: {skip.get('reason','')}")
+            return
+        launch_git_push_dae(run_once=True)
+        return
+    elif args.youtube:
+        skip = should_skip("youtube_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: youtube_dae :: {skip.get('reason','')}")
+            return
+        asyncio.run(monitor_youtube(disable_lock=args.no_lock))
+    elif args.holodae:
+        skip = should_skip("holodae")
+        if skip:
+            print(f"[SKIP] Known false positive: holodae :: {skip.get('reason','')}")
+            return
+        run_holodae()
+    elif args.amo:
+        skip = should_skip("amo_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: amo_dae :: {skip.get('reason','')}")
+            return
+        run_amo_dae()
+    elif args.smd:
+        skip = should_skip("social_media_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: social_media_dae :: {skip.get('reason','')}")
+            return
+        run_social_media_dae()
+    elif args.vision:
+        skip = should_skip("vision_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: vision_dae :: {skip.get('reason','')}")
+            return
+        run_vision_dae()
+    elif args.pqn:
+        skip = should_skip("pqn_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: pqn_dae :: {skip.get('reason','')}")
+            return
+        run_pqn_dae()
+    elif args.liberty:
+        skip = should_skip("liberty_alert_mesh")
+        if skip:
+            print(f"[SKIP] Known false positive: liberty_alert_mesh :: {skip.get('reason','')}")
+            return
+        run_evade_net()
+    elif args.liberty_dae:
+        skip = should_skip("liberty_alert_dae")
+        if skip:
+            print(f"[SKIP] Known false positive: liberty_alert_dae :: {skip.get('reason','')}")
+            return
+        run_liberty_alert_dae()
+    elif args.all:
+        skip = should_skip("monitor_all_platforms")
+        if skip:
+            print(f"[SKIP] Known false positive: monitor_all_platforms :: {skip.get('reason','')}")
+            return
+        asyncio.run(monitor_all_platforms())
+    elif args.mcp:
+        skip = should_skip("mcp_gateway")
+        if skip:
+            print(f"[SKIP] Known false positive: mcp_gateway :: {skip.get('reason','')}")
+            return
+        show_mcp_services_menu()
+    else:
+        # Interactive menu mode
+        _run_interactive_menu(
+            args=args,
+            should_skip=should_skip,
+            pm=pm,
+            monitor_youtube=monitor_youtube,
+            monitor_all_platforms=monitor_all_platforms,
+            search_with_holoindex=search_with_holoindex,
+            check_instance_status=check_instance_status,
+            launch_git_push_dae=launch_git_push_dae,
+            view_git_post_history=view_git_post_history,
+            run_holodae=run_holodae,
+            run_amo_dae=run_amo_dae,
+            run_social_media_dae=run_social_media_dae,
+            run_vision_dae=run_vision_dae,
+            run_pqn_dae=run_pqn_dae,
+            run_evade_net=run_evade_net,
+            run_liberty_alert_dae=run_liberty_alert_dae,
+            run_training_system=run_training_system,
+            show_mcp_services_menu=show_mcp_services_menu,
+            enable_key_hygiene=enable_key_hygiene,
+        )
+
+
+def _run_interactive_menu(
+    args,
+    should_skip,
+    pm,
+    monitor_youtube,
+    monitor_all_platforms,
+    search_with_holoindex,
+    check_instance_status,
+    launch_git_push_dae,
+    view_git_post_history,
+    run_holodae,
+    run_amo_dae,
+    run_social_media_dae,
+    run_vision_dae,
+    run_pqn_dae,
+    run_evade_net,
+    run_liberty_alert_dae,
+    run_training_system,
+    show_mcp_services_menu,
+    enable_key_hygiene: bool,
+) -> None:
+    """Run interactive menu loop."""
+    maybe_auto_index_holo(args.verbose, logger)
+    print("\n" + "=" * 60)
+    print("0102 FoundUps Agent - DAE Test Menu")
+    print("=" * 60)
+
+    # Instance check with timeout protection
+    duplicates = _check_instances_with_timeout()
+
+    if duplicates:
+        if not _handle_duplicate_instances(duplicates, check_instance_status):
+            return  # User chose to exit
+
+    logger.info("[DAEMON] Main menu loop starting")
+    print("[DEBUG-MAIN] About to enter main menu loop")
+
+    # Main menu loop
+    while True:
+        logger.debug("[DAEMON] Top of menu loop - displaying options")
+        print("[DEBUG-MAIN] Top of menu loop - displaying options")
+
+        # Show the main menu
+        print("0. Git Operations (Push + Post + History)          | --git")
+        print("1. YouTube DAEs (Live/Comments/Shorts/Indexing)    | --youtube")
+        print("2. HoloDAE (Code Intelligence & Search)            | --holodae")
+        print("3. AMO DAE (Autonomous Moderation Operations)      | --amo")
+        print("4. Social Media DAE (012 Digital Twin)             | --smd")
+        print("5. Liberty Alert DAE (Community Protection)        | --liberty-dae")
+        print("6. PQN Orchestration (Research & Alignment)        | --pqn")
+        print("7. Liberty Alert (Mesh Alert System)               | --liberty")
+        print("8. FoundUps Vision DAE (Pattern Sensorium)         | --vision")
+        print("9. All DAEs (Full System)                          | --all")
+        print("10. Exit")
+        print("-" * 60)
+        print("00. Check Instance Status & Health                 | --status")
+        print("11. Qwen/Gemma Training System (Pattern Learning)")
+        print("12. MCP Services (Model Context Protocol Gateway)  | --mcp")
+        print("13. Automation Dependencies (Chrome + LM Studio)  | --deps")
+        print("=" * 60)
+        print("CLI: --youtube --no-lock (bypass menu + instance lock)")
+        print("=" * 60)
+
+        try:
+            choice = input("\nSelect option: ").strip()
+            logger.info(f"[DAEMON] User selected option: '{choice}'")
+            print(f"[DEBUG-MAIN] User selected option: '{choice}'")
+        except (EOFError, KeyboardInterrupt) as e:
+            logger.warning(f"[DAEMON] Input interrupted: {e}")
+            print(f"[DEBUG-MAIN] Input interrupted: {e}")
+            choice = "10"  # Default to exit on interrupt
+
+        if choice == "0":
+            handle_git_menu(launch_git_push_dae, view_git_post_history)
+
+        elif choice == "1":
+            # YouTube DAEs Menu
+            while True:
+                exit_to_main = handle_youtube_menu(
+                    args=args,
+                    should_skip=should_skip,
+                    pm=pm,
+                    monitor_youtube=monitor_youtube,
+                    enable_key_hygiene=enable_key_hygiene,
+                )
+                if exit_to_main:
+                    break
+
+        elif choice == "2":
+            # HoloDAE
+            handle_holodae_menu(search_with_holoindex, run_holodae)
+
+        elif choice == "3":
+            # AMO DAE
+            print("[AMO] Starting AMO DAE (Autonomous Moderation)...")
+            try:
+                from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+                dae = AutoModeratorDAE()
+                asyncio.run(dae.run())
+            except KeyboardInterrupt:
+                print("\n[STOP] AMO DAE stopped by user")
+
+        elif choice == "4":
+            # Social Media DAE (012 Digital Twin)
+            print("[SMD] Starting Social Media DAE (012 Digital Twin)...")
+            try:
+                from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
+                orchestrator = SocialMediaOrchestrator()
+                print("Digital Twin mode coming soon...")
+            except KeyboardInterrupt:
+                print("\n[STOP] Social Media DAE stopped by user")
+
+        elif choice == "5":
+            # Liberty Alert DAE
+            try:
+                run_liberty_alert_dae()
+            except KeyboardInterrupt:
+                print("\n[STOP] Liberty Alert DAE stopped by user")
+
+        elif choice == "6":
+            # PQN Orchestration
+            print("[INFO] Starting PQN Research DAE...")
+            run_pqn_dae()
+
+        elif choice == "7":
+            # Liberty Alert mesh alert system
+            try:
+                run_evade_net()
+            except KeyboardInterrupt:
+                print("\n[STOP] Liberty Mesh Alert stopped by user")
+
+        elif choice == "8":
+            # FoundUps Vision DAE
+            try:
+                run_vision_dae()
+            except KeyboardInterrupt:
+                print("\n[STOP] Vision DAE stopped by user")
+
+        elif choice == "9":
+            # All DAEs
+            print("[ALL] Starting ALL DAEs...")
+            try:
+                asyncio.run(monitor_all_platforms())
+            except KeyboardInterrupt:
+                print("\n[STOP] All DAEs stopped by user")
+
+        elif choice == "10":
+            print("[EXIT] Exiting...")
+            break
+
+        elif choice in {"00", "status"}:
+            check_instance_status()
+            input("\nPress Enter to continue...")
+
+        elif choice == "11":
+            # Qwen/Gemma Training System
+            run_training_system()
+
+        elif choice == "12":
+            # MCP Services Gateway
+            print("[MCP] Launching MCP Services Gateway...")
+            show_mcp_services_menu()
+
+        elif choice == "13":
+            # Automation Dependencies
+            print("[DEPS] Checking/launching local automation dependencies (Chrome + LM Studio)...")
+            try:
+                from modules.infrastructure.dependency_launcher.src.dae_dependencies import ensure_dependencies
+                asyncio.run(ensure_dependencies(require_lm_studio=True))
+            except Exception as e:
+                print(f"[ERROR] Dependency launcher failed: {e}")
+
+        else:
+            print("Invalid choice. Please try again.")
+
+
+def _check_instances_with_timeout() -> list:
+    """Check for duplicate instances with timeout protection."""
+    print("[INFO] Checking for duplicate instances (timeout: 3s)...")
+
+    duplicates = []
+    try:
+        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+        lock = get_instance_lock("youtube_monitor")
+
+        result_holder = []
+
+        def check_with_timeout():
+            try:
+                result = lock.check_duplicates(quiet=True)
+                result_holder.append(result)
+            except Exception:
+                result_holder.append(None)
+
+        check_thread = threading.Thread(target=check_with_timeout, daemon=True)
+        check_thread.start()
+        check_thread.join(timeout=3.0)
+
+        if check_thread.is_alive():
+            print("[WARN] Instance check timed out (>3s) - skipping duplicate detection")
+            print("   Use --status to manually check for running instances\n")
+            duplicates = []
+        elif result_holder and result_holder[0] is not None:
+            duplicates = result_holder[0]
+        else:
+            duplicates = []
+
+    except Exception as e:
+        print(f"[WARN] Could not check instances: {e}")
+        print("   Use --status to manually check for running instances\n")
+        duplicates = []
+
+    return duplicates
+
+
+def _handle_duplicate_instances(duplicates: list, check_instance_status) -> bool:
+    """
+    Handle duplicate instances - returns True to continue, False to exit.
+    """
+    while True:
+        print(f"[WARN] FOUND {len(duplicates)} RUNNING INSTANCE(S)")
+        print("\nWhat would you like to do?")
+        print("1. Kill all instances and continue")
+        print("2. Show detailed status")
+        print("3. Continue anyway (may cause conflicts)")
+        print("4. Exit")
+        print("-" * 40)
+
+        try:
+            choice = input("Select option (1-4): ").strip().lstrip(']').lstrip('[')
+            print(f"[DEBUG] Received choice: '{choice}' (repr: {repr(choice)})")
+        except (EOFError, KeyboardInterrupt) as e:
+            print(f"[DEBUG] Input interrupted: {e}")
+            choice = "4"
+
+        if choice == "1":
+            print("\n[INFO] Killing duplicate instances...")
+            killed_pids = []
+            failed_pids = []
+
+            current_pid = os.getpid()
+
+            for pid in duplicates:
+                if pid == current_pid:
+                    continue
+
+                try:
+                    print(f"   [INFO] Terminating PID {pid}...")
+                    process = psutil.Process(pid)
+                    process.terminate()
+
+                    gone, alive = psutil.wait_procs([process], timeout=5)
+
+                    if alive:
+                        print(f"   [INFO] Force killing PID {pid}...")
+                        process.kill()
+                        gone, alive = psutil.wait_procs([process], timeout=2)
+
+                    if not alive:
+                        killed_pids.append(pid)
+                        print(f"   [INFO]PID {pid} terminated successfully")
+                    else:
+                        failed_pids.append(pid)
+                        print(f"   [ERROR]Failed to kill PID {pid}")
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    print(f"   [WARN] Could not kill PID {pid}: {e}")
+                    failed_pids.append(pid)
+
+            if killed_pids:
+                print(f"\n[INFO]Successfully killed {len(killed_pids)} instance(s): {killed_pids}")
+            if failed_pids:
+                print(f"[WARN] Failed to kill {len(failed_pids)} instance(s): {failed_pids}")
+
+            print("   Proceeding to main menu...\n")
+            return True
+
+        elif choice == "2":
+            print("\n" + "=" * 50)
+            check_instance_status()
+            print("=" * 50)
+            input("\nPress Enter to continue...")
+
+        elif choice == "3":
+            print("[WARN] Continuing with potential conflicts...\n")
+            return True
+
+        elif choice == "4":
+            print("[INFO] Exiting...")
+            return False
+
+        else:
+            print(f"[ERROR]Invalid choice '{choice}'. Please enter 1, 2, 3, or 4.")
+            print("   Try again...\n")
+            continue

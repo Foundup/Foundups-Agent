@@ -19,6 +19,7 @@ import time
 import math
 from typing import Tuple, List
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 def get_0102_behavior_interface(default: str = "0102") -> str:
@@ -214,10 +215,13 @@ class HumanBehavior:
                 delay = self.human_delay(0.064, typing_variance)  # 20% faster (was 0.08)
 
             if random.random() < 0.05 and i > 0:
+                # 2026-01-29: FIX - Use Keys.BACKSPACE instead of '\b'
+                # '\b' was NOT being interpreted as backspace by the browser,
+                # causing typos to remain in the final text (e.g., "btterlife" instead of "better life")
                 wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
                 element.send_keys(wrong_char)
                 time.sleep(self.human_delay(0.15, typing_variance))
-                element.send_keys('\b')
+                element.send_keys(Keys.BACKSPACE)
                 time.sleep(self.human_delay(0.1, typing_variance * 0.8))
 
             element.send_keys(char)
@@ -297,8 +301,13 @@ class HumanBehavior:
 _human_behavior_instance = None
 
 def get_human_behavior(driver):
-    """Get or create HumanBehavior singleton."""
+    """Get or create HumanBehavior singleton (legacy name)."""
     global _human_behavior_instance
     if _human_behavior_instance is None:
         _human_behavior_instance = HumanBehavior(driver)
     return _human_behavior_instance
+
+
+def get_012_behavior(driver):
+    """Get or create 012 behavior singleton (preferred name)."""
+    return get_human_behavior(driver)

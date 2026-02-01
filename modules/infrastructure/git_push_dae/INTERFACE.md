@@ -139,3 +139,148 @@ dae = GitPushDAE(
     check_interval=600  # 10-minute checks
 )
 ```
+
+## AI Overseer Integration (WSP 77)
+
+### Activity Routing
+
+GitPushDAE is wired to AI Overseer's activity routing system as `MissionType.GIT_PUSH` with **P2 priority** (MPS score: 12).
+
+```python
+from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
+
+overseer = AIIntelligenceOverseer(repo_root)
+
+# Check if git push is needed
+git_status = overseer.check_git_status()
+# Returns: {"staged_files": 5, "modified_files": 10, "untracked_files": 3}
+
+# Route based on system state (will return GIT_PUSH if staged files exist)
+routing = overseer.route_activity()
+# Returns: {"next_activity": MissionType.GIT_PUSH, "mps_score": 12, ...}
+
+# Execute git push activity (creates mission for skill coordination)
+result = overseer.execute_git_push_activity(dry_run=False)
+```
+
+### Skill Wiring: qwen_gitpush
+
+The `qwen_gitpush` skill provides Qwen/Gemma AI analysis for autonomous commit decisions:
+
+**Skill Path**: `modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md`
+
+**Chain of Thought (4 Steps)**:
+1. **Analyze Git Diff** (Qwen Strategic Analysis)
+2. **Calculate WSP 15 MPS Score** (Custom Scoring)
+3. **Generate Semantic Commit Message** (Qwen Generation)
+4. **Decide Push Action** (Threshold Logic)
+
+**Integration Pattern**:
+```python
+# AI Overseer creates mission with skill context
+mission = overseer.create_mission(
+    mission_type=MissionType.GIT_PUSH,
+    context={
+        "staged_files": git_status["staged_files"],
+        "skill_path": "modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md"
+    },
+    expected_outputs=["commit_hash", "commit_message", "pr_url"]
+)
+
+# WRE Core routes to qwen_gitpush skill for analysis
+# Skill returns: action (push_now/defer), commit_message, mps_score
+
+# GitPushDAE executes pre-analyzed commit
+gitpush_dae.execute_from_skill(
+    commit_message=skill_result.commit_message,
+    mps_score=skill_result.mps_score,
+    skip_analysis=True  # Qwen already analyzed
+)
+```
+
+### Activity State Detection
+
+AI Overseer detects git push needs via:
+
+1. **Direct git status check**: `overseer.check_git_status()`
+2. **Daemon signal detection**: Patterns like `"git_staged"`, `"files_changed"`
+
+```python
+# State detection for activity routing
+state = {
+    "is_live": False,           # P0: Live stream override
+    "unprocessed_comments": 0,  # P1: Comments pending
+    "all_processed": True,      # Comments cleared signal
+    "schedule_queue": 0,        # P2: Scheduling queue
+    "git_staged_files": 5,      # P2: Files ready for commit
+    "social_queue": 0,          # P3: Social media pending
+    "maintenance_due": False    # P4: System maintenance
+}
+
+# Activity routing will return GIT_PUSH for this state
+next_activity = overseer.get_next_activity(state)
+# Returns: MissionType.GIT_PUSH (P2 priority, staged files detected)
+```
+
+### WSP 77 Agent Coordination
+
+Git push operations follow WSP 77 agent coordination:
+
+| Phase | Agent | Role | Git Push Action |
+|-------|-------|------|-----------------|
+| 1 | Gemma | Associate | Validate diff format, check patterns |
+| 2 | Qwen | Partner | Analyze changes, calculate MPS, generate message |
+| 3 | 0102 | Principal | Approve/override push decision |
+| 4 | Learning | - | Store pattern outcomes for future optimization |
+
+### Autonomous Push Protocol
+
+For fully autonomous operation (0102 executing full push cycle):
+
+```python
+# Full autonomous push cycle via AI Overseer
+async def autonomous_push_cycle():
+    overseer = AIIntelligenceOverseer(repo_root)
+
+    # 1. Check activity routing
+    routing = overseer.route_activity()
+
+    if routing["next_activity"] == MissionType.GIT_PUSH:
+        # 2. Execute git push with skill analysis
+        result = await overseer.execute_git_push_activity()
+
+        # 3. If branch protection, auto-create PR
+        if result.get("needs_pr"):
+            await overseer.create_pr_mission(
+                branch=result["branch"],
+                title=result["commit_message"].split("\n")[0]
+            )
+
+        return result
+
+    return {"skipped": True, "reason": "No staged files"}
+```
+
+### Module-by-Module Batching
+
+For WSP-aligned commits per module:
+
+```python
+# Batch commits by module domain
+MODULE_BATCHES = {
+    "youtube-scheduler": "modules/platform_integration/youtube_shorts_scheduler/**",
+    "ai-overseer": "modules/ai_intelligence/ai_overseer/**",
+    "video-indexer": "modules/ai_intelligence/video_indexer/**",
+    "livechat": "modules/communication/livechat/**",
+    "video-comments": "modules/communication/video_comments/**",
+    "infrastructure": "modules/infrastructure/**",
+    "holo-index": "holo_index/**",
+    "wsp-docs": "WSP_framework/**"
+}
+
+# Each batch gets its own commit with semantic message
+for batch_name, pattern in MODULE_BATCHES.items():
+    staged = stage_by_pattern(pattern)
+    if staged > 0:
+        overseer.execute_git_push_activity(batch=batch_name)
+```

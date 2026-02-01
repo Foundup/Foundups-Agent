@@ -7,6 +7,15 @@
 
 ## Change Log
 
+### 2026-01-21: UI-TARS model name config
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 77 (Vision)
+
+**Change:** Added `UI_TARS_MODEL` env override to UI-TARS bridge model selection.
+
+---
+
 ### 2026-01-09: Root violation cleanup - relocate account switch test into module tests
 
 **By:** 0102  

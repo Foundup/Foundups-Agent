@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+UI_TARS_MODEL = os.getenv("UI_TARS_MODEL", "ui-tars-1.5-7b")
 # Default paths
 UI_TARS_PATH = Path(os.getenv("UI_TARS_PATH", "E:/HoloIndex/models/ui-tars-1.5"))
 UI_TARS_TELEMETRY = UI_TARS_PATH / "telemetry"
@@ -393,7 +394,7 @@ Rules:
                 requests.post,
                 f"{tars_api_url}/v1/chat/completions",
                 json={
-                    "model": "ui-tars-1.5-7b",
+                    "model": UI_TARS_MODEL,
                     "messages": [
                         {
                             "role": "user",

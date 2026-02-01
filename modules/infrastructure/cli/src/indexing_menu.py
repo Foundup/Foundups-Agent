@@ -1,0 +1,338 @@
+"""
+Indexing Menu - YouTube indexing submenu for FoundUps Agent CLI.
+
+Extracted from main.py per WSP 62 (file size enforcement).
+Contains: Gemini indexing, Whisper indexing, Test video, Batch index, Training data.
+"""
+
+import os
+import sys
+import asyncio
+from datetime import datetime
+
+from modules.infrastructure.cli.src.utilities import select_channel
+
+
+def handle_indexing_menu() -> None:
+    """Handle YouTube Indexing submenu (Digital Twin Learning)."""
+    print("\n[INDEX] YouTube Channel Indexing")
+    print("=" * 60)
+    print("Creates searchable knowledge base from 012's videos")
+    print("Each video saved as JSON with transcripts, topics, timestamps")
+    print("=" * 60)
+    print("1. [GEMINI] Gemini AI Indexing (fast, no download)")
+    print("2. [LOCAL] Whisper Indexing (yt-dlp + faster-whisper)")
+    print("3. [TEST] Test Video Indexing (single video)")
+    print("4. [BATCH] Batch Index Channel (bulk process)")
+    print("5. [ENHANCE] Batch Enhance Videos (AI Training Data)")
+    print("6. [TRAIN] Extract Training Data (Gemma quality filter)")
+    print("0. Back")
+    print("=" * 60)
+
+    idx_choice = input("\nSelect indexing method: ").strip()
+
+    if idx_choice == "1":
+        _handle_gemini_indexing()
+    elif idx_choice == "2":
+        _handle_whisper_indexing()
+    elif idx_choice == "3":
+        _handle_test_video_indexing()
+    elif idx_choice == "4":
+        _handle_batch_indexing()
+    elif idx_choice == "5":
+        _handle_batch_enhancement()
+    elif idx_choice == "6":
+        _handle_training_data_extraction()
+    elif idx_choice == "0":
+        pass  # Back to YT menu
+
+
+def _handle_gemini_indexing() -> None:
+    """Handle Gemini-based indexing - BROWSER-AWARE like commenting."""
+    print("\n[GEMINI] Autonomous Video Indexing")
+    print("=" * 60)
+    print("Browser rotation (same as comment engagement):")
+    print("  Chrome (9222): UnDaoDu → Move2Japan")
+    print("  Edge (9223): FoundUps")
+    print("Indexes ALL videos per channel until complete")
+    print("=" * 60)
+
+    try:
+        from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
+
+        # Browser-grouped channels (mirrors commenting architecture)
+        # Chrome (port 9222): Same Google account
+        chrome_channels = [
+            os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
+            os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
+        ]
+        # Edge (port 9223): Different Google account
+        edge_channels = [
+            os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
+            os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+        ]
+
+        total_indexed = 0
+
+        # Phase 1: Chrome channels (UnDaoDu, Move2Japan)
+        print("\n[PHASE 1] Chrome (9222): UnDaoDu + Move2Japan")
+        result = asyncio.run(run_video_indexing_cycle(
+            channels=chrome_channels,
+            max_videos_per_channel=9999,  # Index ALL
+            browser="chrome"
+        ))
+        total_indexed += result.get('total_indexed', 0)
+        print(f"[CHROME] Indexed {result.get('total_indexed', 0)} videos")
+
+        # Phase 2: Edge channels (FoundUps + RavingANTIFA)
+        print("\n[PHASE 2] Edge (9223): FoundUps + RavingANTIFA")
+        result = asyncio.run(run_video_indexing_cycle(
+            channels=edge_channels,
+            max_videos_per_channel=9999,  # Index ALL
+            browser="edge"
+        ))
+        total_indexed += result.get('total_indexed', 0)
+        print(f"[EDGE] Indexed {result.get('total_indexed', 0)} videos")
+
+        print(f"\n[RESULT] Total indexed: {total_indexed} videos across all channels")
+    except ImportError as e:
+        print(f"[ERROR] studio_ask_indexer not available: {e}")
+    except Exception as e:
+        print(f"[ERROR] Indexing failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def _handle_whisper_indexing() -> None:
+    """Handle legacy whisper-based indexing."""
+    try:
+        from modules.communication.voice_command_ingestion.scripts.index_channel import (
+            run_indexing_menu
+        )
+        run_indexing_menu()
+    except ImportError as e:
+        print(f"[ERROR] Could not import indexing module: {e}")
+        print("[TIP] Install: pip install faster-whisper yt-dlp chromadb sentence-transformers")
+    except Exception as e:
+        print(f"[ERROR] Indexing menu failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def _handle_test_video_indexing() -> None:
+    """Handle test single video indexing."""
+    print("\n[TEST] Single Video Indexing Test")
+    video_id = input("Enter YouTube video ID: ").strip()
+    if video_id:
+        try:
+            from modules.ai_intelligence.video_indexer.src.gemini_video_analyzer import GeminiVideoAnalyzer
+            from modules.ai_intelligence.video_indexer.src.video_index_store import VideoIndexStore, IndexData
+
+            print(f"[INFO] Analyzing video {video_id}...")
+            analyzer = GeminiVideoAnalyzer()
+            result = analyzer.analyze_video(video_id)
+
+            if result.success:
+                # Save to JSON
+                store = VideoIndexStore(base_path="video_index")
+                index_data = IndexData(
+                    video_id=result.video_id,
+                    channel="test",
+                    title=result.title,
+                    duration=result.duration or 0,
+                    indexed_at=datetime.now().isoformat(),
+                    audio={"segments": [s.__dict__ for s in result.segments], "transcript_summary": result.transcript_summary},
+                    visual={"description": result.visual_description},
+                    moments=[],
+                    clips=[],
+                    metadata={"topics": result.topics, "speakers": result.speakers, "key_points": result.key_points}
+                )
+                path = store.save_index(video_id, index_data)
+                print(f"\n[SUCCESS] Video indexed!")
+                print(f"  Title: {result.title}")
+                print(f"  Topics: {', '.join(result.topics[:5])}")
+                print(f"  Saved to: {path}")
+            else:
+                print(f"[ERROR] Analysis failed: {result.error}")
+        except Exception as e:
+            print(f"[ERROR] Test failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+def _handle_batch_indexing() -> None:
+    """Handle batch index channel."""
+    from pathlib import Path
+
+    print("\n[BATCH] Batch Index Channel Videos")
+    print("=" * 60)
+    channel = select_channel()
+    batch_size = input("Batch size [50]: ").strip() or "50"
+    delay = input("Delay between API calls (seconds) [10]: ").strip() or "10"
+
+    # Resolve paths relative to repo root (4 levels up from this file)
+    repo_root = Path(__file__).resolve().parents[4]
+    video_file = repo_root / "data" / f"{channel}_video_ids.txt"
+    script_path = repo_root / "scripts" / "batch_index_videos.py"
+
+    if not video_file.exists():
+        print(f"[ERROR] Video ID file not found: {video_file}")
+        print("[TIP] Create video ID file or fetch from YouTube API")
+    else:
+        try:
+            import subprocess
+            cmd = [
+                sys.executable,
+                str(script_path),
+                "--batch-size", batch_size,
+                "--delay", delay,
+                "--channel", channel,
+                "--video-file", str(video_file),
+                "--max-retries", "3"
+            ]
+            print(f"[INFO] Running: {' '.join(cmd)}")
+            subprocess.run(cmd, cwd=str(repo_root))
+        except Exception as e:
+            print(f"[ERROR] Batch indexing failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+def _handle_batch_enhancement() -> None:
+    """Handle batch enhancement of indexed videos with AI training data."""
+    from pathlib import Path
+    import json
+
+    print("\n[ENHANCE] Batch Enhance Videos for Digital Twin Training")
+    print("=" * 60)
+    print("Enhances indexed videos with training_data fields:")
+    print("  - quotable_moments (012's authentic voice)")
+    print("  - personas, topics, training pairs")
+    print("  - WSP 15 quality tiers (0=LOW, 1=MED, 2=HIGH)")
+    print("")
+    print("Provider rotation: Grok -> OpenAI -> Gemini")
+    print("Checkpoint/resume: Automatically saves progress")
+    print("=" * 60)
+
+    channel = select_channel()
+
+    # Resolve paths relative to repo root (4 levels up from this file)
+    repo_root = Path(__file__).resolve().parents[4]
+    checkpoint_file = repo_root / "memory" / "enhancement_checkpoint.json"
+    video_dir = repo_root / "memory" / "video_index" / channel
+    script_path = repo_root / "scripts" / "batch_enhance_videos.py"
+
+    if not video_dir.exists():
+        print(f"[ERROR] No indexed videos found: {video_dir}")
+        print("[TIP] Run indexing first (Options 1-4)")
+        return
+
+    # Count videos
+    total_videos = len(list(video_dir.glob("*.json")))
+    completed = 0
+
+    if checkpoint_file.exists():
+        try:
+            state = json.loads(checkpoint_file.read_text(encoding="utf-8"))
+            completed = len(state.get("completed", []))
+        except:
+            pass
+
+    print(f"\nChannel: {channel}")
+    print(f"Total indexed videos: {total_videos}")
+    print(f"Already enhanced: {completed}")
+    print(f"Remaining: {total_videos - completed}")
+    print("")
+    print("Actions:")
+    print("  1. Enhance next batch (25 videos)")
+    print("  2. Enhance ALL remaining")
+    print("  3. Show status only")
+    print("  4. Reset checkpoint (start over)")
+    print("  0. Back")
+
+    action = input("\nSelect action: ").strip()
+
+    if action == "0":
+        return
+    elif action == "3":
+        # Show status
+        try:
+            import subprocess
+            subprocess.run([sys.executable, str(script_path), "--status"], cwd=str(repo_root))
+        except Exception as e:
+            print(f"[ERROR] Status check failed: {e}")
+        return
+    elif action == "4":
+        # Reset checkpoint
+        confirm = input("Are you sure? This will restart from scratch (y/n): ").strip().lower()
+        if confirm == "y":
+            if checkpoint_file.exists():
+                checkpoint_file.unlink()
+                print("[INFO] Checkpoint reset. Next run will start fresh.")
+            else:
+                print("[INFO] No checkpoint to reset.")
+        return
+    elif action in ("1", "2"):
+        max_videos = 25 if action == "1" else 9999
+
+        # 0102 handles provider rotation autonomously (Grok -> OpenAI -> Gemini)
+        try:
+            import subprocess
+            cmd = [
+                sys.executable,
+                str(script_path),
+                "--max-videos", str(max_videos),
+                "--resume"
+            ]
+            print(f"\n[INFO] 0102 autonomous enhancement starting...")
+            print("[INFO] Provider rotation: Grok -> OpenAI -> Gemini (auto)")
+            print("[INFO] Press Ctrl+C to stop (progress saved)\n")
+            subprocess.run(cmd, cwd=str(repo_root))
+        except KeyboardInterrupt:
+            print("\n[STOP] Enhancement stopped (progress saved)")
+        except Exception as e:
+            print(f"[ERROR] Enhancement failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+def _handle_training_data_extraction() -> None:
+    """Handle extract training data with Gemma quality filter."""
+    from pathlib import Path
+
+    print("\n[TRAIN] Extract Training Data for Digital Twin")
+    print("=" * 60)
+    channel = select_channel()
+    use_gemma = input("Use Gemma quality filter? (y/n) [y]: ").strip().lower() != "n"
+
+    # Resolve paths relative to repo root (4 levels up from this file)
+    repo_root = Path(__file__).resolve().parents[4]
+    input_dir = repo_root / "memory" / "video_index" / channel
+    output_dir = repo_root / "memory" / "training_data" / channel
+
+    if not input_dir.exists():
+        print(f"[ERROR] No indexed videos found: {input_dir}")
+        print("[TIP] Run indexing first (Option 1 or 4)")
+    else:
+        try:
+            from modules.ai_intelligence.video_indexer.src.dataset_builder import DatasetBuilder
+
+            print(f"[INFO] Processing {input_dir}...")
+            builder = DatasetBuilder(use_gemma=use_gemma)
+            result = builder.process_folder(str(input_dir), str(output_dir))
+
+            print("\n[SUCCESS] Training data extracted!")
+            print(f"  Videos processed: {result['videos_processed']}")
+            print(f"  Training rows: {result['training_rows']}")
+            print(f"  Voice clips: {result['voice_clips']}")
+            print(f"  Training-worthy (HIGH tier): {result['training_worthy']}")
+            print(f"  Output: {output_dir}/")
+
+            # Show output files
+            for f in output_dir.glob("*"):
+                size = f.stat().st_size / 1024
+                print(f"    - {f.name} ({size:.1f} KB)")
+        except Exception as e:
+            print(f"[ERROR] Training data extraction failed: {e}")
+            import traceback
+            traceback.print_exc()

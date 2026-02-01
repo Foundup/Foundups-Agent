@@ -382,16 +382,40 @@ class InstanceLock:
 
         return closed_count
 
+    @staticmethod
+    def _get_ancestor_pids() -> set:
+        """Return PIDs of the current process and all its ancestors (parent chain).
+
+        Killing an ancestor on Windows can cascade-terminate the entire process
+        tree, so these PIDs must NEVER be targeted by stale-process cleanup.
+        """
+        ancestors = {os.getpid()}
+        try:
+            proc = psutil.Process(os.getpid())
+            while True:
+                parent = proc.parent()
+                if parent is None or parent.pid in ancestors:
+                    break
+                ancestors.add(parent.pid)
+                proc = parent
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+        return ancestors
+
     def _cleanup_stale_processes(self) -> None:
         # First cleanup any stale browser windows
         self.cleanup_browser_windows()
+
+        # Build ancestor set ONCE — killing any of these would kill us too
+        protected_pids = self._get_ancestor_pids()
+        logger.debug("[LOCK] Protected ancestor PIDs: %s", protected_pids)
 
         # Also cleanup any orphaned Python processes from previous sessions
         # This includes background shells that weren't properly terminated
         stale_pids = []
         for process in psutil.process_iter(["pid", "cmdline", "create_time", "name"]):
             pid = process.info.get("pid")
-            if pid == self.pid:
+            if pid in protected_pids:
                 continue
 
             # Check for Python processes
@@ -424,34 +448,66 @@ class InstanceLock:
                             logger.warning("Found orphaned main.py process %s (age: %.1f minutes)", pid, age_minutes)
 
         # Prompt user before killing stale processes (unless running non-interactively)
+        # HARDENED 2026-01-30: Entire kill block wrapped in safety net so launch
+        # ALWAYS continues even if kill logic crashes or kills the wrong thing.
         if stale_pids:
             print(f"\n[ALERT] Found {len(stale_pids)} stale process(es):")
             for pid in stale_pids:
                 print(f"  - PID {pid}")
             print()
 
+            # Double-check: filter out any PIDs that are ancestors (belt + suspenders)
+            safe_pids = [p for p in stale_pids if p not in protected_pids]
+            skipped = len(stale_pids) - len(safe_pids)
+            if skipped:
+                print(f"[PROTECT] Skipping {skipped} PID(s) in our ancestor chain")
+                logger.warning("[LOCK] Skipped %d ancestor PIDs: %s",
+                               skipped, [p for p in stale_pids if p in protected_pids])
+
             # Check if running interactively (has a TTY)
             import sys
+            killed_any = False
             if sys.stdin.isatty():
                 try:
                     choice = input("Kill stale processes? [Y/n]: ").strip().lower()
                     if choice in ('', 'y', 'yes'):
-                        for pid in stale_pids:
-                            logger.warning("Killing stale process %s", pid)
-                            self._kill_process(pid)
+                        for pid in safe_pids:
+                            try:
+                                logger.warning("Killing stale process %s", pid)
+                                self._kill_process(pid)
+                                killed_any = True
+                            except Exception as kill_err:
+                                logger.error("Error killing PID %s: %s", pid, kill_err)
                         print("[OK] Stale processes terminated.")
                         print("[INFO] Continuing launch...\n")
                     else:
                         print("[INFO] Keeping stale processes. You may experience conflicts.")
                         print("[INFO] Continuing launch anyway...\n")
-                        logger.info("User chose to keep stale processes: %s", stale_pids)
+                        logger.info("User chose to keep stale processes: %s", safe_pids)
                 except (EOFError, KeyboardInterrupt):
                     print("\n[INFO] Skipping cleanup. Continuing launch...\n")
+                except Exception as unexpected:
+                    # SAFETY NET: catch ANY exception so launch always continues
+                    logger.error("[LOCK] Unexpected error during interactive kill: %s", unexpected, exc_info=True)
+                    print(f"[WARN] Kill failed ({unexpected}), continuing launch anyway...\n")
             else:
                 # Non-interactive mode: auto-kill (e.g., --no-lock flag)
-                for pid in stale_pids:
-                    logger.warning("Killing stale process %s (non-interactive)", pid)
-                    self._kill_process(pid)
+                for pid in safe_pids:
+                    try:
+                        logger.warning("Killing stale process %s (non-interactive)", pid)
+                        self._kill_process(pid)
+                        killed_any = True
+                    except Exception as kill_err:
+                        logger.error("Error killing PID %s: %s", pid, kill_err)
+
+            # If we killed any processes, also clean up the lock file
+            if killed_any:
+                try:
+                    if self.lock_file.exists():
+                        self.lock_file.unlink(missing_ok=True)
+                        logger.info("[LOCK] Removed stale lock file after process cleanup")
+                except Exception as e:
+                    logger.debug("Could not remove stale lock file: %s", e)
 
         if _env_truthy("INSTANCE_LOCK_AUTO_CLEAN_STALE", "true"):
             self.cleanup_stale_lockfile()
@@ -461,10 +517,23 @@ class InstanceLock:
         try:
             process = psutil.Process(pid)
             process.terminate()
+            # Wait for process to exit, but don't let it block us
             try:
                 process.wait(timeout=3)
             except psutil.TimeoutExpired:
-                process.kill()
+                try:
+                    process.kill()
+                    process.wait(timeout=2)
+                except Exception:
+                    pass  # Best effort
+            except psutil.NoSuchProcess:
+                pass  # Already dead - good
+            # Small sleep to let OS fully clean up
+            time.sleep(0.5)
+        except psutil.NoSuchProcess:
+            logger.debug("Process %s already terminated", pid)
+        except psutil.AccessDenied:
+            logger.warning("Access denied killing process %s (may need admin)", pid)
         except Exception as error:
             logger.error("Failed to kill process %s: %s", pid, error)
 

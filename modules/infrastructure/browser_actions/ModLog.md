@@ -7,6 +7,33 @@
 
 ## Change Log
 
+### 2026-01-26: Digital Twin Flow Wired to LinkedInActions
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination)
+
+**Changes:**
+- Added `run_digital_twin_flow()` method to `LinkedInActions` class in `src/linkedin_actions.py`.
+- Method orchestrates L0-L3 layered tests (context gate, comment, identity likes, scheduled repost).
+- Imports layer tests from `platform_integration/linkedin_agent/tests/`.
+
+**Impact:**
+- Enables AI Overseer and DAEs to invoke full Digital Twin flow via `LinkedInActions`.
+- Completes handoff step: "Wire linkedin_comment_digital_twin skill into ActionRouter".
+
+---
+
+### 2026-01-20: LinkedIn Digital Twin Comment + Schedule Skill
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination)
+
+**Changes:**
+- Added `skillz/linkedin_comment_digital_twin.json` for UI-TARS validated comment, identity-like loop, and scheduled repost.
+
+**Impact:**
+- Establishes repeatable LinkedIn Digital Twin flow with explicit validation gates and scheduling constraints.
+
+---
+
 ### 2025-12-30: Edge Debug-Port Attach + Telemetry Preflight
 **By:** 0102
 **WSP References:** WSP 22 (ModLog Protocol)

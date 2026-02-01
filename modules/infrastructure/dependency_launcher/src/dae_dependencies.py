@@ -139,6 +139,8 @@ def launch_chrome() -> Tuple[bool, str]:
             "--disable-backgrounding-occluded-windows",  # Prevents throttling when behind other windows
             "--disable-renderer-backgrounding",           # Prevents renderer process backgrounding
             "--disable-background-timer-throttling",      # Prevents timer throttling in background tabs
+            # FIX (2026-01-23): Prevent multi-tab issue from session restore
+            "--no-restore-session-state",                 # Prevents restoring previous tabs
             YOUTUBE_STUDIO_URL
         ]
 
@@ -196,6 +198,8 @@ def launch_edge() -> Tuple[bool, str]:
             "--disable-backgrounding-occluded-windows",  # Prevents throttling when behind other windows
             "--disable-renderer-backgrounding",           # Prevents renderer process backgrounding
             "--disable-background-timer-throttling",      # Prevents timer throttling in background tabs
+            # FIX (2026-01-23): Prevent 3-tab issue from session restore
+            "--no-restore-session-state",                 # Prevents restoring previous tabs
             FOUNDUPS_STUDIO_URL
         ]
 
