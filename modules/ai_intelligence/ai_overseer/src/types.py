@@ -42,6 +42,7 @@ class MissionType(Enum):
     COMMENT_PROCESSING = "comment_processing"  # P1: High priority
     VIDEO_INDEXING = "video_indexing"          # P1: Default when idle
     SCHEDULING = "scheduling"                  # P2: Medium priority (triggers indexing)
+    GIT_PUSH = "git_push"                      # P2: Medium priority (autonomous commits)
     SOCIAL_MEDIA = "social_media"              # P3: Low priority
     MAINTENANCE = "maintenance"                # P4: Lowest priority
 

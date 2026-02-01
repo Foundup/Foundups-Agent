@@ -27,13 +27,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Try to import VideoContentIndex
-try:
-    from holo_index.core.video_search import VideoContentIndex
-    VIDEO_INDEX_AVAILABLE = True
-except ImportError:
-    VIDEO_INDEX_AVAILABLE = False
-    logger.warning("[STUDIO-ASK] VideoContentIndex not available")
+# VideoContentIndex causes segfault on Windows (ChromaDB native library issue)
+# Disable for now - indexing works without it, storage goes to JSON files
+# TODO: Fix ChromaDB segfault in holo_index/core/video_search.py
+VIDEO_INDEX_AVAILABLE = False
+VideoContentIndex = None  # Placeholder
+logger.debug("[STUDIO-ASK] VideoContentIndex disabled (ChromaDB segfault workaround)")
 
 
 @dataclass
@@ -402,9 +401,62 @@ class StudioAskIndexer:
         try:
             # Navigate to channel content page
             content_url = f"https://studio.youtube.com/channel/{channel_id}/videos/upload"
+            logger.info(f"[STUDIO-ASK] Navigating to: {content_url}")
             self.driver.get(content_url)
             await self._human_delay(3.0, 0.4)
-            
+
+            # OLDEST FIRST: Click sort dropdown and select "Date (oldest)"
+            # This ensures we process oldest videos first (building knowledge base chronologically)
+            logger.info("[STUDIO-ASK] Sorting by oldest first...")
+            try:
+                # Use JavaScript to find and click sort dropdown, then select oldest
+                sorted_ok = self.driver.execute_script("""
+                    // Find sort button/dropdown
+                    const sortButtons = document.querySelectorAll(
+                        'ytcp-dropdown-trigger, button[aria-label*="Sort"], #sort-menu-button, ' +
+                        '[icon="icons:filter-list"], ytcp-icon-button[icon="icons:filter-list"]'
+                    );
+
+                    for (const btn of sortButtons) {
+                        if (btn.textContent.toLowerCase().includes('date') ||
+                            btn.getAttribute('aria-label')?.toLowerCase().includes('sort')) {
+                            btn.click();
+                            return 'clicked_sort';
+                        }
+                    }
+                    return 'no_sort_button';
+                """)
+
+                if sorted_ok == 'clicked_sort':
+                    await self._human_delay(1.0, 0.2)
+
+                    # Find and click "oldest" option
+                    oldest_clicked = self.driver.execute_script("""
+                        const items = document.querySelectorAll(
+                            'tp-yt-paper-item, ytcp-text-menu-item, ytcp-ve, paper-item'
+                        );
+                        for (const item of items) {
+                            const text = item.textContent.toLowerCase();
+                            if (text.includes('oldest') || text.includes('date (oldest)')) {
+                                item.click();
+                                return true;
+                            }
+                        }
+                        return false;
+                    """)
+
+                    if oldest_clicked:
+                        await self._human_delay(2.0, 0.3)
+                        logger.info("[STUDIO-ASK] ✓ Sorted by oldest")
+                    else:
+                        logger.warning("[STUDIO-ASK] Could not find 'oldest' option")
+                else:
+                    logger.warning("[STUDIO-ASK] Could not find sort button")
+
+            except Exception as e:
+                logger.warning(f"[STUDIO-ASK] Sort failed (using default order): {e}")
+                # Continue with default order - better than failing
+
             # Get list of video IDs
             video_ids = []
             try:
@@ -479,11 +531,15 @@ async def run_video_indexing_cycle(
         logger.info("[VIDEO-INDEX] Video indexing disabled (YT_VIDEO_INDEXING_ENABLED)")
         return {"skipped": True}
 
-    # Default channels from env
+    # Default channels from env - all 4 channels
+    # Chrome (9222): Move2Japan, UnDaoDu (Set 1)
+    # Edge (9223): FoundUps, RavingANTIFA (Set 10)
     if not channels:
         channels = [
+            os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
             os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
             os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
+            os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
         ]
         channels = [c for c in channels if c]
 

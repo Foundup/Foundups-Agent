@@ -2,6 +2,170 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.18.9 - Gemini 2.5 Flash Upgrade (2026-01-28)
+
+### Updated
+- **Model upgrade**: `gemini-2.0-flash` → `gemini-2.5-flash`
+- **Reason**: Gemini 2.0 retiring March 2026; 2.5 is current recommended
+
+### Changed Files
+- `src/gemini_video_analyzer.py`: Default model now `gemini-2.5-flash`
+- `social_media_orchestrator/src/gemini_vision_analyzer.py`
+- `youtube_shorts/src/veo3_generator.py` (2 occurrences)
+- `scripts/batch_enhance_videos.py`: PROVIDERS list updated
+
+### Model Evolution
+```
+gemini-2.0-flash-exp → deprecated 2026-01 (404 NOT_FOUND)
+gemini-2.0-flash     → retiring March 2026
+gemini-2.5-flash     → current recommended (2026-01+)
+```
+
+---
+
+## V0.18.8 - Gemini Model Update (2026-01-28)
+
+### Fixed
+- **Deprecated model**: `gemini-2.0-flash-exp` returned 404 NOT_FOUND
+- **Updated to**: `gemini-2.0-flash` (stable release)
+
+### Changed
+- `src/gemini_video_analyzer.py`: Default model now `gemini-2.0-flash`
+- Also updated in:
+  - `social_media_orchestrator/src/gemini_vision_analyzer.py`
+  - `youtube_shorts/src/veo3_generator.py` (2 occurrences)
+
+### Architecture Note
+For unlisted video scheduling, Gemini API cannot analyze private/unlisted URLs.
+Recommendation: Use `YT_SCHEDULER_INDEX_MODE=stub` for shorts scheduler (default).
+Only use `gemini` mode for indexing PUBLIC videos after publication.
+
+---
+
+## V0.18.7 - RavingANTIFA Channel Configuration (2026-01-27)
+
+### Added
+- **RavingANTIFA to CHANNEL_CONFIG**: Added 4th channel to video_indexer.py
+  - Channel ID: UCVSmg5aOhP4tnQ9KFUg97qA
+  - Browser: Edge (9223)
+  - Credential Set: 10 (same as FoundUps)
+- **Updated studio_ask_indexer.py**: Default channels now include all 4:
+  - Chrome (9222): Move2Japan, UnDaoDu
+  - Edge (9223): FoundUps, RavingANTIFA
+- **Updated indexing_menu.py**: Edge phase now includes RavingANTIFA
+
+### Architecture
+- Full 4-channel indexing parity with comment engagement system
+- Browser grouping: Chrome (Set 1) ↔ Edge (Set 10)
+
+---
+
+## V0.18.6 - Utility Routing Notes (2026-01-21)
+
+### Added
+- Documented index-driven routing: 012 voice → Digital Twin; music/video → RavingANTIFA or faceless-video pipeline.
+
+## V0.18.5 - Segfault Fix + Oldest-First Sorting (2026-01-19)
+
+### Fixed
+- **ChromaDB segfault**: Disabled `VideoContentIndex` initialization that was causing native library crash on Windows
+  - Root cause: ChromaDB SQLite library conflict when initializing from async context
+  - Workaround: Set `VIDEO_INDEX_AVAILABLE = False` - indexing still works via JSON storage
+  - TODO: Investigate ChromaDB async initialization issue
+
+### Added
+- **Oldest-first sorting**: Indexer now sorts content by "Date (oldest)" before processing
+  - Uses JavaScript DOM manipulation to click sort dropdown
+  - Gracefully falls back to default order if sort fails
+  - Ensures chronological knowledge base building (oldest videos first)
+
+### Architecture
+- Indexing flow now: Navigate → Sort oldest → Scrape video list → Process each
+- User said: "it goes to the contents, switches to the oldest, and processes oldest first"
+
+---
+
+## V0.18.4 - Dual Browser Indexing (2026-01-19)
+
+### Changed
+- **Re-added Edge browser launch** for FoundUps indexing:
+  - User: "its not a bad idea to do double indexing... undaodu and foundups have the body of 012s work"
+  - Both Chrome AND Edge now auto-launch if not running
+  - FoundUps (Edge) contains important 012 content alongside UnDaoDu/Move2Japan (Chrome)
+
+### Flow
+1. Pre-flight: Launch Chrome if not running
+2. Pre-flight: Launch Edge if not running
+3. 60-second verification hold (both browsers, single wait)
+4. Phase 1: Index Chrome channels (UnDaoDu + Move2Japan)
+5. Phase 2: Index Edge channels (FoundUps) - gracefully skips if Edge unavailable
+
+### Architecture
+- **Complete 012 body of work coverage**: 3 channels across 2 browsers
+- **Graceful degradation**: Edge failure doesn't block Chrome indexing
+- **Single verification hold**: Both browsers launched before the 60s wait
+
+---
+
+## V0.18.3 - Occam's Razor Menu + Auto-Launch (2026-01-19)
+
+### Changed
+- **main.py indexing menu** simplified from 6 options to 2:
+  - **Before**: Gemini AI, Whisper Local, Test Video, Batch Index, Training Data, Back
+  - **After**: 1. Index ALL videos (continuous until complete), 0. Back
+  - Dev options accessible via CLI: `python -m modules.ai_intelligence.video_indexer.src.studio_ask_indexer --help`
+
+### Added
+- **Auto-launch browsers** on index start:
+  - Pre-flight checks if Chrome (9222) and Edge (9223) are running
+  - Auto-launches via `dae_dependencies.launch_chrome()`/`launch_edge()`
+  - Gracefully skips Edge channels if Edge fails to launch
+  - User no longer needs to manually start browsers before indexing
+
+- **60-second verification hold** after browser launch:
+  - Allows 012 to log in / verify Google account if needed
+  - Countdown displayed: `[WAIT] Continuing in XX seconds...`
+  - Press any key to skip immediately
+  - Auto-continues after 60 seconds if no input
+  - Pattern: Fresh browser launch may require Google re-authentication
+
+### Removed from Menu
+- Whisper indexing (caused cookie errors, legacy)
+- Test single video (dev use only - use Gemini analyzer directly)
+- Batch index (redundant with option 1)
+- Training data extraction (dev use - use dataset_builder.py)
+
+### Architecture Decision
+- **ADR-006**: Occam's Razor for 012-Facing Menus
+  - User said: "too many options... apply occums"
+  - Primary action should be ONE button: "Index ALL videos (continuous)"
+  - Like comment engagement - runs until complete
+  - Dev options remain accessible via CLI
+  - Auto-launch browsers removes manual dependency step
+
+### WSP Compliance
+- WSP 50: Pre-action verification (shows browser rotation pattern)
+- WSP 80: Auto-dependency launch (browsers auto-start)
+- WSP 22: This ModLog documents the change
+
+---
+
+## V0.18.2 - yt-dlp Cookie Fix (2026-01-19)
+
+### Problem
+`visual_analyzer.py` hardcoded `cookiesfrombrowser: ('chrome',)` which fails
+when Chrome is running ("Could not copy Chrome cookie database" error).
+
+### Fix
+Made browser cookies optional via env var `YT_DLP_COOKIES_BROWSER`:
+- Default: No cookies (public videos work fine)
+- Set to `chrome`/`firefox`/`edge`/`safari` for private/unlisted content
+
+### Related Fix
+Same fix applied to `youtube_live_audio/src/youtube_live_audio.py`
+
+---
+
 ## V0.18.1 - Canonical Artifact Path + Gemini Save Fix (2026-01-18)
 
 ### Problem

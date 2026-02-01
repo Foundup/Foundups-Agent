@@ -4,7 +4,9 @@
 
 ## Purpose
 
-Train and operate 012's Digital Twin (0102) for autonomous comment engagement.
+Train and operate 012's Digital Twin (0102) for autonomous comment engagement across social platforms.
+
+**Current focus (POC)**: LinkedIn comment processing and scheduling using 012's studio comment style, grounded in 20 years of 012 video corpus.
 
 ## Quick Start
 
@@ -34,6 +36,20 @@ Phase 1: SFT Training (LoRA)
 Phase 2: DPO Preference Tuning
 Phase 3: Tool-Use Training
 ```
+
+## LinkedIn POC Integration
+
+- **Drafting**: `comment_drafter.py` generates LinkedIn-ready replies (platform="linkedin")
+- **Decisioning**: `decision_policy.py` determines comment / like / ignore
+- **Scheduling**: Orchestrated through LinkedIn modules (scheduler + social media DAE)
+
+## YouTube Concatenation (Live Chat + Studio + Scheduling)
+
+- **Live Chat**: Digital Twin becomes primary response engine (BanterEngine fallback only)
+- **Studio Comments**: Digital Twin drafts + decisions for comment replies
+- **Scheduling**: Index weave signals utility routing
+  - 012 voice → Digital Twin memory
+  - music/video → RavingANTIFA or faceless-video pipeline (module in development)
 
 ## Components
 

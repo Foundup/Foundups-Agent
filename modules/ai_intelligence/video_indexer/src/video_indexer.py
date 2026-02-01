@@ -100,6 +100,11 @@ CHANNEL_CONFIG = {
         "browser": "edge",
         "port": 9223,
     },
+    "ravingantifa": {
+        "channel_id": "UCVSmg5aOhP4tnQ9KFUg97qA",  # RavingANTIFA music/video channel
+        "browser": "edge",
+        "port": 9223,
+    },
 }
 
 
@@ -131,7 +136,7 @@ class VideoIndexer:
         Initialize indexer for specific channel.
 
         Args:
-            channel: Channel name ("move2japan", "undaodu", "foundups")
+            channel: Channel name ("move2japan", "undaodu", "foundups", "ravingantifa")
             chroma_path: Path to ChromaDB (default: holo_index/chroma_store)
             artifact_path: Path for JSON artifacts (default: video_index/)
             auto_launch: Auto-launch browser if not running

@@ -6,6 +6,12 @@
 
 Comprehensive video content indexing for 012's YouTube channels (FoundUps, UnDaoDu, Move2Japan, RavingANTIFA). Transforms raw video content into searchable knowledge artifacts that enable 0102 to learn from and recall 012's teachings.
 
+## Utility Routing (POC)
+
+Index outputs are used to route downstream behavior:
+- 012 voice content → Digital Twin memory and response training
+- music/video content → RavingANTIFA or faceless-video pipeline (module in development)
+
 ## Architecture
 
 ```

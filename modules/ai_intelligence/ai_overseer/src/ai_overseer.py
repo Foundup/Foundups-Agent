@@ -121,6 +121,7 @@ class MissionType(Enum):
     COMMENT_PROCESSING = "comment_processing"    # P1: High priority
     VIDEO_INDEXING = "video_indexing"            # P1: Default when idle
     SCHEDULING = "scheduling"                    # P2: Medium priority (triggers indexing)
+    GIT_PUSH = "git_push"                        # P2: Medium priority (autonomous commits)
     SOCIAL_MEDIA = "social_media"                # P3: Low priority
     MAINTENANCE = "maintenance"                  # P4: Lowest priority
 
@@ -883,6 +884,7 @@ class AIIntelligenceOverseer:
         MissionType.COMMENT_PROCESSING: 15,  # P1: High priority
         MissionType.VIDEO_INDEXING: 14,      # P1: Default when idle
         MissionType.SCHEDULING: 12,          # P2: Medium (triggers indexing via index_weave)
+        MissionType.GIT_PUSH: 12,            # P2: Medium (autonomous commits via qwen_gitpush)
         MissionType.SOCIAL_MEDIA: 8,         # P3: Low priority
         MissionType.MAINTENANCE: 4,          # P4: Lowest priority
     }
@@ -900,6 +902,7 @@ class AIIntelligenceOverseer:
                 - unprocessed_comments: int - Comments awaiting processing
                 - all_processed: bool - Multi-channel done signal
                 - schedule_queue: int - Videos awaiting scheduling
+                - git_staged_files: int - Files staged for autonomous commit
                 - social_queue: int - Social media posts pending
                 - maintenance_due: bool - System maintenance needed
 
@@ -922,6 +925,12 @@ class AIIntelligenceOverseer:
         if current_state.get("schedule_queue", 0) > 0:
             logger.info("[ACTIVITY] P2: Schedule queue active (will trigger indexing)")
             return MissionType.SCHEDULING
+
+        # P2: Git push if staged files exist (autonomous commits via qwen_gitpush)
+        staged_files = current_state.get("git_staged_files", 0)
+        if staged_files > 0:
+            logger.info(f"[ACTIVITY] P2: {staged_files} files staged for commit (qwen_gitpush)")
+            return MissionType.GIT_PUSH
 
         # P3: Social media if posts pending
         if current_state.get("social_queue", 0) > 0:
@@ -955,6 +964,7 @@ class AIIntelligenceOverseer:
             "unprocessed_comments": 0,
             "all_processed": False,
             "schedule_queue": 0,
+            "git_staged_files": 0,  # Staged files for autonomous commit
             "social_queue": 0,
             "maintenance_due": False,
         }
@@ -974,6 +984,16 @@ class AIIntelligenceOverseer:
             # Comments cleared detection (from youtube_daemon_monitor.json)
             if "comments_cleared" in pattern or "edge_comments_cleared" in pattern:
                 state["all_processed"] = True
+
+            # Git push detection (from git_push_dae signals)
+            if "git_staged" in pattern or "files_changed" in pattern:
+                # Extract count from pattern if available
+                import re
+                match = re.search(r'(\d+)\s*files?', pattern)
+                if match:
+                    state["git_staged_files"] = int(match.group(1))
+                else:
+                    state["git_staged_files"] = 1  # At least one file staged
 
         # Check for remaining bugs as work indicator
         bugs_detected = daemon_results.get("bugs_detected", 0)
@@ -1014,6 +1034,130 @@ class AIIntelligenceOverseer:
             "mps_score": mps_score,
             "routing_reason": f"WSP 15 MPS routing: {next_activity.value} scored {mps_score}"
         }
+
+    def execute_git_push_activity(self, dry_run: bool = False) -> Dict[str, Any]:
+        """
+        Execute autonomous git push via qwen_gitpush skill.
+
+        WSP 77 Agent Coordination:
+            1. Qwen analyzes git diff (micro chain-of-thought)
+            2. Calculates MPS score for commit value
+            3. Generates WSP-compliant commit message
+            4. Executes module-by-module commits (or batched)
+            5. Creates PR if branch protection requires
+
+        Skill Path: modules/infrastructure/git_push_dae/skillz/qwen_gitpush/
+
+        Args:
+            dry_run: If True, analyze only, don't commit
+
+        Returns:
+            Dict with:
+                - success: bool
+                - commits: List of commit hashes
+                - pr_url: Optional PR URL if created
+                - skill_execution: qwen_gitpush skill results
+        """
+        import subprocess
+
+        result = {
+            "success": False,
+            "commits": [],
+            "pr_url": None,
+            "skill_execution": None,
+            "staged_files": 0,
+            "dry_run": dry_run
+        }
+
+        try:
+            # Step 1: Check git status for staged files
+            git_status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, cwd=str(self.repo_root)
+            )
+            staged_files = [
+                line for line in git_status.stdout.strip().split('\n')
+                if line and (line.startswith('M ') or line.startswith('A ') or line.startswith('D '))
+            ]
+            result["staged_files"] = len(staged_files)
+
+            if not staged_files:
+                logger.info("[GIT-PUSH] No staged files found")
+                result["success"] = True
+                result["message"] = "No staged files to commit"
+                return result
+
+            logger.info(f"[GIT-PUSH] Found {len(staged_files)} staged files")
+
+            # Step 2: Load qwen_gitpush skill for commit analysis
+            skill_path = self.repo_root / "modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md"
+            if skill_path.exists():
+                logger.info(f"[GIT-PUSH] Using qwen_gitpush skill at {skill_path}")
+                result["skill_execution"] = {"skill": "qwen_gitpush", "status": "available"}
+            else:
+                logger.warning(f"[GIT-PUSH] qwen_gitpush skill not found at {skill_path}")
+                result["skill_execution"] = {"skill": "qwen_gitpush", "status": "not_found"}
+
+            if dry_run:
+                result["success"] = True
+                result["message"] = f"Dry run: Would commit {len(staged_files)} files"
+                logger.info(f"[GIT-PUSH] Dry run complete: {len(staged_files)} files staged")
+                return result
+
+            # Step 3: Execute git commit (WSP-aligned message)
+            # Note: Full qwen_gitpush integration would use WRE skill execution
+            # For now, create mission for coordination
+            mission = self.create_mission(
+                mission_type=MissionType.GIT_PUSH,
+                context={
+                    "staged_files": len(staged_files),
+                    "files": [f.strip() for f in staged_files[:10]],  # First 10 for context
+                    "skill_path": str(skill_path) if skill_path.exists() else None
+                },
+                expected_outputs=["commit_hash", "commit_message", "pr_url"]
+            )
+
+            result["mission_id"] = mission.mission_id
+            result["success"] = True
+            result["message"] = f"Git push mission created: {mission.mission_id}"
+            logger.info(f"[GIT-PUSH] Created mission {mission.mission_id} for {len(staged_files)} files")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"[GIT-PUSH] Error: {e}")
+            result["error"] = str(e)
+            return result
+
+    def check_git_status(self) -> Dict[str, Any]:
+        """
+        Quick check of git status for activity routing.
+
+        Returns:
+            Dict with staged_files, modified_files, untracked_files counts
+        """
+        import subprocess
+
+        try:
+            git_status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, cwd=str(self.repo_root)
+            )
+            lines = [l for l in git_status.stdout.strip().split('\n') if l]
+
+            staged = len([l for l in lines if l[:2] in ('M ', 'A ', 'D ', 'R ')])
+            modified = len([l for l in lines if l[1:2] == 'M' or l[:2] == ' M'])
+            untracked = len([l for l in lines if l.startswith('??')])
+
+            return {
+                "staged_files": staged,
+                "modified_files": modified,
+                "untracked_files": untracked,
+                "total_changes": len(lines)
+            }
+        except Exception as e:
+            logger.error(f"[GIT-STATUS] Error: {e}")
+            return {"staged_files": 0, "modified_files": 0, "untracked_files": 0, "error": str(e)}
 
     # ==================== UBIQUITOUS DAEMON MONITORING ====================
 

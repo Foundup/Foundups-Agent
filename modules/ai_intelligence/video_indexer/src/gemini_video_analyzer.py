@@ -1,7 +1,7 @@
 """
 Gemini Video Analyzer - Direct YouTube Video Analysis via Gemini API
 
-Uses Gemini 2.0 Flash's native video understanding to analyze YouTube videos
+Uses Gemini 2.5 Flash's native video understanding to analyze YouTube videos
 WITHOUT downloading. Supports both VOD and LIVE streams.
 
 Key Discovery (2026-01-10):
@@ -254,14 +254,18 @@ Identify any actionable items or announcements."""
 
     def __init__(
         self,
-        model: str = "gemini-2.0-flash-exp",
+        model: str = "gemini-2.5-flash",
         api_key: Optional[str] = None,
     ):
         """
         Initialize Gemini Video Analyzer.
 
         Args:
-            model: Gemini model to use (default: gemini-2.0-flash-exp)
+            model: Gemini model to use (default: gemini-2.5-flash)
+                   Model history:
+                   - gemini-2.0-flash-exp: deprecated 2026-01
+                   - gemini-2.0-flash: retiring March 2026
+                   - gemini-2.5-flash: current recommended (2026-01+)
             api_key: Google API key (optional, reads from env if not provided)
         """
         if genai is None:

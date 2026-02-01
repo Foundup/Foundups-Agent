@@ -106,6 +106,7 @@
 - [x] Hook in auto_moderator_dae.py (post-comment processing)
 - [x] `YT_VIDEO_INDEXING_ENABLED` environment toggle
 - [x] `studio_ask_indexer.py` for browser automation
+- [ ] Utility routing signals (012 voice vs music/video → downstream pipelines)
 
 ### Gaps Remaining
 - [ ] Full background daemon (continuous operation)
