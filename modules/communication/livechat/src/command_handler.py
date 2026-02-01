@@ -52,7 +52,7 @@ class CommandFloodDetector:
             "😵 MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
             "🙄 Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation 🧘",
             "[ALERT] FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m 💤",
-            "[BOT] ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
+            "ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
             "😤 TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! 🌞"
         ]
 

@@ -1,0 +1,41 @@
+# Moltbot Bridge Configuration
+
+# Moltbot Gateway connection
+gateway:
+  url: "ws://127.0.0.1:18789"
+  webhook_port: 18800
+
+# Channel routing - maps Moltbot channels to Foundups DAEs
+channel_routing:
+  whatsapp:
+    priority: high
+    dae: ai_overseer
+    response_style: conversational
+    
+  telegram:
+    priority: high
+    dae: ai_overseer
+    response_style: conversational
+    
+  discord:
+    priority: medium
+    dae: ai_overseer
+    response_style: casual
+    
+  slack:
+    priority: medium
+    dae: ai_overseer
+    response_style: professional
+
+# Voice integration (when Talk Mode active)
+voice:
+  enabled: true
+  use_voice_memory: true
+  response_max_length: 500  # Shorter for TTS
+
+# 012 Digital Twin context
+digital_twin:
+  persona: "012"
+  use_holoindex: true
+  use_video_memory: true
+  preserve_voice_patterns: true

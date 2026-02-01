@@ -18,8 +18,10 @@ NAVIGATION: Maintains YouTube chat session state and credentials.
 import logging
 import os
 import time
+import json
 import asyncio
 import random
+from pathlib import Path
 from typing import Optional, Dict, Any
 import googleapiclient.errors
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
@@ -68,8 +70,36 @@ class SessionManager:
         self.greeting_message = None  # Will be generated dynamically
         self.greeting_sent = False  # Track if greeting already sent for this session
         self.update_broadcast_sent = False  # Track if update broadcast already sent for this session
+        self._greeting_state_path = (
+            Path(__file__).resolve().parents[1] / "memory" / "greeting_state.json"
+        )
 
         logger.info(f"SessionManager initialized for video: {video_id}")
+
+    def _greeting_cooldown_seconds(self) -> float:
+        value = os.getenv("LIVECHAT_GREETING_COOLDOWN_MIN", "60")
+        try:
+            return max(0.0, float(value)) * 60.0
+        except ValueError:
+            return 60.0 * 60.0
+
+    def _load_greeting_state(self) -> Dict[str, Any]:
+        try:
+            if self._greeting_state_path.exists():
+                return json.loads(self._greeting_state_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.debug(f"[GREETING] Failed to load state: {exc}")
+        return {}
+
+    def _save_greeting_state(self, state: Dict[str, Any]) -> None:
+        try:
+            self._greeting_state_path.parent.mkdir(parents=True, exist_ok=True)
+            self._greeting_state_path.write_text(
+                json.dumps(state, indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+        except Exception as exc:
+            logger.debug(f"[GREETING] Failed to save state: {exc}")
     
     def get_live_chat_id(self) -> Optional[str]:
         """
@@ -209,9 +239,33 @@ class SessionManager:
             logger.info("[CONFIG] Greetings DISABLED via YT_LIVECHAT_ANNOUNCEMENTS_ENABLED")
             return True
 
+        if _env_truthy("YT_BLOCK_GREETING_ON_ACCOUNT_MISMATCH", "true"):
+            if self.bot_channel_id and self.channel_id and self.bot_channel_id != self.channel_id:
+                logger.warning(
+                    "[AUTH] Bot channel mismatch - blocking greeting "
+                    f"(bot={self.bot_channel_id}, channel={self.channel_id})"
+                )
+                self.greeting_sent = True
+                return True
+
         if not self.greeting_message:
             logger.info("No greeting message available - skipping greeting")
             return True
+
+        cooldown_seconds = self._greeting_cooldown_seconds()
+        if cooldown_seconds > 0:
+            state = self._load_greeting_state()
+            channel_key = self.channel_id or self.channel_name or self.persona_key or "unknown"
+            last_sent = 0.0
+            if isinstance(state.get(channel_key), dict):
+                last_sent = float(state[channel_key].get("last_sent_ts", 0.0) or 0.0)
+            if time.time() - last_sent < cooldown_seconds:
+                logger.info(
+                    f"[GREETING] Cooldown active for {channel_key} "
+                    f"({cooldown_seconds/60:.0f}m window) - skipping"
+                )
+                self.greeting_sent = True
+                return True
         
         try:
             # Add delay before greeting (from live_chat_processor)
@@ -239,6 +293,17 @@ class SessionManager:
             if success:
                 logger.info("Greeting sent successfully")
                 self.greeting_sent = True  # Mark greeting as sent for this session
+                try:
+                    state = self._load_greeting_state()
+                    channel_key = self.channel_id or self.channel_name or self.persona_key or "unknown"
+                    state[channel_key] = {
+                        "last_sent_ts": time.time(),
+                        "video_id": self.video_id,
+                        "greeting": self.greeting_message,
+                    }
+                    self._save_greeting_state(state)
+                except Exception as exc:
+                    logger.debug(f"[GREETING] Failed to store greeting state: {exc}")
                 # Add longer post-greeting delay to prevent message stacking
                 delay = random.uniform(15, 25)  # 15-25 seconds between messages
                 logger.info(f"Waiting {delay:.1f}s before update broadcast to prevent stacking")

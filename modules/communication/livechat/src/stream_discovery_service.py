@@ -19,6 +19,7 @@ import time
 from typing import Optional, Dict, List, Any, Callable
 
 from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
+from modules.infrastructure.shared_utilities.session_utils import SessionUtils
 
 logger = logging.getLogger(__name__)
 
@@ -141,11 +142,26 @@ class StreamDiscoveryService:
                 video_id = pre_check_result[0]
                 live_chat_id = pre_check_result[1] if len(pre_check_result) > 1 else None
 
+                # Resolve channel_id and channel_name from session cache
+                channel_id = None
+                channel_name = 'Cached Stream'
+                try:
+                    cache = SessionUtils.load_cache()
+                    if cache and video_id in cache:
+                        cache_entry = cache[video_id]
+                        if isinstance(cache_entry, dict):
+                            channel_id = cache_entry.get('channel_id')
+                            if channel_id and self.stream_resolver:
+                                channel_name = self.stream_resolver._get_channel_display_name(channel_id)
+                                logger.info(f"[CACHED-STREAM] Resolved channel: {channel_name} (ID: {channel_id})")
+                except Exception as e:
+                    logger.warning(f"[CACHED-STREAM] Failed to resolve channel from cache: {e}")
+
                 return {
                     'video_id': video_id,
                     'live_chat_id': live_chat_id,
-                    'channel_id': None,
-                    'channel_name': 'Cached Stream'
+                    'channel_id': channel_id,
+                    'channel_name': channel_name
                 }
             else:
                 logger.info("[QWEN-INFO] No cached stream or last stream ended - need full channel scan")

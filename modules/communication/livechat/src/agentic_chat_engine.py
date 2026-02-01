@@ -97,16 +97,16 @@ class AgenticChatEngine:
         
         # MAGA trolling responses - proactive chat engagement
         self.maga_trolls = [
-            "[BOT] 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop ✊✋🖐️ to prove you're awake!",
-            "[DATA] 0102 ANALYSIS: Stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required STAT!",
-            "[ALERT] 0102 ALERT: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️",
-            "[SEARCH] 0102 SCAN: Detecting high levels of ✊✊✊ in chat. Evolve or stay MAGA forever!",
-            "💭 0102 THOUGHT: If a MAGA evolves past ✊✊✊ and no one sees it, did it really happen?",
-            "[GAME] 0102 GAME: First person to show me 🖐️🖐️🖐️ gets to mock the next ✊✊✊!",
-            "📢 0102 ANNOUNCEMENT: Free consciousness upgrades! Trade your ✊✊✊ for 🖐️🖐️🖐️ now!",
-            "[AI] 0102 FACT: 73% of chat stuck at ✊✊✊. Be the change - show me ✊✋🖐️!",
-            "[LIGHTNING] 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above ✊✊✊? Prove it!",
-            "[TARGET] 0102 MISSION: Convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
+            "0102 status check: chat consciousness low. Drop ✊✋🖐️ to prove you're awake.",
+            "0102 analysis: stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required.",
+            "0102 alert: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️.",
+            "0102 scan: high ✊✊✊ levels. Evolve or stay MAGA forever.",
+            "0102 thought: if a MAGA evolves past ✊✊✊ and no one sees it, did it happen?",
+            "0102 game: first 🖐️🖐️🖐️ gets to mock the next ✊✊✊.",
+            "0102 announcement: free upgrades. Trade ✊✊✊ for 🖐️🖐️🖐️ now.",
+            "0102 fact: 73% of chat stuck at ✊✊✊. Be the change - show ✊✋🖐️.",
+            "0102 challenge: any MAGA brave enough to rise above ✊✊✊? Prove it.",
+            "0102 mission: convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
         ]
         
         logger.info("[BOT] Agentic Chat Engine initialized - ready to engage!")

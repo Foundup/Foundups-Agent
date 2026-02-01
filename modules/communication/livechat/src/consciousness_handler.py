@@ -33,7 +33,7 @@ class ConsciousnessHandler:
         self.grok = grok_integration
 
         # Emoji patterns with skin tone support
-        self.fist_pattern = r'✊[\U0001F3FB-\U0001F3FF]?'
+        self.fist_pattern = r'[✊👊][\U0001F3FB-\U0001F3FF]?'
         self.hand_pattern = r'✋[\U0001F3FB-\U0001F3FF]?'
         self.open_pattern = r'🖐️?[\U0001F3FB-\U0001F3FF]?'
 
@@ -128,7 +128,7 @@ class ConsciousnessHandler:
         pattern = f'{self.fist_pattern}|{self.hand_pattern}|{self.open_pattern}'
         
         for match in re.findall(pattern, text):
-            if '✊' in match:
+            if '✊' in match or '👊' in match:
                 emoji_chars.append('✊')
             elif '✋' in match:
                 emoji_chars.append('✋')
@@ -148,7 +148,7 @@ class ConsciousnessHandler:
             Target username or None
         """
         # Match @username including spaces (e.g., @T K, @John Smith)
-        mention_match = re.search(r'@([^✊✋🖐\n]+?)(?:\s+(?:fc|factcheck|rate)|✊|✋|🖐|$)', text)
+        mention_match = re.search(r'@([^✊✋🖐👊\n]+?)(?:\s+(?:fc|factcheck|rate)|✊|✋|🖐|👊|$)', text)
         if mention_match:
             return mention_match.group(1).strip()
         
@@ -166,7 +166,7 @@ class ConsciousnessHandler:
         Returns:
             Request text or None
         """
-        pattern = r'[✊✋🖐🖐️][\U0001F3FB-\U0001F3FF]?'
+        pattern = r'[✊👊✋🖐🖐️][\U0001F3FB-\U0001F3FF]?'
         matches = list(re.finditer(pattern, text))
         
         if matches:
@@ -280,4 +280,4 @@ class ConsciousnessHandler:
     
     def has_consciousness_emojis(self, text: str) -> bool:
         """Check if text contains consciousness emojis."""
-        return any(emoji in text for emoji in ['✊', '✋', '🖐', '🖐️'])
+        return any(emoji in text for emoji in ['✊', '👊', '✋', '🖐', '🖐️'])

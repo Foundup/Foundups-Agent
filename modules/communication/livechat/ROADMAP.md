@@ -83,7 +83,7 @@ Sprint 3 - Oversized file refactor (phase 1)
 - [U+1F52E] Quiz system with 1933 historical parallels
 - [U+1F52E] F-scale authoritarian personality test
 - [U+1F52E] Educational fact delivery system
-- [U+1F52E] Integration with BanterEngine for responses
+- [U+1F52E] Replace BanterEngine with Digital Twin drafting + decisioning (BanterEngine fallback only)
 
 #### Content & Data
 - [U+1F52E] 1933 parallel database (JSON initially)
@@ -104,10 +104,9 @@ Sprint 3 - Oversized file refactor (phase 1)
 **Focus**: AI integration, scalability, and multi-platform support
 
 #### AI Integration
-- [U+1F52E] Gemini API for dynamic content generation
-- [U+1F52E] AI-powered quiz question creation
-- [U+1F52E] Intelligent response generation
-- [U+1F52E] Content moderation assistance
+- [U+1F52E] Digital Twin as primary response engine across live chat
+- [U+1F52E] Indexing-based routing (012 voice vs music → RavingANTIFA/faceless)
+- [U+1F52E] BanterEngine used only as fallback when Digital Twin unavailable
 
 #### Platform Expansion
 - [U+1F52E] Multi-platform support (YouTube, Twitch, Discord)

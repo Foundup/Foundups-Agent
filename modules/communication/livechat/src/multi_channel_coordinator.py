@@ -37,6 +37,8 @@ import asyncio
 import logging
 from typing import Optional, Dict, Any, Callable, List, Tuple, Awaitable
 
+from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,6 +94,39 @@ CHANNEL_FALLBACKS = {
     "FoundUps": "RavingANTIFA",
     "RavingANTIFA": "FoundUps",
 }
+
+# 2026-01-29: Account Section Mapping (for "wrong Google account" detection)
+# When BOTH channels in a section show OOPS, browser is logged into WRONG Google account
+# Section 0 (Google Account A): UnDaoDu, Move2Japan
+# Section 1 (Google Account B): FoundUps, RavingANTIFA
+ACCOUNT_SECTIONS = {
+    "Move2Japan": 0,
+    "UnDaoDu": 0,
+    "FoundUps": 1,
+    "RavingANTIFA": 1,
+}
+
+def _detect_wrong_account_scenario(target_channel: str, fallback_also_failed: bool) -> str:
+    """
+    Detect when browser is logged into wrong Google account entirely.
+
+    Returns diagnostic message if wrong account detected, empty string otherwise.
+    """
+    if not fallback_also_failed:
+        return ""
+
+    section = ACCOUNT_SECTIONS.get(target_channel)
+    if section is None:
+        return ""
+
+    # Both channels on same section failed = definitely wrong Google account
+    section_name = "Google Account A (UnDaoDu/Move2Japan)" if section == 0 else "Google Account B (FoundUps/RavingANTIFA)"
+    wrong_section = "Google Account B" if section == 0 else "Google Account A"
+
+    return (
+        f"🔴 WRONG GOOGLE ACCOUNT: Browser appears to be on {wrong_section}, "
+        f"but needs {section_name} (Section {section}). Account switch required."
+    )
 
 # Channel name to ID mapping
 CHANNEL_IDS = {
@@ -251,7 +286,93 @@ class MultiChannelCoordinator:
         logger.info(f"[ROTATE] Channels: Chrome ({len(chrome_accounts)}) + Edge ({len(edge_accounts)})")
         logger.info("=" * 70)
 
+        # ACTIVITY ROUTING: Emit breadcrumb for activity router to pick up
+        # This signals that all 4 channels have been processed
+        try:
+            telemetry = get_breadcrumb_telemetry()
+            telemetry.store_breadcrumb(
+                source_dae="multi_channel_coordinator",
+                event_type="rotation_complete",
+                message=f"All {total_channels} channels processed",
+                phase="ACTIVITY-ROUTING",
+                metadata={
+                    "total_processed": total_processed,
+                    "chrome_channels": len(chrome_accounts),
+                    "edge_channels": len(edge_accounts),
+                    "browser_chrome_available": True,
+                    "browser_edge_available": True,
+                }
+            )
+            logger.info("[ROTATE] [BREADCRUMB] rotation_complete emitted - browsers available for next activity")
+        except Exception as e:
+            logger.warning(f"[ROTATE] Failed to emit breadcrumb: {e}")
+
+        # DAE CHAINING: After comment rotation completes, trigger Shorts scheduling
+        # Toggle: YT_SHORTS_SCHEDULING_AFTER_COMMENTS (default: true as of 2026-01-28)
+        if _env_truthy("YT_SHORTS_SCHEDULING_AFTER_COMMENTS", "true"):
+            logger.info("=" * 70)
+            logger.info("[CHAIN] SHORTS SCHEDULING - Triggered after comment rotation")
+            logger.info("=" * 70)
+            try:
+                await self._run_shorts_scheduling_chain(chrome_accounts, edge_accounts)
+            except Exception as sched_err:
+                logger.error(f"[CHAIN] Shorts scheduling failed: {sched_err}")
+
         return total_processed
+
+    async def run_browser_engagement(
+        self,
+        browser: str,
+        runner,
+        max_comments: int,
+        mode: str,
+    ) -> int:
+        """
+        Run comment engagement for a SINGLE browser only.
+
+        2026-01-30: Created for per-browser parallel loop architecture.
+        Each browser independently cycles comments → scheduling without
+        blocking the other browser.
+
+        Args:
+            browser: "chrome" or "edge"
+            runner: CommentEngagementRunner instance
+            max_comments: Max comments per channel (0 = unlimited)
+            mode: Execution mode string
+
+        Returns:
+            Total comments processed for this browser
+        """
+        strict_inbox = _env_truthy("YT_INBOX_STRICT", "true")
+
+        if browser == "chrome":
+            skip_chrome = _env_truthy("YT_SKIP_CHROME", "false")
+            if skip_chrome:
+                logger.info("[ROTATE] SKIPPING CHROME (YT_SKIP_CHROME=true)")
+                return 0
+
+            chrome_accounts = [
+                ("Move2Japan", os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")),
+                ("UnDaoDu", os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")),
+            ]
+            logger.info(f"[ROTATE] [Chrome] Processing {len(chrome_accounts)} channels: {', '.join(a[0] for a in chrome_accounts)}")
+            return await self._run_chrome_engagement(
+                runner, chrome_accounts, max_comments, strict_inbox
+            )
+
+        elif browser == "edge":
+            edge_accounts = [
+                ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")),
+                ("RavingANTIFA", os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")),
+            ]
+            logger.info(f"[ROTATE] [Edge] Processing {len(edge_accounts)} channels: {', '.join(a[0] for a in edge_accounts)}")
+            return await self._run_edge_engagement(
+                runner, edge_accounts, max_comments, strict_inbox
+            )
+
+        else:
+            logger.error(f"[ROTATE] Unknown browser: {browser}")
+            return 0
 
     async def _run_edge_engagement(
         self,
@@ -353,12 +474,19 @@ class MultiChannelCoordinator:
                                 studio_url = fallback_url
                             else:
                                 logger.warning(f"[ROTATE] [Edge] 🚨 Fallback {fallback_channel} also shows OOPS")
+                                # 2026-01-29: Detect wrong Google account scenario
+                                wrong_account_msg = _detect_wrong_account_scenario(account_name, fallback_also_failed=True)
+                                if wrong_account_msg:
+                                    logger.warning(f"[ROTATE] [Edge] {wrong_account_msg}")
 
-                        # STEP 2: If still on Oops (or no fallback), try account switch
+                        # STEP 2: If still on Oops (or no fallback), try DIRECT account switch from OOPS page
                         if _is_oops_page(edge_driver):
-                            logger.warning(f"[ROTATE] [Edge] Attempting account switch for {account_name}...")
+                            logger.warning(f"[ROTATE] [Edge] 🔄 Attempting DIRECT OOPS page switch for {account_name}...")
+                            logger.info(f"[ROTATE] [Edge] Target section: {ACCOUNT_SECTIONS.get(account_name, '?')}")
                             if edge_swapper:
-                                switched = await edge_swapper.swap_to(account_name, navigate_to_comments=True)
+                                # 2026-01-29: Use swap_from_oops_page for direct OOPS page switch
+                                # This clicks "Switch account" button on OOPS page directly
+                                switched = await edge_swapper.swap_from_oops_page(account_name, navigate_to_comments=True)
                                 if not switched:
                                     logger.error(f"[ROTATE] [Edge] Account swap failed for {account_name}; skipping")
                                     logger.warning(f"[ROTATE] [Edge] FIX: Sign into {account_name} in Edge browser")
@@ -370,7 +498,10 @@ class MultiChannelCoordinator:
                                     logger.error(f"[ROTATE] [Edge] Still on OOPS after account switch; skipping {account_name}")
                                     continue
                 except Exception as perm_err:
-                    logger.debug(f"[ROTATE] [Edge] Permission check error: {perm_err}")
+                    # 2026-01-29: BUG FIX - Don't silently swallow swap errors
+                    # Log at WARNING level and skip this channel
+                    logger.warning(f"[ROTATE] [Edge] Permission check/swap error for {account_name}: {perm_err}")
+                    continue  # Skip this channel on error
 
                 self.log_studio_context(channel_id, f"{account_name} comment_engagement", edge_driver)
                 self.set_active_channel(channel_id)
@@ -454,6 +585,15 @@ class MultiChannelCoordinator:
                                 edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
                                 edge_swapper = TarsAccountSwapper(edge_driver)
                                 logger.info(f"[ROTATE] [Edge] ✅ Browser relaunched successfully")
+
+                                # 2026-01-29: WARMUP - Navigate to YouTube to load saved session
+                                logger.info(f"[ROTATE] [Edge] 🔥 Warming up browser session...")
+                                try:
+                                    await asyncio.to_thread(edge_driver.get, "https://www.youtube.com")
+                                    await asyncio.sleep(5)  # Wait for session/cookies to load
+                                    logger.info(f"[ROTATE] [Edge] ✅ Browser session warmed up")
+                                except Exception as warmup_err:
+                                    logger.warning(f"[ROTATE] [Edge] Warmup navigation failed: {warmup_err}")
                             else:
                                 logger.error(f"[ROTATE] [Edge] ❌ Browser relaunch failed: {relaunch_msg}")
                         except Exception as relaunch_err:
@@ -463,10 +603,16 @@ class MultiChannelCoordinator:
                         logger.error(f"[ROTATE] [Edge] ❌ Cannot recover browser session - skipping remaining Edge channels")
                         break
 
-            # Check live stream pending
-            if self.is_live_stream_pending() and _env_truthy("YT_STOP_ROTATION_ON_LIVE", "true"):
-                logger.info(f"[ROTATE] Live stream pending - stopping Edge rotation after {account_name}")
-                break
+            # Check live stream pending - only skip THIS channel's REMAINING work, continue rotation
+            # Changed 2026-01-22: No longer breaks loop - continues to next channel
+            if self.is_live_stream_pending():
+                if _env_truthy("YT_STOP_ROTATION_ON_LIVE", "false"):  # Default OFF now
+                    logger.info(f"[ROTATE] Live stream pending - stopping Edge rotation after {account_name}")
+                    break
+                else:
+                    logger.info(f"[ROTATE] Live stream pending but YT_STOP_ROTATION_ON_LIVE=false - continuing to next channel")
+
+            logger.info(f"[ROTATE] [Edge {idx}/{len(edge_accounts)}] ✅ {account_name} complete - continuing rotation...")
 
         return total_processed
 
@@ -504,6 +650,17 @@ class MultiChannelCoordinator:
             chrome_driver = await asyncio.to_thread(webdriver.Chrome, options=opts)
             swapper = TarsAccountSwapper(chrome_driver)
             logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port}")
+
+            # 2026-01-29: WARMUP - Navigate to YouTube to ensure session is loaded
+            try:
+                current_url = chrome_driver.current_url
+                if "youtube.com" not in current_url:
+                    logger.info(f"[ROTATE] [Chrome] 🔥 Warming up browser session...")
+                    await asyncio.to_thread(chrome_driver.get, "https://www.youtube.com")
+                    await asyncio.sleep(3)  # Wait for session/cookies to load
+                    logger.info(f"[ROTATE] [Chrome] ✅ Browser session warmed up")
+            except Exception as warmup_err:
+                logger.warning(f"[ROTATE] [Chrome] Warmup check failed: {warmup_err}")
 
             # Smart rotation: detect current account to minimize switching
             chrome_accounts = await self._optimize_rotation_order(chrome_driver, chrome_accounts)
@@ -566,7 +723,12 @@ class MultiChannelCoordinator:
                                 account_name = fallback_channel
                                 channel_id = fallback_id
                             else:
-                                logger.warning(f"[ROTATE] [Chrome] 🚨 Fallback {fallback_channel} also shows OOPS - skipping")
+                                logger.warning(f"[ROTATE] [Chrome] 🚨 Fallback {fallback_channel} also shows OOPS")
+                                # 2026-01-29: Detect wrong Google account scenario
+                                wrong_account_msg = _detect_wrong_account_scenario(account_name, fallback_also_failed=True)
+                                if wrong_account_msg:
+                                    logger.warning(f"[ROTATE] [Chrome] {wrong_account_msg}")
+                                logger.warning(f"[ROTATE] [Chrome] Skipping {account_name} - manual account fix needed")
                                 continue
                         else:
                             logger.warning(f"[ROTATE] [Chrome] Fallback switch failed - skipping {account_name}")
@@ -655,14 +817,25 @@ class MultiChannelCoordinator:
                 if strict_inbox:
                     rotation_halt = True
 
+            # Rotation halt check - only halt if explicitly enabled (default: continue)
             if rotation_halt:
-                logger.warning(f"[ROTATE] Rotation halted after {account_name}")
-                break
+                if _env_truthy("YT_ROTATION_HALT_ON_ERROR", "false"):  # Default OFF now
+                    logger.warning(f"[ROTATE] Rotation halted after {account_name} (YT_ROTATION_HALT_ON_ERROR=true)")
+                    break
+                else:
+                    logger.warning(f"[ROTATE] Error on {account_name} but YT_ROTATION_HALT_ON_ERROR=false - continuing rotation")
+                    rotation_halt = False  # Reset for next channel
 
-            # Check live stream pending
-            if self.is_live_stream_pending() and _env_truthy("YT_STOP_ROTATION_ON_LIVE", "true"):
-                logger.info(f"[ROTATE] Live stream pending - stopping Chrome rotation after {account_name}")
-                break
+            # Check live stream pending - only skip THIS channel's REMAINING work, continue rotation
+            # Changed 2026-01-22: No longer breaks loop - continues to next channel
+            if self.is_live_stream_pending():
+                if _env_truthy("YT_STOP_ROTATION_ON_LIVE", "false"):  # Default OFF now
+                    logger.info(f"[ROTATE] Live stream pending - stopping Chrome rotation after {account_name}")
+                    break
+                else:
+                    logger.info(f"[ROTATE] Live stream pending but YT_STOP_ROTATION_ON_LIVE=false - continuing to next channel")
+
+            logger.info(f"[ROTATE] [Chrome {idx}/{len(chrome_accounts)}] ✅ {account_name} complete - continuing rotation...")
 
         return total_processed
 
@@ -776,3 +949,120 @@ class MultiChannelCoordinator:
                 logger.info(f"[VERIFY] {account_name} verification inconclusive; continuing to next channel")
 
         return processed
+
+    async def _run_shorts_scheduling_chain(
+        self,
+        chrome_accounts: List[Tuple[str, str]],
+        edge_accounts: List[Tuple[str, str]],
+    ) -> int:
+        """
+        Run Shorts scheduling for all channels after comment engagement completes.
+
+        DAE Chaining: Comments → Scheduling (same browser sessions)
+
+        Flow:
+        1. Schedule Chrome channels (Move2Japan, UnDaoDu) - port 9222
+        2. Schedule Edge channels (FoundUps, RavingANTIFA) - port 9223
+
+        Uses existing browser connections from comment engagement.
+
+        Args:
+            chrome_accounts: List of (name, channel_id) for Chrome
+            edge_accounts: List of (name, channel_id) for Edge
+
+        Returns:
+            Total videos scheduled across all channels
+        """
+        total_scheduled = 0
+
+        # Map channel names to scheduler channel_keys
+        CHANNEL_KEY_MAP = {
+            "Move2Japan": "move2japan",
+            "UnDaoDu": "undaodu",
+            "FoundUps": "foundups",
+            "RavingANTIFA": "ravingantifa",
+        }
+
+        try:
+            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
+        except ImportError as e:
+            logger.error(f"[CHAIN] Cannot import scheduler: {e}")
+            return 0
+
+        # Max videos per scheduling run (0 = unlimited, 2026-01-28)
+        max_videos = int(os.getenv("YT_SHORTS_SCHEDULE_MAX_VIDEOS", "0"))
+        dry_run = _env_truthy("YT_SHORTS_SCHEDULE_DRY_RUN", "false")
+
+        # Schedule Chrome channels
+        for account_name, channel_id in chrome_accounts:
+            channel_key = CHANNEL_KEY_MAP.get(account_name)
+            if not channel_key:
+                logger.warning(f"[CHAIN] Unknown channel key for {account_name}")
+                continue
+
+            logger.info(f"[CHAIN] [Chrome] Scheduling Shorts for {account_name}...")
+            try:
+                result = await run_scheduler_dae(
+                    channel_key=channel_key,
+                    max_videos=max_videos,
+                    dry_run=dry_run,
+                )
+                scheduled = len(result.get("scheduled", []))
+                total_scheduled += scheduled
+                logger.info(f"[CHAIN] [Chrome] {account_name}: {scheduled} videos scheduled")
+
+                if result.get("errors"):
+                    for err in result["errors"]:
+                        logger.warning(f"[CHAIN] [Chrome] {account_name} error: {err}")
+            except Exception as e:
+                logger.error(f"[CHAIN] [Chrome] {account_name} scheduling failed: {e}")
+
+        # Schedule Edge channels
+        for account_name, channel_id in edge_accounts:
+            channel_key = CHANNEL_KEY_MAP.get(account_name)
+            if not channel_key:
+                logger.warning(f"[CHAIN] Unknown channel key for {account_name}")
+                continue
+
+            logger.info(f"[CHAIN] [Edge] Scheduling Shorts for {account_name}...")
+            try:
+                result = await run_scheduler_dae(
+                    channel_key=channel_key,
+                    max_videos=max_videos,
+                    dry_run=dry_run,
+                )
+                scheduled = len(result.get("scheduled", []))
+                total_scheduled += scheduled
+                logger.info(f"[CHAIN] [Edge] {account_name}: {scheduled} videos scheduled")
+
+                if result.get("errors"):
+                    for err in result["errors"]:
+                        logger.warning(f"[CHAIN] [Edge] {account_name} error: {err}")
+            except Exception as e:
+                logger.error(f"[CHAIN] [Edge] {account_name} scheduling failed: {e}")
+
+        logger.info("=" * 70)
+        logger.info(f"[CHAIN] SHORTS SCHEDULING COMPLETE - {total_scheduled} videos scheduled")
+        logger.info("=" * 70)
+
+        # Emit breadcrumb for activity router
+        try:
+            telemetry = get_breadcrumb_telemetry()
+            telemetry.store_breadcrumb(
+                source_dae="multi_channel_coordinator",
+                event_type="shorts_scheduling_complete",
+                message=f"Scheduled {total_scheduled} videos across all channels",
+                phase="ACTIVITY-ROUTING",
+                metadata={
+                    "total_scheduled": total_scheduled,
+                    "chrome_channels": len(chrome_accounts),
+                    "edge_channels": len(edge_accounts),
+                    "max_videos_per_channel": max_videos,
+                    "dry_run": dry_run,
+                }
+            )
+            logger.info("[CHAIN] [BREADCRUMB] shorts_scheduling_complete emitted")
+        except Exception as e:
+            logger.warning(f"[CHAIN] Failed to emit scheduling breadcrumb: {e}")
+
+        return total_scheduled

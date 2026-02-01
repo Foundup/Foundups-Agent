@@ -16,6 +16,7 @@ import asyncio
 import logging
 import os
 import re
+import threading
 import time
 from datetime import datetime
 from typing import Optional, Dict
@@ -25,9 +26,15 @@ from modules.platform_integration.stream_resolver.src.stream_resolver import Str
 
 # Import WSP-compliant livechat_core
 from .livechat_core import LiveChatCore
+# Channel -> credential mapping helper
+from .persona_registry import resolve_channel_credential_set
 # Import extracted services (WSP 72: Module Independence, WSP 62: Large File Refactoring)
 from .stream_discovery_service import StreamDiscoveryService
 from .multi_channel_coordinator import MultiChannelCoordinator
+# Activity Router for breadcrumb-based activity coordination (WSP 77)
+from modules.infrastructure.activity_control.src.activity_control import (
+    get_activity_router, ActivityType
+)
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +183,24 @@ class AutoModeratorDAE:
         self.current_studio_channel_index = 0
         self.studio_runner = None
         self.studio_repo_root = None
+        # Rotation cycle tracking - when all 4 done, trigger shorts scheduling
+        self._rotation_processed_channels: set = set()
+        self._shorts_scheduling_triggered = False
+
+        # Shorts scheduling health tracking (2026-01-29: Hardened diagnostics)
+        self._shorts_scheduler_available = False
+        self._shorts_last_cycle_result = None  # {"timestamp", "total_scheduled", "channels", "errors"}
+        self._shorts_total_cycles = 0
+        self._shorts_total_scheduled = 0
+        try:
+            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import YouTubeShortsScheduler
+            self._shorts_scheduler_available = True
+            logger.info("[SHORTS] Scheduler module: AVAILABLE (YouTubeShortsScheduler imported OK)")
+        except ImportError as ie:
+            logger.warning(f"[SHORTS] Scheduler module: NOT AVAILABLE ({ie})")
+            logger.warning("[SHORTS] Shorts scheduling will be SKIPPED in comment engagement loop")
+        except Exception as e:
+            logger.warning(f"[SHORTS] Scheduler module: IMPORT ERROR ({e})")
 
         # Extracted services (WSP 72: Module Independence)
         self.stream_discovery_service: Optional[StreamDiscoveryService] = None  # Lazy init
@@ -517,6 +542,36 @@ class AutoModeratorDAE:
             consecutive_failures += 1
             previous_delay = delay
 
+            # HEALTH CHECK: Auto-restart comment engagement task if it crashed
+            # 2026-01-30: The comment task can die from transient WebDriver errors,
+            # network timeouts, or unhandled exceptions.  Without this watchdog,
+            # commenting stops forever until the process is manually restarted.
+            if self._comment_engagement_task and self._comment_engagement_task.done():
+                # Retrieve and log the exception that killed the task
+                try:
+                    exc = self._comment_engagement_task.exception()
+                    logger.error(f"[WATCHDOG] Comment engagement task CRASHED: {exc}", exc_info=exc)
+                except (asyncio.CancelledError, asyncio.InvalidStateError):
+                    logger.warning("[WATCHDOG] Comment engagement task ended (cancelled or invalid state)")
+
+                # RESTART the task
+                if self.studio_runner:
+                    interval_minutes = int(os.getenv("COMMUNITY_ENGAGEMENT_INTERVAL_MINUTES", "10"))
+                    exec_mode = os.getenv("COMMUNITY_EXEC_MODE", "subprocess")
+                    startup_max = int(os.getenv("COMMUNITY_STARTUP_MAX_COMMENTS", "0"))
+                    logger.info(f"[WATCHDOG] RESTARTING comment engagement task (interval={interval_minutes}m, mode={exec_mode})")
+                    self._comment_engagement_task = asyncio.create_task(
+                        self._comment_engagement_loop(
+                            self.studio_runner,
+                            max_comments=startup_max,
+                            mode=exec_mode,
+                            interval_minutes=interval_minutes,
+                        )
+                    )
+                    logger.info("[WATCHDOG] Comment engagement task RESTARTED successfully")
+                else:
+                    logger.error("[WATCHDOG] Cannot restart comment engagement - no studio_runner available")
+
             # Phase 4H: ACCOUNT ROTATION FALLBACK
             # If no live stream found, switch account to process Studio comments for others
             if not result and _env_truthy("YT_ACCOUNT_ROTATION_ENABLED", "true"):
@@ -553,7 +608,8 @@ class AutoModeratorDAE:
                             continue
 
                         # Channels to rotate through (names matching StudioAccountSwitcher list)
-                        rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps"]
+                        # Chrome (9222): Move2Japan, UnDaoDu | Edge (9223): FoundUps, RavingANTIFA
+                        rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
                         self.current_studio_channel_index = (self.current_studio_channel_index + 1) % len(rotation_accounts)
                         target_account = rotation_accounts[self.current_studio_channel_index]
 
@@ -620,6 +676,14 @@ class AutoModeratorDAE:
                             logger.info(f"[AUTH] Forcing credential set {token_index} (YT_FORCE_CREDENTIAL_SET)")
                     except ValueError:
                         logger.warning(f"[AUTH] Invalid YT_FORCE_CREDENTIAL_SET={force_set_raw}; using auto-rotation")
+                if token_index is None:
+                    pinned_set = resolve_channel_credential_set(
+                        channel_name=channel_name,
+                        channel_id=channel_id,
+                    )
+                    if pinned_set:
+                        token_index = pinned_set
+                        logger.info(f"[AUTH] Pinning credential set {token_index} for channel {channel_name}")
                 service = get_authenticated_service(token_index=token_index) if token_index else get_authenticated_service()
                 if service:
                     self.service = create_monitored_service(service)
@@ -679,10 +743,10 @@ class AutoModeratorDAE:
             all_channels = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
         else:
             all_channels = [
-                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan - PRIORITY 1 - FIXED!
-                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps - PRIORITY 2
-                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu - PRIORITY 3 - FIXED!
-                os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
+                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu - PRIORITY 1 (active agent)
+                os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),  # RavingANTIFA - PRIORITY 2 (cross-promo target)
+                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan - PRIORITY 3
+                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps - PRIORITY 4
             ]
         all_channels = [ch for ch in all_channels if ch]  # Filter empty strings
 
@@ -980,11 +1044,15 @@ class AutoModeratorDAE:
         """
         INDEPENDENT comment engagement loop - runs regardless of stream state.
 
-        Architecture (2025-12-30 Fix):
-        - This loop runs INDEPENDENTLY from stream detection
-        - Processes all channels every `interval_minutes` minutes
-        - Does NOT stop when live stream is found
-        - Stream detection runs in PARALLEL (separate task)
+        Architecture (2026-01-30 Refactor — Per-Browser Parallel Loops):
+        - Launches TWO independent loops: one for Chrome, one for Edge
+        - Each browser cycles: Comments → Scheduling → Sleep independently
+        - Chrome does NOT block Edge (and vice versa)
+        - Phase 3 scheduling runs immediately after THAT browser's comments finish
+
+        Previous architecture (2025-12-30 → 2026-01-29):
+        - Single loop: Phase 1 (ALL comments) → Phase 3 (ALL scheduling) → sleep
+        - Problem: Phase 1 blocked Phase 3 for up to 1 hour (UNLIMITED comments)
 
         Args:
             runner: EngagementRunner instance
@@ -992,56 +1060,392 @@ class AutoModeratorDAE:
             mode: Execution mode (subprocess/thread/inproc)
             interval_minutes: Minutes between engagement cycles (default: 10)
         """
+        logger.info("=" * 70)
+        logger.info("[COMMENT-LOOP] PER-BROWSER PARALLEL ENGAGEMENT LOOPS STARTING")
+        logger.info(f"[COMMENT-LOOP] Interval: {interval_minutes} minutes | Mode: {mode}")
+        logger.info(f"[COMMENT-LOOP] Max per channel: {max_comments if max_comments > 0 else 'UNLIMITED'}")
+        logger.info("[COMMENT-LOOP] Architecture: Each browser runs Comments → Scheduling independently")
+        logger.info("[COMMENT-LOOP]   Chrome (9222): Move2Japan, UnDaoDu  → schedule → sleep")
+        logger.info("[COMMENT-LOOP]   Edge   (9223): FoundUps, RavingANTIFA → schedule → sleep")
+        logger.info("[COMMENT-LOOP] Neither browser blocks the other")
+        logger.info("=" * 70)
+
+        # TOP-LEVEL RESILIENCE with INDEPENDENT LOOP SUPERVISION
+        # 2026-01-30: Each browser loop is supervised independently.
+        # If Chrome crashes, Edge keeps running (and vice versa).
+        # Previously asyncio.gather() would cancel the healthy loop
+        # when the other crashed — this was a critical bug.
+        try:
+            await self._ensure_multi_channel_coordinator(runner, mode)
+        except Exception as e:
+            logger.error(f"[COMMENT-LOOP] Coordinator init FAILED: {e}", exc_info=True)
+            logger.info("[COMMENT-LOOP] Retrying coordinator init in 30s...")
+            await asyncio.sleep(30)
+            # Retry once more before giving up
+            await self._ensure_multi_channel_coordinator(runner, mode)
+
+        # Supervisor: manages both browser loops independently
+        _browser_tasks: dict = {}  # {"chrome": Task, "edge": Task}
+        _RESTART_DELAY = 30
+        _HEALTH_CHECK_INTERVAL = 60  # seconds between health checks
+
+        # 2026-02-01: Per-browser locks prevent Phase 1 (comments) and Phase 3
+        # (scheduling) from touching the same browser simultaneously.
+        # The thread leak from asyncio.to_thread can't be interrupted, but the
+        # lock ensures the next cycle waits until the leaked thread releases.
+        _browser_locks: dict = {
+            "chrome": asyncio.Lock(),
+            "edge": asyncio.Lock(),
+        }
+        # Stop events: set when Phase 3 times out so the scheduler thread
+        # knows to stop touching the browser ASAP.
+        _scheduler_stop_events: dict = {
+            "chrome": threading.Event(),
+            "edge": threading.Event(),
+        }
+
+        def _create_browser_task(browser_name: str) -> asyncio.Task:
+            """Create a browser engagement task."""
+            task = asyncio.create_task(
+                self._browser_engagement_loop(
+                    browser_name=browser_name,
+                    runner=runner,
+                    max_comments=max_comments,
+                    mode=mode,
+                    interval_minutes=interval_minutes,
+                    browser_lock=_browser_locks[browser_name],
+                    scheduler_stop_event=_scheduler_stop_events[browser_name],
+                ),
+                name=f"engagement-{browser_name}",
+            )
+            logger.info(f"[SUPERVISOR] {browser_name.upper()} loop task CREATED")
+            return task
+
+        # Launch both loops
+        for _browser in ("chrome", "edge"):
+            _browser_tasks[_browser] = _create_browser_task(_browser)
+
+        # Supervision loop: monitor both tasks, restart individually on failure
+        while True:
+            try:
+                await asyncio.sleep(_HEALTH_CHECK_INTERVAL)
+
+                for _browser in ("chrome", "edge"):
+                    _task = _browser_tasks.get(_browser)
+                    if _task is None or _task.done():
+                        _tag = _browser.upper()
+                        # Log what happened
+                        if _task is not None:
+                            try:
+                                _exc = _task.exception()
+                                if _exc:
+                                    logger.error(
+                                        f"[SUPERVISOR] {_tag} loop CRASHED: {_exc}",
+                                        exc_info=_exc,
+                                    )
+                                else:
+                                    logger.warning(f"[SUPERVISOR] {_tag} loop EXITED without error")
+                            except (asyncio.CancelledError, asyncio.InvalidStateError):
+                                logger.warning(f"[SUPERVISOR] {_tag} loop was cancelled")
+
+                        # Restart just this browser's loop
+                        logger.info(f"[SUPERVISOR] Restarting {_tag} loop in {_RESTART_DELAY}s...")
+                        await asyncio.sleep(_RESTART_DELAY)
+
+                        # Re-init coordinator if needed
+                        try:
+                            await self._ensure_multi_channel_coordinator(runner, mode)
+                        except Exception as _coord_err:
+                            logger.error(f"[SUPERVISOR] Coordinator re-init failed: {_coord_err}")
+
+                        _browser_tasks[_browser] = _create_browser_task(_browser)
+
+            except asyncio.CancelledError:
+                logger.info("[SUPERVISOR] Supervisor CANCELLED — shutting down browser loops")
+                for _b, _t in _browser_tasks.items():
+                    if _t and not _t.done():
+                        _t.cancel()
+                raise
+            except Exception as _sup_err:
+                logger.error(f"[SUPERVISOR] Health check error: {_sup_err}", exc_info=True)
+                await asyncio.sleep(10)
+
+    async def _ensure_multi_channel_coordinator(self, runner, mode: str):
+        """Lazy-init MultiChannelCoordinator with DAE callbacks (called once)."""
+        if not self.multi_channel_coordinator:
+            self.multi_channel_coordinator = MultiChannelCoordinator(
+                log_studio_context=self._log_studio_context,
+                verify_studio_inbox_clear=self._verify_studio_inbox_clear,
+                reconnect_chrome_driver=self._reconnect_chrome_driver,
+                reconnect_edge_driver=self._reconnect_edge_driver,
+                detect_current_channel_id=self._detect_current_channel_id,
+                update_engagement_status=lambda cid, status: self._comment_engagement_status.update({cid: status}),
+                set_active_channel=lambda cid: setattr(self, '_comment_engagement_active_channel', cid),
+                is_live_stream_pending=lambda: self._live_stream_pending,
+            )
+
+    async def _browser_engagement_loop(
+        self,
+        browser_name: str,
+        runner,
+        max_comments: int,
+        mode: str,
+        interval_minutes: int = 10,
+        browser_lock: asyncio.Lock = None,
+        scheduler_stop_event: threading.Event = None,
+    ):
+        """
+        Per-browser engagement loop: Comments → Scheduling → Sleep.
+
+        2026-01-30: Each browser independently cycles through its own channels.
+        Chrome and Edge run in parallel — neither blocks the other.
+
+        2026-02-01: Added browser_lock (asyncio.Lock) and scheduler_stop_event
+        (threading.Event) to prevent Phase 1 / Phase 3 contention. The lock
+        ensures only one phase touches the browser at a time. The stop_event
+        tells a leaked scheduler thread to stop driving the browser.
+
+        Args:
+            browser_name: "chrome" or "edge"
+            runner: EngagementRunner instance
+            max_comments: Max comments per channel (0=UNLIMITED)
+            mode: Execution mode
+            interval_minutes: Minutes between cycles
+            browser_lock: asyncio.Lock preventing concurrent browser access
+            scheduler_stop_event: threading.Event to signal scheduler thread to stop
+        """
+        tag = browser_name.upper()
         cycle_count = 0
         interval_seconds = interval_minutes * 60
 
-        logger.info("=" * 70)
-        logger.info("[COMMENT-LOOP] INDEPENDENT COMMENT ENGAGEMENT LOOP STARTED")
-        logger.info(f"[COMMENT-LOOP] Interval: {interval_minutes} minutes | Mode: {mode}")
-        logger.info(f"[COMMENT-LOOP] Max per channel: {max_comments if max_comments > 0 else 'UNLIMITED'}")
-        logger.info("[COMMENT-LOOP] This loop runs INDEPENDENTLY from stream detection")
-        logger.info("=" * 70)
+        logger.info(f"[{tag}-LOOP] Browser loop STARTED — cycling Comments → Scheduling every {interval_minutes} min")
 
         while True:
             try:
                 cycle_count += 1
-                logger.info(f"\n[COMMENT-LOOP] === Cycle #{cycle_count} starting ===")
+                cycle_start = time.time()
+                logger.info("")
+                logger.info("=" * 60)
+                logger.info(f"[{tag}-LOOP] CYCLE #{cycle_count} STARTING")
+                logger.info(f"[{tag}-LOOP]   Shorts scheduling: {'ENABLED' if self._shorts_scheduler_available else 'UNAVAILABLE'}")
+                logger.info("=" * 60)
 
-                # Run multi-channel engagement
-                await self._run_multi_channel_engagement(runner, max_comments=max_comments, mode=mode)
+                # ============================================
+                # PHASE 1: COMMENT ENGAGEMENT (this browser only)
+                # HARDENED: 90-minute timeout prevents infinite hang if
+                # WebDriver connect, OOPS recovery, or subprocess stalls.
+                # 2026-02-01: Browser lock prevents contention with leaked
+                # Phase 3 scheduler threads from the previous cycle.
+                # ============================================
+                phase1_start = time.time()
+                phase1_timeout = int(os.getenv("COMMUNITY_PHASE1_TIMEOUT", "5400"))  # 90 min default
+                comments_processed = 0
 
-                # VIDEO INDEXING: Run after all comments processed (2026-01-10)
-                # Uses YouTube's "Ask" Gemini feature via browser automation
-                # Enhanced 2026-01-17: Added transcript_ask SKILLz with Gemma validation
-                if os.getenv("YT_VIDEO_INDEXING_ENABLED", "false").lower() in ("1", "true", "yes"):
+                if browser_lock:
+                    logger.info(f"[{tag}-LOOP] PHASE 1: Acquiring browser lock...")
+                    await browser_lock.acquire()
+                    logger.info(f"[{tag}-LOOP] PHASE 1: Browser lock ACQUIRED")
+                try:
+                    logger.info(f"[{tag}-LOOP] PHASE 1: COMMENT ENGAGEMENT starting (timeout={phase1_timeout}s)...")
                     try:
-                        # Try new transcript_ask SKILLz first
-                        from modules.ai_intelligence.video_indexer.skillz.transcript_ask import execute_skill
-                        from modules.ai_intelligence.video_indexer.skillz.transcript_ask.validator import validate_transcript_segments
-                        logger.info(f"[VIDEO-INDEX] Starting transcript extraction with validation...")
-                        # Note: Driver and video selection handled by studio_ask_indexer
-                        # This is a hook for future enhancements
-                    except ImportError:
-                        # Fallback to original studio_ask_indexer
+                        comments_processed = await asyncio.wait_for(
+                            self.multi_channel_coordinator.run_browser_engagement(
+                                browser=browser_name,
+                                runner=runner,
+                                max_comments=max_comments,
+                                mode=mode,
+                            ),
+                            timeout=phase1_timeout,
+                        )
+                    except asyncio.TimeoutError:
+                        logger.error(f"[{tag}-LOOP] PHASE 1 TIMEOUT after {phase1_timeout}s — skipping to next phase")
+                finally:
+                    if browser_lock and browser_lock.locked():
+                        browser_lock.release()
+                        logger.debug(f"[{tag}-LOOP] PHASE 1: Browser lock RELEASED")
+                phase1_elapsed = time.time() - phase1_start
+                logger.info(f"[{tag}-LOOP] PHASE 1: COMMENT ENGAGEMENT complete ({phase1_elapsed:.1f}s, {comments_processed} comments)")
+
+                # ACTIVITY ROUTING: Signal comment completion for this browser
+                try:
+                    activity_router = get_activity_router()
+                    activity_router.signal_activity_complete(
+                        ActivityType.COMMENT_ENGAGEMENT,
+                        metadata={"cycle": cycle_count, "browser": browser_name, "comments": comments_processed}
+                    )
+                except Exception as e:
+                    logger.debug(f"[{tag}-LOOP] [ACTIVITY-ROUTER] Signal failed: {e}")
+
+                # ============================================
+                # PHASE 2: VIDEO INDEXING (Chrome only, optional)
+                # ============================================
+                if browser_name == "chrome" and os.getenv("YT_VIDEO_INDEXING_ENABLED", "false").lower() in ("1", "true", "yes"):
+                    try:
+                        from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
+                        logger.info(f"[{tag}-LOOP] PHASE 2: VIDEO INDEXING starting...")
+                        await run_video_indexing_cycle()
                         try:
-                            from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
-                            logger.info(f"[VIDEO-INDEX] Starting video indexing cycle...")
-                            await run_video_indexing_cycle()
-                        except ImportError:
-                            logger.debug("[VIDEO-INDEX] studio_ask_indexer not available")
+                            activity_router = get_activity_router()
+                            activity_router.signal_activity_complete(
+                                ActivityType.VIDEO_INDEXING,
+                                metadata={"method": "studio_ask_indexer", "browser": browser_name}
+                            )
+                        except Exception:
+                            pass
+                    except ImportError:
+                        logger.debug(f"[{tag}-LOOP] Video indexer not available")
                     except Exception as e:
-                        logger.warning(f"[VIDEO-INDEX] Cycle failed: {e}")
+                        logger.warning(f"[{tag}-LOOP] Video indexing failed: {e}")
 
-                logger.info(f"[COMMENT-LOOP] Cycle #{cycle_count} complete - sleeping {interval_minutes} minutes...")
+                # ============================================
+                # PHASE 3: SHORTS SCHEDULING (this browser only)
+                # ============================================
+                phase3_start = time.time()
+                shorts_enabled = os.getenv("YT_SHORTS_SCHEDULING_ENABLED", "true").lower() in ("1", "true", "yes")
+                scheduled_count = 0
+                error_count = 0
 
-                # Wait before next cycle
-                await asyncio.sleep(interval_seconds)
+                logger.info(f"[{tag}-LOOP] PHASE 3: SHORTS SCHEDULING")
+                logger.info(f"[{tag}-LOOP]   Enabled: {shorts_enabled} | Module: {self._shorts_scheduler_available}")
+
+                if not shorts_enabled:
+                    logger.info(f"[{tag}-LOOP] PHASE 3 SKIPPED: disabled")
+                elif not self._shorts_scheduler_available:
+                    logger.warning(f"[{tag}-LOOP] PHASE 3 SKIPPED: module unavailable")
+                else:
+                    # 2026-02-01: Acquire browser lock for Phase 3 to prevent
+                    # contention if next cycle's Phase 1 starts while this is running.
+                    if browser_lock:
+                        logger.info(f"[{tag}-LOOP] PHASE 3: Acquiring browser lock...")
+                        await browser_lock.acquire()
+                        logger.info(f"[{tag}-LOOP] PHASE 3: Browser lock ACQUIRED")
+
+                    # Clear stop event at start (fresh for this cycle)
+                    if scheduler_stop_event:
+                        scheduler_stop_event.clear()
+
+                    try:
+                        from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import run_multi_channel_scheduler
+                        max_shorts = int(os.getenv("YT_SHORTS_PER_CYCLE", "9999"))
+
+                        phase3_timeout = int(os.getenv("YT_SHORTS_PHASE3_TIMEOUT", "3600"))  # 60 min default
+                        logger.info(f"[{tag}-LOOP] Running scheduler for {browser_name} (max {max_shorts}/ch, timeout={phase3_timeout}s)...")
+
+                        # run_multi_channel_scheduler uses asyncio.run() internally,
+                        # so it must run in a thread to avoid nested event loop.
+                        # HARDENED: timeout prevents infinite hang on browser stall.
+                        # 2026-02-01: stop_event lets us tell the thread to stop
+                        # if the timeout fires (threads can't be interrupted directly).
+                        try:
+                            results = await asyncio.wait_for(
+                                asyncio.to_thread(
+                                    run_multi_channel_scheduler,
+                                    browser=browser_name,
+                                    mode="schedule",
+                                    max_per_channel=max_shorts,
+                                    stop_event=scheduler_stop_event,
+                                ),
+                                timeout=phase3_timeout,
+                            )
+                        except asyncio.TimeoutError:
+                            logger.error(f"[{tag}-LOOP] PHASE 3 TIMEOUT after {phase3_timeout}s")
+                            # Signal the leaked thread to stop driving the browser
+                            if scheduler_stop_event:
+                                scheduler_stop_event.set()
+                                logger.warning(f"[{tag}-LOOP] PHASE 3: Stop signal SENT to scheduler thread")
+                            # Give thread a moment to notice and stop
+                            await asyncio.sleep(5)
+                            results = None
+
+                        # Parse results
+                        if isinstance(results, dict) and "channels" in results:
+                            for ch_key, ch_data in results["channels"].items():
+                                if isinstance(ch_data, dict):
+                                    scheduled_count += ch_data.get("total_scheduled", 0)
+                                    error_count += ch_data.get("total_errors", 0)
+
+                        phase3_elapsed = time.time() - phase3_start
+                        logger.info(f"[{tag}-LOOP] PHASE 3 COMPLETE: {scheduled_count} scheduled | {error_count} errors | {phase3_elapsed:.1f}s")
+
+                        # Update DAE-level tracking (thread-safe: only one browser writes at a time per its own loop)
+                        self._shorts_total_cycles += 1
+                        self._shorts_total_scheduled += scheduled_count
+                        self._shorts_last_cycle_result = {
+                            "timestamp": datetime.now().isoformat(),
+                            "cycle": cycle_count,
+                            "browser": browser_name,
+                            "total_scheduled": scheduled_count,
+                            "total_errors": error_count,
+                            "elapsed_seconds": phase3_elapsed,
+                        }
+
+                        # Signal scheduling complete
+                        try:
+                            activity_router = get_activity_router()
+                            activity_router.signal_activity_complete(
+                                ActivityType.SHORTS_SCHEDULING,
+                                metadata={"total_scheduled": scheduled_count, "browser": browser_name}
+                            )
+                        except Exception:
+                            pass
+
+                    except ImportError as ie:
+                        logger.warning(f"[{tag}-LOOP] IMPORT FAILED: {ie}")
+                    except Exception as e:
+                        logger.error(f"[{tag}-LOOP] PHASE 3 CRASHED: {e}", exc_info=True)
+                    finally:
+                        # 2026-02-01: ALWAYS release browser lock after Phase 3
+                        if browser_lock and browser_lock.locked():
+                            browser_lock.release()
+                            logger.debug(f"[{tag}-LOOP] PHASE 3: Browser lock RELEASED")
+
+                # ============================================
+                # CYCLE SUMMARY + IDLE DETECTION
+                # ============================================
+                total_cycle_elapsed = time.time() - cycle_start
+                is_idle = (comments_processed == 0 and scheduled_count == 0 and error_count == 0)
+
+                logger.info("")
+                logger.info("-" * 50)
+                logger.info(f"[{tag}-LOOP] CYCLE #{cycle_count} COMPLETE ({total_cycle_elapsed:.1f}s)")
+                logger.info(f"[{tag}-LOOP]   Comments: {comments_processed} | Scheduled: {scheduled_count} | Errors: {error_count}")
+                logger.info(f"[{tag}-LOOP]   Lifetime: {self._shorts_total_cycles} scheduling cycles, {self._shorts_total_scheduled} total videos")
+
+                # 2026-02-01: IDLE DETECTION — if this browser did zero work,
+                # signal activity router so orchestration layer can assign work.
+                if is_idle:
+                    logger.info(f"[{tag}-LOOP] [IDLE-DETECT] Browser {tag} is IDLE — 0 comments, 0 scheduled")
+                    try:
+                        activity_router = get_activity_router()
+                        activity_router.signal_activity_complete(
+                            ActivityType.COMMENT_ENGAGEMENT,
+                            metadata={
+                                "cycle": cycle_count,
+                                "browser": browser_name,
+                                "idle": True,
+                                "comments": 0,
+                                "scheduled": 0,
+                            }
+                        )
+                    except Exception as idle_err:
+                        logger.debug(f"[{tag}-LOOP] [IDLE-DETECT] Router signal failed: {idle_err}")
+
+                    # Shorten sleep when idle — check again sooner
+                    idle_sleep = max(120, interval_seconds // 3)  # At least 2 min, at most 1/3 of normal
+                    logger.info(f"[{tag}-LOOP] [IDLE-DETECT] Shortened sleep: {idle_sleep}s (instead of {interval_seconds}s)")
+                    logger.info("-" * 50)
+                    await asyncio.sleep(idle_sleep)
+                else:
+                    logger.info(f"[{tag}-LOOP] Sleeping {interval_minutes} minutes before next cycle...")
+                    logger.info("-" * 50)
+                    # Wait before next cycle
+                    await asyncio.sleep(interval_seconds)
 
             except asyncio.CancelledError:
-                logger.info(f"[COMMENT-LOOP] Loop cancelled after {cycle_count} cycles")
+                logger.info(f"[{tag}-LOOP] Loop CANCELLED after {cycle_count} cycles")
                 raise
             except Exception as e:
-                logger.error(f"[COMMENT-LOOP] Cycle #{cycle_count} error: {e}")
+                logger.error(f"[{tag}-LOOP] Cycle #{cycle_count} EXCEPTION: {e}", exc_info=True)
                 # Wait before retry on error
                 await asyncio.sleep(60)
 
@@ -1055,22 +1459,17 @@ class AutoModeratorDAE:
         Run comment engagement across ALL channels with account switching.
         Delegates to MultiChannelCoordinator (WSP 62: Large File Refactoring).
 
+        NOTE (2026-01-30): This legacy method runs ALL browsers sequentially.
+        The new per-browser architecture uses _browser_engagement_loop() instead,
+        which calls coordinator.run_browser_engagement(browser=...) per browser.
+        This method is kept for backward compatibility (e.g., COMMENT_ONLY mode
+        or any code path that still calls it directly).
+
         Architecture (2025-12-28 Refactor):
         - Chrome (port 9222): Move2Japan + UnDaoDu (SAME Google account)
-        - Edge (port 9223): FoundUps (DIFFERENT Google account)
+        - Edge (port 9223): FoundUps + RavingANTIFA (SAME Edge session)
         """
-        # Lazy init MultiChannelCoordinator with callbacks
-        if not self.multi_channel_coordinator:
-            self.multi_channel_coordinator = MultiChannelCoordinator(
-                log_studio_context=self._log_studio_context,
-                verify_studio_inbox_clear=self._verify_studio_inbox_clear,
-                reconnect_chrome_driver=self._reconnect_chrome_driver,
-                reconnect_edge_driver=self._reconnect_edge_driver,
-                detect_current_channel_id=self._detect_current_channel_id,
-                update_engagement_status=lambda cid, status: self._comment_engagement_status.update({cid: status}),
-                set_active_channel=lambda cid: setattr(self, '_comment_engagement_active_channel', cid),
-                is_live_stream_pending=lambda: self._live_stream_pending,
-            )
+        await self._ensure_multi_channel_coordinator(runner, mode)
 
         await self.multi_channel_coordinator.run_multi_channel_engagement(
             runner=runner,
@@ -1132,6 +1531,14 @@ class AutoModeratorDAE:
             run_id,
             os.getenv("YT_ENGAGEMENT_TEMPO", "012").upper(),
         )
+        logger.info(
+            "[AUTOMATION-AUDIT] run_id=%s shorts_scheduling=%s shorts_module=%s shorts_per_cycle=%s comment_only=%s",
+            run_id,
+            _env_truthy("YT_SHORTS_SCHEDULING_ENABLED", "true"),
+            self._shorts_scheduler_available,
+            os.getenv("YT_SHORTS_PER_CYCLE", "9999"),
+            _env_truthy("YT_COMMENT_ONLY_MODE", "false"),
+        )
 
         # Phase -2: Launch dependencies (Chrome + LM Studio for comment engagement)
         if _env_truthy("YT_DEPS_AUTO_LAUNCH", "true"):
@@ -1162,7 +1569,7 @@ class AutoModeratorDAE:
                 from .engagement_runner import get_runner
                 from pathlib import Path
 
-                default_channel_id = os.getenv("COMMUNITY_CHANNEL_ID") or os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw')
+                default_channel_id = os.getenv("COMMUNITY_CHANNEL_ID") or os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA')
                 startup_max = int(os.getenv("COMMUNITY_STARTUP_MAX_COMMENTS", "0"))
 
                 # Get execution mode (default: subprocess for safety)
@@ -1451,6 +1858,13 @@ class AutoModeratorDAE:
                             "foundups": foundups_summary,
                             "ravingantifa": raving_summary,
                         },
+                        "shorts_scheduling": {
+                            "module_available": getattr(self, "_shorts_scheduler_available", False),
+                            "enabled": os.getenv("YT_SHORTS_SCHEDULING_ENABLED", "true").lower() in ("1", "true", "yes"),
+                            "total_cycles": getattr(self, "_shorts_total_cycles", 0),
+                            "total_scheduled": getattr(self, "_shorts_total_scheduled", 0),
+                            "last_cycle": getattr(self, "_shorts_last_cycle_result", None),
+                        },
                     }
                     with open(jsonl_path, 'a', encoding='utf-8') as f:
                         json.dump(heartbeat_data, f)
@@ -1562,7 +1976,7 @@ class AutoModeratorDAE:
             raise
 
     def get_status(self) -> dict:
-        """Get current DAE status."""
+        """Get current DAE status including shorts scheduling diagnostics."""
         status = {
             'connected': bool(self.service),
             'monitoring': bool(self.livechat and self.livechat.is_running),
@@ -1577,7 +1991,19 @@ class AutoModeratorDAE:
                 'consciousness': True,
                 'grok': True,
                 'throttle': True
-            }
+            },
+            'shorts_scheduling': {
+                'module_available': self._shorts_scheduler_available,
+                'enabled': os.getenv("YT_SHORTS_SCHEDULING_ENABLED", "true").lower() in ("1", "true", "yes"),
+                'total_cycles': self._shorts_total_cycles,
+                'total_scheduled': self._shorts_total_scheduled,
+                'last_cycle': self._shorts_last_cycle_result,
+            },
+            'comment_engagement': {
+                'task_active': bool(self._comment_engagement_task and not self._comment_engagement_task.done()),
+                'active_channel': self._comment_engagement_active_channel,
+                'channels_status': dict(self._comment_engagement_status),
+            },
         }
 
         if self.livechat:
@@ -1588,10 +2014,31 @@ class AutoModeratorDAE:
 
 def main():
     """Main entry point for the Auto Moderator DAE."""
+    class _LogRateLimiter(logging.Filter):
+        """Rate-limit repetitive INFO logs to prevent chat spam."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._last_emit = {}
+            self._interval = float(os.getenv("LIVECHAT_LOG_THROTTLE_SEC", "10") or 10)
+
+        def filter(self, record: logging.LogRecord) -> bool:
+            if record.levelno >= logging.WARNING:
+                return True
+            message = record.getMessage()
+            key = f"{record.name}:{message}"
+            now = time.time()
+            last = self._last_emit.get(key, 0.0)
+            if now - last >= self._interval:
+                self._last_emit[key] = now
+                return True
+            return False
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+    logging.getLogger().addFilter(_LogRateLimiter())
     
     # Create and run DAE
     dae = AutoModeratorDAE()

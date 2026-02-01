@@ -29,7 +29,11 @@ from modules.infrastructure.system_health_monitor.src.system_health_analyzer imp
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
 from modules.communication.livechat.src.stream_session_logger import get_session_logger
 from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
-from modules.communication.livechat.src.persona_registry import get_persona_config, resolve_persona_key
+from modules.communication.livechat.src.persona_registry import (
+    get_persona_config,
+    resolve_persona_key,
+    resolve_channel_credential_set,
+)
 try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
@@ -143,6 +147,11 @@ class LiveChatCore:
         )
         self.persona_config = get_persona_config(
             persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.pinned_credential_set = resolve_channel_credential_set(
             channel_name=self.channel_name,
             channel_id=self.channel_id,
             bot_channel_id=self.bot_channel_id,
@@ -323,6 +332,14 @@ class LiveChatCore:
             logger.error("Cannot send message - no live chat ID")
             self.health_analyzer.analyze_message("ERROR: Cannot send message - no live chat ID")
             return False
+
+        if os.getenv("YT_BLOCK_MESSAGES_ON_ACCOUNT_MISMATCH", "true").lower() in ("1", "true", "yes"):
+            if self.bot_channel_id and self.channel_id and self.bot_channel_id != self.channel_id:
+                logger.warning(
+                    "[AUTH] Bot channel mismatch - blocking message send "
+                    f"(bot={self.bot_channel_id}, channel={self.channel_id})"
+                )
+                return False
         
         # AUTOMATIC: Intelligent throttling before sending
         if self.intelligent_throttle and not skip_delay:
@@ -907,6 +924,7 @@ class LiveChatCore:
                         logger.debug(f"[REFRESH] [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
                         forced_set = _get_forced_credential_set()
+                        pinned_set = self.pinned_credential_set
                         if forced_set:
                             if not self._force_credential_logged:
                                 logger.info(f"[REFRESH] Credential rotation disabled (YT_FORCE_CREDENTIAL_SET={forced_set})")
@@ -917,6 +935,16 @@ class LiveChatCore:
                                 )
                                 self._force_credential_mismatch_logged = True
                             # Skip rotation when a forced set is configured
+                            rotation_decision = {"should_rotate": False}
+                        elif pinned_set:
+                            if not self._force_credential_logged:
+                                logger.info(f"[REFRESH] Credential rotation disabled (channel pinned to Set {pinned_set})")
+                                self._force_credential_logged = True
+                            if current_set != pinned_set and not self._force_credential_mismatch_logged:
+                                logger.warning(
+                                    f"[REFRESH] Active credential set {current_set} does not match pinned {pinned_set}"
+                                )
+                                self._force_credential_mismatch_logged = True
                             rotation_decision = {"should_rotate": False}
                         else:
                             # Check if rotation is needed

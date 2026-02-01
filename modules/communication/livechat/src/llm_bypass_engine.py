@@ -77,7 +77,7 @@ class LLMBypassEngine:
         Returns:
             Tuple of (emoji1, emoji2, emoji3) as integers, or None if not found
         """
-        emoji_map = {'✊': 0, '✋': 1, '🖐️': 2}
+        emoji_map = {'✊': 0, '👊': 0, '✋': 1, '🖐️': 2}
         sequence = []
         
         for char in input_text:

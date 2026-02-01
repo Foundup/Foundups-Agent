@@ -371,7 +371,7 @@ class Veo3Generator:
             print(f"[Veo3] Stage 1 (Move2Japan): {enhanced_v1[:100]}...")
 
             # Stage 2: Gemini final polish for Veo 3 optimization
-            model = genai_legacy.GenerativeModel('gemini-2.0-flash-exp')
+            model = genai_legacy.GenerativeModel('gemini-2.5-flash')  # 2.0-flash retiring Mar 2026; 2.5-flash recommended
 
             polish_prompt = f"""
 Refine this video prompt for Google Veo 3 (keep under 200 words):
@@ -415,7 +415,7 @@ Return ONLY the polished video prompt.
     def _basic_enhance(self, simple_topic: str) -> str:
         """Fallback basic enhancement without prompt_enhancer module."""
         try:
-            model = genai_legacy.GenerativeModel('gemini-2.0-flash-exp')
+            model = genai_legacy.GenerativeModel('gemini-2.5-flash')  # 2.0-flash retiring Mar 2026; 2.5-flash recommended
 
             enhancement_prompt = f"""
 Create a detailed video generation prompt for Google Veo 3 based on this topic:

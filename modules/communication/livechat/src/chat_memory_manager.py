@@ -103,69 +103,26 @@ class ChatMemoryManager:
             session_path = os.path.join(self.conversation_dir, self.current_session)
             os.makedirs(session_path, exist_ok=True)
 
-            # Save full transcript
+            # Save full transcript (history-only, no metadata)
             if self.session_messages:
                 full_transcript = os.path.join(session_path, "full_transcript.txt")
                 with open(full_transcript, 'w', encoding='utf-8') as f:
-                    f.write(f"FULL CHAT TRANSCRIPT\n")
-                    f.write(f"Session: {self.current_session}\n")
-                    f.write(f"Messages: {len(self.session_messages)}\n")
-                    f.write("=" * 60 + "\n\n")
                     for msg in self.session_messages:
                         f.write(f"{msg}\n")
                 logger.info(f"[U+1F4BE] Saved {len(self.session_messages)} messages to full transcript")
 
-            # Save mod-only transcript
+            # Save mod-only transcript (history-only, no metadata)
             if self.session_mod_messages:
                 mod_transcript = os.path.join(session_path, "mod_messages.txt")
                 with open(mod_transcript, 'w', encoding='utf-8') as f:
-                    f.write(f"MOD/OWNER MESSAGES\n")
-                    f.write(f"Session: {self.current_session}\n")
-                    f.write(f"Mod Messages: {len(self.session_mod_messages)}\n")
-                    f.write("=" * 60 + "\n\n")
                     for msg in self.session_mod_messages:
                         f.write(f"{msg}\n")
                 logger.info(f"[U+1F6E1]️ Saved {len(self.session_mod_messages)} mod messages")
 
-            # Save session summary
-            summary_file = os.path.join(session_path, "session_summary.txt")
-            with open(summary_file, 'w', encoding='utf-8') as f:
-                f.write(f"SESSION SUMMARY\n")
-                f.write("=" * 60 + "\n")
-                f.write(f"Session ID: {self.current_session}\n")
-                f.write(f"End Time: {datetime.now()}\n")
-                f.write(f"Total Messages: {len(self.session_messages)}\n")
-                f.write(f"Mod Messages: {len(self.session_mod_messages)}\n")
-
-                # Count unique users
-                unique_users = set()
-                mod_users = set()
-                for msg in self.session_messages:
-                    if ": " in msg:
-                        user = msg.split(": ")[0].replace("[MOD] ", "").replace("[OWNER] ", "")
-                        unique_users.add(user)
-                        if "[MOD]" in msg or "[OWNER]" in msg:
-                            mod_users.add(user)
-
-                f.write(f"Unique Users: {len(unique_users)}\n")
-                f.write(f"Active Mods: {len(mod_users)}\n")
-
-                # Consciousness triggers
-                consciousness_count = sum(1 for msg in self.session_messages if "[U+270A]" in msg or "[U+270B]" in msg or "[U+1F590]" in msg)
-                f.write(f"Consciousness Triggers: {consciousness_count}\n")
-
-                # Fact checks
-                factcheck_count = sum(1 for msg in self.session_messages if "FC" in msg.upper() or "FACTCHECK" in msg.upper())
-                f.write(f"Fact Check Requests: {factcheck_count}\n")
-
-                # Defense mechanisms triggered (for 0102 analysis)
-                defense_keywords = ['fake', 'lies', 'conspiracy', 'mainstream', 'sheep', 'wake up', 'truth']
-                defense_count = sum(1 for msg in self.session_messages
-                                  for keyword in defense_keywords
-                                  if keyword.lower() in msg.lower())
-                f.write(f"Defense Mechanisms Triggered: {defense_count}\n")
-
-            logger.info(f"[DATA] Session ended: {self.current_session} - {len(self.session_messages)} total, {len(self.session_mod_messages)} mod messages")
+            logger.info(
+                f"[DATA] Session ended: {self.current_session} - "
+                f"{len(self.session_messages)} total, {len(self.session_mod_messages)} mod messages"
+            )
 
             # Reset session
             self.current_session = None
@@ -215,9 +172,9 @@ class ChatMemoryManager:
                 # Format message for logs
                 role_prefix = f"[{role}] " if role in ['MOD', 'OWNER'] else ""
 
-                # Clean format for mod logs (YouTube ID + name + message)
+                # Mod/owner log (history-only)
                 if role in ['MOD', 'OWNER']:
-                    mod_entry = f"{author_id or 'unknown_id'} | {youtube_name or author_name}: {message_text}"
+                    mod_entry = f"{author_name}: {message_text}"
                     self.session_mod_messages.append(mod_entry)
 
                 # Full transcript entry
@@ -248,21 +205,86 @@ class ChatMemoryManager:
         try:
             messages = []
             
-            # Get from in-memory buffer first (recent messages)
+            # Get from in-memory buffer (recent messages only)
+            # NOTE: Disk storage methods were never implemented - using memory only
             buffer_messages = list(self.message_buffers.get(author_name, []))
             for msg in buffer_messages[-limit:]:
                 messages.append(f"{author_name}: {msg['text']}")
-            
-            # If we need more messages and user has disk storage
-            if len(messages) < limit and self._has_disk_storage(author_name):
-                disk_messages = self._read_from_disk(author_name, limit - len(messages))
-                messages = disk_messages + messages  # Prepend older messages
-            
+
             return messages[-limit:]  # Return latest N messages
             
         except Exception as e:
             logger.error(f"[FAIL] Error getting history for {author_name}: {e}")
             return []
+
+    def classify_user(self, author_name: str, limit: int = 20) -> Dict[str, Any]:
+        """
+        Classify user as troll or not using chat history.
+
+        Returns:
+            dict: {is_troll: bool, score: int, signals: List[str]}
+        """
+        try:
+            history = self.get_history(author_name, limit=limit)
+            messages = []
+            for entry in history:
+                if ": " in entry:
+                    messages.append(entry.split(": ", 1)[1])
+                else:
+                    messages.append(entry)
+
+            if not messages:
+                return {"is_troll": False, "score": 0, "signals": []}
+
+            troll_keywords = [
+                "libtard", "cuck", "soyboy", "npc", "sheep", "wake up",
+                "snowflake", "cope", "copium", "triggered", "loser",
+            ]
+            caps_hits = 0
+            spam_links = 0
+            keyword_hits = 0
+            repeat_hits = 0
+
+            normalized = [m.strip().lower() for m in messages if isinstance(m, str)]
+            for msg in messages:
+                if not isinstance(msg, str) or not msg.strip():
+                    continue
+                lower = msg.lower()
+                keyword_hits += sum(1 for kw in troll_keywords if kw in lower)
+                if "http://" in lower or "https://" in lower:
+                    spam_links += 1
+                letters = [c for c in msg if c.isalpha()]
+                if letters:
+                    caps_ratio = sum(1 for c in letters if c.isupper()) / len(letters)
+                    if caps_ratio > 0.7 and len(msg) > 12:
+                        caps_hits += 1
+
+            # Repeated message detection
+            seen = {}
+            for msg in normalized:
+                seen[msg] = seen.get(msg, 0) + 1
+            repeat_hits = sum(1 for count in seen.values() if count >= 3)
+
+            score = 0
+            score += 2 if keyword_hits >= 2 else 0
+            score += 2 if spam_links >= 2 else 0
+            score += 2 if caps_hits >= 2 else 0
+            score += 2 if repeat_hits >= 1 else 0
+
+            signals = []
+            if keyword_hits >= 2:
+                signals.append("keywords")
+            if spam_links >= 2:
+                signals.append("links")
+            if caps_hits >= 2:
+                signals.append("caps")
+            if repeat_hits >= 1:
+                signals.append("repeats")
+
+            return {"is_troll": score >= 2, "score": score, "signals": signals}
+        except Exception as e:
+            logger.error(f"[FAIL] Error classifying user {author_name}: {e}")
+            return {"is_troll": False, "score": 0, "signals": ["error"]}
     
     def analyze_user(self, author_name: str) -> Dict[str, Any]:
         """

@@ -97,6 +97,7 @@ class IntelligentLivechatReply:
         self.grok_available = False
         self.grok_client = None
         self.banter_engine = None
+        self.banter_enabled = os.getenv("LIVECHAT_BANTER_ENABLED", "false").lower() in ("1", "true", "yes")
         self.awakened = False
         resolved_persona = resolve_persona_key(
             channel_name=channel_name,
@@ -175,6 +176,10 @@ class IntelligentLivechatReply:
     
     def _init_banter_engine(self):
         """Initialize Banter Engine (singleton)."""
+        if not self.banter_enabled:
+            logger.info("[LIVECHAT-REPLY] Banter disabled via LIVECHAT_BANTER_ENABLED")
+            self.banter_engine = None
+            return
         try:
             from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
             self.banter_engine = get_banter_engine()
@@ -330,12 +335,22 @@ RULES:
 """
     
     def _generate_grok_response(self, message: str, username: str, role: str) -> Optional[str]:
-        """Generate contextual response using Grok."""
+        """Generate contextual response using Grok, with live news injection."""
         if not self.grok_available or not self.grok_client:
             return None
-        
+
         user_prompt = f"Reply to {username} ({role}) who said: \"{message}\""
-        
+
+        # Inject live news context when topic triggers are detected
+        try:
+            from modules.communication.livechat.src.news_context_provider import get_news_context
+            news_ctx = get_news_context(message)
+            if news_ctx:
+                user_prompt += f"\n\nCURRENT NEWS CONTEXT (use if relevant, cite facts):\n{news_ctx}"
+                logger.info(f"[LIVECHAT-REPLY] News context injected ({len(news_ctx)} chars)")
+        except Exception as e:
+            logger.debug(f"[LIVECHAT-REPLY] News provider unavailable: {e}")
+
         try:
             # Use same pattern as video_comments
             response = self.grok_client.get_response(
@@ -365,7 +380,7 @@ RULES:
     
     def _generate_banter_response(self, message: str) -> Optional[str]:
         """Generate response using banter engine."""
-        if not self.banter_engine:
+        if not self.banter_enabled or not self.banter_engine:
             return None
         
         try:

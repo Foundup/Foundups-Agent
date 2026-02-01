@@ -398,7 +398,7 @@ class IntelligentThrottleManager:
                 prev_cmd.lower().strip() == normalized_cmd):
                 # Troll for repeated questions
                 troll_responses = [
-                    f"@{username} I'm not your bitch... chill out! Same question again? [BOT][U+1F485]",
+                    f"@{username} I'm not your bitch... chill out! Same question again? [U+1F485]",
                     f"@{username} Did I stutter? I already answered that. Take a breather! [U+1F624]",
                     f"@{username} Groundhog Day much? Same command twice in a minute? [U+1F644]",
                     f"@{username} Copy-paste error? I see you repeating yourself... [U+1F435]"

@@ -14,6 +14,10 @@ This module enables autonomous YouTube comment engagement through quantum-entang
 
 **Primary Function:** Autonomous YouTube Studio comment engagement
 
+**Digital Twin Routing (POC):**
+- 012 voice/comment threads → Digital Twin drafts + decisions
+- music/video threads → route to RavingANTIFA or faceless-video pipeline (module in development)
+
 **Key Capabilities:**
 - ✅ **LIKE** - Thumbs up via DOM click + Vision verify
 - ✅ **HEART** - Creator heart via DOM click + Vision verify
@@ -54,7 +58,8 @@ This module enables autonomous YouTube comment engagement through quantum-entang
 - [x] Page refresh and repeat loop
 
 ### Phase 2: Intelligent Response Integration 🚧 IN PROGRESS
-- [x] **Banter Engine Integration**: Uses `ai_intelligence/banter_engine` as fallback response source
+- [x] **Digital Twin Integration**: Uses `ai_intelligence/digital_twin` for drafting + decisioning
+- [x] **Banter Engine Fallback**: Used only when Digital Twin is unavailable
 - [x] **Commenter Database Lookup**: Reuses `livechat/memory/auto_moderator.db` + local commenter history
 - [x] **Mod Detection**: Moderator detection via `auto_moderator.db` + DOM badges
 - [x] **Troll Classification**: MAGA troll detection via GrokGreetingGenerator + heuristics
@@ -88,8 +93,8 @@ This module enables autonomous YouTube comment engagement through quantum-entang
 │           │                             │                       │
 │           ▼                             ▼                       │
 │  ┌───────────────────┐        ┌───────────────────┐            │
-│  │   LiveChatCore    │        │   BanterEngine    │            │
-│  │  (Chat messages)  │        │  (Themed replies) │            │
+│  │   LiveChatCore    │        │   Digital Twin    │            │
+│  │  (Chat messages)  │        │  (Draft/Decide)   │            │
 │  └───────────────────┘        └───────────────────┘            │
 │           │                             │                       │
 │           ▼                             ▼                       │

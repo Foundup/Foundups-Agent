@@ -7,6 +7,86 @@
 
 ## Change Log
 
+### 2026-01-28 - Account Swapper DOM Precision + UI-TARS Verification
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 87 (Navigation Protocol), WSP 49 (DOM Resilience)
+
+**Problem:** Channel rotation not moving from Move2Japan to UnDaoDu after comments processed. Account switching unreliable.
+
+**Solution:** Updated `account_swapper_skill.py` with:
+
+1. **Precise DOM paths** from user inspection of YouTube Studio account picker:
+   - Avatar button: `button#avatar-btn`
+   - Switch Account: `ytd-compact-link-renderer` with "Switch account" text
+   - Account picker: `ytd-account-section-list-renderer` structure with `tp-yt-paper-icon-item`
+
+2. **Account picker index mapping**:
+   ```python
+   ACCOUNT_PICKER_MAP = {
+       "UnDaoDu": {"section": 0, "index": 0},
+       "Move2Japan": {"section": 0, "index": 1},
+       "FoundUps": {"section": 1, "index": 0},
+       "RavingANTIFA": {"section": 1, "index": 1},
+   }
+   ```
+
+3. **UI-TARS verification** after each step:
+   - Step 1: Verify account menu opened
+   - Step 2: Verify account picker visible
+   - Step 3: Verify account selected
+   - Step 4: Verify landed on target channel
+
+4. **Multi-strategy selection**:
+   - Strategy 1: Index-based (most reliable with known structure)
+   - Strategy 2: Text-based search on `tp-yt-paper-icon-item`
+   - Strategy 3: Fallback to `ytd-account-item-renderer`
+
+**Files Changed:**
+- `skillz/tars_account_swapper/account_swapper_skill.py`: Complete DOM path + UI-TARS update
+
+---
+
+### 2026-01-23 - Emoji Comment Detection Hardening
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 91 (Observability)
+
+**Problem:** Emoji-only comments like "👏🤟🤘" were not being detected as emoji comments. LLM received empty string `""` and generated confused responses like "If you're asking about ""...".
+
+**Investigation:**
+- Emoji regex pattern was tested and confirmed working
+- Added comprehensive logging to trace emoji detection flow
+- Identified that code path WAS reaching emoji check
+
+**Solution:**
+1. **Hardened emoji pattern** in `intelligent_reply_generator.py:_is_emoji_comment()`:
+   - Added `\U0001F400-\U0001F4FF` range (people, hands, gestures)
+   - Added `\U0001F910-\U0001F9FF` range (faces, hands extended)
+   - Added `\U0000FE00-\U0000FE0F` (variation selectors)
+   - Added `\U0001F3FB-\U0001F3FF` (skin tone modifiers)
+
+2. **Added comprehensive logging:**
+   - Log input text with repr() to see exact characters
+   - Log emoji count and text-only length
+   - Log final IS/NOT emoji decision
+
+3. **Added entry point logging** in `generate_reply()`:
+   - Logs comment_text with repr() at function entry
+   - Helps diagnose if emoji is being lost before reaching function
+
+**Files Changed:**
+- `src/intelligent_reply_generator.py`: Hardened `_is_emoji_comment()` + added logging
+
+---
+
+### 2026-01-21 - Digital Twin Response Alignment
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 73 (Digital Twin Architecture)
+
+**Change:** Documented Digital Twin as primary response engine for Studio comments, with BanterEngine as fallback and indexing-based routing (012 voice vs music).
+
 ### 2026-01-18 - Reply Submit Button Selector Hardening
 
 **By:** 0102

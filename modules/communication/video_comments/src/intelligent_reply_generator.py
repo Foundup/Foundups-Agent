@@ -806,41 +806,56 @@ VARIATION GUIDANCE:
     def _is_emoji_comment(self, comment_text: str) -> bool:
         """
         Check if comment is mostly emojis (playful emoji comment).
-        
+
         If someone just sends emojis, we reply with emojis - match their energy!
+
+        Hardened 2026-01-23: Added comprehensive emoji ranges including hand gestures
         """
         if not comment_text:
+            logger.debug("[EMOJI-CHECK] Empty comment text")
             return False
-        
+
+        # Log input for debugging
+        logger.info(f"[EMOJI-CHECK] Input: '{comment_text}' (len={len(comment_text)}, repr={repr(comment_text)[:100]})")
+
         # Count emoji characters
         import re
-        # Emoji pattern (simplified but catches most)
+        # Emoji pattern - COMPREHENSIVE (covers all Unicode emoji ranges)
+        # Hardened 2026-01-23: Added missing ranges for hand gestures (👏🤟🤘)
         emoji_pattern = re.compile(
             "["
-            "\U0001F600-\U0001F64F"  # emoticons
-            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F600-\U0001F64F"  # emoticons (smileys)
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs (includes 👏 U+1F44F)
             "\U0001F680-\U0001F6FF"  # transport & map
             "\U0001F1E0-\U0001F1FF"  # flags
             "\U00002702-\U000027B0"  # dingbats
-            "\U0001F900-\U0001F9FF"  # supplemental symbols
+            "\U0001F900-\U0001F9FF"  # supplemental symbols (includes 🤟 U+1F91F, 🤘 U+1F918)
             "\U0001FA00-\U0001FA6F"  # chess symbols
             "\U0001FA70-\U0001FAFF"  # symbols extended
             "\U00002600-\U000026FF"  # misc symbols
-            "]+", 
+            "\U0001F400-\U0001F4FF"  # additional pictographs (people, hands, gestures)
+            "\U0001F910-\U0001F9FF"  # faces, hands extended range
+            "\U0000FE00-\U0000FE0F"  # variation selectors
+            "\U0001F3FB-\U0001F3FF"  # skin tone modifiers
+            "]+",
             flags=re.UNICODE
         )
-        
+
         # Find all emojis
         emojis = emoji_pattern.findall(comment_text)
         emoji_count = sum(len(e) for e in emojis)
-        
+
         # Remove emojis to count text
         text_only = emoji_pattern.sub('', comment_text).strip()
-        
+
+        logger.info(f"[EMOJI-CHECK] Found {emoji_count} emoji chars, text_only='{text_only}' (len={len(text_only)})")
+
         # If mostly emoji (emoji > text, or very short text)
         if emoji_count > 0 and (len(text_only) < 5 or emoji_count >= len(text_only)):
+            logger.info(f"[EMOJI-CHECK] ✅ IS EMOJI COMMENT (emoji_count={emoji_count}, text_len={len(text_only)})")
             return True
-        
+
+        logger.info(f"[EMOJI-CHECK] ❌ NOT emoji comment (emoji_count={emoji_count}, text_len={len(text_only)})")
         return False
     
     def _get_emoji_reply(self) -> str:
@@ -1778,6 +1793,12 @@ Reply (address their specific point, no generic phrases):"""
         Returns:
             Generated reply text
         """
+        # LOG INPUT for debugging emoji detection (2026-01-23)
+        logger.info(f"[REPLY-GEN] 📥 generate_reply() called:")
+        logger.info(f"[REPLY-GEN]   comment_text: '{comment_text}' (len={len(comment_text) if comment_text else 0})")
+        logger.info(f"[REPLY-GEN]   repr: {repr(comment_text)[:100] if comment_text else 'None'}")
+        logger.info(f"[REPLY-GEN]   author_name: {author_name}")
+
         # COMMENT AGE CALCULATION (2025-12-30): Parse published_time to days
         # Used to skip holiday suffixes on old comments (>7 days)
         # Pattern from: comment_processor.py parse_comment_age_days()

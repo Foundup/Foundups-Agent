@@ -12,6 +12,7 @@ NAVIGATION: Outputs responses to chat with throttle safeguards.
 
 import logging
 import os
+import re
 import asyncio
 import random
 import time
@@ -21,6 +22,19 @@ import googleapiclient.errors
 from modules.communication.livechat.src.automation_gates import stop_active, stop_file_path
 
 logger = logging.getLogger(__name__)
+
+_UNICODE_TAG_RE = re.compile(r"\[U\+([0-9A-Fa-f]{4,6})\]")
+
+def _convert_unicode_tags_to_emoji(text: str) -> str:
+    """Convert [U+XXXX] tags to actual emoji characters."""
+    if not text:
+        return text
+    def _replace(match: re.Match) -> str:
+        try:
+            return chr(int(match.group(1), 16))
+        except Exception:
+            return match.group(0)
+    return _UNICODE_TAG_RE.sub(_replace, text)
 
 def _env_truthy(name: str, default: str = "false") -> bool:
     return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
@@ -150,9 +164,7 @@ class ChatSender:
 
                 # CRITICAL FIX: Convert Unicode tags to emoji before YouTube send
                 # YouTube API doesn't render [U+XXXX] tags - need actual emoji characters
-                from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
-                banter = get_banter_engine(emoji_enabled=True)
-                message_text = banter._convert_unicode_tags_to_emoji(message_text)
+                message_text = _convert_unicode_tags_to_emoji(message_text)
                 logger.debug(
                     f"[EMOJI] After conversion: {message_text.encode('ascii', 'backslashreplace').decode('ascii')}"
                 )
@@ -228,7 +240,7 @@ class ChatSender:
         logger.info("[U+1F44B] Sending greeting message to chat")
         
         if not greeting_message:
-            greeting_message = "FoundUps Agent reporting in! [BOT]"
+            greeting_message = "FoundUps online. Share your goal and we will map the path."
         
         success = await self.send_message(greeting_message)
         

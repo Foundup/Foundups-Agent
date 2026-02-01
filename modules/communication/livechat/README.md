@@ -44,6 +44,35 @@ All commands go through `intelligent_throttle_manager.py`:
 - **Consciousness**: Highest cost, maximum throttling
 - **YouTube API**: 5 units per poll, 200 units per send (10K daily quota)
 
+### Log Throttle Controls (Spam Prevention)
+To prevent log spam during long-running rotations, LiveChat applies a rate limiter for repeated INFO lines:
+- `LIVECHAT_LOG_THROTTLE_SEC` (default `10`): minimum seconds between identical INFO logs
+- Warnings and errors are never throttled
+
+### Chat Spam Controls (Greeting + Account Safety)
+To prevent repeated greetings and posting from the wrong account:
+- `LIVECHAT_GREETING_COOLDOWN_MIN` (default `60`): cooldown window per channel before another greeting can be sent
+- `YT_BLOCK_GREETING_ON_ACCOUNT_MISMATCH` (default `true`): skip greeting if bot channel ID does not match stream channel ID
+- `YT_BLOCK_MESSAGES_ON_ACCOUNT_MISMATCH` (default `true`): block all chat sends on account mismatch
+
+### Engagement Controls (Mods-Only + Troll-Trolls)
+To keep chat engagement focused and avoid spam:
+- `YT_LIVECHAT_ENGAGE_MODS_ONLY` (default `true`): only engage moderators/owner
+- `YT_LIVECHAT_TROLL_TROLLS` (default `true`): allow MAGA/troll replies even when mods-only
+- `YT_CONSCIOUSNESS_MODE` (default `mod_only`): limit ✊✋🖐 responses to mods/owner
+- Consciousness trigger aliases: `👊` is treated as `✊`
+
+### Banter Engine Controls (Digital Twin First)
+To enforce Digital Twin-only replies and disable banter fallback:
+- `LIVECHAT_BANTER_ENABLED` (default `false`): enable banter engine fallback when true
+
+### Persona Skillz (WSP 77)
+Each persona has a dedicated Skillz profile for consistency and memory anchoring:
+- `skillz/persona_foundups.json` (architecture + WSP vision focus)
+- `skillz/persona_undaodu.json` (012 digital twin clarity)
+- `skillz/persona_ravingantifa.json` (anti-fascism + music)
+- `skillz/persona_move2japan.json` (relocation guidance)
+
 ## Scripts
 
 ### `capture_stream_logs.py`
@@ -78,6 +107,18 @@ YouTube_Live DAE now has complete cardiovascular monitoring system:
 
 See [Skills.md](Skills.md) for complete domain expertise, learned patterns, and chain-of-thought examples.
 
+### Chat Memory (History-Only)
+Live chat history is captured per stream session without extra metadata:
+- Full transcript: `modules/communication/livechat/memory/conversation/<session>/full_transcript.txt`
+- Mod/owner transcript: `modules/communication/livechat/memory/conversation/<session>/mod_messages.txt`
+
+### Troll Classification (History-Based)
+Non-mod users can be classified from chat history:
+- `ChatMemoryManager.classify_user()` uses recent history to flag trolls (keywords, caps, repeats, links)
+- `YT_LIVECHAT_TROLL_TROLLS=true` allows engagement when classified as troll
+- `YT_CONTEXTUAL_FOLLOWUP_ENABLED` (default `true`) appends a follow-up question from prior chat
+- `YT_TROLL_TRACK_BY_TIMEOUTS` (default `true`) marks users as trolls if they were whacked (timeout events)
+
 ### Core Components (29 modules in src/)
 | Module | Lines | Purpose |
 |--------|-------|---------|
@@ -105,6 +146,15 @@ See [Skills.md](Skills.md) for complete domain expertise, learned patterns, and 
 | **stream_trigger.py** | 211 | Manual wake trigger system |
 | **throttle_manager.py** | 98 | Basic adaptive rate limiting |
 
+### Digital Twin Integration (Live Chat)
+
+Live chat responses route through the 012 Digital Twin:
+- **Primary**: `modules/ai_intelligence/digital_twin` drafting + decisioning
+- **Fallback**: `ai_intelligence/banter_engine` (only when Digital Twin is unavailable)
+- **Index signal**: Live chat indexing classifies content for routing:
+  - 012 voice → Digital Twin responses
+  - music/video tracks → RavingANTIFA or faceless-video pipeline (module in development)
+
 ### Cross-Domain Integration
 | Domain | Module | Integration |
 |--------|--------|-------------|
@@ -113,7 +163,8 @@ See [Skills.md](Skills.md) for complete domain expertise, learned patterns, and 
 | **gamification** | whack.py | XP/rank/frag system |
 | **gamification** | timeout_announcer.py | Duke/Quake announcements |
 | **gamification** | self_improvement.py | ML pattern learning |
-| **ai_intelligence** | banter_engine | AI conversation generation |
+| **ai_intelligence** | digital_twin | Primary response engine (012 voice) |
+| **ai_intelligence** | banter_engine | Fallback only (Digital Twin unavailable) |
 | **ai_intelligence** | agentic_sentiment_0102 | Consciousness detection |
 | **infrastructure** | recursive_engine | WSP 48 self-improvement |
 | **infrastructure** | system_health_analyzer | Duplicate detection |
