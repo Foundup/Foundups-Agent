@@ -16,6 +16,7 @@ Tests require a Chrome browser running in debug mode on port 9222.
 | `test_layer1_filter.py` | Apply unlisted filter |
 | `test_layer2_edit.py` | Open edit page, find visibility |
 | `test_layer3_schedule.py` | Visibility → Schedule → date/time → Done |
+| `test_layer4_schedule_audit.py` | Scan scheduled list, detect date/time conflicts |
 
 ## Quick Run
 
@@ -48,6 +49,13 @@ python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer
 ```bash
 # Full schedule flow (production-aligned DOM automation)
 python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer3_schedule --selenium
+```
+
+### Layer 4 Schedule Audit (Conflicts)
+
+```bash
+# Scan scheduled list and report duplicate date/time slots
+python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer4_schedule_audit --selenium
 ```
 
 ## Prerequisites

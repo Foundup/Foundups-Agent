@@ -1,5 +1,512 @@
 # YouTube Shorts Scheduler - ModLog
 
+## 2026-02-01 - Content Page Scheduler (Inline Popup + Calendar Audit)
+
+**WSP References**: WSP 22 (ModLog), WSP 49 (Module Structure), WSP 3 (Organization)
+
+### What
+New `ContentPageScheduler` class that schedules videos directly from the YouTube Studio Content table (video list view) instead of navigating to individual video edit pages.
+
+### Why
+1. **Faster**: No per-video page navigation — stays on content table, clicks inline visibility popup
+2. **Reschedule**: Can change dates on already-scheduled videos (calendar slot optimization)
+3. **Calendar Audit**: Reads scheduled dates from table, detects conflicts (same time slot) and clustering (>8/day)
+4. **Fallback**: When per-video `schedule_video()` fails (click_save timeout), falls back to Content Page approach
+
+### Files
+- **NEW**: `src/content_page_scheduler.py` (~580 lines) — ContentPageScheduler class, calendar audit, standalone entry point
+- **MODIFIED**: `scripts/launch.py` — CPS fallback on per-channel errors, CLI `--content-page` / `--audit` flags
+
+### CLI
+```bash
+python -m ...launch --content-page --browser edge --channel-key foundups --mode schedule
+python -m ...launch --audit --browser edge --channel-key move2japan
+```
+
+---
+
+## 2026-02-01 - Cooperative Stop Signal for Thread Safety
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action)
+
+### Problem
+`run_multi_channel_scheduler()` runs inside `asyncio.to_thread()`. When the DAE's `asyncio.wait_for()` timeout fires, the Python thread can't be interrupted — it keeps driving the browser, causing contention with the next cycle's comment engagement.
+
+### Fix
+- `scripts/launch.py`: Added `stop_event: threading.Event` parameter to `run_multi_channel_scheduler()`
+- Two cooperative check points in the channel loop:
+  1. Before each channel starts (aborts before account swap)
+  2. After each channel completes (aborts before next channel)
+- When `stop_event.is_set()`, scheduler logs `[STOP]` and breaks out of the channel loop
+- Origin URL restore still runs (after the loop, not inside it)
+- Backward compatible: `stop_event=None` (default) preserves existing behavior
+
+---
+
+## 2026-01-31 - Time Jitter Fix: Snap to :15 Intervals
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action)
+
+### Problem
+YouTube Studio only accepts schedule times on 15-minute boundaries (:00, :15, :30, :45). The `_add_time_jitter()` function used `random.randint(-20, +20)` producing arbitrary minutes like `:09`, `:47` which YouTube Studio rejected or rounded unpredictably.
+
+### Fix
+- `src/schedule_tracker.py`: Replaced minute-based jitter with **15-minute step jitter**
+  - `MAX_JITTER_STEPS = 2` (replaces `MAX_JITTER_MINUTES = 20`)
+  - Jitter now picks random steps in `[-2, +2]`, each step = 15 minutes
+  - From base "3:00 PM" can produce: 2:30, 2:45, 3:00, 3:15, 3:30 PM
+  - All outputs guaranteed on :00/:15/:30/:45 boundaries
+
+---
+
+## 2026-01-31 - Schedule Auditor + Slot Spread + Stale Video Recovery
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 80 (DAE Pattern)
+
+### Context
+Multiple issues discovered during production scheduling:
+- RavingANTIFA stuck at batch 112 (infinite loop on stale videos)
+- Tracker recorded false positives (DOM reported success, YouTube didn't schedule)
+- 3 slots/day too few for high-volume channels
+- No independent verification of scheduled state
+- PRIVATE videos not processable after UNLISTED exhausted
+
+### Changes
+
+**`src/schedule_tracker.py`**:
+- Added **global dedup guard** in `increment()`: prevents duplicate video IDs across dates
+- Added **`remove_video(video_id)`** method: purges false positives from tracker, decrements date count, cleans empty dates safely (dict mutation guard via `list(keys())`)
+- Fixed existing duplicate in Move2Japan tracker (`kYneETZCt0Y` on Jan 19)
+
+**`src/scheduler.py`**:
+- **Stale-video detection + auto-purge** (lines 445-492): When all videos in a batch are skipped as "already scheduled" but YouTube still shows them as unlisted:
+  1. First detection: Purges stale IDs from tracker via `remove_video()`, retries next batch
+  2. Second detection (same cycle): Breaks with clear error (prevents infinite loop)
+  - Safety: `_stale_purged` flag ensures only one purge per cycle
+- **Post-cycle audit integration** (opt-in via `YT_SCHEDULER_POST_AUDIT=true`):
+  - Imports `ScheduleAuditor`, runs audit after scheduling
+  - Reports false positives, time collisions, auto-healed count
+  - Auto-heal via `YT_SCHEDULER_AUDIT_AUTO_HEAL=true`
+
+**`src/schedule_auditor.py`** (NEW):
+- **Independent Layer 2 verification** — reads YouTube Studio SCHEDULED filter via DOM
+- `run_audit(auto_heal=False)`: Full audit comparing YouTube state vs tracker JSON
+  - Detects: false positives, missing from tracker, time collisions
+  - Optional auto-heal: purges false positives from tracker
+- `check_tracker_integrity()`: Offline check for count mismatches, duplicate IDs, past dates
+- `run_schedule_audit()`: Standalone entry point with browser connection
+- Scrapes scheduled video rows: video_id, title, date, time from visibility column
+
+**`src/channel_config.py`**:
+- **8 slots per day** (every 3 hours) replaces 3 slots/day:
+  - All channels: 12AM, 3AM, 6AM, 9AM, 12PM, 3PM, 6PM, 9PM
+  - `max_per_day` changed from 3 to 8
+- Move2Japan/UnDaoDu: Asia/Tokyo timezone
+- FoundUps/RavingANTIFA: America/New_York timezone
+
+**`src/dom_automation.py`**:
+- Added `"PRIVATE"` to supported visibility filter options
+- Updated docstrings for `navigate_to_shorts_with_fallback()` and `_apply_filter_via_dom()`
+
+### Architecture
+
+```
+Layer 1: SCHEDULING (existing)
+  scheduler.py -> schedule_tracker.py -> memory/*.json
+  Writes: schedules videos, tracks in JSON + DBA
+
+Layer 2: AUDITING (new)
+  schedule_auditor.py -> reads YouTube DOM + tracker JSON
+  Reads: compares actual vs tracked, detects discrepancies
+  Optional: auto-heals tracker (purge false positives)
+```
+
+### Production Data (as of 2026-01-31)
+- Move2Japan: 192 videos scheduled, Jan 28 -> Apr 2 (8 slots/day going forward)
+- UnDaoDu: 33 videos scheduled, Jan 30 -> Feb 9
+- RavingANTIFA: 4 videos scheduled, Jan 31 -> Feb 1 (2 false positives purged)
+
+### ADR-021: Stale Video Recovery Pattern
+- When tracker says "scheduled" but YouTube says "unlisted", the prior DOM action failed silently
+- `schedule_video()` returned True but YouTube didn't actually commit the schedule
+- Fix: Purge from tracker and retry ONCE per cycle, break on second failure
+- Future: Post-cycle auditor provides independent verification
+
+---
+
+## 2026-01-30 - Edge Filter Click Hardening (6-Step Retry)
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+### Problem
+Edge browser stuck in filter click loop — clicking filter but NOT clicking Visibility.
+Edge shadow-DOM takes 800-1500ms to render dropdowns vs Chrome's ~300ms.
+
+### Fix
+`src/dom_automation.py` — All 6 filter steps hardened with retry+verify:
+
+| Step | Action | Retries | Wait | Verification |
+|------|--------|---------|------|-------------|
+| 2 | Visibility click | 3 | 1.5s/2.5s/4.0s | Dropdown visible |
+| 3 | Dialog open | 3 | 2.0s/3.5s/5.0s | Force-open fallback |
+| 4 | Checkbox click | 3 | 1.0s/2.0s/3.0s | State changed |
+| 5 | Apply button | 3 | 1.0s/2.0s/3.0s | Dialog dismissed |
+| 6 | Chip verify | 3 | 1.0s/2.0s/3.0s | Chip text found |
+
+---
+
+## 2026-01-29 - Fluid Dual-Browser Architecture
+
+**WSP References**: WSP 22 (ModLog), WSP 72 (Module Independence)
+
+**Context**
+- Both Google accounts are now logged into BOTH browsers (Chrome & Edge)
+- This enables any browser to access any channel via account picker
+- Previous architecture locked channels to specific browsers unnecessarily
+
+**Changes**
+`src/channel_config.py`:
+- Added `CHROME_PORT = 9222`, `EDGE_PORT = 9223`, `ALL_PORTS` constants
+- Added `preferred_port` (optimization) and `available_ports` (fluid access) to each channel
+- Added `account_section` for account picker index mapping
+- Added helper functions:
+  - `is_port_available(port)`: Check if browser debug port is responding
+  - `get_available_browsers()`: Return list of running browser ports
+  - `select_browser_for_channel(channel_key, current_port)`: Smart browser selection
+
+**Browser Selection Strategy**:
+1. Reuse current browser if it can access the target channel (minimize switches)
+2. Use preferred_port if available
+3. Fall back to any available port
+
+**Account Picker Structure** (same on both browsers):
+```
+Section 0 (Google Account A): UnDaoDu, Move2Japan
+Section 1 (Google Account B): FoundUps, RavingANTIFA
+```
+
+**Result**
+- Chrome (9222) can access ALL 4 channels
+- Edge (9223) can access ALL 4 channels
+- System automatically selects best browser based on availability
+- Legacy `chrome_port` field preserved for backward compatibility
+
+---
+
+## 2026-01-29 - Infinite Loop Bug Fix (Slots Exhausted)
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem**
+- Scheduler stuck in infinite loop at BATCH 107
+- When scheduling slots were exhausted, `break` only exited inner `for` loop
+- Outer `while True` loop continued indefinitely, repeating same batch
+
+**Root Cause**
+- Line 320: `break` inside `if not slot:` only exits `for video in videos_to_process:`
+- The `while True:` loop has no check for "slots exhausted" condition
+- Result: Loop keeps navigating back and retrying with no slots available
+
+**Fix**
+`src/scheduler.py`:
+- Added `slots_exhausted = False` flag before inner for loop (line 282)
+- Set `slots_exhausted = True` when no slots available (line 321)
+- Added check after for loop (lines 431-435):
+  ```python
+  if slots_exhausted:
+      results["message"] = f"All scheduling slots filled after {batch_num} batches"
+      logger.info(f"[SCHEDULER] Slots exhausted - stopping continuous processing")
+      break
+  ```
+
+**Result**
+- Scheduler now exits cleanly when all scheduling slots are filled
+- Clear log message: "Slots exhausted - stopping continuous processing"
+- Results include meaningful message about batches processed
+
+---
+
+## 2026-01-28 - Sort by Oldest First Feature
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem**
+- After filtering for UNLISTED visibility, videos were processed in default order (newest first)
+- FIFO principle violated: oldest uploaded videos should be scheduled first
+
+**Solution**
+`src/dom_automation.py`:
+- Added `DATE_HEADER_SORT_CSS` and `DATE_HEADER_SORT_XPATH` selectors
+- Added `sort_by_date_oldest()` method that:
+  - Finds the Date column header sort button
+  - Checks current sort state (ascending/descending/none)
+  - Clicks to sort ascending (oldest first) if not already sorted
+- Integrated into `navigate_to_shorts_with_fallback()`:
+  - Called after filter is applied
+  - Called at all three return points (filter already applied, UI-TARS verified, fallback)
+
+**Flow After Fix**
+1. Navigate to shorts page
+2. Apply UNLISTED visibility filter
+3. **NEW**: Sort by date (oldest first)
+4. Get videos → now in oldest-first order
+5. Process videos sequentially
+
+**Result**
+- Oldest unlisted videos are now scheduled first (FIFO order)
+- Videos waiting the longest get priority
+
+---
+
+## 2026-01-28 - Index Weaving Silent Failure Fix + Enhanced Stubs
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 73 (Digital Twin)
+
+**Problem**
+- Index weaving was failing silently for unlisted videos
+- `YT_SCHEDULER_INDEX_MODE=gemini` was configured, but Gemini API CANNOT access unlisted videos
+- No fallback to stub mode when Gemini failed
+- No logging when indexing skipped
+- Stub indexes had empty `key_points` producing minimal description context
+- FFCPLN acronym order was incorrect ("F*** Fake" vs "Fake F***")
+
+**Root Cause**
+1. **Gemini API limitation**: Cannot analyze UNLISTED YouTube videos (requires public URL)
+2. **Silent failure**: When `ensure_index_json()` failed, no logging, no fallback
+3. **Minimal stub data**: Stub index had `key_points: []` - no description context
+
+**Fix**
+`src/scheduler.py`:
+- Added Gemini-to-stub fallback when Gemini fails
+- Added warning log when indexing fails: `[SCHEDULER] Gemini indexing failed ({error}), falling back to stub`
+- Added warning log when indexing skipped entirely
+
+`src/index_weave.py`:
+- Added `_extract_topics_from_title()` - extracts FFCPLN, MAGA, ICE, etc. from title
+- Added `_generate_key_point_from_title()` - creates meaningful key point from title
+- Enhanced `create_stub_index_json()` to populate `key_points` and `topics` from title
+- Stub now produces richer description context even without Gemini
+
+`src/content_generator.py`:
+- Fixed all 5 instances of FFCPLN acronym: "Fake F*** Christian Pedo-Lovin' Nazi"
+
+**Recommendation**
+For unlisted video scheduling, use `YT_SCHEDULER_INDEX_MODE=stub` (default).
+Only use `gemini` mode for PUBLIC videos or post-publish enrichment.
+
+**Result**
+- Indexing no longer fails silently - proper fallback and logging
+- Stub indexes now produce meaningful description context from title
+- FFCPLN acronym is correct throughout
+
+---
+
+## 2026-01-27 - Scheduler Loop Fix + UI-TARS Verification
+
+**WSP References**: WSP 22 (ModLog), WSP 84 (Reusable Patterns), WSP 91 (Observability)
+
+**Problem**
+- Scheduler only processing ONE video per run and exiting
+- After `_sync_scheduled_videos()`, browser was on SCHEDULED page, not UNLISTED
+- Loop continued with stale video list but wrong page context
+- No verification to check if shorts were actually listed before applying filter
+
+**Root Cause**
+The `_sync_scheduled_videos()` method navigates to SCHEDULED filter to sync existing schedule,
+but never navigated back to UNLISTED before the video processing loop started.
+
+**Fix**
+`src/scheduler.py`:
+- Added Step 3.5: Navigate back to UNLISTED after sync completes
+- Log message: "Returning to unlisted Shorts after sync..."
+- Scheduler now processes ALL unlisted videos in one run
+
+`src/dom_automation.py`:
+- Added `verify_shorts_listed(use_ui_tars=True)` method
+  - Quick DOM check for video rows and filter chips
+  - Optional UI-TARS visual verification if DOM check uncertain
+  - Returns dict with: shorts_visible, count, method, needs_filter, filter_applied
+- Integrated verification into `navigate_to_shorts_with_fallback()`
+- If shorts already visible with filter applied, skip redundant filter application
+
+**Result**
+- Scheduler now processes ALL unlisted videos in one run (not just 1)
+- UI-TARS can verify page state when DOM is uncertain
+- Faster navigation when filter already applied
+- Better observability of page state
+
+---
+
+## 2026-01-27 - Content-Aware Title Generation + Resume Capability
+
+**WSP References**: WSP 22 (ModLog), WSP 84 (Reusable Patterns), WSP 77 (AI Overseer)
+
+**Problem**
+- Title generation was purely template-based with no content awareness
+- FFCPLN titles incorrectly used "vs #MAGA" (FFCPLN describes MAGA, not versus)
+- No resume capability - system would reprocess already-scheduled videos on restart
+- No trending hashtag support for ICE resistance content
+
+**Fix**
+`src/schedule_tracker.py`:
+- Added `is_video_scheduled(video_id)` - checks if video already in tracker
+- Added `get_all_scheduled_video_ids()` - returns list of all scheduled IDs
+- Enables resume capability: skip videos that were already processed
+
+`src/scheduler.py`:
+- Integrated `is_video_scheduled()` check in video processing loop
+- Logs skipped videos with reason "Already scheduled"
+- System now picks up where it left off on restart
+
+`src/content_generator.py`:
+- Fixed FFCPLN title templates: removed "vs" (FFCPLN describes MAGA, not versus MAGA)
+- Added `detect_content_type(index_json)` - detects music/speech/news from index
+- Enhanced `extract_title_hint_from_index()` to extract from:
+  - Audio transcript summary (Priority 1)
+  - Key points metadata (Priority 2)
+  - Visual description (Priority 3)
+- Added content-type specific templates: `MUSIC_TITLE_TEMPLATES`, `NEWS_TITLE_TEMPLATES`, `SPEECH_TITLE_TEMPLATES`
+- Added `TRENDING_ICE_HASHTAGS` with #StopICE #ICEout #ResistICE etc.
+- Added `get_trending_ice_hashtags()` and `get_combined_hashtags()`
+- Updated `generate_clickbait_title_from_index()` to use content-aware templates
+
+**Result**
+- Resume capability: restart won't reprocess videos
+- Content-aware titles using actual video index data
+- Music vs speech vs news detection for appropriate templates
+- Trending ICE resistance hashtags available for descriptions
+- FFCPLN correctly describes MAGA (not versus)
+
+---
+
+## 2026-01-27 - Page Content Wait + Retry on Empty Page
+
+**WSP References**: WSP 22 (ModLog), WSP 84 (Reusable Patterns)
+
+**Problem**
+- Diagnostic screenshot revealed page loading with **empty content area** (no videos, no filter bar)
+- ChromeDriver crash during `wait_for_element(VIDEO_TABLE)` prevented page from fully rendering
+- DOM fallback filter can't work when page structure isn't loaded
+
+**Root Cause Analysis**
+Screenshot `diag_url_filter_failed_20260127_132846.png` showed:
+- Shorts tab selected ✓
+- Content area completely empty ✗
+- No filter bar visible ✗
+- No video table visible ✗
+
+**Fix**
+`src/dom_automation.py`:
+- Added `_wait_for_page_content(timeout)` - waits for video table OR filter bar OR chip bar
+- Added retry mechanism (3 attempts with page refresh) in `navigate_to_shorts_with_fallback()`
+- Uses JavaScript to check multiple indicators simultaneously (faster than individual element waits)
+
+**Page Ready Indicators**
+```javascript
+{
+  hasVideoTable: !!document.querySelector('ytcp-video-row'),
+  hasFilterBar: !!document.querySelector("input[placeholder='Filter']"),
+  hasChipBar: !!document.querySelector('ytcp-chip-bar'),
+  hasContentHeader: !!document.querySelector('.video-table-content, #video-list')
+}
+```
+
+**Result**
+- Page refresh on empty content (up to 3 retries)
+- Better diagnostic: "Page content ready: table=True, filter=True, chips=True"
+- Falls back to DOM filter only after confirming page structure loaded
+
+---
+
+## 2026-01-27 - Diagnostic Screenshot & UI-TARS Integration
+
+**WSP References**: WSP 22 (ModLog), WSP 91 (Observability), WSP 77 (AI Overseer)
+
+**Problem**
+- When Selenium/WebDriver errors occur, no visual context is captured
+- Difficult to diagnose what the browser UI looked like when failures happen
+- No way to leverage UI-TARS vision model for visual debugging
+
+**Fix**
+`src/dom_automation.py`:
+- Added `DIAGNOSTIC_DIR` for storing diagnostic screenshots
+- Added `capture_diagnostic_screenshot(context)` - saves screenshots on errors
+- Added `get_browser_state()` - captures URL, title, viewport info
+- Added `diagnose_failure(context, error)` - full diagnostic capture (screenshot + state)
+- Added `diagnose_with_ui_tars(question)` - async UI-TARS visual analysis
+- Integrated diagnostics into `navigate_to_shorts_with_fallback()` and `_apply_filter_via_dom()`
+
+**Usage**
+```python
+# Automatic - diagnostics captured on filter failures
+dom.navigate_to_shorts_with_fallback(channel_id, "UNLISTED")
+
+# Manual diagnostic
+diagnostic = dom.diagnose_failure("custom_context", error)
+print(f"Screenshot: {diagnostic['screenshot']}")
+
+# UI-TARS visual analysis
+result = await dom.diagnose_with_ui_tars("Is the visibility filter dropdown open?")
+```
+
+**Screenshot Location**
+`modules/platform_integration/youtube_shorts_scheduler/memory/diagnostics/`
+
+---
+
+## 2026-01-27 - WebDriver Health Check & Recovery (Symbols not available fix)
+
+**WSP References**: WSP 22 (ModLog), WSP 91 (Observability)
+
+**Problem**
+- Shorts Scheduler crashing with "Symbols not available. Dumping unresolved backtrace" errors
+- ChromeDriver native crashes during `wait_for_element()` and `execute_script()` operations
+- Basic health check (`current_url`) passed but element operations still failed
+
+**Fix**
+1. `src/dom_automation.py`:
+   - Enhanced `check_driver_health(thorough=True)` to test both URL access AND element finding
+   - Added thorough health check to `wait_for_element()` and `wait_for_clickable()`
+   - Catches stale WebDriver connections before expensive operations crash
+
+2. `src/scheduler.py`:
+   - Added `reconnect_browser(max_retries=3)` with exponential backoff
+   - Added `ensure_healthy_connection()` that auto-reconnects on health check failure
+   - Added health check at start of `run_scheduling_cycle()` and `run_indexing_cycle()`
+
+**Result**
+- Stale WebDriver connections detected early with clear error messages
+- Auto-reconnection attempts before failing hard
+- "Symbols not available" crashes should be caught and recovered from
+
+---
+
+## 2026-01-27 - Navigation Robustness Fix (WebDriverException Prevention)
+
+**WSP References**: WSP 22 (ModLog), WSP 84 (Reusable Patterns)
+
+**Problem**
+- `scheduler.py` used basic `navigate_to_shorts()` which crashes on filter rendering issues.
+- `launch.py` already used robust `navigate_to_shorts_with_fallback()` but scheduler did not.
+
+**Fix**
+- `src/scheduler.py`:
+  - `run_scheduling_cycle()`: Replaced `navigate_to_shorts()` with `navigate_to_shorts_with_fallback()` (line 179)
+  - `_sync_scheduled_videos()`: Same fix (line 333)
+  - Both now return gracefully on navigation failure instead of crashing
+
+**Result**
+- DAE no longer crashes with WebDriverException during navigation cycle
+- Consistent with `launch.py` approach (URL-first + DOM fallback)
+
+## 2026-01-21 - Digital Twin Index Utility Routing (Documented)
+
+
+**WSP References**: WSP 22 (ModLog), WSP 73 (Digital Twin), WSP 60 (Memory)
+
+**Changes Made**
+1. Documented index utility routing (012 voice → Digital Twin, music/video → RavingANTIFA/faceless pipeline).
+
 ## V0.1.0 - Initial Module Creation (2025-12-31)
 
 ### Created
@@ -195,6 +702,54 @@
 ### Fix
 - `scripts/launch.py`:
   - Close all extra tabs on connect and keep only the primary tab handle before starting automation.
+
+## V0.9.1 - Oops Page Recovery Layer (Account Switching) (2026-01-19)
+
+### Problem
+- When navigating to YouTube Studio for a channel, the browser may land on an "oops" error page if the wrong Google account is logged in.
+- This blocks all automation until manually fixed.
+- Chrome/Edge browser-channel mapping:
+  - **Chrome (9222)**: Move2Japan, UnDaoDu
+  - **Edge (9223)**: FoundUps, RavingANTIFA
+
+### Fix
+- `src/dom_automation.py`:
+  - Added **Oops Page selectors** to `DOMSelectors`:
+    - `OOPS_SWITCH_ACCOUNT` - Switch account link on oops page
+    - `CHANNEL_SWITCHER_AVATAR` - Avatar button
+    - `SWITCH_ACCOUNT_MENU_XPATH` - Switch account menu item
+    - `ACCOUNT_ITEM_BY_NAME_TEMPLATE` - Account selection by name
+  - Added **`CHANNEL_ACCOUNT_MAP`** mapping channel IDs to account names:
+    - `UC-LSSlOZwpGIRIYihaz8zCw` → Move2Japan
+    - `UCfHM9Fw9HD-NwiS0seD_oIA` → UnDaoDu
+    - `UCSNTUXjAgpd4sgWYP0xoJgw` → FoundUps
+    - `UCVSmg5aOhP4tnQ9KFUg97qA` → RavingANTIFA
+  - Added **`detect_oops_page()`** - Detects oops page via `#selectaccount-link`
+  - Added **`handle_oops_page(target_channel_id)`** - Automated recovery flow:
+    1. Click "Switch account" on oops page
+    2. Click avatar button on YouTube
+    3. Click "Switch account" in menu
+    4. Select target account from list
+    5. Navigate back to target channel
+  - Added **`navigate_with_oops_recovery(channel_id, url)`** - Wrapper with auto-recovery
+
+### Flow Diagram
+```
+Oops Page → Click "Switch account" → YouTube Page
+    ↓
+Click Avatar → Click "Switch account" Menu → Account List
+    ↓
+Select Account → Navigate to Target Channel → Verify (no oops)
+```
+
+### WSP Notes
+- WSP 50: Pre-action detection before proceeding with navigation
+- WSP 84: Reusable recovery pattern for all browser automation
+- WSP 22: This ModLog documents the recovery layer
+
+### Testing
+- Requires Chrome/Edge with debug port (9222/9223) active
+- Test via: Navigate to wrong-account channel, verify recovery
 
 ## V0.9.0 - Scheduler Control Plane (Content-Type Placeholder + Index Switches) (2026-01-18)
 
@@ -759,4 +1314,27 @@ python -m modules.platform_integration.youtube_shorts_scheduler.scripts.launch -
   - `_is_oops_page()` already battle-tested in comment engagement
   - `CHANNEL_FALLBACKS` provides bidirectional recovery
   - No duplicate code - import and reuse
-```
+
+## V0.9.3 - Occam's Razor Menu Simplification (2026-01-19)
+
+### Changed
+- **`show_shorts_scheduler_menu()`** simplified from 7 options to 2:
+  - **Before**: Schedule Next, Schedule All, Dry Run, Chrome rotation, Edge rotation, Indexing handoff, Videos placeholder
+  - **After**: 1. Schedule ALL Shorts (continuous), 0. Back
+  - Dev options accessible via CLI: `--browser chrome|edge`, `--dry-run`
+
+- **main.py handler** simplified:
+  - Option 1 now schedules ALL shorts (max_videos=9999)
+  - Removed handlers for options 2-7
+  - CLI reference preserved in comments for developers
+
+### Architecture Decision
+- **ADR-020**: Occam's Razor for 012-Facing Menus
+  - User said: "too many options... apply occums"
+  - Primary action should be ONE button that "just works"
+  - Dev/debug options remain accessible via CLI, not cluttering menu
+  - Pattern: Indexing and Scheduling now both have single primary action
+
+### WSP Compliance
+- WSP 50: Pre-action verification (menu shows current channel)
+- WSP 22: This ModLog documents the change

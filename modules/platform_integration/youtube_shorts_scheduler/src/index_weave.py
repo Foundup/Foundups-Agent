@@ -158,6 +158,73 @@ class EnsureIndexResult:
     error: Optional[str] = None
 
 
+def _extract_topics_from_title(title: str) -> List[str]:
+    """Extract meaningful topics from video title using keyword detection."""
+    if not title:
+        return ["FFCPLN", "Music"]
+
+    title_lower = title.lower()
+    detected: List[str] = []
+
+    # Topic keyword mappings (keyword -> topic)
+    topic_keywords = {
+        "ffcpln": "FFCPLN",
+        "maga": "MAGA",
+        "ice": "ICE",
+        "trump": "Trump",
+        "fascist": "Anti-Fascism",
+        "antifa": "Anti-Fascism",
+        "resist": "Resistance",
+        "music": "Music",
+        "song": "Music",
+        "anthem": "Music",
+        "epstein": "Epstein",
+        "pedo": "Accountability",
+        "nazi": "Anti-Fascism",
+        "christian": "Christian Nationalism",
+        "immigrant": "Immigration",
+        "deport": "Immigration",
+        "protest": "Protest",
+        "raid": "ICE Raids",
+    }
+
+    for keyword, topic in topic_keywords.items():
+        if keyword in title_lower and topic not in detected:
+            detected.append(topic)
+
+    # Ensure we have at least the defaults
+    if not detected:
+        detected = ["FFCPLN", "Music"]
+    elif "FFCPLN" not in detected:
+        detected.insert(0, "FFCPLN")
+
+    return detected[:5]  # Max 5 topics
+
+
+def _generate_key_point_from_title(title: str) -> List[str]:
+    """Generate a key point from the title for description context."""
+    if not title or len(title.strip()) < 10:
+        return []
+
+    clean_title = title.strip()
+    # Remove common emoji prefixes/suffixes
+    for emoji in ["🔥", "❌", "💀", "🚨", "⚠️", "👀", "🎵", "🎶"]:
+        clean_title = clean_title.replace(emoji, "").strip()
+
+    # Generate a key point based on title content
+    title_lower = clean_title.lower()
+    if "ffcpln" in title_lower:
+        return [f"Part of the FFCPLN collection: {clean_title[:60]}"]
+    elif "maga" in title_lower:
+        return [f"Exposing MAGA hypocrisy: {clean_title[:60]}"]
+    elif "ice" in title_lower:
+        return [f"Documenting ICE cruelty: {clean_title[:60]}"]
+    elif clean_title:
+        return [f"Featured content: {clean_title[:60]}"]
+
+    return []
+
+
 def create_stub_index_json(
     *,
     channel_key: str,
@@ -173,9 +240,16 @@ def create_stub_index_json(
     This is intentionally minimal and deterministic (no network calls). It enables:
     - description enhancement during scheduling
     - later enrichment by full indexers (Gemini/Whisper/browser) without losing linkage
+
+    Enhanced to extract topics and key points from title for better description context.
     """
     cats = categories[:] if categories else ["FFCPLN", "Music", "Shorts"]
-    tops = topics[:] if topics else ["FFCPLN", "Music"]
+
+    # Extract topics from title for richer metadata
+    tops = topics[:] if topics else _extract_topics_from_title(title)
+
+    # Generate key point from title for description context
+    key_points = _generate_key_point_from_title(title)
 
     summary = "FFCPLN music short (index stub; enrich later)."
     if isinstance(title, str) and title.strip():
@@ -198,7 +272,7 @@ def create_stub_index_json(
             "duration": "",
             "topics": tops,
             "speakers": [],
-            "key_points": [],
+            "key_points": key_points,
             "summary": summary,
             "base_description_template": (base_description or "")[:500],
         },

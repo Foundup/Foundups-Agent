@@ -6,6 +6,7 @@ Persistent state management for tracking scheduled videos per date.
 
 import json
 import logging
+import random
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from datetime import datetime, timedelta
@@ -14,6 +15,50 @@ logger = logging.getLogger(__name__)
 
 # Default storage location
 TRACKER_DIR = Path(__file__).parent.parent / "memory"
+
+# Time jitter: max number of 15-minute steps to shift from base time
+# e.g. MAX_JITTER_STEPS=2 means ±30 min (±2 steps x 15 min)
+MAX_JITTER_STEPS = 2
+
+
+def _add_time_jitter(base_time: str, max_steps: int = MAX_JITTER_STEPS) -> str:
+    """
+    Add random jitter to a base time slot, snapped to :15 intervals.
+
+    YouTube Studio only accepts times on 15-minute boundaries (:00, :15, :30, :45).
+    This function shifts the base time by a random number of 15-minute steps.
+
+    Example: base "3:00 PM" with max_steps=2 can produce:
+      2:30 PM, 2:45 PM, 3:00 PM, 3:15 PM, or 3:30 PM
+
+    Args:
+        base_time: Time string like "5:00 AM", "11:00 AM", "5:00 PM"
+        max_steps: Max 15-minute steps in either direction (default 2 = ±30 min)
+
+    Returns:
+        Jittered time string snapped to :15, e.g. "5:15 AM", "2:45 PM"
+    """
+    try:
+        # Parse base time
+        parsed = datetime.strptime(base_time.strip(), "%I:%M %p")
+
+        # Pick a random number of 15-minute steps
+        jitter_steps = random.randint(-max_steps, max_steps)
+        jitter_minutes = jitter_steps * 15
+        jittered = parsed + timedelta(minutes=jitter_minutes)
+
+        # Format back — strip leading zero from hour for natural look
+        # e.g. "5:15 AM" not "05:15 AM"
+        hour = jittered.hour % 12 or 12
+        minute = jittered.minute
+        period = "AM" if jittered.hour < 12 else "PM"
+
+        result = f"{hour}:{minute:02d} {period}"
+        logger.info(f"[TRACKER] Time jitter: {base_time} -> {result} ({jitter_steps:+d} steps, {jitter_minutes:+d}min)")
+        return result
+    except (ValueError, TypeError) as e:
+        logger.warning(f"[TRACKER] Time jitter parse error for '{base_time}': {e}, using as-is")
+        return base_time
 
 
 class ScheduleTracker:
@@ -95,7 +140,22 @@ class ScheduleTracker:
             date_str: Date string like "Jan 5, 2026"
             video_id: Optional video ID to track
         """
-        self.schedule[date_str] = self.schedule.get(date_str, 0) + 1
+        # Global dedup: check if video was already scheduled on ANY date
+        if video_id and self.is_video_scheduled(video_id):
+            existing_date = next(
+                (d for d, ids in self.video_ids.items() if video_id in ids), "?"
+            )
+            logger.warning(
+                f"[TRACKER] Video {video_id} already scheduled on {existing_date} "
+                f"— incrementing count for {date_str} but NOT re-appending ID"
+            )
+            # Still increment count (DOM action happened) but don't duplicate the ID
+            self.schedule[date_str] = self.schedule.get(date_str, 0) + 1
+            self.save()
+            return
+
+        prev_count = self.schedule.get(date_str, 0)
+        self.schedule[date_str] = prev_count + 1
 
         if video_id:
             if date_str not in self.video_ids:
@@ -103,6 +163,11 @@ class ScheduleTracker:
             self.video_ids[date_str].append(video_id)
 
         self.save()
+        total = sum(self.schedule.values())
+        logger.info(
+            f"[TRACKER] Recorded: {video_id or '?'} on {date_str} "
+            f"(day {prev_count + 1}/{self.schedule[date_str]}, total={total})"
+        )
 
     def set_count(self, date_str: str, count: int):
         """
@@ -149,13 +214,18 @@ class ScheduleTracker:
             count = self.get_count(date_str)
 
             if count < max_per_day:
-                # Determine which time slot
-                time_slot = time_slots[count] if count < len(time_slots) else time_slots[-1]
+                # Determine base time slot, then add jitter for human-like variance
+                base_time = time_slots[count] if count < len(time_slots) else time_slots[-1]
+                time_slot = _add_time_jitter(base_time)
+                slot_label = f"slot {count + 1}/{max_per_day}"
+                logger.info(
+                    f"[TRACKER] Allocated: {date_str} at {time_slot} ({slot_label}, base={base_time})"
+                )
                 return (date_str, time_slot)
 
             current += timedelta(days=1)
 
-        logger.warning("[TRACKER] All slots filled in date range")
+        logger.warning("[TRACKER] All slots filled in 60-day window — no available slots")
         return None
 
     def get_summary(self) -> Dict:
@@ -163,17 +233,123 @@ class ScheduleTracker:
         Get summary statistics.
 
         Returns:
-            Dict with total_scheduled, dates_with_videos, available_slots
+            Dict with total_scheduled, dates_with_videos, full_days, partial_days,
+            date_range, and the raw schedule.
         """
         total = sum(self.schedule.values())
-        dates_with_videos = len([d for d, c in self.schedule.items() if c > 0])
+        dates_with_videos = {d: c for d, c in self.schedule.items() if c > 0}
+        full_days = sum(1 for c in dates_with_videos.values() if c >= 3)
+        partial_days = sum(1 for c in dates_with_videos.values() if 0 < c < 3)
+
+        # Date range
+        sorted_dates = sorted(dates_with_videos.keys(), key=lambda d: self._parse_date(d))
+        first_date = sorted_dates[0] if sorted_dates else None
+        last_date = sorted_dates[-1] if sorted_dates else None
 
         return {
             "channel_id": self.channel_id,
             "total_scheduled": total,
-            "dates_with_videos": dates_with_videos,
+            "dates_with_videos": len(dates_with_videos),
+            "full_days": full_days,
+            "partial_days": partial_days,
+            "first_date": first_date,
+            "last_date": last_date,
             "schedule": self.schedule,
         }
+
+    @staticmethod
+    def _parse_date(date_str: str) -> datetime:
+        """Parse 'Jan 5, 2026' format to datetime for sorting."""
+        try:
+            return datetime.strptime(date_str, "%b %d, %Y")
+        except ValueError:
+            # Handle single-digit days without leading zero
+            try:
+                return datetime.strptime(date_str.replace("  ", " "), "%b %d, %Y")
+            except ValueError:
+                return datetime.min
+
+    def log_schedule_report(self):
+        """Log a human-readable schedule report."""
+        summary = self.get_summary()
+        total = summary["total_scheduled"]
+        full = summary["full_days"]
+        partial = summary["partial_days"]
+        first = summary["first_date"] or "n/a"
+        last = summary["last_date"] or "n/a"
+
+        logger.info(f"[TRACKER] ╔══ SCHEDULE REPORT: {self.channel_id[:12]}... ══╗")
+        logger.info(f"[TRACKER] ║ Total scheduled: {total:>4} videos")
+        logger.info(f"[TRACKER] ║ Full days (3/3): {full:>4} days")
+        logger.info(f"[TRACKER] ║ Partial days:    {partial:>4} days")
+        logger.info(f"[TRACKER] ║ Date range:      {first} → {last}")
+        logger.info(f"[TRACKER] ╚{'═' * 44}╝")
+
+    def is_video_scheduled(self, video_id: str) -> bool:
+        """
+        Check if a video has already been scheduled.
+
+        Enables resume capability - if system restarts, skip already-scheduled videos.
+
+        Args:
+            video_id: YouTube video ID to check
+
+        Returns:
+            True if video was already scheduled, False otherwise
+        """
+        for date_str, ids in self.video_ids.items():
+            if video_id in ids:
+                logger.debug(f"[TRACKER] Video {video_id} already scheduled on {date_str}")
+                return True
+        return False
+
+    def remove_video(self, video_id: str) -> bool:
+        """
+        Remove a video from the tracker (purge false positive).
+
+        Used when a video was recorded as scheduled but YouTube still shows it
+        as unlisted — meaning the scheduling action failed silently.
+
+        Decrements the date count and removes the video ID from that date's list.
+
+        Args:
+            video_id: YouTube video ID to remove
+
+        Returns:
+            True if video was found and removed, False if not found
+        """
+        for date_str in list(self.video_ids.keys()):
+            ids = self.video_ids[date_str]
+            if video_id in ids:
+                ids.remove(video_id)
+                # Decrement the count for that date
+                if date_str in self.schedule:
+                    self.schedule[date_str] = max(0, self.schedule[date_str] - 1)
+                    # Clean up empty dates
+                    if self.schedule[date_str] == 0:
+                        del self.schedule[date_str]
+                if not ids:
+                    del self.video_ids[date_str]
+                self.save()
+                logger.info(
+                    f"[TRACKER] Purged false-positive: {video_id} from {date_str} "
+                    f"(scheduling failed silently)"
+                )
+                return True
+        logger.debug(f"[TRACKER] Video {video_id} not found in tracker — nothing to purge")
+        return False
+
+    def get_all_scheduled_video_ids(self) -> List[str]:
+        """
+        Get all video IDs that have been scheduled.
+
+        Returns:
+            List of all scheduled video IDs across all dates
+        """
+        all_ids = []
+        for ids in self.video_ids.values():
+            all_ids.extend(ids)
+        return all_ids
 
     def sync_from_youtube(self, scheduled_videos: List[Dict]):
         """

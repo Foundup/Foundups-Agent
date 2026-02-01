@@ -80,7 +80,7 @@ DESCRIPTION_2026 = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playlist
 ✊ Climate action
 ✊ Immigrant rights vs ICE cruelty
 
-🎵 FULL PLAYLIST: https://ffc.ravingANTIFA.com
+🎵 FULL PLAYLIST: https://ravingANTIFA.com
 
 2026 is the most critical year for US democracy since 1776.
 250 years of freedom at stake. These songs are the soundtrack of resistance.
@@ -91,7 +91,7 @@ DESCRIPTION_2026 = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playlist
 
 DESCRIPTION_SHORT = """🔥 From the FFCPLN Playlist - 160+ songs fighting fascism!
 
-🎵 Get the full playlist: https://ffc.ravingANTIFA.com
+🎵 Get the full playlist: https://ravingANTIFA.com
 
 #FFCPLN #MAGA #ICE #Resistance #Shorts #Viral"""
 
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     # Test case: Japan Home cleaning video
     context = SkillContext(
         original_title="Japan Home cleaning… hates this time of year! Japanese wife goes insane",
-        original_description="Fake Fcuk Christian Pedo-lovin Nazi playlist: https://ffc.ravingANTIFA.com",
+        original_description="Fake Fcuk Christian Pedo-lovin Nazi playlist: https://ravingANTIFA.com",
         video_duration=50,
         emotional_priority="outrage"
     )

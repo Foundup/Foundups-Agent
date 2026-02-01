@@ -33,6 +33,74 @@ BROWSER_PORTS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Scheduling pre-check cache
+# Remembers whether a channel had unlisted videos on the previous cycle.
+# If the last cycle found ZERO unlisted videos (not just "all already
+# scheduled" — truly empty), skip the channel for a cooldown period to
+# avoid a wasteful 30s account-swap + navigate + filter round-trip.
+# ---------------------------------------------------------------------------
+import json
+import os
+import time as _time
+from pathlib import Path
+
+_SCHEDULE_CACHE_PATH = Path(__file__).resolve().parent.parent / "memory" / "channel_schedule_cache.json"
+_SKIP_COOLDOWN_SECONDS = int(os.getenv("YT_SCHEDULE_SKIP_COOLDOWN", "1800"))  # 30 min default
+
+
+def _load_schedule_cache() -> dict:
+    """Load the per-channel scheduling cache."""
+    try:
+        if _SCHEDULE_CACHE_PATH.exists():
+            return json.loads(_SCHEDULE_CACHE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def _save_schedule_cache(cache: dict) -> None:
+    """Persist the per-channel scheduling cache."""
+    try:
+        _SCHEDULE_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _SCHEDULE_CACHE_PATH.write_text(
+            json.dumps(cache, indent=2), encoding="utf-8"
+        )
+    except Exception as e:
+        print(f"[CACHE] Warning: could not save schedule cache: {e}")
+
+
+def _should_skip_channel(channel_key: str, cache: dict) -> bool:
+    """
+    Return True if this channel had 0 unlisted videos on the last cycle
+    AND the cooldown hasn't expired yet.
+
+    Channels that had videos (even if all were already-scheduled "skips")
+    are NEVER skipped — new uploads could appear at any time.
+    """
+    entry = cache.get(channel_key)
+    if not entry:
+        return False  # Never checked → must process
+
+    last_unlisted = entry.get("last_unlisted_count", -1)
+    last_ts = entry.get("last_checked_ts", 0)
+    elapsed = _time.time() - last_ts
+
+    if last_unlisted == 0 and elapsed < _SKIP_COOLDOWN_SECONDS:
+        return True  # Empty channel, still within cooldown
+    return False
+
+
+def _record_channel_result(channel_key: str, cache: dict, unlisted_count: int, skipped_count: int) -> None:
+    """Record this cycle's result for future pre-checks."""
+    cache[channel_key] = {
+        "last_unlisted_count": unlisted_count,
+        "last_skipped_count": skipped_count,
+        "last_checked_ts": _time.time(),
+        "last_checked": __import__("datetime").datetime.now().isoformat(),
+    }
+
+
 def run_shorts_scheduler(
     mode: str = "enhance",
     channel_id: Optional[str] = None,
@@ -306,41 +374,26 @@ def show_shorts_scheduler_menu() -> str:
     """
     Display the scheduler submenu and return choice.
 
-    Occam menu design (0102-first):
-    - Numeric-only choices (avoid letter-coded "dev" affordances in the 012 path).
-    - Expose only stable production actions.
-    - Keep tests in `tests/` and in the CLI, not in the 012-facing menu surface.
-    - “Videos” remains a placeholder until DOM selectors are implemented (next layer).
+    Occam menu design (0102-first) - SIMPLIFIED 2026-01-19:
+    - ONE primary action: Schedule ALL shorts continuously
+    - Dev options accessible via CLI or env vars
     """
     import os
 
-    content_type = os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts"
     channel_key = os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan"
 
-    print("\n[MENU] YouTube Scheduler (PoC: Shorts)")
+    print("\n[MENU] YouTube Shorts Scheduler")
     print("=" * 60)
-    print(f"Mode: content_type={content_type} | channel={channel_key}")
-    print("Controls: main.py → YouTube Controls → Scheduler Controls")
-
-    print("\n== SHORTS (PRODUCTION) ==")
-    print("1. Schedule NEXT unlisted Short (full cake)")
-    print("2. Schedule ALL unlisted Shorts (until empty; safety stops on no slots)")
-    print("3. DRY RUN: Preview NEXT Short (no save)")
-
-    print("\n== MULTI-CHANNEL (BROWSER-GROUPED) ==")
-    print("4. Chrome rotation (Move2Japan ↔ UnDaoDu)")
-    print("5. Edge rotation (FoundUps ↔ RavingANTIFA)")
-
-    print("\n== INDEXING ==")
-    print("6. Index ALL videos (handoff → YouTube DAEs menu → [INDEX])")
-
-    print("\n== FULL VIDEOS (FUTURE LAYER) ==")
-    print("7. Schedule NEXT unlisted Video [placeholder]")
-
-    print("\n0. Back")
+    print(f"Channel: {channel_key} (set YT_SHORTS_SCHEDULER_CHANNEL_KEY to change)")
+    print("Schedules ALL unlisted shorts until complete (like comment engagement)")
     print("=" * 60)
+    print("1. Schedule ALL Shorts (continuous until complete)")
+    print("0. Back")
+    print("=" * 60)
+    print("[DEV] CLI: python -m modules.platform_integration.youtube_shorts_scheduler.scripts.launch --help")
+    print("[DEV] Multi-channel: --browser chrome|edge")
 
-    return input("\nSelect option: ").strip()
+    return input("\nSelect: ").strip()
 
 
 def run_selenium_test(test_name: str) -> bool:
@@ -375,7 +428,7 @@ def run_selenium_test(test_name: str) -> bool:
     # If running the production-aligned full cake, allow channel/max overrides.
     if test_name == "full_chain":
         channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
-        max_videos = (os.getenv("YT_SHORTS_SCHEDULER_MAX_VIDEOS", "1").strip() or "1")
+        max_videos = (os.getenv("YT_SHORTS_SCHEDULER_MAX_VIDEOS", "0").strip() or "0")  # 0 = unlimited (2026-01-28)
         cmd.extend(["--channel", channel_key, "--max", max_videos])
     
     try:
@@ -397,6 +450,7 @@ def run_multi_channel_scheduler(
     mode: str = "schedule",
     max_per_channel: int = 9999,  # Run until complete
     dry_run: bool = False,
+    stop_event: "threading.Event | None" = None,
 ) -> dict:
     """
     Run scheduler across multiple channels in a single browser session.
@@ -430,11 +484,12 @@ def run_multi_channel_scheduler(
     # Import DAE vitals for health monitoring
     from modules.platform_integration.youtube_shorts_scheduler.src.dae_vitals import (
         DAEVitals,
-        reset_dae_vitals,
     )
-    
-    # Initialize fresh vitals for this run
-    vitals = reset_dae_vitals()
+
+    # Initialize fresh LOCAL vitals for this run (thread-safe: no global singleton)
+    # NOTE: When Chrome + Edge run in parallel via asyncio.gather(), each thread
+    # gets its own DAEVitals instance through this local variable.
+    vitals = DAEVitals()
 
     browser = browser.lower()
     if browser not in BROWSER_CHANNELS:
@@ -487,23 +542,60 @@ def run_multi_channel_scheduler(
 
     results = {"browser": browser, "channels": {}}
 
+    # 2026-01-30: Load schedule cache for pre-check (skip empty channels)
+    schedule_cache = _load_schedule_cache()
+
+    # 2026-01-30: Track origin URL so we can restore the browser after scheduling.
+    # Without this, the browser stays on the LAST channel processed, leaving the
+    # comment engagement loop on the wrong channel.
+    origin_url = None
+    try:
+        origin_url = driver.current_url
+        print(f"[ORIGIN] Browser origin: {origin_url[:80]}...")
+    except Exception:
+        pass
+
+    # Channel key → display name mapping (used in multiple places)
+    _DISPLAY_NAMES = {
+        "move2japan": "Move2Japan",
+        "undaodu": "UnDaoDu",
+        "foundups": "FoundUps",
+        "ravingantifa": "RavingANTIFA",
+    }
+
     # Process each channel with rotation
     for i, channel_key in enumerate(channels):
+        # 2026-02-01: STOP SIGNAL — if caller set stop_event, abort gracefully.
+        # This prevents thread leak: when Phase 3 timeout fires in the DAE loop,
+        # it sets stop_event so this thread stops touching the browser.
+        if stop_event is not None and stop_event.is_set():
+            print(f"[STOP] ⛔ Stop signal received — aborting before {channel_key}")
+            results["aborted_by_stop_signal"] = True
+            break
+
         print(f"\n[CHANNEL {i+1}/{len(channels)}] Processing {channel_key.upper()}")
         print("-" * 40)
+
+        # 2026-01-30: PRE-CHECK — skip channels that had 0 unlisted videos recently.
+        # Avoids a 30s account-swap + navigate + filter round-trip for nothing.
+        if _should_skip_channel(channel_key, schedule_cache):
+            cache_entry = schedule_cache.get(channel_key, {})
+            mins_ago = (_time.time() - cache_entry.get("last_checked_ts", 0)) / 60
+            cooldown_mins = _SKIP_COOLDOWN_SECONDS / 60
+            print(f"[SKIP] {channel_key} had 0 unlisted videos {mins_ago:.0f}m ago (cooldown: {cooldown_mins:.0f}m)")
+            results["channels"][channel_key] = {
+                "total_scheduled": 0, "total_errors": 0, "total_skipped": 0,
+                "skipped_reason": "no_unlisted_recent", "cycle_seconds": 0,
+            }
+            vitals.record_channel(processed=True)
+            continue
 
         # Switch account if not first channel
         if i > 0:
             print(f"[SWITCH] Switching to {channel_key}...")
             try:
                 swapper = TarsAccountSwapper(driver)
-                # Map channel_key to swapper target name
-                target_name = {
-                    "move2japan": "Move2Japan",
-                    "undaodu": "UnDaoDu",
-                    "foundups": "FoundUps",
-                    "ravingantifa": "RavingANTIFA",
-                }.get(channel_key, channel_key)
+                target_name = _DISPLAY_NAMES.get(channel_key, channel_key)
 
                 switch_ok = asyncio.run(swapper.swap_to(target_name, navigate_to_comments=False))
                 if not switch_ok:
@@ -527,13 +619,7 @@ def run_multi_channel_scheduler(
                 vitals.record_oops()  # Track oops event
                 
                 # Try fallback channel (bidirectional)
-                target_name = {
-                    "move2japan": "Move2Japan",
-                    "undaodu": "UnDaoDu",
-                    "foundups": "FoundUps",
-                    "ravingantifa": "RavingANTIFA",
-                }.get(channel_key, channel_key)
-                
+                target_name = _DISPLAY_NAMES.get(channel_key, channel_key)
                 fallback_channel = CHANNEL_FALLBACKS.get(target_name)
                 if fallback_channel:
                     print(f"[FALLBACK] Trying {fallback_channel}...")
@@ -573,6 +659,12 @@ def run_multi_channel_scheduler(
             print(f"[OK] {channel_key}: Scheduled {scheduled}, Errors {errors}")
             print(vitals.to_dashboard())  # Show updated vitals
             vitals.emit_to_telemetry(phase=f"channel_{channel_key}")  # Store for 012 review
+
+            # 2026-01-30: Record result for pre-check cache.
+            # "unlisted_found" = total videos the scheduler saw (scheduled + skipped + errors).
+            # If 0, the channel had no unlisted content at all → skip next cycle.
+            unlisted_found = scheduled + errors + len(channel_results.get("skipped", []))
+            _record_channel_result(channel_key, schedule_cache, unlisted_found, len(channel_results.get("skipped", [])))
             
             # AUTO-STOP: Check for critical vitals
             alert = vitals.check_and_alert()
@@ -583,11 +675,70 @@ def run_multi_channel_scheduler(
                 results["vitals"] = vitals.to_dict()
                 break
 
+            # 2026-02-01: Check stop signal after each channel too
+            if stop_event is not None and stop_event.is_set():
+                print(f"[STOP] ⛔ Stop signal received after {channel_key} — stopping rotation")
+                results["aborted_by_stop_signal"] = True
+                break
+
         except Exception as e:
             print(f"[ERROR] {channel_key} failed: {e}")
             vitals.record_op(success=False)
             vitals.record_channel(processed=False)
             results["channels"][channel_key] = {"error": str(e)}
+
+            # 2026-02-01: CONTENT PAGE FALLBACK — if per-video scheduling fails,
+            # try the Content Page Scheduler (inline popup from video list table).
+            cps_enabled = os.getenv("YT_CPS_FALLBACK_ENABLED", "true").lower() in ("1", "true", "yes")
+            if cps_enabled and not dry_run:
+                print(f"[FALLBACK] Trying Content Page Scheduler for {channel_key}...")
+                try:
+                    from modules.platform_integration.youtube_shorts_scheduler.src.content_page_scheduler import ContentPageScheduler
+                    from modules.platform_integration.youtube_shorts_scheduler.src.schedule_tracker import ScheduleTracker
+
+                    cps = ContentPageScheduler(driver)
+                    if cps.navigate_to_content(channel_key, visibility="UNLISTED"):
+                        cps_tracker = ScheduleTracker(channel_key)
+                        cps_config = None
+                        try:
+                            from modules.platform_integration.youtube_shorts_scheduler.src.channel_config import get_channel_config
+                            cps_config = get_channel_config(channel_key)
+                        except Exception:
+                            pass
+
+                        cps_time_slots = (cps_config or {}).get("time_slots", [
+                            "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
+                            "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
+                        ])
+                        cps_max = min(max_per_channel, 5)  # Conservative fallback limit
+
+                        cps_results = asyncio.run(
+                            cps.schedule_all_visible(
+                                tracker=cps_tracker,
+                                time_slots=cps_time_slots,
+                                max_per_day=8,
+                                max_videos=cps_max,
+                                stop_event=stop_event,
+                            )
+                        )
+
+                        cps_scheduled = cps_results.get("total_scheduled", 0)
+                        cps_errors = cps_results.get("total_errors", 0)
+                        print(f"[FALLBACK] CPS result: {cps_scheduled} scheduled, {cps_errors} errors")
+
+                        # Merge CPS results
+                        if cps_scheduled > 0:
+                            results["channels"][channel_key] = cps_results
+                            results["channels"][channel_key]["method"] = "content_page_fallback"
+                            for _ in range(cps_scheduled):
+                                vitals.record_op(success=True)
+                            vitals.record_channel(processed=True)
+                    else:
+                        print(f"[FALLBACK] CPS navigation failed for {channel_key}")
+                except ImportError as cps_ie:
+                    print(f"[FALLBACK] CPS not available: {cps_ie}")
+                except Exception as cps_err:
+                    print(f"[FALLBACK] CPS failed: {cps_err}")
 
     # Summary
     print("\n" + "=" * 60)
@@ -595,15 +746,52 @@ def run_multi_channel_scheduler(
     print("=" * 60)
     total_scheduled = 0
     total_errors = 0
+    total_skipped = 0
+    total_seconds = 0.0
     for ch, res in results["channels"].items():
         scheduled = res.get("total_scheduled", 0)
         errors = res.get("total_errors", 0)
+        skipped = res.get("total_skipped", 0)
+        secs = res.get("cycle_seconds", 0)
         total_scheduled += scheduled
         total_errors += errors
-        print(f"  {ch}: {scheduled} scheduled, {errors} errors")
-    print(f"  TOTAL: {total_scheduled} scheduled, {total_errors} errors")
+        total_skipped += skipped
+        total_seconds += secs
+        status = "OK" if errors == 0 else "WARN"
+        print(f"  [{status}] {ch:<15} {scheduled:>3} scheduled | {errors:>2} errors | {skipped:>2} skipped | {secs:.0f}s")
+        # Show date spread per channel
+        for v in res.get("scheduled", []):
+            print(f"        {v.get('video_id', '?'):>12} → {v.get('date', '?')} @ {v.get('time', '?')}")
+    print("-" * 60)
+    print(f"  TOTAL:  {total_scheduled} scheduled | {total_errors} errors | {total_skipped} skipped | {total_seconds:.0f}s")
+    if total_scheduled > 0:
+        print(f"  AVG:    {total_seconds / total_scheduled:.1f}s per video")
     print(vitals.to_dashboard())  # Final vitals
     results["vitals"] = vitals.to_dict()
+    results["total_scheduled"] = total_scheduled
+    results["total_errors"] = total_errors
+    results["total_seconds"] = round(total_seconds, 1)
+
+    # 2026-01-30: Save schedule cache for next cycle's pre-checks
+    _save_schedule_cache(schedule_cache)
+
+    # 2026-01-30: RESTORE browser to origin URL after scheduling rotation.
+    # Without this, the browser stays on the LAST channel's Studio page,
+    # which confuses the next comment engagement cycle (it detects
+    # the wrong channel as "active" and reorders incorrectly).
+    if origin_url and len(channels) > 1:
+        try:
+            current_url = driver.current_url
+            if current_url != origin_url:
+                print(f"[RESTORE] Returning browser to origin channel...")
+                driver.get(origin_url)
+                import time as _restore_time
+                _restore_time.sleep(3)
+                print(f"[RESTORE] Browser restored to: {origin_url[:80]}...")
+            else:
+                print(f"[RESTORE] Browser already on origin — no restore needed")
+        except Exception as restore_err:
+            print(f"[RESTORE] ⚠️ Failed to restore origin: {restore_err}")
 
     return results
 
@@ -619,10 +807,26 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Preview only")
     parser.add_argument("--browser", choices=["chrome", "edge"], help="Run multi-channel rotation for browser")
     parser.add_argument("--max-per-channel", type=int, default=5, help="Max videos per channel in rotation")
+    # 2026-02-01: Content Page Scheduler CLI options
+    parser.add_argument("--content-page", action="store_true", help="Use Content Page Scheduler (inline popup)")
+    parser.add_argument("--audit", action="store_true", help="Audit calendar for conflicts/gaps (no scheduling)")
+    parser.add_argument("--channel-key", help="Channel key for CPS: move2japan, undaodu, foundups, ravingantifa")
 
     args = parser.parse_args()
 
-    if args.browser:
+    if args.content_page or args.audit:
+        # Content Page Scheduler mode
+        from modules.platform_integration.youtube_shorts_scheduler.src.content_page_scheduler import (
+            run_content_page_scheduler,
+        )
+        run_content_page_scheduler(
+            browser=args.browser or "edge",
+            channel_key=args.channel_key or "foundups",
+            mode=args.mode,
+            max_videos=args.max_per_channel,
+            audit_only=args.audit,
+        )
+    elif args.browser:
         # Multi-channel rotation mode
         run_multi_channel_scheduler(
             browser=args.browser,

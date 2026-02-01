@@ -52,6 +52,9 @@ Each layer gets its own test file with two modes:
   - Update local index JSON with `scheduling` + `description_sync` after successful schedule
   - Do NOT block scheduling on indexing failures (Occam layering)
   - Toggle: `YT_SCHEDULER_INDEX_WEAVE_ENABLED=false` to disable
+- [ ] Index utility routing (POC)
+  - 012 voice → Digital Twin memory
+  - music/video → RavingANTIFA or faceless-video pipeline (module in development)
 
 ---
 

@@ -19,6 +19,9 @@ Automated scheduling system for YouTube Shorts across multiple channels:
   - Ensures `memory/video_index/{channel}/{video_id}.json` exists (Gemini Tier 1)
   - Appends a compact `0102 DIGITAL TWIN INDEX v1` JSON block to the description (cloud memory)
   - Updates local index JSON with `scheduling` + `description_sync` after successful schedule
+- **Index Utility Routing (POC)**:
+  - If indexing identifies 012 voice → route to Digital Twin memory
+  - If indexing identifies music/video → route to RavingANTIFA or faceless-video pipeline (module in development)
 - Schedule tracking with JSON persistence
 - Visibility workflow automation (Unlisted -> Scheduled -> Public)
 

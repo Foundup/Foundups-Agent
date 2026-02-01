@@ -202,7 +202,7 @@ class TestContentGenerator:
         """Test FFCPLN description."""
         desc = get_standard_description("ffcpln")
         assert "FFCPLN" in desc
-        assert "https://ffc.ravingANTIFA.com" in desc
+        assert "https://ravingANTIFA.com" in desc
 
     def test_get_standard_description_alt(self):
         """Test alternative description."""
