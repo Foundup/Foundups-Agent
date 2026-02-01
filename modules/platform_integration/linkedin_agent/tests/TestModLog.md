@@ -13,6 +13,72 @@ wsp_cycle(input="linkedin_test_evolution", log=True)
 
 ## [CLIPBOARD] **Test Framework Evolution Timeline**
 
+### **Latest: L0 AI Gate for Promoted/Repost Skip**
+
+**WSP Compliance**: WSP 34 (Test Documentation), WSP 73 (Digital Twin), WSP 84 (Code Memory Verification)
+
+#### **[OK] L0 CONTEXT GATE ENHANCEMENT**
+- `test_layer0_context_gate.py` now uses API-first AI gate with Qwen fallback to detect promoted/repost posts and skip comments/reposts.
+- `test_full_chain.py` skips L1-L3 when the AI gate blocks the post.
+
+---
+
+### **Latest: L1 UI-TARS Verification Wiring**
+
+**WSP Compliance**: WSP 34 (Test Documentation), WSP 73 (Digital Twin), WSP 91 (Observability)
+
+#### **[OK] COMMENT FLOW VERIFICATION**
+- `test_layer1_comment.py` now calls UI-TARS `verify` for comment editor visibility, typed text presence, and mention selection.
+- Environment flags: `LINKEDIN_USE_UI_TARS`, `LINKEDIN_REQUIRE_UI_TARS`, `TARS_API_URL`.
+
+---
+
+### **Latest: LM Studio Model Load Gate**
+
+**WSP Compliance**: WSP 34 (Test Documentation), WSP 50 (Pre-action verification)
+
+#### **[OK] UI-TARS MODEL CHECK**
+- `check_lm_studio_ready()` now validates `UI_TARS_MODEL` is loaded via `/v1/models`.
+- `LINKEDIN_REQUIRE_UI_TARS_MODEL` controls whether missing model is a hard failure.
+- `LINKEDIN_AUTO_LOAD_UI_TARS_MODEL` triggers a warmup call to load the model.
+
+---
+
+### **Latest: Slow-Step Test Mode**
+
+**WSP Compliance**: WSP 34 (Test Documentation), WSP 50 (Pre-action verification)
+
+#### **[OK] STEP DELAY CONTROLS**
+- Added `LINKEDIN_ACTION_DELAY_SEC` to slow per-step actions in L1-L3.
+- Added `LINKEDIN_LAYER_DELAY_SEC` to slow layer transitions in full chain.
+
+---
+
+### **Latest: LinkedIn Browser Boot + DAEmon Pulse Logging**
+
+**WSP Compliance**: WSP 91 (DAEMON Observability), WSP 50 (Pre-action verification), WSP 34 (Test Documentation)
+
+#### **[OK] NEW TEST UTILITIES**
+- `linkedin_browser.py` - Browser boot + login confirmation for LinkedIn rotation
+
+#### **[OK] FULL CHAIN ENHANCEMENT**
+- `test_full_chain.py` now emits DAEmon pulse points (BATCH_START, PROGRESS, RATE_LIMIT, FAILURE_STREAK, BATCH_COMPLETE)
+
+---
+
+### **Latest: UI-TARS LinkedIn Comment Flow Test**
+
+**WSP Compliance**: WSP 34 (Test Documentation), WSP 73 (Digital Twin), WSP 91 (Observability)
+
+#### **[OK] NEW TEST FILES ADDED**
+- `test_linkedin_comment_flow_ui_tars.py` - UI-TARS validated comment flow with mention selection
+
+#### **[TARGET] Test Coverage Expansion**
+- Adds manual validation path for @mention selection and comment visibility
+- Establishes UI-TARS + DOM verification pattern for LinkedIn
+
+---
+
 ### **Latest: Verified LinkedIn Article Creation Tests**
 
 **WSP Compliance**: WSP 5 (Testing Standards), WSP 84 (Don't vibecode), WSP 22 (Module Documentation)

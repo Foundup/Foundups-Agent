@@ -25,7 +25,7 @@ class GeminiVisionAnalyzer:
         try:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.model = genai.GenerativeModel('gemini-2.5-flash')  # 2.0-flash retiring Mar 2026; 2.5-flash recommended
             print("[GEMINI-VISION] Initialized with AI Studio API")
         except ImportError:
             print("[ERROR] Install: pip install google-generativeai")

@@ -1,5 +1,26 @@
 # ModLog - youtube_live_audio
 
+### 2026-01-19 - Fix: yt-dlp Cookie Database Error
+**WSP Protocol**: WSP 22, WSP 50 (Occam's razor)
+**Agent**: 0102
+
+#### Problem
+`ERROR: Could not copy Chrome cookie database` when Chrome is running.
+yt-dlp was hardcoded to use `cookiesfrombrowser: ('chrome',)` which fails
+because Chrome locks its cookie database while running.
+
+#### Fix
+Made browser cookies optional via env var `YT_DLP_COOKIES_BROWSER`:
+- Default: No cookies (most public videos work fine)
+- Set to `chrome`, `firefox`, `edge`, or `safari` to enable
+- Browser must be closed when using cookies
+
+#### Occam's Razor
+Most videos are public and don't need authentication.
+Only enable cookies for private/unlisted content when needed.
+
+---
+
 ### 2026-01-07 - Sprint 6: Batch Transcription Pipeline (COMPLETE)
 **WSP Protocol**: WSP 22, WSP 84
 **Phase**: Implementation

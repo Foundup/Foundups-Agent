@@ -8,6 +8,18 @@
 
 Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) that eliminates redundancy and provides a cohesive interface for cross-platform content management, OAuth coordination, and scheduling.
 
+**Digital Twin POC**: This is the execution layer for the 012 Digital Twin comment pipeline (LinkedIn-first), including comment scheduling and cross-platform routing.
+
+## Rotation Flow (YouTube → Scheduling → LinkedIn)
+
+This module sits in the post-YouTube rotation:
+1. **YouTube Live Chat**: reply loop completes.
+2. **YouTube Studio Comments**: inbox engagement complete.
+3. **YouTube Scheduling**: verify all scheduled posts complete.
+4. **LinkedIn Digital Twin**: run L0–L3 flow (comment → identity likes → scheduled repost).
+
+This keeps the DAE rotation minimal and deterministic for POC validation.
+
 ## Key Features
 
 - **Unified OAuth Management**: Single coordinator for all platform authentication
@@ -24,6 +36,7 @@ Unified orchestration layer for social media platforms (X/Twitter and LinkedIn) 
 - **QWEN Intelligence Integration**: Platform health monitoring and intelligent posting decisions (NEW)
 - **Heat Level Management**: Automatic rate limit tracking and cooling periods
 - **Pattern Learning**: Learns from successful posts and platform responses
+- **Digital Twin Routing**: Accepts Digital Twin drafts/decisions and routes to LinkedIn execution and scheduling
 
 ## Architecture
 

@@ -14,13 +14,28 @@
 
 ## [CLIPBOARD] Module Overview
 
-**Purpose:** Automated LinkedIn posting scheduler that enables 012 observer to delegate communication tasks to 0102 executor through scheduled posts across multiple LinkedIn profiles.
+**Purpose:** Automated LinkedIn scheduling layer that enables 012 observer to delegate Digital Twin comment/post workflows to 0102 executor through scheduled posts across multiple LinkedIn profiles.
+
+**Digital Twin POC**: Scheduling for LinkedIn comment processing based on 012 studio comment style and 20 years of 012 video corpus.
 
 **Key Capabilities:**
 - Multi-profile LinkedIn account management
 - Scheduled post creation and publishing
 - Content queue management and scheduling logic
 - API integration with LinkedIn's publishing endpoints
+
+## Scheduling Source of Truth (Decision)
+
+**Decision**: Internal scheduler is the source of truth, with optional Google Calendar mirror.
+
+**Rationale (first principles)**:
+- **Autonomy**: Internal scheduler keeps 0102 execution fully autonomous and deterministic.
+- **Visibility**: Google Calendar mirror gives 012 observer visibility without controlling the schedule.
+- **Safety**: Avoids external dependency for core scheduling while enabling human observability.
+
+**Implementation Notes**:
+- Internal queue drives all scheduling and spacing rules (1–3/day, 4–6 hours apart).
+- Calendar mirror is read-only and per-platform (LinkedIn calendar).
 
 **Dependencies:**
 - LinkedIn API (External)
@@ -185,5 +200,5 @@ from modules.platform_integration.linkedin_scheduler import LinkedInScheduler
 ---
 
 **Template Version:** 1.0  
-**Last Updated:** 2025-06-09  
+**Last Updated:** 2026-01-20  
 **WSP Framework Compliance:** Active

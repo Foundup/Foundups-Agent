@@ -41,6 +41,109 @@ This directory contains comprehensive test suites for the LinkedIn Agent module'
   - `test_engagement/test_messaging.py` - Direct messaging, conversation management
   - `test_engagement/test_feed_reader.py` - Feed analysis, content extraction
 
+### 🔄 **Digital Twin Layered Tests (AUDITED)**
+- **Coverage**: L0-L3 cake pattern documented; stubs pending for per-layer runners
+- **Currently Available**:
+  - `test_linkedin_comment_flow_ui_tars.py` - UI-TARS validation for comment + @mention
+- **Planned Layer Stubs**:
+  - `test_layer0_context_gate.py` - LinkedIn validation, AI-post detection
+  - `test_layer1_comment.py` - Comment posting with @mentions
+  - `test_layer2_identity_likes.py` - Identity switcher, like loop
+  - `test_layer3_schedule_repost.py` - Repost with thoughts, schedule picker
+  - `test_full_chain.py` - L0 → L1 → L2 → L3 complete flow
+
+---
+
+## [LAYER] Digital Twin Flow Summary (L0-L3)
+
+L0 (Context Gate) → Validate LinkedIn, extract author, AI-post check, skip promoted/reposts  
+L1 (Comment) → Post 012 comment with @mentions + UI-TARS verification  
+L2 (Identity Likes) → Switch identities, like 012 comment  
+L3 (Schedule Repost) → Repost with thoughts, schedule for future  
+
+## [FILES] Key Files
+
+| Purpose | Path |
+|--------|------|
+| Identity list | `modules/platform_integration/linkedin_agent/data/linkedin_identity_switcher.json` |
+| Comment templates | `modules/platform_integration/linkedin_agent/data/linkedin_skill_templates.json` |
+| Browser skill | `modules/infrastructure/browser_actions/skillz/linkedin_comment_digital_twin.json` |
+| Digital Twin flow doc | `modules/platform_integration/linkedin_agent/docs/LINKEDIN_DIGITAL_TWIN_FLOW.md` |
+
+## [CMD] Commands
+
+```bash
+# Layer info (no execution)
+python -m modules.platform_integration.linkedin_agent.tests.test_layer0_context_gate --info
+
+# Dry run (validate selectors, no side effects)
+python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --selenium --dry-run
+
+# Stop at layer N
+python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --selenium --stop-at 1
+
+# Full live execution
+python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --selenium
+```
+
+## [LOCK] Prerequisites
+
+```bash
+chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\chrome_profile_linkedin"
+```
+
+- Log into LinkedIn as 012
+- Navigate to target AI post
+
+### Browser Boot (Selenium Rotation)
+
+By default, tests will:
+1. Attach to existing Chrome debug port (9222), or
+2. Open a managed Chrome profile via BrowserManager
+
+Environment controls:
+- `LINKEDIN_USE_DEBUG_PORT=true|false` (default: true)
+- `CHROME_PORT=9222`
+- `LINKEDIN_PROFILE=linkedin_165749317` (used when debug port disabled)
+- `LINKEDIN_FEED_URL=https://www.linkedin.com/feed/`
+- `LINKEDIN_USE_UI_TARS=true|false` (default: true)
+- `LINKEDIN_REQUIRE_UI_TARS=true|false` (default: true)
+- `TARS_API_URL=http://127.0.0.1:1234`
+- `UI_TARS_MODEL=ui-tars-1.5-7b`
+- `LINKEDIN_REQUIRE_UI_TARS_MODEL=true|false` (default: true)
+- `LINKEDIN_AUTO_LOAD_UI_TARS_MODEL=true|false` (default: true)
+- `LINKEDIN_ACTION_DELAY_SEC=3` (step delay for slow 012 review)
+- `LINKEDIN_LAYER_DELAY_SEC=4` (between-layer delay in full chain)
+
+## [BLOCK] Blockers
+
+- Antigravity browser blocks LinkedIn (platform safety policy)
+- Tests require 012 manual execution via Chrome debugging port
+
+## [NEXT] Next Steps (Priority Order)
+
+1. **012 Browser Verification**: Run each layer with `--selenium --dry-run` to validate DOM selectors
+2. **Selector Refinement**: LinkedIn DOM may vary; update selectors if failures occur
+3. **Wire to ActionRouter**: Integrate `linkedin_comment_digital_twin` skill into `linkedin_actions.py`
+4. **Optional**: Google Calendar mirror for schedule visibility
+
+## [NOTES] Continuation Notes
+
+- All tests use argparse with `--selenium`, `--dry-run`, `--info` flags
+- Follows YouTube cake pattern: test each layer, combine into full chain
+- Identity switcher loads from JSON; filter by action: `"like_only"`
+- Mention validation checks for `<a>`, `<strong>`, or mention marker in editor HTML
+
+## [DAEMON] Pulse Points (Core Only, WSP 91)
+
+Use the same core pulse points from DAEmon observability, scoped to LN layers:
+
+- `BATCH_START` → Start full L0-L3 flow (state change)
+- `PROGRESS` → Layer completion (L0/L1/L2/L3) heartbeat
+- `RATE_LIMIT` → LinkedIn cooldown or throttling event
+- `FAILURE_STREAK` → 3 consecutive layer/step failures
+- `BATCH_COMPLETE` → End full L0-L3 flow (completion)
+
 ### ⏳ **Phase 4: Portfolio Module (PENDING)**
 - **Coverage**: 0% (not yet implemented)
 - **Components Planned**:
@@ -144,6 +247,9 @@ python modules/platform_integration/linkedin_agent/tests/test_oauth_manual.py
 
 # Actual posting test (requires valid access token)
 python modules/platform_integration/linkedin_agent/tests/test_actual_posting.py
+
+# UI-TARS comment flow (requires UI-TARS + Chrome debugging)
+python modules/platform_integration/linkedin_agent/tests/test_linkedin_comment_flow_ui_tars.py
 ```
 
 ## [CLIPBOARD] **Test Categories**
