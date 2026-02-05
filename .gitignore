@@ -298,6 +298,12 @@ undaodu/
 # LinkedIn agent identity/account data (per-environment config)
 modules/platform_integration/linkedin_agent/data/linkedin_*.json
 
+# OAuth tokens and access tokens (NEVER commit live tokens)
+**/tokens/access_token*.json
+**/tokens/refresh_token*.json
+**/tokens/oauth_token*.json
+**/tokens/*.token
+
 # Generated reports and diagnostics (ephemeral per-session)
 holo_index/reports/
 **/reports/*.md
