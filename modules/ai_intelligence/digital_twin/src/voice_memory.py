@@ -22,8 +22,56 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    """Parse common truthy env values."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 # Lazy import HoloIndex VideoContentIndex
 _video_index = None
+
+
+def _probe_chromadb_health(ssd_path: str = "E:/HoloIndex") -> bool:
+    """Probe ChromaDB video_segments collection in a subprocess.
+
+    A corrupt HNSW index causes a native segfault that cannot be caught
+    in-process.  Running the probe in a child process lets us detect the
+    crash without taking down the caller.
+
+    Uses subprocess (not multiprocessing) to avoid Windows spawn/pickle issues.
+    """
+    import subprocess
+    import sys
+
+    script = (
+        "import chromadb, sys; "
+        f"c = chromadb.PersistentClient(path=r'{ssd_path}/vectors'); "
+        "col = c.get_collection('video_segments'); "
+        "n = col.count(); "
+        "print(n); "
+        "sys.exit(0)"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode != 0:
+            logger.warning(
+                f"[VOICE-MEMORY] ChromaDB probe crashed (exit {result.returncode}) "
+                f"— HNSW index likely corrupt. stderr: {result.stderr[:200]}"
+            )
+            return False
+        count = result.stdout.strip()
+        logger.info(f"[VOICE-MEMORY] ChromaDB probe OK: {count} video segments")
+        return True
+    except subprocess.TimeoutExpired:
+        logger.warning("[VOICE-MEMORY] ChromaDB probe timed out (15s)")
+        return False
+    except Exception as e:
+        logger.warning(f"[VOICE-MEMORY] ChromaDB probe failed: {e}")
+        return False
 
 
 def _get_video_index():
@@ -31,12 +79,17 @@ def _get_video_index():
     global _video_index
     if _video_index is None:
         try:
+            # Subprocess probe: detect HNSW corruption before loading in-process
+            if not _probe_chromadb_health():
+                logger.warning("[VOICE-MEMORY] Skipping VideoContentIndex — ChromaDB probe failed")
+                _video_index = False
+                return None
             from holo_index.core.video_search import VideoContentIndex
             _video_index = VideoContentIndex()
-            logger.info(f"[VOICE-MEMORY] HoloIndex connected: {_video_index.collection.count()} video segments")
+            logger.info("[VOICE-MEMORY] HoloIndex VideoContentIndex connected")
         except ImportError:
             logger.debug("[VOICE-MEMORY] HoloIndex not available")
-            _video_index = False  # Mark as unavailable
+            _video_index = False
         except Exception as e:
             logger.warning(f"[VOICE-MEMORY] HoloIndex connection failed: {e}")
             _video_index = False
@@ -71,7 +124,7 @@ class VoiceMemory:
         self.vectorizer = None
         self.index = None
         self._use_faiss = False
-        self.include_videos = include_videos
+        self.include_videos = include_videos and _env_truthy("VOICE_MEMORY_VIDEO_INDEX", "true")
 
         # Try to load existing index
         if self.index_dir and self.index_dir.exists():

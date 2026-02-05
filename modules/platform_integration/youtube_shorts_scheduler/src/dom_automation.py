@@ -20,6 +20,25 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 logger = logging.getLogger(__name__)
 
+# Orchestration switchboard for OOPS breadcrumb telemetry (optional, graceful degradation)
+try:
+    from modules.infrastructure.orchestration_switchboard.src.orchestration_switchboard import get_orchestration_switchboard
+    _has_switchboard = True
+except ImportError:
+    _has_switchboard = False
+
+
+def _emit_oops_signal(signal_type: str, source_dae: str = "shorts_scheduler_dom", **metadata):
+    """Emit OOPS breadcrumb to orchestration switchboard (fire-and-forget)."""
+    if not _has_switchboard:
+        return
+    try:
+        sb = get_orchestration_switchboard()
+        sb.receive_signal(signal_type, source_dae, metadata=metadata)
+    except Exception as e:
+        logger.debug(f"[OOPS] Switchboard signal failed: {e}")
+
+
 # Diagnostic screenshot directory
 DIAGNOSTIC_DIR = Path("modules/platform_integration/youtube_shorts_scheduler/memory/diagnostics")
 DIAGNOSTIC_DIR.mkdir(parents=True, exist_ok=True)
@@ -120,8 +139,10 @@ class DOMSelectors:
     VISIBILITY_STATUS = "#visibility-status-span"
 
     # L1.1: Schedule Expand
-    SCHEDULE_EXPAND_XPATH = "//div[contains(@class,'schedule')]//button[contains(@aria-label,'expand')]"
-    SCHEDULE_RADIO_XPATH = "//tp-yt-paper-radio-button[@name='SCHEDULE']"
+    # 2026-02-04: Live DOM confirmed - expand button is ytcp-icon-button#second-container-expand-button
+    SCHEDULE_EXPAND_XPATH = "//ytcp-icon-button[@id='second-container-expand-button']"
+    # 2026-02-04: Live DOM confirms name="PUBLISH_FROM_PRIVATE" (no name="SCHEDULE" exists)
+    SCHEDULE_RADIO_XPATH = "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"
 
     # L2: Date
     DATE_DROPDOWN_XPATH = "//div[contains(@class,'date')]//ytcp-dropdown-trigger"
@@ -215,11 +236,14 @@ class DOMSelectors:
     RADIO_PRIVATE = "//tp-yt-paper-radio-button[.//span[text()='Private']]"
     RADIO_UNLISTED = "//tp-yt-paper-radio-button[.//span[text()='Unlisted']]"
     RADIO_PUBLIC = "//tp-yt-paper-radio-button[.//span[text()='Public']]"
-    RADIO_SCHEDULE = "//tp-yt-paper-radio-button[.//span[contains(text(),'Schedule')]]"
+    # 2026-02-04: No "Schedule" radio exists; scheduling is triggered by expanding #second-container
+    RADIO_SCHEDULE = "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"
 
     # Schedule section
-    SCHEDULE_EXPAND = "//div[contains(text(),'Schedule')]//ancestor::button"
-    SCHEDULE_RADIO = "//tp-yt-paper-radio-button[.//span[contains(text(),'private to public')]]"
+    # 2026-02-04: Live DOM confirmed - expand button is #second-container-expand-button
+    SCHEDULE_EXPAND = "//ytcp-icon-button[@id='second-container-expand-button']"
+    # 2026-02-04: Live DOM - text not in <span>, use contains(.) or @name
+    SCHEDULE_RADIO = "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"
 
     # Date/Time inputs
     DATE_PICKER_BTN = "//div[@id='datepicker-trigger']//button"
@@ -812,9 +836,51 @@ class YouTubeStudioDOM:
             if switch_link:
                 logger.warning("[OOPS] Detected oops page - wrong account logged in")
                 return True
+            # Fallback: text-based detection (handles updated Studio UI)
+            text = self.driver.execute_script(
+                "return (document.body && document.body.innerText) || '';"
+            )
+            norm = (text or "").lower().replace("\u2019", "'")
+            if ("don't have permission" in norm
+                    or "dont have permission" in norm
+                    or "do not have permission" in norm
+                    or "permission to view this page" in norm
+                    or "switch account" in norm
+                    or "return to studio" in norm):
+                logger.warning("[OOPS] Detected oops page via text match")
+                return True
             return False
         except Exception as e:
             logger.debug(f"[OOPS] Detection check failed: {e}")
+            return False
+
+    def _click_oops_switch_account(self) -> bool:
+        """Click the 'Switch account' button on the OOPS page using broad selectors.
+
+        2026-02-04: Also removes target="_blank" and rewrites ?next= to prevent redirect loop.
+        """
+        try:
+            return bool(self.driver.execute_script("""
+                const candidates = [...document.querySelectorAll(
+                    'button, ytcp-button, a, [role="button"], tp-yt-paper-button, yt-button-renderer'
+                )];
+                for (const el of candidates) {
+                    const text = (el.textContent || '').trim().toLowerCase();
+                    if (text.includes('switch account') || text.includes('switch acct')) {
+                        el.removeAttribute('target');
+                        var href = el.getAttribute('href') || '';
+                        if (href.includes('channel_switcher')) {
+                            var url = new URL(href, window.location.origin);
+                            url.searchParams.set('next', 'https://studio.youtube.com/');
+                            el.setAttribute('href', url.toString());
+                        }
+                        el.click();
+                        return true;
+                    }
+                }
+                return false;
+            """))
+        except Exception:
             return False
 
     def get_target_channel_name(self, channel_id: str) -> Optional[str]:
@@ -861,14 +927,40 @@ class YouTubeStudioDOM:
 
         logger.info(f"[OOPS] Attempting recovery - switching to account: {target_name}")
 
+        # 2026-02-03: Emit OOPS breadcrumb to orchestration switchboard
+        _emit_oops_signal("oops_page_detected", channel_name=target_name,
+                          channel_id=target_channel_id, browser="edge")
+
         for attempt in range(max_retries):
             try:
                 # Step 1: Click "Switch account" on oops page
-                switch_link = self.wait_for_clickable(
-                    self.selectors.OOPS_SWITCH_ACCOUNT,
-                    timeout=5
-                )
-                self.safe_click(switch_link)
+                # 2026-02-04: CRITICAL fix from live DOM inspection via --chrome:
+                # The "Switch account" link has target="_blank" which opens a new tab.
+                # Must remove it first so navigation stays in same tab for Selenium.
+                switch_clicked = False
+                try:
+                    switch_link = self.wait_for_clickable(
+                        self.selectors.OOPS_SWITCH_ACCOUNT,
+                        timeout=5
+                    )
+                    # Remove target="_blank" to prevent new tab (confirmed via live DOM 2026-02-04)
+                    # AND rewrite ?next= to Studio root to prevent redirect loop (2026-02-04)
+                    self.driver.execute_script("""
+                        arguments[0].removeAttribute('target');
+                        var href = arguments[0].getAttribute('href') || '';
+                        if (href.includes('channel_switcher')) {
+                            var url = new URL(href, window.location.origin);
+                            url.searchParams.set('next', 'https://studio.youtube.com/');
+                            arguments[0].setAttribute('href', url.toString());
+                        }
+                    """, switch_link)
+                    self.safe_click(switch_link)
+                    switch_clicked = True
+                except Exception:
+                    switch_clicked = self._click_oops_switch_account()
+                if not switch_clicked:
+                    logger.warning("[OOPS] Could not click 'Switch account' button")
+                    return False
                 time.sleep(2)  # Wait for navigation
 
                 # Step 2: On YouTube channel switcher, click avatar button
@@ -921,6 +1013,8 @@ class YouTubeStudioDOM:
                 # Verify we're no longer on oops page
                 if not self.detect_oops_page():
                     logger.info(f"[OOPS] Successfully recovered - now on correct account")
+                    _emit_oops_signal("oops_page_recovered", channel_name=target_name,
+                                      channel_id=target_channel_id, recovery_method="account_switch")
                     return True
                 else:
                     logger.warning(f"[OOPS] Still on oops page after attempt {attempt + 1}")
@@ -929,6 +1023,9 @@ class YouTubeStudioDOM:
                 logger.error(f"[OOPS] Recovery attempt {attempt + 1} failed: {e}")
 
         logger.error(f"[OOPS] Failed to recover after {max_retries} attempts")
+        _emit_oops_signal("oops_page_detected", channel_name=target_name,
+                          channel_id=target_channel_id, browser="edge",
+                          attempt_count=max_retries, recovery_failed=True)
         return False
 
     def _log_available_accounts(self):
@@ -2351,10 +2448,11 @@ class YouTubeStudioDOM:
         # We treat "select schedule" as: ensure the schedule section is expanded and date/time inputs exist.
 
         # Variant A: try schedule radio if present
+        # 2026-02-04: Live DOM confirms name="PUBLISH_FROM_PRIVATE" (no name="SCHEDULE" exists)
         radio_xpaths = [
-            getattr(self.selectors, "SCHEDULE_RADIO_XPATH", "//tp-yt-paper-radio-button[@name='SCHEDULE']"),
-            getattr(self.selectors, "RADIO_SCHEDULE", "//tp-yt-paper-radio-button[.//span[contains(text(),'Schedule')]]"),
-            "//tp-yt-paper-radio-button[contains(translate(., 'SCHEDULE', 'schedule'), 'schedule')]",
+            getattr(self.selectors, "SCHEDULE_RADIO_XPATH", "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"),
+            getattr(self.selectors, "RADIO_SCHEDULE", "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"),
+            "//tp-yt-paper-radio-button[contains(.,'private to public')]",
         ]
         for xp in radio_xpaths:
             try:
@@ -2812,3 +2910,99 @@ class YouTubeStudioDOM:
         timing_summary = ", ".join(f"{n}:{t:.1f}s" for n, t in step_times)
         logger.info(f"[DOM] Scheduled {date_str} {time_str} in {total_time:.1f}s [{timing_summary}]")
         return True
+
+    def update_video_tags(self, video_id: str, tags: List[str]) -> bool:
+        """
+        Append tags to a video's tag field in YouTube Studio edit page.
+
+        Navigates to the video edit page, finds the tags input, appends new tags
+        (without replacing existing ones), and saves.
+
+        Gated by env var YT_AUTO_TAG_ENABLED (caller should check before calling).
+
+        Args:
+            video_id: YouTube video ID
+            tags: List of tag strings (without # prefix)
+
+        Returns:
+            True if tags were successfully applied
+        """
+        import os
+        import time as time_module
+
+        if not tags:
+            logger.info(f"[DOM] No tags to apply for {video_id}")
+            return True
+
+        # Navigate to video edit page
+        edit_url = f"https://studio.youtube.com/video/{video_id}/edit"
+        logger.info(f"[DOM] Navigating to edit page for tagging: {video_id}")
+
+        try:
+            self.driver.get(edit_url)
+            time_module.sleep(3)
+
+            if not self._wait_for_page_content(timeout=10):
+                logger.warning(f"[DOM] Edit page did not load for {video_id}")
+                return False
+
+            # Click "Show more" to reveal tags field (it's hidden by default)
+            show_more = self.driver.execute_script("""
+                const buttons = document.querySelectorAll('button, ytcp-button');
+                for (const btn of buttons) {
+                    const text = (btn.textContent || '').trim().toUpperCase();
+                    if (text === 'SHOW MORE') {
+                        btn.click();
+                        return true;
+                    }
+                }
+                return false;
+            """)
+
+            if show_more:
+                time_module.sleep(1)
+
+            # Clean tags: remove # prefix, join with commas
+            clean_tags = [t.lstrip("#").strip() for t in tags if t.strip()]
+            tags_string = ", ".join(clean_tags)
+
+            # Find tags input and append
+            result = self.driver.execute_script(f"""
+                // Tags field is an input inside the "Tags" section
+                const inputs = document.querySelectorAll('input[aria-label*="Tag"], input.tags-input, input#tags-input');
+                for (const input of inputs) {{
+                    const existing = (input.value || '').trim();
+                    const separator = existing ? ', ' : '';
+                    const newValue = existing + separator + "{tags_string.replace('"', '\\"')}";
+                    input.value = newValue;
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    return {{success: true, tags_count: {len(clean_tags)}}};
+                }}
+
+                // Fallback: try text-input style
+                const textInputs = document.querySelectorAll('ytcp-chip-bar input');
+                for (const input of textInputs) {{
+                    input.value = "{tags_string.replace('"', '\\"')}";
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    return {{success: true, method: 'chip-bar'}};
+                }}
+
+                return {{success: false, error: 'tags_input_not_found'}};
+            """)
+
+            if not result or not result.get("success"):
+                logger.warning(f"[DOM] Tags input not found for {video_id}")
+                return False
+
+            logger.info(f"[DOM] Applied {len(clean_tags)} tags to {video_id}")
+
+            # Save
+            time_module.sleep(0.5)
+            self.click_save()
+            time_module.sleep(2)
+            return True
+
+        except Exception as e:
+            logger.error(f"[DOM] Tag update failed for {video_id}: {e}")
+            return False

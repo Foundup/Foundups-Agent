@@ -588,8 +588,53 @@ async def run_video_indexing_cycle(
     total_indexed = sum(r.get("indexed", 0) for r in results.values())
     logger.info(f"[VIDEO-INDEX] Cycle complete: {total_indexed} videos indexed")
 
+    # 2026-02-05: GEMINI ANALYSIS PASS — analyze newly indexed videos via Gemini 2.5 Flash.
+    # Extracts topics, segments, transcript → generates hashtag suggestions.
+    # Gated: only runs if Gemini API key is configured and videos were indexed.
+    gemini_results = {}
+    if total_indexed > 0 and os.getenv("GEMINI_API_KEY"):
+        try:
+            from modules.ai_intelligence.video_indexer.src.gemini_video_analyzer import (
+                GeminiVideoAnalyzer,
+                save_analysis_result,
+                suggest_hashtags,
+            )
+            analyzer = GeminiVideoAnalyzer()
+            logger.info(f"[VIDEO-INDEX] Running Gemini analysis on {total_indexed} newly indexed videos...")
+
+            for channel_id, ch_result in results.items():
+                video_ids = ch_result.get("videos", [])
+                for vid in video_ids[:max_videos_per_channel]:
+                    try:
+                        analysis = analyzer.analyze_video(vid)
+                        if analysis.success:
+                            # Save to HoloIndex
+                            save_analysis_result(analysis, index_to_holoindex=True)
+
+                            # Generate hashtag suggestions
+                            tags = suggest_hashtags(analysis)
+                            logger.info(f"[VIDEO-INDEX] {vid}: {len(analysis.segments)} segments, "
+                                        f"{len(analysis.topics)} topics, {len(tags)} hashtags suggested")
+                            gemini_results[vid] = {
+                                "topics": analysis.topics,
+                                "hashtags": tags,
+                                "segments": len(analysis.segments),
+                                "success": True,
+                            }
+                        else:
+                            logger.warning(f"[VIDEO-INDEX] Gemini analysis failed for {vid}: {analysis.error}")
+                            gemini_results[vid] = {"success": False, "error": analysis.error}
+                    except Exception as gemini_err:
+                        logger.warning(f"[VIDEO-INDEX] Gemini error for {vid}: {gemini_err}")
+                        gemini_results[vid] = {"success": False, "error": str(gemini_err)}
+        except ImportError as ie:
+            logger.info(f"[VIDEO-INDEX] Gemini analyzer not available: {ie}")
+        except Exception as e:
+            logger.warning(f"[VIDEO-INDEX] Gemini analysis pass failed: {e}")
+
     return {
         "total_indexed": total_indexed,
         "channels": results,
+        "gemini_analysis": gemini_results,
         "timestamp": datetime.now().isoformat(),
     }

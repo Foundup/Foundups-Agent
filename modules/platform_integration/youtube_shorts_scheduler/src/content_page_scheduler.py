@@ -59,15 +59,16 @@ class ContentPageSelectors:
     (ytcp-video-visibility-edit-popup) that opens inline on the row.
     """
 
-    # --- Row-level visibility edit triangle ---
-    # Each ytcp-video-row has a visibility cell with an edit triangle icon.
-    # Clicking it opens the inline scheduling popup.
+    # --- Row-level visibility edit trigger ---
+    # Each ytcp-video-row has a visibility cell with an editable wrapper div.
+    # 2026-02-04: Live DOM confirms the clickable element is the wrapper div itself
+    # (div.icon-text-edit-triangle-wrap.editable), NOT a child ytcp-icon-button.
+    # Clicking the wrapper opens the inline scheduling popup.
     VISIBILITY_EDIT_TRIANGLE_CSS = (
-        "div.icon-text-edit-triangle-wrap ytcp-icon-button.edit-triangle-icon"
+        "div.icon-text-edit-triangle-wrap.editable"
     )
     VISIBILITY_EDIT_TRIANGLE_XPATH = (
-        ".//div[contains(@class,'icon-text-edit-triangle-wrap')]"
-        "//ytcp-icon-button[contains(@class,'edit-triangle-icon')]"
+        ".//div[contains(@class,'icon-text-edit-triangle-wrap') and contains(@class,'editable')]"
     )
     # Fallback: target the cell itself
     VISIBILITY_CELL_CSS = "div.tablecell-visibility"
@@ -87,10 +88,11 @@ class ContentPageSelectors:
         "//ytcp-icon-button[@id='second-container-expand-button']"
     )
 
-    # Schedule radio button in popup (select "Schedule" option)
+    # Schedule radio button in popup (select "From private to public")
+    # 2026-02-04: Live DOM confirms name="PUBLISH_FROM_PRIVATE" (no name="SCHEDULE" exists)
     SCHEDULE_RADIO_XPATH = (
         "//ytcp-video-visibility-edit-popup"
-        "//tp-yt-paper-radio-button[@name='SCHEDULE']"
+        "//tp-yt-paper-radio-button[@name='PUBLISH_FROM_PRIVATE']"
     )
 
     # Date picker trigger inside popup
@@ -124,14 +126,54 @@ class ContentPageSelectors:
     )
 
     # --- Video row data extraction ---
-    VIDEO_TITLE_LINK = "a[href*='/edit']"
-    VIDEO_DATE_CELL_XPATH = ".//td[contains(text(),'202')]"
-    VISIBILITY_SPAN_XPATH = ".//span[contains(@class,'visibility')]"
+    # 2026-02-04: Live DOM confirms title is a#video-title (not a[href*='/edit'] which matches thumbnail)
+    VIDEO_TITLE_LINK = "a#video-title"
+    # 2026-02-04: Live DOM confirms date is in div.tablecell-date (not td)
+    VIDEO_DATE_CELL_CSS = "div.tablecell-date"
+    VIDEO_DATE_CELL_XPATH = ".//div[contains(@class,'tablecell-date')]"
+    # 2026-02-04: Live DOM confirms visibility text is in span.label-span inside the edit-triangle-wrap
+    VISIBILITY_SPAN_CSS = "div.icon-text-edit-triangle-wrap span.label-span"
+    VISIBILITY_SPAN_XPATH = ".//div[contains(@class,'icon-text-edit-triangle-wrap')]//span[contains(@class,'label-span')]"
 
     # Scheduled date display in row (when visibility = Scheduled)
     SCHEDULED_DATE_TEXT_XPATH = (
         ".//div[contains(@class,'tablecell-date')]"
     )
+
+    # --- Filter bar UI selectors ---
+    # 2026-02-04: Live DOM confirmed. URL filter params cause blank screen;
+    # must use the sidebar Filter UI instead.
+    # Flow: click filter icon → dropdown shows categories → click "Visibility" →
+    #       sub-panel with checkboxes (Public/Private/Unlisted/Members/Has schedule/Draft)
+    #       → check desired option → click Apply
+    FILTER_ICON_CSS = "#filter-icon"
+    FILTER_ITEM_TAG = "tp-yt-paper-item"  # Menu items in filter dropdown
+    FILTER_CHECKBOX_TAG = "tp-yt-paper-checkbox"  # Checkboxes in sub-panel
+    FILTER_APPLY_BUTTON_XPATH = "//div[contains(@class,'filter')]//button[contains(.,'Apply')] | //ytcp-button[contains(.,'Apply')]"
+
+    # Visibility filter option text → checkbox label mapping
+    VISIBILITY_FILTER_MAP = {
+        "UNLISTED": "Unlisted",
+        "PRIVATE": "Private",
+        "PUBLIC": "Public",
+        "SCHEDULED": "Has schedule",
+        "DRAFT": "Draft",
+        "MEMBERS": "Members",
+    }
+
+    # --- Sidebar navigation selectors ---
+    # 2026-02-04: Agentic navigation uses left sidebar + tab bar instead of URLs.
+    # Flow: click "Content" in sidebar → click "Shorts" or "Videos" tab
+    SIDEBAR_CONTENT_XPATH = "//a[contains(@href,'/videos')]//tp-yt-paper-item | //ytcp-ve[@ve-type='MENU_ITEM']//a[contains(.,'Content')]"
+    CONTENT_TAB_SHORTS_XPATH = "//a[contains(@class,'tab') and contains(.,'Shorts')] | //tp-yt-paper-tab[contains(.,'Shorts')]"
+    CONTENT_TAB_VIDEOS_XPATH = "//a[contains(@class,'tab') and contains(.,'Videos')] | //tp-yt-paper-tab[contains(.,'Videos')]"
+    CONTENT_TAB_LIVE_XPATH = "//a[contains(@class,'tab') and contains(.,'Live')] | //tp-yt-paper-tab[contains(.,'Live')]"
+
+    CONTENT_TAB_MAP = {
+        "short": "Shorts",
+        "upload": "Videos",
+        "live": "Live",
+    }
 
 
 class ContentPageScheduler:
@@ -144,7 +186,7 @@ class ContentPageScheduler:
     Usage:
         cps = ContentPageScheduler(driver, dom)
         cps.navigate_to_content("move2japan", visibility="UNLISTED")
-        results = await cps.schedule_all_visible(time_slots, max_per_day=8)
+        results = await cps.schedule_all_visible(time_slots, max_per_day=3)
 
     Or for calendar audit:
         audit = cps.audit_calendar("move2japan")
@@ -184,7 +226,13 @@ class ContentPageScheduler:
         sort_oldest_first: bool = True,
     ) -> bool:
         """
-        Navigate to Studio Content page with filters and sorting.
+        Navigate to Studio Content page and apply filter via sidebar UI.
+
+        2026-02-04: URL filter params cause blank screen. Uses agentic navigation:
+        1. Navigate to base Studio URL (no filter params)
+        2. Click "Content" sidebar if not already on content page
+        3. Click content type tab (Shorts/Videos/Live)
+        4. Apply visibility filter via sidebar Filter dropdown UI
 
         Args:
             channel_key: "move2japan", "undaodu", "foundups", "ravingantifa"
@@ -195,40 +243,172 @@ class ContentPageScheduler:
         Returns:
             True if navigation successful
         """
-        from .channel_config import build_studio_url, get_channel_config
+        from .channel_config import get_channel_config
 
         config = get_channel_config(channel_key)
         if not config:
             logger.error(f"[CPS] Unknown channel: {channel_key}")
             return False
 
-        sort_order = "ASCENDING" if sort_oldest_first else "DESCENDING"
-        url = build_studio_url(
-            config["id"],
-            content_type=content_type,
-            visibility=visibility,
-            sort_by="date",
-            sort_order=sort_order,
-        )
-
-        logger.info(f"[CPS] Navigating to {channel_key} content page ({visibility}, {content_type})")
-        logger.debug(f"[CPS] URL: {url[:120]}...")
+        # Navigate to base Studio URL (NO filter params — they cause blank screen)
+        base_url = f"https://studio.youtube.com/channel/{config['id']}/videos/{content_type}"
+        logger.info(f"[CPS] Navigating to {channel_key} content page ({content_type})")
 
         try:
-            self.driver.get(url)
-            time_module.sleep(3)
+            # Check if already on this channel's studio — avoid full reload
+            current_url = self.driver.current_url or ""
+            if config["id"] in current_url and "/videos" in current_url:
+                logger.debug("[CPS] Already on Studio content — switching tab only")
+                self._switch_content_tab(content_type)
+            else:
+                self.driver.get(base_url)
+                time_module.sleep(3)
 
             # Wait for video table to load
             WebDriverWait(self.driver, 15).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "ytcp-video-row"))
             )
             logger.info(f"[CPS] Content page loaded — video rows visible")
+
+            # Apply visibility filter via sidebar UI (if specified)
+            if visibility:
+                if not self._apply_visibility_filter_via_ui(visibility):
+                    logger.warning(f"[CPS] Filter '{visibility}' failed — continuing unfiltered")
+
             return True
         except TimeoutException:
             logger.warning(f"[CPS] Content page load timeout — no video rows found")
             return False
         except Exception as e:
             logger.error(f"[CPS] Navigation failed: {e}")
+            return False
+
+    def _switch_content_tab(self, content_type: str) -> bool:
+        """
+        Switch between content tabs (Shorts/Videos/Live) without page reload.
+
+        Args:
+            content_type: "short", "upload", or "live"
+
+        Returns:
+            True if tab switched
+        """
+        tab_label = self.sel.CONTENT_TAB_MAP.get(content_type, "Shorts")
+        try:
+            # Find tab by text content
+            tabs = self.driver.find_elements(By.CSS_SELECTOR, "a[role='tab'], tp-yt-paper-tab")
+            for tab in tabs:
+                if tab.text.strip() == tab_label and tab.is_displayed():
+                    self.dom.safe_click(tab)
+                    time_module.sleep(2)
+                    logger.debug(f"[CPS] Switched to {tab_label} tab")
+                    return True
+
+            logger.debug(f"[CPS] Tab '{tab_label}' not found — may already be active")
+            return False
+        except Exception as e:
+            logger.debug(f"[CPS] Tab switch failed: {e}")
+            return False
+
+    def _apply_visibility_filter_via_ui(self, visibility: str) -> bool:
+        """
+        Apply a visibility filter using the sidebar Filter dropdown UI.
+
+        2026-02-04: Live DOM confirmed flow:
+        1. Click filter icon (#filter-icon) → dropdown with categories
+        2. Click "Visibility" item → sub-panel with checkboxes
+        3. Check the desired checkbox (e.g., "Unlisted", "Has schedule")
+        4. Click "Apply" button
+
+        Args:
+            visibility: "UNLISTED", "PRIVATE", "SCHEDULED", "PUBLIC", "DRAFT"
+
+        Returns:
+            True if filter applied successfully
+        """
+        checkbox_label = self.sel.VISIBILITY_FILTER_MAP.get(visibility)
+        if not checkbox_label:
+            logger.warning(f"[CPS] Unknown visibility filter: {visibility}")
+            return False
+
+        try:
+            # Step 1: Click filter icon to open dropdown
+            filter_icon = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, self.sel.FILTER_ICON_CSS))
+            )
+            self.dom.safe_click(filter_icon)
+            time_module.sleep(0.5)
+
+            # Step 2: Click "Visibility" in the dropdown menu
+            items = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_all_elements_located(
+                    (By.TAG_NAME, self.sel.FILTER_ITEM_TAG)
+                )
+            )
+            visibility_item = None
+            for item in items:
+                if item.text.strip() == "Visibility" and item.is_displayed():
+                    visibility_item = item
+                    break
+
+            if not visibility_item:
+                logger.warning("[CPS] 'Visibility' not found in filter dropdown")
+                return False
+
+            self.dom.safe_click(visibility_item)
+            time_module.sleep(0.5)
+
+            # Step 3: Check the desired checkbox
+            checkboxes = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_all_elements_located(
+                    (By.TAG_NAME, self.sel.FILTER_CHECKBOX_TAG)
+                )
+            )
+            target_cb = None
+            for cb in checkboxes:
+                if cb.text.strip() == checkbox_label and cb.is_displayed():
+                    target_cb = cb
+                    break
+
+            if not target_cb:
+                logger.warning(f"[CPS] Checkbox '{checkbox_label}' not found in Visibility panel")
+                return False
+
+            # Only click if not already checked
+            is_checked = (
+                target_cb.get_attribute("checked") is not None
+                or target_cb.get_attribute("aria-checked") == "true"
+            )
+            if not is_checked:
+                self.dom.safe_click(target_cb)
+                time_module.sleep(0.3)
+
+            # Step 4: Click Apply
+            try:
+                apply_btn = WebDriverWait(self.driver, 3).until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, self.sel.FILTER_APPLY_BUTTON_XPATH)
+                    )
+                )
+                self.dom.safe_click(apply_btn)
+            except TimeoutException:
+                # Some filter panels auto-apply without a button
+                logger.debug("[CPS] No Apply button found — filter may auto-apply")
+
+            time_module.sleep(2)
+
+            # Verify rows reloaded
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ytcp-video-row"))
+            )
+            logger.info(f"[CPS] Visibility filter '{visibility}' ({checkbox_label}) applied")
+            return True
+
+        except TimeoutException:
+            logger.warning(f"[CPS] Timeout applying filter '{visibility}'")
+            return False
+        except Exception as e:
+            logger.warning(f"[CPS] Filter application failed: {e}")
             return False
 
     def navigate_to_scheduled(self, channel_key: str) -> bool:
@@ -264,23 +444,28 @@ class ContentPageScheduler:
                     video_id = href.split("/video/")[1].split("/")[0]
                 title = link.text.strip()
 
-                # Visibility text
+                # Visibility text (2026-02-04: use label-span inside edit-triangle-wrap)
                 visibility = ""
                 try:
-                    vis_spans = row.find_elements(By.XPATH, ".//span")
-                    for span in vis_spans:
-                        text = span.text.strip().lower()
-                        if text in ("unlisted", "private", "public", "scheduled", "draft"):
-                            visibility = text.capitalize()
-                            break
+                    vis_span = row.find_element(By.CSS_SELECTOR, self.sel.VISIBILITY_SPAN_CSS)
+                    visibility = vis_span.text.strip().capitalize()
                 except Exception:
-                    pass
+                    # Fallback: search all spans
+                    try:
+                        vis_spans = row.find_elements(By.XPATH, ".//span")
+                        for span in vis_spans:
+                            text = span.text.strip().lower()
+                            if text in ("unlisted", "private", "public", "scheduled", "draft"):
+                                visibility = text.capitalize()
+                                break
+                    except Exception:
+                        pass
 
-                # Date text
+                # Date text (2026-02-04: use div.tablecell-date, not td)
                 date_text = ""
                 try:
-                    date_el = row.find_element(By.XPATH, self.sel.VIDEO_DATE_CELL_XPATH)
-                    date_text = date_el.text.strip()
+                    date_el = row.find_element(By.CSS_SELECTOR, self.sel.VIDEO_DATE_CELL_CSS)
+                    date_text = date_el.text.strip().split("\n")[0]  # First line is date, second is "Uploaded"
                 except Exception:
                     pass
 
@@ -509,6 +694,63 @@ class ContentPageScheduler:
         except Exception:
             pass
 
+    def reschedule_row_inline(self, row_element, new_date: str, new_time: str) -> bool:
+        """
+        Reschedule an already-scheduled video via the inline popup (no edit page nav).
+
+        2026-02-04: For scheduled videos, the popup opens with the Schedule section
+        already expanded showing current date/time. We just change the values and
+        click Schedule.
+
+        Flow:
+        1. Click edit triangle on row → popup opens with schedule pre-expanded
+        2. Click date picker → change date
+        3. Clear time input → type new time
+        4. Click "Schedule" button
+        5. ESC to dismiss if needed
+
+        Args:
+            row_element: The ytcp-video-row Selenium element
+            new_date: Target date like "Feb 5, 2026"
+            new_time: Target time like "2:00 PM"
+
+        Returns:
+            True if rescheduled successfully
+        """
+        try:
+            # Step 1: Open the popup
+            if not self._click_visibility_edit_on_row(row_element):
+                return False
+            time_module.sleep(1.0)
+
+            # Step 2: Set the new date (reuse dom's date picker)
+            if not self._set_date_in_popup(new_date):
+                logger.warning("[CPS-RESCHED] Failed to set date — dismissing popup")
+                self._dismiss_popup()
+                return False
+            time_module.sleep(0.5)
+
+            # Step 3: Set the new time (reuse dom's time setter)
+            if not self._set_time_in_popup(new_time):
+                logger.warning("[CPS-RESCHED] Failed to set time — dismissing popup")
+                self._dismiss_popup()
+                return False
+            time_module.sleep(0.5)
+
+            # Step 4: Click Schedule button
+            if not self._click_popup_schedule_button():
+                logger.warning("[CPS-RESCHED] Failed to click Schedule — dismissing popup")
+                self._dismiss_popup()
+                return False
+
+            logger.info(f"[CPS-RESCHED] Rescheduled via inline popup → {new_date} {new_time}")
+            return True
+
+        except Exception as e:
+            logger.error(f"[CPS-RESCHED] Inline reschedule failed: {e}")
+            self._dismiss_popup()
+            return False
+
     def refresh_page(self):
         """F5 refresh after scheduling. Scheduled videos disappear from unlisted list."""
         try:
@@ -705,7 +947,7 @@ class ContentPageScheduler:
     # CALENDAR AUDIT
     # ============================================================
 
-    def audit_calendar(self, channel_key: str) -> Dict:
+    def audit_calendar(self, channel_key: str, max_per_day: int = 3) -> Dict:
         """
         Audit the scheduling calendar for a channel.
 
@@ -778,10 +1020,11 @@ class ContentPageScheduler:
         # Detect heavy days (more than max_per_day)
         heavy_days = []
         for date, videos in date_map.items():
-            if len(videos) > 8:  # More than 8 per day
+            if len(videos) > max_per_day:
                 heavy_days.append({
                     "date": date,
                     "count": len(videos),
+                    "excess": len(videos) - max_per_day,
                 })
 
         # Build recommendations
@@ -792,9 +1035,10 @@ class ContentPageScheduler:
                 "Reschedule to spread them out."
             )
         if heavy_days:
+            total_excess = sum(d["excess"] for d in heavy_days)
             recommendations.append(
-                f"CLUSTERING: {len(heavy_days)} days have >8 videos. "
-                "Spread across more dates."
+                f"CLUSTERING: {len(heavy_days)} days exceed {max_per_day}/day limit "
+                f"({total_excess} excess videos need redistribution)."
             )
         if not conflicts and not heavy_days:
             recommendations.append("Calendar looks clean — no conflicts or clustering detected.")
@@ -803,9 +1047,11 @@ class ContentPageScheduler:
             "channel": channel_key,
             "total_scheduled": len(all_scheduled),
             "unique_dates": len(date_map),
+            "max_per_day": max_per_day,
             "conflicts": conflicts,
             "heavy_days": heavy_days,
             "recommendations": recommendations,
+            "date_map": {d: len(v) for d, v in sorted(date_map.items())},
             "videos": all_scheduled,
         }
 
@@ -825,7 +1071,7 @@ class ContentPageScheduler:
         conflicts: List[Dict],
         tracker,
         time_slots: List[str],
-        max_per_day: int = 8,
+        max_per_day: int = 3,
     ) -> Dict:
         """
         Resolve scheduling conflicts by rescheduling duplicate-slot videos.
@@ -889,6 +1135,139 @@ class ContentPageScheduler:
         logger.info(
             f"[CPS-RESOLVE] Done: {results['rescheduled']} rescheduled, "
             f"{results['failed']} failed"
+        )
+        return results
+
+    async def thin_schedule(
+        self,
+        audit_result: Dict,
+        tracker,
+        time_slots: List[str],
+        max_per_day: int = 3,
+    ) -> Dict:
+        """
+        Thin out overcrowded days by redistributing excess videos to future dates.
+
+        2026-02-04: Created for schedule conflict management. When too many videos
+        are scheduled on the same day (e.g., 8 shorts on Apr 3), this spreads
+        them across subsequent days respecting the max_per_day limit.
+
+        Algorithm:
+        1. Sort heavy days by date
+        2. For each heavy day, keep first max_per_day videos, move the rest
+        3. Assign excess videos to the next available date/time slot
+        4. Time spacing: at least 4 hours between videos on same day
+
+        Args:
+            audit_result: Dict from audit_calendar() with heavy_days and videos
+            tracker: ScheduleTracker instance
+            time_slots: Available time slots (e.g., ["8:00 AM", "2:00 PM", "8:00 PM"])
+            max_per_day: Max videos per day (default 3 for shorts)
+
+        Returns:
+            Dict with rescheduled count and details
+        """
+        results = {"rescheduled": 0, "failed": 0, "skipped": 0, "details": []}
+
+        heavy_days = audit_result.get("heavy_days", [])
+        if not heavy_days:
+            logger.info("[CPS-THIN] No heavy days — schedule is balanced")
+            return results
+
+        # Group videos by date from the audit
+        all_videos = audit_result.get("videos", [])
+        date_videos = defaultdict(list)
+        for v in all_videos:
+            date = v.get("date", "")
+            if date:
+                date_videos[date].append(v)
+
+        # Sort heavy days chronologically
+        heavy_days_sorted = sorted(heavy_days, key=lambda d: d["date"])
+        total_excess = sum(d["excess"] for d in heavy_days_sorted)
+        logger.info(
+            f"[CPS-THIN] Thinning {total_excess} excess videos "
+            f"from {len(heavy_days_sorted)} overcrowded days"
+        )
+
+        for day_info in heavy_days_sorted:
+            date = day_info["date"]
+            excess_count = day_info["excess"]
+            day_videos = date_videos.get(date, [])
+
+            if len(day_videos) <= max_per_day:
+                continue
+
+            # Keep first max_per_day, move the rest
+            videos_to_move = day_videos[max_per_day:]
+            logger.info(
+                f"[CPS-THIN] {date}: keeping {max_per_day}, "
+                f"moving {len(videos_to_move)} excess videos"
+            )
+
+            # Get current row elements on the page for inline popup rescheduling
+            rows = self.driver.find_elements(By.CSS_SELECTOR, "ytcp-video-row")
+
+            for idx, video_info in enumerate(videos_to_move):
+                video_id = video_info.get("video_id", "")
+                if not video_id:
+                    results["skipped"] += 1
+                    continue
+
+                slot = tracker.get_next_available_slot(time_slots, max_per_day)
+                if slot is None:
+                    logger.warning(f"[CPS-THIN] No slots available for {video_id}")
+                    results["failed"] += 1
+                    continue
+
+                new_date, new_time = slot
+                logger.info(
+                    f"[CPS-THIN] Moving {video_id}: {date} → {new_date} {new_time}"
+                )
+
+                # Find the row element for this video
+                row_element = None
+                for row in rows:
+                    try:
+                        link = row.find_element(By.CSS_SELECTOR, self.sel.VIDEO_TITLE_LINK)
+                        href = link.get_attribute("href") or ""
+                        if video_id in href:
+                            row_element = row
+                            break
+                    except Exception:
+                        continue
+
+                if row_element:
+                    # Use inline popup rescheduling (fast, stays on content page)
+                    success = self.reschedule_row_inline(row_element, new_date, new_time)
+                else:
+                    # Fallback: navigate to edit page
+                    logger.debug(f"[CPS-THIN] Row not found for {video_id}, using edit page")
+                    try:
+                        self.dom.navigate_to_video(video_id)
+                        time_module.sleep(2)
+                        success = self.dom.schedule_video(new_date, new_time)
+                    except Exception as e:
+                        logger.error(f"[CPS-THIN] Edit page reschedule failed: {e}")
+                        success = False
+
+                if success:
+                    tracker.increment(new_date, video_id)
+                    results["rescheduled"] += 1
+                    results["details"].append({
+                        "video_id": video_id,
+                        "title": video_info.get("title", ""),
+                        "from_date": date,
+                        "to": f"{new_date} {new_time}",
+                    })
+                else:
+                    results["failed"] += 1
+
+                await asyncio.sleep(self.dom.human_delay(2.0, 1.0))
+
+        logger.info(
+            f"[CPS-THIN] Done: {results['rescheduled']} moved, "
+            f"{results['failed']} failed, {results['skipped']} skipped"
         )
         return results
 

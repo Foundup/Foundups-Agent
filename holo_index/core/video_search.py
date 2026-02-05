@@ -156,7 +156,11 @@ class VideoContentIndex:
         self.model = None
         self.model_name = model_name
         
-        logger.info(f"[VIDEO-INDEX] Initialized with {self.collection.count()} segments")
+        try:
+            seg_count = self.collection.count()
+            logger.info(f"[VIDEO-INDEX] Initialized with {seg_count} segments")
+        except Exception as e:
+            logger.warning(f"[VIDEO-INDEX] Initialized (count unavailable: {e})")
     
     def _ensure_collection(self):
         """Get or create the video segments collection."""

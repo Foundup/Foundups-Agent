@@ -34,7 +34,15 @@ class DAEVitals:
     fallback_count: int = 0
     channels_processed: int = 0
     channels_skipped: int = 0
-    
+
+    # Activity tracking
+    current_activity: str = "idle"
+    scheduling_cycles: int = 0
+    indexing_cycles: int = 0
+    videos_scheduled: int = 0
+    videos_indexed: int = 0
+    videos_tagged: int = 0
+
     # Timestamps
     session_start: float = field(default_factory=time.time)
     last_heartbeat: float = field(default_factory=time.time)
@@ -74,6 +82,28 @@ class DAEVitals:
             self.channels_processed += 1
         else:
             self.channels_skipped += 1
+        self.heartbeat()
+
+    def record_activity_start(self, activity: str) -> None:
+        """Record start of a new activity phase."""
+        self.current_activity = activity
+        self.heartbeat()
+
+    def record_scheduling_cycle(self, videos_scheduled: int = 0) -> None:
+        """Record a scheduling cycle completion."""
+        self.scheduling_cycles += 1
+        self.videos_scheduled += videos_scheduled
+        self.heartbeat()
+
+    def record_indexing_cycle(self, videos_indexed: int = 0) -> None:
+        """Record an indexing cycle completion."""
+        self.indexing_cycles += 1
+        self.videos_indexed += videos_indexed
+        self.heartbeat()
+
+    def record_tagging(self, count: int = 1) -> None:
+        """Record videos tagged with Gemini-generated hashtags."""
+        self.videos_tagged += count
         self.heartbeat()
     
     @property
@@ -123,32 +153,42 @@ class DAEVitals:
     def to_dashboard(self) -> str:
         """Format vitals as console dashboard for 012 observation."""
         status = self.get_status_emoji()
-        
+
         # Base metrics (always show)
         parts = [
             f"[VITALS] {status}",
+            f"🎯 {self.current_activity.upper()}",
             f"❤️ {self.ops_per_minute:.1f} ops/min",
             f"🩸 {self.error_rate*100:.1f}% errors",
         ]
-        
+
         # Only show warnings if non-zero
         if self.oops_count > 0:
             parts.append(f"⚠️ {self.oops_count} oops")
         if self.fallback_count > 0:
             parts.append(f"🔄 {self.fallback_count} fallbacks")
-        
+
+        # Activity-specific metrics (only if > 0)
+        if self.videos_scheduled > 0:
+            parts.append(f"📅 {self.videos_scheduled} scheduled")
+        if self.videos_indexed > 0:
+            parts.append(f"📚 {self.videos_indexed} indexed")
+        if self.videos_tagged > 0:
+            parts.append(f"🏷️ {self.videos_tagged} tagged")
+
         # Progress (always show)
         total_channels = self.channels_processed + self.channels_skipped
         if total_channels > 0:
             parts.append(f"📂 {self.channels_processed}/{total_channels} channels")
-        
+
         parts.append(f"🧠 {self.session_minutes:.0f}min")
-        
+
         return " | ".join(parts)
     
     def to_dict(self) -> Dict[str, Any]:
         """Serialize for telemetry/reporting."""
         return {
+            "current_activity": self.current_activity,
             "ops_count": self.ops_count,
             "error_count": self.error_count,
             "error_rate": self.error_rate,
@@ -156,6 +196,11 @@ class DAEVitals:
             "fallback_count": self.fallback_count,
             "channels_processed": self.channels_processed,
             "channels_skipped": self.channels_skipped,
+            "scheduling_cycles": self.scheduling_cycles,
+            "indexing_cycles": self.indexing_cycles,
+            "videos_scheduled": self.videos_scheduled,
+            "videos_indexed": self.videos_indexed,
+            "videos_tagged": self.videos_tagged,
             "session_minutes": self.session_minutes,
             "ops_per_minute": self.ops_per_minute,
             "is_critical": self.is_critical(),

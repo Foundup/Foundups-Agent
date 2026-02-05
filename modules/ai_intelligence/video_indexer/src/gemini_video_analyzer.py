@@ -809,6 +809,82 @@ Identify any actionable items or announcements."""
 
 
 # =============================================================================
+# Hashtag Generation
+# =============================================================================
+
+# Generic/banned terms that don't add SEO value
+_BANNED_HASHTAGS = {
+    "video", "youtube", "content", "watch", "subscribe", "like",
+    "comment", "share", "channel", "live", "stream", "trending",
+    "viral", "new", "today", "update", "episode", "part",
+}
+
+
+def suggest_hashtags(
+    analysis: GeminiAnalysisResult,
+    max_tags: int = 15,
+    max_chars: int = 30,
+) -> List[str]:
+    """
+    Generate YouTube hashtags from Gemini video analysis.
+
+    Extracts topics, key points, and speakers from the analysis and
+    converts them to SEO-friendly hashtags.
+
+    Args:
+        analysis: GeminiAnalysisResult from analyze_video()
+        max_tags: Maximum number of hashtags to return
+        max_chars: Maximum characters per hashtag (excluding #)
+
+    Returns:
+        List of hashtags like ["#japan", "#visa", "#tokyo"]
+    """
+    import re
+
+    raw_terms: List[str] = []
+
+    # Primary source: topics extracted by Gemini
+    raw_terms.extend(analysis.topics or [])
+
+    # Secondary: key points (extract nouns/phrases)
+    for kp in (analysis.key_points or [])[:5]:
+        # Take first 3 words of each key point as potential tag
+        words = kp.split()[:3]
+        raw_terms.append(" ".join(words))
+
+    # Tertiary: speakers (if named)
+    for speaker in (analysis.speakers or []):
+        if speaker and speaker.lower() not in ("unknown", "narrator", "speaker"):
+            raw_terms.append(speaker)
+
+    # Deduplicate and format
+    seen: set = set()
+    hashtags: List[str] = []
+
+    for term in raw_terms:
+        if not term:
+            continue
+        # Normalize: lowercase, remove non-alphanumeric (keep spaces for multi-word)
+        clean = re.sub(r"[^a-z0-9\s]", "", term.lower()).strip()
+        if not clean or clean in _BANNED_HASHTAGS:
+            continue
+
+        # Convert to hashtag: remove spaces or camelCase
+        tag = clean.replace(" ", "")
+        if len(tag) > max_chars or len(tag) < 2:
+            continue
+
+        if tag not in seen:
+            seen.add(tag)
+            hashtags.append(f"#{tag}")
+
+        if len(hashtags) >= max_tags:
+            break
+
+    return hashtags
+
+
+# =============================================================================
 # Utility Functions
 # =============================================================================
 

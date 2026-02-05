@@ -7,8 +7,9 @@ import pytest
 def test_comment_drafter_draft():
     """Test basic draft generation."""
     from modules.ai_intelligence.digital_twin.src.comment_drafter import CommentDrafter
-    
-    drafter = CommentDrafter()
+    from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
+
+    drafter = CommentDrafter(voice_memory=VoiceMemory(include_videos=False))
     
     draft = drafter.draft(
         thread_context="How do I get a work visa for Japan?",
@@ -29,6 +30,7 @@ def test_comment_drafter_applies_guardrails():
         LocalLLM,
     )
     from modules.ai_intelligence.digital_twin.src.style_guardrails import StyleGuardrails
+    from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
     
     # Mock LLM that returns text with filler
     class MockLLM:
@@ -36,7 +38,7 @@ def test_comment_drafter_applies_guardrails():
         def generate(self, prompt, snippets, max_tokens=300):
             return "Sure! I think this is a great question about Japan visas."
     
-    drafter = CommentDrafter(llm=MockLLM())
+    drafter = CommentDrafter(voice_memory=VoiceMemory(include_videos=False), llm=MockLLM())
     draft = drafter.draft(thread_context="Japan visa", platform="youtube")
     
     # Filler should be stripped
@@ -50,8 +52,9 @@ def test_comment_drafter_applies_guardrails():
 def test_comment_drafter_confidence_reduces_on_violations():
     """Test that confidence decreases with violations."""
     from modules.ai_intelligence.digital_twin.src.comment_drafter import CommentDrafter
-    
-    drafter = CommentDrafter()
+    from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
+
+    drafter = CommentDrafter(voice_memory=VoiceMemory(include_videos=False))
     
     # Normal draft
     draft1 = drafter.draft(thread_context="Japan business", platform="youtube")

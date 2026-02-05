@@ -24,11 +24,11 @@ def test_voice_memory_build_and_query():
                 json.dump(sample, f)
             
             # Build index
-            vm = VoiceMemory()
+            vm = VoiceMemory(include_videos=False)
             count = vm.build_index(corpus_dir, index_dir)
-            
+
             assert count == 2
-            
+
             # Query
             results = vm.query("How do I get a visa for Japan?", k=2)
             
@@ -40,10 +40,10 @@ def test_voice_memory_build_and_query():
 def test_voice_memory_empty_corpus():
     """Test handling of empty corpus."""
     from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
-    
+
     with tempfile.TemporaryDirectory() as corpus_dir:
         with tempfile.TemporaryDirectory() as index_dir:
-            vm = VoiceMemory()
+            vm = VoiceMemory(include_videos=False)
             count = vm.build_index(corpus_dir, index_dir)
             
             assert count == 0
@@ -52,8 +52,8 @@ def test_voice_memory_empty_corpus():
 def test_voice_memory_query_no_index():
     """Test query with no index returns empty."""
     from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
-    
-    vm = VoiceMemory()
+
+    vm = VoiceMemory(include_videos=False)
     results = vm.query("test query", k=5)
     
     assert results == []
@@ -62,15 +62,15 @@ def test_voice_memory_query_no_index():
 def test_voice_memory_stats():
     """Test get_stats returns correct info."""
     from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
-    
+
     with tempfile.TemporaryDirectory() as corpus_dir:
         with tempfile.TemporaryDirectory() as index_dir:
             sample = [{"text": "Test comment", "id": "c1", "type": "comment"}]
-            
+
             with open(f"{corpus_dir}/sample.json", "w") as f:
                 json.dump(sample, f)
-            
-            vm = VoiceMemory()
+
+            vm = VoiceMemory(include_videos=False)
             vm.build_index(corpus_dir, index_dir)
             
             stats = vm.get_stats()

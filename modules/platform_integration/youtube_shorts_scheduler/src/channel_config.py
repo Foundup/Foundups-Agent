@@ -1,12 +1,12 @@
-"""
+﻿"""
 Channel Configuration for YouTube Shorts Scheduler
 
-Multi-channel support for Move2Japan, UnDaoDu, FoundUps, and RavingANTIFA.
+Multi-channel support driven by the shared YouTube channel registry.
 
 FLUID DUAL-BROWSER ARCHITECTURE (2026-01-29):
 Both browsers have BOTH Google accounts logged in, so any browser can access any channel.
-- Chrome (9222): Can access ALL 4 channels via account picker
-- Edge (9223): Can access ALL 4 channels via account picker
+- Chrome (9222): Can access ALL channels via account picker
+- Edge (9223): Can access ALL channels via account picker
 
 Account Picker Structure (same on both browsers):
 - Section 0 (Google Account A): UnDaoDu, Move2Japan
@@ -21,82 +21,41 @@ from urllib.parse import quote
 import json
 import socket
 
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channels
+
 # Browser ports
 CHROME_PORT = 9222
 EDGE_PORT = 9223
 ALL_PORTS = [CHROME_PORT, EDGE_PORT]
 
-# Channel configurations
-CHANNELS: Dict[str, Dict[str, Any]] = {
-    "move2japan": {
-        "id": "UC-LSSlOZwpGIRIYihaz8zCw",
-        "name": "Move2Japan",
-        "handle": "@MOVE2JAPAN",
-        "timezone": "Asia/Tokyo",
-        # 8 slots every 3hrs (JST): midnight→9PM covers full day
-        "time_slots": [
-            "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
-            "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
-        ],
-        "max_per_day": 8,
-        "chrome_port": 9222,  # Legacy: preferred port
-        "preferred_port": 9222,  # Minimize account switches (same Google account as UnDaoDu)
-        "available_ports": [9222, 9223],  # Fluid: both browsers can access
-        "account_section": 0,  # Account picker section index
-        "description_template": "ffcpln",
-    },
-    "undaodu": {
-        "id": "UCfHM9Fw9HD-NwiS0seD_oIA",
-        "name": "UnDaoDu",
-        "handle": "@UnDaoDu",
-        "timezone": "Asia/Tokyo",
-        # 8 slots every 3hrs (JST): midnight→9PM covers full day
-        "time_slots": [
-            "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
-            "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
-        ],
-        "max_per_day": 8,
-        "chrome_port": 9222,  # Legacy: preferred port
-        "preferred_port": 9222,  # Minimize account switches (same Google account as Move2Japan)
-        "available_ports": [9222, 9223],  # Fluid: both browsers can access
-        "account_section": 0,  # Account picker section index
-        "description_template": "ffcpln",
-    },
-    "foundups": {
-        "id": "UCSNTUXjAgpd4sgWYP0xoJgw",
-        "name": "FoundUps",
-        "handle": "@FoundUps",
-        "timezone": "America/New_York",
-        # 8 slots every 3hrs (ET): midnight→9PM, evening-weighted for US audience
-        "time_slots": [
-            "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
-            "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
-        ],
-        "max_per_day": 8,
-        "chrome_port": 9223,  # Legacy: preferred port
-        "preferred_port": 9223,  # Minimize account switches (same Google account as RavingANTIFA)
-        "available_ports": [9222, 9223],  # Fluid: both browsers can access
-        "account_section": 1,  # Account picker section index
-        "description_template": "ffcpln",
-    },
-    "ravingantifa": {
-        "id": "UCVSmg5aOhP4tnQ9KFUg97qA",
-        "name": "RavingANTIFA",
-        "handle": "@ravingANTIFA",
-        "timezone": "America/New_York",
-        # 8 slots every 3hrs (ET): midnight→9PM, evening-weighted for US audience
-        "time_slots": [
-            "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
-            "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
-        ],
-        "max_per_day": 8,
-        "chrome_port": 9223,  # Legacy: preferred port
-        "preferred_port": 9223,  # Minimize account switches (same Google account as FoundUps)
-        "available_ports": [9222, 9223],  # Fluid: both browsers can access
-        "account_section": 1,  # Account picker section index
-        "description_template": "ffcpln",
-    },
-}
+
+def _build_channel_config() -> Dict[str, Dict[str, Any]]:
+    """Build channel config dict from shared registry."""
+    channels: Dict[str, Dict[str, Any]] = {}
+    for ch in get_channels(role="shorts"):
+        key = ch.get("key")
+        if not key:
+            continue
+        browser = ch.get("browser") or {}
+        shorts = ch.get("shorts") or {}
+        channels[key] = {
+            "id": ch.get("id"),
+            "name": ch.get("name"),
+            "handle": ch.get("handle"),
+            "timezone": ch.get("timezone"),
+            "time_slots": shorts.get("time_slots") or [],
+            "max_per_day": shorts.get("max_per_day", 8),
+            "chrome_port": browser.get("preferred_port", CHROME_PORT),
+            "preferred_port": browser.get("preferred_port", CHROME_PORT),
+            "available_ports": browser.get("available_ports", ALL_PORTS),
+            "account_section": browser.get("account_section", 0),
+            "description_template": shorts.get("description_template", "ffcpln"),
+        }
+    return channels
+
+
+# Channel configurations (registry-driven)
+CHANNELS: Dict[str, Dict[str, Any]] = _build_channel_config()
 
 
 def is_port_available(port: int) -> bool:

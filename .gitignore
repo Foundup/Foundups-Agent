@@ -297,3 +297,35 @@ undaodu/
 
 # LinkedIn agent identity/account data (per-environment config)
 modules/platform_integration/linkedin_agent/data/linkedin_*.json
+
+# Generated reports and diagnostics (ephemeral per-session)
+holo_index/reports/
+**/reports/*.md
+**/reports/*.json
+
+# HoloIndex output history (runtime telemetry)
+holo_index/holo_index/output/holo_output_history.jsonl
+
+# Claude Code user-specific settings
+.claude/settings.json
+.claude/settings.local.json
+
+# One-off debug/fix scripts (prefixed _ = personal utility)
+scripts/_*.py
+scripts/fix_*.py
+scripts/check_*.py
+scripts/check_*.sh
+scripts/restart_*.sh
+scripts/verify_*.sh
+scripts/get_*.py
+scripts/close_*.py
+scripts/approve_*.py
+scripts/test_*.py
+scripts/wsl_*.sh
+
+# WSP agentic runtime state (changes every session)
+WSP_agentic/agentic_journals/awakening/0102_state_v2.json
+WSP_agentic/agentic_journals/awakening/awareness_log.md
+
+# Data directories (runtime scraped/generated data)
+data/

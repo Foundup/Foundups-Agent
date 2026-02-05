@@ -5,8 +5,8 @@ YouTube Shorts Scheduler - Launch Script
 WSP 62 Compliance: Extracted to scripts/launch.py for main.py integration.
 
 Browser Port Routing:
-- Chrome (9222): Move2Japan, UnDaoDu
-- Edge (9223): FoundUps, RavingANTIFA
+- Chrome (9222): Registry-driven
+- Edge (9223): Registry-driven
 
 Usage:
     from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import run_shorts_scheduler
@@ -18,19 +18,31 @@ Usage:
 
 import logging
 from typing import Optional, List
+from modules.infrastructure.shared_utilities.youtube_channel_registry import group_channels_by_browser, get_channel_by_key
 
 logger = logging.getLogger(__name__)
 
-# Browser-channel mappings for rotation
-BROWSER_CHANNELS = {
-    "chrome": ["move2japan", "undaodu"],
-    "edge": ["foundups", "ravingantifa"],
-}
+def _build_browser_channels() -> dict:
+    grouped = group_channels_by_browser(role="shorts")
+    return {
+        "chrome": [ch["key"] for ch in grouped.get("chrome", [])],
+        "edge": [ch["key"] for ch in grouped.get("edge", [])],
+    }
+
+
+# Browser-channel mappings for rotation (registry-driven)
+BROWSER_CHANNELS = _build_browser_channels()
 
 BROWSER_PORTS = {
     "chrome": 9222,
     "edge": 9223,
 }
+
+# Fallback time slots when channel config unavailable
+_DEFAULT_TIME_SLOTS_FALLBACK = [
+    "12:00 AM", "3:00 AM", "6:00 AM", "9:00 AM",
+    "12:00 PM", "3:00 PM", "6:00 PM", "9:00 PM",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -666,6 +678,61 @@ def run_multi_channel_scheduler(
             unlisted_found = scheduled + errors + len(channel_results.get("skipped", []))
             _record_channel_result(channel_key, schedule_cache, unlisted_found, len(channel_results.get("skipped", [])))
             
+            # 2026-02-05: VIDEO PROCESSING PASS — process Videos tab for channels
+            # that produce uploads (vlogs), not just shorts (FFCPLN songs).
+            # Gated by YT_VIDEO_PROCESSING_ENABLED env var (default: false).
+            video_processing_enabled = os.getenv("YT_VIDEO_PROCESSING_ENABLED", "false").lower() in ("1", "true", "yes")
+            if video_processing_enabled:
+                reg_channel = get_channel_by_key(channel_key)
+                channel_content_types = (reg_channel or {}).get("content_types", ["short"])
+                if "upload" in channel_content_types:
+                    print(f"\n[VIDEO] Processing Videos tab for {channel_key}...")
+                    try:
+                        from modules.platform_integration.youtube_shorts_scheduler.src.content_page_scheduler import ContentPageScheduler
+                        from modules.platform_integration.youtube_shorts_scheduler.src.schedule_tracker import ScheduleTracker
+
+                        vps = ContentPageScheduler(driver)
+                        if vps.navigate_to_content(channel_key, content_type="upload", visibility="UNLISTED"):
+                            vps_tracker = ScheduleTracker(channel_key)
+                            vps_config = None
+                            try:
+                                from modules.platform_integration.youtube_shorts_scheduler.src.channel_config import get_channel_config
+                                vps_config = get_channel_config(channel_key)
+                            except Exception:
+                                pass
+
+                            vps_time_slots = (vps_config or {}).get("time_slots", _DEFAULT_TIME_SLOTS_FALLBACK)
+                            vps_max = min(max_per_channel, 5)  # Conservative for videos
+
+                            vps_results = asyncio.run(
+                                vps.schedule_all_visible(
+                                    tracker=vps_tracker,
+                                    time_slots=vps_time_slots,
+                                    max_per_day=4,  # Lower rate for long-form videos
+                                    max_videos=vps_max,
+                                    stop_event=stop_event,
+                                )
+                            )
+
+                            vps_scheduled = vps_results.get("total_scheduled", 0)
+                            vps_errors = vps_results.get("total_errors", 0)
+                            print(f"[VIDEO] {channel_key}: {vps_scheduled} videos scheduled, {vps_errors} errors")
+
+                            # Track in vitals
+                            vitals.record_scheduling_cycle(vps_scheduled)
+                            for _ in range(vps_scheduled):
+                                vitals.record_op(success=True)
+                            for _ in range(vps_errors):
+                                vitals.record_op(success=False)
+
+                            # Store video results alongside shorts
+                            results["channels"][f"{channel_key}_videos"] = vps_results
+                        else:
+                            print(f"[VIDEO] Navigation to Videos tab failed for {channel_key}")
+                    except Exception as vps_err:
+                        print(f"[VIDEO] Video processing error for {channel_key}: {vps_err}")
+                        logger.error(f"Video processing error: {vps_err}", exc_info=True)
+
             # AUTO-STOP: Check for critical vitals
             alert = vitals.check_and_alert()
             if alert:
@@ -739,6 +806,24 @@ def run_multi_channel_scheduler(
                     print(f"[FALLBACK] CPS not available: {cps_ie}")
                 except Exception as cps_err:
                     print(f"[FALLBACK] CPS failed: {cps_err}")
+
+    # 2026-02-05: CALENDAR AUDIT — detect scheduling conflicts after rotation.
+    # Gated by YT_SCHEDULE_AUDIT_ENABLED (default: true).
+    audit_enabled = os.getenv("YT_SCHEDULE_AUDIT_ENABLED", "true").lower() in ("1", "true", "yes")
+    if audit_enabled and not dry_run and not results.get("abort"):
+        print(f"\n[AUDIT] Running calendar audit for {len(channels)} channels...")
+        for channel_key_audit in channels:
+            try:
+                from modules.platform_integration.youtube_shorts_scheduler.src.content_page_scheduler import ContentPageScheduler
+                audit_cps = ContentPageScheduler(driver)
+                audit_result = audit_cps.audit_calendar(channel_key_audit, max_per_day=8)
+                conflicts = len(audit_result.get("conflicts", []))
+                heavy_days = len(audit_result.get("heavy_days", []))
+                total_scheduled = audit_result.get("total_scheduled", 0)
+                print(f"[AUDIT] {channel_key_audit}: {total_scheduled} scheduled, {conflicts} conflicts, {heavy_days} heavy days")
+                results["channels"].setdefault(channel_key_audit, {})["audit"] = audit_result
+            except Exception as audit_err:
+                print(f"[AUDIT] {channel_key_audit} audit failed: {audit_err}")
 
     # Summary
     print("\n" + "=" * 60)
