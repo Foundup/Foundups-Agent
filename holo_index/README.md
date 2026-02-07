@@ -1,4 +1,4 @@
-﻿# HoloIndex - Brain Surgeon Level Code Intelligence System
+# HoloIndex - Brain Surgeon Level Code Intelligence System
 
 ## [ALERT] REVOLUTIONARY EVOLUTION (2025-10-17): WSP 97 System Execution Prompting Protocol
 
@@ -95,6 +95,10 @@ HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 - **ASCII-Only Signals**: Success/error banners are pure ASCII (`[GREEN]`, `[YELLOW]`, `[ERROR]`) so Unicode scrubbers stay dormant by default.
 - **Single Rendering Path**: CLI search results are routed through `throttler.display_results()` + `render_prioritized_output()`—no duplicate collate logic.
 - **Adaptive History**: Each run asynchronously logs code/WSP hit counts plus advisor/todo metadata, feeding Gemma/Qwen learning without blocking the CLI loop.
+- **Memory Value Score (MVS)**: `[MEMORY]` cards include a 1-10 score derived from doc type priority plus entrypoint/WSP foundation boosts.
+- **History Gating**: Output history logging can be limited with `HOLO_OUTPUT_HISTORY_MODE=verbose|errors|signals` and rotated via `HOLO_OUTPUT_HISTORY_MAX_MB` (default 10MB).
+- **Intent Verbosity Caps**: OutputComposer now enforces per-intent limits (minimal/balanced/detailed) to keep results only to what 0102 needs.
+- **Bundle Fastpath**: `--bundle-json` with `HOLO_SKIP_MODEL=1` now includes path-based code hits when `--bundle-module-hint` is provided.
 ## Revolutionary Architecture
 
 ### [AI] HoloDAE - Chain-of-Thought Logging for Recursive Self-Improvement
@@ -120,10 +124,57 @@ When 0102 runs a search, HoloDAE executes current features (health checks, vibec
 
 ### [SEARCH] Enhanced Search Intelligence
 - **Vector Database**: ChromaDB for semantic similarity
+- **Video Index Safety**: Subprocess health probe + safe batch indexing to avoid native segfaults
 - **Dual Search**: Code + WSP documentation
 - **NAVIGATION.py Integration**: Problem->Solution mapping
 - **Adaptive Learning**: Query enhancement and pattern learning
 - **Automatic Health Checks**: Every search triggers module dependency analysis
+- **Ghost Hit Filtering**: Similarity threshold (`HOLO_MIN_SIMILARITY=0.35`) eliminates low-relevance results near vector centroid
+- **Robust Deduplication**: Path normalization (Windows/Unix, absolute/relative) prevents duplicate hits
+- **Batched Symbol Indexing**: ChromaDB writes chunked at 5000 entries to prevent overflow on large codebases
+- **Quiet by Default**: Chain-of-thought and health OK messages suppressed; enable with `HOLO_VERBOSE=1`
+
+### Search Quality Tuning (Env Vars)
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `HOLO_MIN_SIMILARITY` | `0.35` | Minimum similarity score (0.0-1.0). Increase to reduce noise, decrease for broader recall. |
+| `HOLO_VERBOSE` | `0` | When `1`, prints chain-of-thought orchestration steps and per-module health status to stdout. |
+| `HOLO_OUTPUT_HISTORY_MODE` | `verbose` | Controls history logging: `verbose`, `errors`, `signals`. |
+| `HOLO_OUTPUT_HISTORY_MAX_MB` | `10` | Max size for output history log rotation. |
+| `HOLO_SYMBOL_AUTO` | `1` | Auto-index symbols during `--index-code`. Set `0` to skip. |
+
+### [MEMORY] Retrieval Contract (0102 System)
+HoloIndex is the memory retrieval system. It must be self-maintaining and semantic-first.
+
+Principles:
+- **Semantic first**: meaning-based discovery is the default path.
+- **Symbol-aware**: function/class signatures + docstrings are searchable.
+- **NAVIGATION is minimal**: entry points only, not every new function.
+- **rg is a safety net**: exact-match fallback, not the primary path.
+- **Index once, search forever**: use symbol indexing to keep memory fresh.
+
+Symbol indexing (module-scoped):
+```
+python holo_index.py --index-symbols --symbol-roots modules/ai_intelligence/pqn_alignment
+```
+
+Automatic symbol indexing:
+- `--index-code` now auto-indexes symbols (default roots: `modules/`).
+- Override roots with `HOLO_SYMBOL_ROOTS` or `--symbol-roots`.
+- If `--module` is provided, symbols are scoped to that module.
+- Disable with `HOLO_SYMBOL_AUTO=0`.
+
+If semantic search fails on new work, run symbol indexing before adding NAVIGATION entries.
+
+### Outer Layer Memory Participation (FoundUps Agent Market)
+- FAM artifacts under `modules/foundups/agent_market/` participate in Holo retrieval as module memory targets.
+- Tier-0 retrieval targets for FAM: `README.md` and `INTERFACE.md`.
+- Tier-1 retrieval targets for FAM: `ROADMAP.md`, `ModLog.md`, `tests/TestModLog.md`, and `violations.md`.
+- Distribution contract retrieval target: `src/interfaces.py:DistributionService` and `src/in_memory.py:publish_verified_milestone`.
+- Refresh indexes after spec or contract updates:
+```bash
+python holo_index.py --index-all
+```
 
 ### [BOT] Multi-Agent Coordination
 - **LLM Integration**: Qwen-Coder 1.5B for code understanding

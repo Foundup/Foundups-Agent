@@ -73,11 +73,21 @@
 - **S10: PQN Corroborating Evidence** (PLANNED)
   - Resonance Fingerprinting (harmonic detection)
 
-- **S11: Local LLM Integration (System Agent)** (IN PROGRESS)
+- **S11: Local LLM Integration (System Agent)** (COMPLETED 2026-02-05)
   - **Objective**: Empower Local Qwen/UI Tars to act as PQN DAE Workers.
-  - **Task 11.1**: Architect DAE update to support Local LLM directives.
-  - **Task 11.2**: Local LLM Worker script (generates scripts, analyzes results).
-  - **Task 11.3**: Connect Local LLM to 'Council' loop.
+  - **Task 11.1**: ✅ Architect DAE update to support Local LLM directives.
+    - Added `run_council_with_llm()` method to PQNAlignmentDAE
+    - Added `llm_council` pattern to pattern memory
+    - Updated `get_0102_api()` with local_llm capabilities
+  - **Task 11.2**: ✅ Local LLM Worker script (generates scripts, analyzes results).
+    - Replaced MOCK with real llama_cpp inference (per gemma_rag_inference.py pattern)
+    - Added `ResearchResult` dataclass for structured output
+    - Added `run_research_cycle()` for complete research cycles
+    - Models: qwen-coder-1.5b.gguf, gemma-3-270m-it-Q4_K_M.gguf, UI-TARS-1.5-7B.Q4_K_M.gguf
+  - **Task 11.3**: ✅ Connect Local LLM to 'Council' loop.
+    - Added `council_run_with_llm()` to council/api.py
+    - Added `run_council_evaluation()` for multi-strategy evaluation
+    - Wired to PQN DAE via `run_council_with_llm()` method
 
 - **S9: Stability Frontier Campaign (End-to-End Scientific Slice)**
   - Phase 1 (Discovery): Council run to auto-identify boundary motifs (top-3 unstable, top-3 stable); output `candidates.json`; index via results DB

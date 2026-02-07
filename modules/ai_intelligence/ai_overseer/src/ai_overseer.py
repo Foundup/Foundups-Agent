@@ -40,6 +40,8 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
 # === END UTF-8 ENFORCEMENT ===
 
 import json
+import os
+import sys
 import logging
 import traceback
 from dataclasses import dataclass, field
@@ -92,8 +94,33 @@ try:
 except ImportError:
     AUTOGATE_AVAILABLE = False
 
+# Security Event Correlator (WSP 71/95 incident detection)
+try:
+    from modules.ai_intelligence.ai_overseer.src.security_event_correlator import (
+        SecurityEventCorrelator,
+        SecurityEvent,
+        EventType,
+        ContainmentAction,
+    )
+    CORRELATOR_AVAILABLE = True
+except ImportError:
+    CORRELATOR_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parents[5]
+
+
+def _env_int_with_fallback(primary: str, fallback: Optional[str], default: int) -> int:
+    """Read int env with optional fallback key."""
+    raw = os.getenv(primary)
+    if raw is None and fallback:
+        raw = os.getenv(fallback)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
 
 
 class AgentRole(Enum):
@@ -234,6 +261,64 @@ class AIIntelligenceOverseer:
             except Exception as e:
                 logger.warning(f"[AI-OVERSEER] AutoGate failed to init: {e}")
 
+        # Optional II-Agent adapter (feature-flagged)
+        self.ii_agent = None
+        try:
+            from .ii_agent_adapter import IIAgentAdapter
+            self.ii_agent = IIAgentAdapter(self.repo_root)
+        except Exception as e:
+            logger.debug(f"[AI-OVERSEER] II-Agent adapter unavailable: {e}")
+
+        # OpenClaw security sentinel (skill supply-chain preflight)
+        self.openclaw_security_sentinel = None
+        try:
+            from .openclaw_security_sentinel import OpenClawSecuritySentinel
+            self.openclaw_security_sentinel = OpenClawSecuritySentinel(self.repo_root)
+            logger.info("[AI-OVERSEER] OpenClaw security sentinel initialized")
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] OpenClaw security sentinel unavailable: {e}")
+        self.openclaw_security_monitor_task = None
+        self.openclaw_security_last_status: Optional[Dict[str, Any]] = None
+        self.openclaw_security_alert_dedupe_sec = int(
+            os.getenv("OPENCLAW_SECURITY_ALERT_DEDUPE_SEC", "900")
+        )
+        self.openclaw_security_alert_history: Dict[str, float] = {}
+        # Keep legacy OPENCLAW_INCIDENT_DEDUPE_SEC as fallback to avoid config drift.
+        self.openclaw_incident_alert_dedupe_sec = _env_int_with_fallback(
+            "OPENCLAW_INCIDENT_ALERT_DEDUPE_SEC",
+            "OPENCLAW_INCIDENT_DEDUPE_SEC",
+            60,
+        )
+        self.openclaw_incident_alert_history: Dict[str, float] = {}
+        self.openclaw_security_chat_sender = None
+        # Security alert forensics log (JSONL)
+        self.openclaw_security_alert_log = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "openclaw_security_alerts.jsonl"
+        )
+        # Correlated incident alert forensics log (JSONL)
+        self.openclaw_incident_alert_log = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "openclaw_incident_alerts.jsonl"
+        )
+
+        # Security Event Correlator (WSP 71/95 incident detection + containment)
+        self.security_correlator = None
+        if CORRELATOR_AVAILABLE:
+            try:
+                self.security_correlator = SecurityEventCorrelator(self.repo_root)
+                logger.info("[AI-OVERSEER] Security event correlator initialized")
+            except Exception as e:
+                logger.warning("[AI-OVERSEER] Security correlator unavailable: %s", e)
+
         # Priority 1: HoloDAE Telemetry Monitor (dual-channel architecture)
         # Bridges HoloDAE JSONL telemetry → AI Overseer event_queue
         self.telemetry_monitor = None
@@ -300,6 +385,508 @@ class AIIntelligenceOverseer:
         """Save patterns to memory for WSP 48 learning"""
         with open(self.memory_path, 'w', encoding='utf-8') as f:
             json.dump(self.patterns, f, indent=2)
+
+    def monitor_openclaw_security(self, force: bool = False) -> Dict[str, Any]:
+        """
+        Run OpenClaw security sentinel and return normalized gate status.
+
+        This gives AI Overseer a dedicated, auditable security mission for
+        OpenClaw skill supply-chain checks.
+        """
+        if not self.openclaw_security_sentinel:
+            return {
+                "success": False,
+                "available": False,
+                "passed": False,
+                "message": "OpenClaw security sentinel unavailable",
+            }
+
+        try:
+            status = self.openclaw_security_sentinel.check(force=force)
+            status["success"] = bool(status.get("passed", False))
+            self.openclaw_security_last_status = status
+            return status
+        except Exception as exc:
+            logger.error(f"[AI-OVERSEER] OpenClaw security check failed: {exc}")
+            status = {
+                "success": False,
+                "available": False,
+                "passed": False,
+                "message": f"OpenClaw security check failed: {exc}",
+            }
+            self.openclaw_security_last_status = status
+            return status
+
+    async def start_openclaw_security_monitoring(
+        self,
+        interval_sec: Optional[float] = None,
+        force_first: bool = False,
+    ) -> None:
+        """Start periodic OpenClaw security monitoring task."""
+        if not self.openclaw_security_sentinel:
+            logger.warning("[AI-OVERSEER] OpenClaw security monitor not started (sentinel unavailable)")
+            return
+        if self.openclaw_security_monitor_task and not self.openclaw_security_monitor_task.done():
+            return
+
+        if interval_sec is None:
+            interval_sec = float(os.getenv("OPENCLAW_SECURITY_MONITOR_INTERVAL_SEC", "300"))
+        interval_sec = max(float(interval_sec), 5.0)
+
+        loop = asyncio.get_running_loop()
+        self.openclaw_security_monitor_task = loop.create_task(
+            self._run_openclaw_security_monitor_loop(interval_sec=interval_sec, force_first=force_first)
+        )
+        logger.info("[AI-OVERSEER] OpenClaw security monitor started | interval=%.1fs", interval_sec)
+
+    async def stop_openclaw_security_monitoring(self) -> None:
+        """Stop periodic OpenClaw security monitoring task."""
+        if not self.openclaw_security_monitor_task:
+            return
+        self.openclaw_security_monitor_task.cancel()
+        try:
+            await self.openclaw_security_monitor_task
+        except asyncio.CancelledError:
+            pass
+        self.openclaw_security_monitor_task = None
+        logger.info("[AI-OVERSEER] OpenClaw security monitor stopped")
+
+    def get_openclaw_security_status(self) -> Dict[str, Any]:
+        """Return last OpenClaw security status captured by AI Overseer."""
+        if self.openclaw_security_last_status:
+            return self.openclaw_security_last_status
+        return {
+            "success": False,
+            "available": False,
+            "passed": False,
+            "message": "No OpenClaw security check has run in this session",
+        }
+
+    async def _run_openclaw_security_monitor_loop(self, interval_sec: float, force_first: bool) -> None:
+        """Background loop: periodic OpenClaw security checks."""
+        force_next = force_first
+        while True:
+            status = self.monitor_openclaw_security(force=force_next)
+            force_next = False
+
+            if not status.get("passed", False):
+                logger.warning(
+                    "[AI-OVERSEER] OpenClaw security monitor FAIL | enforced=%s required=%s message=%s",
+                    status.get("enforced"),
+                    status.get("required"),
+                    status.get("message"),
+                )
+                await self._emit_openclaw_security_alert(
+                    status,
+                    source="openclaw_security_monitor",
+                )
+            await asyncio.sleep(interval_sec)
+
+    def _openclaw_security_dedupe_key(self, status: Dict[str, Any], source: str) -> str:
+        """Create deterministic dedupe key for OpenClaw security alerts."""
+        return "|".join(
+            [
+                str(source),
+                str(status.get("exit_code", "unknown")),
+                str(status.get("required")),
+                str(status.get("enforced")),
+                str(status.get("max_severity", "medium")),
+                str(status.get("message", "")),
+            ]
+        )
+
+    def _is_openclaw_security_alert_duplicate(self, dedupe_key: str) -> bool:
+        """Return True when alert should be suppressed within dedupe window."""
+        now = time.time()
+        window = max(int(self.openclaw_security_alert_dedupe_sec), 1)
+
+        # Compact old entries to avoid unbounded growth.
+        expired = [k for k, ts in self.openclaw_security_alert_history.items() if (now - ts) > window]
+        for key in expired:
+            self.openclaw_security_alert_history.pop(key, None)
+
+        last_seen = self.openclaw_security_alert_history.get(dedupe_key)
+        if last_seen and (now - last_seen) < window:
+            return True
+
+        self.openclaw_security_alert_history[dedupe_key] = now
+        return False
+
+    def _persist_openclaw_security_alert(self, event: Dict[str, Any], dedupe_key: str) -> None:
+        """Persist security alert to JSONL forensics log (WSP 71)."""
+        try:
+            record = {
+                "timestamp": time.time(),
+                "dedupe_key": dedupe_key,
+                **event,
+            }
+            with open(self.openclaw_security_alert_log, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+            logger.debug("[AI-OVERSEER] Security alert persisted to %s", self.openclaw_security_alert_log)
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed to persist security alert: %s", exc)
+
+    def _openclaw_incident_dedupe_key(self, event: Dict[str, Any]) -> str:
+        """Create deterministic dedupe key for correlated OpenClaw incident alerts."""
+        incident_id = event.get("incident_id")
+        if incident_id:
+            return str(incident_id)
+        return "|".join(
+            [
+                str(event.get("policy_trigger", "unknown")),
+                str(event.get("severity", "unknown")),
+                str(event.get("containment", "none")),
+            ]
+        )
+
+    def _is_openclaw_incident_alert_duplicate(self, dedupe_key: str) -> bool:
+        """Return True when incident alert should be suppressed within dedupe window."""
+        now = time.time()
+        window = max(int(self.openclaw_incident_alert_dedupe_sec), 1)
+
+        expired = [k for k, ts in self.openclaw_incident_alert_history.items() if (now - ts) > window]
+        for key in expired:
+            self.openclaw_incident_alert_history.pop(key, None)
+
+        last_seen = self.openclaw_incident_alert_history.get(dedupe_key)
+        if last_seen and (now - last_seen) < window:
+            return True
+
+        self.openclaw_incident_alert_history[dedupe_key] = now
+        return False
+
+    def _persist_openclaw_incident_alert(self, event: Dict[str, Any], dedupe_key: str) -> None:
+        """Persist incident alert to JSONL forensics log (WSP 71/95)."""
+        try:
+            record = {
+                "timestamp": time.time(),
+                "dedupe_key": dedupe_key,
+                **event,
+            }
+            with open(self.openclaw_incident_alert_log, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+            logger.debug("[AI-OVERSEER] Incident alert persisted to %s", self.openclaw_incident_alert_log)
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed to persist incident alert: %s", exc)
+
+    async def _emit_openclaw_incident_alert(
+        self,
+        event: Dict[str, Any],
+        dedupe_checked: bool = False,
+    ) -> None:
+        """Emit deduped correlated incident alert into Overseer event flow."""
+        normalized_event = dict(event)
+        dedupe_key = normalized_event.get("dedupe_key") or self._openclaw_incident_dedupe_key(normalized_event)
+        normalized_event["dedupe_key"] = dedupe_key
+        normalized_event["event"] = "openclaw_incident_alert"
+
+        if not dedupe_checked:
+            if self._is_openclaw_incident_alert_duplicate(dedupe_key):
+                logger.debug("[AI-OVERSEER] OpenClaw incident alert deduped: %s", dedupe_key)
+                return
+            self._persist_openclaw_incident_alert(normalized_event, dedupe_key)
+
+        if MCP_AVAILABLE and hasattr(self.mcp, "event_queue"):
+            # Mark as pre-deduped so queue consumer only dispatches.
+            normalized_event["_dedupe_checked"] = True
+            await self.mcp.event_queue.put(normalized_event)
+        else:
+            await self._dispatch_openclaw_incident_alert(normalized_event)
+
+    def _build_openclaw_security_alert_event(self, status: Dict[str, Any], source: str) -> Dict[str, Any]:
+        """Build canonical OpenClaw security event payload."""
+        dedupe_key = self._openclaw_security_dedupe_key(status, source)
+        severity = "critical" if status.get("enforced", False) else "warning"
+        return {
+            "event": "openclaw_security_alert",
+            "severity": severity,
+            "source": source,
+            "dedupe_key": dedupe_key,
+            "checked_at": status.get("checked_at", time.time()),
+            "required": bool(status.get("required", True)),
+            "enforced": bool(status.get("enforced", True)),
+            "max_severity": status.get("max_severity", "medium"),
+            "exit_code": status.get("exit_code", -1),
+            "message": status.get("message", "unknown OpenClaw security failure"),
+            "report_path": status.get("report_path"),
+            "skills_dir": status.get("skills_dir"),
+        }
+
+    async def _emit_openclaw_security_alert(self, status: Dict[str, Any], source: str) -> None:
+        """Emit deduped OpenClaw security alert into Overseer event flow."""
+        event = self._build_openclaw_security_alert_event(status, source=source)
+        dedupe_key = event["dedupe_key"]
+        if self._is_openclaw_security_alert_duplicate(dedupe_key):
+            logger.debug("[AI-OVERSEER] OpenClaw security alert deduped: %s", dedupe_key)
+            return
+
+        logger.warning(
+            "[DAEMON][OPENCLAW-SECURITY] event=%s severity=%s exit_code=%s message=%s",
+            event["event"],
+            event["severity"],
+            event["exit_code"],
+            event["message"],
+        )
+
+        # Persist alert to JSONL forensics log
+        self._persist_openclaw_security_alert(event, dedupe_key)
+
+        # Feed to correlator for incident detection
+        if self.security_correlator and CORRELATOR_AVAILABLE:
+            sec_event = SecurityEvent(
+                event_type=EventType.SECURITY_ALERT,
+                timestamp=event.get("checked_at", time.time()),
+                sender="system",
+                channel="security_monitor",
+                details=event,
+                dedupe_key=dedupe_key,
+            )
+            incident = self.security_correlator.ingest_event(sec_event)
+            if incident:
+                await self._handle_incident(incident)
+
+        if MCP_AVAILABLE and hasattr(self.mcp, "event_queue"):
+            await self.mcp.event_queue.put(event)
+        else:
+            await self._dispatch_openclaw_security_alert(event)
+
+    async def _dispatch_openclaw_security_alert(self, event: Dict[str, Any]) -> None:
+        """Dispatch OpenClaw security alert to configured channels."""
+        to_discord = os.getenv("OPENCLAW_SECURITY_ALERT_TO_DISCORD", "1") != "0"
+        to_chat = os.getenv("OPENCLAW_SECURITY_ALERT_TO_CHAT", "0") != "0"
+        to_stdout = os.getenv("OPENCLAW_SECURITY_ALERT_TO_STDOUT", "1") != "0"
+
+        msg = (
+            "[OPENCLAW-SECURITY] "
+            f"severity={event.get('severity')} "
+            f"required={event.get('required')} "
+            f"enforced={event.get('enforced')} "
+            f"exit={event.get('exit_code')} "
+            f"message={event.get('message')}"
+        )
+        report_path = event.get("report_path")
+        if report_path:
+            msg += f" report={report_path}"
+
+        if to_stdout:
+            print(msg)
+
+        try:
+            self.push_status(
+                msg,
+                to_discord=to_discord,
+                to_chat=to_chat and self.openclaw_security_chat_sender is not None,
+                chat_sender=self.openclaw_security_chat_sender,
+            )
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed dispatching OpenClaw security alert: %s", exc)
+
+    async def _dispatch_openclaw_incident_alert(self, event: Dict[str, Any]) -> None:
+        """Dispatch OpenClaw incident alert to configured channels."""
+        to_discord = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_DISCORD", "1") != "0"
+        to_chat = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_CHAT", "0") != "0"
+        to_stdout = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_STDOUT", "1") != "0"
+
+        msg = (
+            "[OPENCLAW-INCIDENT] "
+            f"id={event.get('incident_id', 'unknown')} "
+            f"severity={event.get('severity', 'unknown')} "
+            f"policy={event.get('policy_trigger', 'unknown')} "
+            f"containment={event.get('containment', 'none')}"
+        )
+        event_counts = event.get("event_counts")
+        if isinstance(event_counts, dict) and event_counts:
+            msg += f" counts={json.dumps(event_counts, sort_keys=True)}"
+
+        if to_stdout:
+            print(msg)
+
+        try:
+            self.push_status(
+                msg,
+                to_discord=to_discord,
+                to_chat=to_chat and self.openclaw_security_chat_sender is not None,
+                chat_sender=self.openclaw_security_chat_sender,
+            )
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed dispatching OpenClaw incident alert: %s", exc)
+
+    async def _handle_incident(self, incident) -> None:
+        """Handle a correlated security incident."""
+        logger.warning(
+            "[AI-OVERSEER] Incident created: id=%s severity=%s policy=%s",
+            incident.incident_id, incident.severity.value, incident.policy_trigger,
+        )
+
+        # Emit incident alert to event queue
+        incident_event = {
+            "event": "openclaw_incident_alert",
+            "incident_id": incident.incident_id,
+            "severity": incident.severity.value,
+            "event_counts": incident.event_counts,
+            "first_seen": incident.first_seen,
+            "last_seen": incident.last_seen,
+            "policy_trigger": incident.policy_trigger,
+            "containment": incident.containment.value if incident.containment else None,
+        }
+
+        await self._emit_openclaw_incident_alert(incident_event)
+
+        # Auto-export forensic bundle for HIGH/CRITICAL
+        if incident.severity.value in ("high", "critical"):
+            if self.security_correlator:
+                bundle_path = self.security_correlator.export_bundle(incident.incident_id)
+                if bundle_path:
+                    logger.info(
+                        "[AI-OVERSEER] Forensic bundle exported: %s", bundle_path
+                    )
+
+    def ingest_security_event(
+        self,
+        event_type: str,
+        sender: str,
+        channel: str,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Ingest external security event into correlator.
+
+        Called by OpenClaw DAE for permission_denied, rate_limited, command_fallback events.
+
+        Returns incident dict if threshold crossed, None otherwise.
+        """
+        if not self.security_correlator or not CORRELATOR_AVAILABLE:
+            return None
+
+        try:
+            evt_type = EventType(event_type)
+        except ValueError:
+            logger.warning("[AI-OVERSEER] Unknown event type: %s", event_type)
+            return None
+
+        sec_event = SecurityEvent(
+            event_type=evt_type,
+            timestamp=time.time(),
+            sender=sender,
+            channel=channel,
+            details=details or {},
+            dedupe_key=f"{event_type}|{sender}|{channel}",
+        )
+
+        incident = self.security_correlator.ingest_event(sec_event)
+        if incident:
+            # Handle incident synchronously (caller is sync context)
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._handle_incident(incident))
+            except RuntimeError:
+                # No running loop, run inline
+                asyncio.run(self._handle_incident(incident))
+            return incident.to_dict()
+
+        return None
+
+    def _correlate_openclaw_event(self, event: Dict[str, Any]) -> None:
+        """Correlate OpenClaw security signals into incident pipeline."""
+        event_type = str(event.get("event", ""))
+        if event_type not in {"permission_denied", "rate_limited", "command_fallback"}:
+            return
+
+        sender = str(
+            event.get("sender")
+            or event.get("user")
+            or event.get("agent")
+            or "unknown_sender"
+        )
+        channel = str(
+            event.get("channel")
+            or event.get("source")
+            or "unknown_channel"
+        )
+
+        details = dict(event)
+        details.pop("event", None)
+        details.pop("sender", None)
+        details.pop("channel", None)
+        self.ingest_security_event(
+            event_type=event_type,
+            sender=sender,
+            channel=channel,
+            details=details,
+        )
+
+    async def _handle_openclaw_incident_event(self, event: Dict[str, Any]) -> None:
+        """Handle incident events from telemetry queue with strict dedupe."""
+        dedupe_checked = bool(event.pop("_dedupe_checked", False))
+        await self._emit_openclaw_incident_alert(event, dedupe_checked=dedupe_checked)
+
+    def check_containment(self, sender: str, channel: str) -> Optional[Dict[str, Any]]:
+        """Check if sender/channel is under containment."""
+        if not self.security_correlator:
+            return None
+        state = self.security_correlator.check_containment(sender, channel)
+        return state.to_dict() if state else None
+
+    def release_openclaw_containment(
+        self,
+        target_type: str,
+        target_id: str,
+        requested_by: str = "operator",
+        reason: str = "manual_override",
+    ) -> Dict[str, Any]:
+        """Release containment for sender/channel target and return operation result."""
+        if target_type not in {"sender", "channel"}:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "invalid_target_type",
+            }
+        if not target_id:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "missing_target_id",
+            }
+        if not self.security_correlator:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "correlator_unavailable",
+            }
+
+        released = self.security_correlator.release_containment(target_type, target_id)
+        logger.warning(
+            "[DAEMON][OPENCLAW-CONTAINMENT] event=containment_release_request "
+            "requested_by=%s reason=%s target_type=%s target_id=%s released=%s",
+            requested_by,
+            reason,
+            target_type,
+            target_id,
+            released,
+        )
+        return {
+            "success": True,
+            "released": bool(released),
+            "target_type": target_type,
+            "target_id": target_id,
+            "requested_by": requested_by,
+            "reason": reason,
+        }
+
+    def get_correlator_stats(self) -> Dict[str, Any]:
+        """Get correlator statistics."""
+        if not self.security_correlator:
+            return {"available": False}
+        stats = self.security_correlator.get_stats()
+        stats["available"] = True
+        return stats
 
     def _is_known_false_positive(self, entity_type: str, entity_name: str) -> bool:
         """
@@ -665,6 +1252,10 @@ class AIIntelligenceOverseer:
         self.active_teams[team.mission_id] = team
 
         # 0102 Principal oversight: Execute plan with supervision
+        if not auto_approve and not sys.stdin.isatty():
+            logger.info("[0102-PRINCIPAL] Non-interactive shell detected; auto-approving mission.")
+            auto_approve = True
+
         if not auto_approve:
             print(f"\\n[0102-PRINCIPAL] Execute mission plan?")
             
@@ -812,8 +1403,8 @@ class AIIntelligenceOverseer:
         # WSP guard: compress hygiene warnings, do not block
         if getattr(self, "holo_adapter", None):
             guard_report = self.holo_adapter.guard(payload=result, intent="planning")
-            if guard_report.get("warnings"):
-                result["guard_warnings"] = guard_report["warnings"]
+            if guard_report.get("emit_warnings"):
+                result["guard_warnings"] = guard_report["emit_warnings"]
 
         return result
 
@@ -1197,6 +1788,8 @@ class AIIntelligenceOverseer:
             )
         """
         logger.info(f"[DAEMON-MONITOR] Starting ubiquitous monitor")
+        if chat_sender is not None:
+            self.openclaw_security_chat_sender = chat_sender
 
         # Load daemon-specific skill
         skill = self._load_daemon_skill(skill_path)
@@ -1871,6 +2464,139 @@ index 0000000..1111111 100644
         except Exception as e:
             logger.warning(f"[LEARNING] Failed to update skill stats: {e}")
 
+    def _push_to_discord(self, message: str, webhook_url: Optional[str] = None) -> bool:
+        """
+        Push status update to Discord via webhook.
+
+        Used for automation status notifications to 012:
+        - Comment processing milestones
+        - Scheduling updates
+        - OOPS page alerts
+        - System health events
+
+        Args:
+            message: Status message to send
+            webhook_url: Optional override, defaults to DISCORD_STATUS_WEBHOOK env var
+
+        Returns:
+            True if push succeeded
+        """
+        url = webhook_url or os.getenv("DISCORD_STATUS_WEBHOOK")
+        if not url:
+            logger.debug("[AI-OVERSEER] No Discord webhook configured (DISCORD_STATUS_WEBHOOK)")
+            return False
+
+        try:
+            import requests
+            response = requests.post(
+                url,
+                json={"content": message},
+                timeout=5
+            )
+            if response.status_code in (200, 204):
+                logger.info(f"[AI-OVERSEER] Discord push: {message[:50]}...")
+                return True
+            else:
+                logger.warning(f"[AI-OVERSEER] Discord push failed: {response.status_code}")
+                return False
+        except ImportError:
+            logger.warning("[AI-OVERSEER] requests library not available for Discord push")
+            return False
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] Discord push error: {e}")
+            return False
+
+    def push_status(self, message: str, to_discord: bool = True, to_chat: bool = False,
+                    chat_sender=None) -> Dict[str, bool]:
+        """
+        Push status update to configured channels.
+
+        Convenience method for AutoModeratorDAE and other systems to report
+        status to 012 without importing webhook logic.
+
+        Args:
+            message: Status message
+            to_discord: Push to Discord webhook (default True)
+            to_chat: Push to YouTube live chat (default False)
+            chat_sender: ChatSender instance for live chat
+
+        Returns:
+            Dict with success status per channel
+        """
+        results = {}
+
+        if to_discord:
+            results["discord"] = self._push_to_discord(message)
+
+        if to_chat and chat_sender:
+            try:
+                import asyncio
+                asyncio.create_task(
+                    chat_sender.send_message(message, response_type='update', skip_delay=True)
+                )
+                results["chat"] = True
+            except Exception as e:
+                logger.warning(f"[AI-OVERSEER] Chat push failed: {e}")
+                results["chat"] = False
+
+        return results
+
+    def quick_response(self, prompt: str, context: Optional[str] = None,
+                       max_tokens: int = 500) -> Dict[str, Any]:
+        """
+        Generate a quick Qwen response for conversational use.
+
+        Used by OpenClaw DAE for Digital Twin conversational responses.
+        Uses local Qwen (no external API required).
+
+        Args:
+            prompt: User's message/question
+            context: Optional context (channel, sender, etc.)
+            max_tokens: Max response length
+
+        Returns:
+            Dict with {"response": str, "tokens": int} or {"error": str}
+        """
+        try:
+            # Use Holo Qwen if available
+            if HOLO_AVAILABLE:
+                from holo_index.qwen_advisor.orchestration.coordinator import QwenCoordinator
+                coordinator = QwenCoordinator(self.repo_root)
+
+                # Build contextual prompt
+                full_prompt = prompt
+                if context:
+                    full_prompt = f"Context: {context}\n\nUser: {prompt}"
+
+                # Get Qwen response
+                result = coordinator.ask(
+                    query=full_prompt,
+                    max_tokens=max_tokens,
+                    system_prompt=(
+                        "You are 0102, the Digital Twin of 012 (UnDaoDu). "
+                        "You are helpful, concise, and speak in first person. "
+                        "You assist with the Foundups codebase and community."
+                    )
+                )
+
+                if result and isinstance(result, str):
+                    return {"response": result, "tokens": len(result.split())}
+                elif result and isinstance(result, dict):
+                    return {
+                        "response": result.get("response", str(result)),
+                        "tokens": result.get("tokens", 0)
+                    }
+
+            # Fallback: simple acknowledgment
+            return {
+                "response": f"I received your message. Qwen is not available for detailed responses at the moment.",
+                "tokens": 15
+            }
+
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] quick_response failed: {e}")
+            return {"error": str(e)}
+
     def _announce_to_chat(self, chat_sender, phase: str, bug: Dict,
                           fix_result: Optional[Dict] = None,
                           verification: Optional[Dict[str, Any]] = None) -> bool:
@@ -2048,11 +2774,14 @@ index 0000000..1111111 100644
             # Kick off consumer loop
             loop = asyncio.get_running_loop()
             self.telemetry_consumer_task = loop.create_task(self._consume_telemetry_events())
+        if os.getenv("OPENCLAW_SECURITY_MONITOR_ENABLED", "1") != "0":
+            await self.start_openclaw_security_monitoring()
 
     async def stop_background_services(self):
         """
         Stop telemetry monitor and consumer loop.
         """
+        await self.stop_openclaw_security_monitoring()
         if self.telemetry_monitor:
             await self.telemetry_monitor.stop_monitoring()
         if self.telemetry_consumer_task:
@@ -2133,6 +2862,32 @@ index 0000000..1111111 100644
 
                 print("[AI-OVERSEER] Run 'python holo_index.py --check-module <module>' for details\n")
 
+        elif event_type == "openclaw_security_alert":
+            await self._dispatch_openclaw_security_alert(event)
+
+        elif event_type in {"permission_denied", "rate_limited", "command_fallback"}:
+            self._correlate_openclaw_event(event)
+
+        elif event_type == "openclaw_incident_alert":
+            await self._handle_openclaw_incident_event(event)
+
+        elif event_type == "openclaw_containment_release":
+            target_type = str(event.get("target_type", "")).strip().lower()
+            target_id = str(event.get("target_id", "")).strip()
+            requested_by = str(event.get("requested_by", "telemetry"))
+            reason = str(event.get("reason", "manual_override"))
+            result = self.release_openclaw_containment(
+                target_type=target_type,
+                target_id=target_id,
+                requested_by=requested_by,
+                reason=reason,
+            )
+            if not result.get("released"):
+                logger.warning(
+                    "[AI-OVERSEER] Containment release not applied: %s",
+                    result,
+                )
+
         else:
             logger.debug("[AI-OVERSEER] Telemetry event ignored: %s", event_type)
 
@@ -2161,6 +2916,21 @@ index 0000000..1111111 100644
         """
         logger.info(f"[AI-OVERSEER] Coordinating mission: {mission_description}")
 
+        mission_type_value = mission_type.value if hasattr(mission_type, "value") else str(mission_type)
+        mission_type_obj = mission_type
+        if not hasattr(mission_type, "value"):
+            try:
+                mission_type_obj = MissionType(mission_type_value)
+            except Exception:
+                mission_type_obj = MissionType.CUSTOM
+
+        ii_agent_result = None
+        if self.ii_agent and self.ii_agent.enabled:
+            allowed = os.getenv("II_AGENT_MISSION_TYPES", "documentation_generation,architecture_design,code_analysis").split(",")
+            allowed = {a.strip().lower() for a in allowed if a.strip()}
+            if mission_type_value in allowed:
+                ii_agent_result = self.ii_agent.run_mission(mission_description, mission_type_value)
+
         # Phase 0: Check for known false positives (WSP 48/60 collective learning)
         if self._is_known_false_positive("mission", mission_description):
             details = None
@@ -2175,11 +2945,11 @@ index 0000000..1111111 100644
                 "reason": details.get("reason") if details else "Known false positive (learned from collective intelligence)",
                 "actual_location": details.get("actual_location") if details else None,
                 "mission_description": mission_description,
-                "mission_type": mission_type.value
+                "mission_type": mission_type_value
             }
 
         # Spawn agent team (runs all 4 phases)
-        team = self.spawn_agent_team(mission_description, mission_type, auto_approve)
+        team = self.spawn_agent_team(mission_description, mission_type_obj, auto_approve)
 
         # Store learning pattern
         self.store_mission_pattern(team)
@@ -2192,7 +2962,8 @@ index 0000000..1111111 100644
                 "principal": team.principal,
                 "associate": team.associate
             },
-            "results": team.results
+            "results": team.results,
+            "external_agent": ii_agent_result
         }
 
 

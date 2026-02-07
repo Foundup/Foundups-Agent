@@ -164,6 +164,11 @@ class IndexerTelemetry:
         self.telemetry_path = config.telemetry_path
         self.telemetry_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Emission mode (full or signal)
+        self.telemetry_mode = os.getenv("INDEXER_TELEMETRY_MODE", "full").strip().lower()
+        self.signal_every = int(os.getenv("INDEXER_TELEMETRY_SIGNAL_EVERY", "60"))
+        self._last_status: Optional[str] = None
+
         # Health calculator
         self.health_calc = HealthCalculator()
 
@@ -264,12 +269,21 @@ class IndexerTelemetry:
                 automation_gates=self.config.gate_snapshot(),
             )
 
-            # Write to JSONL
-            self._write_jsonl(payload.to_json())
-
-            # Log periodically
             self.pulse_count += 1
-            if self.pulse_count % 10 == 0 or status != "healthy":
+            emit_pulse = self._should_emit_pulse(status)
+            if emit_pulse:
+                # Write to JSONL
+                self._write_jsonl(payload.to_json())
+                self._last_status = status
+
+            if self.telemetry_mode == "full":
+                if self.pulse_count % 10 == 0 or status != "healthy":
+                    logger.info(
+                        f"[INDEXER-HEARTBEAT] Pulse #{self.pulse_count} - "
+                        f"Status: {status} | Videos: {self.videos_indexed} | "
+                        f"Errors: {self.errors_detected} | Memory: {memory_mb}MB"
+                    )
+            elif emit_pulse:
                 logger.info(
                     f"[INDEXER-HEARTBEAT] Pulse #{self.pulse_count} - "
                     f"Status: {status} | Videos: {self.videos_indexed} | "
@@ -321,6 +335,9 @@ class IndexerTelemetry:
             metadata=metadata or {},
             duration_ms=duration_ms,
         )
+
+        if not self._should_emit_event(event_type):
+            return
 
         # Log with bracket tag
         if layer:
@@ -376,6 +393,26 @@ class IndexerTelemetry:
         )
 
         logger.error(f"[INDEXER-ERROR] {error_msg}")
+
+    def _should_emit_event(self, event_type: str) -> bool:
+        if self.telemetry_mode == "full":
+            return True
+        if event_type == "error":
+            return True
+        if event_type in {"video_complete", "video_failed"}:
+            return True
+        return False
+
+    def _should_emit_pulse(self, status: str) -> bool:
+        if self.telemetry_mode == "full":
+            return True
+        if status in {"warning", "critical", "stopped"}:
+            return True
+        if self._last_status and status != self._last_status:
+            return True
+        if self.signal_every > 0 and (self.pulse_count % self.signal_every == 0):
+            return True
+        return False
 
     # =========================================================================
     # Layer Tracking

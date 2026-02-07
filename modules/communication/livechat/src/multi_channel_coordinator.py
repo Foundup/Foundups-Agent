@@ -5,13 +5,13 @@ Extracted from AutoModeratorDAE per WSP 62 (Large File Refactoring).
 Handles Chrome + Edge browser rotation for multi-channel comment engagement.
 
 Architecture (2025-12-28, Hardened 2026-01-18):
-- Chrome (port 9222): Move2Japan + UnDaoDu (SAME Google account)
-- Edge (port 9223): FoundUps + RavingANTIFA (SAME Edge session)
+- Chrome (port 9222): Registry-driven channel group (same Google account)
+- Edge (port 9223): Registry-driven channel group (same Edge session)
 
 Hardening Features (2026-01-18):
 1. BIDIRECTIONAL FALLBACK:
-   - Chrome: Move2Japan ↔ UnDaoDu
-   - Edge: FoundUps ↔ RavingANTIFA
+   - Chrome: Registry-driven fallback within same account section
+   - Edge: Registry-driven fallback within same account section
    - If target channel shows "Oops" page, try fallback before account switch
 
 2. OOPS PAGE DETECTION:
@@ -38,6 +38,11 @@ import logging
 from typing import Optional, Dict, Any, Callable, List, Tuple, Awaitable
 
 from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channels,
+    get_rotation_order,
+    build_fallbacks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,27 +89,30 @@ def _is_oops_page(driver) -> bool:
         return False
 
 
-# Bidirectional fallback mapping
+# Bidirectional fallback mapping (built from registry, per account section)
 # When target channel shows Oops, try fallback first before account switch
-CHANNEL_FALLBACKS = {
-    # Chrome channels (same Google account)
-    "Move2Japan": "UnDaoDu",
-    "UnDaoDu": "Move2Japan",
-    # Edge channels (same Edge session)
-    "FoundUps": "RavingANTIFA",
-    "RavingANTIFA": "FoundUps",
-}
+CHANNEL_FALLBACKS = build_fallbacks(role="comments")
 
-# 2026-01-29: Account Section Mapping (for "wrong Google account" detection)
-# When BOTH channels in a section show OOPS, browser is logged into WRONG Google account
-# Section 0 (Google Account A): UnDaoDu, Move2Japan
-# Section 1 (Google Account B): FoundUps, RavingANTIFA
-ACCOUNT_SECTIONS = {
-    "Move2Japan": 0,
-    "UnDaoDu": 0,
-    "FoundUps": 1,
-    "RavingANTIFA": 1,
-}
+# Account Section Mapping (for "wrong Google account" detection)
+ACCOUNT_SECTIONS = {}
+SECTION_CHANNELS: Dict[int, List[str]] = {}
+for _ch in get_channels(role="comments"):
+    _name = _ch.get("name")
+    _section = (_ch.get("browser") or {}).get("account_section", 0)
+    if _name:
+        section = int(_section)
+        ACCOUNT_SECTIONS[_name] = section
+        SECTION_CHANNELS.setdefault(section, []).append(_name)
+
+
+def _format_section_label(section: int) -> str:
+    names = SECTION_CHANNELS.get(section, [])
+    suffix = f" ({', '.join(names)})" if names else ""
+    if section == 0:
+        return f"Google Account A{suffix}"
+    if section == 1:
+        return f"Google Account B{suffix}"
+    return f"Google Account {section}{suffix}"
 
 def _detect_wrong_account_scenario(target_channel: str, fallback_also_failed: bool) -> str:
     """
@@ -120,24 +128,47 @@ def _detect_wrong_account_scenario(target_channel: str, fallback_also_failed: bo
         return ""
 
     # Both channels on same section failed = definitely wrong Google account
-    section_name = "Google Account A (UnDaoDu/Move2Japan)" if section == 0 else "Google Account B (FoundUps/RavingANTIFA)"
-    wrong_section = "Google Account B" if section == 0 else "Google Account A"
+    section_name = _format_section_label(section)
+    other_sections = sorted(s for s in SECTION_CHANNELS.keys() if s != section)
+    wrong_section = _format_section_label(other_sections[0]) if other_sections else "another Google account"
 
     return (
         f"🔴 WRONG GOOGLE ACCOUNT: Browser appears to be on {wrong_section}, "
         f"but needs {section_name} (Section {section}). Account switch required."
     )
 
-# Channel name to ID mapping
-CHANNEL_IDS = {
-    "Move2Japan": os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
-    "UnDaoDu": os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
-    "FoundUps": os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
-    "RavingANTIFA": os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
-}
+# Channel name to ID mapping (registry-driven)
+CHANNEL_IDS = {}
+for _ch in get_channels(role="comments"):
+    _name = _ch.get("name")
+    _cid = _ch.get("id")
+    if _name and _cid:
+        CHANNEL_IDS[_name] = _cid
 
 # Reverse mapping
 CHANNEL_NAMES = {v: k for k, v in CHANNEL_IDS.items()}
+
+
+def _get_ordered_accounts_by_browser() -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """Build ordered channel lists for Chrome and Edge based on registry rotation order."""
+    ordered_keys = get_rotation_order(role="comments")
+    channel_map = {ch.get("key"): ch for ch in get_channels(role="comments")}
+    chrome_accounts: List[Tuple[str, str]] = []
+    edge_accounts: List[Tuple[str, str]] = []
+    for key in ordered_keys:
+        ch = channel_map.get(key)
+        if not ch:
+            continue
+        name = ch.get("name")
+        cid = ch.get("id")
+        browser = (ch.get("browser") or {}).get("comment_browser", "chrome")
+        if not name or not cid:
+            continue
+        if browser == "edge":
+            edge_accounts.append((name, cid))
+        else:
+            chrome_accounts.append((name, cid))
+    return chrome_accounts, edge_accounts
 
 
 class MultiChannelCoordinator:
@@ -182,6 +213,19 @@ class MultiChannelCoordinator:
         self.update_engagement_status = update_engagement_status
         self.set_active_channel = set_active_channel
         self.is_live_stream_pending = is_live_stream_pending
+        self._oops_backoff: Dict[str, float] = {}
+
+    def _oops_cooldown_seconds(self) -> int:
+        return int(os.getenv("YT_OOPS_COOLDOWN_S", "300"))
+
+    def _should_skip_oops(self, account_name: str) -> bool:
+        last_ts = self._oops_backoff.get(account_name)
+        if not last_ts:
+            return False
+        return (time.time() - last_ts) < self._oops_cooldown_seconds()
+
+    def _record_oops(self, account_name: str) -> None:
+        self._oops_backoff[account_name] = time.time()
 
     async def run_multi_channel_engagement(
         self,
@@ -193,11 +237,10 @@ class MultiChannelCoordinator:
         Run comment engagement across ALL channels with account switching.
 
         Flow:
-        1. Process Move2Japan comments (Chrome)
-        2. Switch to UnDaoDu (Chrome - same account picker)
-        3. Process FoundUps comments (Edge - separate browser)
-        4. Check live stream signal before each channel
-        5. If live detected -> pause rotation for that channel
+        1. Process Chrome channels (account switching)
+        2. Process Edge channels (separate browser session)
+        3. Check live stream signal before each channel
+        4. If live detected -> pause rotation for that channel
 
         Args:
             runner: CommentEngagementRunner instance
@@ -211,18 +254,8 @@ class MultiChannelCoordinator:
         edge_parallel = _env_truthy("YT_EDGE_PARALLEL", "true")
         edge_first = _env_truthy("YT_EDGE_FIRST", "true")
 
-        # CHROME ACCOUNTS (same Google account - can switch via YouTube picker)
-        chrome_accounts: List[Tuple[str, str]] = [
-            ("Move2Japan", os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")),
-            ("UnDaoDu", os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")),
-        ]
-
-        # EDGE ACCOUNTS (different Google account - requires separate browser)
-        # NOTE: RavingANTIFA added 2026-01-09, shares Edge browser with FoundUps
-        edge_accounts: List[Tuple[str, str]] = [
-            ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")),
-            ("RavingANTIFA", os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")),
-        ]
+        # Channel groups (registry-driven)
+        chrome_accounts, edge_accounts = _get_ordered_accounts_by_browser()
 
         total_channels = len(chrome_accounts) + len(edge_accounts)
         logger.info("=" * 70)
@@ -251,7 +284,7 @@ class MultiChannelCoordinator:
                 edge_task = None
 
         # Optional ordering: run Edge FIRST when not parallel (matches ops expectation:
-        # FoundUps/RavingANTIFA are often the immediate targets before live chat handoff)
+        # Edge channels are often the immediate targets before live chat handoff)
         if (not edge_parallel) and edge_first:
             total_processed += await self._run_edge_engagement(
                 runner, edge_accounts, max_comments, strict_inbox
@@ -344,6 +377,7 @@ class MultiChannelCoordinator:
             Total comments processed for this browser
         """
         strict_inbox = _env_truthy("YT_INBOX_STRICT", "true")
+        chrome_accounts, edge_accounts = _get_ordered_accounts_by_browser()
 
         if browser == "chrome":
             skip_chrome = _env_truthy("YT_SKIP_CHROME", "false")
@@ -351,20 +385,18 @@ class MultiChannelCoordinator:
                 logger.info("[ROTATE] SKIPPING CHROME (YT_SKIP_CHROME=true)")
                 return 0
 
-            chrome_accounts = [
-                ("Move2Japan", os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")),
-                ("UnDaoDu", os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")),
-            ]
+            if not chrome_accounts:
+                logger.warning("[ROTATE] No Chrome channels configured - skipping Chrome engagement")
+                return 0
             logger.info(f"[ROTATE] [Chrome] Processing {len(chrome_accounts)} channels: {', '.join(a[0] for a in chrome_accounts)}")
             return await self._run_chrome_engagement(
                 runner, chrome_accounts, max_comments, strict_inbox
             )
 
         elif browser == "edge":
-            edge_accounts = [
-                ("FoundUps", os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")),
-                ("RavingANTIFA", os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")),
-            ]
+            if not edge_accounts:
+                logger.warning("[ROTATE] No Edge channels configured - skipping Edge engagement")
+                return 0
             logger.info(f"[ROTATE] [Edge] Processing {len(edge_accounts)} channels: {', '.join(a[0] for a in edge_accounts)}")
             return await self._run_edge_engagement(
                 runner, edge_accounts, max_comments, strict_inbox
@@ -389,7 +421,7 @@ class MultiChannelCoordinator:
         we must explicitly switch the active channel in the YouTube account picker to avoid
         "no permission" pages when navigating directly to a channel inbox URL.
         
-        Updated 2026-01-09: Now supports multiple Edge accounts (FoundUps + RavingANTIFA).
+        Updated 2026-01-09: Now supports multiple Edge accounts.
         """
         total_processed = 0
         edge_driver = None
@@ -422,6 +454,9 @@ class MultiChannelCoordinator:
 
         # Process each Edge account
         for idx, (account_name, channel_id) in enumerate(edge_accounts, 1):
+            if self._should_skip_oops(account_name):
+                logger.warning(f"[ROTATE] [Edge] Skipping {account_name}: OOPS cooldown active")
+                continue
             # Check live stream signal
             try:
                 from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
@@ -453,6 +488,7 @@ class MultiChannelCoordinator:
                 try:
                     if _is_oops_page(edge_driver):
                         logger.warning(f"[ROTATE] [Edge] 🚨 OOPS PAGE detected for {account_name}")
+                        self._record_oops(account_name)
 
                         # STEP 1: Try bidirectional fallback first (no account switch needed)
                         fallback_channel = CHANNEL_FALLBACKS.get(account_name)
@@ -474,6 +510,7 @@ class MultiChannelCoordinator:
                                 studio_url = fallback_url
                             else:
                                 logger.warning(f"[ROTATE] [Edge] 🚨 Fallback {fallback_channel} also shows OOPS")
+                                self._record_oops(fallback_channel)
                                 # 2026-01-29: Detect wrong Google account scenario
                                 wrong_account_msg = _detect_wrong_account_scenario(account_name, fallback_also_failed=True)
                                 if wrong_account_msg:
@@ -490,12 +527,14 @@ class MultiChannelCoordinator:
                                 if not switched:
                                     logger.error(f"[ROTATE] [Edge] Account swap failed for {account_name}; skipping")
                                     logger.warning(f"[ROTATE] [Edge] FIX: Sign into {account_name} in Edge browser")
+                                    self._record_oops(account_name)
                                     continue
                                 await asyncio.sleep(3)
 
                                 # STEP 3: Verify after account switch
                                 if _is_oops_page(edge_driver):
                                     logger.error(f"[ROTATE] [Edge] Still on OOPS after account switch; skipping {account_name}")
+                                    self._record_oops(account_name)
                                     continue
                 except Exception as perm_err:
                     # 2026-01-29: BUG FIX - Don't silently swallow swap errors
@@ -554,6 +593,37 @@ class MultiChannelCoordinator:
                     max_comments, 9223, processed, strict_inbox, error_text, session_recovered
                 )
                 total_processed += processed - stats.get("comments_processed", 0)  # Add retry delta
+
+                # FIX 2026-02-06: Check if comments STILL exist after verify/retry
+                # User requirement: "stay on commenting till they're all commented"
+                stay_on_channel = _env_truthy("YT_STAY_UNTIL_COMMENTS_CLEAR", "true")
+                if stay_on_channel and edge_driver:
+                    # Check DOM directly for comment count
+                    try:
+                        comment_count = edge_driver.execute_script(
+                            "return document.querySelectorAll('ytcp-comment-thread').length || 0"
+                        ) or 0
+                        if comment_count > 0:
+                            logger.info(f"[ROTATE] [Edge] {account_name} has {comment_count} comments REMAINING - re-running engagement")
+                            # Re-run engagement for this channel
+                            retry_result = await runner.run_engagement(
+                                channel_id=channel_id,
+                                video_id=None,
+                                max_comments=max_comments
+                            )
+                            retry_result = retry_result or {}
+                            retry_stats = retry_result.get('stats', {})
+                            retry_processed = retry_stats.get('comments_processed', 0)
+                            total_processed += retry_processed
+                            self.update_engagement_status(channel_id, {
+                                "all_processed": bool(retry_stats.get("all_processed", False)),
+                                "stats": retry_stats,
+                                "error": retry_result.get('error'),
+                                "updated_at": time.time(),
+                            })
+                            logger.info(f"[ROTATE] [Edge] {account_name} re-run: {retry_processed} more comments processed")
+                    except Exception as dom_err:
+                        logger.debug(f"[ROTATE] [Edge] DOM comment check failed: {dom_err}")
 
             except Exception as e:
                 error_str = str(e)
@@ -625,7 +695,7 @@ class MultiChannelCoordinator:
         strict_inbox: bool
     ) -> int:
         """
-        Run comment engagement on Chrome channels (Move2Japan + UnDaoDu).
+        Run comment engagement on Chrome channels (registry-driven).
 
         Uses TarsAccountSwapper for account switching within same Google account.
         """
@@ -667,11 +737,15 @@ class MultiChannelCoordinator:
 
         except Exception as e:
             logger.error(f"[ROTATE] Failed to connect to Chrome: {e}")
-            logger.warning("[ROTATE] Chrome channels (Move2Japan, UnDaoDu) will be skipped")
+            names = ", ".join([a[0] for a in chrome_accounts]) or "none"
+            logger.warning(f"[ROTATE] Chrome channels ({names}) will be skipped")
             return 0
 
         # Process each Chrome account
         for idx, (account_name, channel_id) in enumerate(chrome_accounts, 1):
+            if self._should_skip_oops(account_name):
+                logger.warning(f"[ROTATE] [Chrome] Skipping {account_name}: OOPS cooldown active")
+                continue
             # Check live stream signal
             try:
                 from modules.platform_integration.stream_resolver.src.live_stream_signal import get_live_channel
@@ -706,24 +780,34 @@ class MultiChannelCoordinator:
                 await asyncio.sleep(5)
 
                 # HARDENED: Check for Oops page after switch/refresh
+                # 2026-02-03: Use swap_from_oops_page() which has full cascade:
+                # DOM "Switch Account" -> UI-TARS "Switch Account" -> DOM "Return to Studio" -> UI-TARS "Return to Studio" -> Direct URL
                 if _is_oops_page(chrome_driver):
                     logger.warning(f"[ROTATE] [Chrome] 🚨 OOPS PAGE detected for {account_name}")
+                    self._record_oops(account_name)
 
-                    # Try bidirectional fallback first
-                    fallback_channel = CHANNEL_FALLBACKS.get(account_name)
-                    if fallback_channel:
-                        logger.info(f"[ROTATE] [Chrome] 🔄 Trying fallback channel: {fallback_channel}")
-                        fallback_id = CHANNEL_IDS.get(fallback_channel)
-                        fallback_success = await swapper.swap_to(fallback_channel)
-                        if fallback_success:
-                            await asyncio.to_thread(chrome_driver.refresh)
-                            await asyncio.sleep(5)
-                            if not _is_oops_page(chrome_driver):
+                    # Try DIRECT OOPS page resolution first (with UI-TARS fallback)
+                    logger.info(f"[ROTATE] [Chrome] 🔄 Attempting OOPS page resolution for {account_name}...")
+                    oops_resolved = await swapper.swap_from_oops_page(account_name, navigate_to_comments=True)
+
+                    if oops_resolved and not _is_oops_page(chrome_driver):
+                        logger.info(f"[ROTATE] [Chrome] ✅ OOPS page resolved for {account_name}")
+                    else:
+                        # OOPS resolution failed for target - try bidirectional fallback
+                        fallback_channel = CHANNEL_FALLBACKS.get(account_name)
+                        if fallback_channel:
+                            logger.info(f"[ROTATE] [Chrome] 🔄 Trying fallback channel: {fallback_channel}")
+                            fallback_id = CHANNEL_IDS.get(fallback_channel)
+
+                            # Use swap_from_oops_page for fallback too (handles OOPS cascade)
+                            fallback_success = await swapper.swap_from_oops_page(fallback_channel, navigate_to_comments=True)
+                            if fallback_success and not _is_oops_page(chrome_driver):
                                 logger.info(f"[ROTATE] [Chrome] ✅ Fallback to {fallback_channel} successful!")
                                 account_name = fallback_channel
                                 channel_id = fallback_id
                             else:
-                                logger.warning(f"[ROTATE] [Chrome] 🚨 Fallback {fallback_channel} also shows OOPS")
+                                logger.warning(f"[ROTATE] [Chrome] 🚨 Fallback {fallback_channel} also failed")
+                                self._record_oops(fallback_channel)
                                 # 2026-01-29: Detect wrong Google account scenario
                                 wrong_account_msg = _detect_wrong_account_scenario(account_name, fallback_also_failed=True)
                                 if wrong_account_msg:
@@ -731,11 +815,8 @@ class MultiChannelCoordinator:
                                 logger.warning(f"[ROTATE] [Chrome] Skipping {account_name} - manual account fix needed")
                                 continue
                         else:
-                            logger.warning(f"[ROTATE] [Chrome] Fallback switch failed - skipping {account_name}")
+                            logger.warning(f"[ROTATE] [Chrome] No fallback available - skipping {account_name}")
                             continue
-                    else:
-                        logger.warning(f"[ROTATE] [Chrome] No fallback available - skipping {account_name}")
-                        continue
 
             except Exception as e:
                 logger.error(f"[ROTATE] Account switch error: {e}")
@@ -799,6 +880,40 @@ class MultiChannelCoordinator:
                     max_comments, 9222, processed, strict_inbox, error_text, session_recovered
                 )
                 total_processed += processed - stats.get('comments_processed', 0)  # Add retry delta
+
+                # FIX 2026-02-06: Check if comments STILL exist after verify/retry
+                # User requirement: "stay on commenting till they're all commented"
+                stay_on_channel = _env_truthy("YT_STAY_UNTIL_COMMENTS_CLEAR", "true")
+                if stay_on_channel:
+                    engagement_status = self.update_engagement_status.__self__._comment_engagement_status.get(channel_id, {}) if hasattr(self.update_engagement_status, '__self__') else {}
+                    all_done = engagement_status.get("all_processed", True)
+                    if not all_done:
+                        # Check DOM directly for comment count
+                        try:
+                            comment_count = chrome_driver.execute_script(
+                                "return document.querySelectorAll('ytcp-comment-thread').length || 0"
+                            ) or 0
+                            if comment_count > 0:
+                                logger.info(f"[ROTATE] {account_name} has {comment_count} comments REMAINING - re-running engagement")
+                                # Re-run engagement for this channel
+                                retry_result = await runner.run_engagement(
+                                    channel_id=channel_id,
+                                    video_id=None,
+                                    max_comments=max_comments
+                                )
+                                retry_result = retry_result or {}
+                                retry_stats = retry_result.get('stats', {})
+                                retry_processed = retry_stats.get('comments_processed', 0)
+                                total_processed += retry_processed
+                                self.update_engagement_status(channel_id, {
+                                    "all_processed": bool(retry_stats.get("all_processed", False)),
+                                    "stats": retry_stats,
+                                    "error": retry_result.get('error'),
+                                    "updated_at": time.time(),
+                                })
+                                logger.info(f"[ROTATE] {account_name} re-run: {retry_processed} more comments processed")
+                        except Exception as dom_err:
+                            logger.debug(f"[ROTATE] DOM comment check failed: {dom_err}")
 
                 # Check halt conditions
                 if strict_inbox:
@@ -961,8 +1076,8 @@ class MultiChannelCoordinator:
         DAE Chaining: Comments → Scheduling (same browser sessions)
 
         Flow:
-        1. Schedule Chrome channels (Move2Japan, UnDaoDu) - port 9222
-        2. Schedule Edge channels (FoundUps, RavingANTIFA) - port 9223
+        1. Schedule Chrome channels - port 9222
+        2. Schedule Edge channels - port 9223
 
         Uses existing browser connections from comment engagement.
 
@@ -975,13 +1090,14 @@ class MultiChannelCoordinator:
         """
         total_scheduled = 0
 
-        # Map channel names to scheduler channel_keys
-        CHANNEL_KEY_MAP = {
-            "Move2Japan": "move2japan",
-            "UnDaoDu": "undaodu",
-            "FoundUps": "foundups",
-            "RavingANTIFA": "ravingantifa",
-        }
+        shorts_key_by_name: Dict[str, str] = {}
+        for ch in get_channels(role="shorts"):
+            key = ch.get("key")
+            if not key:
+                continue
+            for name in (ch.get("name"), ch.get("key")):
+                if name:
+                    shorts_key_by_name[name.lower()] = key
 
         try:
             from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
@@ -995,9 +1111,9 @@ class MultiChannelCoordinator:
 
         # Schedule Chrome channels
         for account_name, channel_id in chrome_accounts:
-            channel_key = CHANNEL_KEY_MAP.get(account_name)
+            channel_key = shorts_key_by_name.get(account_name.lower())
             if not channel_key:
-                logger.warning(f"[CHAIN] Unknown channel key for {account_name}")
+                logger.info(f"[CHAIN] [Chrome] {account_name}: shorts role disabled or missing; skipping")
                 continue
 
             logger.info(f"[CHAIN] [Chrome] Scheduling Shorts for {account_name}...")
@@ -1019,9 +1135,9 @@ class MultiChannelCoordinator:
 
         # Schedule Edge channels
         for account_name, channel_id in edge_accounts:
-            channel_key = CHANNEL_KEY_MAP.get(account_name)
+            channel_key = shorts_key_by_name.get(account_name.lower())
             if not channel_key:
-                logger.warning(f"[CHAIN] Unknown channel key for {account_name}")
+                logger.info(f"[CHAIN] [Edge] {account_name}: shorts role disabled or missing; skipping")
                 continue
 
             logger.info(f"[CHAIN] [Edge] Scheduling Shorts for {account_name}...")

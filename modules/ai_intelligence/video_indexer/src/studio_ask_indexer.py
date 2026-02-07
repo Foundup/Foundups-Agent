@@ -15,6 +15,7 @@ Usage:
     await indexer.index_channel_videos(channel_id="UCfHM9Fw9HD-NwiS0seD_oIA")
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -25,7 +26,48 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channel_by_id
+from modules.ai_intelligence.video_indexer.src.video_index_store import (
+    VideoIndexStore,
+    IndexData,
+)
+
 logger = logging.getLogger(__name__)
+
+INDEX_ROOT = Path("memory") / "video_index"
+STOP_FILE = Path("memory") / "STOP_VIDEO_INDEXER"
+REINDEX_FILE = Path("memory") / "REINDEX_VIDEO_INDEXER"
+
+
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _stop_active() -> bool:
+    return STOP_FILE.exists()
+
+
+def _consume_reindex_signal() -> bool:
+    if _env_truthy("VIDEO_INDEXER_FORCE_REINDEX"):
+        return True
+    if REINDEX_FILE.exists():
+        try:
+            REINDEX_FILE.unlink()
+        except Exception:
+            logger.warning("[VIDEO-INDEX] Failed to clear REINDEX signal file")
+        return True
+    return False
+
+
+def _count_indexed_by_channel(index_root: Path) -> Dict[str, int]:
+    if not index_root.exists():
+        return {}
+    counts: Dict[str, int] = {}
+    for child in index_root.iterdir():
+        if not child.is_dir():
+            continue
+        counts[child.name] = len(list(child.glob("*.json")))
+    return counts
 
 # VideoContentIndex causes segfault on Windows (ChromaDB native library issue)
 # Disable for now - indexing works without it, storage goes to JSON files
@@ -44,6 +86,8 @@ class AskResult:
     topics: List[str]
     timestamps: List[Dict[str, str]]
     success: bool
+    # Content category detected from browser Gemini (no API needed)
+    content_category: str = "other"  # ffcpln_music, personal_vlog, ice_remix, educational, other
     error: Optional[str] = None
 
 
@@ -80,15 +124,23 @@ class StudioAskIndexer:
     # Watch page is simpler (direct button), prefer it over Studio
     USE_WATCH_PAGE = True
     
-    # Standard prompt for video analysis
-    ASK_PROMPT = """List all topics discussed in this video with timestamps in JSON format:
+    # Standard prompt for video analysis with content category detection
+    ASK_PROMPT = """Analyze this video and respond in JSON format:
 {
+  "content_category": "ffcpln_music|personal_vlog|ice_remix|educational|other",
   "topics": ["topic1", "topic2"],
   "segments": [
     {"time": "0:00", "topic": "Introduction", "summary": "..."},
     {"time": "1:30", "topic": "Main point", "summary": "..."}
   ]
-}"""
+}
+
+CONTENT CATEGORY (pick ONE):
+- ffcpln_music: Music video, no speech, instrumental/electronic, visualizers
+- personal_vlog: Person talking, daily life, conversational, personal stories
+- ice_remix: Political content, ICE/immigration, news clips, activist
+- educational: Tutorial, how-to, teaching, informational
+- other: None of the above"""
 
     def __init__(
         self,
@@ -138,21 +190,108 @@ class StudioAskIndexer:
         if match:
             return match.group(1)
         return None
+
+    @staticmethod
+    def _index_exists(index_root: Path, channel_key: str, video_id: str) -> bool:
+        if not channel_key or not video_id:
+            return False
+        path = index_root / channel_key / f"{video_id}.json"
+        return path.exists()
+
+    @staticmethod
+    def _parse_timestamp(ts: str) -> Optional[float]:
+        """Convert 'M:SS' or 'H:MM:SS' to seconds."""
+        if not ts:
+            return None
+        try:
+            parts = ts.split(":")
+            if len(parts) == 2:
+                return int(parts[0]) * 60 + int(parts[1])
+            if len(parts) == 3:
+                return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+        except (ValueError, IndexError):
+            return None
+        return None
+
+    @staticmethod
+    def _ask_result_to_index_data(
+        ask_result: AskResult,
+        channel_key: str,
+    ) -> IndexData:
+        """Build IndexData from Ask Gemini response."""
+        segments = []
+        for seg in ask_result.timestamps or []:
+            start = StudioAskIndexer._parse_timestamp(seg.get("time", ""))
+            summary = seg.get("summary") or seg.get("topic") or ""
+            if not summary:
+                continue
+            segments.append(
+                {
+                    "start": start if start is not None else 0,
+                    "end": None,
+                    "text": summary,
+                    "speaker": "",
+                }
+            )
+
+        audio = {
+            "segments": segments,
+            "transcript_summary": ask_result.response_text or "",
+        }
+
+        return IndexData(
+            video_id=ask_result.video_id,
+            channel=channel_key,
+            title=ask_result.title or "",
+            duration=0,
+            indexed_at=datetime.now().isoformat(),
+            audio=audio,
+            visual={"description": "", "keyframes": []},
+            moments=[],
+            clips=[],
+            metadata={
+                "topics": ask_result.topics or [],
+                "key_points": [],
+                "summary": ask_result.response_text or "",
+                "content_category": ask_result.content_category or "other",
+            },
+            gemini_summary={
+                "ask_response": ask_result.response_text or "",
+                "ask_topics": ask_result.topics or [],
+                "ask_segments": ask_result.timestamps or [],
+            },
+            transcript_source="gemini",
+        )
     
     def _parse_ask_response(self, response_text: str) -> Dict[str, Any]:
         """Parse JSON from Ask Gemini response."""
         try:
-            # Try to extract JSON from response
-            json_match = re.search(r'\{[^{}]*"topics"[^{}]*\}', response_text, re.DOTALL)
+            # Try to extract JSON from response (allow nested braces for segments)
+            json_match = re.search(r'\{[\s\S]*?"topics"[\s\S]*?\}(?=\s*$|\s*```)', response_text)
             if json_match:
-                return json.loads(json_match.group())
-            
-            # Fallback: extract topics manually
+                parsed = json.loads(json_match.group())
+                # Validate content_category
+                valid_categories = {"ffcpln_music", "personal_vlog", "ice_remix", "educational", "other"}
+                if parsed.get("content_category") not in valid_categories:
+                    parsed["content_category"] = "other"
+                return parsed
+
+            # Fallback: extract topics manually + detect category from keywords
             topics = re.findall(r'"([^"]+)"', response_text)
-            return {"topics": topics[:10], "segments": []}
+            category = "other"
+            text_lower = response_text.lower()
+            if any(kw in text_lower for kw in ["music", "instrumental", "beat", "melody"]):
+                category = "ffcpln_music"
+            elif any(kw in text_lower for kw in ["vlog", "talking", "personal", "daily"]):
+                category = "personal_vlog"
+            elif any(kw in text_lower for kw in ["ice", "immigration", "deport", "resist"]):
+                category = "ice_remix"
+            elif any(kw in text_lower for kw in ["tutorial", "how to", "learn", "explain"]):
+                category = "educational"
+            return {"topics": topics[:10], "segments": [], "content_category": category}
         except Exception as e:
             logger.warning(f"[STUDIO-ASK] JSON parse failed: {e}")
-            return {"topics": [], "segments": [], "raw": response_text}
+            return {"topics": [], "segments": [], "content_category": "other", "raw": response_text}
     
     async def ask_about_video(self, video_id: str) -> AskResult:
         """
@@ -350,14 +489,17 @@ class StudioAskIndexer:
             
             # Parse response
             parsed = self._parse_ask_response(response_text)
-            
+            content_category = parsed.get("content_category", "other")
+            logger.info(f"[STUDIO-ASK] Content category detected: {content_category}")
+
             return AskResult(
                 video_id=video_id,
                 title=title,
                 response_text=response_text,
                 topics=parsed.get("topics", []),
                 timestamps=parsed.get("segments", []),
-                success=True
+                success=True,
+                content_category=content_category,
             )
             
         except Exception as e:
@@ -376,6 +518,7 @@ class StudioAskIndexer:
         self,
         channel_id: str,
         max_videos: Optional[int] = None,
+        force_reindex: bool = False,
     ) -> Dict[str, Any]:
         """
         Index videos for a channel using Ask Gemini.
@@ -391,8 +534,13 @@ class StudioAskIndexer:
         
         max_videos = max_videos or self.max_videos_per_cycle
         results = []
+        skipped = 0
         
-        logger.info(f"[STUDIO-ASK] Starting video indexing for channel {channel_id}")
+        channel_entry = get_channel_by_id(channel_id)
+        channel_key = (channel_entry or {}).get("key") or channel_id or "unknown"
+        channel_name = (channel_entry or {}).get("name", channel_key)
+
+        logger.info(f"[STUDIO-ASK] Starting video indexing for channel {channel_id} ({channel_name})")
         logger.info(f"[STUDIO-ASK] Max videos: {max_videos}")
         
         if not self.driver:
@@ -479,15 +627,22 @@ class StudioAskIndexer:
             logger.info(f"[STUDIO-ASK] Found {len(video_ids)} videos to index")
             
             # Index each video
+            index_root = INDEX_ROOT
+            store = VideoIndexStore(base_path=str(index_root / channel_key))
             for vid_id in video_ids:
+                if not force_reindex and self._index_exists(index_root, channel_key, vid_id):
+                    skipped += 1
+                    logger.info(f"[STUDIO-ASK] ⏭️ {vid_id}: already indexed")
+                    continue
                 result = await self.ask_about_video(vid_id)
                 results.append(result)
                 
                 if result.success:
                     logger.info(f"[STUDIO-ASK] ✅ {vid_id}: {len(result.topics)} topics")
                     
-                    # Store in VideoContentIndex (simplified - full impl would store segments)
-                    # TODO: Create proper GeminiAnalysisResult wrapper
+                    # Persist Ask results as JSON artifacts for indexing continuity
+                    index_data = self._ask_result_to_index_data(result, channel_key=channel_key)
+                    store.save_index(vid_id, index_data)
                 else:
                     logger.warning(f"[STUDIO-ASK] ❌ {vid_id}: {result.error}")
                 
@@ -498,6 +653,7 @@ class StudioAskIndexer:
             return {
                 "channel_id": channel_id,
                 "indexed": indexed,
+                "skipped": skipped,
                 "failed": len(results) - indexed,
                 "videos": [r.video_id for r in results if r.success],
             }
@@ -530,6 +686,9 @@ async def run_video_indexing_cycle(
     if not os.getenv("YT_VIDEO_INDEXING_ENABLED", "true").lower() in ("1", "true", "yes"):
         logger.info("[VIDEO-INDEX] Video indexing disabled (YT_VIDEO_INDEXING_ENABLED)")
         return {"skipped": True}
+    if _stop_active():
+        logger.warning("[VIDEO-INDEX] STOP file active (memory/STOP_VIDEO_INDEXER)")
+        return {"skipped": True, "reason": "STOP file active"}
 
     # Default channels from env - all 4 channels
     # Chrome (9222): Move2Japan, UnDaoDu (Set 1)
@@ -579,14 +738,24 @@ async def run_video_indexing_cycle(
         max_videos_per_cycle=max_videos_per_channel
     )
 
+    counts_before = _count_indexed_by_channel(INDEX_ROOT)
+    force_reindex = _consume_reindex_signal()
+
     results = {}
     for channel_id in channels:
-        result = await indexer.index_channel_videos(channel_id)
+        result = await indexer.index_channel_videos(
+            channel_id,
+            force_reindex=force_reindex,
+        )
         results[channel_id] = result
         logger.info(f"[VIDEO-INDEX] {channel_id}: {result.get('indexed', 0)} videos indexed")
 
     total_indexed = sum(r.get("indexed", 0) for r in results.values())
+    total_skipped = sum(r.get("skipped", 0) for r in results.values())
+    counts_after = _count_indexed_by_channel(INDEX_ROOT)
+    indexed_delta = {k: counts_after.get(k, 0) - counts_before.get(k, 0) for k in counts_after}
     logger.info(f"[VIDEO-INDEX] Cycle complete: {total_indexed} videos indexed")
+    logger.info(f"[VIDEO-INDEX] Skip count: {total_skipped}")
 
     # 2026-02-05: GEMINI ANALYSIS PASS — analyze newly indexed videos via Gemini 2.5 Flash.
     # Extracts topics, segments, transcript → generates hashtag suggestions.
@@ -634,7 +803,59 @@ async def run_video_indexing_cycle(
 
     return {
         "total_indexed": total_indexed,
+        "total_skipped": total_skipped,
         "channels": results,
         "gemini_analysis": gemini_results,
+        "index_counts_before": counts_before,
+        "index_counts_after": counts_after,
+        "index_counts_delta": indexed_delta,
+        "force_reindex": force_reindex,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+async def run_indexing_daemon(
+    channels: Optional[List[str]] = None,
+    max_videos_per_channel: int = 3,
+    browser: str = "chrome",
+    interval_minutes: int = 60,
+    max_cycles: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Run continuous indexing cycles with STOP/reindex signals.
+    """
+    cycles = 0
+    last_result: Dict[str, Any] = {}
+    logger.info("[VIDEO-INDEX] Daemon started")
+
+    while True:
+        if _stop_active():
+            logger.warning("[VIDEO-INDEX] Daemon stopped (STOP file active)")
+            break
+
+        last_result = await run_video_indexing_cycle(
+            channels=channels,
+            max_videos_per_channel=max_videos_per_channel,
+            browser=browser,
+        )
+        cycles += 1
+
+        if max_cycles and cycles >= max_cycles:
+            logger.info("[VIDEO-INDEX] Daemon reached max cycles")
+            break
+
+        sleep_seconds = max(60, int(interval_minutes * 60))
+        logger.info(f"[VIDEO-INDEX] Daemon sleeping for {sleep_seconds}s")
+        for _ in range(0, sleep_seconds, 10):
+            if _stop_active():
+                break
+            await asyncio.sleep(10)
+        if _stop_active():
+            logger.warning("[VIDEO-INDEX] Daemon stopped during sleep")
+            break
+
+    return {
+        "cycles": cycles,
+        "last_result": last_result,
         "timestamp": datetime.now().isoformat(),
     }

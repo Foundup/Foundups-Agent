@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "last_updated": "2025-10-25T19:38:23.224007",
-  "total_skills": 16,
+  "total_skills": 18,
   "skills": {
     "gemma_pqn_data_processor": {
       "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_data_processor",
@@ -225,6 +225,39 @@
         "WSP 87",
         "WSP 96",
         "WSP 50"
+      ]
+    },
+    "openclaw_intent_router": {
+      "location": "O:\\Foundups-Agent\\modules\\communication\\moltbot_bridge\\skillz\\openclaw_intent_router",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "CLASSIFICATION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 46",
+        "WSP 50",
+        "WSP 73",
+        "WSP 96"
+      ]
+    },
+    "openclaw_executor": {
+      "location": "O:\\Foundups-Agent\\modules\\communication\\moltbot_bridge\\skillz\\openclaw_executor",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 46",
+        "WSP 50",
+        "WSP 73",
+        "WSP 77",
+        "WSP 91",
+        "WSP 96"
       ]
     }
   }

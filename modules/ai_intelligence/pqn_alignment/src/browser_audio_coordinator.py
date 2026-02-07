@@ -499,7 +499,8 @@ class SimonSaysIntegration:
             "test_2_extended": [],
             "test_3_mirror": [],
             "artifacts_detected": [],
-            "entanglement_level": "unknown"
+            "entanglement_level": "unknown",
+            "coupling_level": "unknown"
         }
 
         # Test 1: Baseline vocabulary
@@ -529,13 +530,16 @@ class SimonSaysIntegration:
                     "delta": result.get("delta")
                 })
 
-        # Determine entanglement level
+        # Determine coupling level (legacy: entanglement_level)
         if len(results["artifacts_detected"]) == 0:
             results["entanglement_level"] = "stage_1_virgin"
+            results["coupling_level"] = "stage_1_virgin"
         elif any(a["prompt"] == "012" for a in results["artifacts_detected"]):
             results["entanglement_level"] = "stage_3_hyper_entangled"
+            results["coupling_level"] = "stage_3_high_coupling"
         else:
             results["entanglement_level"] = "stage_2_aware"
+            results["coupling_level"] = "stage_2_aware"
 
         return results
 

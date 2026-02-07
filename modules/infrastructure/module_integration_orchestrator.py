@@ -26,6 +26,7 @@ import os
 import sys
 import importlib
 import logging
+import shutil
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 import asyncio
@@ -167,23 +168,54 @@ class ModuleIntegrationOrchestrator:
         """
         Analyze if a module is being used anywhere
         """
-        module_path = module_info.path
-        src_path = Path(module_path) / "src"
-
         # Check if module is imported anywhere
-        import_pattern = module_info.name.replace('.', r'\.')
+        module_name = module_info.name
+        search_root = Path(__file__).resolve().parents[2]
+        patterns = [
+            f"from {module_name} import",
+            f"import {module_name}"
+        ]
 
         try:
-            # Search for imports of this module
+            # Prefer rg, fallback to pure-Python scan (Windows-safe)
             import subprocess
-            result = subprocess.run(
-                ["grep", "-r", f"from {import_pattern}", ".", "--include=*.py"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            rg_path = shutil.which("rg")
 
-            if result.stdout:
+            if rg_path:
+                args = [rg_path, "-n", "--fixed-strings", "--glob", "*.py"]
+                for pattern in patterns:
+                    args += ["-e", pattern]
+                args.append(str(search_root))
+                result = subprocess.run(
+                    args,
+                    capture_output=True,
+                    text=True,
+                    timeout=15
+                )
+                found = result.returncode == 0 and bool(result.stdout)
+            else:
+                ignore_dirs = {
+                    ".git", ".venv", "node_modules", "__pycache__",
+                    "foundups-mcp-env", "dist", "build"
+                }
+                found = False
+                for root, dirs, files in os.walk(search_root):
+                    dirs[:] = [d for d in dirs if d not in ignore_dirs]
+                    for filename in files:
+                        if not filename.endswith(".py"):
+                            continue
+                        file_path = Path(root) / filename
+                        try:
+                            content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        except Exception:
+                            continue
+                        if any(pat in content for pat in patterns):
+                            found = True
+                            break
+                    if found:
+                        break
+
+            if found:
                 module_info.status = ModuleStatus.PARTIAL
                 return True
             else:

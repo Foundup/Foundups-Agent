@@ -92,6 +92,16 @@ channel_name=channel_name,  # Use actual channel_name from stream dict
 
 ---
 
+## 2026-02-05 - Channel routing alias update
+
+**Changes**
+- Added Move2Japan alternate channel ID mapping in `channel_routing.py` for consistent display/routing.
+
+**Impact**
+- Prevents "unknown channel" warnings for UCklMTN... and aligns stream-resolver tests with current registry.
+
+---
+
 ### V029 - Architectural Direction: X/Twitter DAE Child Integration (Planned)
 **Type**: Architecture Documentation
 **Date**: 2025-10-18
@@ -974,5 +984,4 @@ schedule_id = await orchestrator.schedule_content(
 - 笨・WSP 22: Documented implementation in ModLogs
 
 ---
-
 

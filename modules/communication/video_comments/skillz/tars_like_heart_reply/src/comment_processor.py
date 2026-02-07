@@ -355,7 +355,8 @@ class CommentProcessor:
         Save a viewport screenshot + minimal metadata before attempting UI actions.
         This is the "UI-TARS tars gate" requested: picture first, then decide/act.
         """
-        enabled = os.getenv("YT_UI_PRE_ACTION_SNAPSHOT", "true").lower() in {"1", "true", "yes"}
+        # 2026-02-04: Default OFF (saves ~1-2s per comment from disk I/O + PNG capture)
+        enabled = os.getenv("YT_UI_PRE_ACTION_SNAPSHOT", "false").lower() in {"1", "true", "yes"}
         if not enabled:
             return None
 
@@ -1111,14 +1112,14 @@ class CommentProcessor:
                         if self.action_debug:
                             logger.info(f"  [LIKE] DOM click result={like_ok}")
                         if like_ok:
-                            # Min 0.8s delay for YouTube API persistence (randomized tempo)
+                            # 2026-02-04: Reduced min from 0.8s→0.4s (API persistence is fast)
                             random_mult = self._get_random_delay_multiplier()
                             if self.human:
-                                calculated_delay = self.human.human_delay(0.5, 0.3) * random_mult
-                                await asyncio.sleep(max(calculated_delay, 0.8))
+                                calculated_delay = self.human.human_delay(0.4, 0.3) * random_mult
+                                await asyncio.sleep(max(calculated_delay, 0.4))
                             else:
-                                calculated_delay = 0.5 * random_mult
-                                await asyncio.sleep(max(calculated_delay, 0.8))
+                                calculated_delay = 0.4 * random_mult
+                                await asyncio.sleep(max(calculated_delay, 0.4))
                             like_ok = await self._verify_action_with_vision(
                                 "LIKE",
                                 self.VISION_DESCRIPTIONS["like_verify"],
@@ -1150,12 +1151,12 @@ class CommentProcessor:
             action_plan["like"]["reason"] = "disabled"
             logger.info("  [LIKE] DISABLED (do_like=False)")
 
-            # Human-like delay between actions with randomized tempo
+            # 2026-02-04: Reduced inter-action delay from 1.0s→0.3s
             random_mult = self._get_random_delay_multiplier()
             if self.human:
-                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * random_mult)
+                await asyncio.sleep(self.human.human_delay(0.3, 0.3) * random_mult)
             else:
-                await asyncio.sleep(1 * random_mult)
+                await asyncio.sleep(0.3 * random_mult)
 
         action_plan["like"]["success"] = bool(results.get("like"))
 
@@ -1208,14 +1209,14 @@ class CommentProcessor:
                         if self.action_debug:
                             logger.info(f"  [HEART] DOM click result={heart_ok}")
                         if heart_ok:
-                            # Randomized tempo for unpredictability
+                            # 2026-02-04: Reduced from 1.0s→0.4s base (speed optimization)
                             random_mult = self._get_random_delay_multiplier()
                             if self.human:
-                                calculated_delay = self.human.human_delay(1.0, 0.6) * random_mult
-                                await asyncio.sleep(max(calculated_delay, 0.8))
+                                calculated_delay = self.human.human_delay(0.4, 0.3) * random_mult
+                                await asyncio.sleep(max(calculated_delay, 0.4))
                             else:
-                                calculated_delay = 1 * random_mult
-                                await asyncio.sleep(max(calculated_delay, 0.8))
+                                calculated_delay = 0.4 * random_mult
+                                await asyncio.sleep(max(calculated_delay, 0.4))
                             heart_ok = await self._verify_action_with_vision(
                                 "HEART",
                                 self.VISION_DESCRIPTIONS["heart_verify"],
@@ -1247,12 +1248,12 @@ class CommentProcessor:
             action_plan["heart"]["reason"] = "disabled"
             logger.info("  [HEART] DISABLED (do_heart=False)")
 
-            # Human-like delay between actions with randomized tempo
+            # 2026-02-04: Reduced inter-action delay from 1.0s→0.3s
             random_mult = self._get_random_delay_multiplier()
             if self.human:
-                await asyncio.sleep(self.human.human_delay(1.0, 0.6) * random_mult)
+                await asyncio.sleep(self.human.human_delay(0.3, 0.3) * random_mult)
             else:
-                await asyncio.sleep(1 * random_mult)
+                await asyncio.sleep(0.3 * random_mult)
 
         action_plan["heart"]["success"] = bool(results.get("heart"))
 
@@ -1357,21 +1358,21 @@ class CommentProcessor:
                 hb_task = asyncio.create_task(self._thinking_heartbeat("Layer 2 (Intelligence)", hb_stop))
                 
                 try:
-                    # LLM TIMEOUT: 15 seconds for AI generation (Grok API can be slow)
-                    # Previous 8s was too short - Grok needs ~10-12s for complex prompts
+                    # LLM TIMEOUT: 10 seconds for AI generation
+                    # 2026-02-04: Reduced from 15s→10s (Grok timeout is now 8s)
                     actual_reply_text = await asyncio.wait_for(
                         asyncio.to_thread(self._generate_intelligent_reply, comment_data),
-                        timeout=15.0
+                        timeout=10.0
                     )
                     hb_stop.set() # Stop heartbeat
-                    
+
                     # Log result length for debugging
                     reply_len = len(actual_reply_text) if actual_reply_text else 0
                     logger.info(f"[HARD-THINK] Layer 2 Result: '{actual_reply_text[:50] if actual_reply_text else ''}...' (len={reply_len})")
-                
+
                 except asyncio.TimeoutError:
                     hb_stop.set()
-                    logger.warning("[HARD-THINK] ⚠️ Layer 2 TIMEOUT (15s) - AI Generation too slow, check LLM connectivity")
+                    logger.warning("[HARD-THINK] ⚠️ Layer 2 TIMEOUT (10s) - AI Generation too slow, check LLM connectivity")
                     actual_reply_text = None 
                 except Exception as e:
                     hb_stop.set()

@@ -10,7 +10,141 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-02-06 - Architecture Fix: Complete System Separation
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 77 (Agent Coordination)
+
+### Architecture Redesign: Comment Engagement + Live Chat = INDEPENDENT SYSTEMS
+
+**Problem:** Vision stream detection was hijacking Chrome browser, disrupting comment engagement. The systems were incorrectly coupled through shared browser usage.
+
+**Root Cause:** Vision was used for stream DISCOVERY (navigating to `/@channel/live` for all 4 channels), sharing Chrome with comment engagement.
+
+**New Architecture (Complete Separation):**
+
+| System | Browser | Purpose |
+|--------|---------|---------|
+| Comment Engagement | Chrome (9222) | Studio inbox like/heart/reply |
+| Stream Discovery | None (HTTP) | NO-QUOTA scraping for streams |
+| Live Chat Verification | Edge (9223) | Verify known video is still live |
+
+**Changes to stream_resolver:**
+1. Vision REMOVED from discovery chain (`resolve_stream()`)
+2. NO-QUOTA (HTTP) is now PRIMARY discovery method
+3. Vision refactored to VERIFY-ONLY mode:
+   - `verify_video_is_live(video_id)` - checks specific video
+   - Edge-only (Chrome fallback removed)
+   - No channel navigation
+
+**Live Chat can use vision for verification:**
+```python
+from stream_resolver.src.vision_stream_checker import verify_video_with_vision
+result = verify_video_with_vision('VIDEO_ID')  # Uses Edge, checks specific video
+```
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py` - Vision removed from discovery
+- `modules/platform_integration/stream_resolver/src/vision_stream_checker.py` - Verify-only + Edge-only
+
+---
+
+### Problem 1: Rotation mid-processing
+System was rotating away from comment engagement mid-processing. When comments still existed on a channel, the system would switch to another channel, then return - causing disruption and reset of the comment processing flow.
+
+**Root Cause:**
+1. Rotation check at line 644 only checked if task was `.done()`, not if comments existed
+2. After `_verify_and_retry_engagement()`, loop continued to next channel even if inbox NOT clear
+3. No DOM check for actual comment count before allowing rotation
+
+**Solution:**
+1. `auto_moderator_dae.py`: Added DOM check for `ytcp-comment-thread` count before allowing account rotation
+   - If comments > 0, logs "STAYING to process them" and skips rotation
+   - If comments == 0, logs "allowing rotation"
+2. `multi_channel_coordinator.py` (Chrome + Edge loops): Added re-run logic after verify/retry
+   - If DOM shows comments still pending, re-runs engagement for same channel
+   - New env var `YT_STAY_UNTIL_COMMENTS_CLEAR` (default: true)
+
+### Problem 2: Live chat verification BEFORE terminating comments
+Comment engagement was terminated BEFORE verifying live chat was actually available. If live chat failed to initialize (common when stream just ended), comments were already cancelled.
+
+**Root Cause:**
+- Line 865: `terminate_comment_engagement()` called before `start_listening()`
+- `start_listening()` silently returns if init fails (doesn't raise exception)
+- Comments already cancelled, then 2+ minute stream search disrupts browser
+
+**Solution:**
+- Call `livechat.initialize()` FIRST to verify chat is available
+- Only THEN call `terminate_comment_engagement()`
+- If live chat unavailable, return immediately without disrupting comments
+- Logs: "Live chat CONFIRMED - disabling comment engagement" OR "Live chat NOT available - keeping comment engagement ACTIVE"
+
+**User Requirement:** "stay on commenting till they're all commented... if there's comments stay on comment if there's no comment rotate"
+
+**Files Modified:**
+- `src/auto_moderator_dae.py` - Rotation decision guard + Live chat verification before termination
+- `src/multi_channel_coordinator.py` - Chrome and Edge engagement re-run logic
+
+---
+
+## 2026-02-05 - Inbox verification hardening
+
+**Changes**
+- Added loading-state detection and OOPS/permission guardrails during Studio inbox verification.
+- Expanded empty-state selectors/text.
+- Added one refresh + recheck path when the DOM reports 0 threads but no empty state.
+
+**Why**
+- Reduce “verification inconclusive” churn seen in 2026-02-05 logs.
+
+---
+
+## 2026-02-05 - OOPS cooldown backoff
+
+**Changes**
+- Added per-channel OOPS cooldown (default 300s via `YT_OOPS_COOLDOWN_S`) to reduce repeated OOPS churn.
+- Records OOPS hits for target and fallback channels and skips during cooldown window.
+
+**Why**
+- Logs show repeated OOPS detection and fallback loops; cooldown reduces wasted rotation cycles.
+
+---
+
 ## MODLOG ENTRIES
+
+### 2026-02-03: Chrome Rotation OOPS Recovery via swap_from_oops_page
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 87 (Navigation Protocol)
+
+**Problem:** Chrome rotation in `multi_channel_coordinator.py` called `swap_to(fallback_channel)` on OOPS pages, which hit the same `click_avatar()` failure loop (no avatar on OOPS pages).
+
+**Solution:** Updated `_run_chrome_engagement()` to:
+1. Use `swap_from_oops_page(account_name)` as first-line OOPS recovery (5-step cascade with UI-TARS)
+2. Fallback channel also uses `swap_from_oops_page()` instead of `swap_to()`
+3. OOPS events now visible to orchestration switchboard via breadcrumb telemetry
+
+**Files Modified:**
+- `src/multi_channel_coordinator.py`
+
+---
+
+### 2026-02-02: Channel Registry Integration for Rotation Lists
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 60 (Memory Architecture), WSP 84 (No Vibecoding)
+
+**Problem:** Channel rotation lists were duplicated and required manual edits across multiple files when new channels were added.
+
+**Solution:** Switched live-check rotation, comment rotation grouping, per-browser engagement lists, shorts scheduling chain mapping, and account fallback mapping to read from the shared YouTube channel registry.
+
+**Files Modified:**
+- `src/stream_discovery_service.py`
+- `src/auto_moderator_dae.py`
+- `src/multi_channel_coordinator.py`
+- `src/community_monitor.py`
+
+---
 
 ### 2026-02-01: Browser Lock + Stop Signal + Idle Detection
 

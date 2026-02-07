@@ -11,6 +11,30 @@ This log tracks changes to the **orchestration_switchboard** module in the **inf
 
 ## MODLOG ENTRIES
 
+### 2026-02-03: OOPS Page Signal Handlers + Intelligent Recovery Routing (V1.1.0)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 15 (MPS Priority)
+
+**Problem:** OOPS page events were invisible to the orchestration layer. Browser automation modules handled OOPS recovery independently with no coordination, pattern tracking, or intelligent escalation.
+
+**Solution:**
+1. **New signal types**: `oops_page_detected` (P1_HIGH), `oops_page_recovered` (P1_HIGH) in SIGNAL_PRIORITIES
+2. **New mission type**: `BROWSER_NAVIGATION` for OOPS-related signals
+3. **`_handle_oops_page_detected()`**: Tracks OOPS frequency per channel via WRE telemetry, recommends `account_switch` / `skip_channel` / `use_alternate_browser` based on pattern history
+4. **`_handle_oops_page_recovered()`**: Signals browser availability to Activity Router, queries next activity
+5. **Signal emitters wired**: `account_swapper_skill.py` and `dom_automation.py` now emit OOPS breadcrumbs to switchboard
+
+**Architecture Impact:**
+- OOPS events no longer a telemetry black hole
+- Switchboard can recommend alternate browser after 3+ OOPS on same channel within 60 min
+- Activity Router receives `browser_available` signal on recovery
+
+**Files Modified:**
+- `src/orchestration_switchboard.py`
+
+---
+
 ### 2026-01-26: Initial Implementation (V1.0.0)
 
 **By:** 0102

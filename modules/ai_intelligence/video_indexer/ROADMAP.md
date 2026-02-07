@@ -106,6 +106,9 @@
 - [x] Hook in auto_moderator_dae.py (post-comment processing)
 - [x] `YT_VIDEO_INDEXING_ENABLED` environment toggle
 - [x] `studio_ask_indexer.py` for browser automation
+- [x] Ask-Gemini indexing persists JSON artifacts
+- [x] Progress telemetry for indexing runs (counts + deltas)
+- [x] STOP/REINDEX signals for daemon control
 - [ ] Utility routing signals (012 voice vs music/video → downstream pipelines)
 
 ### Gaps Remaining
@@ -147,6 +150,8 @@ result = indexer.index_video_gemini(video_id)   # VOD
 - [x] Deep links with timestamps (youtube.com/watch?v=...&t=XX)
 - [x] `video_search.py` in holo_index/core/
 - [x] Integration with gemini_video_analyzer (auto-index on save)
+- [x] Safe batch indexing with corruption prevention
+- [x] SQLite audit metadata index for segments
 
 ### Usage
 ```python

@@ -54,6 +54,30 @@ def utility_shared_utilities([parameters]) -> [ReturnType]:
     """
 ```
 
+### YouTube Channel Registry
+```python
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channels,
+    get_channel_ids,
+    get_channel_keys,
+    get_rotation_order,
+    add_channel,
+)
+
+# Load registry
+channels = get_channels()
+channel_ids = get_channel_ids(role="live_check")
+rotation_keys = get_rotation_order(role="comments")
+
+# Add new channel
+ok, msg = add_channel({
+    "key": "newchannel",
+    "id": "UCxxxxxxxxxxxx",
+    "name": "NewChannel",
+    "handle": "@NewChannel",
+})
+```
+
 ## [CONFIG] Configuration
 
 ### Required Configuration

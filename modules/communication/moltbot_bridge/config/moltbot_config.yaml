@@ -1,11 +1,11 @@
-# Moltbot Bridge Configuration
+# OpenClaw Bridge Configuration (legacy filename retained)
 
-# Moltbot Gateway connection
+# OpenClaw Gateway connection
 gateway:
   url: "ws://127.0.0.1:18789"
   webhook_port: 18800
 
-# Channel routing - maps Moltbot channels to Foundups DAEs
+# Channel routing - maps OpenClaw channels to Foundups DAEs
 channel_routing:
   whatsapp:
     priority: high

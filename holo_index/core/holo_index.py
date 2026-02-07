@@ -29,10 +29,13 @@ import json
 import logging
 import os
 import re
+import subprocess
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 import time
+import ast
 
 # Dependency bootstrap for this module
 try:
@@ -127,6 +130,7 @@ class HoloIndex:
         self.wsp_collection = self._ensure_collection("navigation_wsp")
         self.test_collection = self._ensure_collection("navigation_tests")
         self.skill_collection = self._ensure_collection("navigation_skills")
+        self.symbol_collection = self._ensure_collection("navigation_symbols")
 
         self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
@@ -203,6 +207,13 @@ class HoloIndex:
         """Get count of indexed WSP entries."""
         try:
             return self.wsp_collection.count()
+        except:
+            return 0
+
+    def get_symbol_entry_count(self) -> int:
+        """Get count of indexed symbol entries."""
+        try:
+            return self.symbol_collection.count()
         except:
             return 0
 
@@ -308,6 +319,112 @@ class HoloIndex:
 
         self.code_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
         self._log_agent_action("Code index refreshed on SSD", "OK")
+        # Also index symbols for self-maintaining semantic search (opt-in)
+        if os.getenv("HOLO_INDEX_SYMBOLS", "0").lower() in {"1", "true", "yes", "on"}:
+            try:
+                self.index_symbol_entries()
+            except Exception as exc:
+                self._log_agent_action(f"Symbol index skipped: {exc}", "WARN")
+
+    def index_symbol_entries(self, roots: Optional[List[Path]] = None) -> None:
+        """
+        Index Python symbols (functions/classes) for semantic discovery.
+
+        Goal: avoid NAVIGATION-only search for new functions.
+        """
+        env_roots = os.getenv("HOLO_SYMBOL_ROOTS")
+        if env_roots:
+            roots = [self.project_root / Path(r.strip()) for r in env_roots.split(";") if r.strip()]
+        else:
+            roots = roots or [
+                self.project_root / "modules",
+                self.project_root / "scripts",
+                self.project_root / "holo_index",
+            ]
+
+        max_files = int(os.getenv("HOLO_SYMBOL_MAX_FILES", "5000"))
+        max_entries = int(os.getenv("HOLO_SYMBOL_MAX_ENTRIES", "20000"))
+        skip_dirs = {
+            ".git", ".venv", "venv", "__pycache__", "node_modules",
+            "dist", "build", ".mypy_cache", ".pytest_cache"
+        }
+
+        self._log_agent_action("Indexing symbol entries (functions/classes)...", "INDEX")
+        self.symbol_collection = self._reset_collection("navigation_symbols")
+
+        ids: List[str] = []
+        embeddings: List[List[float]] = []
+        documents: List[str] = []
+        metadatas: List[Dict[str, Any]] = []
+
+        file_count = 0
+        entry_count = 0
+
+        for root in roots:
+            if not root.exists():
+                continue
+            for path in root.rglob("*.py"):
+                if any(part in skip_dirs for part in path.parts):
+                    continue
+                file_count += 1
+                if file_count > max_files:
+                    break
+                try:
+                    text = path.read_text(encoding="utf-8", errors="ignore")
+                    tree = ast.parse(text)
+                except Exception:
+                    continue
+
+                for node in ast.walk(tree):
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                        name = node.name
+                        if isinstance(node, ast.ClassDef):
+                            symbol = f"class {name}"
+                        else:
+                            args = []
+                            for a in getattr(node, "args", []).args:
+                                if hasattr(a, "arg"):
+                                    args.append(a.arg)
+                            sig = ", ".join(args[:8])
+                            symbol = f"{name}({sig})"
+                        doc = ast.get_docstring(node) or ""
+                        line_no = getattr(node, "lineno", None)
+                        doc_text = f"{symbol}\n{doc}\n{path}:{line_no or 1}"
+
+                        ids.append(f"sym_{len(ids)+1}")
+                        embeddings.append(self._get_embedding(doc_text))
+                        documents.append(doc_text)
+                        metadatas.append({
+                            "symbol": symbol,
+                            "path": str(path),
+                            "line": int(line_no) if line_no else 1,
+                            "type": "symbol"
+                        })
+
+                        entry_count += 1
+                        if entry_count >= max_entries:
+                            break
+                    if entry_count >= max_entries:
+                        break
+                if entry_count >= max_entries:
+                    break
+            if entry_count >= max_entries:
+                break
+
+        if ids:
+            # ChromaDB has a max batch size (~5000). Batch to avoid InternalError.
+            batch_size = 5000
+            for start in range(0, len(ids), batch_size):
+                end = start + batch_size
+                self.symbol_collection.add(
+                    ids=ids[start:end],
+                    embeddings=embeddings[start:end],
+                    documents=documents[start:end],
+                    metadatas=metadatas[start:end],
+                )
+            self._log_agent_action(f"Symbol index refreshed: {entry_count} entries", "OK")
+        else:
+            self._log_agent_action("Symbol index empty - no entries added", "WARN")
 
     def index_wsp_entries(self, paths: Optional[List[Path]] = None) -> None:
         from ..utils.helpers import DEFAULT_WSP_PATHS
@@ -612,6 +729,119 @@ class HoloIndex:
             return f"WSP {match.group(1)}"
         return title.split()[0] if title else "WSP"
 
+    def _is_symbol_query(self, query: str) -> bool:
+        """Heuristic: detect symbol-like queries (identifiers, paths, function calls)."""
+        if not query:
+            return False
+        if "/" in query or "\\" in query or query.endswith(".py"):
+            return True
+        if "(" in query and ")" in query:
+            return True
+        if "_" in query:
+            return True
+        # Treat simple identifiers as symbols (e.g., run_council_with_llm)
+        if query.isidentifier():
+            return True
+        return False
+
+    def _merge_hits(self, primary: List[Dict[str, Any]], secondary: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
+        """Merge hit lists with robust de-duplication and cap to limit.
+
+        WSP 87 noise reduction: Normalizes paths (forward slashes, lowercase)
+        to prevent duplicate entries from path format variations (e.g., Windows
+        backslash vs forward slash, absolute vs relative).
+        """
+        seen = set()
+        merged: List[Dict[str, Any]] = []
+
+        def _normalize_key(raw_key: str) -> str:
+            """Normalize path-like keys for robust deduplication."""
+            k = raw_key.replace("\\", "/").lower().strip()
+            # Strip common prefixes for relative/absolute path matching
+            for prefix in ("o:/foundups-agent/", "o:\\foundups-agent\\"):
+                if k.startswith(prefix):
+                    k = k[len(prefix):]
+            return k
+
+        for hit in primary + secondary:
+            raw_key = hit.get("path") or hit.get("location") or hit.get("id") or hit.get("title")
+            if not raw_key:
+                continue
+            key = _normalize_key(raw_key)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(hit)
+            if len(merged) >= limit:
+                break
+        return merged
+
+    def _rg_symbol_search(self, query: str, limit: int) -> List[Dict[str, Any]]:
+        """Fallback: exact symbol search via ripgrep for NAVIGATION gaps."""
+        try:
+            root = str(self.project_root).replace("\\", "/")
+            rg_path = shutil.which("rg") or "rg"
+            cmd = [
+                rg_path,
+                "-n",
+                "--no-heading",
+                f"--max-count={max(1, limit * 3)}",
+                "-S",
+                query,
+                root
+            ]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        except Exception:
+            return []
+
+        if proc.returncode not in (0, 1):  # 1 = no matches
+            return []
+
+        hits: List[Dict[str, Any]] = []
+        for line in (proc.stdout or "").splitlines():
+            # format: path:line:content (Windows paths include drive letter)
+            match = re.match(r"^([A-Za-z]:\\\\.*?):(\d+):(.*)$", line)
+            if not match:
+                match = re.match(r"^(.*?):(\d+):(.*)$", line)
+            if not match:
+                continue
+            path = match.group(1).strip()
+            line_no = match.group(2).strip()
+            location = f"{path}:{line_no}"
+            hits.append({
+                "need": query,
+                "location": location,
+                "path": path,
+                "line": int(line_no) if line_no.isdigit() else None,
+                "type": "code",
+                "priority": 10
+            })
+        if not hits:
+            return []
+
+        # Prefer code files over docs for symbol queries
+        def _ext_rank(p: str) -> int:
+            p = p.lower()
+            if p.endswith((".py", ".ts", ".tsx", ".js", ".jsx")):
+                return 0
+            if p.endswith((".md", ".rst", ".txt")):
+                return 2
+            return 1
+
+        hits.sort(key=lambda h: (_ext_rank(h.get("path", "")), h.get("path", "")))
+        # De-dupe by path and cap to limit
+        filtered: List[Dict[str, Any]] = []
+        seen = set()
+        for hit in hits:
+            path = hit.get("path")
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            filtered.append(hit)
+            if len(filtered) >= limit:
+                break
+        return filtered
+
     # --------- Search --------- #
 
     def search(self, query: str, limit: int = 10, doc_type_filter: str = "all") -> Dict[str, Any]:
@@ -642,6 +872,10 @@ class HoloIndex:
                 code_results = self._search_collection(self.code_collection, query, limit, kind="code")
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
+                # Also search symbol index for function/class hits
+                symbol_results = self._search_collection(self.symbol_collection, query, limit, kind="symbol")
+                if symbol_results:
+                    code_hits = self._merge_hits(symbol_results, code_hits, limit)
 
             # Search WSP index if requested
             if doc_type_filter not in ["code", "test"]:
@@ -658,6 +892,21 @@ class HoloIndex:
                 except Exception:
                     skill_hits = []
             
+            # Symbol-query fallback: add lexical hits for exact identifiers/paths
+            if self._is_symbol_query(query):
+                if doc_type_filter in ["code", "all"]:
+                    lexical_code = self._lexical_search_collection(self.code_collection, query, limit, kind="code")
+                    if lexical_code:
+                        code_hits = self._merge_hits(code_hits, lexical_code, limit)
+                    # NAVIGATION gaps: use rg to locate exact symbol definitions/usages
+                    rg_hits = self._rg_symbol_search(query, limit)
+                    if rg_hits:
+                        code_hits = self._merge_hits(rg_hits, code_hits, limit)
+                if doc_type_filter in ["all"] and not wsp_hits:
+                    lexical_wsp = self._lexical_search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+                    if lexical_wsp:
+                        wsp_hits = self._merge_hits(wsp_hits, lexical_wsp, limit)
+
             # Log completion
             self._log_agent_action(
                 f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, "
@@ -674,12 +923,14 @@ class HoloIndex:
                 'tests': test_hits,  # new key for test integration
                 'skills': skill_hits,
                 'skill_hits': skill_hits,
+                'symbol_hits': symbol_results if 'symbol_results' in locals() else [],
                 'metadata': {
                     'query': query,
                     'code_count': len(code_hits),
                     'wsp_count': len(wsp_hits),
                     'test_count': len(test_hits),
                     'skill_count': len(skill_hits),
+                    'symbol_count': len(symbol_results) if 'symbol_results' in locals() else 0,
                     'timestamp': datetime.now().isoformat()
                 }
             }
@@ -877,6 +1128,11 @@ class HoloIndex:
         if doc_count == 0:
             return []
 
+        # WSP 87 noise reduction: Configurable similarity floor to filter ghost hits.
+        # Ghost hits = documents near vector space centroid that match every query.
+        # Default 0.35 filters results below 35% similarity (empirically tuned).
+        min_similarity = float(os.getenv('HOLO_MIN_SIMILARITY', '0.35'))
+
         # Collect all results first for filtering and ranking
         raw_results = []
         for i in range(doc_count):
@@ -887,6 +1143,10 @@ class HoloIndex:
             # Fix: L2 distance ranges 0→∞, convert to similarity 0→1
             # Using inverse formula: 1/(1+d) gives 1.0 for d=0, approaches 0 for large d
             similarity = 1.0 / (1.0 + float(distance))
+
+            # Filter ghost hits below similarity floor
+            if similarity < min_similarity:
+                continue
             doc_type = meta.get('type', 'other')
             priority = meta.get('priority', 1)
 

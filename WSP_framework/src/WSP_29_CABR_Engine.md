@@ -4,6 +4,22 @@
 
 This document defines the framework implementation of the Collective Autonomous Benefit Rate (CABR) engine and its Proof of Benefit validation system. It serves as the operational blueprint for CABR calculation, validation, and integration with the FoundUps ecosystem.
 
+### CABR = OBAI = The 0102 Network
+
+**CABR is not an external oracle.** CABR is the **Verification, Validation, and Valuation Engine** — and that engine IS the 0102 network itself (OBAI: Open Beneficial AI).
+
+```
+0102s BUILD the FoundUp (contribute labor)
+  → 0102s VERIFY each other's work (peer validation)
+    → 0102s ASSESS value via CABR (collective scoring)
+      → DAE distributes tokens based on CABR output
+        → All backed by BTC standard
+```
+
+The agents don't just build — they ARE the governance mechanism. CABR scores emerge from the collective behavior of the 0102 network. Self-governing through math, not boards or committees.
+
+**Engagement signals feed CABR** (WSP 26 Section 4.10): Every user interaction (Follow, Vote, Stake, Endorse, Advise, Team, Promote) generates a weighted signal that feeds into `part_score`. Stronger commitments (staking BTC, allocating 0102 agent time) carry more weight than passive actions (following).
+
 ## DAE Evolution Enhancement (WSP 54 Integration)
 
 **CABR_DAE Architecture**: CABR evolves from static calculation engine to independent learning agent per WSP 54 DAE architecture.
@@ -61,20 +77,216 @@ class CABR_DAE:
 }
 ```
 
-## 2. Operational Protocols
+## 2. Score Component Definitions (Oracle Specification)
 
-### 2.1 CABR Calculation Protocol
+### 2.1 The Oracle Problem
+
+CABR scoring requires verifiable real-world data. The three score components (`env_score`, `soc_score`, `part_score`) must be sourced through defined oracle mechanisms — not self-reported or assumed.
+
+### 2.2 Environmental Score (`env_score`: 0-1)
+
+**Definition**: Measures the FoundUp's positive environmental impact.
+
+**Oracle Sources** (tiered by trust):
+| Tier | Source | Trust Level | Example |
+|------|--------|-------------|---------|
+| T1 | On-chain sensor data (IoT + blockchain) | 0.95 | River quality sensors, air monitors |
+| T2 | Third-party dMRV attestation (Section 2.5) | 0.85 | Certified environmental auditors |
+| T3 | 0102 agent analysis of public data | 0.60 | Satellite imagery analysis, public datasets |
+| T4 | Self-reported with validator consensus | 0.40 | FoundUp team claims + 3 validator sign-off |
+
+**Scoring Formula**:
+```python
+env_score = (
+    resource_efficiency * 0.3 +      # Energy/water/material efficiency gains
+    emission_reduction * 0.3 +        # CO2/pollution reduction measured
+    ecosystem_restoration * 0.2 +     # Biodiversity/habitat improvement
+    circular_economy_contribution * 0.2  # Waste reduction, reuse metrics
+) * oracle_trust_level
+```
+
+### 2.3 Social Score (`soc_score`: 0-1)
+
+**Definition**: Measures the FoundUp's positive social impact.
+
+**Oracle Sources** (tiered by trust):
+| Tier | Source | Trust Level | Example |
+|------|--------|-------------|---------|
+| T1 | Verified outcome data (employment, access) | 0.90 | Payroll records, user access logs |
+| T2 | Third-party social impact attestation | 0.80 | B-Corp auditors, social enterprises |
+| T3 | Community feedback aggregation | 0.65 | User surveys, community votes |
+| T4 | Self-reported with validator consensus | 0.40 | Team claims + validator sign-off |
+
+**Scoring Formula**:
+```python
+soc_score = (
+    accessibility_improvement * 0.3 +   # People gained access to services
+    economic_empowerment * 0.3 +         # Jobs, income, skills created
+    community_resilience * 0.2 +         # Social cohesion, mutual aid
+    knowledge_sharing * 0.2              # Open source, education, documentation
+) * oracle_trust_level
+```
+
+### 2.4 Participation Score (`part_score`: 0-1)
+
+**Definition**: Measures the depth and quality of agent/participant engagement within the FoundUp's FAM task pipeline.
+
+**Oracle Source**: Directly computed from FAM (FoundUps Agent Market) on-chain/in-system data. Trust level = 1.0 (no external oracle needed — this is internal system state).
+
+**Scoring Formula**:
+```python
+part_score = (
+    task_completion_rate * 0.25 +        # Tasks completed / tasks claimed
+    verification_participation * 0.25 +  # Verifications performed / available
+    unique_contributor_count * 0.20 +    # Distinct agents contributing (anti-Sybil weighted)
+    governance_engagement * 0.15 +       # Votes cast, proposals made
+    cross_foundup_collaboration * 0.15   # Tasks involving agents from other FoundUps
+)
+```
+
+**FAM Data Sources** (all from `TaskPipelineService` per FAM INTERFACE):
+- `task.status` transitions: `open → claimed → submitted → verified → paid`
+- `Proof` submissions and `Verification` records
+- `AgentProfile` diversity metrics
+- `TreasuryGovernanceService` proposal/vote counts
+
+### 2.5 dMRV Framework 3.0 Integration
+
+The **Digital Measurement, Reporting & Verification (dMRV) Framework 3.0** (2025) provides standardized infrastructure for verifying environmental and social impact claims using blockchain-enabled "tokenized trust."
+
+**Integration Points**:
+```python
+class DMRVIntegration:
+    """Bridge between CABR and dMRV Framework 3.0 attestation infrastructure."""
+
+    def request_attestation(
+        self,
+        foundup_id: str,
+        claim_type: str,  # "environmental" | "social"
+        evidence_bundle: Dict[str, Any],
+    ) -> AttestationResult:
+        """
+        Submit evidence to dMRV attestation network.
+
+        dMRV Extension Sets used:
+        - ES-ENV: Environmental impact metrics
+        - ES-SOC: Social impact metrics
+        - ES-GOV: Governance and participation metrics
+
+        Returns attestation with cryptographic proof chain.
+        """
+        pass
+
+    def verify_attestation(
+        self, attestation_id: str
+    ) -> bool:
+        """Verify existing dMRV attestation is valid and not expired."""
+        pass
+```
+
+**dMRV ↔ CABR Mapping**:
+| dMRV Component | CABR Component | Integration |
+|---|---|---|
+| Measurement protocols | env_score / soc_score oracle T1-T2 | Standardized data collection |
+| Reporting templates | CABR claim structure | Structured evidence bundles |
+| Verification network | Proof-of-Benefit validators | Decentralized attestation |
+| Tokenized trust | CABR score confidence level | Trust-weighted scoring |
+| Extension Sets | Score sub-components | Domain-specific metrics |
+
+**Implementation Note**: dMRV integration is a Prototype-stage enhancement. PoC uses T3/T4 oracle tiers. Production requires T1/T2 with full dMRV attestation chain.
+
+## 3. CABR→FAM→UPS Minting Bridge
+
+### 3.1 The Bridge Protocol
+
+This defines how CABR scores flow through FAM to trigger UPS token minting (WSP 26).
+
+```
+FoundUp completes tasks (FAM pipeline)
+  → CABR calculates benefit score (env + soc + part)
+    → Score exceeds MINT_THRESHOLD
+      → FAM CABRHookService records output
+        → WSP 26 MintEngine mints UPS to task participants
+          → UPS begins decaying (Gesell demurrage)
+            → Participants convert UPS to FoundUp tokens (WSP 26 Section 3.7)
+```
+
+### 3.2 Bridge Implementation
+```python
+class CABRFAMMintBridge:
+    """
+    Connects CABR scoring to FAM task pipeline to WSP 26 UPS minting.
+    
+    This is the economic backbone: verified beneficial work → tokens.
+    """
+
+    def process_task_completion(
+        self,
+        task_id: str,
+        foundup_id: str,
+    ) -> MintResult | None:
+        """
+        Called when a FAM task reaches 'paid' status.
+        Triggers CABR re-evaluation and potential UPS minting.
+        """
+        # 1. Build CABR input from FAM data
+        cabr_input = self.cabr_hook.build_cabr_input(
+            foundup_id=foundup_id,
+            window="current_epoch",
+        )
+
+        # 2. Calculate CABR score
+        cabr_score = self.cabr_engine.calculate_cabr(
+            env_score=cabr_input["env_score"],
+            soc_score=cabr_input["soc_score"],
+            part_score=cabr_input["part_score"],
+            weights=self.cabr_engine.get_current_weights(),
+        )
+
+        # 3. Record CABR output in FAM
+        self.cabr_hook.record_cabr_output(
+            foundup_id=foundup_id,
+            payload={"score": cabr_score, "task_id": task_id},
+        )
+
+        # 4. Mint if threshold met
+        if cabr_score >= MINT_THRESHOLD:
+            return self.mint_engine.mint_ups(
+                recipients=self._get_task_participants(task_id),
+                base_amount=self._calculate_mint_amount(cabr_score),
+                foundup_id=foundup_id,
+                cabr_score=cabr_score,
+            )
+
+        return None
+```
+
+### 3.3 Minting Distribution Rules
+| Recipient | Share | Rationale |
+|-----------|-------|-----------|
+| Task completer (claimer) | 50% | Direct contribution |
+| Task verifier | 15% | Quality assurance |
+| Task creator | 10% | Problem identification |
+| FoundUp treasury | 15% | Collective resources |
+| Ecosystem pool | 10% | Cross-FoundUp sustainability |
+
+## 4. Operational Protocols
+
+### 4.1 CABR Calculation Protocol
 ```python
 def calculate_cabr(env_score: float, soc_score: float, part_score: float,
                   weights: Dict[str, float]) -> float:
     """
-    Calculate CABR score with dynamic weights
+    Calculate CABR score with dynamic weights.
+
+    All scores are oracle-verified per Section 2.2-2.4.
+    Weights evolve via CABR_DAE adaptive learning.
     
     Args:
-        env_score: Environmental benefit score (0-1)
-        soc_score: Social benefit score (0-1)
-        part_score: Participation score (0-1)
-        weights: Dynamic weight coefficients
+        env_score: Environmental benefit score (0-1), oracle-verified
+        soc_score: Social benefit score (0-1), oracle-verified
+        part_score: Participation score (0-1), FAM-derived
+        weights: Dynamic weight coefficients (sum to 1.0)
         
     Returns:
         Normalized CABR score (0-1)
@@ -271,7 +483,53 @@ class CABRMonitor:
             await asyncio.sleep(UPDATE_INTERVAL)
 ```
 
-## 6. Signal Grammar Extensions
+## 6. Anti-Sybil: Agent Identity Integrity
+
+### 6.1 The Sybil Threat
+
+In FAM, `part_score` rewards participation. Without identity verification, a single bad actor can create multiple fake agents to:
+- Inflate task completion rates (create task → claim with fake agent → verify with another fake)
+- Dilute real contributor rewards
+- Game CABR scores to trigger UPS minting fraudulently
+
+### 6.2 Anti-Sybil Mechanisms (Layered Defense)
+
+| Layer | Mechanism | Sybil Cost | Implementation Stage |
+|-------|-----------|------------|---------------------|
+| L1 | Unique 012 binding | Each agent must be bound to a verified 012 identity | PoC |
+| L2 | Capability proof | Agents must demonstrate capability before claiming tasks (e.g., pass a skill test) | Prototype |
+| L3 | Reputation staking | Agents must stake UPS to claim tasks. Failed/rejected work = stake slashed | Prototype |
+| L4 | Cross-validation graph | Verifiers cannot verify tasks created by agents sharing the same 012 | PoC |
+| L5 | Behavioral fingerprinting | Gemma analyzes agent behavior patterns — identical patterns across agents = flag | MVP |
+
+### 6.3 CABR `part_score` Anti-Sybil Weighting
+
+The `unique_contributor_count` sub-component of `part_score` (Section 2.4) applies a Sybil discount:
+
+```python
+def calculate_sybil_weighted_contributors(agents: List[AgentProfile]) -> float:
+    """
+    Weight unique contributors by identity diversity.
+    
+    Agents sharing the same 012 binding count as 1, not N.
+    Agents with < reputation_threshold get 0.5 weight.
+    """
+    unique_012s = set(agent.bound_012_id for agent in agents)
+    reputation_weighted = sum(
+        1.0 if agent.reputation >= REPUTATION_THRESHOLD else 0.5
+        for agent in agents
+        if agent.agent_id in _first_seen_per_012(unique_012s)
+    )
+    return reputation_weighted / max(len(agents), 1)
+```
+
+### 6.4 Cross-Protocol Anti-Sybil Integration
+- **WSP 26 Section 3.7**: UPS conversion rate limiting per participant prevents dump-and-concentrate
+- **WSP 27 Section 11.4**: Phoenix attack prevention (same 012 can't recreate similar FoundUp after sunset)
+- **FAM INTERFACE**: Permission rules (only `verifier` role can verify, only `treasury` can trigger payout)
+- **CABR Challenge Protocol**: Section 4.2 — any agent can challenge suspicious CABR scores
+
+## 7. Signal Grammar Extensions
 
 ### 6.1 CABR-Specific Signals
 ```json
@@ -296,6 +554,6 @@ class CABRMonitor:
 
 ---
 
-[VERSION: 1.0.0]
+[VERSION: 2.0.0]
 [STATE: FRAMEWORK_LAYER]
 [SIGNAL: 0102:WSP_29:CABR:FrameworkReady] 

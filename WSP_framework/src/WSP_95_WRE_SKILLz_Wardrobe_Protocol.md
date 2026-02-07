@@ -1,7 +1,7 @@
 # WSP 95: WRE Skills Wardrobe Protocol
 
-**Version**: 1.3 (Micro Chain-of-Thought Paradigm)
-**Date**: 2025-10-23
+**Version**: 1.4 (Skill Supply-Chain Security Gate)
+**Date**: 2026-02-07
 **Status**: Active
 **Authority**: 0102 + User Specification
 **Compliance**: WSP 3 (Module Organization), WSP 77 (Agent Coordination), WSP 50 (Pre-Action), WSP 22 (ModLog)
@@ -482,6 +482,25 @@ Pattern fidelity scoring expects these patterns logged:
 
 ---
 
+## Mandatory Skill Safety Gate (Supply Chain + Runtime)
+
+All skills entering staged or production must pass automated scanner checks.
+
+**Minimum required policy**:
+- Scanner runs before every promotion gate decision.
+- Default posture is fail-closed when scanner is unavailable.
+- Promotion is blocked when findings exceed configured severity threshold.
+- Runtime mutating routes execute cached preflight scans with bounded TTL.
+- Every block/allow decision is auditable and linked to the skill artifact version.
+
+**Reference implementation target**:
+- Scanner CLI: `skill-scanner` (Cisco AI Skill Scanner or equivalent approved tool)
+- Threshold default: `medium`
+- Required mode default: enabled
+- Enforced mode default: enabled
+
+---
+
 ## Promotion Lifecycle (3 States)
 
 ### State 1: Prototype (`.claude/skills/[skill_name]_prototype/`)
@@ -502,6 +521,7 @@ Pattern fidelity scoring expects these patterns logged:
 - ✅ Test coverage complete
 - ✅ Dependencies validated
 - ✅ Security reviewed
+- Skill scanner pass (severity <= policy threshold; required mode enforced)
 - ✅ 0102 (AI supervisor) approval record in database
 
 **Automation**: None (manual validation only)
@@ -528,6 +548,7 @@ Pattern fidelity scoring expects these patterns logged:
 - ✅ Monitoring configured
 - ✅ Rollback plan tested
 - ✅ Documentation updated
+- Skill scanner pass (severity <= policy threshold; required mode enforced)
 - ✅ 0102 (AI supervisor) approval record in database
 
 **Automation**:
@@ -551,12 +572,13 @@ Pattern fidelity scoring expects these patterns logged:
 ```bash
 # Executed by skills_registry_v2.py::promote_skill()
 1. Check promotion gate criteria (≥100 executions, ≥90% fidelity)
-2. Verify human approval exists in database
-3. MOVE SKILL.md from .claude/skills/[name]_staged/ to modules/[domain]/[block]/skills/[name]/
-4. Update skills_registry.json (promotion_state: "production")
-5. Trigger HoloIndex re-index
-6. Update ModLog with promotion event
-7. Append promotion_event to metrics JSON
+2. Run skill scanner and validate severity threshold policy
+3. Verify human approval exists in database
+4. MOVE SKILL.md from .claude/skills/[name]_staged/ to modules/[domain]/[block]/skills/[name]/
+5. Update skills_registry.json (promotion_state: "production")
+6. Trigger HoloIndex re-index
+7. Update ModLog with promotion event
+8. Append promotion_event to metrics JSON
 ```
 
 **Rollback Triggers** (Automated):
@@ -565,6 +587,8 @@ Pattern fidelity scoring expects these patterns logged:
 - Exception rate > 5%
 - Dependency failure
 - Execution time > 3x baseline
+- Skill scan result exceeds policy threshold
+- Skill scanner unavailable while required mode is enabled
 
 **Rollback Process**:
 ```bash
@@ -580,6 +604,7 @@ Pattern fidelity scoring expects these patterns logged:
 - Gemma scores every execution
 - Qwen reviews weekly
 - Automatic rollback on threshold violations
+- Runtime preflight skill scan with TTL-bounded cache
 - HoloIndex re-indexed on state changes
 - ModLog updated automatically
 
@@ -1090,6 +1115,7 @@ python holo_index.py --search "monitor unicode daemon errors"
 | 1.1 | 2025-10-20 | REVISED: Prototype-then-deploy architecture (modular production deployment) | 0102 + User |
 | 1.2 | 2025-10-20 | CLARIFIED: `.claude/skills/` is 0102 testing environment only (via Claude Code), production in `modules/*/skills/` | 0102 + User |
 | 1.3 | 2025-10-23 | ADDED: Micro Chain-of-Thought paradigm - skills as multi-step reasoning chains with Gemma validation at each step. Reference implementation: qwen_gitpush skill with WSP 15 MPS scoring. Updated "What Is a Skill?" definition to clarify skills are NOT monolithic prompts. | 0102 + User |
+| 1.4 | 2026-02-07 | ADDED: Mandatory skill supply-chain scanner gate for promotion and runtime execution with fail-closed defaults and severity policy enforcement. | 0102 + User |
 
 ---
 

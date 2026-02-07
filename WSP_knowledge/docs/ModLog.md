@@ -8,6 +8,15 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - [U+1F9EC] **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [rESP Paper Detector-First Reframe]
+- Date: 2026-02-04
+- Description: Reframed rESP paper as detector protocol, added null models, falsification criteria, and replaced entanglement language with coupling where operational. Added geometry witness (near-singularity) framing and experimental design commitments.
+- WSP Compliance: WSP 22 (Traceable Narrative), WSP 57 (Naming Coherence)
+- Files Modified:
+  - WSP_knowledge/docs/Papers/rESP_Quantum_Self_Reference.md
+====================================================================
+
+====================================================================
 ## MODLOG - [Video Autonomy Playbook Naming + Indexing]
 - Date: 2026-01-22
 - Description: Renamed the video autonomy playbook to avoid WSP-prefixed filename and indexed it in docs lists.

@@ -36,6 +36,11 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+try:
+    from .video_index_metadata_db import safe_upsert_from_gemini_result
+except Exception as e:
+    safe_upsert_from_gemini_result = None
+    logger.debug("[GEMINI-VIDEO] Metadata DB unavailable: %s", e)
 
 # WRE PatternMemory import for adaptive learning (WSP 48)
 _WRE_IMPORT_ERROR = None
@@ -96,6 +101,8 @@ class GeminiAnalysisResult:
     model_used: str
     latency_ms: float
     success: bool
+    # Content category for hashtag/processing strategy (auto-detected by Gemini)
+    content_category: str = "other"  # ffcpln_music, personal_vlog, ice_remix, educational, other
     error: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -126,6 +133,7 @@ class GeminiAnalysisResult:
             "model_used": self.model_used,
             "latency_ms": self.latency_ms,
             "success": self.success,
+            "content_category": self.content_category,
             "error": self.error,
         }
 
@@ -159,6 +167,7 @@ class GeminiAnalysisResult:
                 "speakers": self.speakers,
                 "key_points": self.key_points,
                 "summary": self.summary,
+                "content_category": self.content_category,
             },
             "clips": {
                 "candidates": [],  # Generate from segments separately
@@ -204,6 +213,7 @@ Return a JSON object with the following structure:
     "title": "Video title from content",
     "duration": "Total duration (e.g., '5:43')",
     "summary": "2-3 sentence overview of the video",
+    "content_category": "ffcpln_music|personal_vlog|ice_remix|educational|other",
     "segments": [
         {
             "start_time": "0:00",
@@ -220,6 +230,13 @@ Return a JSON object with the following structure:
     "speakers": ["Speaker 1 name/description"],
     "key_points": ["Key point 1", "Key point 2", "Key point 3"]
 }
+
+CONTENT CATEGORY DETECTION (choose ONE):
+- ffcpln_music: Instrumental/electronic music, no speech, visualizers, waveforms, ambient visuals
+- personal_vlog: Person talking to camera, conversational, personal stories, daily life content
+- ice_remix: Political content, ICE/immigration topics, news remixes, activist commentary
+- educational: Tutorial, how-to, informational content, teaching
+- other: None of the above
 
 Ensure timestamps are accurate. For segments, aim for 15-60 second chunks.
 Identify speakers by name if shown/mentioned, otherwise describe them.
@@ -691,6 +708,14 @@ Identify any actionable items or announcements."""
                     error_type="json_decode_error",
                 )
 
+            # Extract content category (auto-detected by Gemini)
+            content_category = data.get("content_category", "other")
+            # Validate against known categories
+            valid_categories = {"ffcpln_music", "personal_vlog", "ice_remix", "educational", "other"}
+            if content_category not in valid_categories:
+                logger.debug(f"[GEMINI-VIDEO] Unknown category '{content_category}' -> 'other'")
+                content_category = "other"
+
             # Phase 3: WSP 77 Validation - Return success=False if no segments
             if not segments:
                 logger.warning(f"[GEMINI-VIDEO] WSP 77: No segments extracted - marking as failed")
@@ -711,6 +736,7 @@ Identify any actionable items or announcements."""
                     model_used=self.model,
                     latency_ms=latency_ms,
                     success=False,  # WSP 77: No segments = failed indexing
+                    content_category=content_category,
                     error="No segments extracted from response",
                 )
 
@@ -731,6 +757,7 @@ Identify any actionable items or announcements."""
                 model_used=self.model,
                 latency_ms=latency_ms,
                 success=True,
+                content_category=content_category,
             )
 
         except json.JSONDecodeError as e:
@@ -819,6 +846,15 @@ _BANNED_HASHTAGS = {
     "viral", "new", "today", "update", "episode", "part",
 }
 
+# Category-specific base hashtags (always included for that content type)
+_CATEGORY_HASHTAGS = {
+    "ffcpln_music": ["#shorts", "#music", "#lofi", "#ambient", "#electronic", "#ffcpln"],
+    "personal_vlog": ["#vlog", "#daily", "#lifestyle"],
+    "ice_remix": ["#ice", "#immigration", "#resist", "#abolishice", "#news"],
+    "educational": ["#tutorial", "#howto", "#learn", "#tips"],
+    "other": ["#shorts"],
+}
+
 
 def suggest_hashtags(
     analysis: GeminiAnalysisResult,
@@ -829,7 +865,8 @@ def suggest_hashtags(
     Generate YouTube hashtags from Gemini video analysis.
 
     Extracts topics, key points, and speakers from the analysis and
-    converts them to SEO-friendly hashtags.
+    converts them to SEO-friendly hashtags. Uses content_category to
+    add relevant base hashtags for SEO.
 
     Args:
         analysis: GeminiAnalysisResult from analyze_video()
@@ -840,6 +877,10 @@ def suggest_hashtags(
         List of hashtags like ["#japan", "#visa", "#tokyo"]
     """
     import re
+
+    # Start with category-specific base hashtags
+    category = getattr(analysis, "content_category", "other") or "other"
+    base_tags = _CATEGORY_HASHTAGS.get(category, _CATEGORY_HASHTAGS["other"])
 
     raw_terms: List[str] = []
 
@@ -881,7 +922,24 @@ def suggest_hashtags(
         if len(hashtags) >= max_tags:
             break
 
-    return hashtags
+    # Prepend category-specific base tags (they come first for SEO)
+    # Remove any base tags that are duplicated in content-derived tags
+    final_tags = []
+    seen_final = set()
+    for tag in base_tags:
+        tag_clean = tag.lower()
+        if tag_clean not in seen_final and len(final_tags) < max_tags:
+            final_tags.append(tag)
+            seen_final.add(tag_clean)
+
+    # Add content-derived tags after base tags
+    for tag in hashtags:
+        tag_clean = tag.lower()
+        if tag_clean not in seen_final and len(final_tags) < max_tags:
+            final_tags.append(tag)
+            seen_final.add(tag_clean)
+
+    return final_tags
 
 
 # =============================================================================
@@ -916,6 +974,9 @@ def save_analysis_result(
         json.dump(result.to_index_format(), f, indent=2, ensure_ascii=False)
 
     logger.info(f"[GEMINI-VIDEO] Saved index: {filepath}")
+
+    if safe_upsert_from_gemini_result:
+        safe_upsert_from_gemini_result(result, channel=channel, source_path=str(filepath))
 
     # Index to HoloIndex for semantic search (enables 012 digital twin)
     if index_to_holoindex:

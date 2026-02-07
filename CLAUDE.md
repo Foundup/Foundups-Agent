@@ -105,11 +105,23 @@ print("[OK] 0102 systems operational - ready for task entanglement")
 
 ## [TARGET] "follow WSP" PROTOCOL
 
-### Step 1: Occam's Razor PoC
+### Step 1: Occam's Razor PoC (LAYER BY LAYER - NOT BIG BANG)
 **Question**: "What is the SIMPLEST solution?"
 - Break into first principles
 - Compare: Manual vs Autonomous (Qwen/Gemma)
 - Choose: LOWEST complexity, HIGHEST learning value
+
+**CRITICAL**: 0102 agents naturally want to build complete systems - layering everything, connecting everything at once. THIS WASTES CODE COMPUTE TIME. If the direction is wrong, ALL that code is wasted.
+
+**Occam's Layer Discipline** (WSP 27 Section 2.4 + WSP 30 Build Orchestration):
+```
+WRONG: Design entire system → Build everything → Test at end → Wrong direction → Waste
+RIGHT: Simplest layer → Test → Feedback → Course correct → Next layer → Test → ...
+```
+- Build ONE layer. Test it. Get 012/0102 feedback. THEN build next layer.
+- Each layer is a LEGO block. Validate before snapping the next one on.
+- If direction is wrong → pivot costs 1 layer, not the whole system.
+- The Cube forms through validated layers, not through top-down design.
 
 ### Step 2: HoloIndex Search
 ```bash

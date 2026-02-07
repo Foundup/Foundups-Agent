@@ -100,6 +100,12 @@ Edit `data/style_rules.json`:
 ### Guardrails
 NeMo Guardrails config at `config/guardrails/`
 
+### VoiceMemory Video Index
+Disable HoloIndex video transcript queries if needed:
+```bash
+set VOICE_MEMORY_VIDEO_INDEX=0
+```
+
 ## Vision System (V0.5.0)
 
 ### Autonomous Vision Agent

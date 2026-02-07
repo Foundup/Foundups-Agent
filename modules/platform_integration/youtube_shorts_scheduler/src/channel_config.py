@@ -50,6 +50,7 @@ def _build_channel_config() -> Dict[str, Dict[str, Any]]:
             "available_ports": browser.get("available_ports", ALL_PORTS),
             "account_section": browser.get("account_section", 0),
             "description_template": shorts.get("description_template", "ffcpln"),
+            "content_types": ch.get("content_types") or ["short"],
         }
     return channels
 
@@ -123,6 +124,40 @@ def get_channel_config(channel_key: str) -> Optional[Dict[str, Any]]:
     return CHANNELS.get(channel_key.lower())
 
 
+def get_channels_by_content_type(content_type: str) -> List[str]:
+    """
+    Get channel keys that support a specific content type.
+
+    Args:
+        content_type: "short" or "upload"
+
+    Returns:
+        List of channel keys supporting that content type
+    """
+    content_type = content_type.lower().strip()
+    return [
+        key for key, config in CHANNELS.items()
+        if content_type in config.get("content_types", ["short"])
+    ]
+
+
+def channel_supports_content_type(channel_key: str, content_type: str) -> bool:
+    """
+    Check if a channel supports a specific content type.
+
+    Args:
+        channel_key: Channel identifier
+        content_type: "short" or "upload"
+
+    Returns:
+        True if channel supports the content type
+    """
+    config = get_channel_config(channel_key)
+    if not config:
+        return False
+    return content_type.lower().strip() in config.get("content_types", ["short"])
+
+
 def build_studio_url(
     channel_id: str,
     content_type: str = "short",
@@ -178,9 +213,16 @@ def get_studio_urls(channel_key: str) -> Dict[str, str]:
     channel_id = config["id"]
 
     return {
+        # Shorts URLs
         "unlisted_shorts": build_studio_url(channel_id, "short", "UNLISTED"),
         "scheduled_shorts": build_studio_url(channel_id, "short", "SCHEDULED"),
         "public_shorts": build_studio_url(channel_id, "short", "PUBLIC"),
         "all_shorts": build_studio_url(channel_id, "short"),
+        # Video (upload) URLs - for channels with personal vlogs
+        "unlisted_videos": build_studio_url(channel_id, "upload", "UNLISTED"),
+        "scheduled_videos": build_studio_url(channel_id, "upload", "SCHEDULED"),
+        "public_videos": build_studio_url(channel_id, "upload", "PUBLIC"),
+        "all_videos": build_studio_url(channel_id, "upload"),
+        # Base
         "base": f"https://studio.youtube.com/channel/{channel_id}",
     }

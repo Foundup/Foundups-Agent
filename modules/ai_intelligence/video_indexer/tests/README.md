@@ -62,6 +62,8 @@ Test individual components without external dependencies:
 - `test_indexer_telemetry.py` - Heartbeat and health calculation
 - `test_clip_generator.py` - Virality scoring algorithms
 - `test_multimodal_aligner.py` - Moment alignment logic
+- `test_studio_ask_indexer_persistence.py` - Ask-Gemini JSON persistence
+- `test_studio_ask_indexer_signals.py` - STOP/reindex signals + counts
 
 ### 2. Integration Tests (Requires Browser)
 Test full pipeline with Selenium automation:
@@ -205,6 +207,8 @@ from modules.ai_intelligence.video_indexer.src.video_indexer import VideoIndexer
 | 2026-01-10 | test_stage3_video_indexing.py | Stage 3: Full 4-phase indexing pipeline |
 | 2026-01-10 | test_stage4_validation.py | Stage 4: Index quality validation |
 | 2026-01-10 | test_gemini_video_analyzer.py | Gemini AI video analysis (Tier 1 method) |
+| 2026-02-06 | test_studio_ask_indexer_persistence.py | Ask-Gemini JSON persistence (offline) |
+| 2026-02-06 | test_studio_ask_indexer_signals.py | Ask-Gemini daemon signals + counts |
 
 ## Gemini Video Analyzer (PRIMARY METHOD)
 

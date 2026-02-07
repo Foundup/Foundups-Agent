@@ -1,4 +1,4 @@
-﻿# HoloIndex Test Suite TESTModLog
+# HoloIndex Test Suite TESTModLog
 ## ++ CodeIndex Circulation Monitor Coverage
 **WSP Protocol**: WSP 93 (CodeIndex), WSP 35 (HoloIndex Qwen Advisor Plan), WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 
@@ -34,6 +34,49 @@
 - Added tests for HoloOutputFormatter summary/TODO structure and telemetry JSONL logging.
 - Existing coordinator tests now validate structured response still includes arbitration/execution details.
 - Pending: module map + doc consumption tests once coordinator integration lands.
+
+## [2026-02-06] Holo vs grep Integration Test Refresh
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Updated `test_holo_vs_grep.py` assertions to reflect current CLI output formatting.
+- Added UTF-8 safe subprocess decoding for HoloIndex and rg outputs.
+- Reframed TSX preview test to semantic-result availability when literal rg fails.
+- Documented SWOT comparison in `holo_index/tests/TEST_SUITE_DOCUMENTATION.md`.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_holo_vs_grep.py -q`
+
+## [2026-02-06] Video Search Health Probe Tests
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 34 (Test Documentation), WSP 22 (Documentation)
+
+### Summary
+- Added `test_video_search_healthcheck.py` to validate video index health probe toggles.
+- Covers disable flag, healthcheck disable path, and failure blocking.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_video_search_healthcheck.py -q`
+
+## [2026-02-06] Video Search SQLite Metadata Index Tests
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 34 (Test Documentation), WSP 22 (Documentation)
+
+### Summary
+- Added `test_video_search_metadata_db.py` to verify SQLite audit index writes.
+- Uses a manual instance (no ChromaDB init) to keep tests isolated.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_video_search_metadata_db.py -q`
+
+## [2026-02-06] Benchmark Runner Controls
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 22 (Documentation)
+
+### Summary
+- Added BENCH_* env timeouts and BENCH_MAX_QUERIES to keep benchmark runs bounded.
+- Forced UTF-8 subprocess decoding and ASCII-only report markers to avoid Windows encoding crashes.
+
+### Verification
+- `BENCH_MAX_QUERIES=4 python holo_index/tests/benchmark_holo_vs_tools.py`
+  - Bounded run executed with `BENCH_MAX_QUERIES=2` (literal queries only).
 
 
 ## Purpose (Read Before Writing Tests)
@@ -303,4 +346,3 @@
 - **Script Dependencies**: Python standard library + HoloIndex components
 - **Error Handling**: Comprehensive exception catching with diagnostic output
 - **Performance**: Optimized for fast execution in CI/CD pipelines
-

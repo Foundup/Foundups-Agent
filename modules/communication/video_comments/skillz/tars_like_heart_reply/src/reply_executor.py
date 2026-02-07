@@ -337,7 +337,8 @@ class BrowserReplyExecutor:
             if not typed:
                 return False
 
-            delay = (self.human.human_delay(1.0, 0.4) if self.human else 1.0) * self.delay_multiplier
+            # 2026-02-04: Reduced pre-submit delay from 1.0s→0.5s
+            delay = (self.human.human_delay(0.5, 0.3) if self.human else 0.5) * self.delay_multiplier
             await asyncio.sleep(delay)
 
             # Submit reply
@@ -469,12 +470,13 @@ class BrowserReplyExecutor:
                 logger.warning(f"[REPLY] DOM open failed: {reply_open.get('error')}")
             return False
 
-        # Human-like delay after opening reply box (randomized 0.6s-2.4s, respects FAST mode)
+        # Human-like delay after opening reply box
+        # 2026-02-04: Reduced from 1.5s→0.6s base (speed optimization)
         if self.human:
-            await asyncio.sleep(self.human.human_delay(1.5, 0.6) * self.delay_multiplier)
+            await asyncio.sleep(self.human.human_delay(0.6, 0.4) * self.delay_multiplier)
         else:
-            await asyncio.sleep(1.5 * self.delay_multiplier)
-        logger.info(f"[DAEMON][REPLY-EXEC] Reply box opened, waited {1.5 * self.delay_multiplier:.2f}s")
+            await asyncio.sleep(0.6 * self.delay_multiplier)
+        logger.info(f"[DAEMON][REPLY-EXEC] Reply box opened, waited {0.6 * self.delay_multiplier:.2f}s")
 
         logger.info("[HARD-THINK] Reply box OPENED. Looking for textarea via Shadow DOM...")
 
@@ -535,14 +537,13 @@ class BrowserReplyExecutor:
         if textarea:
             logger.info(f"[HARD-THINK] Textarea FOUND. Typing reply ({len(reply_text)} chars)...")
 
-            # ANTI-DETECTION: "Reading/thinking" pause before typing (2025-12-30)
-            # Simulates human reading the comment and formulating response
+            # ANTI-DETECTION: "Reading/thinking" pause before typing
+            # 2026-02-04: Reduced from 2s→0.8s base (speed optimization)
             if self.delay_multiplier >= 1.0:  # Only for standard tempo
                 if self.human:
-                    # 1-3 second "thinking" pause (shortened per user feedback)
-                    think_time = self.human.human_delay(2.0, 0.5)
+                    think_time = self.human.human_delay(0.8, 0.4)
                 else:
-                    think_time = random.uniform(1.0, 3.0)
+                    think_time = random.uniform(0.5, 1.2)
                 logger.info(f"[ANTI-DETECTION] 🤔 Thinking before typing: {think_time:.1f}s")
                 await asyncio.sleep(think_time)
 
@@ -556,13 +557,13 @@ class BrowserReplyExecutor:
             # Type character-by-character with JS injection (visual human-like typing)
             logger.info(f"[DAEMON][REPLY-EXEC] ⌨️ Typing reply character-by-character...")
 
-            # Calculate delay per character (OPTIMIZED 2026-01-02)
-            # 20% faster: 0.12 -> 0.096, 0.08 -> 0.064 (WSP 0102 speed optimization)
+            # Calculate delay per character
+            # 2026-02-04: Further reduced from 0.096→0.055 (burst mode handles variance)
             if self.human and HUMAN_BEHAVIOR_AVAILABLE:
-                base_char_delay = 0.096  # 20% faster (was 0.12)
+                base_char_delay = 0.055  # ~43% faster (was 0.096)
                 char_delay = base_char_delay * self.delay_multiplier
             else:
-                char_delay = 0.064  # 20% faster fallback (was 0.08)
+                char_delay = 0.035  # ~45% faster fallback (was 0.064)
 
             # Type character-by-character with delays (visible human-like typing)
             try:
@@ -599,14 +600,15 @@ class BrowserReplyExecutor:
                         await asyncio.sleep(char_delay * random.uniform(0.55, 1.7))
 
                     # Occasional hesitation pause (human "thinking" in-stream)
-                    hesitation_rate = 0.05
+                    # 2026-02-04: Reduced from 5%→2%, shorter pause (was 0.4-2.4s)
+                    hesitation_rate = 0.02
                     if random.random() < hesitation_rate and self.delay_multiplier >= 1.0:
-                        hesitate = random.uniform(0.4, 2.4)
+                        hesitate = random.uniform(0.3, 1.2)
                         logger.debug(f"[ANTI-DETECTION] Typing hesitation: {hesitate:.1f}s")
                         await asyncio.sleep(hesitate)
 
                     # Rare micro-edit: simulate a quick correction (contenteditable-safe backspace)
-                    if random.random() < 0.02 and self.delay_multiplier >= 1.0:
+                    if random.random() < 0.01 and self.delay_multiplier >= 1.0:
                         self.driver.execute_script(
                             """
                             const el = arguments[0];
@@ -652,11 +654,12 @@ class BrowserReplyExecutor:
              logger.error("  [REPLY] [HARD-THINK] Failed to find textarea after opening box (Shadow DOM search returned null)")
              return False
 
-        # Human-like delay before submit (randomized 0.4s-1.2s)
+        # Human-like delay before submit
+        # 2026-02-04: Reduced from 0.8s→0.4s base
         if self.human:
-            await asyncio.sleep(self.human.human_delay(0.8, 0.5) * self.delay_multiplier)
+            await asyncio.sleep(self.human.human_delay(0.4, 0.3) * self.delay_multiplier)
         else:
-            await asyncio.sleep(0.8 * self.delay_multiplier)
+            await asyncio.sleep(0.4 * self.delay_multiplier)
 
         # Submit - HARDENED 2026-01-18: Multiple selector strategies + text-based fallback
         submit_result = self.driver.execute_script(

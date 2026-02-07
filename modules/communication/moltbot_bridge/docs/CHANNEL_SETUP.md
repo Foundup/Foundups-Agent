@@ -1,9 +1,11 @@
-# Moltbot Channel Setup Guide
+# OpenClaw Channel Setup Guide
+
+> Formerly "Moltbot Channel Setup Guide" - updated Jan 2026 for OpenClaw rebrand
 
 ## Prerequisites
 
-- Moltbot installed: `npm i -g moltbot && moltbot onboard`
-- Config file: `~/.clawdbot/moltbot.json`
+- OpenClaw installed: `npm i -g openclaw && openclaw onboard`
+- Config file: `~/.openclaw/openclaw.json`
 
 ---
 
@@ -12,7 +14,7 @@
 **Requirement**: Separate phone number recommended (or use personal with caution)
 
 ### Setup Steps
-1. Add to `moltbot.json`:
+1. Add to `openclaw.json`:
 ```json
 {
   "channels": {
@@ -26,13 +28,13 @@
 
 2. Login via QR code:
 ```bash
-moltbot channels login
+openclaw channels login
 ```
 - Scan with WhatsApp → Linked Devices
 
 3. Start gateway:
 ```bash
-moltbot start
+openclaw start
 ```
 
 ---
@@ -50,7 +52,7 @@ moltbot start
    - `/setprivacy` → Disable (to see group messages)
    - `/setjoingroups` → Enable
 
-3. Add to `moltbot.json`:
+3. Add to `openclaw.json`:
 ```json
 {
   "channels": {
@@ -89,7 +91,7 @@ moltbot start
    - Right-click server → Copy Server ID
    - Right-click channel → Copy Channel ID
 
-6. Add to `moltbot.json`:
+6. Add to `openclaw.json`:
 ```json
 {
   "channels": {
@@ -118,7 +120,7 @@ moltbot start
    - Use existing voice or clone 012's voice
    - Copy Voice ID from ElevenLabs dashboard
 
-3. Add to `moltbot.json`:
+3. Add to `openclaw.json`:
 ```json
 {
   "talk": {
@@ -136,7 +138,7 @@ moltbot start
 
 ---
 
-## Complete moltbot.json Example
+## Complete openclaw.json Example
 
 ```json
 {

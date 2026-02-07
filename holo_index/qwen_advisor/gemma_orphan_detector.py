@@ -7,7 +7,7 @@ Detects "uncontaminated" modules (nothing imports them) and queues
 them for Qwen MPS deep analysis.
 
 Architecture:
-- L0: Rules-based grep for import patterns (<10ms)
+- L0: Rules-based scan for import patterns (<10ms)
 - L1: Gemma fast validation (50-100ms) - is this truly orphaned?
 - Output: Queue of orphan modules for Qwen L2 evaluation
 
@@ -17,6 +17,7 @@ WSP Compliance: WSP 15 (MPS), WSP 88 (Orphan Analysis)
 import os
 import re
 import subprocess
+import shutil
 from pathlib import Path
 from typing import List, Dict, Set, Optional
 from dataclasses import dataclass, field
@@ -51,7 +52,7 @@ class GemmaOrphanDetector:
     """
     Gemma-powered orphan module detector.
     
-    Uses L0 (grep) + L1 (Gemma validation) for fast orphan detection,
+    Uses L0 (rules scan) + L1 (Gemma validation) for fast orphan detection,
     queuing results for Qwen L2 MPS evaluation.
     """
     
@@ -115,10 +116,10 @@ class GemmaOrphanDetector:
         
         result = OrphanScanResult()
         
-        # L0: Build import graph using grep
-        logger.info("[L0] Building import graph with grep...")
+        # L0: Build import graph using fast scan
+        logger.info("[L0] Building import graph (rg/python scan)...")
         all_modules = self._find_all_python_modules()
-        import_graph = self._build_import_graph_grep()
+        import_graph = self._build_import_graph_scan()
         
         result.total_modules_scanned = len(all_modules)
         logger.info(f"[L0] Found {len(all_modules)} Python modules")
@@ -171,7 +172,7 @@ class GemmaOrphanDetector:
                 # No Gemma - use heuristics
                 for orphan in potential_orphans:
                     orphan.confidence = 0.8  # High confidence from L0
-                    orphan.reason = "L0 grep detection (no Gemma validation)"
+                    orphan.reason = "L0 scan detection (no Gemma validation)"
                     result.orphans.append(orphan)
         else:
             result.orphans = potential_orphans
@@ -196,42 +197,70 @@ class GemmaOrphanDetector:
                     modules.append(py_file)
         return modules
     
-    def _build_import_graph_grep(self) -> Dict[str, Set[str]]:
-        """Build import graph using grep (L0 fast scan)."""
+    def _build_import_graph_scan(self) -> Dict[str, Set[str]]:
+        """Build import graph using rg or Python scan (L0 fast scan)."""
         import_graph: Dict[str, Set[str]] = {}
         
-        # Grep for import statements
+        rg_path = shutil.which("rg")
         try:
-            result = subprocess.run(
-                ["grep", "-rn", "--include=*.py", "-E", 
-                 r"^(from|import)\s+[a-zA-Z_]"],
-                cwd=str(self.repo_root),
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            for line in result.stdout.split('\n'):
-                if ':' not in line:
-                    continue
-                
-                parts = line.split(':', 2)
-                if len(parts) < 3:
-                    continue
-                
-                file_path, line_num, content = parts
-                
-                # Parse import statement
-                imported = self._parse_import_statement(content)
-                if imported:
-                    if file_path not in import_graph:
-                        import_graph[file_path] = set()
-                    import_graph[file_path].add(imported)
-                    
+            if rg_path:
+                result = subprocess.run(
+                    [
+                        rg_path,
+                        "-n",
+                        "--glob",
+                        "*.py",
+                        "-e",
+                        r"^(from|import)\s+[a-zA-Z_]"
+                    ],
+                    cwd=str(self.repo_root),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                for line in result.stdout.split('\n'):
+                    if ':' not in line:
+                        continue
+
+                    parts = line.split(':', 2)
+                    if len(parts) < 3:
+                        continue
+
+                    file_path, _line_num, content = parts
+
+                    # Parse import statement
+                    imported = self._parse_import_statement(content)
+                    if imported:
+                        if file_path not in import_graph:
+                            import_graph[file_path] = set()
+                        import_graph[file_path].add(imported)
+            else:
+                pattern = re.compile(r'^(from|import)\s+[a-zA-Z_]')
+                for root, dirs, files in os.walk(self.repo_root):
+                    dirs[:] = [d for d in dirs if d not in self.EXCLUDE_DIRS]
+                    for filename in files:
+                        if not filename.endswith(".py"):
+                            continue
+                        file_path = Path(root) / filename
+                        try:
+                            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                                for line in f:
+                                    if not pattern.match(line):
+                                        continue
+                                    imported = self._parse_import_statement(line)
+                                    if imported:
+                                        key = str(file_path)
+                                        if key not in import_graph:
+                                            import_graph[key] = set()
+                                        import_graph[key].add(imported)
+                        except OSError:
+                            continue
+
         except subprocess.TimeoutExpired:
-            logger.warning("[L0] Grep timeout - using fallback")
+            logger.warning("[L0] Scan timeout - using fallback")
         except Exception as e:
-            logger.warning(f"[L0] Grep failed: {e}")
+            logger.warning(f"[L0] Scan failed: {e}")
         
         return import_graph
     

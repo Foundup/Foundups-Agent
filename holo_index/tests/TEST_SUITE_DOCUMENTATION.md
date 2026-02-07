@@ -110,6 +110,12 @@ Filename Queries:
 - Success rates (%)
 - Semantic advantage count
 
+### SWOT (HoloIndex vs grep/glob)
+**Strengths**: Semantic retrieval, WSP context, module-aware guidance, previews.
+**Weaknesses**: Embedding quality + index freshness required.
+**Opportunities**: Symbol indexing for function-level recall; automated memory refresh.
+**Threats**: Over-reliance on NAVIGATION or stale embeddings; noisy output drift.
+
 **Report Sections**:
 1. Summary table (all queries)
 2. Analysis:
@@ -149,6 +155,21 @@ Filename Queries:
 - Search functionality (stub)
 - WSP compliance checking (stub)
 
+**File**: `test_video_search_healthcheck.py`
+**Purpose**: Video index health probe + env toggle coverage
+
+**Tests**:
+- Disable flag blocks indexing (`CHROMADB_VIDEO_INDEX_DISABLE=1`)
+- Healthcheck disable skips subprocess (`CHROMADB_VIDEO_INDEX_HEALTHCHECK=0`)
+- Healthcheck failure blocks index init
+
+**File**: `test_video_search_metadata_db.py`
+**Purpose**: SQLite audit index for video segment metadata
+
+**Tests**:
+- Inserts a metadata row into the SQLite audit DB
+- Verifies row presence via direct query
+
 ---
 
 ## Running Tests
@@ -174,6 +195,9 @@ python -m pytest holo_index/tests/test_comprehensive_holo_verification.py::TestP
 ```bash
 # Full benchmark report
 python holo_index/tests/benchmark_holo_vs_tools.py
+ 
+# Bounded run (fast)
+BENCH_MAX_QUERIES=4 BENCH_HOLO_TIMEOUT=20 BENCH_RG_TIMEOUT=10 BENCH_GREP_TIMEOUT=20 python holo_index/tests/benchmark_holo_vs_tools.py
 
 # Output includes:
 #   - Query-by-query comparison

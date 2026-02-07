@@ -19,6 +19,7 @@ import time
 from typing import Optional, Dict, List, Any, Callable
 
 from modules.platform_integration.stream_resolver.src.stream_resolver import StreamResolver
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channel_ids
 from modules.infrastructure.shared_utilities.session_utils import SessionUtils
 
 logger = logging.getLogger(__name__)
@@ -91,14 +92,11 @@ class StreamDiscoveryService:
             logger.info(f"[CONFIG] Using YT_CHANNELS_TO_CHECK override ({len(channels)} channels)")
             return channels
 
-        # Default channel list - PRIORITIZE MOVE2JAPAN FIRST
-        channels = [
-            os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),
-            os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),
-            os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),
-            os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),
-            os.getenv('TEST_CHANNEL_ID', ''),
-        ]
+        # Default channel list from registry (role: live_check)
+        channels = get_channel_ids(role="live_check")
+        test_channel = os.getenv("TEST_CHANNEL_ID", "").strip()
+        if test_channel and test_channel not in channels:
+            channels.append(test_channel)
         return [ch for ch in channels if ch]
 
     def _run_qwen_analysis(self) -> None:

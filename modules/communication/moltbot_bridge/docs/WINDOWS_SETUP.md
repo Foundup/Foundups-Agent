@@ -1,7 +1,7 @@
-# Moltbot Windows (WSL2) Installation Guide
+# OpenClaw Windows (WSL2) Installation Guide
 
 > [!IMPORTANT]
-> Moltbot runs on Windows via **WSL2** (Windows Subsystem for Linux).
+> OpenClaw runs on Windows via **WSL2** (Windows Subsystem for Linux).
 > The Gateway runs inside WSL, accessible from Windows.
 
 ## Quick Install
@@ -35,36 +35,26 @@ Restart WSL to apply.
 ### Step 3: Install Node.js in WSL
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
-npm install -g pnpm
 ```
 
-### Step 4: Install Moltbot
+### Step 4: Install OpenClaw
 
 ```bash
-git clone https://github.com/moltbot/moltbot.git
-cd moltbot
-pnpm install
-pnpm ui:build
-pnpm build
-moltbot onboard
+npm install -g openclaw
+openclaw onboard
 ```
 
-### Step 5: Install Gateway Service
+### Step 5: Start Gateway
 
 ```bash
-moltbot onboard --install-daemon
-```
-
-Verify:
-```bash
-moltbot gateway status
+openclaw start
 ```
 
 ---
 
-## Accessing Moltbot from Windows
+## Accessing OpenClaw from Windows
 
 The Gateway runs on `ws://127.0.0.1:18789` inside WSL.
 WSL2 shares `localhost` with Windows, so you can access it directly.
@@ -73,10 +63,10 @@ WSL2 shares `localhost` with Windows, so you can access it directly.
 
 ```bash
 # Inside WSL
-~/.clawdbot/moltbot.json
+~/.openclaw/openclaw.json
 
 # From Windows (if needed)
-\\wsl$\Ubuntu-24.04\home\<username>\.clawdbot\moltbot.json
+\\wsl$\Ubuntu-24.04\home\<username>\.openclaw\openclaw.json
 ```
 
 ## What is WHATSAPP_ALLOWED_NUMBER?
@@ -106,8 +96,8 @@ WhatsApp uses an **allowlist** for security. Only phone numbers in `allowFrom` c
 # Enter WSL
 wsl
 
-# Check Moltbot status
-wsl -e moltbot gateway status
+# Start OpenClaw
+wsl -e openclaw start
 
 # Shutdown WSL
 wsl --shutdown

@@ -2,6 +2,27 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.5.5 - Test Documentation Restored (2026-02-04)
+
+### Added
+- `tests/README.md` with strategy and execution commands (WSP 34).
+- `tests/TestModLog.md` with required recording format.
+
+### WSP Compliance
+- **WSP 34**: Test documentation restored
+- **WSP 22**: ModLog update
+
+---
+## V0.5.6 - VoiceMemory Video Index Toggle (2026-02-04)
+
+### Added
+- `VOICE_MEMORY_VIDEO_INDEX` env toggle to disable HoloIndex video transcript queries when needed.
+
+### WSP Compliance
+- **WSP 22**: ModLog update
+
+---
+
 ## V0.5.4 - System Concatenation Notes (2026-01-21)
 
 ### Added

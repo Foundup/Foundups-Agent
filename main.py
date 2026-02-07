@@ -290,8 +290,62 @@ def search_with_holoindex(query: str):
         print(f"[ERROR] HoloIndex search failed: {e}")
 
 
+def run_openclaw_security_preflight(repo_root: Path) -> bool:
+    """
+    Run OpenClaw security preflight via AI Overseer sentinel.
+
+    Env controls:
+      OPENCLAW_SECURITY_PREFLIGHT=1         Enable preflight at startup (default on)
+      OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1  Block startup on failed check (default on)
+      OPENCLAW_SECURITY_PREFLIGHT_FORCE=0   Bypass TTL cache and force re-scan
+    """
+    enabled = os.getenv("OPENCLAW_SECURITY_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[SECURITY] OpenClaw startup preflight disabled")
+        return True
+
+    # Default: warn but don't block. The Cisco skill scanner is an optional
+    # external tool that may not be installed on all dev machines.
+    # Set OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1 to hard-gate in production.
+    enforced = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_ENFORCED", "0") != "0"
+    force = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_FORCE", "0") == "1"
+
+    try:
+        # Suppress noisy INFO logs during preflight (Qwen/Gemma init messages)
+        _prev_level = logging.root.level
+        logging.root.setLevel(logging.WARNING)
+        from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
+        overseer = AIIntelligenceOverseer(repo_root)
+        logging.root.setLevel(_prev_level)
+        status = overseer.monitor_openclaw_security(force=force)
+    except Exception as exc:
+        logger.error(f"[SECURITY] OpenClaw preflight execution failed: {exc}")
+        if enforced:
+            print(f"[SECURITY] OpenClaw preflight FAILED: {exc}")
+            return False
+        print(f"[SECURITY] OpenClaw preflight warning: {exc}")
+        return True
+
+    passed = bool(status.get("passed", False))
+    message = status.get("message", "no message")
+    cache_state = "cached" if status.get("cached") else "fresh"
+    print(
+        f"[SECURITY] OpenClaw preflight: {'PASS' if passed else 'FAIL'} "
+        f"({cache_state}) - {message}"
+    )
+
+    if not passed and enforced:
+        print("[SECURITY] Startup blocked by OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1")
+        return False
+    return True
+
+
 def main():
     """Main entry point - thin router to CLI module."""
+    repo_root = Path(__file__).resolve().parent
+    if not run_openclaw_security_preflight(repo_root):
+        return
+
     # Import MCP services for CLI access
     from modules.infrastructure.mcp_manager.src.mcp_manager import show_mcp_services_menu
     

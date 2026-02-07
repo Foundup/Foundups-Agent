@@ -7,8 +7,8 @@ from modules.platform_integration.stream_resolver.src.stream_resolver import Str
 resolver = StreamResolver(None)  # No service to test mapping only
 
 test_channels = {
-    'UCSNTUXjAgpd4sgWYP0xoJgw': 'UnDaoDu',
-    'UC-LSSlOZwpGIRIYihaz8zCw': 'FoundUps',
+    'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',
+    'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan',
     'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan'
 }
 

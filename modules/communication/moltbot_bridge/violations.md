@@ -1,0 +1,51 @@
+# WSP Violations Log - moltbot_bridge
+
+## 2026-02-07: WSP 95/71 Security Audit - CLEAN
+
+**Auditor**: 0102
+**WSP**: 71, 95, 96
+**Status**: NO VIOLATIONS
+
+### Audit Scope
+Mutating DAE entrypoints checked for scanner gate parity with WSP 95/96 requirements:
+- Required mode fail-closed
+- Enforced severity threshold
+- TTL-bounded cache
+- Auditable decision logs
+
+### Findings
+
+**All routes properly gated.** The skill safety gate in `openclaw_dae.py` covers:
+
+| Intent Category | Gate Required | Gate Present | Status |
+|-----------------|---------------|--------------|--------|
+| COMMAND         | Yes           | Yes          | PASS   |
+| SYSTEM          | Yes           | Yes          | PASS   |
+| SCHEDULE        | Yes           | Yes          | PASS   |
+| SOCIAL          | Yes           | Yes          | PASS   |
+| AUTOMATION      | Yes           | Yes          | PASS   |
+| FOUNDUP         | Yes           | Yes          | PASS   |
+| QUERY           | No (read-only)| N/A          | N/A    |
+| MONITOR         | No (read-only)| N/A          | N/A    |
+| CONVERSATION    | No (LLM-only) | N/A          | N/A    |
+
+### Architecture Validation
+
+1. **Single entry point**: All skill-driven routes go through `OpenClawDAE.process()`
+2. **Gate enforcement**: `_ensure_skill_safety()` called before any mutating route
+3. **Downstream coverage**: `fam_adapter.py` and `auto_moderator_bridge.py` are only invoked from `openclaw_dae.py` after gate check
+4. **Fail-closed**: Scanner unavailable + required mode = route blocked (WSP 95)
+5. **Severity threshold**: Configurable via `OPENCLAW_SKILL_SCAN_MAX_SEVERITY` (default: medium)
+6. **TTL cache**: Configurable via `OPENCLAW_SKILL_SCAN_TTL_SEC` (default: 300s)
+
+### Test Coverage
+
+14 tests in `tests/test_skill_safety_guard.py`:
+- 7 unit tests for `run_skill_scan()` function
+- 7 integration tests for OpenClaw DAE safety gate
+
+All tests passing as of 2026-02-07.
+
+---
+
+*No violations found. Architecture is WSP 95/71 compliant.*

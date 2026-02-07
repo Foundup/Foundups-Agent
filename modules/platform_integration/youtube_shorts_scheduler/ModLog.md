@@ -1,5 +1,113 @@
 # YouTube Shorts Scheduler - ModLog
 
+## 2026-02-04 - CPS Agentic Navigation + Schedule Thinning + Inline Rescheduling
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 84 (No Vibecoding)
+
+### What
+Major CPS overhaul: agentic sidebar navigation (no URL filter params), schedule thinning algorithm, inline popup rescheduling, and live DOM selector verification for scheduled video popups.
+
+### Why
+1. **URL filter params cause blank screen** in YouTube Studio. Must navigate via base URL + sidebar Filter UI.
+2. **8+ videos per day on same date** (e.g., Apr 3, 2026 had 8 shorts at same time). YouTube algorithm works best with 1-3 shorts/day, spaced 4+ hours apart.
+3. **Edit page rescheduling is slow** (per-video navigation). Inline popup rescheduling stays on content table.
+
+### Key Changes
+
+**Navigation (`navigate_to_content`)**:
+- Removed URL filter params (`?filter=...`) that caused blank screen
+- Added `_apply_visibility_filter_via_ui()` — clicks Filter icon > Visibility > checkbox > Apply
+- Added `_switch_content_tab()` — switches Shorts/Videos/Live tabs without page reload
+- Smart detection: if already on Studio content page, just switch tab
+
+**Schedule Thinning (`thin_schedule`)**:
+- Detects overcrowded days (>max_per_day, default 3)
+- Redistributes excess videos to future dates via `tracker.get_next_available_slot()`
+- Uses inline popup rescheduling (fast, stays on content page)
+- Falls back to edit page navigation if row not found on page
+
+**Inline Popup Rescheduling (`reschedule_row_inline`)**:
+- Opens visibility edit popup on row, changes date/time, clicks Schedule
+- No page navigation required — operates directly on content table rows
+- For scheduled videos, popup opens with schedule already expanded
+
+**Audit Fixes (`audit_calendar`)**:
+- `max_per_day` now configurable (default 3, was hardcoded 8)
+- `heavy_days` threshold uses `max_per_day` parameter
+- Added `excess` count per heavy day and `date_map` to audit result
+
+**Selector Additions (ContentPageSelectors)**:
+- `FILTER_ICON_CSS`, `FILTER_ITEM_TAG`, `FILTER_CHECKBOX_TAG`, `FILTER_APPLY_BUTTON_XPATH`
+- `VISIBILITY_FILTER_MAP`: maps "SCHEDULED" -> "Has schedule", etc.
+- `SIDEBAR_CONTENT_XPATH`, `CONTENT_TAB_*` selectors for agentic tab navigation
+
+### Live DOM Verification (Scheduled Video Popup)
+All selectors verified on live scheduled video (Apr 3, 2026, 6:00 PM):
+- `POPUP_DIALOG_CSS` -> FOUND
+- `POPUP_DATE_TRIGGER_CSS` -> FOUND ("Apr 3, 2026")
+- `POPUP_TIME_INPUT_CSS` -> FOUND ("6:00 PM")
+- `POPUP_SAVE_BUTTON_CSS` -> FOUND (text "Schedule")
+- `ytcp-datetime-picker` -> FOUND (verification element)
+- `#second-container-expand-button` -> hidden (expected: schedule already expanded)
+
+### Files
+- **MODIFIED**: `src/content_page_scheduler.py` — All changes above
+
+---
+
+## 2026-02-04 - Live DOM Selector Audit + Fixes (--chrome inspection)
+
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+### What
+Audited all scheduling popup DOM selectors against the live YouTube Studio page using Claude Code `--chrome` browser integration. Fixed 5 broken selectors in `dom_automation.py` and `content_page_scheduler.py`.
+
+### Why
+Multiple XPath selectors referenced elements that don't exist in the current YouTube Studio DOM (e.g., `name="SCHEDULE"` radio button). The scheduling flow relied on timeout fallbacks to work around broken selectors. Live inspection confirmed the correct element names and structure.
+
+### Key Findings
+- **No `name="SCHEDULE"` radio exists** — scheduling is triggered by expanding `#second-container` which contains `name="PUBLISH_FROM_PRIVATE"` and `name="PUBLISH_FROM_SPONSORS_ONLY"` radios
+- **`target="_blank"` on OOPS "Switch account"** — confirmed and fixed in previous session
+- **Visibility popup structure**: `ytcp-video-visibility-edit-popup > tp-yt-paper-dialog#dialog > ytcp-video-visibility-select`
+- **Working selectors confirmed**: `#datepicker-trigger`, `#time-of-day-container input`, `#save-button`, `#cancel-button`
+
+### Files
+- **MODIFIED**: `src/dom_automation.py` — Fixed `SCHEDULE_EXPAND_XPATH`, `SCHEDULE_RADIO_XPATH`, `RADIO_SCHEDULE`, `SCHEDULE_EXPAND`, `SCHEDULE_RADIO` (V1+V2 selectors), hardcoded fallback XPaths at line ~2433, and `?next=` redirect loop fix in `handle_oops_page()` + `_click_oops_switch_account()`
+- **MODIFIED**: `src/content_page_scheduler.py` — Fixed `SCHEDULE_RADIO_XPATH` from `name='SCHEDULE'` to `name='PUBLISH_FROM_PRIVATE'`
+
+---
+
+## 2026-02-02 - Channel Registry Integration
+
+**WSP References**: WSP 22 (ModLog), WSP 60 (Memory), WSP 84 (No Vibecoding)
+
+### What
+Replaced hard-coded channel config and browser rotation lists with registry-driven data.
+
+### Why
+New channels should be added once (registry) and automatically show up in shorts scheduling and rotation.
+
+### Files
+- **MODIFIED**: `src/channel_config.py` - builds CHANNELS from registry
+- **MODIFIED**: `scripts/launch.py` - browser rotation reads registry
+
+---
+
+## 2026-02-03 - OOPS Page Switchboard Telemetry in dom_automation
+
+**WSP References**: WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+### What
+Added orchestration switchboard OOPS breadcrumb emission to `dom_automation.py`'s `handle_oops_page()` method.
+
+### Why
+OOPS page recovery events were invisible to the orchestration layer. The switchboard now receives `oops_page_detected` and `oops_page_recovered` signals from the scheduler's DOM automation, enabling pattern tracking and intelligent escalation (e.g., recommend alternate browser after repeated OOPS).
+
+### Files
+- **MODIFIED**: `src/dom_automation.py` - Added `_emit_oops_signal()` helper + switchboard import + emission points in `handle_oops_page()`
+
+---
+
 ## 2026-02-01 - Content Page Scheduler (Inline Popup + Calendar Audit)
 
 **WSP References**: WSP 22 (ModLog), WSP 49 (Module Structure), WSP 3 (Organization)

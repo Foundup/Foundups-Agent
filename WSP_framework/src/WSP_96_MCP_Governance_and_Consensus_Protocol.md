@@ -3,7 +3,7 @@
 **Status**: DRAFT (Phase 0.1 Foundation)
 **Version**: 0.1
 **Date**: 2025-10-15
-**WSP Compliance**: WSP 77 (Agent Coordination), WSP 80 (Cube-Level DAE Orchestration), WSP 35 (HoloIndex Integration)
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 80 (Cube-Level DAE Orchestration), WSP 35 (HoloIndex Integration), WSP 71 (Security), WSP 95 (Skills Governance)
 
 ---
 
@@ -93,6 +93,20 @@ graph TD
 - Emergency intervention protocols
 - Audit trail maintenance
 
+### Skill Supply-Chain Security Gate
+
+MCP-connected agents that execute skills must satisfy a supply-chain gate before activation.
+
+**Mandatory controls**:
+- Scan skill bundles before activation and before promotion to production execution paths.
+- Enforce fail-closed behavior when scanner tooling is unavailable in required mode.
+- Block activation when findings exceed approved severity threshold.
+- Persist scanner evidence (tool version, timestamp, highest severity, decision) in governance audit logs.
+- Route scanner-policy violations to WSP 47 violation tracking.
+
+**Runtime requirement**:
+- Mutating operations must execute a cached preflight scan with bounded TTL and automatic refresh.
+
 ### Agent Behavior Constraints
 
 **0102 Constraints**:
@@ -125,11 +139,13 @@ graph TD
 - Limited deployment in sandbox environment
 - Bell state monitoring and validation
 - Performance metrics collection
+- Skill scanner evidence collection and policy threshold validation
 
 **Phase 2: Adoption**
 - Full MVP DAE integration
 - Multi-agent consensus approval
 - Gateway sentinel registration
+- Supply-chain gate pass recorded for all active skill bundles
 
 **Phase 3: Optimization**
 - Performance tuning based on telemetry
@@ -195,6 +211,8 @@ graph TD
 - Agent consensus simulation
 - MCP server failover testing
 - Emergency protocol validation
+- Scanner fail-closed tests (tool missing, required mode on)
+- Severity-threshold block tests (high/critical findings)
 
 ---
 
@@ -227,4 +245,5 @@ graph TD
 2. Deploy consensus workflow for Phase 0.1 MCP servers
 3. Establish emergency governance procedures
 4. Create telemetry and monitoring framework
+5. Standardize scanner evidence ingestion for MCP activation decisions
 

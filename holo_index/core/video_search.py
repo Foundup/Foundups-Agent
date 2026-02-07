@@ -22,6 +22,10 @@ import json
 import logging
 import os
 import re
+import subprocess
+import sys
+import hashlib
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -93,6 +97,13 @@ except ImportError:
     chromadb = None
     logger.warning("[VIDEO-INDEX] chromadb not available")
 
+try:
+    from modules.infrastructure.database.src.chromadb_corruption_prevention import (
+        ChromaDBCorruptionPrevention,
+    )
+except Exception:
+    ChromaDBCorruptionPrevention = None
+
 
 @dataclass
 class VideoMatch:
@@ -129,6 +140,8 @@ class VideoContentIndex:
     """
     
     COLLECTION_NAME = "video_segments"
+    _health_checked = False
+    _health_ok = True
     
     def __init__(
         self,
@@ -144,13 +157,34 @@ class VideoContentIndex:
         """
         if chromadb is None:
             raise ImportError("chromadb is required. Install with: pip install chromadb")
+
+        if os.getenv("CHROMADB_VIDEO_INDEX_DISABLE", "false").lower() in {"1", "true", "yes", "on"}:
+            raise RuntimeError("ChromaDB video indexing disabled via CHROMADB_VIDEO_INDEX_DISABLE")
         
         self.ssd_path = Path(ssd_path)
         self.vector_path = self.ssd_path / "vectors"
         self.vector_path.mkdir(parents=True, exist_ok=True)
+
+        self._prevention = None
+        if ChromaDBCorruptionPrevention and os.getenv("CHROMADB_PREVENTION_ENABLED", "true").lower() in {
+            "1", "true", "yes", "on"
+        }:
+            try:
+                self._prevention = ChromaDBCorruptionPrevention(str(self.vector_path))
+                logger.info("[VIDEO-INDEX] ChromaDB corruption prevention enabled")
+            except Exception as e:
+                logger.warning(f"[VIDEO-INDEX] Prevention init failed: {e}")
+                self._prevention = None
+        self.metadata_path = self.ssd_path / "video_index"
+        self.metadata_path.mkdir(parents=True, exist_ok=True)
+        self.metadata_db = self.metadata_path / "video_metadata.db"
         
+        if not self._probe_chromadb_health(str(self.vector_path)):
+            raise RuntimeError("ChromaDB health check failed (video indexing disabled)")
+
         self.client = chromadb.PersistentClient(path=str(self.vector_path))
         self.collection = self._ensure_collection()
+        self._init_metadata_db()
         
         # Lazy load model
         self.model = None
@@ -168,6 +202,121 @@ class VideoContentIndex:
             return self.client.get_collection(self.COLLECTION_NAME)
         except Exception:
             return self.client.create_collection(self.COLLECTION_NAME)
+    
+    def _init_metadata_db(self) -> None:
+        """Initialize SQLite metadata index for auditability."""
+        if os.getenv("VIDEO_INDEX_SQLITE_DISABLE", "false").lower() in {"1", "true", "yes", "on"}:
+            return
+        try:
+            conn = sqlite3.connect(self.metadata_db)
+            cur = conn.cursor()
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS segments (
+                    segment_id TEXT PRIMARY KEY,
+                    video_id TEXT,
+                    title TEXT,
+                    channel TEXT,
+                    start_time TEXT,
+                    end_time TEXT,
+                    speaker TEXT,
+                    topics TEXT,
+                    segment_type TEXT,
+                    indexed_at TEXT,
+                    content_hash TEXT
+                )
+                """
+            )
+            conn.commit()
+            conn.close()
+        except Exception as exc:
+            logger.warning(f"[VIDEO-INDEX] SQLite init failed: {exc}")
+
+    def _record_metadata(self, segment_id: str, metadata: Dict[str, Any], content: str) -> None:
+        """Record segment metadata into SQLite for auditability."""
+        if os.getenv("VIDEO_INDEX_SQLITE_DISABLE", "false").lower() in {"1", "true", "yes", "on"}:
+            return
+        try:
+            content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            conn = sqlite3.connect(self.metadata_db)
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO segments (
+                    segment_id, video_id, title, channel, start_time, end_time,
+                    speaker, topics, segment_type, indexed_at, content_hash
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    segment_id,
+                    metadata.get("video_id", ""),
+                    metadata.get("title", ""),
+                    metadata.get("channel", ""),
+                    metadata.get("start_time", ""),
+                    metadata.get("end_time", ""),
+                    metadata.get("speaker", ""),
+                    metadata.get("topics", ""),
+                    metadata.get("segment_type", ""),
+                    metadata.get("indexed_at", ""),
+                    content_hash,
+                ),
+            )
+            conn.commit()
+            conn.close()
+        except Exception as exc:
+            logger.warning(f"[VIDEO-INDEX] SQLite insert failed: {exc}")
+
+    @classmethod
+    def _probe_chromadb_health(cls, vector_path: str) -> bool:
+        """Probe ChromaDB in a subprocess to avoid native segfaults."""
+        if cls._health_checked:
+            return cls._health_ok
+
+        if os.getenv("CHROMADB_VIDEO_INDEX_HEALTHCHECK", "true").lower() in {"0", "false", "no", "off"}:
+            cls._health_checked = True
+            cls._health_ok = True
+            return True
+
+        cmd = [
+            sys.executable,
+            "-c",
+            (
+                "import chromadb; "
+                f"client=chromadb.PersistentClient(path=r'{vector_path}'); "
+                "collection=client.get_or_create_collection('video_segments'); "
+                "collection.count(); "
+                "print('ok')"
+            ),
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=False,
+            )
+        except Exception as exc:
+            cls._health_checked = True
+            cls._health_ok = False
+            logger.warning(f"[VIDEO-INDEX] ChromaDB health check failed: {exc}")
+            return False
+
+        cls._health_checked = True
+        cls._health_ok = result.returncode == 0
+
+        if not cls._health_ok:
+            stderr = (result.stderr or "").strip()
+            stdout = (result.stdout or "").strip()
+            logger.warning(
+                "[VIDEO-INDEX] ChromaDB health check failed (rc=%s). stdout=%s stderr=%s",
+                result.returncode,
+                stdout[:200],
+                stderr[:200],
+            )
+
+        return cls._health_ok
     
     def _get_model(self):
         """Lazy load SentenceTransformer model."""
@@ -244,6 +393,9 @@ class VideoContentIndex:
             doc_content = content
             if speaker:
                 doc_content = f"{speaker}: {content}"
+
+            if not doc_content.strip():
+                continue
             
             ids.append(seg_id)
             embeddings.append(self._get_embedding(doc_content))
@@ -262,12 +414,48 @@ class VideoContentIndex:
             })
         
         if ids:
-            self.collection.add(
-                ids=ids,
-                embeddings=embeddings,
-                documents=documents,
-                metadatas=metadatas,
-            )
+            # Safe batch + integrity guards
+            batch_size = int(os.getenv("VIDEO_INDEX_BATCH_SIZE", "200"))
+            for i in range(0, len(ids), batch_size):
+                b_ids = ids[i:i + batch_size]
+                b_embeddings = embeddings[i:i + batch_size]
+                b_documents = documents[i:i + batch_size]
+                b_metadatas = metadatas[i:i + batch_size]
+
+                # Filter out malformed embeddings
+                filtered = []
+                for seg_id, emb, doc, meta in zip(b_ids, b_embeddings, b_documents, b_metadatas):
+                    if not isinstance(emb, list) or len(emb) != 384:
+                        continue
+                    filtered.append((seg_id, emb, doc, meta))
+
+                if not filtered:
+                    continue
+
+                f_ids, f_emb, f_docs, f_metas = zip(*filtered)
+
+                if self._prevention:
+                    success, message = self._prevention.safe_batch_index(
+                        self.COLLECTION_NAME,
+                        ids=list(f_ids),
+                        embeddings=list(f_emb),
+                        documents=list(f_docs),
+                        metadatas=list(f_metas),
+                    )
+                    if not success:
+                        logger.warning(f"[VIDEO-INDEX] Prevention blocked batch: {message}")
+                        continue
+                else:
+                    self.collection.add(
+                        ids=list(f_ids),
+                        embeddings=list(f_emb),
+                        documents=list(f_docs),
+                        metadatas=list(f_metas),
+                    )
+
+                for seg_id, doc, meta in zip(f_ids, f_docs, f_metas):
+                    self._record_metadata(seg_id, meta, doc)
+
             logger.info(f"[VIDEO-INDEX] Indexed {len(ids)} segments from {result.video_id}")
         
         return len(ids)

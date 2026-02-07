@@ -35,6 +35,12 @@ from .multi_channel_coordinator import MultiChannelCoordinator
 from modules.infrastructure.activity_control.src.activity_control import (
     get_activity_router, ActivityType
 )
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channel_ids,
+    get_rotation_order,
+    get_channel_by_key,
+    group_channels_by_browser,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -274,6 +280,7 @@ class AutoModeratorDAE:
 
         start_time = time.time()
         last_count = None
+        did_refresh = False
         while (time.time() - start_time) < timeout_seconds:
             try:
                 last_count = driver.execute_script(
@@ -286,6 +293,31 @@ class AutoModeratorDAE:
             if last_count and last_count > 0:
                 logger.info(f"[VERIFY] {account_name} inbox NOT clear (threads={last_count})")
                 return False
+
+            try:
+                oops_page = bool(driver.execute_script(
+                    "const t=(document.body&&document.body.innerText)||'';"
+                    "return t.includes('Oops') || t.includes(\"don't have permission\") || t.includes('You have been blocked');"
+                ))
+            except Exception:
+                oops_page = False
+
+            if oops_page:
+                logger.warning(f"[VERIFY] {account_name} OOPS/permission page - cannot verify inbox")
+                return None
+
+            try:
+                loading_state = bool(driver.execute_script(
+                    "return !!(document.querySelector('ytcp-loading-paper') || "
+                    "document.querySelector('paper-spinner-lite') || "
+                    "document.querySelector('ytcp-progress-bar'));"
+                ))
+            except Exception:
+                loading_state = False
+
+            if loading_state:
+                await asyncio.sleep(0.5)
+                continue
 
             try:
                 permission_error = bool(driver.execute_script(
@@ -305,7 +337,8 @@ class AutoModeratorDAE:
                     "'ytcp-comments-empty-state',"
                     "'.empty-state-content',"
                     "'[data-empty-state]',"
-                    "'.ytcp-comment-surface-empty'"
+                    "'.ytcp-comment-surface-empty',"
+                    "'ytcp-comment-empty-state'"
                     "];"
                     "for (const sel of emptySelectors) {"
                     "  if (document.querySelector(sel)) return true;"
@@ -313,7 +346,8 @@ class AutoModeratorDAE:
                     "const bodyText = (document.body && document.body.innerText) || '';"
                     "return bodyText.includes('No comments to respond to') || "
                     "bodyText.includes('All caught up') || "
-                    "bodyText.includes('No new comments');"
+                    "bodyText.includes('No new comments') || "
+                    "bodyText.includes('Nothing to review');"
                 ))
             except Exception:
                 empty_state = False
@@ -321,6 +355,17 @@ class AutoModeratorDAE:
             if empty_state:
                 logger.info(f"[VERIFY] {account_name} inbox empty state confirmed")
                 return True
+
+            if last_count == 0 and not did_refresh and (time.time() - start_time) > (timeout_seconds * 0.5):
+                logger.info(f"[VERIFY] {account_name} no threads + no empty state; refreshing inbox for recheck")
+                try:
+                    driver.refresh()
+                    did_refresh = True
+                except Exception as e:
+                    logger.warning(f"[VERIFY] {account_name} refresh failed: {e}")
+                    return None
+                await asyncio.sleep(4)
+                continue
 
             await asyncio.sleep(0.5)
 
@@ -522,6 +567,7 @@ class AutoModeratorDAE:
             # Wait with intelligent delay, but check for triggers every 5 seconds
             elapsed = 0
             check_interval = 5  # Check for triggers every 5 seconds
+            last_activity_check = 0  # Track when we last checked activity router
             
             while elapsed < delay:
                 # Wait for shorter interval
@@ -536,11 +582,28 @@ class AutoModeratorDAE:
                     previous_delay = None
                     trigger.reset()
                     break
+                
+                # ACTIVITY ROUTER CHECK: Every 5 minutes, check for available work
+                # This closes GAP 1/2 from the agentic orchestration analysis
+                if elapsed - last_activity_check >= 300:
+                    last_activity_check = elapsed
+                    try:
+                        router = get_activity_router()
+                        decision = router.get_next_activity()
+                        router.emit_work_check_breadcrumb(decision)
+                        
+                        # Log if non-idle work is available (informational only)
+                        if decision.next_activity != ActivityType.IDLE:
+                            logger.info(f"[ACTIVITY] Work available: {decision.next_activity.name} on {decision.browser}")
+                            logger.info(f"[ACTIVITY] Reason: {decision.reason}")
+                    except Exception as e:
+                        logger.debug(f"[ACTIVITY] Router check failed: {e}")
             
             # Update counters
             retry_count += 1
             consecutive_failures += 1
             previous_delay = delay
+
 
             # HEALTH CHECK: Auto-restart comment engagement task if it crashed
             # 2026-01-30: The comment task can die from transient WebDriver errors,
@@ -591,6 +654,7 @@ class AutoModeratorDAE:
                                 current_url = switcher.driver.current_url
                                 if self._is_studio_comments_url(current_url):
                                     permission_error = False
+                                    comment_count = 0
                                     try:
                                         permission_error = bool(switcher.driver.execute_script(
                                             "const t=(document.body&&document.body.innerText)||'';"
@@ -599,17 +663,37 @@ class AutoModeratorDAE:
                                         ))
                                     except Exception:
                                         permission_error = False
+
+                                    # FIX 2026-02-06: Check if comments exist BEFORE allowing rotation
+                                    # User requirement: "stay on commenting till they're all commented"
+                                    if not permission_error:
+                                        try:
+                                            comment_count = switcher.driver.execute_script(
+                                                "return document.querySelectorAll('ytcp-comment-thread').length || 0"
+                                            ) or 0
+                                        except Exception as dom_err:
+                                            logger.debug(f"[ROTATE] DOM comment count failed: {dom_err}")
+                                            comment_count = 0
+
                                     if permission_error:
                                         logger.warning("[ROTATE] Studio comments page shows permission error - allowing rotation")
-                                    else:
-                                        logger.info(f"[ROTATE] Studio comments page active ({current_url}) - skipping rotation")
+                                    elif comment_count > 0:
+                                        # FIX: Comments exist - DO NOT rotate, stay on this channel
+                                        logger.info(f"[ROTATE] {comment_count} comments PENDING on current page - STAYING to process them")
                                         skip_rotation = True
+                                    else:
+                                        logger.info(f"[ROTATE] Studio comments page clear (0 comments) - allowing rotation")
                         if skip_rotation:
                             continue
 
-                        # Channels to rotate through (names matching StudioAccountSwitcher list)
-                        # Chrome (9222): Move2Japan, UnDaoDu | Edge (9223): FoundUps, RavingANTIFA
-                        rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
+                        # Channels to rotate through (names matching StudioAccountSwitcher list, registry-driven)
+                        rotation_accounts = []
+                        for key in get_rotation_order(role="comments"):
+                            ch = get_channel_by_key(key)
+                            if ch and ch.get("name"):
+                                rotation_accounts.append(ch["name"])
+                        if not rotation_accounts:
+                            rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
                         self.current_studio_channel_index = (self.current_studio_channel_index + 1) % len(rotation_accounts)
                         target_account = rotation_accounts[self.current_studio_channel_index]
 
@@ -742,12 +826,7 @@ class AutoModeratorDAE:
         if channels_override:
             all_channels = [ch.strip() for ch in channels_override.split(",") if ch.strip()]
         else:
-            all_channels = [
-                os.getenv('UNDAODU_CHANNEL_ID', 'UCfHM9Fw9HD-NwiS0seD_oIA'),   # UnDaoDu - PRIORITY 1 (active agent)
-                os.getenv('RAVINGANTIFA_CHANNEL_ID', 'UCVSmg5aOhP4tnQ9KFUg97qA'),  # RavingANTIFA - PRIORITY 2 (cross-promo target)
-                os.getenv('MOVE2JAPAN_CHANNEL_ID', 'UC-LSSlOZwpGIRIYihaz8zCw'),  # Move2Japan - PRIORITY 3
-                os.getenv('FOUNDUPS_CHANNEL_ID', 'UCSNTUXjAgpd4sgWYP0xoJgw'),  # FoundUps - PRIORITY 4
-            ]
+            all_channels = get_channel_ids(role="comments")
         all_channels = [ch for ch in all_channels if ch]  # Filter empty strings
 
         try:
@@ -774,15 +853,23 @@ class AutoModeratorDAE:
         # Phase 4: Comment engagement is DISABLED during live chat
         # User requirement: "Once on live chat, do NOT return to comments"
         # Comment engagement runs ONLY at startup, before first stream found
-        logger.info("[LOCK] Comment engagement DISABLED during live chat (user requirement)")
 
         # Start monitoring
         logger.info("="*60)
         logger.info("MONITORING CHAT - WSP-COMPLIANT ARCHITECTURE")
         logger.info("="*60)
 
-        # === CRITICAL: Terminate comment engagement BEFORE starting live chat ===
-        # Prevents dual-process race condition (user requirement: lock to live chat only)
+        # === FIX 2026-02-06: Verify live chat BEFORE terminating comments ===
+        # Previously: Comments terminated → live chat failed → disruption + 2min stream search
+        # Now: Verify live chat works → THEN terminate comments → no disruption if chat unavailable
+        logger.info("[LOCK] Verifying live chat availability before disabling comments...")
+        if not self.livechat or not await self.livechat.initialize():
+            logger.warning("[LOCK] Live chat NOT available - keeping comment engagement ACTIVE")
+            logger.info("[LOCK] Will search for another stream without disrupting comments")
+            return  # Exit monitor_chat, will search for new stream without disrupting comments
+
+        # === Live chat CONFIRMED available - NOW safe to terminate comments ===
+        logger.info("[LOCK] Live chat CONFIRMED - disabling comment engagement")
         await self.terminate_comment_engagement()
         self._live_stream_pending = False
         self._live_chat_active = True
@@ -795,7 +882,9 @@ class AutoModeratorDAE:
             logger.info("[HEART] Heartbeat monitoring started (30s interval)")
 
         try:
-            await self.livechat.start_listening()
+            # Session already initialized above, start polling directly
+            self.livechat.is_running = True
+            await self.livechat.run_polling_loop()
         except KeyboardInterrupt:
             logger.info("[STOP] Monitoring stopped by user")
         except Exception as e:
@@ -1064,9 +1153,14 @@ class AutoModeratorDAE:
         logger.info("[COMMENT-LOOP] PER-BROWSER PARALLEL ENGAGEMENT LOOPS STARTING")
         logger.info(f"[COMMENT-LOOP] Interval: {interval_minutes} minutes | Mode: {mode}")
         logger.info(f"[COMMENT-LOOP] Max per channel: {max_comments if max_comments > 0 else 'UNLIMITED'}")
-        logger.info("[COMMENT-LOOP] Architecture: Each browser runs Comments → Scheduling independently")
-        logger.info("[COMMENT-LOOP]   Chrome (9222): Move2Japan, UnDaoDu  → schedule → sleep")
-        logger.info("[COMMENT-LOOP]   Edge   (9223): FoundUps, RavingANTIFA → schedule → sleep")
+        logger.info("[COMMENT-LOOP] Architecture: Each browser runs Comments ? Scheduling independently")
+        groups = group_channels_by_browser(role="comments")
+        chrome_names = [ch.get("name") or ch.get("key") for ch in groups.get("chrome", [])]
+        edge_names = [ch.get("name") or ch.get("key") for ch in groups.get("edge", [])]
+        chrome_desc = ", ".join(chrome_names) if chrome_names else "(none)"
+        edge_desc = ", ".join(edge_names) if edge_names else "(none)"
+        logger.info(f"[COMMENT-LOOP]   Chrome (9222): {chrome_desc}  -> schedule -> sleep")
+        logger.info(f"[COMMENT-LOOP]   Edge   (9223): {edge_desc} -> schedule -> sleep")
         logger.info("[COMMENT-LOOP] Neither browser blocks the other")
         logger.info("=" * 70)
 
@@ -1130,7 +1224,21 @@ class AutoModeratorDAE:
             try:
                 await asyncio.sleep(_HEALTH_CHECK_INTERVAL)
 
+                # ACTIVITY CHECK: Should we yield for live stream? (GAP 1/2 fix)
+                try:
+                    router = get_activity_router()
+                    interrupt = router.should_interrupt_for_higher_priority(ActivityType.COMMENT_ENGAGEMENT)
+                    if interrupt and interrupt.next_activity == ActivityType.LIVE_CHAT:
+                        logger.info("[SUPERVISOR] Live stream detected! Comment loops will yield at next cycle.")
+                        # Emit breadcrumb for observability
+                        router.emit_work_check_breadcrumb(interrupt)
+                        # Note: We don't cancel tasks here - they will yield naturally
+                        # when the orchestrator switches to live chat mode
+                except Exception as _router_err:
+                    logger.debug(f"[SUPERVISOR] Activity check skipped: {_router_err}")
+
                 for _browser in ("chrome", "edge"):
+
                     _task = _browser_tasks.get(_browser)
                     if _task is None or _task.done():
                         _tag = _browser.upper()
@@ -1240,6 +1348,20 @@ class AutoModeratorDAE:
                 phase1_start = time.time()
                 phase1_timeout = int(os.getenv("COMMUNITY_PHASE1_TIMEOUT", "5400"))  # 90 min default
                 comments_processed = 0
+
+                # FIX 2026-02-06: Emit breadcrumb so stream resolver knows to skip vision detection
+                try:
+                    from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+                    telemetry = get_breadcrumb_telemetry()
+                    telemetry.store_breadcrumb(
+                        source_dae="comment_engagement",
+                        event_type="comment_engagement_active",
+                        message=f"{tag} comment engagement starting cycle #{cycle_count}",
+                        phase="COMMENT-ENGAGEMENT",
+                        metadata={"browser": browser_name, "cycle": cycle_count}
+                    )
+                except Exception:
+                    pass  # Telemetry not critical
 
                 if browser_lock:
                     logger.info(f"[{tag}-LOOP] PHASE 1: Acquiring browser lock...")
@@ -1411,6 +1533,13 @@ class AutoModeratorDAE:
                 logger.info(f"[{tag}-LOOP]   Comments: {comments_processed} | Scheduled: {scheduled_count} | Errors: {error_count}")
                 logger.info(f"[{tag}-LOOP]   Lifetime: {self._shorts_total_cycles} scheduling cycles, {self._shorts_total_scheduled} total videos")
 
+                # Push status to Discord for 012 visibility
+                try:
+                    from .discord_status_pusher import push_cycle_complete
+                    push_cycle_complete(browser_name, cycle_count, comments_processed, scheduled_count)
+                except ImportError:
+                    pass
+
                 # 2026-02-01: IDLE DETECTION — if this browser did zero work,
                 # signal activity router so orchestration layer can assign work.
                 if is_idle:
@@ -1429,6 +1558,13 @@ class AutoModeratorDAE:
                         )
                     except Exception as idle_err:
                         logger.debug(f"[{tag}-LOOP] [IDLE-DETECT] Router signal failed: {idle_err}")
+
+                    # Push idle status to Discord
+                    try:
+                        from .discord_status_pusher import push_idle
+                        push_idle(browser_name)
+                    except ImportError:
+                        pass
 
                     # Shorten sleep when idle — check again sooner
                     idle_sleep = max(120, interval_seconds // 3)  # At least 2 min, at most 1/3 of normal
@@ -1466,8 +1602,8 @@ class AutoModeratorDAE:
         or any code path that still calls it directly).
 
         Architecture (2025-12-28 Refactor):
-        - Chrome (port 9222): Move2Japan + UnDaoDu (SAME Google account)
-        - Edge (port 9223): FoundUps + RavingANTIFA (SAME Edge session)
+        - Chrome (port 9222): Registry-driven channels (same Google account)
+        - Edge (port 9223): Registry-driven channels (same Edge session)
         """
         await self._ensure_multi_channel_coordinator(runner, mode)
 
@@ -1888,6 +2024,176 @@ class AutoModeratorDAE:
                     # Log heartbeat every 10 pulses (every 5 minutes)
                     if heartbeat_count % 10 == 0:
                         logger.info(f"[HEART] Heartbeat #{heartbeat_count} - Status: {status}, Stream: {'ACTIVE' if stream_active else 'IDLE'}")
+
+                    # === OODA LOOP: Activity Router Decision Check (every 4 pulses = 2 minutes) ===
+                    # Layer 4: Transform heartbeat from passive logger to active decision maker
+                    # Layer 5: UI-TARS vision for page state observation
+                    # WSP 77: Agent Coordination - Observe-Orient-Decide-Act pattern
+                    if heartbeat_count % 4 == 0:
+                        try:
+                            # === LAYER 5: Page State Observation via CDP ===
+                            # Observe what's on Chrome/Edge browsers without blocking
+                            page_state = {"chrome": None, "edge": None}
+                            try:
+                                import requests as obs_requests
+
+                                # Check Chrome (port 9222)
+                                try:
+                                    chrome_resp = obs_requests.get("http://127.0.0.1:9222/json", timeout=1)
+                                    if chrome_resp.status_code == 200:
+                                        chrome_tabs = chrome_resp.json()
+                                        if chrome_tabs:
+                                            chrome_url = chrome_tabs[0].get("url", "")
+                                            chrome_title = chrome_tabs[0].get("title", "")
+                                            # Infer page type from URL
+                                            if "studio.youtube.com" in chrome_url and "/comments" in chrome_url:
+                                                chrome_page_type = "youtube_studio_comments"
+                                            elif "studio.youtube.com" in chrome_url:
+                                                chrome_page_type = "youtube_studio"
+                                            elif "youtube.com/watch" in chrome_url and "live" in chrome_url.lower():
+                                                chrome_page_type = "youtube_live"
+                                            elif "youtube.com/watch" in chrome_url:
+                                                chrome_page_type = "youtube_video"
+                                            elif "youtube.com" in chrome_url:
+                                                chrome_page_type = "youtube_other"
+                                            elif "accounts.google.com" in chrome_url or "oops" in chrome_title.lower():
+                                                chrome_page_type = "google_auth"
+                                            else:
+                                                chrome_page_type = "other"
+                                            page_state["chrome"] = {
+                                                "url": chrome_url[:100],
+                                                "title": chrome_title[:50],
+                                                "page_type": chrome_page_type
+                                            }
+                                except Exception:
+                                    pass  # Chrome not available
+
+                                # Check Edge (port 9223)
+                                try:
+                                    edge_resp = obs_requests.get("http://127.0.0.1:9223/json", timeout=1)
+                                    if edge_resp.status_code == 200:
+                                        edge_tabs = edge_resp.json()
+                                        if edge_tabs:
+                                            edge_url = edge_tabs[0].get("url", "")
+                                            edge_title = edge_tabs[0].get("title", "")
+                                            # Infer page type from URL
+                                            if "studio.youtube.com" in edge_url and "/comments" in edge_url:
+                                                edge_page_type = "youtube_studio_comments"
+                                            elif "studio.youtube.com" in edge_url:
+                                                edge_page_type = "youtube_studio"
+                                            elif "youtube.com/watch" in edge_url and "live" in edge_url.lower():
+                                                edge_page_type = "youtube_live"
+                                            elif "youtube.com/watch" in edge_url:
+                                                edge_page_type = "youtube_video"
+                                            elif "youtube.com" in edge_url:
+                                                edge_page_type = "youtube_other"
+                                            elif "accounts.google.com" in edge_url or "oops" in edge_title.lower():
+                                                edge_page_type = "google_auth"
+                                            else:
+                                                edge_page_type = "other"
+                                            page_state["edge"] = {
+                                                "url": edge_url[:100],
+                                                "title": edge_title[:50],
+                                                "page_type": edge_page_type
+                                            }
+                                except Exception:
+                                    pass  # Edge not available
+
+                                # Log page state observation
+                                chrome_type = page_state["chrome"]["page_type"] if page_state["chrome"] else "N/A"
+                                edge_type = page_state["edge"]["page_type"] if page_state["edge"] else "N/A"
+                                logger.info(f"[OODA-L5] Page State: Chrome={chrome_type}, Edge={edge_type}")
+
+                            except Exception as l5_e:
+                                logger.debug(f"[OODA-L5] Page observation failed: {l5_e}")
+
+                            # OBSERVE: Get current activity router state
+                            activity_router = get_activity_router()
+
+                            # ORIENT: Query for next activity decision
+                            decision = activity_router.get_next_activity()
+
+                            # DECIDE: Determine if pivot needed
+                            current_activity = ActivityType.LIVE_CHAT if self._live_chat_active else ActivityType.COMMENT_ENGAGEMENT
+                            should_pivot = decision.next_activity != current_activity and decision.next_activity != ActivityType.IDLE
+
+                            # Log OODA decision
+                            logger.info(
+                                f"[OODA] Pulse #{heartbeat_count}: "
+                                f"Current={current_activity.name}, "
+                                f"Suggested={decision.next_activity.name}, "
+                                f"Pivot={'YES' if should_pivot else 'NO'}, "
+                                f"Reason={decision.reason[:50] if decision.reason else 'none'}"
+                            )
+
+                            # ACT: Signal pivot opportunity (actual pivot handled by higher orchestration)
+                            if should_pivot and decision.next_activity != ActivityType.IDLE:
+                                # Emit breadcrumb for activity routing opportunity
+                                if self.telemetry:
+                                    try:
+                                        # Import breadcrumb telemetry for OODA signals
+                                        from .breadcrumb_telemetry import get_breadcrumb_telemetry
+                                        breadcrumb = get_breadcrumb_telemetry()
+                                        breadcrumb.store_breadcrumb(
+                                            source_dae="auto_moderator_dae",
+                                            event_type="ooda_pivot_opportunity",
+                                            message=f"OODA suggests pivot: {current_activity.name} -> {decision.next_activity.name}",
+                                            phase="OODA-DECISION",
+                                            metadata={
+                                                "current_activity": current_activity.name,
+                                                "suggested_activity": decision.next_activity.name,
+                                                "suggested_browser": decision.browser,
+                                                "reason": decision.reason,
+                                                "heartbeat_count": heartbeat_count,
+                                                "live_chat_active": self._live_chat_active,
+                                                "edge_comments_cleared": edge_comments_cleared,
+                                                # Layer 5: Page state observation
+                                                "page_state_chrome": page_state.get("chrome", {}).get("page_type") if page_state else None,
+                                                "page_state_edge": page_state.get("edge", {}).get("page_type") if page_state else None,
+                                            }
+                                        )
+                                    except Exception as bc_e:
+                                        logger.debug(f"[OODA] Breadcrumb emit failed: {bc_e}")
+
+                                # LEARN: Store decision pattern for PatternMemory
+                                try:
+                                    from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
+                                    pattern_memory = PatternMemory()
+                                    from modules.infrastructure.wre_core.src.pattern_memory import SkillOutcome
+                                    import json
+                                    from datetime import datetime as dt
+
+                                    outcome = SkillOutcome(
+                                        execution_id=f"ooda_{dt.now().isoformat()}",
+                                        skill_name="ooda_activity_decision",
+                                        agent="heartbeat",
+                                        timestamp=dt.now().isoformat(),
+                                        input_context=json.dumps({
+                                            "current_activity": current_activity.name,
+                                            "live_chat_active": self._live_chat_active,
+                                            "edge_comments_cleared": edge_comments_cleared,
+                                            # Layer 5: Page state observation
+                                            "page_state_chrome": page_state.get("chrome", {}).get("page_type") if page_state else None,
+                                            "page_state_edge": page_state.get("edge", {}).get("page_type") if page_state else None,
+                                        }),
+                                        output_result=json.dumps({
+                                            "suggested_activity": decision.next_activity.name,
+                                            "reason": decision.reason,
+                                            "browser": decision.browser,
+                                        }),
+                                        success=should_pivot,  # Success = we identified a pivot opportunity
+                                        pattern_fidelity=0.8,
+                                        outcome_quality=0.7,
+                                        execution_time_ms=0,
+                                        step_count=1,
+                                        notes=f"OODA L4+L5: {current_activity.name}->{decision.next_activity.name}"
+                                    )
+                                    pattern_memory.store_outcome(outcome)
+                                except Exception as pm_e:
+                                    logger.debug(f"[OODA] PatternMemory store failed: {pm_e}")
+
+                        except Exception as ooda_e:
+                            logger.debug(f"[OODA] Decision check failed: {ooda_e}")
 
                         # === AI OVERSEER: Autonomous monitoring (every 5 minutes) ===
                         try:

@@ -50,6 +50,7 @@ class SocialMediaRouter:
     # Channel IDs from environment (single source of truth: .env file)
     # Fallbacks are the known channel IDs for safety
     _MOVE2JAPAN_ID = os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")
+    _MOVE2JAPAN_ALT_ID = os.getenv("MOVE2JAPAN_ALT_CHANNEL_ID", "UCklMTNnu5POwRmQsg5JJumA")
     _FOUNDUPS_ID = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
     _UNDAODU_ID = os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
     _RAVINGANTIFA_ID = os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
@@ -65,6 +66,13 @@ class SocialMediaRouter:
         ),
         _MOVE2JAPAN_ID: ChannelRouting(
             channel_id=_MOVE2JAPAN_ID,
+            channel_name='Move2Japan',
+            linkedin_page_id='104834798',  # GeoZai page
+            x_account='geozai',
+            enabled=True
+        ),
+        _MOVE2JAPAN_ALT_ID: ChannelRouting(
+            channel_id=_MOVE2JAPAN_ALT_ID,
             channel_name='Move2Japan',
             linkedin_page_id='104834798',  # GeoZai page
             x_account='geozai',
@@ -99,6 +107,7 @@ class SocialMediaRouter:
     # Updated 2026-01-09: Uses env vars for channel IDs
     DISPLAY_NAMES = {
         _MOVE2JAPAN_ID: 'Move2Japan [JAPAN]',
+        _MOVE2JAPAN_ALT_ID: 'Move2Japan [JAPAN]',
         _UNDAODU_ID: 'UnDaoDu [MINDFUL]',
         _FOUNDUPS_ID: 'FoundUps [LOYAL]',
         _RAVINGANTIFA_ID: 'RavingANTIFA [VOICE]',

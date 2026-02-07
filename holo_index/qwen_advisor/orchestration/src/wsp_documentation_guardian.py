@@ -411,6 +411,13 @@ class WSPDocumentationGuardian:
             self.logger.warning(f"[WSP-GUARDIAN] Failed to log rollback: {e}")
 
 
+    def _resolve_module_path(self, module: str):
+        """Resolve module name to filesystem path (mirrors QwenOrchestrator pattern)."""
+        if not module:
+            return None
+        candidate = (self.repo_root / module).resolve()
+        return candidate if candidate.exists() else None
+
     def _build_module_snapshot(self, module: str) -> Dict[str, Any]:
         path = self._resolve_module_path(module)
         snapshot: Dict[str, Any] = {

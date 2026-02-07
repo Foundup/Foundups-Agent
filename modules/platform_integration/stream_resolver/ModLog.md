@@ -12,6 +12,83 @@ This log tracks changes specific to the **stream_resolver** module in the **plat
 
 ## MODLOG ENTRIES
 
+### 2026-02-06 - Vision Refactored to Verification-Only (Architecture Fix)
+
+**By:** 0102
+**WSP References:** WSP 77 (Agent Coordination), WSP 91 (Observability), WSP 22 (ModLog)
+
+**Problem:** VisionStreamChecker was hijacking Chrome (port 9222) during stream DISCOVERY, disrupting active comment engagement. Vision navigated to `/@channel/live` for all 4 channels (~4 minutes), breaking comment processing.
+
+**Root Cause:** Vision was used for stream DISCOVERY (navigation-based), not just VERIFICATION.
+
+**Architecture Fix (Complete Separation):**
+
+1. **Comment Engagement** = Chrome (9222), INDEPENDENT
+   - Processes YouTube Studio inbox
+   - No stream awareness needed
+   - Never interrupted by stream detection
+
+2. **Stream Discovery** = HTTP only (NO-QUOTA), NO BROWSER
+   - `no_quota_stream_checker.py` handles all discovery
+   - Zero browser navigation
+   - Writes `live_stream_signal` file for coordination
+
+3. **Live Chat Verification** = Edge (9223), verify-only
+   - `verify_video_is_live(video_id)` checks if known stream is active
+   - Goes directly to `watch?v=VIDEO_ID` (no channel navigation)
+   - Edge-only (Chrome fallback REMOVED)
+
+**Changes:**
+1. **stream_resolver.py**: Removed vision from discovery chain entirely
+   - Vision code block removed from `resolve_stream()`
+   - NO-QUOTA is now the PRIMARY discovery method
+
+2. **vision_stream_checker.py**: Refactored for verification-only
+   - Added `verify_video_is_live(video_id)` - checks specific video
+   - Added `verify_video_with_vision(video_id)` - public API
+   - `check_channel_for_live()` deprecated (returns None)
+   - Edge-only initialization (Chrome fallback removed)
+   - Clear logging: "Chrome reserved for comment engagement"
+
+**Public API:**
+```python
+# For live chat verification (Edge browser)
+from stream_resolver.src.vision_stream_checker import verify_video_with_vision
+result = verify_video_with_vision('VIDEO_ID')
+if result['live']:
+    # Stream still active
+```
+
+**Files Modified:**
+- `src/stream_resolver.py` - Vision removed from discovery
+- `src/vision_stream_checker.py` - Verify-only mode + Edge-only
+
+---
+
+### 2026-02-02 - Registry-Driven Channel Rotation Defaults
+
+**By:** 0102  
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 60 (Module Memory), WSP 22 (ModLog)
+
+**Problem:** No-quota rotation and allowlists were hard-coded, so new channels required manual edits.
+
+**Fix:** Default channel lists now load from the shared YouTube channel registry, with `TEST_CHANNEL_ID` still supported as an override.
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py`
+
+### 2026-02-02 - Add RavingANTIFA to NO-QUOTA Rotation
+
+**By:** 0102  
+**WSP References:** WSP 87 (No-Quota Stream Detection), WSP 91 (Observability)
+
+**Problem:** NO-QUOTA rotation list did not include the newly added @ravingANTIFA channel, so live checks could miss that channel when running in scraping mode.
+
+**Fix:** Added `RAVINGANTIFA_CHANNEL_ID` to the default NO-QUOTA rotation list.
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py`
+
 ### 2026-01-18 - Channel-Scoped Cache for Multi-Stream Scans
 
 **By:** 0102  
@@ -1692,5 +1769,18 @@ for attempt in range(max_attempts):  # 5 attempts
 **Component**: stream_resolver
 **Status**: [OK] Updated
 **WSP 22**: Traceable narrative maintained
+
+---
+
+## 2026-02-05 - Stream Resolver maintenance
+
+**Changes**
+- Added preflight fallback for vision stream detection to try alternate debug ports (9222/9223) before disabling vision.
+- Restored legacy helper wrappers for `find_active_stream` and `search_livestreams_enhanced` to keep tests/integrations working.
+- Updated stream resolver tests/scripts to align with current channel ID mappings.
+
+**Notes**
+- Mapping now recognizes Move2Japan alternate channel ID.
+- Verified stream resolver quota intelligence tests with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`.
 
 ---

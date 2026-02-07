@@ -18,6 +18,7 @@ import time
 
 # Core Interfaces
 from .holo_adapter import HoloAdapter
+from holo_index.qwen_advisor.config import QwenAdvisorConfig
 
 try:
     from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
@@ -43,9 +44,12 @@ class AutoGate:
         self.llm = None
         if LLM_AVAILABLE:
             try:
-                # Reuse standard configuration or fallback
-                # Note: We rely on environment/defaults for model path
-                self.llm = QwenInferenceEngine() 
+                config = QwenAdvisorConfig.from_env()
+                self.llm = QwenInferenceEngine(
+                    model_path=config.model_path,
+                    max_tokens=config.max_tokens,
+                    temperature=config.temperature,
+                )
                 logger.info("[AUTO-GATE] Qwen Inference Engine initialized")
             except Exception as e:
                 logger.warning(f"[AUTO-GATE] Failed to init Qwen: {e}")

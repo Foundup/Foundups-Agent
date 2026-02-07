@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+try:
+    from .video_index_metadata_db import safe_upsert_from_index_data
+except Exception as e:
+    safe_upsert_from_index_data = None
+    logger.debug(f"[VIDEO-INDEX-STORE] Metadata DB unavailable: {e}")
 
 
 # =============================================================================
@@ -104,6 +109,9 @@ class VideoIndexStore:
         # Write JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+
+        if safe_upsert_from_index_data:
+            safe_upsert_from_index_data(data, source_path=str(file_path))
 
         logger.info(f"[VIDEO-INDEX-STORE] Saved: {file_path}")
         return str(file_path)

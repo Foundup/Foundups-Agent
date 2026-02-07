@@ -1,4 +1,4 @@
-# Moltbot Local Models (Ollama) Configuration
+# OpenClaw Local Models (Ollama) Configuration
 
 > [!TIP]
 > Use Ollama for zero-cost local inference without API keys.
@@ -33,9 +33,9 @@ ollama serve
 
 ---
 
-## Moltbot Configuration for Ollama
+## OpenClaw Configuration for Ollama
 
-Add to `~/.clawdbot/moltbot.json`:
+Add to `~/.openclaw/openclaw.json`:
 
 ```json
 {
@@ -100,7 +100,7 @@ Use Ollama locally, fall back to Claude for complex tasks:
 
 ## WSL + Ollama (Windows)
 
-If running Moltbot in WSL2, Ollama on Windows is accessible via:
+If running OpenClaw in WSL2, Ollama on Windows is accessible via:
 ```
 http://host.docker.internal:11434/v1
 ```

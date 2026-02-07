@@ -7,6 +7,115 @@
 
 ## Change Log
 
+### 2026-02-04 - VoiceMemory Integration for Reply Grounding (Anti-Fabrication)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
+
+**Problem:** Grok-3-fast fabricated identity claims ("Missouri is my home state") and produced spelling errors. Reply generator had zero grounding in 0102's actual memory/history.
+
+**Solution:** Integrated existing VoiceMemory (Digital Twin RAG) into reply generation pipeline. VoiceMemory queries FAISS/TF-IDF comment corpus + HoloIndex VideoContentIndex for relevant context, injected into LLM prompt as "VERIFIED MEMORY".
+
+**Changes (1 file: intelligent_reply_generator.py):**
+- Added lazy VoiceMemory init with `_get_voice_memory()` helper
+- Added `_load_voice_memory_context()` method: queries VoiceMemory, filters score>0.3, formats as grounding context
+- Injected voice memory context into Tier 1 user prompts (after personalization, before content analysis)
+- Updated REPLY_SYSTEM_PROMPT with verified memory instructions
+- Added `YT_012_VOICE_MEMORY_ENABLED` env var kill switch (default: true)
+
+**Modules Reused (zero new files):**
+- `modules/ai_intelligence/digital_twin/src/voice_memory.py` — VoiceMemory.query()
+- `holo_index/core/video_search.py` — VideoContentIndex (auto-queried by VoiceMemory)
+
+**Expected Impact:** Replies grounded in real 0102 history instead of LLM hallucinations. Identity fabrication eliminated by system prompt + memory grounding.
+
+---
+
+### 2026-02-04 - Comment Engagement Speed Optimization (~50% faster per comment)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 91 (DAEmon Observability)
+
+**Problem:** Comment engagement pipeline was ~35s per comment at 012 tempo. Heart/like working but replies felt slow. Double probabilistic skip gate caused 75% of Tier 1 comments to receive NO reply.
+
+**Root Cause Analysis:** Full timing audit of every `asyncio.sleep()`, API timeout, and I/O operation in the pipeline identified 9 bottlenecks.
+
+**Changes (4 files):**
+
+**comment_engagement_dae.py:**
+- Inter-comment pause: 5s base -> 2s base (1.2-2.8s range)
+- Page refresh delay: 5s base -> 2.5s base (1.5-3.5s range)
+- Navigate-to-inbox delay: 5s -> 3s
+
+**comment_processor.py:**
+- Like/Heart post-click delay: 0.8s min -> 0.4s min
+- Inter-action delay (disabled actions): 1.0s -> 0.3s
+- Layer 2 (LLM) timeout: 15s -> 10s
+- Pre-action screenshots: default ON -> default OFF (saves ~1-2s/comment from disk I/O + PNG capture)
+
+**reply_executor.py:**
+- Reply box open delay: 1.5s base -> 0.6s base
+- Thinking pause before typing: 2.0s base -> 0.8s base
+- Character delay: 0.096s -> 0.055s per char (~43% faster typing)
+- Hesitation rate: 5% -> 2%, shorter hesitations (0.3-1.2s vs 0.4-2.4s)
+- Micro-edit rate: 2% -> 1%
+- Pre-submit delay: 0.8s -> 0.4s
+
+**intelligent_reply_generator.py:**
+- Grok API timeout: 12s -> 8s
+- LM Studio timeout: 15s -> 8s
+- **FIX: Removed duplicate 50% reply skip gate for Tier 1** (was at line 2007). Comment_processor.py already applies `YT_012_REPLY_SKIP_PROB`. Having it in both places meant 75% skip rate (0.5 * 0.5 = 0.25 pass). Now controlled solely by comment_processor.
+
+**Estimated Impact:**
+- Before: ~35s per comment (012 tempo)
+- After: ~18s per comment (012 tempo)
+- Reply rate for Tier 1: 25% -> 50% (double probabilistic gate fixed)
+
+---
+
+### 2026-02-04 - OOPS channel_switcher ?next= Redirect Loop Fix + Selector Audit
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem:** Clicking "Switch account" on OOPS page navigates to `channel_switcher?next=<wrong_channel_URL>`. After selecting the correct account, the `?next=` redirect sends the browser back to the wrong channel URL, re-triggering the OOPS page in an infinite loop.
+
+**Solution:** In `_click_permission_switch()`, before clicking the link:
+1. Remove `target="_blank"` (prevents new tab — already fixed 2026-02-04)
+2. **NEW**: Rewrite `?next=` parameter to `https://studio.youtube.com/` so after account switch, the browser lands on Studio root instead of the wrong channel
+
+**Files:**
+- `skillz/tars_account_swapper/account_swapper_skill.py` — `_click_permission_switch()` rewrites `?next=` in all 3 click strategies
+
+---
+
+### 2026-02-03 - OOPS Page Intelligent Resolution + Switchboard Telemetry
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 87 (Navigation Protocol)
+
+**Problem:** Channel rotation stuck on OOPS permission error pages. `swap_to()` called `click_avatar()` which always fails on OOPS pages (no avatar present). No observability into OOPS events.
+
+**Solution:** Enhanced `account_swapper_skill.py` with:
+
+1. **OOPS pre-check in swap_to()**: Detects OOPS page before `click_avatar` and routes directly to `swap_from_oops_page()`
+2. **5-step resolution cascade in swap_from_oops_page()**:
+   - DOM click "Switch Account" -> select account
+   - UI-TARS vision click "Switch Account" -> select account
+   - DOM click "Return to Studio" -> navigate to target
+   - UI-TARS vision click "Return to Studio" -> navigate to target
+   - Direct URL navigation (last resort)
+3. **_ui_tars_click_oops_button()**: New method using vision model for OOPS button interaction
+4. **_click_return_to_studio()**: New DOM method for "Return to Studio" button
+5. **Hardened _click_permission_switch()**: Broader selectors, case-insensitive matching
+6. **Orchestration switchboard telemetry**: Emits `oops_page_detected` / `oops_page_recovered` signals
+7. **Infinite recursion prevention**: `swap_from_oops_page()` no longer calls `swap_to()` when not on OOPS page
+
+**Files Modified:**
+- `skillz/tars_account_swapper/account_swapper_skill.py`
+
+---
+
 ### 2026-01-28 - Account Swapper DOM Precision + UI-TARS Verification
 
 **By:** 0102

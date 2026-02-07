@@ -147,7 +147,25 @@ class QwenOrchestrator:
         # Initialize Services
         self.mission_coordinator = MissionCoordinator(agent_type="qwen" if self._is_qwen_agent() else "0102")
         self.component_router = ComponentRouter()
-        self.mcp_handler = MCPHandler(mcp_client=getattr(self, 'mcp_client', None), logger=self._log_chain_of_thought)
+        self.mcp_handler = MCPHandler(mcp_client=None, logger=self._log_chain_of_thought)
+
+        # WSP 93: CodeIndex circulation + architect decision helpers
+        self.codeindex_engine = CodeIndexCirculationEngine()
+        self.architect_engine = ArchitectDecisionEngine()
+        self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
+        self._last_codeindex_reports: List[Dict[str, Any]] = []
+
+        # Initialize MCP client if available (toggleable)
+        mcp_enabled = os.getenv("HOLO_MCP_ENABLED", "true").lower() in {"1", "true", "yes"}
+        if MCP_AVAILABLE and ResearchIngestionMCP and mcp_enabled:
+            try:
+                self.mcp_client = ResearchIngestionMCP()
+                self.mcp_handler.mcp_client = self.mcp_client
+            except Exception as e:
+                self.mcp_client = None
+                logging.debug(f"[QWEN] MCP client unavailable (non-fatal): {e}")
+        else:
+            self.mcp_client = None
 
         # Initialize core components
         self.feedback_learner = get_learner()
@@ -177,33 +195,8 @@ class QwenOrchestrator:
                 sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
                 sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
         except Exception as e:
-            # Non-fatal - log warning but continue
-            logging.warning(f"[QWEN] Failed to set UTF-8 console: {e}")
-        
-        # Performance tracking
-        self.performance_history = []
-        self._last_module_snapshots = {}
-
-        # WSP 93: CodeIndex circulation + architect decision helpers
-        self.codeindex_engine = CodeIndexCirculationEngine()
-        self.architect_engine = ArchitectDecisionEngine()
-        self._last_module_snapshots: Dict[str, Dict[str, Any]] = {}
-        self._last_codeindex_reports: List[Dict[str, Any]] = []
-
-        # Initialize MCP client if available (toggleable)
-        mcp_enabled = os.getenv("HOLO_MCP_ENABLED", "true").lower() in {"1", "true", "yes"}
-        mcp_warn = os.getenv("HOLO_MCP_WARNINGS", "true").lower() in {"1", "true", "yes"}
-        if MCP_AVAILABLE and ResearchIngestionMCP and mcp_enabled:
-            try:
-                self.mcp_client = ResearchIngestionMCP()
-                # Update handler with client
-                self.mcp_handler.mcp_client = self.mcp_client
-            except Exception as e:
-                if mcp_warn:
-                    print(f"[WARN] Failed to initialize MCP client: {e}")
-                self.mcp_client = None
-        elif not mcp_enabled:
-            self.mcp_client = None
+            # Non-fatal - keep quiet by default
+            logging.debug(f"[QWEN] Failed to set UTF-8 console: {e}")
 
     def _select_general_components(self, query: str, files: List[str], modules: List[str]) -> List[str]:
         """Select appropriate components for GENERAL intent queries based on content analysis."""
@@ -484,6 +477,20 @@ class QwenOrchestrator:
                 "0102-OPTIMIZATION",
                 f"[TARGET] GENERAL query optimized: {compression_ratio:.1f}x compression ({original_length} -> {summary_length} tokens)"
             )
+
+            # Ensure GENERAL queries still surface top search hits (avoid "0 files checked" dead-end)
+            if search_results:
+                code_hits = search_results.get('code', []) or []
+                wsp_hits = search_results.get('wsps', []) or []
+                if code_hits or wsp_hits:
+                    result_lines = ["[RESULTS] Top matches"]
+                    for item in code_hits[:3]:
+                        path = item.get('path') or item.get('id') or item.get('title') or 'unknown'
+                        result_lines.append(f"  [CODE] {path}")
+                    for item in wsp_hits[:3]:
+                        path = item.get('path') or item.get('id') or item.get('title') or 'unknown'
+                        result_lines.append(f"  [WSP] {path}")
+                    concise_summary = concise_summary.rstrip() + "\n" + "\n".join(result_lines)
 
             return concise_summary
 
@@ -958,6 +965,11 @@ class QwenOrchestrator:
             )
         return '\n'.join(report_lines)
 
+    @staticmethod
+    def _format_component_display(component_name: str) -> str:
+        """Format component name for display (snake_case -> Title Case)."""
+        return component_name.replace("_", " ").title()
+
     def _execute_component_stub(
         self,
         component_name: str,
@@ -985,19 +997,29 @@ class QwenOrchestrator:
 
     def _run_health_analysis(self, module_snapshots: Dict[str, Dict[str, Any]]) -> List[str]:
         if not module_snapshots:
-            return ["[HEALTH][OK] No modules to audit in current query"]
+            return []  # WSP 87 noise reduction: Empty output when nothing to report
         lines: List[str] = []
+        violation_count = 0
+        ok_count = 0
         for module, snapshot in module_snapshots.items():
             if not snapshot['exists']:
                 lines.append(f"[HEALTH][WARNING] FOUND missing module on disk: {module}")
+                violation_count += 1
                 continue
             missing_docs = snapshot['missing_docs']
             if missing_docs:
                 lines.append(
                     f"[HEALTH][VIOLATION] {module} missing {', '.join(missing_docs)} (WSP 22)"
                 )
+                violation_count += 1
             else:
-                lines.append(f"[HEALTH][OK] {module} documentation complete")
+                ok_count += 1
+        # WSP 87 noise reduction: Suppress individual OK messages.
+        # Only show a compact summary when all modules are healthy.
+        if ok_count > 0 and violation_count == 0:
+            lines.append(f"[HEALTH][OK] All {ok_count} modules compliant")
+        elif ok_count > 0:
+            lines.append(f"[HEALTH] {ok_count}/{ok_count + violation_count} modules compliant")
         return lines
 
     def _run_vibecoding_analysis(self, module_snapshots: Dict[str, Dict[str, Any]]) -> List[str]:
@@ -1176,10 +1198,14 @@ class QwenOrchestrator:
             'message': message,
         })
         self.logger.info(log_entry)
-        try:
-            print(log_entry)
-        except UnicodeEncodeError:
-            sys.stdout.buffer.write((log_entry + '\n').encode('utf-8', errors='replace'))
+        # WSP 87 noise reduction: Only print chain-of-thought to stdout in verbose mode.
+        # Default: log to file/logger only. Reduces ~20-30 lines of console noise per query.
+        verbose = os.getenv('HOLO_VERBOSE', '').lower() in {'1', 'true', 'yes'}
+        if verbose:
+            try:
+                print(log_entry)
+            except UnicodeEncodeError:
+                sys.stdout.buffer.write((log_entry + '\n').encode('utf-8', errors='replace'))
 
     def get_analysis_context(self) -> Dict[str, Any]:
         return {

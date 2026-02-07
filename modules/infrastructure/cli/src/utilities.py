@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channels
 
 
 def env_truthy(name: str, default: str = "false") -> bool:
@@ -154,13 +155,18 @@ def set_env_bool(key: str, enabled: bool) -> None:
 def select_channel() -> str:
     """Display numbered channel selection menu and return channel name."""
     print("\nSelect channel:")
-    print("  1. UnDaoDu")
-    print("  2. FoundUps")
-    print("  3. Move2Japan")
-    print("  4. RavingANTIFA")
+    channels = get_channels()
+    if not channels:
+        print("[WARN] No channels found in registry; defaulting to undaodu")
+        return "undaodu"
+    for idx, ch in enumerate(channels, start=1):
+        print(f"  {idx}. {ch.get('name', ch.get('key'))}")
     choice = input("Channel [1]: ").strip() or "1"
-    channel_map = {"1": "undaodu", "2": "foundups", "3": "move2japan", "4": "ravingantifa"}
-    return channel_map.get(choice, "undaodu")
+    try:
+        selected = channels[int(choice) - 1]
+        return str(selected.get("key", "undaodu")).lower()
+    except Exception:
+        return str(channels[0].get("key", "undaodu")).lower()
 
 
 def holo_controls_menu() -> None:

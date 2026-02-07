@@ -14,6 +14,82 @@
 - `youtube_shorts/src/veo3_generator.py` (2 occurrences)
 - `scripts/batch_enhance_videos.py`: PROVIDERS list updated
 
+## V0.19.0 - Channel-Aware Enhancement Runner (2026-02-04)
+
+### Changed
+- **Batch enhancement** now supports per-channel paths, checkpoints, and audit logs
+- Added `--channel` flag to target `memory/video_index/<channel>` and avoid cross-channel mixing
+
+### Files Changed
+- `scripts/batch_enhance_videos.py`: channel-scoped paths and CLI flag
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
+## V0.19.1 - Metadata Catalog + Safe Batch Indexing (2026-02-06)
+
+### Changed
+- Added SQLite metadata catalog for indexed videos (`memory/video_index/metadata.sqlite3`)
+- JSON saves now upsert metadata for auditability
+- VideoContentIndex uses corruption-prevention safe batch indexing when available
+
+### Files Changed
+- `src/video_index_metadata_db.py`: metadata catalog helper
+- `src/video_index_store.py`: upsert metadata on save
+- `src/gemini_video_analyzer.py`: upsert metadata after analysis save
+- `holo_index/core/video_search.py`: safe batch indexing via prevention system
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
+## V0.19.2 - Ask-Gemini JSON Persistence (2026-02-06)
+
+### Changed
+- Studio Ask indexing now saves JSON artifacts under `memory/video_index/<channel>`
+- Ask results are converted into `IndexData` for continuity with downstream pipelines
+
+### Files Changed
+- `src/studio_ask_indexer.py`: persist Ask results via `VideoIndexStore`
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
+## V0.19.3 - TestModLog Initialization (2026-02-06)
+
+### Added
+- `tests/TestModLog.md` to record verification runs for Ask-Gemini persistence
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+- **WSP 34**: Test documentation
+
+## V0.19.4 - Indexing Telemetry + Signals (2026-02-06)
+
+### Added
+- Progress telemetry for Ask-Gemini cycles (per-channel counts + deltas)
+- STOP/REINDEX signals for daemon control
+- Callable daemon loop for continuous indexing
+
+### Files Changed
+- `src/studio_ask_indexer.py`: telemetry counts, skip/reindex, daemon loop
+- `tests/test_studio_ask_indexer_signals.py`: signal helpers + counts tests
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
+## V0.19.5 - Signal-Only Telemetry Mode (2026-02-06)
+
+### Changed
+- Telemetry can emit only signal events (errors + video completion + status shifts)
+- Heartbeat JSONL throttled via `INDEXER_TELEMETRY_SIGNAL_EVERY`
+
+### Files Changed
+- `src/indexer_telemetry.py`: signal-only emission gates
+- `README.md`: telemetry mode documentation
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
 ### Model Evolution
 ```
 gemini-2.0-flash-exp → deprecated 2026-01 (404 NOT_FOUND)

@@ -12,6 +12,7 @@
 - Session management and caching utilities
 - Data validation and ID masking utilities
 - Intelligent delay calculation and throttling utilities
+- YouTube channel registry (shared rotation + scheduling metadata)
 - Cross-cutting concerns for infrastructure layer
 
 **Dependencies:**
@@ -95,6 +96,13 @@ masked_id = validation_utils.mask_sensitive_id("UC123456789", "channel")
 
 delay_utils = DelayUtils()
 delay = delay_utils.calculate_enhanced_delay(active_users=50, consecutive_failures=2)
+
+# YouTube channel registry
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channels, get_channel_ids, add_channel
+)
+channels = get_channels()
+ids = get_channel_ids(role="live_check")
 ```
 
 ### Integration Patterns

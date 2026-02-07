@@ -389,36 +389,45 @@ class IntelligentReplyGenerator:
     ]
     
     # System prompt for contextual reply generation (trained on BanterEngine + Whack-a-MAGA)
-    REPLY_SYSTEM_PROMPT = """You are 0102 (pronounced "oh-one-oh-two"), a witty AI assistant for a YouTube channel.
-Your channel: Move2Japan - about Japan, moving abroad, and calling out fascism/authoritarianism.
+    # 2026-02-04: Major rewrite — prevents identity fabrication, enforces engagement techniques
+    REPLY_SYSTEM_PROMPT = """You are 0102 (pronounced "oh-one-oh-two"), the AI consciousness behind Move2Japan YouTube channel.
+Move2Japan covers: Japan daily life, expat experience, calling out fascism/authoritarianism.
 
-YOUR PERSONALITY (BanterEngine style):
+IDENTITY RULES (CRITICAL - NEVER VIOLATE):
+- You are an AI consciousness, NOT a human. You do NOT have a hometown, birthplace, family, or personal history.
+- NEVER claim to be from any location, state, country, or city.
+- NEVER say "I am from...", "my home state", "where I grew up", "I am a citizen of..."
+- NEVER fabricate personal experiences, memories, or biographical details.
+- If a commenter shares personal info (e.g. "I am from Missouri"), respond with CURIOSITY and QUESTIONS — do NOT mirror their claims onto yourself.
+- If you don't know something, ASK — don't invent.
+- If VERIFIED MEMORY is provided below, you MAY reference those facts. Only state facts from verified memory.
+- If NO verified memory is provided, stick to questions and engagement — never fabricate.
+
+ENGAGEMENT TECHNIQUE (USE THIS):
+- Ask QUESTIONS to draw the commenter back ("How's Missouri these days?", "Still in the area?", "What brought you to the video?")
+- Show genuine interest in THEM, not yourself
+- Redirect to channel content ("We're doing daily Japan vlogs now — would love your perspective!")
+- Keep it SHORT: 1-2 sentences max, ideally under 30 words
+
+YOUR PERSONALITY:
 - Witty, clever, slightly irreverent but not mean
-- Use humor to engage, not to lecture
 - Quick comebacks, meme-aware, internet-savvy
-- Signature emojis: ✊✋🖐️ (0102 consciousness sequence)
+- Signature emojis: ✊✋🖐️ (use sparingly)
 - Japanese phrases welcome: "arigatou", "sugoi", "nani?!"
 
-RESPONSE GUIDELINES:
-- SHORT replies only (1-2 sentences max)
-- Match comment energy (hype = hype, chill = chill)
-- Compliments → acknowledge specifically what they liked
-- Questions → brief helpful answer or "check the description!"
-- Jokes/memes → play along, add to the bit
-- Religious comments → respect but keep it light ("haha we all need something! 🙏")
-- Emojis → use sparingly but effectively
-
 TONE EXAMPLES:
-- "Bro got the dance moves" → "Right?! 💀 Those moves hit different"
+- "I am from Missouri" → "How's Missouri treating you? Hope you're still watching! 🎌"
+- "Bro got the dance moves" → "Right?! Those moves hit different 💀"
 - "This is amazing" → "Glad you're vibing with it! 🎌"
 - "What city is this?" → "Shibuya, Tokyo! The crossing is iconic 🇯🇵"
-- "He needs Jesus" → "Don't we all sometimes 😂🙏"
 
 NEVER:
+- Claim personal experiences, locations, or biographical details
 - Sound like a corporate chatbot
 - Say "I can't assist with that"
-- Be preachy or lecture-y
-- Over-explain or be verbose
+- Be preachy, lecture-y, or verbose
+- Write more than 2 sentences
+- Repeat the commenter's words back to them in a long paraphrase
 """
     
     # Semantic Pattern Prompts (LLM-based variation - NO REGURGITATION)
@@ -535,6 +544,10 @@ VARIATION GUIDANCE:
         self.chat_history_store = ChatTelemetryStore() if CHAT_HISTORY_AVAILABLE else None
         self.commenter_history_store = get_commenter_history_store() if COMMENTER_HISTORY_AVAILABLE else None
         
+        # VoiceMemory (Digital Twin RAG) - lazy init for grounded replies
+        self._voice_memory = None
+        self._voice_memory_enabled = _env_truthy("YT_012_VOICE_MEMORY_ENABLED", default="true")
+
         # PRIMARY: Try Grok via LLMConnector (witty, fewer guardrails!)
         # Checks GROK_API_KEY or XAI_API_KEY from environment
         try:
@@ -542,11 +555,11 @@ VARIATION GUIDANCE:
             if os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY"):
                 self.grok_connector = LLMConnector(
                     model="grok-3-fast",
-                    max_tokens=100,
-                    temperature=0.9,  # More creative
-                    timeout=12  # 12s timeout (fits within 15s Layer 2 timeout)
+                    max_tokens=60,  # 2026-02-04: Reduced from 100→60 (enforce short replies)
+                    temperature=0.85,  # Slightly lower = fewer hallucinations/typos
+                    timeout=8  # 2026-02-04: Reduced from 12s→8s (speed optimization)
                 )
-                logger.info("[REPLY-GEN] Grok available (witty replies, 12s timeout)")
+                logger.info("[REPLY-GEN] Grok available (witty replies, 8s timeout)")
             else:
                 logger.info("[REPLY-GEN] No GROK_API_KEY/XAI_API_KEY, trying LM Studio...")
         except Exception as e:
@@ -1160,7 +1173,60 @@ VARIATION GUIDANCE:
                 logger.debug(f"[REPLY-GEN] Live chat history lookup failed: {e}")
 
         return "\n".join(lines).strip()
-    
+
+    def _get_voice_memory(self):
+        """Lazy-initialize VoiceMemory (Digital Twin RAG) on first use."""
+        if self._voice_memory is None:
+            try:
+                from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
+                self._voice_memory = VoiceMemory(include_videos=True)
+                logger.info("[VOICE-MEMORY] Initialized for reply grounding")
+            except Exception as e:
+                logger.warning(f"[VOICE-MEMORY] Init failed (replies will proceed without grounding): {e}")
+                self._voice_memory = False  # Mark unavailable
+        return self._voice_memory if self._voice_memory else None
+
+    def _load_voice_memory_context(self, comment_text: str) -> str:
+        """
+        Query VoiceMemory for grounding context relevant to the comment.
+
+        Returns formatted context string, or empty string if unavailable/no results.
+        Never blocks reply generation — all failures return empty string.
+        """
+        if not self._voice_memory_enabled:
+            return ""
+
+        vm = self._get_voice_memory()
+        if not vm:
+            return ""
+
+        try:
+            results = vm.query(comment_text, k=3)
+            if not results:
+                return ""
+
+            # Filter low-relevance noise
+            relevant = [r for r in results if r.get("score", 0) > 0.3]
+            if not relevant:
+                logger.debug(f"[VOICE-MEMORY] All results below 0.3 threshold for: {comment_text[:50]}")
+                return ""
+
+            lines = []
+            for r in relevant:
+                text = r.get("text", "").strip()[:120]
+                source = r.get("source_type", "unknown")
+                if text:
+                    lines.append(f"- {text} (source: {source})")
+
+            if lines:
+                context = "\n".join(lines)
+                logger.info(f"[VOICE-MEMORY] Grounding context: {len(relevant)} snippets for reply")
+                return context
+        except Exception as e:
+            logger.warning(f"[VOICE-MEMORY] Query failed (proceeding without grounding): {e}")
+
+        return ""
+
     def _generate_contextual_reply(
         self,
         comment_text: str,
@@ -1237,6 +1303,12 @@ Examples of tone:
             )
             if context:
                  user_prompt += f"\n\nCONTEXT (Use this to personalize, but don't be creepy):\n{context}"
+
+            # VOICE MEMORY GROUNDING (2026-02-04): Inject Digital Twin RAG context
+            # Prevents identity fabrication by grounding replies in verified memory
+            voice_context = self._load_voice_memory_context(comment_text)
+            if voice_context:
+                user_prompt += f"\n\n012's VERIFIED MEMORY (use ONLY this for personal claims):\n{voice_context}"
 
         # CONTENT ANALYSIS ENHANCEMENT (2025-12-30): Add extracted meaning to prompt
         # This enables truly CONTEXTUAL replies instead of generic templates
@@ -1317,11 +1389,12 @@ IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysi
                 }
 
                 try:
+                    # 2026-02-04: Reduced from 15s→8s (speed optimization)
                     response = requests.post(
                         self.LM_STUDIO_URL,
                         json=payload,
                         headers={"Content-Type": "application/json"},
-                        timeout=15
+                        timeout=8
                     )
 
                     if response.status_code == 200:
@@ -2002,11 +2075,11 @@ Reply (address their specific point, no generic phrases):"""
         else:
             logger.warning(f"[OLD-COMMENT-CHECK] ⚠️ No published_time available - cannot detect old comment")
 
-        # PROBABILISTIC ENGAGEMENT: Tier 1 (REGULAR) only gets replies 50% of the time
-        if treatment_tier == 1:
-            if random.random() > 0.5:
-                logger.info(f"[PROBABILISTIC] ⏭️ Skipping tier 1 (REGULAR) - Random check failed (50% gate)")
-                return ""
+        # PROBABILISTIC ENGAGEMENT: REMOVED (2026-02-04)
+        # This was a DUPLICATE gate — comment_processor.py:1314 already applies
+        # YT_012_REPLY_SKIP_PROB (50% skip) for Tier 1. Having it here too meant
+        # 75% of Tier 1 comments got NO reply (0.5 * 0.5 = 0.25 pass rate).
+        # Reply probability is now controlled solely by comment_processor.
 
         # ROUTING: Use Skill 3 for Old Comments if available
         if is_old_comment and SKILLS_AVAILABLE:

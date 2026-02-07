@@ -76,16 +76,19 @@ PROVIDERS = [
     ("gemini-2.5-flash", "Gemini"),  # 2.0-flash retiring Mar 2026; 2.5-flash recommended
 ]
 
-# Paths
-VIDEO_DIR = Path("memory/video_index/undaodu")
-CHECKPOINT_FILE = Path("memory/enhancement_checkpoint.json")
-AUDIT_FILE = Path("memory/enhancement_audit.jsonl")
+def _get_paths(channel: str) -> tuple[Path, Path, Path]:
+    """Resolve per-channel paths for enhancement artifacts."""
+    safe_channel = channel.strip() or "undaodu"
+    video_dir = Path("memory/video_index") / safe_channel
+    checkpoint_file = Path("memory") / f"enhancement_checkpoint_{safe_channel}.json"
+    audit_file = Path("memory") / f"enhancement_audit_{safe_channel}.jsonl"
+    return video_dir, checkpoint_file, audit_file
 
 
-def load_checkpoint() -> dict:
+def load_checkpoint(checkpoint_file: Path) -> dict:
     """Load checkpoint or return empty state."""
-    if CHECKPOINT_FILE.exists():
-        return json.loads(CHECKPOINT_FILE.read_text(encoding="utf-8"))
+    if checkpoint_file.exists():
+        return json.loads(checkpoint_file.read_text(encoding="utf-8"))
     return {
         "completed": [],
         "failed": [],
@@ -94,16 +97,23 @@ def load_checkpoint() -> dict:
     }
 
 
-def save_checkpoint(state: dict):
+def save_checkpoint(state: dict, checkpoint_file: Path):
     """Save checkpoint state."""
     state["last_run"] = datetime.now().isoformat()
-    CHECKPOINT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    CHECKPOINT_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 
-def log_audit(video_id: str, provider: str, success: bool, tier: int, error: str = None):
+def log_audit(
+    video_id: str,
+    provider: str,
+    success: bool,
+    tier: int,
+    audit_file: Path,
+    error: str = None
+):
     """Append to audit log."""
-    AUDIT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    audit_file.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "timestamp": datetime.now().isoformat(),
         "video_id": video_id,
@@ -112,14 +122,14 @@ def log_audit(video_id: str, provider: str, success: bool, tier: int, error: str
         "quality_tier": tier,
         "error": error,
     }
-    with open(AUDIT_FILE, "a", encoding="utf-8") as f:
+    with open(audit_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
 
 
-def get_videos_needing_enhancement() -> list:
+def get_videos_needing_enhancement(video_dir: Path) -> list:
     """Get list of video JSONs that need enhancement."""
     needing = []
-    for f in VIDEO_DIR.glob("*.json"):
+    for f in video_dir.glob("*.json"):
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             if not data.get("training_data"):
@@ -130,6 +140,7 @@ def get_videos_needing_enhancement() -> list:
 
 
 def run_batch(
+    channel: str,
     max_videos: int = 50,
     start_provider_idx: int = 0,
     delay_between: float = 5.0,
@@ -144,11 +155,12 @@ def run_batch(
         delay_between: Seconds between videos
         rate_limit_delay: Seconds to wait on rate limit
     """
-    state = load_checkpoint()
+    video_dir, checkpoint_file, audit_file = _get_paths(channel)
+    state = load_checkpoint(checkpoint_file)
     completed_set = set(state["completed"])
 
     # Get videos needing enhancement (excluding already completed)
-    all_needing = get_videos_needing_enhancement()
+    all_needing = get_videos_needing_enhancement(video_dir)
     to_process = [f for f in all_needing if f.stem not in completed_set]
 
     logger.info(f"Videos needing enhancement: {len(all_needing)}")
@@ -174,7 +186,7 @@ def run_batch(
         video_id = video_path.stem
         model, provider_name = PROVIDERS[provider_idx]
 
-        logger.info(f"[{i+1}/{len(to_process)}] Enhancing {video_id} with {provider_name}")
+        logger.info(f"[{i+1}/{len(to_process)}] Enhancing {video_id} with {provider_name} ({channel})")
 
         try:
             enhancer = VideoEnhancer(model=model)
@@ -189,7 +201,7 @@ def run_batch(
             if result:
                 tier = result.quality_tier
                 logger.info(f"  SUCCESS: Tier {tier}")
-                log_audit(video_id, provider_name, True, tier)
+                log_audit(video_id, provider_name, True, tier, audit_file)
                 state["completed"].append(video_id)
                 consecutive_failures = 0
 
@@ -199,7 +211,7 @@ def run_batch(
                                metrics={"completed": len(state["completed"]), "tier": tier})
             else:
                 logger.warning(f"  FAILED: No result")
-                log_audit(video_id, provider_name, False, 0, "No result returned")
+                log_audit(video_id, provider_name, False, 0, audit_file, "No result returned")
                 state["failed"].append(video_id)
                 consecutive_failures += 1
 
@@ -217,11 +229,11 @@ def run_batch(
                            severity=1, metrics={"provider_idx": provider_idx})
                 time.sleep(rate_limit_delay)
 
-            log_audit(video_id, provider_name, False, 0, error_str[:200])
+            log_audit(video_id, provider_name, False, 0, audit_file, error_str[:200])
             consecutive_failures += 1
 
         # Save checkpoint after each video
-        save_checkpoint(state)
+        save_checkpoint(state, checkpoint_file)
 
         # Check for too many failures
         if consecutive_failures >= 3:
@@ -250,22 +262,23 @@ def run_batch(
                metrics={"completed": len(state["completed"]), "failed": len(state["failed"]), "remaining": remaining})
 
 
-def show_status():
+def show_status(channel: str):
     """Show current enhancement status."""
-    state = load_checkpoint()
-    all_needing = get_videos_needing_enhancement()
+    video_dir, checkpoint_file, audit_file = _get_paths(channel)
+    state = load_checkpoint(checkpoint_file)
+    all_needing = get_videos_needing_enhancement(video_dir)
 
     print("=" * 60)
-    print("VIDEO ENHANCEMENT STATUS")
+    print(f"VIDEO ENHANCEMENT STATUS ({channel})")
     print("=" * 60)
-    print(f"Total videos: {len(list(VIDEO_DIR.glob('*.json')))}")
+    print(f"Total videos: {len(list(video_dir.glob('*.json')))}")
     print(f"Need enhancement: {len(all_needing)}")
     print(f"Completed: {len(state['completed'])}")
     print(f"Failed: {len(state['failed'])}")
     print(f"Last run: {state.get('last_run', 'Never')}")
 
-    if AUDIT_FILE.exists():
-        lines = AUDIT_FILE.read_text(encoding="utf-8").strip().split("\n")
+    if audit_file.exists():
+        lines = audit_file.read_text(encoding="utf-8").strip().split("\n")
         success_count = sum(1 for l in lines if '"success": true' in l)
         print(f"Audit log entries: {len(lines)} ({success_count} successful)")
 
@@ -277,20 +290,23 @@ if __name__ == "__main__":
     parser.add_argument("--delay", type=float, default=5.0, help="Delay between videos")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
     parser.add_argument("--status", action="store_true", help="Show status only")
+    parser.add_argument("--channel", default="undaodu", help="Channel key (memory/video_index/<channel>)")
 
     args = parser.parse_args()
 
     if args.status:
-        show_status()
+        show_status(args.channel)
     else:
         provider_map = {"grok": 0, "openai": 1, "gemini": 2}
         start_idx = provider_map.get(args.provider, 0)
 
         if args.resume:
-            state = load_checkpoint()
+            _, checkpoint_file, _ = _get_paths(args.channel)
+            state = load_checkpoint(checkpoint_file)
             start_idx = state.get("current_provider_idx", 0)
 
         run_batch(
+            channel=args.channel,
             max_videos=args.max_videos,
             start_provider_idx=start_idx,
             delay_between=args.delay,

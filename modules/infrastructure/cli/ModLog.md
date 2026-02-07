@@ -2,6 +2,45 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.3.1 - Channel Registry Controls (2026-02-02)
+
+### Added
+- **Channel Registry Menu** (`C` option in YouTube DAEs): list + add channels via shared registry
+- Channel selection prompts now read from the registry (scheduler, persona, indexing, rotation status)
+
+### Files Changed
+- `src/youtube_menu.py`: New Channel Registry submenu + dynamic rotation/status mapping
+- `src/youtube_controls.py`: Scheduler/persona channel lists now registry-driven
+- `src/utilities.py`: `select_channel()` now uses registry
+- `src/indexing_menu.py`: Indexing rotation now uses registry browser groups
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+- **WSP 60**: Registry stored in module memory
+
+## V0.3.2 - Channel-Aware Batch Enhancement (2026-02-04)
+
+### Changed
+- **Batch Enhance Videos** now passes selected channel to enhancement runner
+- Per-channel checkpoints used by indexing menu (`enhancement_checkpoint_<channel>.json`)
+
+### Files Changed
+- `src/indexing_menu.py`: pass `--channel` and use channel-scoped checkpoint
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
+## V0.3.3 - Canonical Test Artifact Path (2026-02-06)
+
+### Changed
+- Test video indexing now writes JSON artifacts under `memory/video_index/test`
+
+### Files Changed
+- `src/indexing_menu.py`: test path now resolved from repo root
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+
 ## V0.3.0 - Rotation Controls Menu (2026-01-28)
 
 ### Added

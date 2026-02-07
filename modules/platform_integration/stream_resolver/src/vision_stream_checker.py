@@ -40,6 +40,7 @@ class VisionStreamChecker:
         'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',   # Move2Japan (alternate)
         'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',      # UnDaoDu
         'UCSNTUXjAgpd4sgWYP0xoJgw': '@FoundUps',     # FoundUps
+        'UCVSmg5aOhP4tnQ9KFUg97qA': '@ravingantifa', # RavingANTIFA
     }
     
     def __init__(self):
@@ -52,90 +53,41 @@ class VisionStreamChecker:
         """
         Check if browser and UI-TARS are available.
 
-        Sprint 3.2: Uses BrowserManager for Edge/Chrome browser selection.
-        Fallback chain: Edge → Chrome :9223 → Chrome :9222 → Scraping
+        ARCHITECTURE (2026-02-06):
+        - Vision uses EDGE ONLY (port 9223)
+        - Chrome (port 9222) is RESERVED for comment engagement
+        - NO Chrome fallback - prevents browser hijacking
+
+        If Edge unavailable, vision falls back to HTTP scraping.
         """
         try:
             from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
 
-            # Get browser type preference (Edge or Chrome)
-            browser_type = os.getenv("STREAM_BROWSER_TYPE", "edge").lower()
-            stream_chrome_port = int(os.getenv("STREAM_CHROME_PORT", os.getenv("FOUNDUPS_CHROME_PORT", "9222")))
-
             browser_manager = get_browser_manager()
 
-            # Try primary browser type
+            # EDGE ONLY - Chrome is reserved for comment engagement
+            logger.info("[VISION] Attempting Edge browser (Chrome reserved for comments)...")
             try:
-                if browser_type == "edge":
-                    logger.info(f"[VISION] Attempting Edge browser for vision detection...")
-                    self.driver = browser_manager.get_browser(
-                        browser_type='edge',
-                        profile_name='vision_stream_detection',
-                        options={},
-                        dae_name='youtube_vision_dae',
-                    )
-                    self.vision_available = True
-                    logger.info(f"[VISION] ✅ Edge browser connected - vision mode available (browser separation active)")
-                    return
-
-                elif browser_type == "chrome":
-                    logger.info(f"[VISION] Attempting Chrome browser on port {stream_chrome_port}...")
-                    # For Chrome, use debug port if different from comment engagement
-                    if stream_chrome_port != 9222:
-                        logger.info(f"[VISION] Using Chrome on separate port :{ stream_chrome_port}")
-
-                    from selenium import webdriver
-                    from selenium.webdriver.chrome.options import Options
-
-                    chrome_options = Options()
-                    chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{stream_chrome_port}")
-
-                    self.driver = webdriver.Chrome(options=chrome_options)
-                    self.vision_available = True
-                    logger.info(f"[VISION] ✅ Chrome connected on port {stream_chrome_port} - vision mode available")
-                    return
+                self.driver = browser_manager.get_browser(
+                    browser_type='edge',
+                    profile_name='vision_stream_detection',
+                    options={},
+                    dae_name='youtube_vision_dae',
+                )
+                self.vision_available = True
+                logger.info("[VISION] ✅ Edge browser connected - vision mode available")
+                logger.info("[VISION] Chrome (9222) remains available for comment engagement")
+                return
 
             except Exception as e:
-                logger.warning(f"[VISION] {browser_type.title()} browser failed: {e}")
-
-                # Fallback: Try Edge if Chrome was primary
-                if browser_type == "chrome":
-                    try:
-                        logger.info(f"[VISION] Fallback: Attempting Edge browser...")
-                        self.driver = browser_manager.get_browser(
-                            browser_type='edge',
-                            profile_name='vision_stream_detection',
-                            options={},
-                            dae_name='youtube_vision_dae',
-                        )
-                        self.vision_available = True
-                        logger.info(f"[VISION] ✅ Edge browser connected (fallback) - vision mode available")
-                        return
-                    except Exception as edge_err:
-                        logger.warning(f"[VISION] Edge fallback failed: {edge_err}")
-
-                # Final fallback: Try Chrome on default port
-                if browser_type == "edge":
-                    try:
-                        logger.info(f"[VISION] Fallback: Attempting Chrome on port 9222...")
-                        from selenium import webdriver
-                        from selenium.webdriver.chrome.options import Options
-
-                        chrome_options = Options()
-                        chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:9222")
-
-                        self.driver = webdriver.Chrome(options=chrome_options)
-                        self.vision_available = True
-                        logger.info(f"[VISION] ✅ Chrome connected on port 9222 (fallback) - vision mode available")
-                        return
-                    except Exception as chrome_err:
-                        logger.warning(f"[VISION] Chrome fallback failed: {chrome_err}")
-
-            # All fallbacks exhausted
-            raise Exception("All browser options exhausted")
+                logger.warning(f"[VISION] Edge browser failed: {e}")
+                # NO Chrome fallback - Chrome is reserved for comments
+                logger.info("[VISION] Edge unavailable - vision will use HTTP scraping")
+                logger.info("[VISION] Chrome NOT used for vision (reserved for comment engagement)")
+                raise Exception("Edge not available, Chrome reserved for comments")
 
         except Exception as e:
-            logger.info(f"[VISION] Browser not available ({e}) - will use scraping fallback")
+            logger.info(f"[VISION] Browser not available ({e}) - will use HTTP scraping")
             self.vision_available = False
             self.driver = None
     
@@ -473,9 +425,98 @@ class VisionStreamChecker:
             logger.error(f"[SCRAPE] Fallback scraping failed: {e}")
             return None
     
+    def verify_video_is_live(self, video_id: str) -> Dict[str, Any]:
+        """
+        VERIFICATION ONLY: Check if a specific video is currently live.
+
+        This method is for LIVE CHAT verification - checking if a known stream
+        is still active. It does NOT discover streams (no channel navigation).
+
+        Args:
+            video_id: YouTube video ID to verify
+
+        Returns:
+            {
+                'live': bool,
+                'video_id': str,
+                'title': str (if live),
+                'source': 'vision_verify'
+            }
+        """
+        if not self.vision_available or not self.driver:
+            logger.info("[VISION-VERIFY] Vision not available, using HTTP fallback")
+            return self._verify_with_http(video_id)
+
+        try:
+            # Go directly to the video (NO channel navigation!)
+            watch_url = f"https://www.youtube.com/watch?v={video_id}"
+            logger.info(f"[VISION-VERIFY] Checking video: {video_id}")
+
+            # Store current URL to restore
+            original_url = self.driver.current_url
+
+            try:
+                self.driver.get(watch_url)
+
+                import time
+                time.sleep(2)  # Quick check, not full page load
+
+                # Check for LIVE indicators
+                is_live = self._check_live_indicators_dom()
+
+                if is_live:
+                    title = self._get_video_title()
+                    logger.info(f"[VISION-VERIFY] Video {video_id} is LIVE")
+                    return {
+                        'live': True,
+                        'video_id': video_id,
+                        'title': title or 'Live Stream',
+                        'source': 'vision_verify'
+                    }
+                else:
+                    logger.info(f"[VISION-VERIFY] Video {video_id} is NOT live")
+                    return {
+                        'live': False,
+                        'video_id': video_id,
+                        'source': 'vision_verify'
+                    }
+
+            finally:
+                # Restore original URL if it was Studio
+                if original_url and 'studio.youtube.com' in original_url:
+                    logger.info(f"[VISION-VERIFY] Restoring Studio URL")
+                    self.driver.get(original_url)
+                    time.sleep(1)
+
+        except Exception as e:
+            logger.warning(f"[VISION-VERIFY] Vision verify failed: {e}")
+            return self._verify_with_http(video_id)
+
+    def _verify_with_http(self, video_id: str) -> Dict[str, Any]:
+        """HTTP fallback for video verification."""
+        try:
+            from .no_quota_stream_checker import NoQuotaStreamChecker
+            scraper = NoQuotaStreamChecker()
+            result = scraper.check_video_is_live(video_id)
+            if result and result.get('live'):
+                return {
+                    'live': True,
+                    'video_id': video_id,
+                    'title': result.get('title', 'Live Stream'),
+                    'source': 'http_verify'
+                }
+            return {
+                'live': False,
+                'video_id': video_id,
+                'source': 'http_verify'
+            }
+        except Exception as e:
+            logger.error(f"[HTTP-VERIFY] Fallback failed: {e}")
+            return {'live': False, 'video_id': video_id, 'source': 'error'}
+
     def close(self):
         """Clean up resources."""
-        # Don't close driver - we're attached to existing Chrome
+        # Don't close driver - we're attached to existing browser
         self.driver = None
         self.vision_available = False
 
@@ -494,12 +535,35 @@ def get_vision_stream_checker() -> VisionStreamChecker:
 
 def check_channel_with_vision(channel_id: str, channel_name: str = None) -> Optional[Dict[str, Any]]:
     """
-    Quick function to check channel using vision (with scraping fallback).
-    
+    DEPRECATED: Do not use for stream discovery - navigates browser.
+
+    Use NO-QUOTA (HTTP scraping) for stream discovery instead.
+    Use verify_video_with_vision() for verification of known video IDs.
+    """
+    logger.warning("[VISION] check_channel_with_vision is DEPRECATED - use NO-QUOTA for discovery")
+    logger.warning("[VISION] This method navigates the browser and disrupts comment engagement")
+    # Return None to force fallback to NO-QUOTA
+    return None
+
+
+def verify_video_with_vision(video_id: str) -> Dict[str, Any]:
+    """
+    VERIFICATION ONLY: Check if a specific video is currently live.
+
+    For LIVE CHAT use - verifying a known stream is still active.
+    Does NOT navigate to channels (no browser hijacking).
+    Uses Edge only (Chrome reserved for comment engagement).
+
     Usage:
-        result = check_channel_with_vision('UCklMTNnu5POwRmQsg5JJumA', 'Move2Japan')
-        if result and result['live']:
-            video_id = result['video_id']
+        result = verify_video_with_vision('dQw4w9WgXcQ')
+        if result['live']:
+            print(f"Stream still active: {result['title']}")
+
+    Args:
+        video_id: YouTube video ID to verify
+
+    Returns:
+        {'live': bool, 'video_id': str, 'title': str, 'source': str}
     """
     checker = get_vision_stream_checker()
-    return checker.check_channel_for_live(channel_id, channel_name)
+    return checker.verify_video_is_live(video_id)

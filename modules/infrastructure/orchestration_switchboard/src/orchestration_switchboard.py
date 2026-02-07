@@ -98,6 +98,8 @@ SIGNAL_PRIORITIES = {
     "rotation_complete": SignalPriority.P1_HIGH,
     "comment_processing": SignalPriority.P1_HIGH,
     "browser_available": SignalPriority.P1_HIGH,
+    "oops_page_detected": SignalPriority.P1_HIGH,      # 2026-02-03: OOPS blocks browser activity
+    "oops_page_recovered": SignalPriority.P1_HIGH,      # 2026-02-03: Browser available after OOPS recovery
 
     # P2 Medium - Social and scheduling
     "linkedin_notification": SignalPriority.P2_MEDIUM,
@@ -386,6 +388,8 @@ class OrchestrationSwitchboard:
             "video_indexing": "VIDEO_INDEXING",
             "party_requested": "LIVE_STREAM",
             "git_push_requested": "GIT_PUSH",
+            "oops_page_detected": "BROWSER_NAVIGATION",
+            "oops_page_recovered": "ACTIVITY_ROUTING",
         }
 
         mission_type = mission_type_map.get(signal.signal_type, "CUSTOM")
@@ -466,6 +470,96 @@ class OrchestrationSwitchboard:
             "browser": browser,
             "port": port,
             "action": f"Run shorts scheduler for {channel_key} on {browser}:{port}"
+        }
+
+    def _handle_oops_page_detected(self, signal: Signal) -> Dict[str, Any]:
+        """
+        Handle OOPS page detection signal.
+
+        2026-02-03: Intelligent OOPS page response.
+        The switchboard tracks which browsers/channels are OOPS-blocked and
+        recommends recovery strategy based on pattern history.
+
+        Metadata expected:
+            browser: "chrome" or "edge"
+            channel_name: Target channel name
+            channel_id: Target channel ID
+            url: URL that triggered OOPS
+            recovery_method: How the caller plans to recover
+            attempt_count: Number of attempts so far
+        """
+        browser = signal.metadata.get("browser", "unknown")
+        channel = signal.metadata.get("channel_name", "unknown")
+        attempt = signal.metadata.get("attempt_count", 1)
+
+        # Check WRE for historical OOPS patterns on this channel
+        oops_history_count = 0
+        if self.telemetry:
+            oops_history_count = self.telemetry.get_event_count(
+                "signal_received_oops_page_detected",
+                minutes=60,
+                source_dae=signal.source_dae,
+            )
+
+        # Intelligent decision: if OOPS happens repeatedly, recommend alternate browser
+        recommendation = "account_switch"  # Default: try account switch
+        if oops_history_count >= 3 and attempt >= 2:
+            # Repeated OOPS on same browser - suggest alternate browser
+            alt_browser = "edge" if browser == "chrome" else "chrome"
+            recommendation = f"use_alternate_browser:{alt_browser}"
+            logger.warning(
+                f"[SWITCHBOARD] OOPS pattern detected: {channel} failed {oops_history_count}x "
+                f"on {browser} in last hour - recommending {alt_browser}"
+            )
+        elif attempt >= 2:
+            recommendation = "skip_channel"
+            logger.warning(
+                f"[SWITCHBOARD] OOPS recovery failed {attempt}x for {channel} on {browser} - recommending skip"
+            )
+
+        return {
+            "status": "oops_detected",
+            "browser": browser,
+            "channel": channel,
+            "attempt_count": attempt,
+            "oops_history_count": oops_history_count,
+            "recommendation": recommendation,
+            "action": f"OOPS on {browser} for {channel} - recommend: {recommendation}"
+        }
+
+    def _handle_oops_page_recovered(self, signal: Signal) -> Dict[str, Any]:
+        """
+        Handle OOPS page recovery signal.
+
+        2026-02-03: Signals browser is available again after OOPS recovery.
+        Routes to activity router to determine next activity.
+        """
+        browser = signal.metadata.get("browser", "unknown")
+        channel = signal.metadata.get("channel_name", "unknown")
+        recovery_method = signal.metadata.get("recovery_method", "unknown")
+
+        # Signal browser availability
+        if self.router:
+            self.router.signal_browser_available(browser, "oops_recovery")
+
+        # Get next activity
+        next_activity = None
+        if self.router:
+            decision = self.router.get_next_activity()
+            next_activity = decision.next_activity.name
+
+        logger.info(
+            f"[SWITCHBOARD] OOPS recovered: {channel} on {browser} via {recovery_method} "
+            f"- next activity: {next_activity}"
+        )
+
+        return {
+            "status": "oops_recovered",
+            "browser": browser,
+            "channel": channel,
+            "recovery_method": recovery_method,
+            "browser_available": browser,
+            "next_activity": next_activity,
         }
 
     def _handle_shorts_scheduling_complete(self, signal: Signal) -> Dict[str, Any]:

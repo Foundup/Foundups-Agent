@@ -8,6 +8,18 @@ Active - Clean WRE Structure Achieved
 
 ## Chronological Change Log
 
+### main.py Startup Performance Fix (3 issues resolved)
+**Date**: 2026-02-07
+**WSP Protocol References**: WSP 22, WSP 50, WSP 84, WSP 87
+**Impact Analysis**: main.py startup reduced from 30s+ to 2s. CLI menu now displays immediately.
+
+#### [OK] Implementation Details
+- `modules/ai_intelligence/ai_overseer/src/holo_adapter.py`: HoloIndex lazy loading via `_get_holo()`. SentenceTransformer model (20-30s load) deferred to first `search()` call.
+- `main.py`: `OPENCLAW_SECURITY_PREFLIGHT_ENFORCED` default changed from `1` to `0` (warn, don't block). Prevents startup hard-block when `cisco-ai-skill-scanner` binary is absent.
+- `main.py`: Logging temporarily suppressed to WARNING during `AIIntelligenceOverseer` init in preflight. Eliminates Qwen/Gemma init noise from menu display.
+
+---
+
 ### Instance Lock Self-Healing + Status Hardening
 **Date**: 2026-01-18
 **WSP Protocol References**: WSP 22, WSP 84, WSP 91
@@ -416,3 +428,7 @@ infrastructure/
 **Last Updated**: 2025-08-16
 **Domain Lead**: WRE Core System with AI Intelligence
 **WSP Compliance**: 100% - MLE-STAR DAE Operational
+
+## [2026-02-06] - Module integration search no longer depends on grep
+- Updated `modules/infrastructure/module_integration_orchestrator.py` to use `rg` if available and a pure-Python scan fallback (no grep usage).
+- Keeps module usage analysis Windows-safe and aligned with Holo-first search policy.

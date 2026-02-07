@@ -313,6 +313,8 @@ def main():
     parser.add_argument('--index-all', action='store_true', help='Index both code and WSP')
     parser.add_argument('--index-code', action='store_true', help='Index code (NAVIGATION.py)')
     parser.add_argument('--index-wsp', action='store_true', help='Index WSP documents')
+    parser.add_argument('--index-symbols', action='store_true', help='Index code symbols (functions/classes)')
+    parser.add_argument('--symbol-roots', nargs='*', help='Limit symbol indexing to specific roots (relative to repo)')
     parser.add_argument('--index-skillz', dest='index_skills', action='store_true', help='Index SKILLz.md files for agent discovery (preferred)')
     parser.add_argument('--index-skills', dest='index_skills', action='store_true', help='Legacy alias for --index-skillz')
     parser.add_argument('--reindex-skills', dest='index_skills', action='store_true', help='Alias for --index-skillz (WRE automation)')
@@ -503,11 +505,12 @@ def main():
         def _score_text(tokens: List[str], *fields: str) -> float:
             score = 0.0
             lowered = [(f or "").lower() for f in fields]
+            normalized = [f.replace("_", "").replace("-", "") for f in lowered]
             for tok in tokens:
                 if not tok:
                     continue
                 for idx, field in enumerate(lowered):
-                    if tok in field:
+                    if tok in field or tok in normalized[idx]:
                         # Weight earlier fields slightly higher (title/need > summary/path)
                         score += (2.0 if idx == 0 else 1.0 if idx == 1 else 0.5)
             return score
@@ -539,7 +542,13 @@ def main():
             except Exception:
                 return {}
 
-        def _lexical_task_retrieval(repo_root: "_Path", task: str, limit: int, ssd_path: str) -> Dict[str, Any]:
+        def _lexical_task_retrieval(
+            repo_root: "_Path",
+            task: str,
+            limit: int,
+            ssd_path: str,
+            module_dir: Optional["_Path"] = None,
+        ) -> Dict[str, Any]:
             tokens = _tokenize(task)
             need_to = _load_need_to(repo_root)
             wsp_summary = _load_wsp_summary(ssd_path)
@@ -558,6 +567,39 @@ def main():
                     "type": "code",
                     "priority": 1,
                 })
+
+            # Path-based fallback when module hint is provided (fast lexical, no embeddings)
+            if module_dir is not None and module_dir.exists():
+                allowed_ext = {".py", ".md", ".txt", ".json", ".yaml", ".yml"}
+                for path in module_dir.rglob("*"):
+                    if not path.is_file():
+                        continue
+                    if path.suffix.lower() not in allowed_ext:
+                        continue
+                    rel_path = str(path.relative_to(repo_root)).replace("\\", "/")
+                    score = _score_text(tokens, rel_path, path.name)
+                    if score <= 0:
+                        continue
+                    similarity = min(1.0, score / max(1.0, len(tokens) * 3.0))
+                    code_hits.append({
+                        "need": f"path match: {path.name}",
+                        "location": rel_path,
+                        "similarity": f"{similarity*100:.1f}%",
+                        "cube": None,
+                        "type": "code",
+                        "priority": 1,
+                    })
+
+            # Deduplicate by location while preserving score order
+            seen_locations = set()
+            deduped_hits = []
+            for hit in code_hits:
+                loc = hit.get("location")
+                if not loc or loc in seen_locations:
+                    continue
+                seen_locations.add(loc)
+                deduped_hits.append(hit)
+            code_hits = deduped_hits
             code_hits.sort(key=lambda x: float((x.get("similarity") or "0%").rstrip("%")), reverse=True)
             code_hits = code_hits[:limit]
 
@@ -635,7 +677,7 @@ def main():
         # Task retrieval: fast lexical path when HOLO_SKIP_MODEL=1, otherwise full HoloIndex search.
         skip_model = _env_truthy("HOLO_SKIP_MODEL", "false")
         if skip_model:
-            search_payload = _lexical_task_retrieval(repo_root, task, int(args.limit), str(args.ssd))
+            search_payload = _lexical_task_retrieval(repo_root, task, int(args.limit), str(args.ssd), module_dir=module_dir)
         else:
             try:
                 from holo_index.core import HoloIndex as _HoloIndex  # local import to avoid heavy imports in fastpath
@@ -852,6 +894,7 @@ def main():
 
     index_code = args.index_code or args.index or args.index_all
     index_wsp = args.index_wsp or args.index or args.index_all
+    index_symbols = args.index_symbols
 
     indexing_awarded = False
     if index_code:
@@ -867,6 +910,35 @@ def main():
         except Exception as e:
             print(f"[WARN] Failed to record index refresh: {e}")
 
+        indexing_awarded = True
+        # Auto symbol indexing to keep memory self-maintaining (can disable with HOLO_SYMBOL_AUTO=0)
+        auto_symbols = os.getenv("HOLO_SYMBOL_AUTO", "1").lower() in {"1", "true", "yes", "on"}
+        if index_symbols or auto_symbols:
+            symbol_roots = None
+            if args.symbol_roots:
+                symbol_roots = [Path(r) for r in args.symbol_roots]
+            elif args.module:
+                candidate = Path(args.module)
+                if not candidate.exists():
+                    candidate = Path("modules") / args.module
+                symbol_roots = [candidate]
+            else:
+                env_roots = os.getenv("HOLO_SYMBOL_ROOTS")
+                if env_roots:
+                    symbol_roots = [Path(r.strip()) for r in env_roots.split(";") if r.strip()]
+                else:
+                    symbol_roots = [Path("modules")]
+            start_time = time.time()
+            holo.index_symbol_entries(roots=symbol_roots)
+            duration = time.time() - start_time
+            safe_print(f"[SYMBOLS] Indexed symbols in {duration:.2f}s")
+            indexing_awarded = True
+    if index_symbols and not index_code:
+        start_time = time.time()
+        roots = [Path(r) for r in args.symbol_roots] if args.symbol_roots else None
+        holo.index_symbol_entries(roots=roots)
+        duration = time.time() - start_time
+        safe_print(f"[SYMBOLS] Indexed symbols in {duration:.2f}s")
         indexing_awarded = True
     if index_wsp:
         start_time = time.time()
@@ -1096,6 +1168,7 @@ def main():
 
         try:
             import subprocess
+            import shutil
 
             holoindex_root = Path(__file__).parent
             orphaned_files = []
@@ -1109,12 +1182,55 @@ def main():
                 """Check if document is referenced by other docs (per WSP 83)"""
                 doc_name = Path(doc_path).name
                 try:
-                    # Use grep to find references, excluding the file itself
-                    result = subprocess.run(
-                        ['grep', '-r', '--include=*.md', '--exclude-dir=.git', doc_name, str(holoindex_root)],
-                        capture_output=True, text=True, cwd=holoindex_root
-                    )
-                    references = [line for line in result.stdout.split('\n') if line.strip() and not doc_path in line]
+                    rg_path = shutil.which("rg")
+                    doc_rel = str(doc_path).replace("\\", "/")
+                    references = []
+
+                    if rg_path:
+                        result = subprocess.run(
+                            [
+                                rg_path,
+                                "-n",
+                                "--fixed-strings",
+                                "--glob",
+                                "*.md",
+                                "--glob",
+                                "!**/.git/**",
+                                doc_name,
+                                str(holoindex_root)
+                            ],
+                            capture_output=True,
+                            text=True,
+                            cwd=holoindex_root
+                        )
+                        for line in result.stdout.split('\n'):
+                            if not line.strip():
+                                continue
+                            parts = line.split(":", 2)
+                            if not parts:
+                                continue
+                            path_part = parts[0].replace("\\", "/")
+                            if path_part.endswith(doc_rel) or path_part == doc_rel:
+                                continue
+                            references.append(line)
+                    else:
+                        for root, dirs, files in os.walk(holoindex_root):
+                            dirs[:] = [d for d in dirs if d != ".git"]
+                            for filename in files:
+                                if not filename.endswith(".md"):
+                                    continue
+                                file_path = Path(root) / filename
+                                rel_path = file_path.relative_to(holoindex_root)
+                                if str(rel_path).replace("\\", "/") == doc_rel:
+                                    continue
+                                try:
+                                    content = file_path.read_text(encoding="utf-8", errors="ignore")
+                                except OSError:
+                                    continue
+                                if doc_name in content:
+                                    references.append(str(rel_path))
+                                    break
+
                     return len(references) > 0
                 except:
                     return False
@@ -1529,10 +1645,22 @@ def main():
         # Memory recording
         _record_thought_to_memory(results, args.search, advisor, add_reward_event)
 
-        # Delegate rendering to throttler
-        throttler.display_results(results)
-        final_output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
-        safe_print(final_output)
+        # Route through Qwen orchestrator for intent-aware output (OutputComposer)
+        orchestrated_output = None
+        try:
+            from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+            qwen_orch = QwenOrchestrator()
+            orchestrated_output = qwen_orch.orchestrate_holoindex_request(args.search, results)
+        except Exception as orch_exc:
+            logger.debug(f"[ORCHESTRATOR] Fallback to throttler: {orch_exc}")
+
+        if orchestrated_output:
+            safe_print(orchestrated_output)
+        else:
+            # Fallback: delegate rendering to throttler
+            throttler.display_results(results)
+            final_output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
+            safe_print(final_output)
 
         if args.llm_advisor and results.get('advisor'):
             add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
@@ -1988,6 +2116,7 @@ def main():
         safe_print("  python holo_index.py --search 'query'        # Search code + WSP guidance")
         safe_print("  python holo_index.py --search 'query' --limit 3")
         safe_print("  python holo_index.py --search 'query' --llm-advisor  # Add Qwen advisor guidance")
+        safe_print("  python holo_index.py --index-symbols --symbol-roots modules/ai_intelligence/pqn_alignment")
         safe_print("  python holo_index.py --link-modules          # Link all module documentation (Qwen)")
         safe_print("  python holo_index.py --link-modules --module liberty_alert  # Link one module")
         safe_print("  python holo_index.py --link-modules --interactive  # Interactive mode")
@@ -2002,6 +2131,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

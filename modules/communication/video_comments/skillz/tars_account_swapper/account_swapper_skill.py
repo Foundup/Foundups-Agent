@@ -27,6 +27,25 @@ if str(project_root) not in sys.path:
 
 from modules.infrastructure.foundups_selenium.src.human_behavior import get_human_behavior
 
+# Orchestration switchboard for OOPS breadcrumb telemetry (optional, graceful degradation)
+try:
+    from modules.infrastructure.orchestration_switchboard.src.orchestration_switchboard import get_orchestration_switchboard
+    _has_switchboard = True
+except ImportError:
+    _has_switchboard = False
+
+
+def _emit_oops_signal(signal_type: str, source_dae: str = "tars_account_swapper", **metadata):
+    """Emit OOPS breadcrumb to orchestration switchboard (fire-and-forget)."""
+    if not _has_switchboard:
+        return
+    try:
+        sb = get_orchestration_switchboard()
+        sb.receive_signal(signal_type, source_dae, metadata=metadata)
+    except Exception as e:
+        logging.getLogger(__name__).debug(f"[TARS-SWAP] Switchboard signal failed: {e}")
+
+
 # UI-TARS verification (optional, graceful degradation if unavailable)
 try:
     from modules.infrastructure.foundups_vision.src.ui_tars_bridge import UITarsBridge
@@ -182,30 +201,165 @@ class TarsAccountSwapper:
         try:
             return bool(self.driver.execute_script(
                 "const t=(document.body&&document.body.innerText)||'';"
-                "return t.includes(\"don't have permission\") || t.includes('Oops, you don\\'t have permission');"
+                "const norm=t.toLowerCase().replace(/\\u2019/g, \"'\");"
+                "return ("
+                "norm.includes(\"don't have permission\") || "
+                "norm.includes(\"dont have permission\") || "
+                "norm.includes(\"do not have permission\") || "
+                "norm.includes(\"permission to view this page\") || "
+                "norm.includes(\"switch account\") || "
+                "norm.includes(\"return to studio\")"
+                ");"
             ))
         except Exception:
             return False
 
     def _click_permission_switch(self) -> bool:
-        """Click the Switch account button on permission error page."""
+        """Click the Switch account button on permission error page.
+
+        2026-02-03: Hardened with live DOM inspection results.
+        2026-02-04: Fixed from live OOPS page inspection via --chrome:
+          - Actual element: <a id="selectaccount-link" class="button filled" target="_blank" href="...channel_switcher...">
+          - CRITICAL: target="_blank" opens new tab - must remove before click or navigate directly
+          - Strategy: Remove target="_blank", then click to navigate in-place (keeps Selenium driver on same tab)
+        """
         try:
-            return bool(self.driver.execute_script(
-                "const btn=[...document.querySelectorAll('button,ytcp-button')].find(b=>b.textContent.includes('Switch account'));"
-                "if(btn){btn.click();return true;} return false;"
-            ))
+            return bool(self.driver.execute_script("""
+                // Strategy 1: Precise ID selector (confirmed via live DOM 2026-02-04)
+                const switchLink = document.querySelector('#selectaccount-link');
+                if (switchLink) {
+                    // CRITICAL: Remove target="_blank" so click navigates in same tab
+                    // Otherwise Selenium driver stays on OOPS page while switcher opens in new tab
+                    switchLink.removeAttribute('target');
+                    // 2026-02-04: CRITICAL FIX - Rewrite ?next= to Studio root to prevent
+                    // redirect loop back to the OOPS-triggering channel URL.
+                    // Without this fix, channel_switcher?next=<wrong_channel> redirects
+                    // back to the wrong channel after switching, causing re-OOPS.
+                    const href = switchLink.getAttribute('href') || '';
+                    if (href.includes('channel_switcher')) {
+                        const url = new URL(href, window.location.origin);
+                        url.searchParams.set('next', 'https://studio.youtube.com/');
+                        switchLink.setAttribute('href', url.toString());
+                    }
+                    switchLink.click();
+                    return true;
+                }
+                // Strategy 2: Fallback text search across all clickable elements
+                const candidates = [...document.querySelectorAll('a, button, [role="button"]')];
+                for (const el of candidates) {
+                    const text = (el.textContent || '').trim().toLowerCase();
+                    if (text.includes('switch account')) {
+                        el.removeAttribute('target');
+                        const h = el.getAttribute('href') || '';
+                        if (h.includes('channel_switcher')) {
+                            const u = new URL(h, window.location.origin);
+                            u.searchParams.set('next', 'https://studio.youtube.com/');
+                            el.setAttribute('href', u.toString());
+                        }
+                        el.click();
+                        return true;
+                    }
+                }
+                // Strategy 3: href-based (channel_switcher URL)
+                const csLinks = document.querySelectorAll('a[href*="channel_switcher"]');
+                for (const link of csLinks) {
+                    link.removeAttribute('target');
+                    const h2 = link.getAttribute('href') || '';
+                    const u2 = new URL(h2, window.location.origin);
+                    u2.searchParams.set('next', 'https://studio.youtube.com/');
+                    link.setAttribute('href', u2.toString());
+                    link.click();
+                    return true;
+                }
+                return false;
+            """))
         except Exception:
+            return False
+
+    def _click_return_to_studio(self) -> bool:
+        """Click the 'Return to Studio' button on permission error page.
+
+        2026-02-03: New method - provides alternative OOPS resolution path.
+        2026-02-04: Fixed from live OOPS page inspection via --chrome:
+          - Actual element: <a class="button tonal" href="/">Return to Studio</a>
+          - Links to Studio root "/" for whatever account is currently active
+        """
+        try:
+            return bool(self.driver.execute_script("""
+                // Strategy 1: Precise class selector (confirmed via live DOM 2026-02-04)
+                const tonalBtn = document.querySelector('a.button.tonal');
+                if (tonalBtn && tonalBtn.textContent.trim().toLowerCase().includes('return')) {
+                    tonalBtn.click();
+                    return true;
+                }
+                // Strategy 2: Text search fallback
+                const candidates = [...document.querySelectorAll('a, button, [role="button"]')];
+                for (const el of candidates) {
+                    const text = (el.textContent || '').trim().toLowerCase();
+                    if (text.includes('return to studio') || text.includes('go to studio') || text.includes('back to studio')) {
+                        el.click();
+                        return true;
+                    }
+                }
+                return false;
+            """))
+        except Exception:
+            return False
+
+    async def _ui_tars_click_oops_button(self, button_description: str) -> bool:
+        """
+        Use UI-TARS vision model to click a button on the OOPS page.
+
+        2026-02-03: Fallback when DOM-based button click fails.
+        UI-TARS takes a screenshot and uses vision to locate + click the button.
+
+        Args:
+            button_description: Natural language description (e.g. "Switch Account button")
+
+        Returns:
+            True if UI-TARS successfully clicked the button
+        """
+        if not self.ui_tars_verify or not self._ui_tars:
+            logger.debug("[TARS-SWAP] UI-TARS not available for OOPS button click")
+            return False
+
+        try:
+            logger.info(f"[TARS-SWAP] 🔍 UI-TARS attempting to click: '{button_description}'")
+            result = await self._ui_tars.execute_action(
+                action="click",
+                description=button_description,
+                context={"page": "oops_permission_error"},
+                driver=self.driver,
+                timeout=60,
+            )
+
+            if result.success:
+                logger.info(f"[TARS-SWAP] ✅ UI-TARS clicked '{button_description}' "
+                            f"(confidence={result.confidence:.2f}, {result.duration_ms}ms)")
+                return True
+            else:
+                logger.warning(f"[TARS-SWAP] UI-TARS failed to click '{button_description}': {result.error}")
+                return False
+
+        except Exception as e:
+            logger.warning(f"[TARS-SWAP] UI-TARS OOPS click exception: {e}")
             return False
 
     async def swap_from_oops_page(self, target: str, *, navigate_to_comments: bool = True) -> bool:
         """
         Direct account switch from OOPS/permission error page.
 
-        This is a faster path when already on an OOPS page:
-        1. Click "Switch account" button directly on OOPS page
-        2. Account picker appears in top-right
-        3. Select the correct account from picker
-        4. Navigate to target URL
+        2026-02-03: Enhanced with:
+        - UI-TARS vision fallback when DOM clicks fail
+        - "Return to Studio" button as secondary resolution path
+        - Direct URL navigation as final fallback
+
+        Resolution cascade:
+        1. DOM click "Switch account" -> select account from picker
+        2. UI-TARS click "Switch Account" button -> select account from picker
+        3. DOM click "Return to Studio" -> navigate to target URL
+        4. UI-TARS click "Return to Studio" -> navigate to target URL
+        5. Direct URL navigation to target (last resort)
 
         Args:
             target: Target channel name ('Move2Japan', 'UnDaoDu', 'FoundUps', 'RavingANTIFA')
@@ -223,48 +377,96 @@ class TarsAccountSwapper:
         # Verify we're on an OOPS page
         if not self._is_permission_error():
             logger.warning("[TARS-SWAP] Not on OOPS page - falling back to normal swap")
-            return await self.swap_to(target, navigate_to_comments=navigate_to_comments)
-
-        # Step 1: Click "Switch account" button on OOPS page
-        logger.info("[TARS-SWAP] Step 1: Clicking 'Switch account' on OOPS page...")
-        if not self._click_permission_switch():
-            logger.error("[TARS-SWAP] ❌ Failed to click 'Switch account' on OOPS page")
-            # Fallback to normal flow
-            return await self.swap_to(target, navigate_to_comments=navigate_to_comments)
-
-        await self.sleep_human(2.0, 0.5)
-
-        # UI-TARS verify: Account picker should now be visible
-        await self._verify_step("oops_switch_clicked", "Account picker dropdown visible after clicking OOPS switch button")
-
-        # Step 2: Select target account from picker
-        logger.info(f"[TARS-SWAP] Step 2: Selecting {target} from account picker...")
-        match_terms = (self.CHANNELS.get(target, {}) or {}).get("match_terms") or []
-        if not await self.select_account(target, match_terms=match_terms):
-            logger.error(f"[TARS-SWAP] ❌ Failed to select {target} from picker")
-            return False
-
-        await self.sleep_human(3.0, 0.5)
-
-        # Step 3: Navigate to target comments (optional)
-        if navigate_to_comments:
+            # Avoid infinite recursion: swap_to now calls swap_from_oops_page, so navigate directly
             await self.navigate_to_comments(target)
             await asyncio.sleep(3)
+            return await self._ensure_target_access(target)
 
-        # Verify we made it
-        if not await self._ensure_target_access(target):
-            logger.error(f"[TARS-SWAP] ❌ Failed to reach {target} after OOPS switch")
-            return False
+        # 2026-02-03: Emit OOPS breadcrumb to orchestration switchboard
+        _emit_oops_signal("oops_page_detected", channel_name=target, browser="unknown", attempt_count=1)
 
-        target_id = self.CHANNELS[target]["id"]
-        try:
-            final_url = self.driver.current_url
-            logger.info(f"[TARS-SWAP] 🚀 OOPS page switch to {target} successful!")
-            logger.info(f"[TARS-SWAP] Final URL: {final_url}")
-        except Exception:
-            logger.info(f"[TARS-SWAP] 🚀 OOPS page switch to {target} successful!")
+        # === CASCADE 1: Try "Switch account" (DOM then UI-TARS) ===
+        logger.info("[TARS-SWAP] Step 1: Clicking 'Switch account' on OOPS page...")
 
-        return True
+        switch_clicked = self._click_permission_switch()
+        if not switch_clicked:
+            logger.warning("[TARS-SWAP] DOM click failed for 'Switch account' - trying UI-TARS...")
+            switch_clicked = await self._ui_tars_click_oops_button(
+                "Switch Account button on the permission error page"
+            )
+
+        if switch_clicked:
+            await self.sleep_human(2.0, 0.5)
+
+            # UI-TARS verify: Account picker should now be visible
+            await self._verify_step("oops_switch_clicked", "Account picker dropdown visible after clicking OOPS switch button")
+
+            # Step 2: Select target account from picker
+            logger.info(f"[TARS-SWAP] Step 2: Selecting {target} from account picker...")
+            match_terms = (self.CHANNELS.get(target, {}) or {}).get("match_terms") or []
+            if await self.select_account(target, match_terms=match_terms):
+                await self.sleep_human(3.0, 0.5)
+
+                # Step 3: Navigate to target comments (optional)
+                if navigate_to_comments:
+                    await self.navigate_to_comments(target)
+                    await asyncio.sleep(3)
+
+                # Verify we made it
+                if await self._ensure_target_access(target):
+                    try:
+                        final_url = self.driver.current_url
+                        logger.info(f"[TARS-SWAP] 🚀 OOPS page switch to {target} successful!")
+                        logger.info(f"[TARS-SWAP] Final URL: {final_url}")
+                    except Exception:
+                        logger.info(f"[TARS-SWAP] 🚀 OOPS page switch to {target} successful!")
+                    _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="switch_account")
+                    return True
+
+                logger.warning(f"[TARS-SWAP] Account switch completed but {target} still inaccessible")
+            else:
+                logger.warning(f"[TARS-SWAP] Failed to select {target} from picker after Switch Account")
+
+        # === CASCADE 2: Try "Return to Studio" (DOM then UI-TARS) ===
+        logger.info("[TARS-SWAP] Step 3: Trying 'Return to Studio' button...")
+
+        return_clicked = self._click_return_to_studio()
+        if not return_clicked:
+            logger.warning("[TARS-SWAP] DOM click failed for 'Return to Studio' - trying UI-TARS...")
+            return_clicked = await self._ui_tars_click_oops_button(
+                "Return to Studio button on the permission error page"
+            )
+
+        if return_clicked:
+            await self.sleep_human(3.0, 0.5)
+            logger.info(f"[TARS-SWAP] Returned to Studio - now navigating to {target}...")
+
+            # After returning to Studio, navigate directly to target channel
+            if navigate_to_comments:
+                await self.navigate_to_comments(target)
+                await asyncio.sleep(3)
+
+            if await self._ensure_target_access(target):
+                logger.info(f"[TARS-SWAP] 🚀 Return to Studio + navigate to {target} successful!")
+                _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="return_to_studio")
+                return True
+
+            logger.warning(f"[TARS-SWAP] Return to Studio succeeded but {target} still inaccessible")
+
+        # === CASCADE 3: Direct URL navigation (last resort) ===
+        logger.info(f"[TARS-SWAP] Step 4: LAST RESORT - Direct URL navigation to {target}...")
+        await self.navigate_to_comments(target)
+        await asyncio.sleep(5)
+
+        if await self._ensure_target_access(target):
+            logger.info(f"[TARS-SWAP] 🚀 Direct URL navigation to {target} successful!")
+            _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="direct_url")
+            return True
+
+        logger.error(f"[TARS-SWAP] ❌ All OOPS resolution cascades failed for {target}")
+        _emit_oops_signal("oops_page_detected", channel_name=target, browser="unknown",
+                          attempt_count=2, recovery_failed=True)
+        return False
 
     async def _ensure_target_access(self, target: str) -> bool:
         """Verify we are on the target comments page with access."""
@@ -479,7 +681,14 @@ class TarsAccountSwapper:
         if await self._ensure_target_access(target):
             logger.info(f"[TARS-SWAP] Already on {target} comments page - skipping account switch")
             return True
-        
+
+        # 2026-02-03: OOPS PAGE PRE-CHECK - Route to swap_from_oops_page() BEFORE click_avatar
+        # On OOPS pages, there's no avatar button - click_avatar will always fail.
+        # Instead, use the "Switch account" / "Return to Studio" buttons on the OOPS page directly.
+        if self._is_permission_error():
+            logger.info(f"[TARS-SWAP] 🚨 OOPS page detected - routing to swap_from_oops_page() (skipping click_avatar)")
+            return await self.swap_from_oops_page(target, navigate_to_comments=navigate_to_comments)
+
         # Ensure we are on a page where account switching is possible
         if "youtube.com" not in self.driver.current_url:
             self.driver.get("https://www.youtube.com")

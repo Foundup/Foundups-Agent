@@ -18,6 +18,15 @@ from modules.infrastructure.cli.src.youtube_controls import (
     yt_switch_summary,
     yt_controls_menu,
 )
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channels,
+    get_channel_keys,
+    get_channel_by_key,
+    get_channel_by_id,
+    get_rotation_order,
+    group_channels_by_browser,
+    add_channel,
+)
 from modules.communication.youtube_shorts.src.clip_exporter import export_clip, ClipExportError
 from modules.communication.youtube_shorts.src.video_editor import VideoEditor, VideoEditorError
 from modules.communication.headless_video_orchestrator.src.oss_adapters import (
@@ -134,6 +143,7 @@ def handle_youtube_menu(
     print("")
     print("== OPERATIONS ==")
     print("R. [OPS] Rotation Controls (Account Swap/Test)")
+    print("C. [OPS] Channel Registry (Add/Manage)")
     print("00. Controls (Local Switches)")
     print("0. Back to Main Menu")
     print("=" * 60)
@@ -143,6 +153,9 @@ def handle_youtube_menu(
     if yt_choice == "R":
         # Rotation Controls (Account Swap/Test)
         _handle_rotation_controls_menu()
+        return False
+    elif yt_choice == "C":
+        _handle_channel_registry_menu()
         return False
 
     elif yt_choice == "00":
@@ -388,8 +401,11 @@ def _handle_comment_engagement_menu() -> None:
             print("\n[DAE] COMMENT-ONLY MODE (NO Live Chat Agent)")
             print("=" * 60)
             print("Auto-rotates through ALL channels:")
-            print("  Chrome (9222): Move2Japan + UnDaoDu")
-            print("  Edge (9223): FoundUps + RavingANTIFA")
+            groups = group_channels_by_browser(role="comments")
+            chrome_names = [ch.get("name", ch.get("key")) for ch in groups.get("chrome", [])]
+            edge_names = [ch.get("name", ch.get("key")) for ch in groups.get("edge", [])]
+            print(f"  Chrome (9222): {' + '.join(chrome_names) if chrome_names else '(none)'}")
+            print(f"  Edge (9223): {' + '.join(edge_names) if edge_names else '(none)'}")
             print("")
             print("🔒 Stream detection: DISABLED")
             print("🔒 Live chat agent: DISABLED")
@@ -526,8 +542,9 @@ def _handle_video_lab_menu() -> None:
                 max_dur = default_max_dur
                 quality = default_quality
             else:
+                available_channels = "/".join(get_channel_keys())
                 channel_key = input(
-                    f"channel (move2japan/undaodu/foundups/ravingantifa) [{default_channel}]: "
+                    f"channel ({available_channels}) [{default_channel}]: "
                 ).strip().lower() or default_channel
                 video_id = input(f"source video_id [{default_video_id}]: ").strip() or default_video_id
                 min_dur = input(f"min duration seconds [{default_min_dur}]: ").strip() or default_min_dur
@@ -729,14 +746,119 @@ def _handle_shorts_scheduler_menu() -> None:
             print("[ERROR] Invalid choice")
 
 
+def _handle_channel_registry_menu() -> None:
+    """Add/manage YouTube channels in the shared registry."""
+    import re
+
+    def _slugify(value: str) -> str:
+        cleaned = re.sub(r"[^a-z0-9]+", "", value.lower())
+        return cleaned or value.lower().replace(" ", "")
+
+    while True:
+        channels = get_channels()
+        print("\n[OPS] Channel Registry")
+        print("=" * 60)
+        if channels:
+            for idx, ch in enumerate(channels, start=1):
+                name = ch.get("name", ch.get("key"))
+                key = ch.get("key", "")
+                cid = ch.get("id", "")
+                browser = (ch.get("browser") or {}).get("comment_browser", "chrome")
+                roles = ch.get("roles", {})
+                role_flags = ",".join([r for r, enabled in roles.items() if enabled])
+                print(f"{idx}) {name} ({key}) id={cid} browser={browser} roles={role_flags}")
+        else:
+            print("[WARN] No channels found in registry.")
+
+        print("-" * 60)
+        print("1) Add channel")
+        print("0) Back")
+        print("=" * 60)
+
+        choice = input("channel-registry> ").strip().lower()
+        if choice in {"0", "back", "b", "exit", "quit"}:
+            break
+        if choice != "1":
+            print("[ERROR] Invalid choice")
+            continue
+
+        name = input("Channel name (e.g., NewChannel): ").strip()
+        if not name:
+            print("[ERROR] Channel name is required.")
+            continue
+
+        key_default = _slugify(name)
+        key = input(f"Channel key [{key_default}]: ").strip().lower() or key_default
+        channel_id = input("Channel ID (UC...): ").strip()
+        if not channel_id:
+            print("[ERROR] Channel ID is required.")
+            continue
+
+        handle_default = f"@{name.replace(' ', '')}"
+        handle = input(f"Handle [{handle_default}]: ").strip() or handle_default
+        timezone_default = "America/New_York"
+        timezone = input(f"Timezone [{timezone_default}]: ").strip() or timezone_default
+
+        browser = input("Comment browser (chrome/edge) [chrome]: ").strip().lower() or "chrome"
+        if browser not in {"chrome", "edge"}:
+            print("[ERROR] Invalid browser. Use chrome or edge.")
+            continue
+
+        section_raw = input("Account section (0/1) [0]: ").strip() or "0"
+        try:
+            account_section = int(section_raw)
+        except ValueError:
+            print("[ERROR] Invalid account section. Use 0 or 1.")
+            continue
+
+        def _yn(prompt: str, default_yes: bool = True) -> bool:
+            default = "Y" if default_yes else "N"
+            raw = input(f"{prompt} [{default}]: ").strip().lower()
+            if not raw:
+                return default_yes
+            return raw in {"y", "yes", "true", "1"}
+
+        roles = {
+            "live_check": _yn("Include in live checks?", True),
+            "comments": _yn("Include in comment rotation?", True),
+            "shorts": _yn("Include in shorts scheduling?", True),
+            "indexing": _yn("Include in indexing rotation?", True),
+        }
+
+        channel_payload = {
+            "key": key,
+            "id": channel_id,
+            "name": name,
+            "handle": handle,
+            "timezone": timezone,
+            "roles": roles,
+            "browser": {
+                "comment_browser": browser,
+                "preferred_port": 9222 if browser == "chrome" else 9223,
+                "available_ports": [9222, 9223],
+                "account_section": account_section,
+            },
+        }
+
+        ok, msg = add_channel(channel_payload)
+        print(f"[{'OK' if ok else 'ERROR'}] {msg}")
+
+
 def _handle_rotation_controls_menu() -> None:
     """Handle Rotation Controls submenu for account swapping and testing."""
-    CHANNELS = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
+    CHANNELS = []
+    for key in get_rotation_order(role="comments"):
+        ch = get_channel_by_key(key)
+        if ch and ch.get("name"):
+            CHANNELS.append(ch["name"])
+    if not CHANNELS:
+        CHANNELS = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
 
     while True:
         # Get current rotation state from env
         rotation_enabled = env_truthy("YT_ROTATION_ENABLED", "true")
-        current_order = os.getenv("YT_ROTATION_ORDER", "Move2Japan,UnDaoDu,FoundUps,RavingANTIFA")
+        default_order = ",".join(CHANNELS) if CHANNELS else "Move2Japan,UnDaoDu,FoundUps,RavingANTIFA"
+        current_order = os.getenv("YT_ROTATION_ORDER", default_order)
         halt_on_error = env_truthy("YT_ROTATION_HALT_ON_ERROR", "false")
 
         print("\n[OPS] Rotation Controls - Account Swap/Test")
@@ -765,7 +887,7 @@ def _handle_rotation_controls_menu() -> None:
             print("\nAvailable channels:")
             for i, ch in enumerate(CHANNELS, 1):
                 print(f"  {i}. {ch}")
-            ch_choice = input("Select channel [1-4]: ").strip()
+            ch_choice = input(f"Select channel [1-{len(CHANNELS)}]: ").strip()
             try:
                 ch_idx = int(ch_choice) - 1
                 if 0 <= ch_idx < len(CHANNELS):
@@ -775,7 +897,7 @@ def _handle_rotation_controls_menu() -> None:
                 else:
                     print("[ERROR] Invalid channel")
             except ValueError:
-                print("[ERROR] Enter a number 1-4")
+                print(f"[ERROR] Enter a number 1-{len(CHANNELS)}")
             input("\nPress Enter to continue...")
             continue
 
@@ -808,7 +930,7 @@ def _handle_rotation_controls_menu() -> None:
             # Set rotation order
             print("\nCurrent order:", current_order)
             print("Enter new order (comma-separated):")
-            print("  Example: UnDaoDu,Move2Japan,FoundUps,RavingANTIFA")
+            print(f"  Example: {default_order}")
             new_order = input("Order: ").strip()
             if new_order:
                 os.environ["YT_ROTATION_ORDER"] = new_order
@@ -888,13 +1010,8 @@ def _check_rotation_status() -> None:
                 if match:
                     channel_id = match.group(1)
                     # Map channel ID to name
-                    id_map = {
-                        "UC-LSSlOZwpGIRIYihaz8zCw": "Move2Japan",
-                        "UCfHM9Fw9HD-NwiS0seD_oIA": "UnDaoDu",
-                        "UCSNTUXjAgpd4sgWYP0xoJgw": "FoundUps",
-                        "UCVSmg5aOhP4tnQ9KFUg97qA": "RavingANTIFA",
-                    }
-                    channel_name = id_map.get(channel_id, f"Unknown ({channel_id})")
+                    ch = get_channel_by_id(channel_id)
+                    channel_name = ch.get("name") if ch else f"Unknown ({channel_id})"
                     print(f"  Active Channel: {channel_name}")
                 else:
                     print("  Active Channel: (not on channel page)")

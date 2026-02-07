@@ -32,6 +32,8 @@ from typing import Dict, Optional
 from datetime import datetime
 from pathlib import Path
 
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channel_by_id
+
 logger = logging.getLogger(__name__)
 
 # Browser lock to prevent multiple Selenium sessions
@@ -692,14 +694,8 @@ def get_community_monitor(channel_id: str, chat_sender=None, telemetry_store=Non
             # HYBRID: DOM-based account switching + UI-TARS training data collection
             # Training enables future vision-based switching (Phase 5)
             try:
-                # Map channel_id to account name
-                channel_to_account = {
-                    "UC-LSSlOZwpGIRIYihaz8zCw": "Move2Japan",
-                    "UCSNTUXjAgpd4sgWYP0xoJgw": "UnDaoDu",
-                    "UCfHM9Fw9HD-NwiS0seD_oIA": "FoundUps",
-                }
-
-                target_account = channel_to_account.get(channel_id)
+                channel_info = get_channel_by_id(channel_id)
+                target_account = channel_info.get("name") if channel_info else None
                 if target_account:
                     logger.info(f"[COMMUNITY] 🔄 Triggering Studio account switch: {old_channel} → {target_account}")
                     logger.info(f"[COMMUNITY]   Phase 4H: DOM clicks will generate UI-TARS training data")

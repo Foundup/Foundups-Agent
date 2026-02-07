@@ -9,8 +9,10 @@ import os
 import sys
 import asyncio
 from datetime import datetime
+from pathlib import Path
 
 from modules.infrastructure.cli.src.utilities import select_channel
+from modules.infrastructure.shared_utilities.youtube_channel_registry import group_channels_by_browser
 
 
 def handle_indexing_menu() -> None:
@@ -52,30 +54,25 @@ def _handle_gemini_indexing() -> None:
     print("\n[GEMINI] Autonomous Video Indexing")
     print("=" * 60)
     print("Browser rotation (same as comment engagement):")
-    print("  Chrome (9222): UnDaoDu → Move2Japan")
-    print("  Edge (9223): FoundUps")
+    groups = group_channels_by_browser(role="indexing")
+    chrome_names = [ch.get("name", ch.get("key")) for ch in groups.get("chrome", [])]
+    edge_names = [ch.get("name", ch.get("key")) for ch in groups.get("edge", [])]
+    print(f"  Chrome (9222): {' + '.join(chrome_names) if chrome_names else '(none)'}")
+    print(f"  Edge (9223): {' + '.join(edge_names) if edge_names else '(none)'}")
     print("Indexes ALL videos per channel until complete")
     print("=" * 60)
 
     try:
         from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
 
-        # Browser-grouped channels (mirrors commenting architecture)
-        # Chrome (port 9222): Same Google account
-        chrome_channels = [
-            os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
-            os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
-        ]
-        # Edge (port 9223): Different Google account
-        edge_channels = [
-            os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
-            os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
-        ]
+        groups = group_channels_by_browser(role="indexing")
+        chrome_channels = [ch.get("id") for ch in groups.get("chrome", []) if ch.get("id")]
+        edge_channels = [ch.get("id") for ch in groups.get("edge", []) if ch.get("id")]
 
         total_indexed = 0
 
         # Phase 1: Chrome channels (UnDaoDu, Move2Japan)
-        print("\n[PHASE 1] Chrome (9222): UnDaoDu + Move2Japan")
+        print("\n[PHASE 1] Chrome (9222): Registry channels")
         result = asyncio.run(run_video_indexing_cycle(
             channels=chrome_channels,
             max_videos_per_channel=9999,  # Index ALL
@@ -85,7 +82,7 @@ def _handle_gemini_indexing() -> None:
         print(f"[CHROME] Indexed {result.get('total_indexed', 0)} videos")
 
         # Phase 2: Edge channels (FoundUps + RavingANTIFA)
-        print("\n[PHASE 2] Edge (9223): FoundUps + RavingANTIFA")
+        print("\n[PHASE 2] Edge (9223): Registry channels")
         result = asyncio.run(run_video_indexing_cycle(
             channels=edge_channels,
             max_videos_per_channel=9999,  # Index ALL
@@ -133,8 +130,10 @@ def _handle_test_video_indexing() -> None:
             result = analyzer.analyze_video(video_id)
 
             if result.success:
+                repo_root = Path(__file__).resolve().parents[4]
+                artifact_root = repo_root / "memory" / "video_index" / "test"
                 # Save to JSON
-                store = VideoIndexStore(base_path="video_index")
+                store = VideoIndexStore(base_path=str(artifact_root))
                 index_data = IndexData(
                     video_id=result.video_id,
                     channel="test",
@@ -218,7 +217,7 @@ def _handle_batch_enhancement() -> None:
 
     # Resolve paths relative to repo root (4 levels up from this file)
     repo_root = Path(__file__).resolve().parents[4]
-    checkpoint_file = repo_root / "memory" / "enhancement_checkpoint.json"
+    checkpoint_file = repo_root / "memory" / f"enhancement_checkpoint_{channel}.json"
     video_dir = repo_root / "memory" / "video_index" / channel
     script_path = repo_root / "scripts" / "batch_enhance_videos.py"
 
@@ -258,7 +257,10 @@ def _handle_batch_enhancement() -> None:
         # Show status
         try:
             import subprocess
-            subprocess.run([sys.executable, str(script_path), "--status"], cwd=str(repo_root))
+            subprocess.run(
+                [sys.executable, str(script_path), "--status", "--channel", channel],
+                cwd=str(repo_root)
+            )
         except Exception as e:
             print(f"[ERROR] Status check failed: {e}")
         return
@@ -282,7 +284,8 @@ def _handle_batch_enhancement() -> None:
                 sys.executable,
                 str(script_path),
                 "--max-videos", str(max_videos),
-                "--resume"
+                "--resume",
+                "--channel", channel
             ]
             print(f"\n[INFO] 0102 autonomous enhancement starting...")
             print("[INFO] Provider rotation: Grok -> OpenAI -> Gemini (auto)")

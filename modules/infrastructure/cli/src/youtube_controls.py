@@ -10,6 +10,7 @@ from modules.infrastructure.cli.src.utilities import (
     set_env_bool,
     update_env_file,
 )
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channel_keys
 
 
 def yt_switch_summary() -> str:
@@ -79,8 +80,10 @@ def yt_scheduler_controls_menu() -> None:
             update_env_file("YT_SCHEDULER_CONTENT_TYPE", raw)
             continue
         if choice == "2":
-            raw = input("shorts channel (move2japan/undaodu/foundups/ravingantifa): ").strip().lower()
-            if raw not in {"move2japan", "undaodu", "foundups", "ravingantifa"}:
+            available = get_channel_keys(role="shorts")
+            prompt = "shorts channel (" + "/".join(available) + "): "
+            raw = input(prompt).strip().lower()
+            if raw not in set(available):
                 print("[ERROR] Invalid channel key.")
                 continue
             os.environ["YT_SHORTS_SCHEDULER_CHANNEL_KEY"] = raw
@@ -190,13 +193,15 @@ def yt_controls_menu() -> None:
             update_env_file("YT_ENGAGEMENT_TEMPO", raw)
             continue
         if choice == str(persona_idx):
-            raw = input("persona (auto/foundups/undaodu/move2japan/ravingantifa): ").strip().lower()
+            available = get_channel_keys()
+            prompt = "persona (auto/" + "/".join(available) + "): "
+            raw = input(prompt).strip().lower()
             if raw in {"", "auto"}:
                 os.environ.pop("YT_ACTIVE_PERSONA", None)
                 update_env_file("YT_ACTIVE_PERSONA", "")
                 continue
-            if raw not in {"foundups", "undaodu", "move2japan", "ravingantifa"}:
-                print("[ERROR] Invalid persona. Use foundups, undaodu, move2japan, ravingantifa, or auto.")
+            if raw not in set(available):
+                print("[ERROR] Invalid persona. Use a registered channel key or auto.")
                 continue
             os.environ["YT_ACTIVE_PERSONA"] = raw
             update_env_file("YT_ACTIVE_PERSONA", raw)

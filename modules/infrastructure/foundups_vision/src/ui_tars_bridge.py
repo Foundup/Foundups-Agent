@@ -686,6 +686,178 @@ Rules:
         """Verify an element exists/state."""
         return await self.execute_action("verify", description, **kwargs)
 
+    async def observe_page_state(
+        self,
+        driver,
+        context: Optional[Dict[str, Any]] = None,
+        timeout: int = 60,
+    ) -> Dict[str, Any]:
+        """
+        Layer 5 OODA: Observe page state using UI-TARS vision.
+
+        Captures screenshot and uses UI-TARS to describe what's visible on the page.
+        Used by heartbeat OODA loop to determine if activity pivot is needed.
+
+        Args:
+            driver: Selenium WebDriver instance
+            context: Additional context (e.g., expected_page, current_activity)
+            timeout: Max seconds for vision inference
+
+        Returns:
+            Dict with page state observations:
+            {
+                "success": bool,
+                "page_type": str,  # "youtube_studio", "youtube_live", "youtube_comments", etc.
+                "indicators": List[str],  # ["live_stream_active", "comments_visible", etc.]
+                "confidence": float,
+                "raw_output": str,
+                "error": Optional[str]
+            }
+        """
+        import base64
+        import io
+        import time as time_module
+        from PIL import Image
+
+        start_time = time_module.time()
+        context = context or {}
+
+        self._emit_event("observe_start", {"context": context})
+
+        try:
+            # Ensure connected
+            if not self._connected:
+                await self.connect()
+
+            # 1. Capture screenshot
+            screenshot_bytes = await asyncio.to_thread(driver.get_screenshot_as_png)
+
+            # Resize for faster inference
+            img = Image.open(io.BytesIO(screenshot_bytes))
+            original_size = img.size
+            if img.width > 1280:
+                ratio = 1280 / img.width
+                img = img.resize((1280, int(img.height * ratio)), Image.Resampling.LANCZOS)
+                logger.debug(f"[UI-TARS-OBSERVE] Resized: {original_size} -> {img.size}")
+
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='PNG')
+            screenshot_bytes = img_buffer.getvalue()
+            screenshot_base64 = base64.b64encode(screenshot_bytes).decode('utf-8')
+
+            # 2. Build observation prompt
+            prompt = """You are observing a web browser page to determine its current state.
+
+Analyze the screenshot and respond in this exact format:
+Page: <page_type>
+Indicators: <comma-separated list of what you observe>
+Confidence: <0.0-1.0>
+
+Page types (choose one):
+- youtube_studio_comments: YouTube Studio comments page
+- youtube_live_chat: YouTube live stream with chat visible
+- youtube_video: YouTube video page (not live)
+- youtube_home: YouTube homepage
+- youtube_shorts: YouTube Shorts tab
+- google_oops: Google/YouTube error page (OOPS, sign-in required)
+- browser_error: Browser error (disconnected, crashed)
+- other: None of the above
+
+Indicators (list all that apply):
+- live_stream_active: Live stream indicator visible
+- comments_visible: Comment section visible
+- chat_visible: Live chat panel visible
+- no_comments: No comments to process
+- logged_in: User appears logged in
+- logged_out: Sign-in prompt visible
+- loading: Page is loading
+- error_message: Error message visible
+- studio_sidebar: YouTube Studio sidebar visible
+
+Example response:
+Page: youtube_studio_comments
+Indicators: comments_visible, logged_in, studio_sidebar
+Confidence: 0.9"""
+
+            # 3. Call LM Studio API
+            import requests
+            tars_api_url = os.getenv("TARS_API_URL", "http://127.0.0.1:1234").rstrip("/")
+            if tars_api_url.endswith("/v1"):
+                tars_api_url = tars_api_url[:-3]
+
+            response = await asyncio.to_thread(
+                requests.post,
+                f"{tars_api_url}/v1/chat/completions",
+                json={
+                    "model": UI_TARS_MODEL,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": f"data:image/png;base64,{screenshot_base64}"}
+                                }
+                            ]
+                        }
+                    ],
+                    "max_tokens": 200,
+                    "temperature": 0.1,
+                },
+                timeout=timeout
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"LM Studio API error: {response.status_code}")
+
+            # 4. Parse response
+            response_data = response.json()
+            model_output = response_data['choices'][0]['message']['content']
+
+            # Parse structured output
+            import re
+            page_match = re.search(r'Page:\s*(\S+)', model_output)
+            indicators_match = re.search(r'Indicators:\s*(.+?)(?=Confidence:|$)', model_output, re.DOTALL)
+            confidence_match = re.search(r'Confidence:\s*([\d.]+)', model_output)
+
+            page_type = page_match.group(1).strip() if page_match else "unknown"
+            indicators_raw = indicators_match.group(1).strip() if indicators_match else ""
+            indicators = [i.strip() for i in indicators_raw.split(',') if i.strip()]
+            confidence = float(confidence_match.group(1)) if confidence_match else 0.5
+
+            duration_ms = int((time_module.time() - start_time) * 1000)
+
+            result = {
+                "success": True,
+                "page_type": page_type,
+                "indicators": indicators,
+                "confidence": confidence,
+                "duration_ms": duration_ms,
+                "raw_output": model_output[:200],
+                "error": None
+            }
+
+            self._emit_event("observe_complete", result)
+            logger.info(f"[UI-TARS-OBSERVE] Page: {page_type}, Indicators: {indicators}, Confidence: {confidence:.2f} ({duration_ms}ms)")
+
+            return result
+
+        except Exception as e:
+            duration_ms = int((time_module.time() - start_time) * 1000)
+            result = {
+                "success": False,
+                "page_type": "error",
+                "indicators": [],
+                "confidence": 0.0,
+                "duration_ms": duration_ms,
+                "raw_output": "",
+                "error": str(e)
+            }
+            self._emit_event("observe_failed", {"error": str(e), "duration_ms": duration_ms})
+            logger.warning(f"[UI-TARS-OBSERVE] Failed: {e}")
+            return result
+
     def close(self) -> None:
         """Close UI-TARS connection."""
         self._emit_event("bridge_close", {"session_id": self._session_id})

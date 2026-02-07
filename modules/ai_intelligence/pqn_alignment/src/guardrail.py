@@ -141,7 +141,7 @@ class GuardrailThrottle:
                 return "&"  # Cohere (stabilizing)
         
         elif self.policy == "reduce_entangle":
-            # Reduce entanglement, keep coherence
+            # Reduce coupling (legacy: entanglement), keep coherence
             if symbol == "^":
                 self.interventions += 1
                 return "&"  # Replace with coherence

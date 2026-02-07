@@ -200,7 +200,7 @@ class VideoIndexStore:
         video_id: str,
         index_data: IndexData
     ) -> str:
-        """Save index to JSON, return path."""
+        """Save index to JSON, update metadata catalog, return path."""
 
     def load_index(
         self,
@@ -213,6 +213,32 @@ class VideoIndexStore:
         channel: str = None              # Filter by channel
     ) -> List[str]:
         """List all indexed video IDs."""
+```
+
+### StudioAskIndexer (Browser-Based)
+
+```python
+from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import (
+    run_video_indexing_cycle,
+    run_indexing_daemon,
+)
+
+async def run_video_indexing_cycle(
+    driver=None,
+    channels: Optional[List[str]] = None,
+    max_videos_per_channel: int = 3,
+    browser: str = "chrome",
+) -> Dict[str, Any]:
+    """Run a single Ask-Gemini indexing cycle with progress telemetry."""
+
+async def run_indexing_daemon(
+    channels: Optional[List[str]] = None,
+    max_videos_per_channel: int = 3,
+    browser: str = "chrome",
+    interval_minutes: int = 60,
+    max_cycles: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Run continuous indexing cycles with STOP/REINDEX signals."""
 ```
 
 ## Data Classes
