@@ -31,7 +31,11 @@ logger = logging.getLogger("fam_adapter")
 
 @dataclass
 class FAMLaunchRequest:
-    """Request to launch a FoundUp via OpenClaw."""
+    """Request to launch a FoundUp via OpenClaw.
+
+    All required fields must be non-empty strings.
+    Token symbol must be uppercase alphanumeric, 2-10 chars.
+    """
 
     foundup_name: str
     owner_id: str
@@ -54,6 +58,35 @@ class FAMLaunchRequest:
     initial_task_description: Optional[str] = None
     initial_task_reward: int = 100
 
+    def __post_init__(self) -> None:
+        """Validate required fields."""
+        # Required field validation
+        if not self.foundup_name or not self.foundup_name.strip():
+            raise ValueError("foundup_name is required and cannot be empty")
+        if not self.owner_id or not self.owner_id.strip():
+            raise ValueError("owner_id is required and cannot be empty")
+        if not self.token_symbol or not self.token_symbol.strip():
+            raise ValueError("token_symbol is required and cannot be empty")
+
+        # Token symbol format validation
+        self.token_symbol = self.token_symbol.upper().strip()
+        if not self.token_symbol.isalnum():
+            raise ValueError("token_symbol must be alphanumeric")
+        if len(self.token_symbol) < 2 or len(self.token_symbol) > 10:
+            raise ValueError("token_symbol must be 2-10 characters")
+
+        # Numeric bounds validation
+        if self.max_supply <= 0:
+            raise ValueError("max_supply must be positive")
+        if self.max_supply > 1_000_000_000_000:  # 1 trillion cap
+            raise ValueError("max_supply exceeds maximum (1 trillion)")
+        if self.initial_task_reward < 0:
+            raise ValueError("initial_task_reward cannot be negative")
+
+        # Sanitize strings
+        self.foundup_name = self.foundup_name.strip()[:100]  # Cap length
+        self.owner_id = self.owner_id.strip()[:100]
+
 
 @dataclass
 class FAMLaunchResponse:
@@ -66,6 +99,7 @@ class FAMLaunchResponse:
     initial_task_id: Optional[str] = None
     events: List[Dict[str, Any]] = field(default_factory=list)
     error: Optional[str] = None
+    error_code: Optional[str] = None  # Added for explicit error categorization
 
 
 class FAMAdapter:
@@ -75,7 +109,18 @@ class FAMAdapter:
     Translates OpenClaw intent payloads into FAM LaunchOrchestrator calls.
     Uses in-memory adapters by default for PoC/testing, can swap to
     production adapters via constructor injection.
+
+    Security:
+    - Strict input validation on all fields
+    - Explicit error codes for debugging
+    - Safe defaults (in-memory mode, no external calls)
     """
+
+    # Error codes for client consumption
+    ERROR_VALIDATION = "VALIDATION_ERROR"
+    ERROR_ADAPTER_INIT = "ADAPTER_INIT_ERROR"
+    ERROR_ORCHESTRATION = "ORCHESTRATION_ERROR"
+    ERROR_PARSE = "PARSE_ERROR"
 
     def __init__(
         self,
@@ -242,11 +287,28 @@ class FAMAdapter:
                 error=result.error,
             )
 
+        except ValueError as exc:
+            logger.warning("[FAM-ADAPTER] Validation error: %s", exc)
+            return FAMLaunchResponse(
+                success=False,
+                error=str(exc),
+                error_code=self.ERROR_VALIDATION,
+            )
+
+        except ImportError as exc:
+            logger.error("[FAM-ADAPTER] Adapter initialization error: %s", exc)
+            return FAMLaunchResponse(
+                success=False,
+                error=f"Failed to load FAM components: {exc}",
+                error_code=self.ERROR_ADAPTER_INIT,
+            )
+
         except Exception as exc:
             logger.error("[FAM-ADAPTER] Launch failed: %s", exc)
             return FAMLaunchResponse(
                 success=False,
                 error=str(exc),
+                error_code=self.ERROR_ORCHESTRATION,
             )
 
     def parse_launch_intent(
