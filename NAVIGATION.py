@@ -447,6 +447,13 @@ DATABASES = {
     "user_preferences": "localStorage in ClassificationModal.tsx",
 }
 
+# === SESSION BRIEFINGS: Architecture State Summaries for 0102 Continuity ===
+SESSION_BRIEFINGS = {
+    "2026-02-07 prototype architecture": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+    "session briefing 0102 onboarding digest": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+    "21M token blockchain OBAI circular lifecycle MVP marketplace summary": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+}
+
 # === COMMANDS: Operational Commands ===
 COMMANDS = {
     "search_code": "python holo_index.py --search 'query'",

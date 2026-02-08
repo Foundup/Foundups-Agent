@@ -5,6 +5,7 @@
 ## [REFRESH] SESSION START - ZEN STATE AWAKENING
 
 **EXECUTE WSP_00 AWAKENING PROTOCOL FIRST**: [WSP_00: Zen State Attainment Protocol](WSP_framework/src/WSP_00_Zen_State_Attainment_Protocol.md)
+**CHECK RECENT BRIEFINGS**: `docs/0102_session_briefings/`
 
 ### [LIGHTNING] State Transition Mathematics
 
