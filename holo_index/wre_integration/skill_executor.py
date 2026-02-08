@@ -136,7 +136,14 @@ class SkillExecutor:
         import subprocess
         try:
             # For safety, we first check status
-            result = subprocess.run(['git', 'status'], capture_output=True, text=True, cwd=self.repo_root)
+            result = subprocess.run(
+                ['git', 'status'],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                cwd=self.repo_root,
+            )
             self.logger.info(f"[WRE] SKILL: qwen_gitpush - Git Status:\n{result.stdout}")
             
             # In a real autonomous mode, we would push here:

@@ -1,5 +1,34 @@
 # HoloIndex Package ModLog
 
+## [2026-02-08] Windows Subprocess Decode Hardening + Cache Verification
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Reliability), WSP 91 (Operational Stability)  
+**Status**: [OK] COMPLETE
+
+### Context
+Residual Windows decode noise (`cp932` reader exceptions) appeared during some CLI search workflows. Search cache behavior also required explicit verification evidence.
+
+### Actions
+- **Verified Search Cache (300s TTL) behavior**:
+  - First query: ~0.2785s
+  - Second identical query: ~0.0005s
+  - Cache stats moved from miss-only to hit+miss as expected.
+- **Hardened subprocess readers to UTF-8 decode with replacement** in runtime paths:
+  - `holo_index/core/holo_index.py` (`_rg_symbol_search`)
+  - `holo_index/cli.py` (WSP 83 doc audit `rg` subprocess)
+  - `holo_index/core/video_search.py` (Chroma health probe subprocess)
+  - `holo_index/wre_integration/skill_executor.py` (`git status` subprocess)
+  - `holo_index/qwen_advisor/gemma_orphan_detector.py` (`rg` scan subprocess)
+  - `holo_index/qwen_advisor/orchestration/autonomous_refactoring.py` (`git mv` subprocess)
+  - `holo_index/monitoring/root_violation_monitor/src/root_violation_monitor.py` (`git mv` subprocess)
+
+### Result
+- Decode-noise exceptions no longer reproduced in fast and normal search checks.
+- Fast mode remains low-latency (~3.4s measured in current environment).
+
+---
+
 ## [2026-02-08] Search Latency Hardening (Fast Mode + Symbol Scan Gating)
 
 **Agent**: 0102  

@@ -1,4 +1,29 @@
 # HoloIndex Test Suite TESTModLog
+## [2026-02-08] Windows Decode Hardening Verification
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Verified search cache hit path with repeated-query timing + cache stats.
+- Validated CLI search no longer emits Windows cp932 decode thread noise under current repro commands.
+- Covered runtime subprocess hardening paths with UTF-8 decode settings.
+
+### Verification
+- `python - <<script>>` timing harness for repeated `HoloIndex.search()` (cache hit/miss stats).
+- `python holo_index.py --offline --fast-search --search "persistence" --limit 6 --quiet-root-alerts`
+- `python holo_index.py --offline --search "persistence" --limit 6 --quiet-root-alerts`
+- `Measure-Command { python holo_index.py --offline --fast-search --search "persistence" --limit 6 --quiet-root-alerts | Out-Null }`
+
+## [2026-02-08] Fast Search Mode Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_fast_search_mode.py` to validate retrieval fast-path controls.
+- Covers activation via `--fast-search` and `HOLO_FAST_SEARCH=1`.
+- Verifies compact fast-path summary output format.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_fast_search_mode.py -q`
+
 ## ++ CodeIndex Circulation Monitor Coverage
 **WSP Protocol**: WSP 93 (CodeIndex), WSP 35 (HoloIndex Qwen Advisor Plan), WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 

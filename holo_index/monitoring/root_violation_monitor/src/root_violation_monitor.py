@@ -409,7 +409,9 @@ class GemmaRootViolationMonitor:
                         ["git", "mv", str(src_path), str(dest_path)],
                         cwd=self.root_path,
                         capture_output=True,
-                        text=True
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
                     )
                     if result.returncode == 0:
                         return True

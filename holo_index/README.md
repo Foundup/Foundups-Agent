@@ -86,9 +86,10 @@ HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 ## Operational Documentation
 - **[CLI_REFERENCE.md](CLI_REFERENCE.md)** — Verbatim menu snapshot and CLI command mappings (for 0102_gpt parsing)
 - [Operational Playbook](docs/OPERATIONAL_PLAYBOOK.md) — step-by-step pre-code checklist, TODO workflow, and doc compliance rules for 0102.
-- [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
-- [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) — deeper design notes for the search/CLI pipeline.
-- **Offline Mode** — run `python holo_index.py --offline --search "..."` to avoid model downloads and auto-install; cached model loads if present, otherwise lexical fallback is used.
+- [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) ― how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
+- [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) ― deeper design notes for the search/CLI pipeline.
+- **Offline Mode** ― run `python holo_index.py --offline --search "..."` to avoid model downloads and auto-install; cached model loads if present, otherwise lexical fallback is used.
+- **Fast Search Mode** ― run `python holo_index.py --offline --fast-search --search "..."` (or set `HOLO_FAST_SEARCH=1`) to skip heavy advisor/orchestration steps for low-latency retrieval.
 
 ### Agentic Output Stream (WSP 87/75/90)
 - **Throttled Sections**: AgenticOutputThrottler now enforces `max_sections` automatically; additional sections are suppressed with an inline hint to re-run with `--verbose`.

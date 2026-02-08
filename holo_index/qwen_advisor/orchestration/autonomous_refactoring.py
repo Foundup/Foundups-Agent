@@ -998,7 +998,9 @@ Recommend strategy: """
                         ["git", "mv", str(source), str(target)],
                         cwd=self.repo_root,
                         capture_output=True,
-                        text=True
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
                     )
                     if result.returncode == 0:
                         return

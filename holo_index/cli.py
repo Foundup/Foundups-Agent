@@ -210,6 +210,44 @@ def render_response(throttler, outputs, args):
     output = throttler.render_prioritized_output(verbose=getattr(args, 'verbose', False))
     safe_print(output)
 
+
+def _is_fast_search_enabled(args) -> bool:
+    """
+    Decide whether to run fast retrieval-only search path.
+
+    Fast mode intentionally skips heavy advisory/orchestration layers to keep
+    CLI latency low for direct lookup workflows.
+    """
+    explicit = bool(getattr(args, "fast_search", False))
+    env_enabled = _env_truthy("HOLO_FAST_SEARCH", "false")
+    return explicit or env_enabled
+
+
+def _render_fast_search_summary(results: Dict[str, Any], limit: int = 5) -> None:
+    """Compact fast-mode output compatible with existing CLI usage."""
+    code_hits = results.get("code", []) or []
+    wsp_hits = results.get("wsps", []) or []
+    total_hits = len(code_hits) + len(wsp_hits)
+
+    safe_print(f"[OK] Analysis complete: {total_hits} hits (code={len(code_hits)}, wsp={len(wsp_hits)}), no critical issues found")
+    safe_print("[RESULTS] Top matches")
+
+    shown = 0
+    for hit in code_hits:
+        loc = hit.get("location") or hit.get("path") or "unknown"
+        safe_print(f"  [CODE] {loc}")
+        shown += 1
+        if shown >= limit:
+            return
+
+    for hit in wsp_hits:
+        title = hit.get("title") or "unknown"
+        path = hit.get("path") or "unknown"
+        safe_print(f"  [WSP] {path if path != 'unknown' else title}")
+        shown += 1
+        if shown >= limit:
+            return
+
 # Temporary stub - to be extracted later
 def _get_search_history_for_patterns():
     """Retrieve search history for pattern analysis (Phase 2)."""
@@ -328,6 +366,7 @@ def main():
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
     parser.add_argument('--offline', action='store_true', help='Disable model downloads and pip installs; use offline lexical search if needed')
+    parser.add_argument('--fast-search', action='store_true', help='Fast retrieval-only mode (skips heavy advisory/orchestration steps)')
 
     parser.add_argument('--llm-advisor', action='store_true', help='Force enable Qwen advisor guidance')
     parser.add_argument('--init-dae', type=str, nargs='?', const='auto', help='Initialize DAE context (auto-detect or specify DAE focus)')
@@ -775,6 +814,11 @@ def main():
         os.environ.setdefault('HF_HUB_OFFLINE', '1')
         os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
 
+    fast_search_mode = _is_fast_search_enabled(args)
+    if fast_search_mode:
+        # Fast mode is retrieval-focused; skip heavyweight embedding model load.
+        os.environ.setdefault('HOLO_SKIP_MODEL', '1')
+
     if args.code_index_report:
         _run_codeindex_report(args.code_index_report)
         return
@@ -1201,6 +1245,8 @@ def main():
                             ],
                             capture_output=True,
                             text=True,
+                            encoding="utf-8",
+                            errors="replace",
                             cwd=holoindex_root
                         )
                         for line in result.stdout.split('\n'):
@@ -1538,6 +1584,15 @@ def main():
 
         # Set query context
         throttler.set_query_context(args.search, results)
+
+        # Fast mode: retrieval-focused path for low-latency lookups.
+        if fast_search_mode:
+            _render_fast_search_summary(results, limit=args.limit)
+            search_results = results
+            if args.llm_advisor and results.get('advisor'):
+                add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
+            # Skip heavy post-processing pipeline.
+            return
 
         # P0 FIX: Integrate Gemma root violation monitor alerts
         # Shows real-time root directory violations in HoloIndex output
