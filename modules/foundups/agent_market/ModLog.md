@@ -1,13 +1,83 @@
 # ModLog - FoundUps Agent Market
 
-## 2026-02-07 - v0.0.4 - OpenClaw/FAM wiring + Moltbook distribution adapter
+## 2026-02-08 - v0.0.6 - Core domain hardening (0102-A)
 
 ### WSP References
-- WSP 11, 22, 47, 49, 50, 60, 72, 73, 87
+- WSP 5, 11, 29, 50, 91, 95
 
 ### Changes
-- Added `MoltbookDistributionAdapter` interface to `interfaces.py` for outbound distribution.
-- Created `moltbot_bridge/src/fam_adapter.py`:
+- Hardened `exceptions.py`:
+  - Added `StateTransitionError` alias for backwards compatibility with task_pipeline.py
+  - Added `IdempotencyError` for duplicate operation detection
+  - Added `RewardConstraintError` for reward validation failures
+- Implemented `cabr_hooks.py`:
+  - Replaced stub with full `PersistentCABRHooks` implementation
+  - `CABRInput` dataclass with task metrics, agent counts, event volume
+  - `CABROutput` dataclass with score, confidence, factors
+  - Evidence chain persistence via `_cabr_inputs` and `_cabr_outputs` dicts
+  - `get_score_history()` and `get_input_history()` for audit trail
+- Verified `observability.py`:
+  - Already complete with `PersistentObservability` class
+  - Proper SQLite persistence via adapter
+- Hardened `in_memory.py`:
+  - Added `DeterministicIdGenerator` class for repeatable test IDs
+  - `DETERMINISTIC_IDS=1` env var or `deterministic=True` flag enables determinism
+  - Replaced 7 `uuid4()` calls with counter-based ID generation
+  - Added `reset()` method for test isolation (clears all state + counters)
+  - Added `get_tasks_by_foundup()` helper for CABR hooks integration
+
+### Impact
+- Tests can now assert on specific generated IDs when deterministic mode enabled
+- CABR evidence chain now fully traceable from input collection to score output
+- Exception hierarchy supports idempotency and reward validation
+- In-memory adapter provides complete test isolation with reset()
+
+### Notes
+- Set `DETERMINISTIC_IDS=1` in pytest fixtures for repeatable tests
+- Use `market.reset()` between tests for clean state
+
+---
+
+## 2026-02-08 - v0.0.5 - Chain-agnostic adapters + boundary hardening (0102-B)
+
+### WSP References
+- WSP 11, 30, 50, 72, 73, 91, 95
+
+### Changes
+- Created `token_factory.py`:
+  - `ChainAgnosticTokenFactory` with pluggable `ChainBackend` interface
+  - `MockChainBackend` for testing, extensible to Hedera/EVM
+  - `TokenDeploymentResult`, `VestingConfig` dataclasses
+  - No chain lock-in: chain selected via `terms.chain_hint`
+- Created `treasury_governance.py`:
+  - `InMemoryTreasuryGovernance` with proposal-based transfers
+  - Multi-signature approval support (`required_approvals` configurable)
+  - `TreasuryProposal`, `TreasuryState`, `ProposalStatus` models
+  - Safe defaults: max single transfer limit, balance checks
+- Hardened `moltbook_distribution_adapter.py`:
+  - Deterministic post IDs (`_generate_deterministic_id`) for idempotency
+  - Thread-safe with `Lock` for concurrent access
+  - Retry logic with configurable `max_retries` and backoff
+  - Explicit `PublishStatus` enum (PENDING, PUBLISHED, FAILED, RETRYING)
+  - `retry_failed()` method for batch retry of failed publishes
+- Hardened `fam_adapter.py`:
+  - `FAMLaunchRequest.__post_init__` validation (required fields, token format, numeric bounds)
+  - Explicit `error_code` field in `FAMLaunchResponse`
+  - Error codes: `VALIDATION_ERROR`, `ADAPTER_INIT_ERROR`, `ORCHESTRATION_ERROR`, `PARSE_ERROR`
+  - Input sanitization (strip, length caps)
+- Verified `webhook_receiver.py` rate limiting (already hardened with TokenBucket)
+
+### Impact
+- Enables chain-agnostic token deployment without vendor lock-in
+- Adds governance layer for treasury transfers with audit trail
+- Provides idempotent distribution with retry capability
+- Strengthens adapter boundaries with strict validation
+
+### Notes
+- All adapters remain WSP 72 compliant (module independence)
+- Chain backends (Hedera, EVM) are stubs pending API key configuration
+
+## 2026-02-07 - v0.0.4 - OpenClaw/FAM wiring + Moltbook distribution adapter
   - `FAMAdapter` class with in-memory/injected adapter support
   - `FAMLaunchRequest` and `FAMLaunchResponse` dataclasses
   - `parse_launch_intent()` for OpenClaw message parsing

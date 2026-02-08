@@ -8,6 +8,7 @@ import io
 from .intelligent_subroutine_engine import IntelligentSubroutineEngine
 from .module_scoring_subroutine import ModuleScoringSubroutine
 from .holo_index import HoloIndex
+from .search_cache import SearchCache, get_search_cache
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 # Prevent UnicodeEncodeError on Windows systems

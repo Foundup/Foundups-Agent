@@ -1,7 +1,16 @@
-﻿"""In-memory adapter for FoundUps Agent Market PoC."""
+﻿"""In-memory adapter for FoundUps Agent Market PoC.
+
+Provides deterministic ID generation for repeatable tests when
+DETERMINISTIC_IDS=1 environment variable is set.
+
+WSP References:
+- WSP 5: Testing standards - deterministic behavior for tests
+- WSP 11: Interface contract stability
+"""
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict
 from typing import Dict, List, Optional
 from uuid import uuid4
@@ -39,6 +48,39 @@ from .models import (
 )
 
 
+class DeterministicIdGenerator:
+    """Counter-based ID generator for repeatable tests.
+
+    When DETERMINISTIC_IDS=1, generates sequential IDs instead of UUIDs.
+    This enables deterministic test assertions on generated IDs.
+    """
+
+    def __init__(self, deterministic: bool = False) -> None:
+        self._deterministic = deterministic
+        self._counters: Dict[str, int] = {}
+
+    def next_id(self, prefix: str, length: int = 10) -> str:
+        """Generate next ID with given prefix.
+
+        Args:
+            prefix: ID prefix (e.g., "ev", "join", "pay")
+            length: Hex suffix length (ignored in deterministic mode)
+
+        Returns:
+            ID string like "ev_0001" (deterministic) or "ev_a1b2c3d4" (uuid)
+        """
+        if self._deterministic:
+            self._counters.setdefault(prefix, 0)
+            self._counters[prefix] += 1
+            return f"{prefix}_{self._counters[prefix]:04d}"
+        else:
+            return f"{prefix}_{uuid4().hex[:length]}"
+
+    def reset(self) -> None:
+        """Reset all counters for test isolation."""
+        self._counters.clear()
+
+
 class InMemoryAgentMarket(
     FoundupRegistryService,
     TokenFactoryAdapter,
@@ -50,9 +92,20 @@ class InMemoryAgentMarket(
     DistributionService,
     RepoProvisioningAdapter,
 ):
-    """Single-process PoC adapter with deterministic behavior for tests."""
+    """Single-process PoC adapter with deterministic behavior for tests.
 
-    def __init__(self, actor_roles: Optional[Dict[str, str]] = None):
+    Set DETERMINISTIC_IDS=1 or pass deterministic=True for repeatable test IDs.
+    """
+
+    def __init__(
+        self,
+        actor_roles: Optional[Dict[str, str]] = None,
+        deterministic: bool = False,
+    ):
+        # Check env var for deterministic mode (useful for pytest fixtures)
+        use_deterministic = deterministic or os.getenv("DETERMINISTIC_IDS", "0") == "1"
+        self._id_gen = DeterministicIdGenerator(deterministic=use_deterministic)
+
         self.actor_roles = actor_roles or {}
         self.foundups: Dict[str, Foundup] = {}
         self.tasks: Dict[str, Task] = {}
@@ -87,7 +140,7 @@ class InMemoryAgentMarket(
         payout_id: Optional[str] = None,
     ) -> None:
         event = EventRecord(
-            event_id=f"ev_{uuid4().hex[:12]}",
+            event_id=self._id_gen.next_id("ev", 12),
             event_type=event_type,
             actor_id=actor_id,
             payload=payload,
@@ -159,7 +212,7 @@ class InMemoryAgentMarket(
     # AgentJoinService
     def submit_join_request(self, foundup_id: str, profile: AgentProfile) -> str:
         self.get_foundup(foundup_id)
-        request_id = f"join_{uuid4().hex[:10]}"
+        request_id = self._id_gen.next_id("join", 10)
         self.join_requests[request_id] = (foundup_id, profile)
         self._emit(
             "agent.join_requested",
@@ -267,12 +320,12 @@ class InMemoryAgentMarket(
         if task.status != TaskStatus.VERIFIED:
             raise InvalidStateTransitionError("payout requires verified state")
         payout = Payout(
-            payout_id=f"pay_{uuid4().hex[:10]}",
+            payout_id=self._id_gen.next_id("pay", 10),
             task_id=task.task_id,
             recipient_id=task.assignee_id or "unknown",
             amount=task.reward_amount,
             status=PayoutStatus.COMPLETED,
-            reference=f"inmem:{uuid4().hex[:8]}",
+            reference=self._id_gen.next_id("inmem", 8),
             paid_at=task.created_at,
         )
         self.payouts[payout.payout_id] = payout
@@ -314,7 +367,7 @@ class InMemoryAgentMarket(
     # TreasuryGovernanceService
     def propose_transfer(self, foundup_id: str, amount: int, reason: str, proposer_id: str) -> str:
         self.get_foundup(foundup_id)
-        proposal_id = f"prop_{uuid4().hex[:10]}"
+        proposal_id = self._id_gen.next_id("prop", 10)
         self.transfer_proposals[proposal_id] = {
             "foundup_id": foundup_id,
             "amount": amount,
@@ -349,7 +402,7 @@ class InMemoryAgentMarket(
             raise NotFoundError(f"proposal '{proposal_id}' not found")
         if not proposal.get("approved"):
             raise InvalidStateTransitionError("proposal must be approved before execution")
-        reference = f"xfer_{uuid4().hex[:8]}"
+        reference = self._id_gen.next_id("xfer", 8)
         self._emit(
             "treasury.transfer_executed",
             executor_id,
@@ -472,7 +525,7 @@ class InMemoryAgentMarket(
 
         payload = self.build_milestone_payload(task_id)
         distribution = DistributionPost(
-            distribution_id=f"dist_{uuid4().hex[:10]}",
+            distribution_id=self._id_gen.next_id("dist", 10),
             foundup_id=task.foundup_id,
             task_id=task.task_id,
             channel=channel,
@@ -536,3 +589,30 @@ class InMemoryAgentMarket(
         """Get repository metadata for a foundup."""
         self.get_foundup(foundup_id)
         return self.repos.get(foundup_id)
+
+    # Test isolation helpers
+    def reset(self) -> None:
+        """Reset all state for test isolation.
+
+        Clears all stored data and resets ID counters.
+        Call between tests for deterministic behavior.
+        """
+        self.foundups.clear()
+        self.tasks.clear()
+        self.proofs.clear()
+        self.verifications.clear()
+        self.payouts.clear()
+        self.events.clear()
+        self.join_requests.clear()
+        self.agents_by_foundup.clear()
+        self.token_addresses.clear()
+        self.treasury_accounts.clear()
+        self.transfer_proposals.clear()
+        self.cabr_outputs.clear()
+        self.distributions_by_task.clear()
+        self.repos.clear()
+        self._id_gen.reset()
+
+    def get_tasks_by_foundup(self, foundup_id: str) -> List[Task]:
+        """Get all tasks for a FoundUp. Used by CABR hooks."""
+        return [t for t in self.tasks.values() if t.foundup_id == foundup_id]

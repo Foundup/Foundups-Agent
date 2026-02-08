@@ -51,6 +51,15 @@ except ImportError as exc:
 # Lazy load sentence_transformers to prevent crash on import
 SentenceTransformer = None
 
+# Search cache for fast repeated queries (WSP 91 observability)
+try:
+    from .search_cache import SearchCache, get_search_cache
+    SEARCH_CACHE_AVAILABLE = True
+except ImportError:
+    SEARCH_CACHE_AVAILABLE = False
+    SearchCache = None  # type: ignore
+    get_search_cache = None  # type: ignore
+
 # Optional imports (disabled for stability)
 AGENT_LOGGER_AVAILABLE = False
 BREADCRUMB_AVAILABLE = False
@@ -191,6 +200,15 @@ class HoloIndex:
                 self.breadcrumb_tracer = None  # Ensure it's None on failure
         else:
             self.breadcrumb_tracer = None  # Ensure it's always defined
+
+        # Initialize search cache for fast repeated queries
+        if SEARCH_CACHE_AVAILABLE:
+            cache_ttl = float(os.getenv("HOLO_CACHE_TTL", "300"))  # 5 min default
+            cache_size = int(os.getenv("HOLO_CACHE_SIZE", "100"))
+            self.search_cache = get_search_cache(max_size=cache_size, ttl_seconds=cache_ttl)
+            self._log_agent_action(f"Search cache initialized (size={cache_size}, ttl={cache_ttl}s)", "INFO")
+        else:
+            self.search_cache = None
 
         # Cache state for reuse and mark initialized
         HoloIndex._shared_state = dict(self.__dict__)
@@ -847,17 +865,24 @@ class HoloIndex:
     def search(self, query: str, limit: int = 10, doc_type_filter: str = "all") -> Dict[str, Any]:
         """
         0102: Enhanced search with AST preview extraction for TypeScript/JSX files
-        
+
         Args:
             query: Search query string
             limit: Maximum number of results to return
             doc_type_filter: Filter by document type ('code', 'wsp', 'all')
-            
+
         Returns:
             Dictionary with legacy keys ('code', 'wsps') and modern keys
             ('code_hits', 'wsp_hits') plus metadata for telemetry.
         """
         try:
+            # Fast path: check cache first (WSP 91 performance optimization)
+            if self.search_cache is not None:
+                cached = self.search_cache.get(query, doc_type_filter)
+                if cached is not None:
+                    self._log_agent_action(f"[CACHE HIT] '{query}' (limit={limit})", "FAST")
+                    return cached
+
             # Log search initiation
             self._log_agent_action(f"Searching: '{query}' (limit={limit}, type={doc_type_filter})")
             
@@ -866,6 +891,13 @@ class HoloIndex:
             wsp_hits = []
             test_hits = []
             skill_hits = []
+            symbol_results: List[Dict[str, Any]] = []
+
+            # Symbol collection can be large; only query it when it will likely add value.
+            # This keeps non-symbol searches fast while preserving exact-identifier discovery.
+            symbol_query = self._is_symbol_query(query)
+            force_symbol_scan = os.getenv("HOLO_FORCE_SYMBOL_SCAN", "0").lower() in {"1", "true", "yes", "on"}
+            should_scan_symbols = force_symbol_scan or symbol_query or (self.model is not None)
             
             # Search code index if requested
             if doc_type_filter in ["code", "all"]:
@@ -873,7 +905,8 @@ class HoloIndex:
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
                 # Also search symbol index for function/class hits
-                symbol_results = self._search_collection(self.symbol_collection, query, limit, kind="symbol")
+                if should_scan_symbols:
+                    symbol_results = self._search_collection(self.symbol_collection, query, limit, kind="symbol")
                 if symbol_results:
                     code_hits = self._merge_hits(symbol_results, code_hits, limit)
 
@@ -893,7 +926,7 @@ class HoloIndex:
                     skill_hits = []
             
             # Symbol-query fallback: add lexical hits for exact identifiers/paths
-            if self._is_symbol_query(query):
+            if symbol_query:
                 if doc_type_filter in ["code", "all"]:
                     lexical_code = self._lexical_search_collection(self.code_collection, query, limit, kind="code")
                     if lexical_code:
@@ -931,9 +964,15 @@ class HoloIndex:
                     'test_count': len(test_hits),
                     'skill_count': len(skill_hits),
                     'symbol_count': len(symbol_results) if 'symbol_results' in locals() else 0,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now().isoformat(),
+                    'cached': False
                 }
             }
+
+            # Store in cache for fast repeated queries
+            if self.search_cache is not None:
+                self.search_cache.put(query, doc_type_filter, payload)
+
             return payload
             
         except Exception as e:

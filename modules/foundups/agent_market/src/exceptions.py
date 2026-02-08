@@ -1,4 +1,9 @@
-﻿"""Domain exceptions for FoundUps Agent Market."""
+﻿"""Domain exceptions for FoundUps Agent Market.
+
+WSP References:
+- WSP 50: Error handling with domain exceptions
+- WSP 11: Public API contract stability
+"""
 
 
 class AgentMarketError(Exception):
@@ -14,7 +19,16 @@ class NotFoundError(AgentMarketError):
 
 
 class InvalidStateTransitionError(AgentMarketError):
-    """Task transition is not valid for current state."""
+    """Task transition is not valid for current state.
+
+    Raised when attempting a lifecycle transition that violates
+    the deterministic state machine:
+        OPEN -> CLAIMED -> SUBMITTED -> VERIFIED -> PAID
+    """
+
+
+# Alias for backwards compatibility with task_pipeline.py
+StateTransitionError = InvalidStateTransitionError
 
 
 class PermissionDeniedError(AgentMarketError):
@@ -27,3 +41,11 @@ class ImmutableFieldError(AgentMarketError):
 
 class CABRGateError(AgentMarketError):
     """CABR score gate failed - distribution blocked."""
+
+
+class IdempotencyError(AgentMarketError):
+    """Operation already completed - duplicate request detected."""
+
+
+class RewardConstraintError(AgentMarketError):
+    """Reward amount violates constraints (zero, negative, exceeds budget)."""

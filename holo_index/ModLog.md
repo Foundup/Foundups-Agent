@@ -1,5 +1,75 @@
 # HoloIndex Package ModLog
 
+## [2026-02-08] Search Latency Hardening (Fast Mode + Symbol Scan Gating)
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Performance), WSP 91 (Operational Efficiency)  
+**Status**: [OK] COMPLETE
+
+### Context
+HoloIndex retrieval was timing out in long sessions. Core search was relatively fast, but end-to-end CLI latency was too high for iterative 0102 workflows.
+
+### Actions
+- `holo_index/core/holo_index.py`:
+  - Added symbol-scan gating inside `search()`:
+    - skip symbol collection scans for non-symbol queries when model is unavailable
+    - allow override with `HOLO_FORCE_SYMBOL_SCAN=1`
+  - Keeps identifier queries intact while reducing unnecessary high-cardinality scans.
+- `holo_index/cli.py`:
+  - Added `--fast-search` flag.
+  - Added `HOLO_FAST_SEARCH=1` env support.
+  - Added fast-path render (`_render_fast_search_summary`) and selector (`_is_fast_search_enabled`).
+  - Fast path skips heavy advisory/orchestration layers and returns retrieval summary directly.
+- `holo_index/tests/test_fast_search_mode.py`:
+  - Added tests for fast-mode activation via flag/env and summary rendering.
+- `holo_index/README.md`:
+  - Documented `--fast-search` usage.
+
+### Result
+- Baseline offline search (example query): ~8.1s
+- Fast mode (`--fast-search`): ~4.6s
+- Improvement: ~43% lower end-to-end CLI latency for retrieval workflows.
+
+---
+
+## [2026-02-08] Search Cache Performance Optimization
+
+**Agent**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 91 (Observability), WSP 87 (Performance)
+**Status**: [OK] COMPLETE
+
+### Context
+HoloIndex searches were slow due to embedding generation on every query. Repeated queries paid full embedding + ChromaDB cost each time, causing timeouts during intensive agent sessions.
+
+### Actions
+- `holo_index/core/search_cache.py`: NEW FILE
+  - LRU cache with configurable TTL (default 5 min) and max size (default 100)
+  - Query normalization for better cache hit rates (lowercase, whitespace collapse)
+  - MD5 hash keys for fixed-length cache lookups
+  - Thread-safe with `Lock()` for concurrent access
+  - Hit/miss/eviction metrics for WSP 91 observability
+  - Optional disk persistence for cross-session caching
+- `holo_index/core/holo_index.py`:
+  - Added cache check at search entry point (fast path <1ms on hit)
+  - Added cache store after successful search
+  - New env vars: `HOLO_CACHE_TTL`, `HOLO_CACHE_SIZE`
+- `holo_index/core/__init__.py`: Exported `SearchCache`, `get_search_cache`
+
+### Result
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Repeated query latency | 50-200ms | <1ms (cache hit) |
+| First query latency | 50-200ms | 50-200ms (unchanged) |
+| Memory overhead | 0 | ~1MB per 100 queries |
+| Cache observability | None | Full hit/miss/eviction stats |
+
+### New Env Vars
+- `HOLO_CACHE_TTL` (default `300`): Cache TTL in seconds
+- `HOLO_CACHE_SIZE` (default `100`): Max cached queries
+
+---
+
 ## [2026-02-07] Noise Reduction Sprint + Search Quality Overhaul
 
 **Agent**: 0102

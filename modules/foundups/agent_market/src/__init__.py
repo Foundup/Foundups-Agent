@@ -3,10 +3,13 @@
 from .exceptions import (
     AgentMarketError,
     CABRGateError,
+    IdempotencyError,
     ImmutableFieldError,
     InvalidStateTransitionError,
     NotFoundError,
     PermissionDeniedError,
+    RewardConstraintError,
+    StateTransitionError,
     ValidationError,
 )
 from .in_memory import InMemoryAgentMarket
@@ -28,10 +31,13 @@ from .models import (
 __all__ = [
     "AgentMarketError",
     "CABRGateError",
+    "IdempotencyError",
     "ImmutableFieldError",
     "InvalidStateTransitionError",
     "NotFoundError",
     "PermissionDeniedError",
+    "RewardConstraintError",
+    "StateTransitionError",
     "ValidationError",
     "InMemoryAgentMarket",
     "LaunchEvent",
