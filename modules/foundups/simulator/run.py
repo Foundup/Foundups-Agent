@@ -182,6 +182,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable ANSI colors"
     )
+    parser.add_argument(
+        "--ai",
+        action="store_true",
+        help="Enable AI agents (Qwen founders, Gemma users)"
+    )
+    parser.add_argument(
+        "--risk",
+        type=float,
+        default=0.5,
+        help="AI user risk tolerance 0-1 (default: 0.5)"
+    )
 
     return parser.parse_args()
 
@@ -199,7 +210,12 @@ def main() -> int:
         max_ticks=args.ticks,
         seed=args.seed,
         verbose=args.verbose,
+        use_ai=args.ai,
+        ai_risk_tolerance=args.risk,
     )
+
+    if args.ai:
+        logger.info("[MAIN] AI mode enabled: Qwen founders + Gemma users")
 
     # Try to connect to FAMDaemon if available
     fam_daemon = None

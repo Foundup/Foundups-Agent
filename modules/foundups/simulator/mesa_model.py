@@ -99,7 +99,9 @@ class FoundUpsModel:
 
     def _create_agents(self) -> None:
         """Create initial agent population."""
-        # Create founder agents
+        use_ai = self._config.use_ai
+
+        # Create founder agents (Qwen-powered if AI enabled)
         for i in range(self._config.num_founder_agents):
             agent_id = f"founder_{i:03d}"
             agent = FounderAgent(
@@ -111,6 +113,7 @@ class FoundUpsModel:
                 creation_cost=self._config.foundup_creation_cost,
                 action_probability=self._config.agent_action_probability,
                 cooldown_ticks=self._config.agent_cooldown_ticks,
+                use_ai=use_ai,
             )
             self._agents[agent_id] = agent
             self._agent_order.append(agent_id)
@@ -121,9 +124,13 @@ class FoundUpsModel:
             )
             self._token_economy.register_agent(agent_id)
 
-        # Create user agents
+        # Create user agents (Gemma-powered if AI enabled)
         for i in range(self._config.num_user_agents):
             agent_id = f"user_{i:03d}"
+            # Vary risk tolerance across users
+            risk_tolerance = self._config.ai_risk_tolerance + (i % 5 - 2) * 0.1
+            risk_tolerance = max(0.1, min(0.9, risk_tolerance))
+
             agent = UserAgent(
                 agent_id=agent_id,
                 fam_bridge=self._fam_bridge,
@@ -136,6 +143,8 @@ class FoundUpsModel:
                 stake_max=self._config.stake_max,
                 action_probability=self._config.agent_action_probability,
                 cooldown_ticks=self._config.agent_cooldown_ticks,
+                use_ai=use_ai,
+                risk_tolerance=risk_tolerance,
             )
             self._agents[agent_id] = agent
             self._agent_order.append(agent_id)
