@@ -61,15 +61,27 @@ class CABREstimator:
         "part": 0.34,
     }
 
-    # Category impact baselines
+    # Category impact baselines (env_score, soc_score)
     CATEGORY_BASELINES = {
-        "defi": {"env": 0.2, "soc": 0.6},
+        # Original domains
+        "video": {"env": 0.2, "soc": 0.7},
         "social": {"env": 0.1, "soc": 0.8},
-        "infrastructure": {"env": 0.5, "soc": 0.5},
-        "creative": {"env": 0.1, "soc": 0.7},
+        "finance": {"env": 0.2, "soc": 0.7},
+        "defi": {"env": 0.2, "soc": 0.6},
         "environment": {"env": 0.9, "soc": 0.5},
-        "governance": {"env": 0.2, "soc": 0.7},
         "education": {"env": 0.1, "soc": 0.9},
+        "infrastructure": {"env": 0.5, "soc": 0.5},
+        # New domains
+        "waste": {"env": 0.9, "soc": 0.6},       # GotJunk - high env (recycling/diversion)
+        "healthcare": {"env": 0.2, "soc": 0.9},  # High social (health access)
+        "realestate": {"env": 0.3, "soc": 0.7},  # Medium env (land use), high social (housing)
+        "logistics": {"env": 0.7, "soc": 0.6},   # High env (efficiency), medium social
+        "food": {"env": 0.8, "soc": 0.8},        # High both (agriculture + food access)
+        "energy": {"env": 0.95, "soc": 0.7},     # Very high env (renewables)
+        "labor": {"env": 0.1, "soc": 0.9},       # Low env, very high social (worker rights)
+        "creative": {"env": 0.1, "soc": 0.7},    # Low env, high social (culture)
+        "governance": {"env": 0.2, "soc": 0.85}, # Medium env, very high social (democracy)
+        "insurance": {"env": 0.2, "soc": 0.75},  # Low env, high social (risk sharing)
     }
 
     def __init__(self, use_ai: bool = True) -> None:
