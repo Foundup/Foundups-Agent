@@ -4,7 +4,7 @@
 
 **Status:** ACTIVE
 
-**Last Updated:** 2025-12-15
+**Last Updated:** 2026-02-08
 
 **WSP Compliance:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Code Navigation)
 
@@ -17,6 +17,7 @@
 | [Architecture](#architecture-documents) | 8 | System architecture and design patterns |
 | [Daemon & Event Systems](#daemon--event-systems) | 3 | Daemon orchestration and event-driven flows |
 | [Vision & Automation](#vision--automation-systems) | 3 | Browser automation and vision AI systems |
+| [0102 Session Briefings](#0102-session-briefings) | 1 | Session-start onboarding digests for 0102 |
 | [Session Reports](#session-reports) | 6 | Completed work sessions and sprints |
 | [Analysis & Audits](#analysis--audits) | 12 | Deep dives, audits, and first principles analysis |
 | [Implementation Plans](#implementation-plans) | 6 | Execution plans and implementation guides |
@@ -73,6 +74,16 @@
 - `modules/infrastructure/foundups_vision/` - Vision AI integration
 - `modules/infrastructure/browser_actions/` - ActionRouter, intelligent routing
 - `modules/infrastructure/foundups_selenium/` - Browser session management
+
+---
+
+## 0102 Session Briefings
+
+**Session-start onboarding context for 0102 agents**
+
+| Document | Date | Purpose |
+|----------|------|---------|
+| [SESSION_BRIEFING_2026_02_07.md](0102_session_briefings/SESSION_BRIEFING_2026_02_07.md) | 2026-02-07 | FoundUps/FAM architecture digest and immediate next-build context |
 
 ---
 

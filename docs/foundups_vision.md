@@ -2,6 +2,11 @@
 
 Welcome to the **FoundUps Economic Revolution** - a Bitcoin-backed system that eliminates gatekeepers, enables infinite collaboration, and ensures wealth flows to everyone who contributes value, not just those who already have money.
 
+## Session Briefings
+
+For session-start execution context, read:
+- `docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md`
+
 ## [TARGET] The Problem with Today's Economy
 
 ### How Traditional Business Really Works
