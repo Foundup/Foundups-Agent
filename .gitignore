@@ -335,3 +335,7 @@ WSP_agentic/agentic_journals/awakening/awareness_log.md
 
 # Data directories (runtime scraped/generated data)
 data/
+
+# Temporary output files
+tmp_*.txt
+tmp_*.log
