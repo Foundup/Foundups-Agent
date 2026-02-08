@@ -1,5 +1,49 @@
 # ModLog - FoundUps Agent Market
 
+## 2026-02-08 - v0.1.0 - Prototype Tranche 1: Observability Backbone
+
+### WSP References
+- WSP 5, 11, 91
+
+### Changes
+- Created `src/fam_daemon.py` (737 LOC) - FAM DAEmon observability backbone:
+  - `fam_event_v1` schema with deterministic event IDs, monotonic sequence IDs, dedupe keys
+  - `FAMEventType` enum: 11 canonical domain event types
+  - `FAMEvent` dataclass with full serialization (to_dict, to_json, from_dict)
+  - `FAMEventStore`: Dual-write persistence (JSONL append-only + SQLite indexed)
+  - `FAMDaemon`: Heartbeat loop, health/status API, event listeners
+  - `FAMDaemonHealth`: Uptime, heartbeat count, parity status, errors
+  - `get_fam_daemon()` singleton accessor
+- Created `tests/test_fam_daemon.py` - Comprehensive test suite:
+  - Schema validation (FAMEvent, FAMEventType)
+  - Ordering/sequence guarantees (monotonic, gap-free)
+  - Dedupe/replay protection (duplicate rejection)
+  - JSONL+SQLite parity verification
+  - Heartbeat + health endpoint coverage
+  - Thread safety (concurrent writes)
+- Updated `INTERFACE.md` with fam_event_v1 schema and FAMDaemon API
+- Updated `ROADMAP.md` marking Prototype Tranche 1 complete
+
+### Key Design Decisions
+1. **Deterministic Event IDs**: `sha256(type:payload_hash:timestamp)[:16]` prefix `fam_ev_`
+2. **Dedupe Keys**: Event-type-specific (task:id:status, proof:id, etc.) for idempotent replay
+3. **Dual-Write**: JSONL for disaster recovery, SQLite for fast queries and dedupe enforcement
+4. **Singleton Pattern**: `get_fam_daemon()` ensures single heartbeat loop per process
+5. **Parity Verification**: `verify_parity()` checks JSONL/SQLite sync for audit
+
+### Impact
+- FAM now has observability backbone for 012/Overseer polling
+- All domain events emit to both JSONL sink and SQLite index
+- Replay-safe event processing with dedupe key enforcement
+- Health/status API ready for Overseer integration
+
+### Test Coverage
+- 26 FAM DAEmon tests (schema, ordering, dedupe, parity, health, thread safety)
+- 26 core FAM tests (existing suite maintained)
+- Total: 52 tests passing
+
+---
+
 ## 2026-02-08 - v0.0.6 - Core domain hardening (0102-A)
 
 ### WSP References

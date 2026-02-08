@@ -102,6 +102,50 @@ DistributionPost(
 )
 ```
 
+### fam_event_v1 (DAEmon Observability Schema)
+```python
+FAMEvent(
+    # Identity
+    event_id: str,           # Deterministic: sha256(type:payload_hash:timestamp)[:16]
+    sequence_id: int,        # Monotonic, gap-free, assigned by store
+    dedupe_key: str,         # Idempotent replay protection key
+
+    # Classification
+    event_type: str,         # FAMEventType enum value
+    schema_version: str,     # "fam_event_v1"
+
+    # Context
+    actor_id: str,           # Default: "system"
+    foundup_id: str | None,  # Foundup context
+    task_id: str | None,     # Task context
+
+    # Payload
+    payload: dict[str, object],
+
+    # Timestamps
+    timestamp: datetime,     # Event occurrence time (UTC)
+    recorded_at: datetime,   # Store write time (UTC)
+)
+```
+
+**FAMEventType enum:**
+- `foundup_created`, `foundup_updated`
+- `task_state_changed`
+- `proof_submitted`, `verification_recorded`
+- `payout_triggered`
+- `milestone_published`
+- `security_alert_forwarded`, `incident_alert_forwarded`
+- `heartbeat`, `daemon_started`, `daemon_stopped`
+
+**Dedupe Key Generation:**
+- `task_state_changed`: `task:{task_id}:{new_status}`
+- `proof_submitted`: `proof:{proof_id}`
+- `verification_recorded`: `verification:{verification_id}`
+- `payout_triggered`: `payout:{payout_id}`
+- `milestone_published`: `distribution:{distribution_id}`
+- `heartbeat`: `heartbeat:{timestamp[:19]}` (per-second)
+- Default: `{event_type}:{payload_hash[:12]}`
+
 ## Service Contracts
 
 ### FoundupRegistryService
@@ -144,6 +188,51 @@ DistributionPost(
 ### ObservabilityService
 - `emit_event(event_type: str, actor_id: str, payload: dict[str, object]) -> None`
 - `query_events(foundup_id: str | None = None, task_id: str | None = None) -> list[dict[str, object]]`
+
+### FAMDaemon (Prototype Observability Backbone)
+```python
+FAMDaemon(
+    data_dir: Path | None = None,       # Default: module memory/
+    heartbeat_interval_sec: float = 60.0,
+    auto_start: bool = False,
+)
+```
+
+**Runtime API:**
+- `start() -> None`: Start heartbeat loop, emit `daemon_started`
+- `stop() -> None`: Stop loop, emit `daemon_stopped`
+- `emit(event_type, payload, actor_id, foundup_id, task_id) -> (bool, str)`: Write event
+- `query_events(event_type, foundup_id, task_id, since_sequence, limit) -> list[FAMEvent]`
+- `get_health() -> FAMDaemonHealth`: Health/status for Overseer polling
+- `get_status() -> dict`: Alias for `get_health().to_dict()`
+- `add_listener(fn) -> None`: Subscribe to events
+- `remove_listener(fn) -> None`: Unsubscribe
+
+**FAMDaemonHealth:**
+```python
+FAMDaemonHealth(
+    running: bool,
+    uptime_seconds: float,
+    heartbeat_count: int,
+    last_heartbeat: str | None,
+    event_store_stats: dict,
+    parity_ok: bool,
+    parity_message: str,
+    errors: list[str],      # Last 10 errors
+)
+```
+
+**FAMEventStore (Persistence):**
+- Dual-write: JSONL (append-only DR) + SQLite (indexed queries)
+- Dedupe enforcement via `dedupe_key` unique constraint
+- `verify_parity() -> (bool, str)`: JSONL/SQLite sync check
+- `get_stats() -> dict`: Event counts by type
+
+**Singleton Access:**
+```python
+from modules.foundups.agent_market.src.fam_daemon import get_fam_daemon
+daemon = get_fam_daemon(auto_start=True)
+```
 
 ### DistributionService
 - `build_milestone_payload(task_id: str) -> dict[str, object]`
