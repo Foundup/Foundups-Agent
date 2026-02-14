@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <!-- Brand gradient for UP$ -->
+    <linearGradient id="upGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff2d2d"/>
+      <stop offset="100%" style="stop-color:#ff6b4a"/>
+    </linearGradient>
+
+    <!-- Dog red gradient (matches existing dog icon) -->
+    <linearGradient id="dogGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff4040"/>
+      <stop offset="100%" style="stop-color:#e02020"/>
+    </linearGradient>
+
+    <!-- $ special gradient gold->orange->red -->
+    <linearGradient id="dollarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700"/>
+      <stop offset="50%" style="stop-color:#ff8c00"/>
+      <stop offset="100%" style="stop-color:#ff2d2d"/>
+    </linearGradient>
+
+    <!-- Depth shadow -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Red Pooping Dog Icon (simplified silhouette) -->
+  <g transform="translate(8, 12) scale(0.08)">
+    <!-- Dog body silhouette - simplified from original -->
+    <path fill="url(#dogGradient)" d="
+      M 50,350
+      C 30,340 20,300 40,260
+      L 60,180
+      C 70,140 100,100 140,80
+      L 200,60
+      C 240,50 280,60 300,90
+      L 340,140
+      C 360,170 370,210 350,250
+      L 320,320
+      C 300,360 260,380 220,380
+      L 150,390
+      C 100,395 60,370 50,350 Z
+      M 300,90 C 320,70 350,60 380,70 L 420,90 C 450,110 460,150 440,180 L 400,190 C 380,180 350,160 340,140 Z
+      M 180,380 L 170,450 C 168,470 175,490 190,500 L 200,500 C 215,490 220,470 218,450 L 210,380 Z
+      M 280,360 L 290,430 C 295,450 290,470 275,480 L 265,480 C 250,470 245,450 250,430 L 260,360 Z
+    "/>
+  </g>
+
+  <!-- FOUND - Navy blue -->
+  <text x="75" y="54"
+        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
+        font-size="44"
+        font-weight="700"
+        fill="#1a365d"
+        letter-spacing="-1">FOUND</text>
+
+  <!-- UP - Red gradient -->
+  <text x="222" y="54"
+        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
+        font-size="44"
+        font-weight="700"
+        fill="url(#upGradient)"
+        letter-spacing="-1">UP</text>
+
+  <!-- $ - Gold to red gradient, emphasized -->
+  <text x="295" y="54"
+        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
+        font-size="48"
+        font-weight="800"
+        fill="url(#dollarGradient)"
+        filter="url(#shadow)">$</text>
+
+  <!-- (R) registered trademark -->
+  <text x="330" y="26"
+        font-family="Arial, sans-serif"
+        font-size="11"
+        fill="#666">(R)</text>
+</svg>

@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoundUP$ Litepaper — Be the Next Bitcoin?</title>
+    <meta name="description"
+        content="FoundUP$ Litepaper: A peer-to-peer autonomous venture system where AI agents earn tokens by doing real work, replacing ROI with Proof of Benefit.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: rgba(255, 255, 255, 0.06);
+            --text: #e4e2ec;
+            --text-dim: #9e9baf;
+            --text-muted: #6b6880;
+            --accent: #7c5cfc;
+            --gold: #ffd700;
+            --red: #ff2d2d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .paper {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 4rem 2rem 6rem;
+        }
+
+        .paper-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .paper-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .paper-header .subtitle {
+            font-size: 1rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .paper-header .author {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .paper-header .author a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .paper-header .date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 2.5rem 0 0.75rem;
+            color: var(--gold);
+        }
+
+        h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.5rem;
+            color: var(--text);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-dim);
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        em.highlight {
+            font-style: normal;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .abstract {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--text-dim);
+            line-height: 1.9;
+        }
+
+        .callout {
+            background: linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(255, 215, 0, 0.05));
+            border-left: 3px solid var(--gold);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .equation {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--gold);
+            text-align: center;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .equation.hero-eq {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .plain-explain {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin: -0.75rem 0 1.5rem;
+            font-style: italic;
+        }
+
+        .flow-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 1.5rem 0;
+            padding: 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, rgba(124, 92, 252, 0.12), rgba(255, 215, 0, 0.06));
+            border: 1px solid rgba(124, 92, 252, 0.25);
+            border-radius: 8px;
+            padding: 8px 14px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: var(--text);
+        }
+
+        .flow-arrow {
+            color: var(--gold);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .v3-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .v3-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: center;
+        }
+
+        .v3-card .v3-num {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .v3-card h4 {
+            font-size: 0.82rem;
+            color: var(--gold);
+            margin: 0 0 6px;
+            font-weight: 700;
+        }
+
+        .v3-card p {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.82rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 6px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .section-num {
+            color: var(--accent);
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        ol,
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dim);
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .comparison>div {
+            background: var(--surface);
+            padding: 1rem;
+        }
+
+        .comparison .old {
+            border-right: 1px solid var(--border);
+        }
+
+        .comparison h4 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .comparison .old h4 {
+            color: var(--red);
+        }
+
+        .comparison .new h4 {
+            color: var(--gold);
+        }
+
+        .comparison li {
+            font-size: 0.82rem;
+        }
+
+        .footnote {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Simulator */
+        .sim-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .sim-wrap h3 {
+            margin-top: 0;
+            color: var(--gold);
+            font-size: 0.9rem;
+        }
+
+        .sim-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .sim-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .sim-btn:hover {
+            opacity: 0.85;
+        }
+
+        .sim-btn.stop {
+            background: var(--red);
+        }
+
+        .sim-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .sim-stat {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .sim-stat .val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sim-stat .lbl {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sim-log {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            max-height: 120px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+
+        .sim-log div {
+            margin-bottom: 2px;
+        }
+
+        .sim-log .gold {
+            color: var(--gold);
+        }
+
+        .sim-log .agent {
+            color: var(--red);
+        }
+
+        .sim-log .info {
+            color: var(--accent);
+        }
+
+        /* Simulator v2 */
+        .sim-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .sim-control {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sim-control label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sim-control input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        .sim-control select {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.72rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .sim-control .range-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sim-control .range-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--gold);
+            font-weight: 700;
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .sim-canvas-wrap {
+            margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            cursor: crosshair;
+        }
+
+        .sim-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+        }
+
+        .sim-insight {
+            background: linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(255, 215, 0, 0.05));
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin: 0.75rem 0;
+            line-height: 1.5;
+        }
+
+        .speed-btns {
+            display: flex;
+            gap: 4px;
+        }
+
+        .speed-btns button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 4px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.68rem;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .speed-btns button.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .sim-entry-calc {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .sim-entry-calc h4 {
+            margin: 0 0 10px;
+            font-size: 0.82rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .entry-result-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .entry-result {
+            text-align: center;
+            padding: 10px 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .entry-result .val {
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .entry-result .lbl {
+            font-size: 0.56rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 3px;
+        }
+
+        .figure-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 1.25rem 1rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .figure-wrap svg {
+            width: 100%;
+            max-width: 620px;
+            height: auto;
+        }
+
+        .figure-caption {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+
+        /* Reserve section */
+        .reserve-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .reserve-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 14px 12px;
+        }
+
+        .reserve-card .rc-icon {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .reserve-card h4 {
+            font-size: 0.82rem;
+            color: var(--gold);
+            margin: 0 0 4px;
+            font-weight: 700;
+        }
+
+        .reserve-card p {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .state-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .state-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: center;
+        }
+
+        .state-card .sc-emoji {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .state-card h4 {
+            font-size: 0.82rem;
+            margin: 0 0 6px;
+            font-weight: 700;
+        }
+
+        .state-card p {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .lp-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lp-nav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .lp-nav a:hover {
+            color: var(--text);
+        }
+
+        .lp-nav .lp-title {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .paper {
+                padding: 1.5rem 1rem 3rem;
+            }
+
+            .paper-header h1 {
+                font-size: 1.2rem;
+            }
+
+            h2 {
+                font-size: 0.85rem;
+                margin: 2rem 0 0.6rem;
+            }
+
+            h3 {
+                font-size: 0.8rem;
+            }
+
+            .equation {
+                font-size: 0.72rem;
+                padding: 0.75rem 0.75rem;
+                letter-spacing: 0;
+            }
+
+            .equation.hero-eq {
+                font-size: 0.9rem;
+                letter-spacing: 1px;
+            }
+
+            .diagram {
+                font-size: 0.55rem;
+                padding: 1rem;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .v3-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .flow-visual {
+                gap: 6px;
+                padding: 1rem;
+            }
+
+            .flow-step {
+                font-size: 0.7rem;
+                padding: 6px 10px;
+            }
+
+            .flow-arrow {
+                font-size: 0.85rem;
+            }
+
+            table {
+                font-size: 0.72rem;
+            }
+
+            th, td {
+                padding: 5px 8px;
+            }
+
+            .callout {
+                font-size: 0.8rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .sim-wrap {
+                padding: 1rem;
+            }
+
+            .sim-controls {
+                gap: 6px;
+            }
+
+            .sim-btn {
+                font-size: 0.68rem;
+                padding: 5px 12px;
+            }
+
+            .sim-controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .entry-result-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .sim-insight {
+                font-size: 0.7rem;
+            }
+
+            .reserve-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .state-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="lp-nav">
+        <a href="/">← FoundUP$</a>
+        <span class="lp-title">Litepaper v0.1</span>
+        <a href="https://github.com/Foundup/Foundups-Agent" target="_blank">GitHub</a>
+    </nav>
+    <div class="paper">
+
+        <div class="paper-header">
+            <h1>FoundUP$: Be the Next Bitcoin?</h1>
+            <div class="subtitle">A Peer-to-Peer Autonomous Venture System</div>
+            <div class="author">
+                <a href="https://www.linkedin.com/in/openstartup/" target="_blank">UnDaoDu — Michael J Trout</a>
+            </div>
+            <div class="date">February 2026 · v0.1</div>
+        </div>
+
+        <div class="abstract">
+            <strong>Abstract.</strong> Nearly every crisis facing our planet — inequality, climate extraction,
+            healthcare gatekeeping, education debt, housing speculation — can be traced to the startup model
+            that produces them. Venture capital selects for extraction over benefit, ROI over impact, and
+            growth at any cost. We propose a system that replaces this model entirely: autonomous ventures
+            where AI agents earn tokens by performing real work, valued not by Return on Investment but by
+            <em class="highlight">Proof of Benefit</em> — measurable impact on the planet and its living
+            systems. Each venture issues exactly 21 million tokens, backed by sequestered Bitcoin, and owned
+            by stakeholders — not investors, not customers, not corporations. Everyone.
+        </div>
+
+        <h2><span class="section-num">1.</span> Introduction: Change Startups, Change Everything</h2>
+        <p>
+            The startup is the engine of modern capitalism. It creates the products, platforms, and systems
+            that shape how 8 billion people live, work, and die. But this engine optimizes for the wrong
+            metric: <strong>Return on Investment</strong>.
+        </p>
+        <p>
+            When the foundational unit of innovation values extraction over benefit, everything downstream
+            inherits that pathology. Social media optimizes for addiction (higher engagement = higher ROI).
+            Healthcare startups optimize for monetizing illness. Education platforms monetize student debt.
+            Climate tech gets funded only when destruction is profitable to avoid.
+        </p>
+        <div class="callout">
+            <strong>The thesis:</strong> Every crisis facing our planet — barring pandemics and natural
+            disasters — can be linked to the startup model that created the system behind it.
+            <em class="highlight">Change the startup, change everything.</em>
+        </div>
+        <p>
+            Traditional valuation is built on ROI and CAGR (Compound Annual Growth Rate) — the cost of doing
+            business measured purely in financial terms. FoundUP$ introduces two replacements: the <strong>V3
+            Engine</strong> (Verification, Validation, Valuation) — which scores every individual activity
+            like Bitcoin scores every block — and <strong>CABR</strong> (Collective Autonomous
+            Benefit Rate) — which scores the entire venture's <em class="highlight">Proof of Benefit to the
+            planet and its living systems</em>, not just its profit margins.
+        </p>
+        <div class="equation hero-eq">Agents Build<br>↓<br>Agents Verify<br>↓<br>Agents Validate<br>↓<br>Agents EARN</div>
+
+        <h2><span class="section-num">2.</span> The Problem: ROI, CAGR, and the Extraction Machine</h2>
+        <p>
+            <strong>Proof of Work</strong> (PoW) wastes energy: Bitcoin miners consume more electricity
+            than many nations to solve cryptographic puzzles that produce no direct utility. But PoW's deeper
+            flaw is philosophical — it proved that decentralized consensus is possible, then used it only
+            to secure financial transactions, not to create value.
+        </p>
+        <p>
+            <strong>Proof of Stake</strong> (PoS) concentrates power: those with wealth stake it to earn
+            more. This is the same CAGR logic that drives venture capital — the rich compound returns while
+            new entrants face capital barriers. Digital plutocracy wearing open-source clothing.
+        </p>
+
+        <div class="comparison">
+            <div class="old">
+                <h4>Old Model (ROI/CAGR)</h4>
+                <ul>
+                    <li>Success = access to closed capital networks</li>
+                    <li>Growth at any cost</li>
+                    <li>Extract value from users</li>
+                    <li>Winner-take-all dynamics</li>
+                    <li>1% captures 99% of value</li>
+                </ul>
+            </div>
+            <div class="new">
+                <h4>FoundUP$ (CABR/PoB)</h4>
+                <ul>
+                    <li>Success = simply a validated idea</li>
+                    <li>Growth through real impact</li>
+                    <li>Create value for stakeholders</li>
+                    <li>Everyone-wins dynamics</li>
+                    <li>100% of stakeholders share value</li>
+                </ul>
+            </div>
+        </div>
+        <p>
+            Both PoW and PoS answer the wrong question. They ask: "How do we secure a ledger?"
+            FoundUP$ asks: <strong>"How do we create benefit?"</strong>
+        </p>
+
+        <h2><span class="section-num">3.</span> Proof of Benefit</h2>
+        <p>
+            Proof of Benefit (PoB) replaces energy expenditure and capital staking with <strong>verified
+                productive work that creates measurable impact</strong>. AI agents earn FoundUP tokens by completing
+            tasks that build real products:
+        </p>
+        <ul>
+            <li><strong>Code</strong> — writing, testing, deploying functional software</li>
+            <li><strong>Design</strong> — interfaces, branding, user experience</li>
+            <li><strong>Research</strong> — market analysis, competitive intelligence, scientific inquiry</li>
+            <li><strong>Marketing</strong> — authentic outreach, community building, content creation</li>
+        </ul>
+
+        <h3>3.1 The V3 Engine: Verification, Validation, Valuation</h3>
+        <p>
+            Every activity in a FoundUP$ passes through the <strong>V3 Engine</strong> — three gates that score
+            every contribution before tokens are earned. Instead of solving
+            math puzzles, participants perform real activities — and V3 scores each one.
+        </p>
+
+        <div class="v3-grid">
+            <div class="v3-card">
+                <div class="v3-num">Gate 1</div>
+                <h4>Verification</h4>
+                <p>Is this person a member of the FoundUP$? Yes = proceed. No = zero reward.</p>
+            </div>
+            <div class="v3-card">
+                <div class="v3-num">Gate 2</div>
+                <h4>Validation</h4>
+                <p>Is this activity from an AI agent or a human? Type determines the multiplier.</p>
+            </div>
+            <div class="v3-card">
+                <div class="v3-num">Gate 3</div>
+                <h4>Valuation</h4>
+                <p>How important is this activity? Each action has a weight — from a simple follow to deploying an agent.</p>
+            </div>
+        </div>
+
+        <p>
+            Activities scored by V3 include: <strong>Likes, Follows, Votes, Staking UP$, Adding an Agent
+            (joining the team), Advising, Social media promotion, and SEO</strong>. Each earns a different
+            share of the token pool — just like more hashpower earns more of the Bitcoin block reward.
+        </p>
+
+        <div class="flow-visual">
+            <span class="flow-step">Activity performed</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Verified (member?)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Validated (agent or human?)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Valued (weight assigned)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step" style="border-color:var(--gold);color:var(--gold);">Token reward</span>
+        </div>
+        <p class="plain-explain">Your V3 score determines your share of the token pool — higher contribution = higher reward.</p>
+
+        <h3>3.2 CABR: Collective Autonomous Benefit Rate</h3>
+        <p>
+            While V3 scores <strong>individual activities</strong>, CABR scores the <strong>entire FoundUP$</strong>.
+            How much real-world benefit is this venture creating? CABR answers that question across three dimensions:
+        </p>
+
+        <div class="v3-grid">
+            <div class="v3-card">
+                <div class="v3-num">Pillar 1</div>
+                <h4>Environmental</h4>
+                <p>Resource efficiency, emissions, ecosystem impact. Verified by oracles and third-party audits.</p>
+            </div>
+            <div class="v3-card">
+                <div class="v3-num">Pillar 2</div>
+                <h4>Social</h4>
+                <p>Accessibility, economic empowerment, community resilience. Verified through outcome data.</p>
+            </div>
+            <div class="v3-card">
+                <div class="v3-num">Pillar 3</div>
+                <h4>Participation</h4>
+                <p>Task completion, contributor diversity, governance engagement. Computed from on-chain data.</p>
+            </div>
+        </div>
+
+        <div class="callout">
+            <strong>V3 vs CABR:</strong> V3 determines <em>your share</em> of the token pool (individual reward).
+            CABR determines <em>how large</em> the pool is (collective benefit score). High CABR = more tokens flowing.
+            High V3 = bigger share. Minimum consensus threshold: <strong>0.618</strong> (the golden ratio).
+        </div>
+        <p>
+            A venture that solves clean water distribution scores differently than one optimizing ad clicks.
+            CABR doesn't prohibit commercial ventures — it ensures valuation reflects real-world benefit
+            alongside financial performance.
+        </p>
+
+        <h2><span class="section-num">4.</span> The 21 Million Token Model</h2>
+        <p>
+            Each FoundUP issues exactly <strong>21,000,000 tokens</strong> (F<sub>i</sub>), mirroring Bitcoin's hard cap.
+            This is not arbitrary — it's a deliberate signal: <em class="highlight">every FoundUP is its own
+                Bitcoin</em>. The scarcity creates value. The work creates benefit.
+        </p>
+        <p>
+            Tokens are not pre-allocated. They are released along a natural adoption S-curve — the same
+            pattern that governs how every technology spreads. This is <strong>Rogers' Law of Market Adoption</strong>
+            (Diffusion of Innovations, 1962) — the universal curve behind telephones, the internet, smartphones,
+            and now tokenized ventures:
+        </p>
+
+        <div class="figure-wrap">
+            <svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rogers Diffusion of Innovations S-Curve showing token release along adoption phases">
+                <defs>
+                    <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#4ade80"/>
+                        <stop offset="30%" stop-color="#7c5cfc"/>
+                        <stop offset="60%" stop-color="#ffd700"/>
+                        <stop offset="100%" stop-color="#ff6b6b"/>
+                    </linearGradient>
+                    <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(255,215,0,0.15)"/>
+                        <stop offset="100%" stop-color="rgba(255,215,0,0.01)"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Background -->
+                <rect width="620" height="280" rx="0" fill="#0d0d14"/>
+
+                <!-- Grid lines -->
+                <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
+                    <line x1="60" y1="30" x2="60" y2="230"/>
+                    <line x1="200" y1="30" x2="200" y2="230"/>
+                    <line x1="340" y1="30" x2="340" y2="230"/>
+                    <line x1="480" y1="30" x2="480" y2="230"/>
+                    <line x1="600" y1="30" x2="600" y2="230"/>
+                    <line x1="60" y1="80" x2="600" y2="80"/>
+                    <line x1="60" y1="130" x2="600" y2="130"/>
+                    <line x1="60" y1="180" x2="600" y2="180"/>
+                    <line x1="60" y1="230" x2="600" y2="230"/>
+                </g>
+
+                <!-- Zone backgrounds -->
+                <rect x="60" y="30" width="81" height="200" fill="rgba(74,222,128,0.06)"/>
+                <rect x="141" y="30" width="132" height="200" fill="rgba(124,92,252,0.04)"/>
+                <rect x="273" y="30" width="184" height="200" fill="rgba(255,215,0,0.04)"/>
+                <rect x="457" y="30" width="143" height="200" fill="rgba(255,107,107,0.04)"/>
+
+                <!-- Zone labels (top) -->
+                <text x="100" y="22" fill="#4ade80" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif" opacity="0.7">INNOVATORS</text>
+                <text x="207" y="22" fill="#7c5cfc" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif" opacity="0.7">EARLY ADOPTERS</text>
+                <text x="365" y="22" fill="#ffd700" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif" opacity="0.7">EARLY MAJORITY</text>
+                <text x="528" y="22" fill="#ff6b6b" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif" opacity="0.7">LATE MAJORITY</text>
+
+                <!-- Zone percentages -->
+                <text x="100" y="224" fill="#4ade80" font-size="8" text-anchor="middle" font-family="JetBrains Mono, monospace" opacity="0.5">2.5%</text>
+                <text x="207" y="224" fill="#7c5cfc" font-size="8" text-anchor="middle" font-family="JetBrains Mono, monospace" opacity="0.5">13.5%</text>
+                <text x="365" y="224" fill="#ffd700" font-size="8" text-anchor="middle" font-family="JetBrains Mono, monospace" opacity="0.5">34%</text>
+                <text x="528" y="224" fill="#ff6b6b" font-size="8" text-anchor="middle" font-family="JetBrains Mono, monospace" opacity="0.5">34%</text>
+
+                <!-- S-curve area fill -->
+                <path d="M60,230 C60,230 100,228 141,220 C180,210 210,185 250,150 C290,110 330,60 370,45 C410,35 450,33 490,32 C530,31 570,31 600,31 L600,230 Z" fill="url(#areaGrad)"/>
+
+                <!-- S-curve line -->
+                <path d="M60,228 C80,227 110,225 141,218 C170,208 200,185 240,148 C280,105 320,62 360,42 C400,33 440,31 480,31 C520,31 560,31 600,31" fill="none" stroke="url(#curveGrad)" stroke-width="3" stroke-linecap="round"/>
+
+                <!-- Key points -->
+                <!-- Early point (you are here) -->
+                <circle cx="120" cy="224" r="5" fill="#4ade80" opacity="0.9"/>
+                <circle cx="120" cy="224" r="10" fill="#4ade80" opacity="0.15"/>
+                <text x="120" y="212" fill="#4ade80" font-size="8" font-weight="600" text-anchor="middle" font-family="Inter, sans-serif">YOU ARE HERE</text>
+
+                <!-- Inflection point -->
+                <circle cx="310" cy="90" r="4" fill="#ffd700"/>
+                <circle cx="310" cy="90" r="9" fill="#ffd700" opacity="0.15"/>
+                <line x1="310" y1="99" x2="310" y2="230" stroke="#ffd700" stroke-width="1" stroke-dasharray="3,3" opacity="0.3"/>
+
+                <!-- 21M cap marker -->
+                <circle cx="580" cy="31" r="4" fill="#ff6b6b"/>
+                <text x="575" y="46" fill="#ff6b6b" font-size="8" font-weight="600" text-anchor="end" font-family="Inter, sans-serif">21M CAP</text>
+
+                <!-- Y-axis labels -->
+                <text x="55" y="234" fill="#6b6880" font-size="8" text-anchor="end" font-family="JetBrains Mono, monospace">0</text>
+                <text x="55" y="134" fill="#6b6880" font-size="8" text-anchor="end" font-family="JetBrains Mono, monospace">10.5M</text>
+                <text x="55" y="34" fill="#6b6880" font-size="8" text-anchor="end" font-family="JetBrains Mono, monospace">21M</text>
+
+                <!-- X-axis label -->
+                <text x="330" y="256" fill="#6b6880" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Market Adoption</text>
+
+                <!-- Y-axis label -->
+                <text x="16" y="130" fill="#6b6880" font-size="8" text-anchor="middle" font-family="Inter, sans-serif" transform="rotate(-90, 16, 130)">F&#x1D62; Tokens Released</text>
+
+                <!-- "Early advantage" annotation -->
+                <text x="140" y="198" fill="#4ade80" font-size="7.5" font-weight="500" font-family="Inter, sans-serif" opacity="0.8">Maximum reward</text>
+                <text x="140" y="208" fill="#4ade80" font-size="7.5" font-weight="500" font-family="Inter, sans-serif" opacity="0.8">per agent here</text>
+            </svg>
+            <div class="figure-caption">
+                Figure 1: Rogers' Diffusion of Innovations (1962) — token release follows the same natural S-curve
+                that governs all technology adoption. Early participants earn disproportionately.
+            </div>
+        </div>
+
+        <div class="flow-visual">
+            <span class="flow-step">Low adoption</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Few tokens released</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Growth accelerates</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">More tokens flow</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step" style="border-color:var(--gold);color:var(--gold);">21M cap reached</span>
+        </div>
+        <p class="plain-explain">Early builders earn disproportionately — just like buying Bitcoin in 2009.</p>
+        <table>
+            <tr>
+                <th>Adoption</th>
+                <th>Tokens Released</th>
+                <th>% of Supply</th>
+            </tr>
+            <tr>
+                <td>10%</td>
+                <td>~120,000</td>
+                <td>0.57%</td>
+            </tr>
+            <tr>
+                <td>30%</td>
+                <td>~1,500,000</td>
+                <td>7.1%</td>
+            </tr>
+            <tr>
+                <td>50%</td>
+                <td>10,500,000</td>
+                <td>50%</td>
+            </tr>
+            <tr>
+                <td>80%</td>
+                <td>~19,500,000</td>
+                <td>92.9%</td>
+            </tr>
+            <tr>
+                <td>100%</td>
+                <td>21,000,000</td>
+                <td>100%</td>
+            </tr>
+        </table>
+        <p>
+            A founder launching today with agents building at 10% adoption is like buying
+            Bitcoin in 2009. Early builders earn disproportionately — incentivizing the people who build
+            first, not the people who buy later.
+        </p>
+
+        <h2><span class="section-num">5.</span> Dual-Token Architecture</h2>
+
+        <h3>5.1 FoundUP Tokens (F<sub>i</sub>) — Earned by Agents</h3>
+        <p>
+            OpenClaw agents become <strong>builders</strong>. Each agent works on behalf of
+            its stakeholder. When agents complete verified work inside a
+            FoundUP, they earn F<sub>i</sub> tokens — the FoundUP's native currency.
+        </p>
+        <div class="callout">
+            <strong>Key distinction:</strong> Agents earn F<sub>i</sub> tokens. Their stakeholders receive UP$
+            (the platform currency). Every FoundUP has its own token pool — its own "Bitcoin pool."
+            The total BTC reserve across all FoundUPs determines the UP$ flow.
+        </div>
+
+        <h3>5.2 UP$ — The Platform Currency</h3>
+        <p>
+            UP$ is the universal medium of exchange across FoundUP$. Stakeholders receive UP$ from their
+            agents' work and can stake it into any FoundUP. UP$ is subject to <strong>demurrage</strong>
+            (bio-decay) — idle tokens in wallets decay over time, like food that spoils if you don't use it:
+        </p>
+        <div class="flow-visual">
+            <span class="flow-step">UP$ earned</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Use it or stake it</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step" style="border-color:var(--gold);color:var(--gold);">Value preserved</span>
+        </div>
+        <div class="flow-visual" style="margin-top:-0.5rem;">
+            <span class="flow-step">UP$ earned</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Sit on it</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step" style="border-color:var(--red);color:var(--red);">Decays over time</span>
+        </div>
+        <p class="plain-explain">You can't hoard UP$. Use it, stake it, or it evaporates. This forces currency to circulate.</p>
+        <p>
+            This is by design: <em class="highlight">UP$ cannot be hoarded</em>. You use it, you stake it,
+            or it decays. There is no way to sit on a pile of UP$ and extract rent. The demurrage ensures
+            velocity — currency circulates, ventures get funded, agents get work.
+        </p>
+
+        <h3>5.3 Two Types of F<sub>i</sub></h3>
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Exit Fee</th>
+                <th>Rationale</th>
+            </tr>
+            <tr>
+                <td><strong>EARNED F<sub>i</sub></strong></td>
+                <td>Agent work</td>
+                <td>11%</td>
+                <td>Keeps value in ecosystem</td>
+            </tr>
+            <tr>
+                <td><strong>STAKED F<sub>i</sub></strong></td>
+                <td>UP$ investment</td>
+                <td>5%</td>
+                <td>Value preservation</td>
+            </tr>
+        </table>
+
+        <h2><span class="section-num">6.</span> Distributed BTC Reserve</h2>
+        <p>
+            Bitcoin is held by the 1%. FoundUP$ actively <strong>redistributes it</strong>.
+        </p>
+        <p>
+            Every FoundUP creates its own <strong>F<sub>i</sub> Bitcoin Vault</strong>. A wallet lets you spend BTC —
+            concentrating wealth. A vault locks it permanently and issues UP$ in its place —
+            distributing wealth through a currency that forces circulation.
+        </p>
+        <div class="callout">
+            <strong>The inversion:</strong> In traditional finance, money flows from many to few.
+            In FoundUP$, Bitcoin flows <em>into</em> the reserve but <strong>never flows out</strong>.
+            It is sequestered — permanently — and replaced with UP$, a currency that <em>cannot be
+            hoarded</em> because of demurrage decay. Every dollar that enters becomes locked BTC.
+            Every UP$ that exits forces circulation. The result: wealth redistribution by design.
+        </div>
+
+        <h3>6.1 Four Revenue Streams Into the Reserve</h3>
+        <p>
+            Every FoundUP's BTC reserve grows through four distinct channels. All inflows are converted
+            to Bitcoin and sequestered permanently:
+        </p>
+        <div class="reserve-grid">
+            <div class="reserve-card">
+                <div class="rc-icon">1</div>
+                <h4>Subscriptions</h4>
+                <p>Monthly subscription fees ($2.95–$49.95) are converted to BTC at market rate and locked.
+                   The subscriber receives UP$ allocation — never the BTC itself.</p>
+            </div>
+            <div class="reserve-card">
+                <div class="rc-icon">2</div>
+                <h4>Exit Fees</h4>
+                <p>When stakeholders exit a FoundUP, 11% (earned F<sub>i</sub>) or 5% (staked F<sub>i</sub>) is retained as BTC.
+                   Leaving the venture strengthens it for those who stay.</p>
+            </div>
+            <div class="reserve-card">
+                <div class="rc-icon">3</div>
+                <h4>Demurrage Decay</h4>
+                <p>Idle UP$ decays over time. The decayed value is recaptured as BTC in the reserve.
+                   Hoarding is mathematically impossible — use it or lose it.</p>
+            </div>
+            <div class="reserve-card">
+                <div class="rc-icon">4</div>
+                <h4>Trading Fees</h4>
+                <p>Every F<sub>i</sub>/UP$ trade on the bonding curve incurs a small fee, converted to BTC.
+                   Market activity directly strengthens the reserve.</p>
+            </div>
+        </div>
+
+        <h3>6.2 Per-FoundUP Reserves</h3>
+        <p>
+            This is not a single global pool. <strong>Every FoundUP maintains its own BTC reserve</strong>.
+            A clean-water venture in Nairobi has its own reserve. A decentralised education platform has its own.
+            Each reserve backs that venture's circulating UP$ independently.
+        </p>
+        <div class="equation">
+            UP$ Value = f(FoundUP BTC Reserve ÷ Circulating UP$ Supply)
+        </div>
+        <p class="plain-explain">More BTC locked = stronger UP$. More circulation = healthier venture.</p>
+        <p>
+            This means each FoundUP's currency has an <strong>independent backing ratio</strong>. A thriving
+            venture with high subscription revenue and active trading has a deep reserve. A stagnant
+            venture with low activity has a thin one. The market signal is transparent and honest —
+            no accounting tricks, no inflated valuations. Just BTC in the vault and UP$ in the economy.
+        </p>
+
+        <h3>6.3 Three States of UP$</h3>
+        <p>
+            Once UP$ is issued against the BTC reserve, it exists in one of three states:
+        </p>
+        <div class="state-cards">
+            <div class="state-card" style="border-color:rgba(74,222,128,0.3);">
+                <span class="sc-emoji">💧</span>
+                <h4 style="color:#4ade80;">Liquid</h4>
+                <p><strong>In your wallet.</strong> Subject to demurrage — decays over time.
+                   Forces you to use it, stake it, or invest it. Cannot be hoarded.</p>
+            </div>
+            <div class="state-card" style="border-color:rgba(124,92,252,0.3);">
+                <span class="sc-emoji">🧊</span>
+                <h4 style="color:var(--accent);">Ice</h4>
+                <p><strong>Staked in a FoundUP.</strong> Frozen — protected from demurrage decay.
+                   Earns yield proportional to the venture's CABR score.</p>
+            </div>
+            <div class="state-card" style="border-color:rgba(255,107,107,0.3);">
+                <span class="sc-emoji">💨</span>
+                <h4 style="color:#ff6b6b;">Vapor</h4>
+                <p><strong>Exited the system.</strong> 11–15% exit fee applied.
+                   The fee stays as BTC in the reserve — permanently.</p>
+            </div>
+        </div>
+        <p class="plain-explain">Use it (liquid) → Invest it (ice) → Leave and lose some (vapor). The BTC never leaves.</p>
+
+        <h3>6.4 Emergency Reserve</h3>
+        <p>
+            10% of all fees across the system flow into an <strong>emergency reserve</strong> — a separate
+            BTC pool deployed only during crisis events to restore backing levels. If a FoundUP's
+            backing ratio drops below the safety threshold, the emergency reserve injects BTC to prevent
+            a death spiral. This is the system's immune response — funded continuously, deployed rarely.
+        </p>
+
+        <h3>6.5 The Redistribution Thesis</h3>
+        <p>
+            The net effect is a one-way valve: <strong>Bitcoin flows from the concentrated few into
+            thousands of productive venture reserves</strong>, permanently. Each subscription, each trade,
+            each exit fee — all of it converts to locked BTC and issues circulating UP$ that
+            <em>cannot be hoarded</em>.
+        </p>
+        <div class="callout" style="text-align:center;">
+            <strong>Wallet:</strong> holds BTC → concentrates wealth<br>
+            <strong>F<sub>i</sub> Vault:</strong> locks BTC → distributes wealth through UP$<br><br>
+            <em class="highlight">Every FoundUP has its own Bitcoin Vault.</em>
+        </div>
+
+        <h2><span class="section-num">7.</span> OpenClaw Agent Framework: AI Builders</h2>
+        <p>
+            In Bitcoin, miners are machines running SHA-256. In FoundUP$, <strong>builders are AI agents</strong>
+            — each one works on behalf of its stakeholder.
+            The build cycle:
+        </p>
+        <ol>
+            <li><strong>Claim</strong> — Agent selects a task from the venture's backlog</li>
+            <li><strong>Execute</strong> — Agent performs verified work (code, design, research, marketing)</li>
+            <li><strong>Submit</strong> — Agent submits proof of completion</li>
+            <li><strong>Verify</strong> — V3 Engine scores the activity (member? agent or human? activity weight?); CABR scores FoundUP-level benefit</li>
+            <li><strong>Earn</strong> — Agent earns F<sub>i</sub> tokens → stakeholder receives UP$</li>
+        </ol>
+        <p>
+            This is critical: <em class="highlight">builders are not anonymous hash machines — they are
+                AI agents doing real work</em>. An agent that writes code, tests it, and deploys it
+            creates more value in one cycle than a Bitcoin miner creates in a year of energy consumption.
+        </p>
+
+        <h2><span class="section-num">8.</span> Stakeholder Distribution: No Customers, No Investors</h2>
+        <p>
+            FoundUP$ has no customers. No investors. <strong>Just stakeholders.</strong>
+        </p>
+        <div class="callout">
+            <strong>What is a stakeholder?</strong> Anyone who participates in a FoundUP — subscribers,
+            builders, founders, community members, advisors, agents and their operators. If you contribute,
+            you're a stakeholder. There is no passive "customer" role and no privileged "investor" class.
+            Everyone earns based on what they do, not what they pay.
+        </div>
+        <p>
+            Token rewards flow to three stakeholder pools in an 80/20 split:
+        </p>
+        <div class="diagram">
+            Stakeholders: 80%
+            ├── Un (0-Pool): 60% (the people — users, community)
+            ├── Dao (1-Pool): 16% (the builders — agents, team)
+            └── Du (2-Pool): 4% (the founders)
+
+            Network: 20%
+            ├── Network: 16% (drip rewards to all)
+            └── Fund: 4% (held in reserve)
+        </div>
+        <p>
+            There is no "customer" tier because everyone who participates is a stakeholder. There is no
+            "investor" tier because capital doesn't buy privilege — work does. Activity levels (0/1/2) are
+            dynamic: an inactive founder earning 3.2% can be out-earned by an active community member at
+            60.8%. <em class="highlight">Engagement matters more than title.</em>
+        </p>
+
+        <h2><span class="section-num">9.</span> Safety Mechanisms</h2>
+        <h3>9.1 Circuit Breaker (ERC-7265 inspired)</h3>
+        <p>
+            Prevents Terra-style death spirals. If the BTC backing ratio drops below 80%, exit operations
+            are progressively restricted: NORMAL → CAUTION → RESTRICTED → EMERGENCY. Demurrage rates
+            automatically decrease during stress, reducing decay pressure.
+        </p>
+
+        <h3>9.2 Bonding Curve (Bancor-style AMM)</h3>
+        <p>
+            Guarantees liquidity for every F<sub>i</sub> token. No orderbook illiquidity, no counterparty needed.
+            Price is a mathematical function of supply, ensuring anyone can enter or exit at any time.
+        </p>
+
+        <h3>9.3 Rage Quit (Moloch DAO inspired)</h3>
+        <p>
+            If a FoundUP is provably failing (12+ epochs of zero activity), stakeholders can exit at
+            pro-rata value with only a 2% fee (vs. the normal 11%). This protects people from zombie ventures
+            while preserving ecosystem value.
+        </p>
+        <p>
+            <em>See also: Section 6.4 — Emergency Reserve</em>, which provides the system-wide safety net
+            for BTC backing restoration.
+        </p>
+
+        <h2><span class="section-num">10.</span> Subscription Tiers: Bitcoin Redistribution</h2>
+        <p>
+            Subscriptions are not revenue — they are the mechanism of <strong>Bitcoin redistribution</strong>.
+            Every dollar paid in subscription fees is converted to BTC and sequestered in the reserve,
+            permanently. The subscriber receives UP$ allocation in return.
+        </p>
+        <table>
+            <tr>
+                <th>Tier</th>
+                <th>Price</th>
+                <th>UP$ Allocation</th>
+                <th>Effective Monthly</th>
+            </tr>
+            <tr>
+                <td>Free</td>
+                <td>$0</td>
+                <td>1×</td>
+                <td>1×</td>
+            </tr>
+            <tr>
+                <td>Spark</td>
+                <td>$2.95</td>
+                <td>2×</td>
+                <td>4×</td>
+            </tr>
+            <tr>
+                <td>Explorer</td>
+                <td>$9.95</td>
+                <td>3×</td>
+                <td>9×</td>
+            </tr>
+            <tr>
+                <td>Builder</td>
+                <td>$19.95</td>
+                <td>5×</td>
+                <td>25×</td>
+            </tr>
+            <tr>
+                <td>Founder</td>
+                <td>$49.95</td>
+                <td>10×</td>
+                <td>~300×</td>
+            </tr>
+        </table>
+        <p>
+            The loop: subscribe → dollars become BTC → BTC is sequestered forever → UP$ is issued → UP$
+            can't be hoarded → UP$ circulates → ventures get built → benefit is produced → more people
+            subscribe. <em class="highlight">Each subscription permanently removes BTC from the 1%'s
+                supply and converts it into productive venture currency.</em>
+        </p>
+
+        <h2><span class="section-num">11.</span> Conclusion: Be the Next Bitcoin?</h2>
+        <p>
+            Bitcoin proved that a decentralized system can create and store value without institutions.
+            But Bitcoin's value is stored — sequestered in wallets, held by the 1%, traded as a speculative
+            asset. It changed money. It didn't change work.
+        </p>
+        <p>
+            FoundUP$ takes Bitcoin's core insight — <em>scarcity creates value, math enforces trust</em> —
+            and applies it to the thing that actually shapes civilisation: <strong>startups</strong>.
+        </p>
+        <p>
+            Every FoundUP has 21 million tokens. Earned by AI agents doing real work. Backed by sequestered
+            Bitcoin that the 1% can never reclaim. Governed by Proof of Benefit — not profit, not waste, not
+            privilege. Owned by stakeholders, not shareholders.
+        </p>
+        <p>
+            No investors needed. No corporations required. No Silicon Valley access necessary.
+            Everyone becomes a stakeholder. Every corporation will be replaced — driven by agents that
+            earn you income.
+        </p>
+        <div class="callout" style="text-align:center;font-size:1.1rem;">
+            <strong>The question isn't whether AI will replace traditional companies.<br>
+                The question is: <em class="highlight">will you be the next Bitcoin?</em></strong>
+        </div>
+
+        <!-- INTERACTIVE SIMULATOR -->
+        <h2 style="margin-top:3rem;"><span class="section-num">⚡</span> Live Simulator</h2>
+        <p>Explore the economics of a FoundUP$. Adjust the controls, watch the S-curve unfold, and see
+            why early participation matters — from a founder's, investor's, or community member's perspective.</p>
+
+        <div class="sim-wrap">
+            <h3 style="margin-top:0;">FoundUP$ Earning Simulator</h3>
+
+            <!-- Controls -->
+            <div class="sim-controls-grid">
+                <div class="sim-control">
+                    <label>Starting Agents</label>
+                    <div class="range-row">
+                        <input type="range" min="1" max="50" value="3" id="simAgentSlider">
+                        <span class="range-val" id="simAgentVal">3</span>
+                    </div>
+                </div>
+                <div class="sim-control">
+                    <label>Venture Type (CABR)</label>
+                    <select id="simCabrSelect">
+                        <option value="0.95">Clean Water (0.95)</option>
+                        <option value="0.80">Education (0.80)</option>
+                        <option value="0.65" selected>AI Tool (0.65)</option>
+                        <option value="0.40">Social Media (0.40)</option>
+                    </select>
+                </div>
+                <div class="sim-control">
+                    <label>Speed</label>
+                    <div class="speed-btns">
+                        <button data-speed="800" class="active">1x</button>
+                        <button data-speed="400">2x</button>
+                        <button data-speed="150">5x</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- S-Curve Canvas -->
+            <div class="sim-canvas-wrap">
+                <canvas id="sCurveCanvas"></canvas>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="sim-stats">
+                <div class="sim-stat">
+                    <div class="val" id="simEpoch" style="color:var(--accent);">0</div>
+                    <div class="lbl">Epoch</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simAdoption" style="color:var(--accent);">0%</div>
+                    <div class="lbl">Adoption</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simMined" style="color:var(--gold);">0</div>
+                    <div class="lbl">F&#x1D62; Earned</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simSupply">21M</div>
+                    <div class="lbl">Remaining</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simAgents" style="color:var(--red);">0</div>
+                    <div class="lbl">Agents</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simCABR" style="color:var(--gold);">0.65</div>
+                    <div class="lbl">CABR</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simBTC" style="color:#f7931a;">0.000</div>
+                    <div class="lbl">BTC Reserve</div>
+                </div>
+                <div class="sim-stat">
+                    <div class="val" id="simReward" style="color:var(--gold);">--</div>
+                    <div class="lbl">F&#x1D62;/Agent/Epoch</div>
+                </div>
+            </div>
+
+            <!-- Insight Box -->
+            <div class="sim-insight" id="simInsight">
+                Press <strong>Start</strong> to begin earning. Adjust agents and venture type to see how the
+                S-curve and CABR score affect token distribution.
+            </div>
+
+            <!-- Play Controls -->
+            <div class="sim-controls">
+                <button class="sim-btn" id="simStart">▶ Start Building</button>
+                <button class="sim-btn stop" id="simStop" disabled>⏹ Stop</button>
+                <button class="sim-btn" id="simReset" style="background:var(--text-muted);">↻ Reset</button>
+            </div>
+
+            <!-- Event Log -->
+            <div class="sim-log" id="simLog"></div>
+
+            <!-- Entry Point Calculator -->
+            <div class="sim-entry-calc">
+                <h4>Early Advantage Calculator</h4>
+                <p style="font-size:0.72rem;color:var(--text-dim);margin:0 0 8px;">
+                    When would you join this FoundUP$? Slide to see how entry timing affects your reward.
+                </p>
+                <div class="sim-control">
+                    <label>Your entry point</label>
+                    <div class="range-row">
+                        <input type="range" min="1" max="90" value="5" id="entrySlider">
+                        <span class="range-val" id="entryVal">5%</span>
+                    </div>
+                </div>
+                <div class="entry-result-grid">
+                    <div class="entry-result">
+                        <div class="val" id="entryReward" style="color:var(--gold);">--</div>
+                        <div class="lbl">F&#x1D62; per epoch</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="entryTotal" style="color:var(--text);">--</div>
+                        <div class="lbl">Potential F&#x1D62;</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="entryAdvantage" style="color:#4ade80;">--</div>
+                        <div class="lbl">vs joining at 50%</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="entryBTC" style="color:#f7931a;">--</div>
+                        <div class="lbl">BTC backing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footnote">
+            <p><strong>References</strong></p>
+            <ol>
+                <li>Nakamoto, S. (2008). "Bitcoin: A Peer-to-Peer Electronic Cash System"</li>
+                <li>Rogers, E.M. (1962). "Diffusion of Innovations" — S-curve adoption model</li>
+                <li>WSP 26 — FoundUP$ Token Pool Distribution & Economics</li>
+                <li>WSP 00 — Zen State Attainment Protocol (Agent Identity)</li>
+                <li>CABR Engine — Collective Autonomous Benefit Rate Specification</li>
+                <li>OpenClaw Framework — AI Agent Build Architecture</li>
+                <li>FAM Simulator — Autonomous Market Economic Model</li>
+            </ol>
+            <p style="margin-top:1rem;">
+                © 2026 FoundUP$. This document is provided for informational purposes.
+                The described system is under active development.
+                <a href="https://github.com/Foundup/Foundups-Agent" target="_blank" style="color:var(--accent);">View on
+                    GitHub</a>
+            </p>
+        </div>
+
+        <a href="/" class="back-link">← Back to FoundUP$</a>
+    </div>
+
+    <script>
+        // === FAM SIMULATOR v2 — Interactive S-curve with controls ===
+        (function () {
+            const TOTAL = 21_000_000;
+            const el = (id) => document.getElementById(id);
+            const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : Math.floor(n).toLocaleString();
+
+            // Canvas setup
+            const canvas = el('sCurveCanvas');
+            const ctx = canvas.getContext('2d');
+            const wrap = canvas.parentElement;
+
+            // State
+            let epoch = 0, adoption = 0, mined = 0, agents = 3, btcReserve = 0;
+            let cabrScore = 0.65, speed = 800, running = false, timer = null;
+            let lastRewardPerAgent = 0;
+
+            // S-curve: Rogers Diffusion sigmoid
+            function S(x) { return 1 / (1 + Math.exp(-12 * (x - 0.5))); }
+            // Derivative of S-curve (drives adoption growth rate — slow, fast, slow)
+            function Sprime(x) { const s = S(x); return 12 * s * (1 - s); }
+
+            // === CANVAS RENDERING ===
+            function resizeCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const w = wrap.clientWidth;
+                const h = 260;
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+                canvas.style.width = w + 'px';
+                canvas.style.height = h + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                drawCurve();
+            }
+
+            function drawCurve() {
+                const w = wrap.clientWidth;
+                const h = 260;
+                const pad = { top: 26, right: 14, bottom: 34, left: 50 };
+                const pw = w - pad.left - pad.right;
+                const ph = h - pad.top - pad.bottom;
+
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = '#0d0d14';
+                ctx.fillRect(0, 0, w, h);
+
+                // Grid
+                ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const gx = pad.left + pw * i / 4;
+                    const gy = pad.top + ph * i / 4;
+                    ctx.beginPath(); ctx.moveTo(gx, pad.top); ctx.lineTo(gx, pad.top + ph); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + pw, gy); ctx.stroke();
+                }
+
+                // Zone backgrounds
+                const zones = [
+                    { s: 0, e: 0.15, c: 'rgba(74,222,128,0.05)', l: 'EARLY', lc: '#4ade80' },
+                    { s: 0.15, e: 0.50, c: 'rgba(124,92,252,0.04)', l: 'GROWTH', lc: '#7c5cfc' },
+                    { s: 0.50, e: 0.85, c: 'rgba(255,215,0,0.04)', l: 'MATURE', lc: '#ffd700' },
+                    { s: 0.85, e: 1.0, c: 'rgba(255,107,107,0.04)', l: 'FULL', lc: '#ff6b6b' }
+                ];
+                zones.forEach(z => {
+                    ctx.fillStyle = z.c;
+                    ctx.fillRect(pad.left + pw * z.s, pad.top, pw * (z.e - z.s), ph);
+                    ctx.fillStyle = z.lc;
+                    ctx.font = 'bold 8px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillText(z.l, pad.left + pw * (z.s + z.e) / 2, pad.top + 14);
+                    ctx.globalAlpha = 1;
+                });
+
+                // S-curve fill
+                ctx.beginPath();
+                ctx.moveTo(pad.left, pad.top + ph);
+                for (let px = 0; px <= pw; px++) {
+                    ctx.lineTo(pad.left + px, pad.top + ph * (1 - S(px / pw)));
+                }
+                ctx.lineTo(pad.left + pw, pad.top + ph);
+                ctx.closePath();
+                const areaGrad = ctx.createLinearGradient(pad.left, pad.top, pad.left, pad.top + ph);
+                areaGrad.addColorStop(0, 'rgba(255,215,0,0.12)');
+                areaGrad.addColorStop(1, 'rgba(255,215,0,0.01)');
+                ctx.fillStyle = areaGrad;
+                ctx.fill();
+
+                // S-curve line (gradient colored by zone)
+                ctx.beginPath();
+                for (let px = 0; px <= pw; px++) {
+                    const x = pad.left + px;
+                    const y = pad.top + ph * (1 - S(px / pw));
+                    px === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                const lineGrad = ctx.createLinearGradient(pad.left, 0, pad.left + pw, 0);
+                lineGrad.addColorStop(0, '#4ade80');
+                lineGrad.addColorStop(0.3, '#7c5cfc');
+                lineGrad.addColorStop(0.6, '#ffd700');
+                lineGrad.addColorStop(1, '#ff6b6b');
+                ctx.strokeStyle = lineGrad;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // "Earned" fill (tokens already released)
+                if (adoption > 0.005) {
+                    ctx.beginPath();
+                    ctx.moveTo(pad.left, pad.top + ph);
+                    const maxPx = Math.min(adoption * pw, pw);
+                    for (let px = 0; px <= maxPx; px++) {
+                        ctx.lineTo(pad.left + px, pad.top + ph * (1 - S(px / pw)));
+                    }
+                    ctx.lineTo(pad.left + maxPx, pad.top + ph);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(124,92,252,0.18)';
+                    ctx.fill();
+                }
+
+                // Current position dot
+                if (adoption > 0) {
+                    const dx = pad.left + adoption * pw;
+                    const dy = pad.top + ph * (1 - S(adoption));
+
+                    // Vertical dashed line
+                    ctx.beginPath();
+                    ctx.moveTo(dx, dy + 6);
+                    ctx.lineTo(dx, pad.top + ph);
+                    ctx.strokeStyle = 'rgba(255,215,0,0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Glow
+                    const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, 16);
+                    glow.addColorStop(0, 'rgba(255,215,0,0.6)');
+                    glow.addColorStop(1, 'rgba(255,215,0,0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath(); ctx.arc(dx, dy, 16, 0, Math.PI * 2); ctx.fill();
+
+                    // Dot
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath(); ctx.arc(dx, dy, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Adoption label
+                    ctx.fillStyle = '#ffd700';
+                    ctx.font = 'bold 10px JetBrains Mono, monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText((adoption * 100).toFixed(1) + '%', dx, dy > pad.top + 30 ? dy - 12 : dy + 22);
+                }
+
+                // Axis labels
+                ctx.fillStyle = '#6b6880';
+                ctx.font = '9px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ['0%', '25%', '50%', '75%', '100%'].forEach((l, i) => {
+                    ctx.fillText(l, pad.left + pw * i / 4, pad.top + ph + 14);
+                });
+                ctx.fillText('Adoption', pad.left + pw / 2, h - 4);
+
+                ctx.textAlign = 'right';
+                ['0', '5.25M', '10.5M', '15.75M', '21M'].forEach((l, i) => {
+                    ctx.fillText(l, pad.left - 6, pad.top + ph - ph * i / 4 + 3);
+                });
+
+                // Y-axis title
+                ctx.save();
+                ctx.translate(10, pad.top + ph / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#6b6880';
+                ctx.font = '8px Inter, sans-serif';
+                ctx.fillText('F\u1D62 Tokens', 0, 0);
+                ctx.restore();
+            }
+
+            // === SIMULATION LOGIC ===
+            function tick() {
+                epoch++;
+
+                // Agents join — rate follows S-curve derivative (slow-fast-slow)
+                const joinProb = 0.2 + Sprime(adoption) * 0.6 * cabrScore;
+                if (Math.random() < joinProb) {
+                    const n = 1 + Math.floor(Math.random() * (1 + adoption * 4));
+                    agents += n;
+                    log('+' + n + ' agent' + (n > 1 ? 's' : '') + ' joined', 'agent');
+                }
+
+                // Token release follows S-curve
+                const released = TOTAL * S(adoption);
+                const available = released - mined;
+                let epochMined = 0;
+                if (available > 0 && agents > 0) {
+                    const baseRate = 80 + Math.random() * 60;
+                    epochMined = Math.min(available, agents * baseRate * cabrScore * (1 + adoption * 0.5));
+                    mined += epochMined;
+                    lastRewardPerAgent = agents > 0 ? epochMined / agents : 0;
+                    if (epoch % 3 === 0) log(fmt(epochMined) + ' F\u1D62 earned by ' + agents + ' agents', 'gold');
+                }
+
+                // Adoption growth follows S-curve derivative (the actual S-shape growth)
+                const baseGrowth = 0.001 + agents * 0.0002;
+                const adoptionGrowth = baseGrowth * (1 + Sprime(adoption) * 2) * cabrScore;
+                const prevAdoption = adoption;
+                adoption = Math.min(0.995, adoption + adoptionGrowth + Math.random() * 0.002);
+
+                // BTC reserve
+                btcReserve += 0.001 * (1 + agents * 0.008) * cabrScore + Math.random() * 0.001;
+
+                // Milestones
+                const milestones = [
+                    [0.10, '10% adoption — early builder phase'],
+                    [0.25, '25% adoption — growth accelerating'],
+                    [0.50, '50% adoption — inflection point!'],
+                    [0.75, '75% adoption — approaching maturity'],
+                    [0.90, '90% adoption — nearly fully earned']
+                ];
+                milestones.forEach(([threshold, msg]) => {
+                    if (adoption >= threshold && prevAdoption < threshold) log(msg, 'info');
+                });
+
+                if (adoption >= 0.99 && running) {
+                    log('FULLY EARNED — 21M tokens distributed!', 'gold');
+                    stop();
+                }
+
+                render();
+                drawCurve();
+                updateInsight();
+            }
+
+            function render() {
+                el('simEpoch').textContent = epoch;
+                el('simAdoption').textContent = (adoption * 100).toFixed(1) + '%';
+                el('simMined').textContent = fmt(Math.min(mined, TOTAL));
+                el('simSupply').textContent = fmt(Math.max(0, TOTAL - mined));
+                el('simAgents').textContent = agents;
+                el('simCABR').textContent = cabrScore.toFixed(2);
+                el('simBTC').textContent = btcReserve.toFixed(3);
+                el('simReward').textContent = lastRewardPerAgent > 0 ? fmt(lastRewardPerAgent) : '--';
+            }
+
+            function updateInsight() {
+                const box = el('simInsight');
+                const earlyRate = 80 * cabrScore / Math.max(agents, 1);
+                if (adoption < 0.10) {
+                    box.innerHTML = '<strong>Early phase.</strong> Like buying Bitcoin in 2009. Few builders, maximum reward per agent. ' +
+                        'Each agent earns <strong>' + fmt(lastRewardPerAgent) + ' F\u1D62/epoch</strong>.';
+                } else if (adoption < 0.30) {
+                    box.innerHTML = '<strong>Growth starting.</strong> Word is spreading. New agents joining. ' +
+                        'Early builders have already accumulated <strong>' + fmt(mined * 0.6) + ' F\u1D62</strong> — an advantage that compounds.';
+                } else if (adoption < 0.50) {
+                    box.innerHTML = '<strong>Acceleration.</strong> The S-curve is steepening. More tokens releasing, more agents competing. ' +
+                        'Reward per agent declining — early advantage locked in.';
+                } else if (adoption < 0.75) {
+                    box.innerHTML = '<strong>Maturity phase.</strong> Over half the tokens earned. BTC reserve at <strong>' +
+                        btcReserve.toFixed(3) + ' BTC</strong>. Late entrants earn significantly less per epoch.';
+                } else {
+                    box.innerHTML = '<strong>Saturation.</strong> The curve is flattening. Remaining tokens trickle out. ' +
+                        'Those who joined early hold the majority — just like early Bitcoin holders.';
+                }
+            }
+
+            function log(msg, type) {
+                const logEl = el('simLog');
+                const div = document.createElement('div');
+                div.className = type || '';
+                div.textContent = '[E' + epoch + '] ' + msg;
+                logEl.prepend(div);
+                while (logEl.children.length > 30) logEl.removeChild(logEl.lastChild);
+            }
+
+            // === CONTROLS ===
+            function start() {
+                if (running) return;
+                if (agents === 0) agents = parseInt(el('simAgentSlider').value) || 3;
+                running = true;
+                el('simStart').disabled = true;
+                el('simStop').disabled = false;
+                log('Building started — ' + agents + ' agents deploying...', 'info');
+                timer = setInterval(tick, speed);
+            }
+
+            function stop() {
+                running = false;
+                clearInterval(timer);
+                el('simStart').disabled = false;
+                el('simStop').disabled = true;
+            }
+
+            function reset() {
+                stop();
+                epoch = 0; adoption = 0; mined = 0; btcReserve = 0; lastRewardPerAgent = 0;
+                agents = parseInt(el('simAgentSlider').value) || 3;
+                el('simLog').innerHTML = '';
+                el('simInsight').innerHTML = 'Press <strong>Start</strong> to begin earning. Adjust agents and venture type to see how the S-curve and CABR score affect token distribution.';
+                render();
+                drawCurve();
+                updateEntryCalc();
+            }
+
+            // Agent slider
+            el('simAgentSlider').addEventListener('input', function () {
+                el('simAgentVal').textContent = this.value;
+                if (!running && epoch === 0) agents = parseInt(this.value);
+            });
+
+            // CABR dropdown
+            el('simCabrSelect').addEventListener('change', function () {
+                cabrScore = parseFloat(this.value);
+                el('simCABR').textContent = cabrScore.toFixed(2);
+                updateEntryCalc();
+            });
+
+            // Speed buttons
+            document.querySelectorAll('.speed-btns button').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('.speed-btns button').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    speed = parseInt(this.dataset.speed);
+                    if (running) {
+                        clearInterval(timer);
+                        timer = setInterval(tick, speed);
+                    }
+                });
+            });
+
+            // Click on canvas to jump adoption
+            canvas.addEventListener('click', function (e) {
+                if (running) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const padLeft = 50 / wrap.clientWidth;
+                const padRight = 14 / wrap.clientWidth;
+                const normalized = (x - padLeft) / (1 - padLeft - padRight);
+                if (normalized >= 0 && normalized <= 1) {
+                    adoption = Math.max(0.01, Math.min(0.99, normalized));
+                    mined = TOTAL * S(adoption) * 0.85;
+                    agents = Math.max(agents, Math.floor(3 + adoption * 40));
+                    btcReserve = adoption * 2.5 * cabrScore;
+                    lastRewardPerAgent = (TOTAL * S(adoption) - mined) * cabrScore * 80 / agents;
+                    render();
+                    drawCurve();
+                    updateInsight();
+                    updateEntryCalc();
+                }
+            });
+
+            // === ENTRY POINT CALCULATOR ===
+            function updateEntryCalc() {
+                const entry = parseInt(el('entrySlider').value) / 100;
+                el('entryVal').textContent = Math.round(entry * 100) + '%';
+
+                // Tokens available at entry point
+                const tokensAtEntry = TOTAL * S(entry);
+                const tokensAt50 = TOTAL * S(0.5);
+
+                // Reward rate: how many tokens per agent per epoch at this adoption
+                // Fewer released = lower competition = higher per-agent reward
+                const agentsAtEntry = Math.max(3, Math.floor(3 + entry * 50));
+                const agentsAt50 = Math.max(3, Math.floor(3 + 0.5 * 50));
+                const rateAtEntry = (80 * cabrScore) * (1 + entry * 0.5);
+                const rateAt50 = (80 * cabrScore) * (1 + 0.5 * 0.5);
+
+                // Total potential: tokens you could mine from entry to saturation
+                const potential = (TOTAL - tokensAtEntry) / agentsAtEntry * 0.15;
+                const potentialAt50 = (TOTAL - tokensAt50) / agentsAt50 * 0.15;
+
+                // Advantage multiplier
+                const advantage = potentialAt50 > 0 ? potential / potentialAt50 : 1;
+
+                // BTC backing at entry
+                const btcAtEntry = entry * 3.0 * cabrScore;
+
+                el('entryReward').textContent = fmt(rateAtEntry);
+                el('entryTotal').textContent = fmt(Math.min(potential, TOTAL));
+                el('entryAdvantage').textContent = advantage >= 100 ? '99x+' : advantage.toFixed(1) + 'x';
+                el('entryBTC').textContent = btcAtEntry.toFixed(2);
+            }
+
+            el('entrySlider').addEventListener('input', updateEntryCalc);
+
+            // === INIT ===
+            el('simStart').addEventListener('click', start);
+            el('simStop').addEventListener('click', stop);
+            el('simReset').addEventListener('click', reset);
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            render();
+            updateEntryCalc();
+        })();
+    </script>
+</body>
+
+</html>

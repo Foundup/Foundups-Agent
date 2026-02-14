@@ -8,6 +8,13 @@
 /firestore.rules
 /firebase.json
 
+# Firebase deployment artifacts (root level - not module-specific)
+/.firebase/
+/.firebaserc
+/firestore.indexes.json
+# /public/ - TRACKED: Contains animation source code (foundup-cube.js)
+/functions/
+
 # Python
 __pycache__/
 *.py[cod]
