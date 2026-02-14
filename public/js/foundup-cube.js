@@ -310,6 +310,20 @@ const FoundupCube = (function () {
                 tierName: d.tier_name || 'GREEN',
             },
         }),
+        // CABR Score updated (3V Engine consensus)
+        'cabr_score_updated': (d) => ({
+            type: 'cabr_score_updated',
+            data: {
+                foundupId: d.foundup_id,
+                env_score: d.env_score || 0,
+                soc_score: d.soc_score || 0,
+                part_score: d.part_score || 0,
+                total: d.total || 0,
+                threshold: d.threshold || 0.618,
+                threshold_met: d.threshold_met || false,
+                confidence: d.confidence || 0,
+            },
+        }),
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -429,6 +443,58 @@ const FoundupCube = (function () {
         }
     };
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // CABR SCORE STATE (3V Engine: Validation → Verification → Valuation)
+    // ═══════════════════════════════════════════════════════════════════════
+    const cabrScore = {
+        env_score: 0.0,      // Environmental impact (0-1)
+        soc_score: 0.0,      // Social impact (0-1)
+        part_score: 0.0,     // Participation metrics (0-1)
+        total: 0.0,          // Weighted average
+        threshold: 0.618,    // Golden ratio consensus threshold
+        threshold_met: false,
+        confidence: 0.0,
+
+        // Update from SSE event
+        update(data) {
+            this.env_score = data.env_score ?? this.env_score;
+            this.soc_score = data.soc_score ?? this.soc_score;
+            this.part_score = data.part_score ?? this.part_score;
+            this.total = data.total ?? this.total;
+            this.threshold_met = data.threshold_met ?? (this.total >= this.threshold);
+            this.confidence = data.confidence ?? this.confidence;
+        },
+
+        // Get display color based on threshold
+        getColor() {
+            return this.threshold_met ? '#00FF00' : '#FF6B6B';
+        },
+
+        // Simulate for demo mode
+        simulateProgress(phase, progress) {
+            // CABR evolves slower than F_i rating (impact takes time)
+            if (phase === 'IDEA') {
+                this.env_score = 0.3;
+                this.soc_score = 0.4;
+                this.part_score = 0.0;
+            } else if (phase === 'SCAFFOLD' || phase === 'BUILDING') {
+                this.env_score = 0.4;
+                this.soc_score = 0.5;
+                this.part_score = progress * 0.3;
+            } else if (phase === 'PROMOTING' || phase === 'STAKING') {
+                this.env_score = 0.5;
+                this.soc_score = 0.6;
+                this.part_score = 0.3 + progress * 0.3;
+            } else if (phase === 'LAUNCH' || phase === 'CELEBRATE') {
+                this.env_score = 0.6;
+                this.soc_score = 0.7;
+                this.part_score = 0.6 + progress * 0.2;
+            }
+            this.total = this.env_score * 0.33 + this.soc_score * 0.33 + this.part_score * 0.34;
+            this.threshold_met = this.total >= this.threshold;
+        }
+    };
+
     function connectSimulatorBridge() {
         if (!FLAGS.USE_SIM_EVENTS || simBridge.connected) return;
 
@@ -544,6 +610,11 @@ const FoundupCube = (function () {
         // Update F_i rating from SSE (color temperature gradient)
         if (mapped.type === 'fi_rating_updated') {
             fiRating.update(mapped.data);
+        }
+
+        // Update CABR score from SSE (3V engine consensus)
+        if (mapped.type === 'cabr_score_updated') {
+            cabrScore.update(mapped.data);
         }
     }
 
@@ -2828,47 +2899,43 @@ const FoundupCube = (function () {
             ctx.fillText(stageText, cx + 140, statusY);
         }
 
-        // Phase announcement for IDEA (founder with lightbulb)
-        if (currentPhase === 'IDEA') {
-            const elapsed = getScaledElapsed(phaseStartTime);
-            const pulse = 0.7 + Math.sin(elapsed / 200) * 0.3;
-            ctx.font = STYLE.fonts.announcement;
-            ctx.fillStyle = `rgba(255, 45, 45, ${pulse})`;  // Red for PoC
-            ctx.fillText('F_i PoC Stage', cx, h * 0.15);
-        }
+        // Phase announcements - ONLY show in single-cube view (not zoomed out)
+        if (!cameraHandoff.zoomedOut) {
+            // Phase announcement for IDEA (founder with lightbulb)
+            if (currentPhase === 'IDEA') {
+                const elapsed = getScaledElapsed(phaseStartTime);
+                const pulse = 0.7 + Math.sin(elapsed / 200) * 0.3;
+                ctx.font = STYLE.fonts.announcement;
+                ctx.fillStyle = `rgba(255, 45, 45, ${pulse})`;  // Red for PoC
+                ctx.fillText('F_i PoC Stage', cx, h * 0.15);
+            }
 
-        // Phase announcement for SCAFFOLD/BUILDING (prototype phase)
-        if (currentPhase === 'SCAFFOLD' || (currentPhase === 'BUILDING' && stage === 'Proto')) {
-            const elapsed = getScaledElapsed(phaseStartTime);
-            const pulse = 0.6 + Math.sin(elapsed / 180) * 0.2;
-            ctx.font = STYLE.fonts.announcement;
-            ctx.fillStyle = `rgba(245, 166, 35, ${pulse})`;  // Orange for Proto
-            ctx.fillText('Building Prototype', cx, h * 0.15);
-        }
+            // Phase announcement for SCAFFOLD/BUILDING (prototype phase)
+            if (currentPhase === 'SCAFFOLD' || (currentPhase === 'BUILDING' && stage === 'Proto')) {
+                const elapsed = getScaledElapsed(phaseStartTime);
+                const pulse = 0.6 + Math.sin(elapsed / 180) * 0.2;
+                ctx.font = STYLE.fonts.announcement;
+                ctx.fillStyle = `rgba(245, 166, 35, ${pulse})`;  // Orange for Proto
+                ctx.fillText('Building Prototype', cx, h * 0.15);
+            }
 
-        // Phase announcement for LAUNCH/CELEBRATE (MVP)
-        if (currentPhase === 'LAUNCH' || currentPhase === 'CELEBRATE') {
-            const elapsed = getScaledElapsed(phaseStartTime);
-            const pulse = 0.8 + Math.sin(elapsed / 100) * 0.2;
-            ctx.font = STYLE.fonts.announcement;
-            ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;  // Gold for MVP
-            ctx.fillText('F_i MVP is Live!', cx, h * 0.15);
-        }
+            // Phase announcement for LAUNCH/CELEBRATE (MVP)
+            if (currentPhase === 'LAUNCH' || currentPhase === 'CELEBRATE') {
+                const elapsed = getScaledElapsed(phaseStartTime);
+                const pulse = 0.8 + Math.sin(elapsed / 100) * 0.2;
+                ctx.font = STYLE.fonts.announcement;
+                ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;  // Gold for MVP
+                ctx.fillText('F_i MVP is Live!', cx, h * 0.15);
+            }
 
-        // Phase announcement for CUSTOMERS
-        if (currentPhase === 'CUSTOMERS') {
-            const elapsed = getScaledElapsed(phaseStartTime);
-            const pulse = 0.7 + Math.sin(elapsed / 150) * 0.3;
-            ctx.font = STYLE.fonts.announcement;
-            ctx.fillStyle = `rgba(0, 229, 208, ${pulse})`;
-            ctx.fillText('First paying customers!', cx, h * 0.15);
-        }
-
-        // Ecosystem view status (zoomed out)
-        if (cameraHandoff.zoomedOut) {
-            ctx.font = STYLE.fonts.announcement;
-            ctx.fillStyle = 'rgba(124, 92, 252, 0.8)';
-            ctx.fillText(`Ecosystem: ${cameraHandoff.cubeCount} FoundUPs`, cx, h * 0.12);
+            // Phase announcement for CUSTOMERS
+            if (currentPhase === 'CUSTOMERS') {
+                const elapsed = getScaledElapsed(phaseStartTime);
+                const pulse = 0.7 + Math.sin(elapsed / 150) * 0.3;
+                ctx.font = STYLE.fonts.announcement;
+                ctx.fillStyle = `rgba(0, 229, 208, ${pulse})`;
+                ctx.fillText('First paying customers!', cx, h * 0.15);
+            }
         }
     }
 
@@ -2976,7 +3043,15 @@ const FoundupCube = (function () {
         const s = camera.scale;
         if (s >= 10) return { cols: 1, rows: 1 };       // Normal view (not used here)
         if (s >= 6)  return { cols: 2, rows: 2 };       // 4 tiles
-        return { cols: 3, rows: 3 };                     // 9 tiles
+        if (s >= 4)  return { cols: 3, rows: 3 };       // 9 tiles
+        return { cols: 4, rows: 4 };                     // 16 tiles
+    }
+
+    // Get ecosystem tagline based on grid size (012's vision)
+    function getEcosystemTagline(tileCount) {
+        if (tileCount <= 4)  return 'FoundUP$ eating the StartUP';
+        if (tileCount <= 9)  return 'FoundUP$ eating corporations';
+        return 'FoundUP$ redistributing Bitcoin';
     }
 
     function drawEcosystemView() {
@@ -2986,11 +3061,12 @@ const FoundupCube = (function () {
 
         ctx.save();
 
-        // Ecosystem label
-        ctx.font = 'bold 12px sans-serif';
+        // Ecosystem label - tagline changes based on grid size (012's vision)
+        const tagline = getEcosystemTagline(tileCount);
+        ctx.font = 'bold 14px sans-serif';
         ctx.fillStyle = 'rgba(124, 92, 252, 0.9)';
         ctx.textAlign = 'center';
-        ctx.fillText('FoundUPs Ecosystem', w / 2, 20);
+        ctx.fillText(tagline, w / 2, 22);
 
         // Grid layout: divide canvas into tiles with padding
         const pad = 20;
@@ -3223,7 +3299,7 @@ const FoundupCube = (function () {
 
     function drawColorKey() {
         const keyW = 140;
-        const keyH = 100;  // Compact: just AGENTS legend
+        const keyH = 130;  // Expanded: AGENTS legend + CABR score
         const keyX = w - keyW - 12;
         const keyY = h - keyH - 55;
 
@@ -3243,6 +3319,7 @@ const FoundupCube = (function () {
             const totalBlocks = Math.pow(CONFIG.targetSize, 3);
             const progress = filledBlocks.size / totalBlocks;
             fiRating.simulateProgress(currentPhase, progress);
+            cabrScore.simulateProgress(currentPhase, progress);
         }
 
         const borderColor = fiRating.borderColor;
@@ -3282,6 +3359,21 @@ const FoundupCube = (function () {
             ctx.textAlign = 'left';
             ctx.fillText(item.label, keyX + 14, ly);
         });
+
+        // CABR Score display (below agents)
+        const cabrY = divY + 18 + legend.length * 17 + 8;
+        ctx.font = '8px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.textAlign = 'left';
+        ctx.fillText('CABR', keyX, cabrY);
+
+        // CABR total with threshold indicator
+        const cabrColor = cabrScore.getColor();
+        const cabrIcon = cabrScore.threshold_met ? '\u2713' : '\u2717';  // checkmark or X
+        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = cabrColor;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${cabrScore.total.toFixed(2)} ${cabrIcon}`, keyX + keyW - 16, cabrY);
 
         ctx.restore();
     }
