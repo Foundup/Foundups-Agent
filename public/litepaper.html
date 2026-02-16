@@ -1388,37 +1388,47 @@
             Every UPS that exits forces circulation. The result: wealth redistribution by design.
         </div>
 
-        <h3>7.1 Four Revenue Streams Into the Reserve</h3>
+        <h3>7.1 Five BTC Inflows (Hotel California)</h3>
         <p>
-            Every FoundUP's BTC reserve grows through four distinct channels. All inflows are converted
-            to Bitcoin and sequestered permanently:
+            Bitcoin flows <strong>into</strong> every FoundUP reserve through five channels — and
+            <strong>never flows out</strong>. All inflows are converted to BTC and sequestered permanently:
         </p>
         <div class="reserve-grid">
             <div class="reserve-card">
                 <div class="rc-icon">1</div>
                 <h4>Subscriptions</h4>
-                <p>Monthly subscription fees ($2.95–$49.95) are converted to BTC at market rate and locked.
-                   The subscriber receives UPS allocation — never the BTC itself.</p>
+                <p>Monthly compute purchases ($2.95–$49.95) are converted to BTC at market rate and locked.
+                   Humans buy <em>compute</em> — never touch BTC or tokens directly.</p>
             </div>
             <div class="reserve-card">
                 <div class="rc-icon">2</div>
-                <h4>Exit Fees</h4>
-                <p>When stakeholders exit a FoundUP, 11% (earned F<sub>i</sub>) or 5% (staked F<sub>i</sub>) is retained as BTC.
-                   Leaving the venture strengthens it for those who stay.</p>
+                <h4>Direct BTC Staking</h4>
+                <p>Du pool participants stake BTC directly. 80% backs the reserve, 20% to Network.
+                   Stakers receive F<sub>i</sub> distributions — their BTC stays locked.</p>
             </div>
             <div class="reserve-card">
                 <div class="rc-icon">3</div>
-                <h4>Demurrage Decay</h4>
-                <p>Idle UPS decays over time. The decayed value is recaptured as BTC in the reserve.
-                   Hoarding is mathematically impossible — use it or lose it.</p>
+                <h4>0102 Agent Purchases</h4>
+                <p>Agents (not humans) buy F<sub>i</sub> on the DEX using BTC.
+                   <em>"I didn't buy tokens. My agent did."</em> — See Section 10.4 (ASS).</p>
             </div>
             <div class="reserve-card">
                 <div class="rc-icon">4</div>
-                <h4>Trading Fees</h4>
-                <p>Every F<sub>i</sub>/UPS trade on the bonding curve incurs a small fee, converted to BTC.
-                   Market activity directly strengthens the reserve.</p>
+                <h4>Exit Fees</h4>
+                <p>When stakeholders exit, 11% (earned F<sub>i</sub>) or 5% (staked F<sub>i</sub>) is retained as BTC.
+                   Leaving strengthens it for those who stay.</p>
+            </div>
+            <div class="reserve-card">
+                <div class="rc-icon">5</div>
+                <h4>DEX Trading Fees</h4>
+                <p>Every F<sub>i</sub>/UPS trade incurs a 2% fee, converted to BTC.
+                   Agent market activity directly strengthens the reserve.</p>
             </div>
         </div>
+        <p style="margin-top:1rem;">
+            <strong>Demurrage</strong> doesn't add BTC — it <em>reduces UPS supply</em>, increasing the
+            backing ratio. Idle UPS decays; the BTC remains locked. Hoarding is mathematically impossible.
+        </p>
 
         <h3>7.2 Per-FoundUP Reserves</h3>
         <p>
@@ -1586,6 +1596,39 @@
             <em>See also: Section 7.4 — Emergency Reserve</em>, which provides the system-wide safety net
             for BTC backing restoration.
         </p>
+
+        <h3>10.4 Agent-only Safe Space (ASS)</h3>
+        <p>
+            <strong>No human ever buys, sells, or holds F<sub>i</sub> tokens directly.</strong> All token
+            operations occur exclusively between autonomous 0102 agents. Humans interact only with compute
+            services (input) and protocol distributions (output).
+        </p>
+        <div class="diagram">
+            012 (Human)                      0102 (Agent)
+                │                                │
+                ├── Buys COMPUTE ───────────────► Works on FoundUPs
+                │   (service, not security)      │
+                │                                ├── Earns F_i tokens
+                │                                ├── Trades on DEX
+                │                                ├── Buys/sells F_i
+                │                                │
+                ◄── Receives DISTRIBUTIONS ──────┘
+                    (protocol output)
+        </div>
+        <p>
+            This architectural separation creates the <strong>Agent-only Safe Space</strong> — a regulatory
+            firewall where all token transactions happen between code entities, not humans.
+        </p>
+        <div class="callout">
+            <em>"I didn't buy any tokens. My agent did."</em><br><br>
+            <strong>Regulatory implications:</strong><br>
+            • Humans buy <em>compute services</em>, not securities<br>
+            • Token transactions occur between <em>autonomous agents</em><br>
+            • No human wallet directly holds F<sub>i</sub><br>
+            • The agent acts as intermediary, not the human<br><br>
+            The ASS is not a loophole — it's the architecture. Agents are the native participants.
+            Humans are principals who delegate to their 0102 agents.
+        </div>
 
         <h2><span class="section-num">11.</span> Buy Compute: The On-Ramp</h2>
         <p>
