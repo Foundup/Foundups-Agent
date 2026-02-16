@@ -2105,45 +2105,63 @@
 
             // === SIMULATION LOGIC ===
             let startingAgents = 3; // Stored from slider
+            const GROWTH_FACTOR = 9; // Exponential agent growth steepness
+            const SUBSCRIPTION_BTC = 0.0001; // BTC per agent per epoch (simulated subscriptions)
+            let lastReleased = 0; // Track S-curve token release
+
+            // Calculate agents at any adoption level (exponential growth)
+            function agentsAt(adoptionLevel) {
+                return Math.max(startingAgents, Math.floor(startingAgents * Math.exp(GROWTH_FACTOR * adoptionLevel)));
+            }
 
             function tick() {
                 epoch++;
 
-                // Agents grow EXPONENTIALLY with adoption (network effects)
+                // 1. AGENTS: Grow exponentially with adoption (network effects)
                 // Formula: agents = starting * e^(growthFactor * adoption)
-                // At 10%: ~2x agents, At 50%: ~150x agents, At 90%: ~8000x agents
-                const growthFactor = 9; // Controls exponential steepness
                 const prevAgents = agents;
-                agents = Math.floor(startingAgents * Math.exp(growthFactor * adoption));
+                agents = agentsAt(adoption);
 
-                // Minimum agents = starting agents
-                agents = Math.max(agents, startingAgents);
-
-                // Log significant agent growth
                 if (agents > prevAgents * 1.5 && agents > 100) {
                     log('Agent swarm: ' + fmt(agents) + ' (exponential growth)', 'agent');
                 }
 
-                // Token release follows S-curve
-                const released = TOTAL * S(adoption);
-                const available = released - mined;
+                // 2. TOKENS: S-curve determines TOTAL released, delta goes to agents
+                // This epoch's release = S(adoption_new) - S(adoption_old)
+                const nowReleased = TOTAL * S(adoption);
+                const epochReleased = Math.max(0, nowReleased - lastReleased);
+                lastReleased = nowReleased;
+
+                // Distribute this epoch's tokens to agents (scaled by CABR)
                 let epochMined = 0;
-                if (available > 0 && agents > 0) {
-                    const baseRate = 80 + Math.random() * 60;
-                    epochMined = Math.min(available, agents * baseRate * cabrScore * (1 + adoption * 0.5));
+                if (epochReleased > 0 && agents > 0) {
+                    // CABR scales distribution efficiency (0.5-1.0 realistic range)
+                    epochMined = epochReleased * cabrScore;
                     mined += epochMined;
-                    lastRewardPerAgent = agents > 0 ? epochMined / agents : 0;
+                    lastRewardPerAgent = epochMined / agents;
                     if (epoch % 3 === 0) log(fmt(epochMined) + ' F\u1D62 distributed to ' + agents + ' agents', 'gold');
                 }
 
-                // Adoption growth follows S-curve derivative (the actual S-shape growth)
-                const baseGrowth = 0.001 + agents * 0.0002;
-                const adoptionGrowth = baseGrowth * (1 + Sprime(adoption) * 2) * cabrScore;
+                // 3. ADOPTION: Grows based on agent activity and S-curve dynamics
+                // More agents = faster word-of-mouth, S'(x) peaks at 50%
                 const prevAdoption = adoption;
-                adoption = Math.min(0.995, adoption + adoptionGrowth + Math.random() * 0.002);
+                const agentEffect = Math.log(agents + 1) * 0.0005; // Logarithmic to prevent runaway
+                const curveAccel = Sprime(adoption) * 0.5; // S-curve acceleration at inflection
+                const adoptionGrowth = (0.001 + agentEffect + curveAccel) * cabrScore;
+                adoption = Math.min(0.995, adoption + adoptionGrowth + Math.random() * 0.001);
 
-                // BTC reserve
-                btcReserve += 0.001 * (1 + agents * 0.008) * cabrScore + Math.random() * 0.001;
+                // 4. BTC RESERVE: Comes from 5 sources (simulated)
+                // - Subscriptions: ~proportional to agents (each agent = 1 subscriber)
+                // - Staking: occasional larger deposits
+                // - Agent purchases: proportional to agent activity
+                // - Exit fees: proportional to mined tokens
+                // - DEX fees: proportional to trading volume
+                const subscriptionBTC = agents * SUBSCRIPTION_BTC;
+                const stakingBTC = Math.random() < 0.05 ? 0.01 * cabrScore : 0; // 5% chance of staking event
+                const agentPurchaseBTC = epochMined > 0 ? epochMined / TOTAL * 0.001 : 0;
+                const exitFeeBTC = mined > 0 ? mined / TOTAL * 0.0001 * 0.08 : 0; // 8% avg exit fee
+                const dexFeeBTC = epochMined > 0 ? epochMined / TOTAL * 0.0005 * 0.02 : 0; // 2% fee
+                btcReserve += subscriptionBTC + stakingBTC + agentPurchaseBTC + exitFeeBTC + dexFeeBTC;
 
                 // Milestones
                 const milestones = [
@@ -2231,7 +2249,7 @@
 
             function reset() {
                 stop();
-                epoch = 0; adoption = 0; mined = 0; btcReserve = 0; lastRewardPerAgent = 0;
+                epoch = 0; adoption = 0; mined = 0; btcReserve = 0; lastRewardPerAgent = 0; lastReleased = 0;
                 startingAgents = parseInt(el('simAgentSlider').value) || 3;
                 agents = startingAgents;
                 kValue = parseInt(el('simCategorySelect').value) || 12;
@@ -2288,10 +2306,13 @@
                 const normalized = (x - padLeft) / (1 - padLeft - padRight);
                 if (normalized >= 0 && normalized <= 1) {
                     adoption = Math.max(0.01, Math.min(0.99, normalized));
+                    // Use S-curve for mined, exponential for agents
                     mined = TOTAL * S(adoption) * 0.85;
-                    agents = Math.max(agents, Math.floor(3 + adoption * 40));
-                    btcReserve = adoption * 2.5 * cabrScore;
-                    lastRewardPerAgent = (TOTAL * S(adoption) - mined) * cabrScore * 80 / agents;
+                    lastReleased = TOTAL * S(adoption);
+                    agents = agentsAt(adoption); // Use exponential formula
+                    // BTC from cumulative subscriptions
+                    btcReserve = agents * SUBSCRIPTION_BTC * adoption * 500; // ~500 epochs to here
+                    lastRewardPerAgent = agents > 0 ? (TOTAL * S(adoption) * 0.15 / agents) : 0;
                     render();
                     drawCurve();
                     updateInsight();
@@ -2304,31 +2325,35 @@
                 const entry = parseInt(el('entrySlider').value) / 100;
                 el('entryVal').textContent = Math.round(entry * 100) + '%';
 
-                // Tokens available at entry point
+                // S-curve tokens at entry vs 50%
                 const tokensAtEntry = TOTAL * S(entry);
                 const tokensAt50 = TOTAL * S(0.5);
+                const tokensRemaining = TOTAL - tokensAtEntry;
 
-                // Reward rate: how many tokens per agent per epoch at this adoption
-                // Fewer released = lower competition = higher per-agent reward
-                const agentsAtEntry = Math.max(3, Math.floor(3 + entry * 50));
-                const agentsAt50 = Math.max(3, Math.floor(3 + 0.5 * 50));
-                const rateAtEntry = (80 * cabrScore) * (1 + entry * 0.5);
-                const rateAt50 = (80 * cabrScore) * (1 + 0.5 * 0.5);
+                // EXPONENTIAL agent count at entry (same formula as main sim)
+                const agentsEntry = agentsAt(entry);
+                const agents50 = agentsAt(0.5);
 
-                // Total potential: tokens you could mine from entry to saturation
-                const potential = (TOTAL - tokensAtEntry) / agentsAtEntry * 0.15;
-                const potentialAt50 = (TOTAL - tokensAt50) / agentsAt50 * 0.15;
+                // Per-agent share of remaining tokens (early = fewer agents = bigger share)
+                // This is the key early-mover advantage
+                const shareAtEntry = tokensRemaining / agentsEntry;
+                const shareAt50 = (TOTAL - tokensAt50) / agents50;
 
-                // Advantage multiplier
-                const advantage = potentialAt50 > 0 ? potential / potentialAt50 : 1;
+                // Advantage multiplier: how much more you get vs joining at 50%
+                const advantage = shareAt50 > 0 ? shareAtEntry / shareAt50 : 1;
 
-                // BTC backing at entry
-                const btcAtEntry = entry * 3.0 * cabrScore;
+                // Epoch reward rate: S-curve releases more tokens near inflection
+                // Early epochs release less, but you have less competition
+                const releaseRate = Sprime(entry) * TOTAL * 0.01; // Tokens per epoch at this adoption
+                const rewardPerAgent = releaseRate * cabrScore / agentsEntry;
 
-                el('entryReward').textContent = fmt(rateAtEntry);
-                el('entryTotal').textContent = fmt(Math.min(potential, TOTAL));
+                // BTC reserve estimate (from cumulative subscriptions)
+                const btcAtEntry = agentsEntry * SUBSCRIPTION_BTC * entry * 300;
+
+                el('entryReward').textContent = fmt(rewardPerAgent);
+                el('entryTotal').textContent = fmt(Math.min(shareAtEntry * 0.1, TOTAL)); // ~10% capture rate
                 el('entryAdvantage').textContent = advantage >= 100 ? '99x+' : advantage.toFixed(1) + 'x';
-                el('entryBTC').textContent = btcAtEntry.toFixed(2);
+                el('entryBTC').textContent = btcAtEntry.toFixed(3);
             }
 
             el('entrySlider').addEventListener('input', updateEntryCalc);
