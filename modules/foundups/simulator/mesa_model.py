@@ -22,7 +22,12 @@ from .adapters.phantom_plugs import PhantomTokenEconomy, PhantomSocialActions
 from .agents.base_agent import BaseSimAgent
 from .agents.founder_agent import FounderAgent
 from .agents.user_agent import UserAgent
-from .economics.token_economics import TokenEconomicsEngine, FeeConfig, adoption_curve
+from .economics.token_economics import (
+    TokenEconomicsEngine,
+    FeeConfig,
+    SubscriptionTier,
+    adoption_curve,
+)
 from .economics.fi_orderbook import OrderBookManager
 from .economics.investor_staking import InvestorPool
 from .economics.btc_reserve import BTCReserve, get_btc_reserve, reset_btc_reserve
@@ -32,7 +37,9 @@ from .economics.pool_distribution import (
     ParticipantType, ActivityLevel,
 )
 from .economics.fi_rating import FiRatingEngine, get_rating_engine
+from .economics.allocation_engine import AllocationEngine
 from .ai.cabr_estimator import CABREstimator, CABRScore, FoundUpIdea, CABR_THRESHOLD
+from .step_pipeline import run_step
 
 if TYPE_CHECKING:
     pass
@@ -123,6 +130,15 @@ class FoundUpsModel:
         self._rating_engine = get_rating_engine()
         self._rating_update_interval = 10  # Every 10 ticks, emit rating updates
         self._demurrage_interval: int = 10  # Apply demurrage every N ticks
+        self._subscription_refresh_interval: int = 30
+        self._subscription_month_reset_interval: int = 300
+
+        # Allocation Engine (0102 digital twin UPS→F_i routing per WSP 26 Section 17)
+        self._allocation_engine = AllocationEngine(
+            token_engine=self._token_econ_engine,
+            orderbook_manager=self._orderbook,
+            rating_engine=self._rating_engine,
+        )
 
         # CABR Score Estimator (3V engine: Validation -> Verification -> Valuation)
         self._cabr_estimator = CABREstimator(use_ai=False)  # Heuristic for simulation
@@ -140,8 +156,20 @@ class FoundUpsModel:
         self._agents: Dict[str, BaseSimAgent] = {}
         self._agent_order: List[str] = []
 
+        # Agent lifecycle tracking (01(02) → 0102 → 01/02 state machine)
+        self._agent_awakened: set = set()  # Agents in 0102 zen state
+        self._agent_last_activity_tick: Dict[str, int] = {}  # Last activity per agent
+        self._agent_rank: Dict[str, int] = {}  # Current rank 1-7 per agent
+        self._agent_idle_threshold: int = 100  # Ticks before emitting idle event
+
+        # Pure-step shadow parity counters (refactor safety telemetry)
+        self._pure_step_shadow_checks: int = 0
+        self._pure_step_shadow_failures: int = 0
+        self._pure_step_shadow_last: Dict[str, float | int | bool] = {}
+
         # Initialize agents
         self._create_agents()
+        self._bootstrap_012_accounts()
 
         logger.info(
             f"[MODEL] Initialized with {len(self._agents)} agents, "
@@ -175,6 +203,14 @@ class FoundUpsModel:
             )
             self._token_economy.register_agent(agent_id)
 
+            # Emit agent_joins event - 01(02) dormant state
+            self._fam_bridge.emit_agent_joins(
+                agent_id=agent_id,
+                agent_type="founder",
+                foundup_id="F_0",  # Ecosystem-level until assigned
+                rank=1,  # Apprentice
+            )
+
         # Create user agents (Gemma-powered if AI enabled)
         for i in range(self._config.num_user_agents):
             agent_id = f"user_{i:03d}"
@@ -206,63 +242,217 @@ class FoundUpsModel:
             )
             self._token_economy.register_agent(agent_id)
 
+            # Emit agent_joins event - 01(02) dormant state
+            self._fam_bridge.emit_agent_joins(
+                agent_id=agent_id,
+                agent_type="user",
+                foundup_id="F_0",  # Ecosystem-level until assigned
+                rank=1,  # Apprentice
+            )
+
         logger.info(
             f"[MODEL] Created {self._config.num_founder_agents} founders, "
             f"{self._config.num_user_agents} users"
         )
+
+    def _bootstrap_012_accounts(self) -> None:
+        """Initialize 012 subscription accounts + pool participants.
+
+        This wires the intended flow so allocation engine and pAVS distribution
+        both operate from tick 1:
+        - user_* -> 012 accounts with subscription allocation budgets
+        - all agents -> participant registry for pool distribution
+        - all agents -> token-econ wallets for future F_i mining hooks
+        """
+        tiers = [
+            SubscriptionTier.SPARK,
+            SubscriptionTier.EXPLORER,
+            SubscriptionTier.BUILDER,
+            SubscriptionTier.FOUNDER,
+        ]
+        daemon = self._fam_bridge.get_daemon()
+
+        for idx, agent_id in enumerate(self._agent_order):
+            if agent_id not in self._token_econ_engine.agent_wallets:
+                self._token_econ_engine.register_agent(agent_id, allocator_id=agent_id)
+
+            if agent_id.startswith("founder_"):
+                if agent_id not in self._pool_distributor.participants:
+                    self._pool_distributor.register_participant(
+                        participant_id=agent_id,
+                        p_type=ParticipantType.DAO,
+                        activity=ActivityLevel.DAO,
+                    )
+                continue
+
+            # Users act as 012 subscription accounts in simulator economics.
+            account = self._token_econ_engine.human_accounts.get(agent_id)
+            if account is None:
+                account = self._token_econ_engine.register_human(agent_id, initial_ups=0.0)
+
+            target_tier = tiers[idx % len(tiers)]
+            account.upgrade_subscription(target_tier)
+            refreshed = account.refresh_allocation()
+            if refreshed > 0:
+                account.ups_balance += refreshed
+                if daemon:
+                    daemon.emit(
+                        event_type="subscription_allocation_refreshed",
+                        payload={
+                            "human_id": agent_id,
+                            "tier": account.subscription_tier.value,
+                            "allocation_ups": round(refreshed, 2),
+                            "remaining_allocation_ups": round(account.remaining_allocation, 2),
+                            "wallet_ups": round(account.ups_balance, 2),
+                        },
+                        actor_id=agent_id,
+                        foundup_id="F_0",
+                    )
+
+            if agent_id not in self._pool_distributor.participants:
+                self._pool_distributor.register_participant(
+                    participant_id=agent_id,
+                    p_type=ParticipantType.UN,
+                    activity=ActivityLevel.UN,
+                    has_active_membership=True,
+                )
+
+    def _sync_token_econ_foundup_pools(self) -> None:
+        """Ensure token-econ pool state tracks FoundUps created via FAM bridge."""
+        for foundup_id in self._state_store.get_foundup_ids():
+            if foundup_id not in self._token_econ_engine.foundup_pools:
+                self._token_econ_engine.register_foundup(foundup_id)
+            if foundup_id not in self._fi_distributors:
+                self._fi_distributors[foundup_id] = FoundUpTokenDistributor(foundup_id)
+
+    def _refresh_subscription_allocations(self) -> None:
+        """Refresh periodic 012 subscription allocations."""
+        daemon = self._fam_bridge.get_daemon()
+        for human_id, account in self._token_econ_engine.human_accounts.items():
+            added = account.refresh_allocation()
+            if added <= 0:
+                continue
+            account.ups_balance += added
+            if daemon:
+                daemon.emit(
+                    event_type="subscription_allocation_refreshed",
+                    payload={
+                        "human_id": human_id,
+                        "tier": account.subscription_tier.value,
+                        "allocation_ups": round(added, 2),
+                        "remaining_allocation_ups": round(account.remaining_allocation, 2),
+                        "wallet_ups": round(account.ups_balance, 2),
+                    },
+                    actor_id=human_id,
+                    foundup_id="F_0",
+                )
+
+    def _reset_subscription_cycles(self) -> None:
+        """Reset monthly cycle counters for all subscription accounts."""
+        daemon = self._fam_bridge.get_daemon()
+        for human_id, account in self._token_econ_engine.human_accounts.items():
+            account.reset_monthly_cycles()
+            if daemon:
+                daemon.emit(
+                    event_type="subscription_cycle_reset",
+                    payload={
+                        "human_id": human_id,
+                        "tier": account.subscription_tier.value,
+                        "cycles_per_month": account.get_subscription_config().cycles_per_month,
+                    },
+                    actor_id=human_id,
+                    foundup_id="F_0",
+                )
 
     def step(self) -> None:
         """Execute one simulation tick.
 
         Mesa convention: model.step() advances simulation by one tick.
         """
-        self._tick += 1
-        elapsed = time.time() - self._start_time if self._start_time else 0.0
-
-        # Update event bus tick
-        self._event_bus.set_tick(self._tick)
-
-        # Step state store
-        self._state_store.tick(self._tick, elapsed)
-
-        # Shuffle agent order for fairness
-        random.shuffle(self._agent_order)
-
-        # Step each agent
-        for agent_id in self._agent_order:
-            agent = self._agents[agent_id]
-            agent.step(self._tick)
-
-        # Advance task lifecycle through the FAM pipeline.
-        self._advance_task_pipeline()
-        self._simulate_market_activity()
-        self._simulate_f0_investor_program()
-
-        # Apply demurrage (bio-decay) every N ticks
-        if self._tick % self._demurrage_interval == 0:
-            self._apply_demurrage_cycle()
-
-        # Track BTC-F_i ratio every epoch (every 50 ticks)
-        if self._tick % 50 == 0:
-            self._record_btc_fi_ratio()
-
-        # Emit F_i rating updates for animation (every N ticks)
-        if self._tick % self._rating_update_interval == 0:
-            self._emit_rating_updates()
-            self._emit_cabr_updates()  # CABR score alongside F_i rating
-
-        # Sync balances from token economy to state store.
-        for agent_id in self._agent_order:
-            agent = self._agents[agent_id]
-            # Sync token balance to state store
-            balance = self._token_economy.get_balance(agent_id)
-            current = self._state_store.get_state().agents.get(agent_id)
-            if current and current.tokens != balance:
-                delta = balance - current.tokens
-                self._state_store.update_agent_tokens(agent_id, delta)
+        run_step(self)
 
         if self._config.verbose:
             logger.debug(f"[MODEL] Tick {self._tick} complete")
+
+    def _track_agent_lifecycle(self) -> None:
+        """Track agent state transitions: 01(02) → 0102 → 01/02.
+
+        Emits:
+        - agent_awakened: When agent first performs successful action
+        - agent_idle: When agent inactive for threshold ticks
+        - agent_ranked: When agent earns enough to rank up
+        """
+        for agent_id in self._agent_order:
+            agent = self._agents[agent_id]
+            state = self._state_store.get_state().agents.get(agent_id)
+            if not state:
+                continue
+
+            # Initialize rank if not set
+            if agent_id not in self._agent_rank:
+                self._agent_rank[agent_id] = 1
+
+            # Check for activity via state store (likes, follows, stakes, foundups)
+            has_activity = (
+                state.likes_given > 0 or
+                state.follows_given > 0 or
+                state.stakes_made > 0 or
+                state.foundups_created > 0
+            )
+
+            # Awakening: first activity transitions 01(02) → 0102
+            if has_activity and agent_id not in self._agent_awakened:
+                self._agent_awakened.add(agent_id)
+                self._agent_last_activity_tick[agent_id] = self._tick
+                coherence = 0.62 + random.uniform(0, 0.20)  # 0.62-0.82
+                self._fam_bridge.emit_agent_awakened(
+                    agent_id=agent_id,
+                    coherence=round(coherence, 2),
+                    foundup_id="F_0",
+                )
+                logger.debug(f"[LIFECYCLE] {agent_id} awakened to 0102 (coherence: {coherence:.2f})")
+
+            # Track last activity tick
+            if has_activity:
+                total_actions = state.likes_given + state.follows_given + state.stakes_made + state.foundups_created
+                if agent_id not in self._agent_last_activity_tick:
+                    self._agent_last_activity_tick[agent_id] = self._tick
+                # Simple heuristic: if total actions increased, mark active
+                # (In real impl, would track previous tick values)
+
+            # Idle detection: 01/02 decayed state
+            last_tick = self._agent_last_activity_tick.get(agent_id, 0)
+            inactive_ticks = self._tick - last_tick
+            if inactive_ticks >= self._agent_idle_threshold and agent_id in self._agent_awakened:
+                # Emit idle event once per threshold window
+                if inactive_ticks % self._agent_idle_threshold == 0:
+                    self._fam_bridge.emit_agent_idle(
+                        agent_id=agent_id,
+                        foundup_id="F_0",
+                        inactive_ticks=inactive_ticks,
+                        current_tick=self._tick,
+                    )
+                    logger.debug(f"[LIFECYCLE] {agent_id} IDLE ({inactive_ticks} ticks)")
+
+            # Rank progression based on earnings (simplified)
+            current_rank = self._agent_rank.get(agent_id, 1)
+            earned = state.tokens - self._config.initial_agent_tokens
+            # Rank thresholds: 100, 500, 2000, 5000, 10000, 20000
+            thresholds = [0, 100, 500, 2000, 5000, 10000, 20000]
+            new_rank = 1
+            for r, threshold in enumerate(thresholds[1:], start=2):
+                if earned >= threshold:
+                    new_rank = min(r, 7)
+
+            if new_rank > current_rank:
+                self._agent_rank[agent_id] = new_rank
+                self._fam_bridge.emit_agent_ranked(
+                    agent_id=agent_id,
+                    old_rank=current_rank,
+                    new_rank=new_rank,
+                    foundup_id="F_0",
+                )
+                logger.debug(f"[LIFECYCLE] {agent_id} ranked up: {current_rank} → {new_rank}")
 
     def _advance_task_pipeline(self) -> None:
         """Progress task states through submit -> verify -> payout -> publish.
@@ -336,38 +526,127 @@ class FoundUpsModel:
             return
         buyer_id = random.choice(buyer_pool)
 
-        self._orderbook.place_sell(
+        sell_order, _ = self._orderbook.place_sell(
             foundup_id=foundup_id,
             human_id=seller_id,
             price=round(sell_price, 4),
             quantity=quantity,
         )
-        _, trades = self._orderbook.place_buy(
+        buy_order, trades = self._orderbook.place_buy(
             foundup_id=foundup_id,
             human_id=buyer_id,
             price=round(buy_price, 4),
             quantity=quantity,
         )
+        daemon = self._fam_bridge.get_daemon()
+        book = self._orderbook.get_or_create_book(foundup_id)
+
+        if daemon:
+            daemon.emit(
+                event_type="order_placed",
+                payload={
+                    "order_id": sell_order.order_id,
+                    "side": "sell",
+                    "owner_id": seller_id,
+                    "price": round(sell_order.price, 4),
+                    "quantity": round(sell_order.quantity, 2),
+                    "status": sell_order.status.value,
+                },
+                actor_id=seller_id,
+                foundup_id=foundup_id,
+            )
+            daemon.emit(
+                event_type="order_placed",
+                payload={
+                    "order_id": buy_order.order_id,
+                    "side": "buy",
+                    "owner_id": buyer_id,
+                    "price": round(buy_order.price, 4),
+                    "quantity": round(buy_order.quantity, 2),
+                    "status": buy_order.status.value,
+                },
+                actor_id=buyer_id,
+                foundup_id=foundup_id,
+            )
+
         if not trades:
+            if daemon:
+                depth = book.get_order_book_depth(levels=3)
+                daemon.emit(
+                    event_type="orderbook_snapshot",
+                    payload={
+                        "best_bid": depth.get("best_bid"),
+                        "best_ask": depth.get("best_ask"),
+                        "spread": depth.get("spread"),
+                        "mid_price": depth.get("mid_price"),
+                        "bids": depth.get("bids", []),
+                        "asks": depth.get("asks", []),
+                    },
+                    actor_id="dex",
+                    foundup_id=foundup_id,
+                )
             return
 
-        daemon = self._fam_bridge.get_daemon()
         for trade in trades:
             self._total_dex_trades += 1
             self._total_dex_volume_ups += trade.ups_total
+            if daemon:
+                daemon.emit(
+                    event_type="order_matched",
+                    payload={
+                        "trade_id": trade.trade_id,
+                        "buyer_id": trade.buyer_id,
+                        "seller_id": trade.seller_id,
+                        "price": round(trade.price, 4),
+                        "quantity": round(trade.quantity, 2),
+                        "ups_total": round(trade.ups_total, 4),
+                    },
+                    actor_id="dex",
+                    foundup_id=trade.foundup_id,
+                )
+                daemon.emit(
+                    event_type="fi_trade_executed",
+                    payload={
+                        "trade_id": trade.trade_id,
+                        "buyer_id": trade.buyer_id,
+                        "seller_id": trade.seller_id,
+                        "price": round(trade.price, 4),
+                        "quantity": round(trade.quantity, 2),
+                        "ups_total": round(trade.ups_total, 4),
+                        "fee_ups": round(trade.fee_ups, 4),
+                    },
+                    actor_id=trade.buyer_id,
+                    foundup_id=trade.foundup_id,
+                )
+
+        if daemon and trades:
+            last_trade = trades[-1]
+            depth = book.get_order_book_depth(levels=3)
             daemon.emit(
-                event_type="fi_trade_executed",
+                event_type="price_tick",
                 payload={
-                    "trade_id": trade.trade_id,
-                    "buyer_id": trade.buyer_id,
-                    "seller_id": trade.seller_id,
-                    "price": round(trade.price, 4),
-                    "quantity": round(trade.quantity, 2),
-                    "ups_total": round(trade.ups_total, 4),
-                    "fee_ups": round(trade.fee_ups, 4),
+                    "last_price": round(last_trade.price, 4),
+                    "best_bid": depth.get("best_bid"),
+                    "best_ask": depth.get("best_ask"),
+                    "spread": depth.get("spread"),
+                    "mid_price": depth.get("mid_price"),
+                    "total_volume_ups": round(book.total_volume_ups, 4),
                 },
-                actor_id=trade.buyer_id,
-                foundup_id=trade.foundup_id,
+                actor_id="dex",
+                foundup_id=foundup_id,
+            )
+            daemon.emit(
+                event_type="orderbook_snapshot",
+                payload={
+                    "best_bid": depth.get("best_bid"),
+                    "best_ask": depth.get("best_ask"),
+                    "spread": depth.get("spread"),
+                    "mid_price": depth.get("mid_price"),
+                    "bids": depth.get("bids", []),
+                    "asks": depth.get("asks", []),
+                },
+                actor_id="dex",
+                foundup_id=foundup_id,
             )
 
     def _seed_f0_investor_pool_once(self) -> None:
@@ -465,9 +744,13 @@ class FoundUpsModel:
     def _apply_demurrage_cycle(self) -> None:
         """Apply bio-decay to all registered wallets.
 
-        Decayed UP$ routes to BTC Reserve (Hotel California).
+        Decayed UP$ is redistributed across network and pAVS treasury lanes.
         Active participants get decay relief via pool rewards.
         """
+        daemon = self._fam_bridge.get_daemon()
+        network_before = self._demurrage.total_to_network_pool
+        pavs_before = self._demurrage.total_to_pavs_treasury
+
         # Register any new agents as wallets if not already tracked
         for agent_id in self._agent_order:
             if agent_id not in self._demurrage.wallets:
@@ -480,9 +763,52 @@ class FoundUpsModel:
 
         if decay_results:
             total_decay = sum(decay_results.values())
+            network_delta = self._demurrage.total_to_network_pool - network_before
+            pavs_delta = self._demurrage.total_to_pavs_treasury - pavs_before
+            self._demurrage.update_pavs_treasury_balance(
+                self._demurrage.pavs_treasury_balance + pavs_delta
+            )
             logger.debug(
                 f"[MODEL] Demurrage tick {self._tick}: "
                 f"{total_decay:.2f} UP$ decayed from {len(decay_results)} wallets"
+            )
+            if daemon:
+                daemon.emit(
+                    event_type="demurrage_cycle_completed",
+                    payload={
+                        "wallets_affected": len(decay_results),
+                        "total_decay_ups": round(total_decay, 4),
+                        "network_pool_delta_ups": round(network_delta, 4),
+                        "pavs_treasury_delta_ups": round(pavs_delta, 4),
+                    },
+                    actor_id="demurrage_engine",
+                    foundup_id="F_0",
+                )
+                daemon.emit(
+                    event_type="pavs_treasury_updated",
+                    payload={
+                        "pavs_treasury_balance_ups": round(self._demurrage.pavs_treasury_balance, 4),
+                        "network_pool_balance_ups": round(self._demurrage.total_to_network_pool, 4),
+                        "treasury_health": round(self._demurrage.get_stats()["treasury_health"], 4),
+                    },
+                    actor_id="demurrage_engine",
+                    foundup_id="F_0",
+                )
+
+        if daemon:
+            daemon.emit(
+                event_type="treasury_separation_snapshot",
+                payload={
+                    "pavs_treasury_ups": round(self._demurrage.pavs_treasury_balance, 4),
+                    "network_pool_ups": round(self._demurrage.total_to_network_pool, 4),
+                    "fund_pool_ups": round(self._pool_distributor.accumulated_fund, 4),
+                    "foundup_ups_treasury": {
+                        fid: round(pool.ups_treasury, 4)
+                        for fid, pool in self._token_econ_engine.foundup_pools.items()
+                    },
+                },
+                actor_id="demurrage_engine",
+                foundup_id="F_0",
             )
 
         # Distribute epoch rewards via pool structure
@@ -494,6 +820,109 @@ class FoundUpsModel:
                 epoch=self._epoch_counter,
                 total_ups_rewards=epoch_rewards,
             )
+
+    def _simulate_012_allocations(self) -> None:
+        """Simulate 012 participants allocating UPS to FoundUps via 0102 digital twin.
+
+        Per WSP 26 Section 17: AllocationEngine routes to direct stake or DEX.
+        """
+        daemon = self._fam_bridge.get_daemon()
+
+        # Get humans with UPS balance
+        humans_with_ups = [
+            (hid, account)
+            for hid, account in self._token_econ_engine.human_accounts.items()
+            if account.ups_balance > 10.0  # Minimum for allocation
+        ]
+
+        if not humans_with_ups:
+            return
+
+        # Get available FoundUps
+        foundup_ids = list(self._token_econ_engine.foundup_pools.keys())
+        if not foundup_ids:
+            return
+
+        # Random 012 decides to allocate (10% chance per tick)
+        for human_id, account in humans_with_ups:
+            if random.random() > 0.10:
+                continue
+
+            allocatable = min(account.ups_balance, account.remaining_allocation)
+            if allocatable <= self._allocation_engine.min_allocation_ups:
+                continue
+
+            # Allocate 20-50% of available budget
+            allocation_pct = random.uniform(0.20, 0.50)
+            ups_to_allocate = allocatable * allocation_pct
+            if not account.use_allocated_ups(ups_to_allocate):
+                continue
+
+            # 50% chance: fixed allocation, 50% chance: autonomous
+            if random.random() < 0.50:
+                # Fixed: pick 1-3 random FoundUps
+                num_targets = min(len(foundup_ids), random.randint(1, 3))
+                targets = random.sample(foundup_ids, num_targets)
+                pct_each = 1.0 / num_targets
+                target_dict = {fid: pct_each for fid in targets}
+
+                batch = self._allocation_engine.allocate_fixed(
+                    human_id=human_id,
+                    total_ups=ups_to_allocate,
+                    targets=target_dict,
+                )
+            else:
+                # Autonomous: let 0102 decide
+                batch = self._allocation_engine.allocate_autonomous(
+                    human_id=human_id,
+                    total_ups=ups_to_allocate,
+                    candidate_foundups=foundup_ids,
+                    max_targets=3,
+                )
+
+            successful_ups = sum(result.ups_allocated for result in batch.results)
+            if successful_ups < ups_to_allocate:
+                # Refund unused allocation budget so failed routing is not punitive.
+                account.remaining_allocation += (ups_to_allocate - successful_ups)
+
+            if daemon:
+                daemon.emit(
+                    event_type="ups_allocation_executed",
+                    payload={
+                        "human_id": human_id,
+                        "strategy": batch.strategy.value,
+                        "ups_requested": round(ups_to_allocate, 4),
+                        "ups_executed": round(successful_ups, 4),
+                        "fi_received": round(batch.total_fi_received, 4),
+                        "success_count": batch.success_count,
+                        "pending_count": len(batch.pending_orders),
+                        "remaining_allocation_ups": round(account.remaining_allocation, 4),
+                    },
+                    actor_id=human_id,
+                    foundup_id="F_0",
+                )
+                for result in batch.results:
+                    daemon.emit(
+                        event_type="ups_allocation_result",
+                        payload={
+                            "human_id": human_id,
+                            "strategy": batch.strategy.value,
+                            "path": result.path.value,
+                            "ups_allocated": round(result.ups_allocated, 4),
+                            "fi_received": round(result.fi_received, 4),
+                            "fee_paid": round(result.fee_paid, 4),
+                            "order_id": result.order_id,
+                        },
+                        actor_id=human_id,
+                        foundup_id=result.foundup_id,
+                    )
+
+            if batch.success_count > 0:
+                logger.debug(
+                    f"[MODEL] 012 allocation: {human_id} allocated "
+                    f"{ups_to_allocate:.2f} UPS -> {batch.total_fi_received:.2f} F_i "
+                    f"({batch.strategy.value}, {batch.success_count} targets)"
+                )
 
     def _record_btc_fi_ratio(self) -> None:
         """Record BTC-per-F_i ratio for tracking the mirror dynamic.
@@ -557,7 +986,7 @@ class FoundUpsModel:
             velocity = min(1.0, task_ratio * 2)  # Scale to 0-1
 
             # Calculate traction from engagement
-            engagement = tile.like_count + tile.customer_count * 10
+            engagement = tile.likes + tile.customer_count * 10
             traction = min(1.0, engagement / 100)
 
             # Calculate health from lifecycle stage
@@ -594,7 +1023,8 @@ class FoundUpsModel:
     def _emit_cabr_updates(self) -> None:
         """Emit CABR score updates for animation.
 
-        Calculates CABR (Conscious Autonomous Benefit Rate) from simulation state:
+        Calculates CABR (Consensus-Driven Autonomous Benefit Rate, also referred to
+        as Collective Autonomous Benefit Rate) from simulation state to power PoB:
         - env_score: Environmental impact (heuristic from category)
         - soc_score: Social impact (heuristic from category)
         - part_score: Participation metrics (task completion, verifications)
@@ -624,9 +1054,10 @@ class FoundUpsModel:
 
             # Update with live participation metrics
             cabr = self._cabr_scores[foundup_id]
+            # Count active agents (simplified - all agents potentially contribute)
             active_agents = len([
-                a for a in state.agents
-                if a.current_foundup_id == foundup_id
+                a for a in state.agents.values()
+                if a.status == "active"
             ])
             cabr = self._cabr_estimator.update_participation(
                 score=cabr,
@@ -736,6 +1167,11 @@ class FoundUpsModel:
         """Get BTC-per-F_i ratio history for analysis."""
         return self._btc_fi_ratio_history
 
+    @property
+    def allocation_engine(self) -> AllocationEngine:
+        """Get allocation engine (0102 digital twin UPS→F_i routing)."""
+        return self._allocation_engine
+
     def get_agent(self, agent_id: str) -> Optional[BaseSimAgent]:
         """Get agent by ID."""
         return self._agents.get(agent_id)
@@ -771,14 +1207,28 @@ class FoundUpsModel:
             "f0_seed_btc": self._f0_seed_btc,
             "f0_investor_count": len(self._f0_investor_ids),
             "mvp_offerings_resolved": self._mvp_offerings_resolved,
+            "active_012_accounts": len(self._token_econ_engine.human_accounts),
             # BTC Reserve + Demurrage (wired economics)
             "btc_reserve_total": self._btc_reserve.total_btc,
             "btc_reserve_usd": self._btc_reserve.reserve_usd_value,
             "ups_value_btc": self._btc_reserve.ups_value_btc,
             "total_demurrage_decayed": self._demurrage.total_decayed,
-            "total_btc_from_decay": self._demurrage.total_btc_from_decay,
+            "total_btc_from_decay": getattr(self._demurrage, "total_btc_from_decay", 0.0),
             "pool_participants": len(self._pool_distributor.participants),
+            "pavs_treasury_ups": self._demurrage.pavs_treasury_balance,
+            "network_pool_ups": self._demurrage.total_to_network_pool,
+            "fund_pool_ups": self._pool_distributor.accumulated_fund,
+            "foundup_treasury_ups_total": sum(
+                pool.ups_treasury for pool in self._token_econ_engine.foundup_pools.values()
+            ),
+            "allocation_batches": self._allocation_engine.allocation_count,
+            "allocation_ups_total": self._allocation_engine.total_allocated_ups,
+            "allocation_fi_total": self._allocation_engine.total_fi_acquired,
             "epochs_completed": self._epoch_counter,
+            "pure_step_shadow_checks": self._pure_step_shadow_checks,
+            "pure_step_shadow_failures": self._pure_step_shadow_failures,
+            "pure_step_shadow_last_tick": int(self._pure_step_shadow_last.get("tick", 0)),
+            "pure_step_shadow_last_ok": bool(self._pure_step_shadow_last.get("ok", True)),
             # BTC-F_i mirror ratio (key metric)
             "btc_per_fi_latest": (
                 self._btc_fi_ratio_history[-1]["btc_per_fi"]

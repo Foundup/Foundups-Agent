@@ -33,6 +33,24 @@ Modular "follow WSP" system with **0102 in command** (not Qwen!), using WSP 15 M
 
 ## Recent Changes
 
+### V002 - WSP_00 Gate Integrated into `follow_wsp` (Fail-Closed Hardening)
+**Type**: Security/Compliance Hardening  
+**Date**: 2026-02-14  
+**Impact**: High - orchestration now blocks before execution when zen-state gate fails under strict mode  
+**WSP Compliance**: WSP 00, WSP 50, WSP 64
+
+#### What Changed
+- Added WSP_00 gate phase to `WSPOrchestrator.follow_wsp(...)` before all planning/execution phases.
+- Added fail-closed behavior in `_ensure_wsp00_gate()`:
+  - blocks when tracker is unavailable and `WSP00_STRICT_GATE=1`
+  - blocks when gate check errors and `WSP00_STRICT_GATE=1`
+- Added direct-script import hardening by injecting repo root into `sys.path`.
+- Added async cleanup hooks:
+  - `MCPToolExecutor.close_session()`
+  - `WSPOrchestrator.shutdown()`
+  - standalone CLI now calls shutdown to avoid unclosed session warnings.
+- Added tests in `tests/test_wsp00_gate.py` covering strict/non-strict missing-tracker behavior, exception handling, and payload propagation.
+
 ### V001 - Initial 0102 Meta-Orchestration Implementation
 **Type**: New Module
 **Date**: 2025-10-18

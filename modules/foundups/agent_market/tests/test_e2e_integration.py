@@ -386,6 +386,47 @@ class TestE2EOpenClawIntegration:
         assert "launch foundup" in response.lower()
         assert "create foundup" in response.lower()
 
+    def test_fam_adapter_auto_symbol_when_missing_token(self):
+        """Launch parser should auto-generate token symbol when none is supplied."""
+        from modules.communication.moltbot_bridge.src.fam_adapter import FAMAdapter
+
+        adapter = FAMAdapter(use_in_memory=True)
+        request = adapter.parse_launch_intent("launch foundup solar cleanup", "user_2")
+
+        assert request is not None
+        assert request.token_symbol != "FUP"
+        assert len(request.token_symbol) >= 3
+
+    def test_fam_adapter_symbol_collision_resolution(self):
+        """Auto token resolution should avoid duplicate symbols across launches."""
+        from modules.communication.moltbot_bridge.src.fam_adapter import FAMAdapter, FAMLaunchRequest
+
+        adapter = FAMAdapter(use_in_memory=True)
+        req1 = FAMLaunchRequest(
+            foundup_name="Solar Cleanup",
+            owner_id="owner_a",
+            token_symbol="AUTO",
+        )
+        req2 = FAMLaunchRequest(
+            foundup_name="Solar Cleanup",
+            owner_id="owner_b",
+            token_symbol="AUTO",
+        )
+
+        resp1 = adapter.launch_foundup(req1, actor_id="owner_a")
+        resp2 = adapter.launch_foundup(req2, actor_id="owner_b")
+
+        assert resp1.success is True
+        assert resp2.success is True
+        assert resp1.foundup_id is not None
+        assert resp2.foundup_id is not None
+        assert resp1.foundup_id != resp2.foundup_id
+
+        market = adapter._get_in_memory_market()
+        sym1 = market.get_foundup(resp1.foundup_id).token_symbol
+        sym2 = market.get_foundup(resp2.foundup_id).token_symbol
+        assert sym1 != sym2
+
 
 class TestE2EMoltbookDistribution:
     """Tests for Moltbook distribution adapter."""

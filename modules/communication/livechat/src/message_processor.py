@@ -1053,6 +1053,7 @@ class MessageProcessor:
         commands = [
             '/score', '/rank', '/stats', '/leaderboard', '/frags', '/whacks',
             '/help', '/quiz', '/facts', '/sprees', '/toggle', '/session',
+            '/fuc',  # FFCPLN Mining economy (OWNER only)
             # Deprecated but handled with helpful messages:
             '/level', '/answer', '/top', '/fscale', '/rate'
         ]

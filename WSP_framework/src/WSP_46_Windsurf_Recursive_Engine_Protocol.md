@@ -110,7 +110,17 @@ WRE orchestration follows a clear three-tier hierarchy:
 2) Domain Orchestrators (domain coordination)
 3) Module Orchestrators (module operations)
 
-Responsibilities, flows, and metrics mirror the reference in `WSP_ORCHESTRATION_HIERARCHY.md` which is now an annex pointer; this section is canonical.
+Responsibilities, flows, and metrics mirror the reference in `WSP_framework/docs/annexes/ORCHESTRATION_HIERARCHY_ANNEX.md`; this section is canonical.
+
+### 2.5.1 Tier Responsibility Matrix
+
+| Tier | Owner | Scope | Required Outputs |
+|---|---|---|---|
+| Tier 1 - WRE Core Orchestration | WRE core orchestrator | System-wide orchestration policy, safety, and routing | System health report, orchestration decisions, protocol-aligned execution trace |
+| Tier 2 - Domain Orchestrators | Domain DAEs/orchestrators | Domain-specific coordination and cross-block sequencing | Domain plan, domain-level status/events, bounded token execution |
+| Tier 3 - Module Orchestrators | Module DAEs/cubes | Module-local operations with strict contract boundaries | Module outcomes, ModLog/test artifacts, memory updates |
+
+Boundary rule: higher tiers coordinate and set constraints; lower tiers execute within local contracts. Escalations flow up only when local policy gates fail or cross-domain dependencies are required.
 
 ### 2.6 DAE Compliance (WSP 80)
 
@@ -124,7 +134,7 @@ To reduce global complexity and enforce local protocol guarantees, this protocol
   - Block-independence tests (WSP 72) validating cube boundaries
 - Token discipline: per-cube token budgets (typically 5-8K) are enforced. Any system-wide >30K usage requires a WSP 70 override documented in the relevant `ModLog.md`.
 
-Relationships: WSP 80, WSP 72, WSP 70, WSP 53, Annex: WSP_ORCHESTRATION_HIERARCHY.md
+Relationships: WSP 80, WSP 72, WSP 70, WSP 53, Annex: WSP_framework/docs/annexes/ORCHESTRATION_HIERARCHY_ANNEX.md
 
 ## 3. Orchestrated Agents & Utilities
 

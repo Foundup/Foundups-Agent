@@ -82,7 +82,7 @@ from modules.gamification.whack_a_magat.src.whack import apply_whack, get_profil
 - [ ] Commands still work
 
 ## Prevention:
-- Follow WSP_MODULE_PLACEMENT_GUIDE.md for ALL future modules
+- Follow `WSP_framework/docs/annexes/MODULE_PLACEMENT_GUIDE.md` for ALL future modules
 - ALWAYS check correct domain before creating files
 - NEVER mix gaming and moderation in same domain
 

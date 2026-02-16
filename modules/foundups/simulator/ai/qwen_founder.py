@@ -104,18 +104,21 @@ PROBLEM_DOMAINS = [
     },
     # === NEW DOMAINS ===
     {
-        "domain": "waste",  # GotJunk style
+        "domain": "waste",  # GotJunk - Japan context (both seller AND buyer pain)
         "pains": [
-            "Junk removal is expensive and landfill-focused",
-            "Reusable items end up in waste streams unnecessarily",
-            "No incentive for circular economy in waste management",
-            "Recycling verification is opaque and untrustworthy",
+            # SELLER pain: Getting rid of stuff is hard
+            "People have difficulty getting rid of stuff (especially in Japan)",
+            "Disposing of items is expensive, complex, and time-consuming",
+            "No simple way to snap a photo and list or give away items instantly",
+            # BUYER pain: New stuff is expensive, used is hard to find
+            "New items are expensive - the thing you need might be findable used",
+            "No local marketplace to browse what's available nearby right now",
         ],
         "outcomes": [
-            "Tokenized incentives for proper waste sorting",
-            "Peer-to-peer marketplace for reusable items before disposal",
-            "Verified recycling with proof-of-diversion from landfill",
-            "Community-owned waste collection with transparent routing",
+            "Snap photo → AI prices it → instant listing (Free/Discount/Auction)",
+            "Browse 50km radius feed - find what you need from nearby givers",
+            "Voice chat about item history helps buyers decide",
+            "One-swipe: sellers dispose easily, buyers find affordable items",
         ],
     },
     {
@@ -524,13 +527,13 @@ Respond in JSON:
                 "Create monitoring dashboard",
             ],
             # New domains
-            "waste": [  # GotJunk style
-                "Build pickup scheduling system",
-                "Create item categorization AI",
-                "Implement recycling verification",
-                "Add reuse marketplace integration",
-                "Build route optimization engine",
-                "Create landfill diversion tracker",
+            "waste": [  # GotJunk - Japan-style item disposal made easy
+                "Build photo capture with Gemini Vision analysis",
+                "Create swipe-to-list interface (Free/Discount/Auction)",
+                "Implement 50km geo-fenced browse feed",
+                "Add voice chat about item history (AI-assisted)",
+                "Build 5-minute cart reservation with countdown",
+                "Create cross-device sync with Firebase Auth",
             ],
             "healthcare": [
                 "Design patient data schema",

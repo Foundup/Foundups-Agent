@@ -790,6 +790,7 @@ class LiveChatCore:
         inactivity_timeout = 180  # Consider stream inactive after 3 minutes of no messages
         consecutive_poll_errors = 0  # Track consecutive polling errors
         consecutive_empty_polls = 0  # Track polls with no messages
+        invite_distribution_done = False  # Track if we've done auto-distribution this session
         # Dynamic troll interval based on chat activity
         base_troll_interval = 600  # Base: 10 minutes for quiet chat
         troll_interval = base_troll_interval
@@ -833,7 +834,28 @@ class LiveChatCore:
                         if record_success:
                             record_success('proactive_troll', {'activity': recent_msg_count, 'msg': troll_msg[:50]}, tokens_used=50)
                     last_troll = time.time()
-                
+
+                # Auto-distribute TOP 10 invites (once per session, after 30 min)
+                if not invite_distribution_done and hasattr(self.message_processor, 'stream_start_time'):
+                    stream_duration = time.time() - self.message_processor.stream_start_time
+                    if stream_duration > 1800:  # 30 minutes
+                        logger.info(f"[INVITE-AUTO] 🎟️ Stream running {stream_duration/60:.1f} min - checking TOP 10 invites...")
+                        try:
+                            from modules.gamification.whack_a_magat.src.invite_distributor import auto_distribute_top10_invites
+                            new_invites = auto_distribute_top10_invites()
+                            if new_invites:
+                                logger.info(f"[INVITE-AUTO] 📤 Sending {len(new_invites)} invite messages to chat...")
+                                for inv in new_invites:
+                                    await self.send_chat_message(inv['message'])
+                                    await asyncio.sleep(2)  # Delay between messages
+                                logger.info(f"[INVITE-AUTO] ✅ Distributed {len(new_invites)} TOP 10 invites")
+                            else:
+                                logger.info(f"[INVITE-AUTO] ⏭️ All TOP 10 whackers already have invites (no new distribution)")
+                            invite_distribution_done = True
+                        except Exception as e:
+                            logger.error(f"[INVITE-AUTO] ❌ Error: {e}")
+                            invite_distribution_done = True  # Don't retry on error
+
                 # Periodic stream health check - detect if stream ended
                 if time.time() - last_stream_check > stream_check_interval:
                     logger.info("[SEARCH] Checking if stream is still live...")

@@ -22,7 +22,10 @@ from dataclasses import dataclass
 try:
     from modules.infrastructure.oauth_management.src.oauth_manager import OAuthManager
 except ImportError:
-    OAuthManager = None
+    try:
+        from modules.platform_integration.utilities.oauth_management.src.oauth_manager import OAuthManager
+    except ImportError:
+        OAuthManager = None
 
 @dataclass
 class OAuthConfig:

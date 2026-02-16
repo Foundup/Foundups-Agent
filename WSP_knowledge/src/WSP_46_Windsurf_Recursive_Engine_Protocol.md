@@ -112,47 +112,7 @@ WRE orchestration follows a clear three-tier hierarchy:
 
 Responsibilities, flows, and metrics mirror the reference in `WSP_ORCHESTRATION_HIERARCHY.md` which is now an annex pointer; this section is canonical.
 
-### 2.6 WRE Evolution: Qwen/Gemma Integration (CORRECTED ARCHITECTURE)
-
-**CRITICAL INSIGHT** (012's directive):
-
-The WRE system we tried to build was CORRECT in concept but WRONG in execution:
-- **Original attempt**: Built without Qwen or Gemma - used complex agent scaffolding
-- **NEW understanding**: WRE = Qwen (agentic coordination) + Gemma (specialized functions)
-
-**WRE with Qwen/Gemma**:
-```
-012 Vision
-    v
-0102 Digital Twin (learns 012 patterns)
-    v
-[BOT][AI] Qwen = WRE Brain (agentic coordination, NOT consciousness)
-    v
-[BOT][AI][BABY] Gemma = Module Functions (each .py enhanced with learning)
-```
-
-**YouTube DAE as WRE Use Case**:
-- YouTube DAE demonstrates WRE pattern
-- HoloIndex = tool for applying WRE to EVERY DAE
-- Every FoundUp DAE follows same pattern
-
-**Key Correction**:
-- **NOT** "organs" (analogy not needed for system operation)
-- **IS** "specialized functions" (each module learns autonomously)
-- Qwen coordinates, Gemma executes
-- 0102 learns from 012, directs Qwen
-- WRE becomes recursive digital extension system
-
-**HoloIndex Role**:
-- Maps all .py modules in any DAE
-- Identifies enhancement opportunities
-- Applies Gemma learning to each module
-- Enables WRE pattern across all FoundUp DAEs
-
-**This Document Reflects**: Original WRE architecture (pre-Qwen/Gemma)
-**See Also**: WSP 80 (DAE Cube with Qwen/Gemma enhancement pattern)
-
-### 2.7 DAE Compliance (WSP 80)
+### 2.6 DAE Compliance (WSP 80)
 
 To reduce global complexity and enforce local protocol guarantees, this protocol SHALL be executed through cube-level DAEs per WSP 80 (Cube-Level DAE Orchestration Protocol):
 

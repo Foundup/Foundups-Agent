@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from modules.foundups.agent_market.src.exceptions import NotFoundError
+from modules.foundups.agent_market.src.exceptions import NotFoundError, ValidationError
 from modules.foundups.agent_market.src.models import (
     EventRecord,
     Foundup,
@@ -90,6 +90,20 @@ class TestFoundupCRUD:
 
         assert len(foundups) >= 1
         assert any(f.foundup_id == sample_foundup.foundup_id for f in foundups)
+
+    def test_duplicate_token_symbol_raises(self, adapter, sample_foundup):
+        """Token symbols must be unique (case-insensitive)."""
+        adapter.create_foundup(sample_foundup)
+        duplicate = Foundup(
+            foundup_id="fdup_other",
+            name="Other",
+            owner_id="owner_2",
+            token_symbol="test",
+            immutable_metadata={},
+            mutable_metadata={},
+        )
+        with pytest.raises(ValidationError):
+            adapter.create_foundup(duplicate)
 
 
 class TestTaskCRUD:
@@ -230,3 +244,63 @@ class TestEventCRUD:
 
         events = adapter.query_events(event_type="task.created")
         assert all(e.event_type == "task.created" for e in events)
+
+
+class TestComputeAccessPersistence:
+    """Tests for compute access persistence operations."""
+
+    def test_activate_plan_and_wallet(self, adapter):
+        plan = adapter.activate_compute_plan(
+            actor_id="actor_1",
+            tier="builder",
+            monthly_credit_allocation=30,
+        )
+        wallet = adapter.get_wallet("actor_1")
+        assert plan["tier"] == "builder"
+        assert wallet["credit_balance"] == 30
+        assert wallet["tier"] == "builder"
+
+    def test_purchase_and_debit_and_rebate(self, adapter):
+        adapter.activate_compute_plan("actor_1", tier="builder", monthly_credit_allocation=0)
+        purchase = adapter.purchase_credits("actor_1", amount=20, rail="subscription", payment_ref="pay_1")
+        debit = adapter.debit_credits(
+            actor_id="actor_1",
+            amount=5,
+            reason="task.create",
+            foundup_id="f_1",
+        )
+        rebate = adapter.rebate_credits("actor_1", amount=2, reason="pob_bonus")
+        wallet = adapter.get_wallet("actor_1")
+        ledger = adapter.list_compute_ledger("actor_1")
+
+        assert purchase["entry_type"] == "purchase"
+        assert debit["entry_type"] == "debit"
+        assert rebate["entry_type"] == "rebate"
+        assert wallet["credit_balance"] == 17
+        assert len(ledger) == 3
+
+    def test_ensure_access_enforced(self, adapter):
+        adapter.compute_access_enforced = True
+        adapter.activate_compute_plan("actor_1", tier="builder", monthly_credit_allocation=1)
+        denied = adapter.ensure_access("actor_1", capability="foundup.launch", foundup_id="f_1")
+        allowed = adapter.ensure_access("actor_1", capability="task.claim", foundup_id="f_1")
+
+        assert denied["allowed"] is False
+        assert denied["reason"] == "insufficient compute credits"
+        assert allowed["allowed"] is True
+
+    def test_compute_session_round_trip(self, adapter):
+        session_id = adapter.record_compute_session(
+            actor_id="actor_1",
+            foundup_id="f_1",
+            workload={"tasks": 2, "model": "qwen"},
+            credits_debited=3,
+        )
+        session = adapter.get_compute_session(session_id)
+        assert session["session_id"] == session_id
+        assert session["credits_debited"] == 3
+        assert session["workload"]["tasks"] == 2
+
+    def test_compute_session_missing_raises(self, adapter):
+        with pytest.raises(NotFoundError):
+            adapter.get_compute_session("missing")

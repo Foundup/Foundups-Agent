@@ -106,7 +106,7 @@ class SemanticStateEngine:
             raise TransitionError("Multi-step transitions prohibited")
         if any(abs(d) > 1 for d in delta):
             raise TransitionError("Digit jumps >1 not allowed")
-        
+        SemanticStateEngine
         # Execute transition
         self.state_history.append(self.current_state)
         self.current_state = target_state

@@ -1,0 +1,6 @@
+{
+  "params": {
+    "max_ticks": 2000,
+    "seed": 42
+  }
+}

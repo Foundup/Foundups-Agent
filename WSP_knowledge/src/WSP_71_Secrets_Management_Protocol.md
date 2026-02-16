@@ -29,6 +29,12 @@ This protocol establishes the **Canonical Secrets Management Architecture** for 
 - Secret access MUST be validated against agent permissions before retrieval
 - All secret access attempts MUST be logged and audited
 
+**Rule 4: Skill Supply-Chain Safety Gate**
+- Any executable skill set (`SKILL.md` and related assets) MUST pass automated security scanning before staged or production use.
+- Runtime systems that execute mutating skill actions MUST enforce preflight scanning with fail-closed defaults.
+- Scanner outcomes (status, severity, decision) MUST be logged as auditable security events.
+- If scanner tooling is unavailable in required mode, execution MUST be blocked and treated as a security incident candidate.
+
 ### 2.2 Security Architecture
 
 **Three-Layer Security Model:**
@@ -100,6 +106,31 @@ class SecretsManager:
 - **Secure Handling**: Use secrets in memory only, clear after use
 - **Error Handling**: Ensure secrets are cleared even on error conditions
 - **Rotation Support**: Implement automatic handling of secret rotation
+
+### 3.4 Skill Safety Preflight Interface
+
+Runtime skill execution must expose a preflight gate that can be enforced by policy:
+
+```python
+class SkillSafetyGate:
+    def scan_skills(self, skills_path: str, max_severity: str = "medium") -> dict:
+        """
+        Scan skill artifacts before execution or promotion.
+
+        Returns:
+            {
+              "available": bool,
+              "passed": bool,
+              "highest_severity": "none|low|medium|high|critical",
+              "message": str
+            }
+        """
+```
+
+**Required behavior:**
+- `required_mode=true`: block if scanner unavailable.
+- `enforced_mode=true`: block when `highest_severity` exceeds threshold.
+- Cache windows are allowed for runtime efficiency but MUST expire predictably.
 
 ## 4. Secrets Management Systems Integration
 
@@ -211,6 +242,8 @@ local_vault_config:
 - Permission violation rates and trends  
 - Secret rotation compliance and overdue rotations
 - System availability and error rates
+- Skill scan pass/fail rates, severity distribution, and fail-closed blocks
+- Promotion blocks due to skill scan failures
 
 ### 5.3 Compliance Validation
 
@@ -246,6 +279,13 @@ local_vault_config:
 - Integration with existing pre-action verification framework
 - Comprehensive verification logging and audit trails
 
+### 6.4 WSP 95 and WSP 96 Skill/MCP Governance Integration
+
+**Cross-Protocol Enforcement:**
+- WSP 95 promotion gates MUST include supply-chain scan evidence before `prototype -> staged` and `staged -> production`.
+- WSP 96 MCP/agent activation workflows MUST reject unsafe skill bundles based on severity policy.
+- Violations route to WSP 47 tracking with remediation records in module `violations.md`.
+
 ## 7. Implementation Roadmap
 
 ### 7.1 Phase 1: Core Infrastructure (P0 - Critical)
@@ -259,6 +299,7 @@ local_vault_config:
 - Add real-time security alerting and violation detection
 - Implement secret rotation automation and lifecycle management
 - Enhanced integration with WSP 4 FMAS security scanning
+- Enforce skill supply-chain scanner gate for promotion and runtime execution
 
 ### 7.3 Phase 3: Advanced Features (P2 - Medium)
 - Multi-secrets-manager support with failover capabilities

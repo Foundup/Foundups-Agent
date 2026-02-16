@@ -109,6 +109,7 @@ const FoundupCube = (function () {
         MULTI_CUBE: false,      // Phase 3: Multi-cube zoom-out
         DEBUG_TIMING: false,    // Log phase transitions
         WRITE_FIRESTORE: true,  // Phase 6: Write events to Firestore
+        DRIVEN_MODE: false,     // Phase 7: Animation controlled by simulator state (not timer)
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -322,6 +323,109 @@ const FoundupCube = (function () {
                 threshold: d.threshold || 0.618,
                 threshold_met: d.threshold_met || false,
                 confidence: d.confidence || 0,
+            },
+        }),
+
+        // Agent Lifecycle Events (01(02) → 0102 → 01/02 state machine)
+        'agent_joins': (d) => ({
+            type: 'agent_joins',
+            data: {
+                actor_id: d.actor_id,
+                agent_type: d.agent_type || 'user',
+                public_key: d.public_key || '',
+                rank: d.rank || 1,
+                state: d.state || '01(02)',
+                foundup_idx: d.foundup_idx || 1,
+            },
+        }),
+        'agent_awakened': (d) => ({
+            type: 'agent_awakened',
+            data: {
+                actor_id: d.actor_id,
+                coherence: d.coherence || 0.72,
+                state: d.state || '0102',
+            },
+        }),
+        'agent_idle': (d) => ({
+            type: 'agent_idle',
+            data: {
+                actor_id: d.actor_id,
+                inactive_ticks: d.inactive_ticks || 0,
+                current_tick: d.current_tick || 0,
+                state: d.state || '01/02',
+            },
+        }),
+        'agent_ranked': (d) => ({
+            type: 'agent_ranked',
+            data: {
+                actor_id: d.actor_id,
+                old_rank: d.old_rank || 1,
+                new_rank: d.new_rank || 2,
+                old_title: d.old_title || 'Apprentice',
+                new_title: d.new_title || 'Builder',
+            },
+        }),
+        'agent_earned': (d) => ({
+            type: 'agent_earned',
+            data: {
+                actor_id: d.actor_id,
+                amount: d.amount || 0,
+                foundup_idx: d.foundup_idx || 1,
+                task_id: d.task_id,
+            },
+            triggerEarningPulse: true,
+        }),
+        'agent_leaves': (d) => ({
+            type: 'agent_leaves',
+            data: {
+                actor_id: d.actor_id,
+                public_key: d.public_key || '',
+                wallet_balance: d.wallet_balance || 0,
+            },
+        }),
+
+        // State Sync Events (DRIVEN_MODE: simulator controls animation)
+        'state_sync': (d) => ({
+            type: 'state_sync',
+            data: {
+                phase: d.phase || 'IDEA',
+                tick: d.tick || 0,
+                foundups_count: d.foundups_count || 0,
+                agents_count: d.agents_count || 0,
+                total_fi: d.total_fi || 0,
+                lifecycle_stage: d.lifecycle_stage || 'PoC',
+                filled_blocks: d.filled_blocks || 0,
+                total_blocks: d.total_blocks || 64,
+            },
+        }),
+        'phase_command': (d) => ({
+            type: 'phase_command',
+            data: {
+                target_phase: d.target_phase,
+                force: d.force || false,
+            },
+        }),
+
+        // Synthetic User Events (Simile AI pattern - pre-launch market testing)
+        'synthetic_user_adopted': (d) => ({
+            type: 'synthetic_user_adopted',
+            data: {
+                agentId: d.agent_id,
+                foundupId: d.foundup_id,
+                confidence: d.confidence || 0,
+                reasons: d.reasons || [],
+                viralCoefficient: d.viral_coefficient || 1.0,
+                personaType: `${d.persona_income || 'medium'}_${d.persona_risk || 'moderate'}`,
+            },
+        }),
+        'synthetic_user_rejected': (d) => ({
+            type: 'synthetic_user_rejected',
+            data: {
+                agentId: d.agent_id,
+                foundupId: d.foundup_id,
+                confidence: d.confidence || 0,
+                reasons: d.reasons || [],
+                personaType: `${d.persona_income || 'medium'}_${d.persona_risk || 'moderate'}`,
             },
         }),
     };
@@ -616,6 +720,16 @@ const FoundupCube = (function () {
         if (mapped.type === 'cabr_score_updated') {
             cabrScore.update(mapped.data);
         }
+
+        // Handle state_sync for DRIVEN_MODE
+        if (mapped.type === 'state_sync') {
+            handleStateSync(mapped.data);
+        }
+
+        // Handle phase_command for direct control
+        if (mapped.type === 'phase_command') {
+            setPhase(mapped.data.target_phase, { force: mapped.data.force });
+        }
     }
 
     // Pulse a builder's $ to show earning (synced with ticker event)
@@ -698,16 +812,42 @@ const FoundupCube = (function () {
 
     // ═══════════════════════════════════════════════════════════════════════
     // VISION STATEMENTS (rotate per loop - each FoundUp starts with a dream)
+    // Keywords: peer-to-peer, decentralized, community, owned by stakeholders
+    // Not just code - ANY community-beneficial venture
     // ═══════════════════════════════════════════════════════════════════════
     const VISION_STATEMENTS = Object.freeze([
+        // Tech platforms (decentralized)
         'A decentralized YouTube owned by its stakeholders',
-        'A decentralized Twitter owned by its community',
+        'A peer-to-peer Twitter with no corporate overlord',
         'An open-source Uber where drivers own the platform',
         'A community-owned Airbnb with no middleman',
         'A decentralized GitHub built by its contributors',
+        'A peer-to-peer Spotify where artists earn directly',
+        // AI & Knowledge
         'An AI marketplace owned by its creators',
+        'A community knowledge base that pays contributors',
+        'Decentralized tutoring owned by teachers & students',
+        // Real-world community services
+        'Community egg distribution managed by neighbors',
+        'A peer-to-peer tool library for the neighborhood',
+        'Decentralized childcare co-op owned by parents',
+        'Community garden coordination with shared harvests',
+        'Peer-to-peer meal sharing for elderly neighbors',
+        // Finance & Commerce
         'A community banking platform with zero fees',
-        'A decentralized Spotify where artists earn directly',
+        'Peer-to-peer lending circles for small businesses',
+        'Decentralized farmers market with direct sales',
+        'Community investment club owned by members',
+        // Creative & Cultural
+        'A decentralized film studio owned by creators',
+        'Peer-to-peer music venue booking for indie bands',
+        'Community art gallery with artist-owned curation',
+        'Decentralized podcast network owned by listeners',
+        // Local Services
+        'Peer-to-peer home repair coordination',
+        'Community rideshare owned by the neighborhood',
+        'Decentralized pet-sitting network for pet lovers',
+        'Peer-to-peer language exchange owned by learners',
     ]);
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -863,10 +1003,20 @@ const FoundupCube = (function () {
         promoter_assigned: (d) => `${d.agentId || '0102'} → promoter track (MPS P${d.priority || 4})`,
         handshake_complete: (d) => `handshake: ${d.agentId || '0102'} ↔ F${toSubscript(d.foundupIndex || 1)}`,
 
-        // Agent lifecycle events
-        agent_joins: (d) => `01(02) Agent joins F${toSubscript(d.foundupIndex || 1)}`,
-        agent_idle: (d) => `0102 ${d.agentId || 'agent'} IDLE — awaiting ORCH`,
-        orch_handoff: (d) => `ORCH → ${d.agentId || '0102'}: build ${d.module || 'module'}`,
+        // Agent lifecycle events (01(02) → 0102 → 01/02 state machine)
+        agent_joins: (d) => `01(02) ${(d.public_key || '').slice(0, 10)}... enters${d.agent_type ? ` (${d.agent_type})` : ''}`,
+        agent_awakened: (d) => `0102 ${d.actor_id || 'agent'} ZEN (${(d.coherence || 0.72).toFixed(2)})`,
+        agent_idle: (d) => `01/02 ${d.actor_id || 'agent'} IDLE (${d.inactive_ticks || 0} ticks)`,
+        agent_ranked: (d) => `${d.actor_id || 'agent'} rank UP: ${d.old_rank || 1}→${d.new_rank || 2} (${d.new_title || 'Builder'})`,
+        agent_earned: (d) => `${d.actor_id || 'agent'} earned ${d.amount || 0} F${toSubscript(d.foundup_idx || 1)}`,
+        agent_leaves: (d) => `${(d.public_key || '').slice(0, 10)}... logs off (${d.wallet_balance || 0} F_i)`,
+        orch_handoff: (d) => `ORCH → ${d.actor_id || '0102'}: build ${d.module || 'module'}`,
+
+        // SmartDAO escalation events (WSP 100: F₀ DAE → F₁+ SmartDAO)
+        smartdao_emergence: (d) => `F${toSubscript(d.foundup_idx || 0)} → SmartDAO F${toSubscript(d.new_tier || 1)} EMERGENCE`,
+        tier_escalation: (d) => `F${toSubscript(d.old_tier || 0)} → F${toSubscript(d.new_tier || 1)} TIER UP`,
+        treasury_autonomy: (d) => `F${toSubscript(d.foundup_idx || 1)} TREASURY AUTONOMOUS`,
+        cross_dao_funding: (d) => `F${toSubscript(d.source_tier || 2)} funds F${toSubscript(d.target_tier || 0)}: ${d.amount || 0} UP$`,
 
         // FAM module building events (what agents build)
         build_registry: (d) => `0102 builds REGISTRY module`,
@@ -2385,6 +2535,11 @@ const FoundupCube = (function () {
     }
 
     function updatePhase() {
+        // DRIVEN_MODE: Skip timer-based transitions, wait for state_sync events
+        if (FLAGS.DRIVEN_MODE) {
+            return;  // Phase controlled by simulator via state_sync
+        }
+
         const elapsed = getScaledElapsed(phaseStartTime);
         const phase = PHASES[currentPhase];
 
@@ -2397,6 +2552,49 @@ const FoundupCube = (function () {
             phaseStartTime = Date.now();
             onPhaseChange(nextPhase);
             emitEvent('phase_changed', { phase: nextPhase, loopTime: Date.now() - loopStartTime });
+        }
+    }
+
+    // DRIVEN_MODE: Set phase directly from simulator state
+    function setPhase(targetPhase, options = {}) {
+        if (!PHASES[targetPhase]) {
+            console.warn(`[CUBE] Invalid phase: ${targetPhase}`);
+            return false;
+        }
+        if (currentPhase === targetPhase && !options.force) {
+            return false;  // Already at target phase
+        }
+        if (FLAGS.DEBUG_TIMING) {
+            console.log(`[CUBE] DRIVEN: ${currentPhase} → ${targetPhase}`);
+        }
+        currentPhase = targetPhase;
+        phaseStartTime = Date.now();
+        onPhaseChange(targetPhase);
+        emitEvent('phase_changed', { phase: targetPhase, driven: true });
+        return true;
+    }
+
+    // DRIVEN_MODE: Handle state_sync events from simulator
+    function handleStateSync(data) {
+        // Update phase if different
+        if (data.phase && data.phase !== currentPhase) {
+            setPhase(data.phase);
+        }
+        // Update F_i rating based on lifecycle stage
+        if (data.lifecycle_stage) {
+            simBridge.lastLifecycleStage = data.lifecycle_stage;
+        }
+        // Update block fill progress (for visual consistency)
+        if (data.filled_blocks !== undefined) {
+            const targetFilled = data.filled_blocks;
+            const currentFilled = filledBlocks.size;
+            // If simulator has more blocks, fill them
+            if (targetFilled > currentFilled) {
+                const toFill = targetFilled - currentFilled;
+                for (let i = 0; i < toFill; i++) {
+                    fillRandomBlock();
+                }
+            }
         }
     }
 
@@ -3328,11 +3526,11 @@ const FoundupCube = (function () {
         ctx.roundRect(keyX - 8, keyY - 12, keyW, keyH, 6);
         ctx.stroke();
 
-        // F_i tier badge (top right)
+        // F_i Rating label (color speaks for itself - no need to state tier name)
         ctx.font = 'bold 8px monospace';
-        ctx.fillStyle = borderColor;
+        ctx.fillStyle = borderColor;  // Color shows the tier
         ctx.textAlign = 'right';
-        ctx.fillText(fiRating.tierName, keyX + keyW - 16, keyY - 2);
+        ctx.fillText('F_i Rating', keyX + keyW - 16, keyY - 2);
 
         // Agent legend header
         const divY = keyY + 8;
@@ -3546,16 +3744,29 @@ const FoundupCube = (function () {
             cubeRotation.targetY = 0;
         });
 
-        // Scroll wheel zooms into cube
-        // UP (negative deltaY) = zoom IN (bigger cube, higher scale)
-        // DOWN (positive deltaY) = zoom OUT (smaller cube, lower scale)
+        // Scroll wheel: zoom OR speed (shift+wheel)
+        // UP (negative deltaY) = zoom IN / speed UP
+        // DOWN (positive deltaY) = zoom OUT / speed DOWN
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            // Simpler zoom: just use sign of deltaY
-            const direction = e.deltaY > 0 ? -1 : 1;  // DOWN=out(-1), UP=in(+1)
-            const zoomStep = 0.5;  // Fixed step size
-            camera.targetScale = Math.max(STYLE.camera.minScale, Math.min(STYLE.camera.maxScale, camera.targetScale + direction * zoomStep));
-            console.log(`Zoom: deltaY=${e.deltaY}, dir=${direction}, scale=${camera.targetScale.toFixed(1)}`);
+
+            if (e.shiftKey) {
+                // SHIFT + wheel = adjust simulation speed
+                const speedDelta = e.deltaY > 0 ? -0.25 : 0.25;
+                speedMultiplier = Math.max(0.25, Math.min(5.0, speedMultiplier + speedDelta));
+                // Update slider if exists
+                const slider = document.getElementById('speedSlider');
+                const valueEl = document.getElementById('speedValue');
+                if (slider) slider.value = speedMultiplier;
+                if (valueEl) valueEl.textContent = speedMultiplier.toFixed(1) + 'x';
+                console.log(`Speed: ${speedMultiplier.toFixed(1)}x (shift+wheel)`);
+            } else {
+                // Normal wheel = zoom
+                const direction = e.deltaY > 0 ? -1 : 1;  // DOWN=out(-1), UP=in(+1)
+                const zoomStep = 0.5;  // Fixed step size
+                camera.targetScale = Math.max(STYLE.camera.minScale, Math.min(STYLE.camera.maxScale, camera.targetScale + direction * zoomStep));
+                console.log(`Zoom: deltaY=${e.deltaY}, dir=${direction}, scale=${camera.targetScale.toFixed(1)}`);
+            }
         }, { passive: false });
 
         // Double-click resets zoom to default
@@ -3718,7 +3929,67 @@ const FoundupCube = (function () {
         if (label) label.textContent = speedMultiplier + 'x';
     }
 
-    return { init, setFirestore, setSpeed, getSessionStats, STYLE, FLAGS };
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMMAND API - Direct control interface for simulator integration
+    // Usage: FoundupCube.command('setPhase', { phase: 'BUILDING' })
+    // ═══════════════════════════════════════════════════════════════════════
+    function command(action, params = {}) {
+        switch (action) {
+            case 'setPhase':
+                return setPhase(params.phase, { force: params.force });
+
+            case 'enableDrivenMode':
+                FLAGS.DRIVEN_MODE = true;
+                console.log('[CUBE] DRIVEN_MODE enabled - animation controlled by simulator');
+                return true;
+
+            case 'disableDrivenMode':
+                FLAGS.DRIVEN_MODE = false;
+                console.log('[CUBE] DRIVEN_MODE disabled - animation uses internal timer');
+                return true;
+
+            case 'stateSync':
+                handleStateSync(params);
+                return true;
+
+            case 'fillBlocks':
+                const count = params.count || 1;
+                for (let i = 0; i < count; i++) {
+                    fillRandomBlock();
+                }
+                return filledBlocks.size;
+
+            case 'spawnAgent':
+                const agent = spawnAgent(params.type || 'builder', params.status || '');
+                return agent ? agent.id : null;
+
+            case 'addTickerMessage':
+                addTickerMessage(params.type || 'info', params.data || {});
+                return true;
+
+            case 'getState':
+                return {
+                    phase: currentPhase,
+                    filledBlocks: filledBlocks.size,
+                    totalBlocks: Math.pow(CONFIG.targetSize, 3),
+                    agentCount: agents.length,
+                    loopCount: loopCount,
+                    fiEarned: fiEarned,
+                    drivenMode: FLAGS.DRIVEN_MODE,
+                    lifecycleStage: getLifecycleStage(),
+                };
+
+            case 'reset':
+                onPhaseChange('IDEA');
+                return true;
+
+            default:
+                console.warn(`[CUBE] Unknown command: ${action}`);
+                return false;
+        }
+    }
+
+    return { init, setFirestore, setSpeed, getSessionStats, command, STYLE, FLAGS };
 })();
 
 // Auto-init if buildCanvas exists

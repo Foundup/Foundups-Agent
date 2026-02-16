@@ -1,4 +1,8 @@
 ﻿# ROADMAP - FoundUps Agent Market
+## Domain Alignment References
+- `modules/foundups/ROADMAP.md`
+- `modules/foundups/docs/OCCAM_LAYERED_EXECUTION_PLAN.md`
+- `modules/foundups/docs/CONTINUATION_RUNBOOK.md`
 
 ## Versioning and Progression
 - PoC: `0.0.x`
@@ -36,10 +40,21 @@ Integrate real persistence and one chain adapter while keeping chain-agnostic in
 - `src/fam_daemon.py` (737 LOC)
 - `tests/test_fam_daemon.py` (comprehensive coverage)
 
-### Tranche 2: Persistence Layer (Planned)
-- SQLite/Postgres repository layer for Foundups, Tasks, Proofs
-- Migration scripts and schema versioning
-- Query optimization and indexing
+### Tranche 2: Persistence Layer (COMPLETE - 2026-02-08)
+**Deliverables:**
+- [x] SQLite repository adapter with CRUD coverage for Foundups, Tasks, Proofs, Verifications, Payouts, Events, Distribution posts, Agent profiles, Token terms
+- [x] Postgres adapter boundary (`PostgresAdapter`) preserving the same repository contract
+- [x] Repository factory (`create_repository`) with env-driven backend selection (`sqlite`/`postgres`)
+- [x] Schema migration/versioning (`schema_migrations` table + `MigrationManager`, `LATEST_SCHEMA_VERSION`)
+- [x] Query indexes for hot read paths (`tasks`, `proofs`, `event_records`, `payouts`, `distribution_posts`)
+- [x] Test coverage for migration idempotency/version guard and repository backend routing
+
+**Files Added:**
+- `src/persistence/migrations.py`
+- `src/persistence/postgres_adapter.py`
+- `src/persistence/repository_factory.py`
+- `tests/test_migrations.py`
+- `tests/test_repository_factory.py`
 
 ### Tranche 3: Chain Adapter (Planned)
 - One concrete token adapter (Hedera or EVM)
@@ -50,6 +65,29 @@ Integrate real persistence and one chain adapter while keeping chain-agnostic in
 - Role model for verifiers/governance actors
 - Permission matrix enforcement
 - Audit trail per actor
+
+### Tranche 5: Compute Access Paywall (In Progress, WSP 15 Ordered)
+Goal: make FoundUps a one-stop paid build surface where execution compute is metered, quality-gated by CABR/PoB, and routed through pAVS treasury lanes.
+
+**P0 (first)**
+- [x] Access gate + credit debit ledger enforcement in in-memory adapter
+- [x] Metering hooks at launch/orchestration/task-mutating boundaries
+- [x] Compute access event emission for debit/purchase/rebate/session/denial
+- [x] Persistence-backed compute wallet/ledger/session tables + migrations (SQLite/Postgres adapters)
+- [x] Service-layer wiring in persistent registry/task pipeline paths
+- [ ] Remaining service-layer wiring (distribution and treasury governance persistent paths)
+
+**P1 (second)**
+- Plan/tier lifecycle (scout, builder, swarm, sovereign)
+- UP$ to compute-credit conversion rails and constraints
+- pAVS fee routing + credit rebate settlement
+- Simulator scenario pack for PoB yield and paywall stress tests
+
+**P2 (third)**
+- Dynamic pricing and queueing optimization from utilization history
+
+Reference design:
+- `docs/COMPUTE_ACCESS_PAYWALL_SPEC.md`
 
 ### Exit Criteria
 - End-to-end pipeline works with persistent storage and adapter test doubles.

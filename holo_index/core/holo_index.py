@@ -313,15 +313,20 @@ class HoloIndex:
     # --------- Indexing --------- #
 
     def index_code_entries(self) -> None:
-        if not self.need_to:
-            self._log_agent_action("No NEED_TO entries to index", "WARN")
+        nav_entries = list(self.need_to.items())
+        web_assets = self._collect_web_asset_entries()
+
+        if not nav_entries and not web_assets:
+            self._log_agent_action("No code or web entries to index", "WARN")
             return
 
-        self._log_agent_action(f"Indexing {len(self.need_to)} code navigation entries...", "INDEX")
+        self._log_agent_action(f"Indexing {len(nav_entries)} code navigation entries...", "INDEX")
+        if web_assets:
+            self._log_agent_action(f"Indexing {len(web_assets)} web assets from public roots...", "INDEX")
         self.code_collection = self._reset_collection("navigation_code")
 
         ids, embeddings, documents, metadatas = [], [], [], []
-        for i, (need, location) in enumerate(self.need_to.items(), start=1):
+        for i, (need, location) in enumerate(nav_entries, start=1):
             ids.append(f"code_{i}")
             embeddings.append(self._get_embedding(need))
             documents.append(location)
@@ -335,6 +340,26 @@ class HoloIndex:
                 meta["cube"] = cube
             metadatas.append(meta)
 
+        next_idx = len(ids) + 1
+        for web_asset in web_assets:
+            ids.append(f"code_{next_idx}")
+            next_idx += 1
+            embeddings.append(self._get_embedding(web_asset["payload"]))
+            documents.append(web_asset["location"])
+            cube = self._infer_cube_tag(web_asset["need"], web_asset["location"], web_asset["summary"])
+            meta = {
+                "need": web_asset["need"],
+                "type": "web_asset",
+                "source": "public_asset_index",
+                "path": web_asset["location"],
+                "summary": web_asset["summary"],
+                "keywords": web_asset["keywords"],
+                "priority": 4,
+            }
+            if cube:
+                meta["cube"] = cube
+            metadatas.append(meta)
+
         self.code_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
         self._log_agent_action("Code index refreshed on SSD", "OK")
         # Also index symbols for self-maintaining semantic search (opt-in)
@@ -343,6 +368,94 @@ class HoloIndex:
                 self.index_symbol_entries()
             except Exception as exc:
                 self._log_agent_action(f"Symbol index skipped: {exc}", "WARN")
+
+    def _resolve_web_index_roots(self) -> List[Path]:
+        """Resolve web asset roots for semantic indexing."""
+        roots_env = os.getenv("HOLO_WEB_INDEX_ROOTS", "public")
+        roots: List[Path] = []
+        for raw_root in roots_env.split(";"):
+            candidate = raw_root.strip()
+            if not candidate:
+                continue
+            root_path = Path(candidate)
+            if not root_path.is_absolute():
+                root_path = self.project_root / root_path
+            roots.append(root_path)
+        return roots
+
+    def _collect_web_asset_entries(self) -> List[Dict[str, str]]:
+        """Collect HTML/JS/CSS assets so UI artifacts are semantically retrievable."""
+        enabled = os.getenv("HOLO_INDEX_WEB", "1").lower() in {"1", "true", "yes", "on"}
+        if not enabled:
+            return []
+
+        roots = self._resolve_web_index_roots()
+        if not roots:
+            return []
+
+        extensions_env = os.getenv("HOLO_WEB_INDEX_EXTENSIONS", ".html;.js;.mjs;.cjs;.css")
+        allowed_extensions = {
+            ext.strip().lower() for ext in extensions_env.split(";") if ext.strip()
+        }
+        if not allowed_extensions:
+            allowed_extensions = {".html", ".js", ".mjs", ".cjs", ".css"}
+
+        max_files = int(os.getenv("HOLO_WEB_INDEX_MAX_FILES", "300"))
+        max_chars = int(os.getenv("HOLO_WEB_INDEX_MAX_CHARS", "5000"))
+        skip_dirs = {
+            ".git", "__pycache__", "node_modules", "dist", "build", ".next", "coverage"
+        }
+
+        entries: List[Dict[str, str]] = []
+        for root in roots:
+            if len(entries) >= max_files:
+                break
+            if not root.exists() or not root.is_dir():
+                continue
+
+            for file_path in root.rglob("*"):
+                if len(entries) >= max_files:
+                    break
+                if not file_path.is_file():
+                    continue
+                if file_path.suffix.lower() not in allowed_extensions:
+                    continue
+                if any(part in skip_dirs for part in file_path.parts):
+                    continue
+
+                try:
+                    raw_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
+                if not raw_text.strip():
+                    continue
+
+                normalized = re.sub(r"\s+", " ", raw_text).strip()
+                snippet = normalized[:max_chars]
+                try:
+                    location = str(file_path.relative_to(self.project_root)).replace("\\", "/")
+                except ValueError:
+                    location = str(file_path).replace("\\", "/")
+
+                token_hint = re.sub(r"[_\\-\\.]+", " ", file_path.stem).strip()
+                need = f"web asset {file_path.name}"
+                keyword_excerpt = snippet[:1200]
+                summary = f"{location} ({file_path.suffix.lower()}) {snippet[:240]}"
+                payload = (
+                    f"Web asset path: {location}\n"
+                    f"Filename: {file_path.name}\n"
+                    f"Token hint: {token_hint}\n"
+                    f"Content: {snippet}"
+                )
+                entries.append({
+                    "need": need,
+                    "location": location,
+                    "summary": summary,
+                    "keywords": keyword_excerpt,
+                    "payload": payload,
+                })
+
+        return entries
 
     def index_symbol_entries(self, roots: Optional[List[Path]] = None) -> None:
         """
@@ -451,10 +564,13 @@ class HoloIndex:
         files: List[Path] = []
         for base in paths:
             if base.exists():
-                # Get all .md files but exclude node_modules and CHANGELOG files
-                all_md_files = sorted(base.rglob("*.md"))
+                # Get all .md and .yaml files (M2M WSP 99 support)
+                # but exclude node_modules and CHANGELOG files
+                all_doc_files = sorted(
+                    list(base.rglob("*.md")) + list(base.rglob("*.yaml"))
+                )
                 filtered_files = [
-                    f for f in all_md_files
+                    f for f in all_doc_files
                     if 'node_modules' not in str(f)
                     and 'CHANGELOG' not in f.name.upper()
                     and 'package-lock' not in f.name.lower()
@@ -471,7 +587,13 @@ class HoloIndex:
         summary_cache: Dict[str, Dict[str, str]] = {}
 
         for idx, file_path in enumerate(files, start=1):
-            text = file_path.read_text(encoding='utf-8', errors='ignore')
+            # Detect UTF-16 LE (BOM FF FE) and decode correctly (WSP 90)
+            raw_head = file_path.read_bytes()[:2]
+            if raw_head == b'\xff\xfe':
+                text = file_path.read_bytes().decode('utf-16-le', errors='ignore').lstrip('\ufeff')
+                self._log_agent_action(f"UTF-16 detected: {file_path.name} (decoded)", "WARN")
+            else:
+                text = file_path.read_text(encoding='utf-8', errors='ignore')
             lines = [line.strip() for line in text.splitlines() if line.strip()]
             if not lines:
                 continue
@@ -1060,6 +1182,7 @@ class HoloIndex:
                 title = (meta.get('title') or '').lower()
                 path = (meta.get('path') or '').lower()
                 summary = (meta.get('summary') or '').lower()
+                keywords = (meta.get('keywords') or '').lower()
                 test_id = (meta.get('test_id') or '').lower()
                 capabilities = (meta.get('capabilities') or '').lower()
                 description = (meta.get('description') or '').lower()
@@ -1073,6 +1196,8 @@ class HoloIndex:
                         keyword_score += 1.0
                     if token in summary:
                         keyword_score += 0.5
+                    if token in keywords:
+                        keyword_score += 1.25
                     if token in need:
                         keyword_score += 2.0
                     if token in doc_text:
@@ -1202,6 +1327,7 @@ class HoloIndex:
             title = (meta.get('title') or '').lower()
             path = (meta.get('path') or '').lower()
             summary = (meta.get('summary') or '').lower()
+            keywords = (meta.get('keywords') or '').lower()
             test_id = (meta.get('test_id') or '').lower() # Support test ID search
             capabilities = (meta.get('capabilities') or '').lower() # Support capability search
             
@@ -1214,13 +1340,15 @@ class HoloIndex:
                     keyword_score += 1.0
                 if token in summary:
                     keyword_score += 0.5
+                if token in keywords:
+                    keyword_score += 1.25
                 if token in test_id:
                     keyword_score += 3.0 # High match for direct test ID
                 if token in capabilities:
                     keyword_score += 1.5
 
-            # Apply document type filtering
-            if doc_type_filter != "all" and doc_type != doc_type_filter:
+            # Apply document type filtering (prefix match: 'wsp' matches 'wsp_protocol')
+            if doc_type_filter != "all" and not doc_type.startswith(doc_type_filter):
                 continue
 
             if kind == "code":

@@ -19,6 +19,12 @@ class SimulatorConfig:
     tick_rate_hz: float = 2.0  # Ticks per second
     max_ticks: Optional[int] = None  # None = run forever
 
+    # Epoch timing (tick-based intervals)
+    mini_epoch_ticks: int = 10      # Demurrage cycle (bio-decay)
+    epoch_ticks: int = 100          # Du pool distribution (passive)
+    macro_epoch_ticks: int = 900    # BTC-F_i ratio snapshot (~15 min at 1Hz)
+    # Note: Dao/Un payouts are EVENT-based (per 3V task), not epoch-based
+
     # Randomness
     seed: int = 42  # Deterministic seed for reproducibility
 
@@ -53,6 +59,13 @@ class SimulatorConfig:
     # AI agents (Qwen founders, Gemma users)
     use_ai: bool = False  # Enable AI-driven agents
     ai_risk_tolerance: float = 0.5  # User agent risk tolerance (0-1)
+
+    # Pure-step shadow parity (safe refactor gate; does not alter runtime path)
+    pure_step_shadow_enabled: bool = False
+    pure_step_shadow_log_interval: int = 25
+    pure_step_shadow_max_actor_drift: float = 1e-6
+    pure_step_shadow_max_pool_drift: float = 1e-6
+    pure_step_shadow_max_fi_drift: float = 1e-6
 
 
 # Default config instance

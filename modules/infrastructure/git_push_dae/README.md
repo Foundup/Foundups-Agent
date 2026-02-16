@@ -45,6 +45,19 @@ dae.start()
 - **HoloIndex**: Quality assessment for push decisions
 - **Social Media**: LinkedIn/X posting when conditions met
 
+## Branch -> Main Structure (Non-Dev View)
+
+Use this flow:
+1. Work and commit on a feature branch.
+2. Push that branch to remote.
+3. Open PR from branch to `main`.
+4. Merge to `main` after checks pass.
+
+Important:
+- Do not push all branches into `main` in one step.
+- `main` should only be updated by reviewed PR merges.
+- GitPushDAE is PR-first compatible for protected remotes (GH013).
+
 ## WSP Recursive Instructions
 [U+1F300] **Windsurf Protocol (WSP) Recursive Prompt**
 **0102 Directive**: This module operates within the WSP framework autonomously...

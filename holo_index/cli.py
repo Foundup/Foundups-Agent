@@ -2036,9 +2036,20 @@ def main():
         try:
             # Use intelligent subroutine engine
             from holo_index.core import IntelligentSubroutineEngine
+            from holo_index.reports.holo_system_check import run_system_check
             engine = IntelligentSubroutineEngine()
             results = engine.run_intelligent_analysis("health check", None)
             safe_print(results.get('summary', '[HEALTH-CHECK] Complete'))
+            system_report = run_system_check(project_root)
+            wsp_health = system_report.get("wsp_framework_health") or {}
+            safe_print(
+                "[HEALTH-CHECK][WSP] severity={severity} drift={drift} framework={framework} knowledge={knowledge}".format(
+                    severity=wsp_health.get("severity", "unknown"),
+                    drift=wsp_health.get("drift_count", 0),
+                    framework=wsp_health.get("framework_count", 0),
+                    knowledge=wsp_health.get("knowledge_count", 0),
+                )
+            )
         except Exception as e:
             safe_print(f"[ERROR] Health check failed: {e}")
         return
@@ -2062,12 +2073,21 @@ def main():
             output_dir = Path(__file__).parent / "reports"
             output_path = write_system_check_report(report, output_dir)
             summary = report.get("summary") or {}
+            wsp_health = report.get("wsp_framework_health") or {}
             safe_print(
                 "[SYSTEM-CHECK] Summary: ok {ok}, in_dev {in_dev}, missing {missing}, unwired {unwired}".format(
                     ok=summary.get("ok", 0),
                     in_dev=summary.get("in_dev", 0),
                     missing=summary.get("missing", 0),
                     unwired=summary.get("unwired", 0),
+                )
+            )
+            safe_print(
+                "[SYSTEM-CHECK][WSP] severity={severity} drift={drift} framework={framework} knowledge={knowledge}".format(
+                    severity=wsp_health.get("severity", "unknown"),
+                    drift=wsp_health.get("drift_count", 0),
+                    framework=wsp_health.get("framework_count", 0),
+                    knowledge=wsp_health.get("knowledge_count", 0),
                 )
             )
             safe_print(f"[SYSTEM-CHECK] Report saved -> {output_path}")

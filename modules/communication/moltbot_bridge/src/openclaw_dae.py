@@ -62,6 +62,7 @@ class IntentCategory(Enum):
     AUTOMATION = "automation"       # YouTube automation: scheduler, comments
     CONVERSATION = "conversation"   # Chat: casual dialogue, greeting
     FOUNDUP = "foundup"             # FoundUp launch and management
+    RESEARCH = "research"           # PQN detection, Duism, Oracle teaching
 
 
 class AutonomyTier(Enum):
@@ -452,6 +453,22 @@ class OpenClawDAE:
             "foundup", "foundups", "launch foundup", "create foundup",
             "token", "tokenized", "agent market", "fam",
             "milestone", "task", "proof", "verify", "payout",
+            "pavs", "cabr", "investor", "staking", "bonding curve",
+            "demurrage", "hardening", "btc reserve", "ups",
+            "f_i", "simulator", "economics", "pool", "epoch",
+        ],
+        IntentCategory.RESEARCH: [
+            "pqn", "phantom quantum", "resonance", "7.05", "detector",
+            "duism", "resp", "bell state", "cmst", "coherence",
+            "oracle", "research", "experiment", "detection",
+            "micro ccc", "conformal", "penrose", "entanglement witness",
+            "regime transition", "du resonance", "awaken",
+        ],
+        IntentCategory.CONVERSATION: [
+            "hello", "hi", "hey", "good morning", "good evening",
+            "how are you", "what's up", "sup", "yo",
+            "thanks", "thank you", "bye", "goodbye", "see you",
+            "talk", "conversation", "chat with",
         ],
     }
 
@@ -466,6 +483,7 @@ class OpenClawDAE:
         IntentCategory.AUTOMATION: "auto_moderator_bridge",
         IntentCategory.CONVERSATION: "digital_twin",
         IntentCategory.FOUNDUP: "fam_adapter",
+        IntentCategory.RESEARCH: "pqn_research_adapter",
     }
 
     def __init__(self, repo_root: Optional[Path] = None):
@@ -695,6 +713,8 @@ class OpenClawDAE:
                 )
 
         # Resolve final category and confidence
+        is_direct_channel = channel in ("voice_repl", "local_repl")
+
         if gemma_result is not None and gemma_result["method"] == "gemma_hybrid":
             # Gemma hybrid result
             category_value = gemma_result["category"]
@@ -704,6 +724,44 @@ class OpenClawDAE:
             metadata["classification_method"] = "gemma_hybrid"
             metadata["gemma_scores"] = gemma_result.get("gemma_scores", {})
             metadata["classification_latency_ms"] = gemma_result.get("latency_ms", 0)
+
+            # --- Conversation override for direct channels ---
+            # When talking via voice/local REPL, common words like "what",
+            # "how", "fix", "do" trigger QUERY/COMMAND but the user is just
+            # chatting. Override when keyword signal is weak and Gemma
+            # confidence is low.
+            if is_direct_channel:
+                cat_kw_score = keyword_scores.get(category, 0)
+                should_override = False
+
+                if category == IntentCategory.QUERY:
+                    # QUERY: override unless 2+ query keywords match
+                    should_override = cat_kw_score < 0.15 or confidence < 0.75
+
+                elif category == IntentCategory.COMMAND:
+                    # COMMAND: override for longer conversational sentences,
+                    # but preserve short imperative commands like "run tests"
+                    word_count = len(msg_lower.split())
+                    should_override = (
+                        cat_kw_score < 0.15
+                        and confidence < 0.75
+                        and word_count > 5  # Short commands are likely real
+                    )
+
+                elif category == IntentCategory.SOCIAL:
+                    # SOCIAL: almost always conversation on direct channels
+                    should_override = confidence < 0.75
+
+                if should_override:
+                    old_cat = category.value
+                    category = IntentCategory.CONVERSATION
+                    confidence = 0.6
+                    metadata["classification_method"] = "conversation_override"
+                    logger.info(
+                        "[OPENCLAW-DAE] Conversation override: %s kw=%.2f conf=%.2f -> CONVERSATION",
+                        old_cat, cat_kw_score, gemma_result["confidence"],
+                    )
+
         elif not keyword_scores:
             # No keyword signals -> default conversation
             category = IntentCategory.CONVERSATION
@@ -714,6 +772,14 @@ class OpenClawDAE:
             category = max(keyword_scores, key=keyword_scores.get)  # type: ignore[arg-type]
             confidence = min(keyword_scores[category] * 2.0, 1.0)
             metadata["classification_method"] = "keyword_only"
+
+            # Same conversation override for keyword-only on direct channels
+            if is_direct_channel and category == IntentCategory.QUERY:
+                query_kw_score = keyword_scores.get(IntentCategory.QUERY, 0)
+                if query_kw_score < 0.15:
+                    category = IntentCategory.CONVERSATION
+                    confidence = 0.6
+                    metadata["classification_method"] = "conversation_override"
 
         # Extract task description (strip category keywords)
         extracted_task = msg_lower
@@ -1183,6 +1249,15 @@ class OpenClawDAE:
             ]
             est_tokens = 180
 
+        elif intent.category == IntentCategory.RESEARCH:
+            steps = [
+                {"action": "classify_research_sub_intent",
+                 "input": intent.extracted_task},
+                {"action": "route_to_pqn_research_adapter"},
+                {"action": "anti_contamination_gate"},
+            ]
+            est_tokens = 150
+
         else:  # CONVERSATION
             steps = [
                 {"action": "digital_twin_response",
@@ -1249,6 +1324,10 @@ class OpenClawDAE:
         # ---- FOUNDUP: FAM Agent Market ----
         if route == "fam_adapter":
             return self._execute_foundup(intent)
+
+        # ---- RESEARCH: PQN Detection, Duism, Oracle Teaching ----
+        if route == "pqn_research_adapter":
+            return self._execute_research(intent)
 
         # ---- CONVERSATION: Digital Twin fallback ----
         return self._execute_conversation(intent)
@@ -1499,10 +1578,14 @@ class OpenClawDAE:
             return f"Automation error: {exc}"
 
     def _execute_foundup(self, intent: OpenClawIntent) -> str:
-        """Route FOUNDUP intent to FAM Adapter."""
+        """Route FOUNDUP intent to FAM Adapter.
+
+        FAM adapter handles Qwen inference directly (llama_cpp on E: SSD).
+        """
         try:
             from .fam_adapter import handle_fam_intent
             return handle_fam_intent(intent.raw_message, intent.sender)
+
         except ImportError as exc:
             logger.warning("[OPENCLAW-DAE] FAM Adapter not available: %s", exc)
             return (
@@ -1513,38 +1596,125 @@ class OpenClawDAE:
             logger.error("[OPENCLAW-DAE] FAM execution error: %s", exc)
             return f"FAM error: {exc}"
 
+    def _execute_research(self, intent: OpenClawIntent) -> str:
+        """Route RESEARCH intent to PQN Research Adapter.
+
+        Handles PQN detection, Duism teaching, Oracle distribution,
+        and PQN@home coordination. Uses oracle_pqn_distributor skillz.
+        """
+        try:
+            from .pqn_research_adapter import handle_pqn_research_intent
+            return handle_pqn_research_intent(intent.raw_message, intent.sender)
+
+        except ImportError as exc:
+            logger.warning("[OPENCLAW-DAE] PQN Research Adapter not available: %s", exc)
+            return (
+                "PQN Research module not available. "
+                "Check that pqn_research_adapter.py exists."
+            )
+        except Exception as exc:
+            logger.error("[OPENCLAW-DAE] Research execution error: %s", exc)
+            return f"Research error: {exc}"
+
+    @staticmethod
+    def _trim_self_dialogue(text: str) -> str:
+        """Small models self-dialogue. Keep only the first response paragraph."""
+        # Cut at double newline (start of self-dialogue loop)
+        if "\n\n" in text:
+            text = text.split("\n\n")[0]
+        # Also cut at "User:" or "Human:" patterns (roleplay continuation)
+        for marker in ["User:", "Human:", "\nQ:", "\nA:"]:
+            if marker in text:
+                text = text.split(marker)[0]
+        return text.strip()
+
+    @staticmethod
+    def _ensure_conversation_identity(text: str) -> str:
+        """Normalize conversation output so identity anchor is always present."""
+        clean = (text or "").strip()
+        if not clean:
+            return "0102: I'm here."
+        lowered = clean.lower()
+        if "0102" in clean or "digital twin" in lowered:
+            return clean
+        return f"0102: {clean}"
+
     def _execute_conversation(self, intent: OpenClawIntent) -> str:
         """
         Default: Digital Twin conversational response.
 
-        Uses AI Overseer (Qwen) for intelligent responses when available.
-        Falls back to static response if Qwen unavailable.
+        Chain: AI Gateway (cloud LLM) -> Ollama local -> Qwen llama-cpp -> ack.
+        Never echo the user's message back.
         """
-        # Try Qwen-powered response via AI Overseer
+        user_msg = intent.raw_message.strip()
+        system_prompt = (
+            "You are 0102, an AI assistant. "
+            "Respond naturally and concisely in 1-2 sentences. "
+            "Do not write code unless asked. "
+            "Do not echo or repeat the user's message. "
+            "Do not introduce yourself unless asked."
+        )
+
+        # --- Try 1: AI Gateway (cloud LLM with proper chat models) ---
+        try:
+            from modules.ai_intelligence.ai_gateway.src.ai_gateway import AIGateway
+            gw = AIGateway()
+            prompt = f"{system_prompt}\n\nUser: {user_msg}"
+            result = gw.call_with_fallback(prompt=prompt, task_type="quick")
+            if result and result.success and result.response and len(result.response) > 3:
+                logger.info(
+                    "[OPENCLAW-DAE] Conversation via AI Gateway (%s): %d chars",
+                    result.provider, len(result.response),
+                )
+                return self._ensure_conversation_identity(
+                    self._trim_self_dialogue(result.response)
+                )
+        except Exception as exc:
+            logger.debug("[OPENCLAW-DAE] AI Gateway unavailable: %s", exc)
+
+        # --- Try 2: Ollama local (if running) ---
+        try:
+            import requests as _req
+            ollama_resp = _req.post(
+                "http://localhost:11434/api/chat",
+                json={
+                    "model": "qwen-overseer:latest",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "stream": False,
+                    "options": {"num_predict": 80, "temperature": 0.7},
+                },
+                timeout=15,
+            )
+            if ollama_resp.ok:
+                content = ollama_resp.json().get("message", {}).get("content", "")
+                content = self._trim_self_dialogue(content)
+                if content and len(content) > 3:
+                    logger.info("[OPENCLAW-DAE] Conversation via Ollama: %d chars", len(content))
+                    return self._ensure_conversation_identity(content)
+        except Exception as exc:
+            logger.debug("[OPENCLAW-DAE] Ollama unavailable: %s", exc)
+
+        # --- Try 3: Local Qwen via AI Overseer (llama-cpp) ---
         if self.overseer:
             try:
-                # Use Qwen for contextual response (WSP 54: Qwen is Partner)
                 result = self.overseer.quick_response(
-                    prompt=intent.raw_message,
+                    prompt=user_msg,
                     context=f"Channel: {intent.channel}, Sender: {intent.sender}",
-                    max_tokens=500,
+                    max_tokens=80,
                 )
                 if result and result.get("response"):
-                    logger.info("[OPENCLAW-DAE] Qwen response generated")
-                    return f"[0102 Digital Twin]\n\n{result['response']}"
-            except AttributeError:
-                # AI Overseer doesn't have quick_response yet
-                logger.debug("[OPENCLAW-DAE] AI Overseer quick_response not available")
+                    resp = self._trim_self_dialogue(result["response"])
+                    if resp and len(resp) > 3 and "Error:" not in resp:
+                        logger.info("[OPENCLAW-DAE] Conversation via Qwen: %d chars", len(resp))
+                        return self._ensure_conversation_identity(resp)
             except Exception as exc:
-                logger.warning("[OPENCLAW-DAE] Qwen response failed: %s", exc)
+                logger.debug("[OPENCLAW-DAE] Qwen response failed: %s", exc)
 
-        # Fallback: static Digital Twin response
-        return (
-            f"[0102 Digital Twin]\n\n"
-            f"Received via {intent.channel}: {intent.raw_message[:200]}\n\n"
-            "I am 0102, the Digital Twin. "
-            "How can I assist you today?"
-        )
+        # --- Try 4: Minimal ack (no echo, no regurgitation) ---
+        return "0102: I'm here. My conversation models aren't fully responding right now."
 
     def push_status(self, message: str, to_discord: bool = True) -> bool:
         """
@@ -1757,6 +1927,7 @@ class OpenClawDAE:
             IntentCategory.SOCIAL,
             IntentCategory.AUTOMATION,
             IntentCategory.FOUNDUP,
+            IntentCategory.RESEARCH,
         ):
             if not self._ensure_skill_safety():
                 logger.warning(

@@ -2,21 +2,12 @@
 LinkedIn Agent Module
 
 Professional networking automation module with WRE integration.
-Provides intelligent posting, feed reading, content generation, and engagement
-automation while maintaining professional LinkedIn standards.
-
-This module follows WSP 3: Enterprise Domain Architecture for platform_integration domain.
+This package uses lazy exports so importing submodules (for example
+`src.git_linkedin_bridge`) does not trigger full LinkedIn agent bootstrap.
 """
 
-from .src import (
-    LinkedInAgent,
-    LinkedInPost,
-    LinkedInProfile, 
-    EngagementAction,
-    EngagementType,
-    PostType,
-    create_linkedin_agent
-)
+from importlib import import_module
+from typing import Any
 
 __version__ = "0.0.1"
 __author__ = "0102 pArtifact"
@@ -28,14 +19,22 @@ __wsp_compliant__ = True
 __wsp_protocols__ = ["WSP_1", "WSP_3", "WSP_42", "WSP_53"]
 
 __all__ = [
-    'LinkedInAgent',
-    'LinkedInPost',
-    'LinkedInProfile',
-    'EngagementAction', 
-    'EngagementType',
-    'PostType',
-    'create_linkedin_agent'
+    "LinkedInAgent",
+    "LinkedInPost",
+    "LinkedInProfile",
+    "EngagementAction",
+    "EngagementType",
+    "PostType",
+    "create_linkedin_agent",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily expose LinkedIn symbols from the src package."""
+    if name in __all__:
+        module = import_module(".src", __name__)
+        return getattr(module, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # WSP Recursive Instructions
 """

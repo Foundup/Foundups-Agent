@@ -2,6 +2,84 @@
 
 ## Chronological Change Log
 
+### 2026-02-16 - Occam Layered Continuity Pack
+
+**By:** 0102
+**WSP References:** WSP 11, WSP 15, WSP 22, WSP 49, WSP 50
+
+**What changed**
+- Replaced domain-level roadmap with a first-principles layered execution roadmap:
+  - `modules/foundups/ROADMAP.md`
+- Added continuity planning docs for deterministic handoff/resume:
+  - `modules/foundups/docs/OCCAM_LAYERED_EXECUTION_PLAN.md`
+  - `modules/foundups/docs/CONTINUATION_RUNBOOK.md`
+- Added simulator-specific roadmap:
+  - `modules/foundups/simulator/ROADMAP.md`
+- Added cross-links in active module planning docs:
+  - `modules/foundups/README.md`
+  - `modules/foundups/simulator/README.md`
+  - `modules/foundups/agent/ROADMAP.md`
+  - `modules/foundups/agent_market/ROADMAP.md`
+
+**Why**
+- Lock a shared architecture intent (Occam layered model) so any 0102 can continue
+  without reconstructing strategy from chat history.
+- Keep planning, WSP alignment, and execution order in one discoverable path.
+
+---
+
+### 2026-02-12 - foundups.com Invite Access System
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+**Feature Implemented**
+Invite-only access system for foundups.com (Gmail 2004 model):
+
+**Invite Code Format**: `FUP-XXXX-XXXX`
+- Characters: `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no I/O/0/1 confusion)
+- One-time use - each grants 5 new invites to joining user
+
+**Distribution Sources** (Cross-module):
+1. `/fuc invite` command in livechat (OWNER/Managing Directors)
+2. `/fuc distribute` auto-distribution to TOP 10 whackers
+3. Auto-distribution after 30 min stream (SQLite-tracked, no duplicates)
+
+**Random Presenter Feature**:
+```python
+COMMUNITY_PRESENTERS = [
+    {"username": "Al-sq5ti", "title": "Managing Director"},
+    {"username": "Mike", "title": "Founder"},
+    {"username": "Move2Japan", "title": "Host"},
+]
+```
+- Invites display: `(Presented by @Al-sq5ti - Managing Director)`
+- Makes distribution feel community-driven
+
+**Website Redemption** (`public/index.html`):
+- `verifyInvite()` - Validates code via Firebase
+- Toggle: "I Have an Invite" vs "Join the Waitlist"
+- OAuth: Google/LinkedIn sign-in after invite verification
+
+**Firebase Schema** (`invites` collection):
+```javascript
+{
+  code: 'FUP-XXXX-XXXX',
+  createdBy: 'agent' | 'admin',
+  generatedFor: 'user_id',
+  status: 'active' | 'used',
+  usedBy: null | 'uid',
+  createdAt: timestamp
+}
+```
+
+**Cross-References**:
+- Distribution: `modules/gamification/whack_a_magat/src/invite_distributor.py`
+- Commands: `modules/communication/livechat/src/command_handler.py`
+- Website: `public/index.html`
+
+---
+
 ### WSP 49 Structure Alignment and Doc Promotion (No Data Loss)
 - WSP Protocol References: WSP 49 (Structure), WSP 11 (Interfaces), WSP 22 (Traceable Narrative), WSP 60 (Memory)
 - Action: Promoted canonical docs from `src/` to module root:

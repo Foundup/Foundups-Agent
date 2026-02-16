@@ -3,6 +3,73 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Operational Noise Reduction - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 49 (module boundaries), WSP 91 (operational clarity)
+
+**Type**: Reliability/Operator UX hardening
+
+**Changes Made**:
+1. `src/git_push_dae.py` time window gate adjusted from `<= 6` to `< 6`:
+   - Sleep hours now `23:00-05:59`.
+   - Pushes are allowed again at `06:00+` local time.
+2. `tests/test_git_push_dae.py` boundary coverage updated:
+   - Added explicit assertion that `06:00` is operational (`True`).
+3. LinkedIn package import side effects reduced (dependency module fix):
+   - `modules/platform_integration/linkedin_agent/src/__init__.py` now lazily exports symbols,
+     preventing unnecessary full `linkedin_agent` import during `GitLinkedInBridge` startup.
+4. Added OAuth legacy import shim for cross-module compatibility:
+   - `modules/infrastructure/oauth_management/src/oauth_manager.py` now forwards to the
+     canonical oauth manager in `modules/platform_integration/utilities/oauth_management`.
+
+**Impact**:
+- Removes repeated startup warning noise in GitPushDAE runs.
+- Aligns morning push behavior with expected operator window.
+
+## Documentation Clarification - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 49 (module docs)
+
+**Type**: Documentation Update - Non-dev branch/main workflow clarity
+
+**Changes Made**:
+1. Updated `README.md` with explicit non-developer git flow:
+   - branch commit -> branch push -> PR -> merge to `main`
+2. Added explicit warning against "push all branches to main" behavior.
+3. Clarified that GitPushDAE is PR-first compatible for protected remotes.
+
+**Impact**:
+- Reduces operator confusion for 012/non-dev workflow.
+- Aligns automation expectations with protected-branch practice.
+
+---
+
+## Log Audit Hardening - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 91 (observability)
+
+**Type**: Reliability Fix - Logging duplication + deterministic audit hash
+
+**Problems Observed**:
+- Duplicate DAEMON log lines in single run (`daemon.GitPushDAE` entries emitted twice).
+- `context_hash` generated with Python `hash(...)` (process-randomized and non-deterministic).
+
+**Changes Made**:
+1. `src/git_push_dae.py` logger setup hardened:
+   - `logger.propagate = False` to prevent duplicate root propagation.
+   - Idempotent logger initialization via `_wsp91_configured` guard to avoid re-adding handlers
+     when multiple `GitPushDAE` instances are created in the same CLI process.
+2. Decision audit hash hardened:
+   - Replaced Python runtime hash with deterministic SHA-256 based context hash
+     (`_stable_context_hash`) and truncated stable digest for logs.
+3. Added tests in `tests/test_git_push_dae.py`:
+   - `test_logger_setup_does_not_duplicate_handlers`
+   - `test_context_hash_is_deterministic`
+
+**Validation**:
+- Command:
+  - `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/infrastructure/git_push_dae/tests/test_git_push_dae.py -q`
+- Result: `18 passed, 2 warnings`
+
+---
+
 ## Launch Script Fix - 2026-01-21
 **WSP References**: WSP 62 (Large File Refactoring), WSP 22 (ModLog)
 

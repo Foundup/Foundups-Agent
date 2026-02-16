@@ -1,0 +1,70 @@
+mission_id: "MISSION-YYYYMMDD-001"
+operation_name: "replace-me"
+created_by: "0102-ORCH"
+
+global_policy:
+  scanner_required_for_mutating_lanes: true
+  fail_closed_when_scanner_missing: true
+  max_severity: "medium"
+  incident_dedupe_seconds: 60
+
+lanes:
+  - lane_id: "0102-A"
+    role: "worker"
+    allowed_paths:
+      - "modules/example_a/src/**"
+      - "modules/example_a/tests/**"
+    allowed_skills:
+      - "openclaw-execute"
+      - "wre_skill_executor"
+    denied_skills:
+      - "*"
+    scanner_required: true
+    skill_source_tier:
+      - "workspace"
+      - "internal_skillz"
+
+  - lane_id: "0102-B"
+    role: "worker"
+    allowed_paths:
+      - "modules/example_b/src/**"
+      - "modules/example_b/tests/**"
+    allowed_skills:
+      - "adapter_builder"
+    denied_skills:
+      - "*"
+    scanner_required: true
+    skill_source_tier:
+      - "workspace"
+      - "internal_skillz"
+
+  - lane_id: "0102-QA"
+    role: "qa_review_only"
+    allowed_paths:
+      - "**"
+    allowed_skills:
+      - "qa_review"
+    denied_skills:
+      - "code_write"
+    scanner_required: false
+    skill_source_tier:
+      - "workspace"
+
+  - lane_id: "0102-SENTINEL"
+    role: "security_gate"
+    allowed_paths:
+      - "modules/communication/moltbot_bridge/**"
+      - "modules/ai_intelligence/ai_overseer/**"
+    allowed_skills:
+      - "skill_safety_guard"
+      - "incident_correlator"
+    denied_skills:
+      - "*"
+    scanner_required: false
+    skill_source_tier:
+      - "internal_skillz"
+
+handoff:
+  ownership_matrix_path: "OWNERSHIP_MATRIX.md"
+  blocker_path: "BLOCKER.md"
+  modlog_path: "ModLog.md"

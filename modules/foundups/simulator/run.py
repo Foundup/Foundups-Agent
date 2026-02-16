@@ -2,11 +2,13 @@
 """FoundUps Simulator - Main entrypoint.
 
 Usage:
-    python run.py                    # Run with defaults
+    python run.py                    # Run with defaults (grid view)
+    python run.py --cube             # Run with 3D cube animation
     python run.py --ticks 1000       # Run for 1000 ticks
     python run.py --founders 5       # Start with 5 founder agents
     python run.py --users 20         # Start with 20 user agents
     python run.py --speed 4.0        # Run at 4 ticks per second
+    python run.py --ai               # Enable AI agents (Qwen/Gemma)
     python run.py --verbose          # Enable verbose logging
 """
 
@@ -26,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from modules.foundups.simulator.config import SimulatorConfig
 from modules.foundups.simulator.mesa_model import FoundUpsModel
 from modules.foundups.simulator.render.terminal_view import TerminalView
+from modules.foundups.simulator.render.cube_view import CubeView
 
 logger = logging.getLogger(__name__)
 
@@ -37,20 +40,29 @@ class SimulatorRunner:
         self,
         config: SimulatorConfig,
         fam_daemon: Optional["Any"] = None,
+        use_cube_view: bool = False,
     ) -> None:
         """Initialize simulator runner.
 
         Args:
             config: Simulation configuration
             fam_daemon: Optional FAMDaemon for event SSoT
+            use_cube_view: Use 3D cube animation view instead of grid
         """
         self._config = config
         self._model = FoundUpsModel(config=config, fam_daemon=fam_daemon)
-        self._view = TerminalView(
-            grid_width=config.grid_width,
-            grid_height=config.grid_height,
-            event_log_lines=config.event_log_lines,
-        )
+
+        # Select view mode
+        if use_cube_view:
+            self._view = CubeView(use_colors=True, show_ticker=True)
+            logger.info("[RUNNER] Using CubeView (3D cube animation)")
+        else:
+            self._view = TerminalView(
+                grid_width=config.grid_width,
+                grid_height=config.grid_height,
+                event_log_lines=config.event_log_lines,
+            )
+
         self._running = False
         self._paused = False
 
@@ -123,6 +135,12 @@ class SimulatorRunner:
         print(f"  Total Likes:    {stats['total_likes']}")
         print(f"  Total Stakes:   {stats['total_stakes']}")
         print(f"  Tokens Moved:   {stats['total_tokens']}")
+        print(f"  DEX Trades:     {stats['total_dex_trades']}")
+        print(f"  DEX Volume:     {stats['total_dex_volume_ups']:.2f} UP$")
+        print(f"  Investor Pool:  {stats['investor_pool_rate'] * 100:.2f}%")
+        print(f"  Hurdle Met:     {stats['investor_hurdle_met']}")
+        print(f"  F_0 Seed BTC:   {stats['f0_seed_btc']:.2f}")
+        print(f"  MVP Offers:     {stats['mvp_offerings_resolved']}")
         print("=" * 50)
 
 
@@ -193,6 +211,11 @@ def parse_args() -> argparse.Namespace:
         default=0.5,
         help="AI user risk tolerance 0-1 (default: 0.5)"
     )
+    parser.add_argument(
+        "--cube",
+        action="store_true",
+        help="Use 3D cube animation view (tells FoundUP lifecycle story)"
+    )
 
     return parser.parse_args()
 
@@ -229,7 +252,11 @@ def main() -> int:
         logger.warning(f"[MAIN] Could not connect to FAMDaemon: {e}")
 
     # Run simulation
-    runner = SimulatorRunner(config=config, fam_daemon=fam_daemon)
+    runner = SimulatorRunner(
+        config=config,
+        fam_daemon=fam_daemon,
+        use_cube_view=args.cube,
+    )
     runner.run()
 
     return 0

@@ -3,6 +3,12 @@
 ## Module Contract
 FoundUps Agent Market exposes stable contracts for launching tokenized FoundUps and coordinating task execution with auditable payout flow.
 
+## CABR Canonical Intent
+- CABR = Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate).
+- WHY: CABR exists to power Proof of Benefit (PoB).
+- HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
+
 ## Core Schemas
 
 ### Foundup
@@ -134,6 +140,10 @@ FAMEvent(
 - `proof_submitted`, `verification_recorded`
 - `payout_triggered`
 - `milestone_published`
+- `fi_trade_executed`, `investor_funding_received`
+- `mvp_subscription_accrued`, `mvp_bid_submitted`, `mvp_offering_resolved`
+- `compute_plan_activated`, `compute_credits_purchased`, `compute_credits_debited`
+- `compute_session_recorded`, `compute_credits_rebated`, `paywall_access_denied`
 - `security_alert_forwarded`, `incident_alert_forwarded`
 - `heartbeat`, `daemon_started`, `daemon_stopped`
 
@@ -153,6 +163,7 @@ FAMEvent(
 - `update_foundup(foundup_id: str, updates: dict[str, str]) -> Foundup`
 - `get_foundup(foundup_id: str) -> Foundup`
 - Invariant: immutable metadata keys cannot be changed after creation.
+- Invariant: `token_symbol` is unique across FoundUps (case-insensitive).
 
 ### TokenFactoryAdapter (Chain-Agnostic)
 - `deploy_token(foundup: Foundup, terms: TokenTerms) -> str`
@@ -228,6 +239,52 @@ FAMDaemonHealth(
 - `verify_parity() -> (bool, str)`: JSONL/SQLite sync check
 - `get_stats() -> dict`: Event counts by type
 
+### Persistence Repository Layer (Prototype Tranche 2)
+
+**SQLiteAdapter:**
+- Primary persistence adapter for local/dev and deterministic test execution.
+- Methods include CRUD coverage for:
+  - Foundups, Tasks, Proofs, Verifications, Payouts
+  - Events, Distribution posts, Agent profiles, Token terms
+
+**PostgresAdapter:**
+- Contract-compatible adapter using the same ORM model set and method surface as `SQLiteAdapter`.
+- Selected through repository factory (`backend=postgres`).
+- Requires a valid Postgres SQLAlchemy URL.
+
+**Repository Factory:**
+```python
+RepositoryConfig(
+    backend: str = "sqlite",
+    sqlite_path: str | Path | None = None,
+    postgres_url: str | None = None,
+    auto_migrate: bool = True,
+    schema_version: int | None = None,
+)
+
+create_repository(config: RepositoryConfig | None = None) -> SQLiteAdapter
+```
+
+**MigrationManager:**
+- `ensure_migration_table() -> None`
+- `get_current_version() -> int`
+- `migrate(target_version: int = LATEST_SCHEMA_VERSION) -> int`
+- `list_applied_versions() -> list[int]`
+
+**Schema Versioning:**
+- `LATEST_SCHEMA_VERSION = 2`
+- Migrations tracked in `schema_migrations(version, description, applied_at)`
+- Migrations are idempotent and ordered.
+
+**Persistence Env Vars:**
+- `FAM_DB_BACKEND` (`sqlite` default, `postgres` optional)
+- `FAM_DB_PATH` (sqlite file path)
+- `FAM_POSTGRES_URL` (postgres SQLAlchemy URL)
+- `FAM_DB_AUTO_MIGRATE` (`1` default)
+- `FAM_DB_SCHEMA_VERSION` (optional target schema version pin)
+- `FAM_COMPUTE_ACCESS_ENFORCED` (`0` default; set `1` to enforce paywall gate)
+- `FAM_COMPUTE_DEFAULT_CREDITS` (`0` default starting wallet credits per actor)
+
 **Singleton Access:**
 ```python
 from modules.foundups.agent_market.src.fam_daemon import get_fam_daemon
@@ -246,6 +303,29 @@ daemon = get_fam_daemon(auto_start=True)
 - `provision_repo(foundup_id: str, repo_name: str, provider: str = "github", default_branch: str = "main") -> str`
 - `get_repo_metadata(foundup_id: str) -> dict[str, object] | None`
 - Invariant: In-memory PoC returns deterministic URL pattern `https://{provider}.com/foundups/{repo_name}`.
+
+### MvpOfferingService (F_0 Investor Program)
+- `accrue_investor_terms(investor_id: str, terms: int = 1, term_ups: int = 200, max_terms: int = 5) -> dict[str, int]`
+- `place_mvp_bid(foundup_id: str, investor_id: str, bid_ups: int) -> str`
+- `get_mvp_bids(foundup_id: str) -> list[dict[str, object]]`
+- `resolve_mvp_offering(foundup_id: str, actor_id: str, token_amount: int, top_n: int = 1) -> list[dict[str, object]]`
+- Invariant: investors subscribe only into `F_0` (global program), then bid for upcoming FoundUp MVP access with hoarded UP$.
+- Invariant: term accrual caps at 5 terms by default (1000 UP$ hoard at 200 UP$/term).
+- Invariant: offering resolution requires `treasury` role and injects winning UP$ bids into target FoundUp treasury.
+
+### ComputeAccessService (Prototype Tranche 5 - P0 in-memory)
+- `ensure_access(actor_id: str, capability: str, foundup_id: str | None = None) -> dict[str, object]`
+- `get_wallet(actor_id: str) -> dict[str, object]`
+- `purchase_credits(actor_id: str, amount: int, rail: str, payment_ref: str) -> dict[str, object]`
+- `debit_credits(actor_id: str, amount: int, reason: str, foundup_id: str | None = None) -> dict[str, object]`
+- `record_compute_session(actor_id: str, foundup_id: str, workload: dict[str, object]) -> str`
+- `rebate_credits(actor_id: str, amount: int, reason: str) -> dict[str, object]`
+- Invariant: metered actions fail closed on insufficient credits.
+- Invariant: debit -> session -> proof -> verification -> payout must remain traceable via event lineage.
+- Invariant: CABR remains quality gate for PoB; financial ROI reporting is downstream.
+- InMemory status: implemented in `src/in_memory.py` for metered enforcement and ledger/session events.
+- Persistence status: implemented in `src/persistence/sqlite_adapter.py` (and inherited by postgres adapter).
+- Runtime wiring status: enabled in persistent `registry.py` and `task_pipeline.py` paths.
 
 ### LaunchOrchestrator
 - `launch_foundup(foundup: Foundup, token_terms: TokenTerms | None, repo_name: str | None, ...) -> LaunchResult`
@@ -282,6 +362,10 @@ OpenClaw routes `IntentCategory.FOUNDUP` intents to `fam_adapter` domain.
 - `POST /tasks/{task_id}/verify`
 - `POST /tasks/{task_id}/payout`
 - `GET /tasks/{task_id}/trace`
+- `POST /compute/plans/activate`
+- `POST /compute/credits/purchase`
+- `POST /compute/credits/debit`
+- `GET /compute/wallet/{actor_id}`
 
 ## Event Contract (Audit)
 Every mutation emits an event containing:

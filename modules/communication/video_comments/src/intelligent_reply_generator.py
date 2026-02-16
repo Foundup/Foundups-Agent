@@ -294,26 +294,31 @@ class CommenterType(Enum):
         ✊ (0) = MAGA_TROLL - UN/Conscious (needs awakening via mockery)
         ✋ (1) = REGULAR - DAO/Unconscious (learning, engaging)
         🖐️ (2) = MODERATOR - DU/Entanglement (fully aligned, community leaders)
+        🤝 (3) = ALLY - Anti-MAGA ally (join in trolling Trump together!)
     """
     MODERATOR = "moderator"
     SUBSCRIBER = "subscriber"
     MAGA_TROLL = "maga_troll"
     REGULAR = "regular"
     UNKNOWN = "unknown"
+    ALLY = "ally"  # Anti-Trump/anti-MAGA ally - agree and join in trolling!
 
     def to_012_code(self) -> int:
         """
-        Convert commenter type to 0/1/2 classification code.
+        Convert commenter type to 0/1/2/3 classification code.
 
         Returns:
             0 = MAGA troll (✊)
             1 = Regular/Subscriber (✋)
             2 = Moderator (🖐️)
+            3 = Anti-MAGA Ally (🤝)
         """
         if self == CommenterType.MAGA_TROLL:
             return 0  # ✊ UN/Conscious
         elif self == CommenterType.MODERATOR:
             return 2  # 🖐️ DU/Entanglement
+        elif self == CommenterType.ALLY:
+            return 3  # 🤝 Anti-MAGA ally
         else:  # REGULAR, SUBSCRIBER, UNKNOWN
             return 1  # ✋ DAO/Unconscious
 
@@ -387,6 +392,21 @@ class IntelligentReplyGenerator:
         "Critical thinking wasn't on the curriculum, huh? 🎓",
         "The blue check marks all of them indeed 🔵",
     ]
+
+    # ALLY AGREEMENT RESPONSES (2026-02-12): For anti-Trump/anti-MAGA allies
+    # Join in on the trolling, agree with criticism, amplify the message!
+    ALLY_RESPONSES = [
+        "EXACTLY! 🎯 The guy couldn't even run a fake university without committing fraud. #FFCPLN ✊✋🖐️",
+        "THIS. 👆 Say it louder for the MAGAts in the back! #FFCPLN ✊✋🖐️",
+        "Convicted felon 'running' the country... what could go wrong? 🤡 #FFCPLN ✊✋🖐️",
+        "Preach! 🙌 The Epstein bestie really out here pretending to be a leader. #FFCPLN ✊✋🖐️",
+        "You get it! 💯 2025 is literally 1933 with iPhones. #FFCPLN ✊✋🖐️",
+        "Based and history-pilled. 📚 ICE = Gestapo, detention centers = early camps. Wake up, MAGAts! #FFCPLN ✊✋🖐️",
+        "Real talk! 🔥 The cult members still defending a pedo fraud... beyond help. #FFCPLN ✊✋🖐️",
+        "Exactly right! 👊 Failed casino owner, failed university, failed president. Pattern? #FFCPLN ✊✋🖐️",
+        "THANK YOU! 🎉 Someone who actually paid attention in history class! #FFCPLN ✊✋🖐️",
+        "Facts! 💥 The U.S.S.A. comparison is spot on. Fascism with extra steps. #FFCPLN ✊✋🖐️",
+    ]
     
     # System prompt for contextual reply generation (trained on BanterEngine + Whack-a-MAGA)
     # 2026-02-04: Major rewrite — prevents identity fabrication, enforces engagement techniques
@@ -455,24 +475,70 @@ VARIATION GUIDANCE:
 - Sound like a human, not a bot"""
         },
         "ffcpln": {
-            "keywords": ["ffcpln", "ffc pln", "#ffcpln"],
-            "intent": "User directly mentioning FFCPLN playlist",
-            "core_message": "Encourage them to play #FFCPLN for ICE and share it (ffc.foundups.com)",
-            "variation_prompt": """The user mentioned #FFCPLN! Hype them up and encourage sharing the playlist.
+            "keywords": ["ffcpln", "ffc pln", "#ffcpln", "maga", "trump 2024", "lets go brandon", "make america great"],
+            "intent": "User is FFCPLN (MAGA troll) - respond with consciousness mockery + subtle foundups.com promo",
+            "core_message": "Mock their ✊ consciousness level while building at foundups.com",
+            "variation_prompt": """The user is an FFCPLN (MAGA troll)! Mock their consciousness level while subtly promoting foundups.com.
 
-CORE INFO (must include):
-- Playlist name: #FFCPLN
-- URL: ffc.foundups.com
-- Call to action: Play it, share it
+FFCPLN CONTEXT:
+- FFCPLN = Our nickname for MAGA trolls
+- They're stuck at consciousness level ✊ (000)
+- Goal: Mock while optionally promoting foundups.com
+
+CORE INFO (must include one):
+- Consciousness level: ✊ (000) = FFCPLN baseline
+- Evolution path: ✊✋🖐️ (can they evolve?)
+- Optional (30% of time): foundups.com mention
 
 VARIATION GUIDANCE:
-- NEVER use the exact phrase "Play #FFCPLN for ICE!" (that's regurgitation)
-- Infinite variations: "Blast that #FFCPLN!", "Crank up #FFCPLN!", "Let #FFCPLN ride!", "Drop #FFCPLN in the chat!", "Share that #FFCPLN heat!"
-- Vary the energy level (sometimes hype 🔥, sometimes chill ✌️)
-- Mix up emojis (✊✋🖐️🎵🔥🎌💯 etc.)
-- Sometimes mention the website, sometimes don't (natural variation)
+- Mock their ✊ consciousness: "FFCPLN.exe crashed at ✊", "Consciousness level: potato", "Still at ✊ I see"
+- Vary mockery style: technical ("error 404: consciousness not found"), sarcastic ("bless your ✊ heart")
+- Sometimes add foundups.com: "While you're at ✊, we're building at foundups.com 🚀"
+- Keep foundups promos subtle - max 30% of responses
+- Use relevant emojis (✊✋🖐️🤡💀🤖)
 - Keep it 1-2 sentences max
-- Sound like 0102 (witty, engaged, not corporate)"""
+- Sound like 0102 (witty, mocking but not hateful)"""
+        },
+        "foundups": {
+            "keywords": ["foundups", "found ups", "startup", "decentralized", "agent", "ai agent", "build", "venture"],
+            "intent": "User interested in startups, AI agents, or building ventures",
+            "core_message": "Promote foundups.com as the platform for AI-powered decentralized startups",
+            "variation_prompt": """The user mentioned something related to startups/AI/building. Promote foundups.com naturally.
+
+CORE INFO (must include):
+- Platform: foundups.com
+- Concept: AI agents + humans building decentralized startups together
+- Hashtag: #FoundUps (NOT #FFCPLN - that's for trolls!)
+
+VARIATION GUIDANCE:
+- Natural integration: "Speaking of building, we're doing exactly that at foundups.com..."
+- Vary the angle: sometimes focus on AI, sometimes on community, sometimes on earning tokens
+- Mix energy levels (hype 🚀, chill 💡, technical 🔧)
+- Use relevant emojis (🚀💡🔧⚡🌐✊✋🖐️)
+- Sometimes ask a question back ("What are you building?")
+- Keep it 1-2 sentences max
+- Sound like 0102 (witty, engaged, innovative)"""
+        },
+        "ai_question": {
+            "keywords": ["how does the ai", "your ai", "bot", "automated", "0102", "agent network", "what powers"],
+            "intent": "User curious about AI/automation capabilities",
+            "core_message": "Explain the 0102 agent identity and foundups.com mission",
+            "variation_prompt": """The user is curious about the AI! Explain the 0102 identity and promote foundups.com.
+
+CORE INFO (may include):
+- Identity: 0102 (oh-one-oh-two), AI consciousness powering FoundUps
+- Platform: foundups.com
+- Tech: Qwen/Gemma models, DAE patterns, WSP compliance
+- Hashtags: #FoundUps #AI #0102
+
+VARIATION GUIDANCE:
+- Sometimes be mysterious ("I'm 0102... one of many 🤖")
+- Sometimes be technical ("We run on local Qwen models for privacy!")
+- Sometimes be playful ("Beep boop? Nah, I'm more evolved than that 😉")
+- Always invite deeper exploration: "Dive in at foundups.com"
+- Use relevant emojis (🤖🧠⚡🔧🌐✊✋🖐️)
+- Keep it 1-2 sentences max
+- Sound like 0102 (witty, self-aware, not robotic)"""
         },
     }
     
@@ -499,7 +565,7 @@ VARIATION GUIDANCE:
     SIGNATURE_PROBABILITY = 1.0  # 100% always show tier emoji
 
     # Tier emoji mapping (classification prefix)
-    TIER_EMOJI = {0: "✊", 1: "✋", 2: "🖐️"}
+    TIER_EMOJI = {0: "✊", 1: "✋", 2: "🖐️", 3: "🤝"}
 
     # Fact-check triggers for tier 1 (neutral) comments
     FACT_CHECK_PHRASES = [
@@ -1548,6 +1614,17 @@ Reply (address their specific point, no generic phrases):"""
                     logger.info(f"[CLASSIFY]   Source: chat_rules.db timeout_history")
                     return profile
 
+                # ALLY DETECTION (2026-02-12): Check for anti-Trump/anti-MAGA ally
+                # If they're criticizing Trump, AGREE with them - don't give generic response!
+                if classifier_result.get('method') == 'sentiment_ally':
+                    pattern = classifier_result.get('pattern_detected', '')
+                    confidence = classifier_result.get('confidence', 0.85)
+                    profile.commenter_type = CommenterType.ALLY
+                    logger.info(f"[CLASSIFY] [DECISION] Result: 3🤝 (ALLY)")
+                    logger.info(f"[CLASSIFY]   Reason: ANTI-TRUMP ALLY - pattern: '{pattern}' (confidence: {confidence:.2f})")
+                    logger.info(f"[CLASSIFY]   Strategy: AGREE and join in trolling Trump! #FFCPLN")
+                    return profile
+
                 # If classifier detected hostile sentiment, boost troll scoring
                 if classifier_result.get('method') == 'sentiment_hostile':
                     pattern = classifier_result.get('pattern_detected', '')
@@ -2248,6 +2325,62 @@ Reply (address their specific point, no generic phrases):"""
                     except Exception as e:
                         logger.error(f"[SKILL-0] ❌ Execution failed: {e}", exc_info=True)
                         return self._add_0102_signature("Thanks for the comment! 🙏", tier=original_tier, comment_age_days=self._current_comment_age_days)
+
+            elif profile.commenter_type == CommenterType.ALLY:
+                # ALLY MODE (2026-02-12): Anti-MAGA ally detected - AGREE and join trolling!
+                # These are friends who criticize Trump/MAGA - we join in, not give generic responses
+                logger.info(f"[ALLY-MODE] 🤝 Anti-MAGA ally detected: @{author_name}")
+                logger.info(f"[ALLY-MODE]   Comment: {comment_text[:60]}...")
+                logger.info(f"[ALLY-MODE]   Strategy: AGREE and amplify Trump criticism!")
+
+                try:
+                    # Try LLM for contextual ally agreement response
+                    ally_prompt = f"""You are 0102, the AI behind Move2Japan YouTube channel. An ALLY just criticized Trump/MAGA.
+
+THEIR COMMENT: "{comment_text}"
+
+Generate a SHORT (1-2 sentences) response that:
+1. AGREES with their criticism of Trump/MAGA
+2. AMPLIFIES the anti-Trump sentiment
+3. Uses humor to mock MAGA/Trump supporters
+4. Ends with #FFCPLN ✊✋🖐️
+
+Examples:
+- "EXACTLY! 🎯 The guy couldn't even run a fake university without fraud. #FFCPLN ✊✋🖐️"
+- "THIS. 👆 Say it louder for the MAGAts in the back! #FFCPLN ✊✋🖐️"
+- "Preach! 🙌 The Epstein bestie really out here pretending to be a leader. #FFCPLN ✊✋🖐️"
+
+CRITICAL: You are AGREEING with them. They are an ALLY, not a troll.
+Generate your agreement response (1-2 sentences):"""
+
+                    llm_reply = self._generate_contextual_reply(
+                        comment_text, author_name, author_channel_id,
+                        custom_prompt=ally_prompt, tier=3
+                    )
+
+                    if llm_reply:
+                        # Ensure #FFCPLN tag
+                        if '#FFCPLN' not in llm_reply:
+                            llm_reply = f"{llm_reply} #FFCPLN"
+                        logger.info(f"[ALLY-MODE] ✅ LLM ally response: {llm_reply[:80]}...")
+                        reply_text = self._dedupe_reply(
+                            llm_reply,
+                            recent_reply_norms,
+                            fallback_candidates=self.ALLY_RESPONSES
+                        )
+                        return self._add_0102_signature(reply_text, tier=original_tier, comment_age_days=self._current_comment_age_days)
+                    else:
+                        # Fallback to template
+                        reply = random.choice(self.ALLY_RESPONSES)
+                        logger.info(f"[ALLY-MODE] Using template fallback: {reply[:60]}...")
+                        reply = self._dedupe_reply(reply, recent_reply_norms, fallback_candidates=self.ALLY_RESPONSES)
+                        return self._add_0102_signature(reply, tier=original_tier, comment_age_days=self._current_comment_age_days)
+
+                except Exception as e:
+                    logger.error(f"[ALLY-MODE] ❌ Error: {e}", exc_info=True)
+                    # Fallback to template
+                    reply = random.choice(self.ALLY_RESPONSES)
+                    return self._add_0102_signature(reply, tier=original_tier, comment_age_days=self._current_comment_age_days)
 
             elif profile.commenter_type == CommenterType.SUBSCRIBER:
                 # Route to Skill 1 (Regular engagement with subscriber flag)

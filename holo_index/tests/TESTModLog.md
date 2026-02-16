@@ -1,4 +1,39 @@
 # HoloIndex Test Suite TESTModLog
+## [2026-02-12] 012 Scratchpad Source Resolver Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_ingest_012_corpus.py` to validate deterministic source resolution for 012 corpus ingest.
+- Covers:
+  - Auto mode prefers root `012.txt` scratchpad.
+  - Explicit relative path resolution works for docs mirror path.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_ingest_012_corpus.py -q`
+
+## [2026-02-11] Holo System Check WSP Sentinel Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_holo_system_check.py` to validate WSP framework sentinel integration in system-check output.
+- Covers:
+  - `run_system_check(...)` includes `wsp_framework_health` payload.
+  - `write_system_check_report(...)` renders `WSP Framework Health` section.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_holo_system_check.py -q`
+
+## [2026-02-11] Web Asset Indexing Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_web_asset_indexing.py` to validate semantic ingestion of `public` HTML/JS assets.
+- Covers enabled path, disabled toggle path, and merged indexing with NAVIGATION entries.
+- Locks retrieval behavior needed for FoundUP cube animation artifacts.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_web_asset_indexing.py -q`
+
 ## [2026-02-08] Windows Decode Hardening Verification
 **WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 

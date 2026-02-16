@@ -1,5 +1,86 @@
-﻿# TestModLog - tests
+# TestModLog - tests
 
+## 2026-02-16 (Cross-module concatenated validation - identity-anchor hardened)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+- Status: PASS
+- Result: 335 passed, 2 warnings
+- Notes:
+  - Confirms integrated lane stability after OpenClaw conversation identity normalization.
+  - Includes SSE member-gate + DEX stream contract + token symbol guardrail updates.
+
+## 2026-02-16 (Symbol guardrails + member-gate integration lane)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/simulator/tests/test_sse_server.py modules/foundups/agent_market/tests/test_e2e_integration.py modules/foundups/agent_market/tests/test_persistence.py modules/foundups/agent_market/tests/test_task_lifecycle.py -q`
+- Status: PASS
+- Result: 55 passed, 2 warnings
+- Notes:
+  - Validates case-insensitive duplicate token symbol rejection in in-memory and sqlite paths.
+  - Validates FAM adapter token auto-generation + collision-safe launch resolution.
+  - Validates simulator SSE member-gate auth (including fail-closed misconfiguration)
+    plus endpoint gating behavior and DEX streamable event contract.
+
+## 2026-02-16 (Cross-module concatenated validation)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+- Status: PASS
+- Result: 321 passed, 2 warnings
+- Notes:
+  - Validates FAM + Moltbot + Simulator integration surfaces as a single test lane.
+  - Warnings are repo-level pytest config warnings for `asyncio_*` options.
+
+## 2026-02-16 (Concatenated suite stabilization: agent_market + simulator)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+- Status: PASS
+- Result: 229 passed, 2 warnings
+- Notes:
+  - Includes deterministic-id/heartbeat dedupe checks in `test_fam_daemon.py`.
+  - Includes CABR history serialization precision checks in `test_cabr_hooks.py`.
+  - Warnings are repo-level pytest config warnings for `asyncio_*` options.
+
+## 2026-02-16 (Compute Access Persistence - Tranche 5 P0 Extension)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_sqlite_adapter.py modules/foundups/agent_market/tests/test_migrations.py modules/foundups/agent_market/tests/test_persistence.py modules/foundups/agent_market/tests/test_compute_access.py modules/foundups/agent_market/tests/test_persistent_compute_wiring.py modules/foundups/agent_market/tests/test_task_lifecycle.py modules/foundups/agent_market/tests/test_schemas.py modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py -q`
+- Status: PASS
+- Result: 49 passed, 2 warnings
+- Notes:
+  - Validates schema v2 migration and compute-access tables/indexes.
+  - Validates wallet, debit, rebate, access checks, and compute-session round trips.
+  - Validates persistent registry/task pipeline compute-gate debit wiring.
+  - Uses project `.venv` to include SQLAlchemy dependency.
+
+## 2026-02-16 (Compute Access Paywall P0 In-Memory)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/agent_market/tests/test_compute_access.py modules/foundups/agent_market/tests/test_task_lifecycle.py modules/foundups/agent_market/tests/test_schemas.py modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py -q`
+- Status: PASS
+- Result: 16 passed, 2 warnings
+- Notes:
+  - Validates paywall denial when no plan or insufficient credits.
+  - Validates scout-tier block and builder-tier debit flow.
+  - Validates compute purchase/debit/rebate/session event emission.
+  - Confirms CABR canonical terminology guardrail still passes.
+
+## 2026-02-11 (F_0 MVP offering contract)
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_mvp_offering.py -q`
+- Status: PASS
+- Result: 4 passed
+- Notes:
+  - Validates 5-term cap at 200 UP$/term.
+  - Validates bid UP$ gating and treasury-only resolve.
+  - Validates highest-bid allocation + loser refund + treasury injection accounting.
+
+## 2026-02-08 (Prototype Tranche 2: Persistence Layer)
+- Command: $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_persistence.py -q
+- Status: PASS
+- Result: 12 passed
+- Command: $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_sqlite_adapter.py -q
+- Status: PASS
+- Result: 9 passed
+- Command: $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_migrations.py -q
+- Status: PASS
+- Result: 4 passed
+- Command: $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/foundups/agent_market/tests/test_repository_factory.py -q
+- Status: PASS
+- Result: 3 passed
+- Notes:
+  - SQLAlchemy 2 compatibility validated for WAL pragma query.
+  - Migration idempotency/version guard and backend factory routing validated.
+  - Full suite run still shows pre-existing unrelated failures outside persistence tranche scope.
 ## 2026-02-08 (Prototype Tranche 1: FAM DAEmon)
 - Added: `test_fam_daemon.py` - 27 tests for FAM DAEmon observability backbone
 - Command: Manual Python script (web3 pytest plugin conflict)
@@ -31,3 +112,5 @@
 - Status: PASS
 - Result: 23 passed, 2 warnings
 - Notes: Warnings are repo-level pytest config warnings (`asyncio_*` options) under plugin-autoload-disabled mode.
+
+

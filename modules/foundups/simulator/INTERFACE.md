@@ -3,6 +3,12 @@
 ## Module Contract
 FoundUps Simulator provides real-time event streaming via Server-Sent Events (SSE) for the cube visualization frontend, bridging FAMDaemon observability data to the web UI.
 
+## CABR Canonical Intent
+- CABR = Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate).
+- WHY: CABR exists to power Proof of Benefit (PoB).
+- HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
+
 ## Core Schemas
 
 ### SSE Event Envelope
@@ -25,14 +31,27 @@ STREAMABLE_EVENT_TYPES = {
     "foundup_created",           # New FoundUp launched
     "task_state_changed",        # Task status transition
     "fi_trade_executed",         # DEX trade completed
+    "order_placed",              # DEX order accepted
+    "order_cancelled",           # DEX order cancelled
+    "order_matched",             # DEX order matched/executed
+    "price_tick",                # DEX ticker update
+    "orderbook_snapshot",        # DEX depth snapshot
+    "portfolio_updated",         # Wallet/portfolio update
     "investor_funding_received", # BTC investment received
     "mvp_subscription_accrued",  # Monthly UP$ accrued
+    "subscription_allocation_refreshed",  # 012 subscription cycle refresh
+    "subscription_cycle_reset",  # Monthly subscription reset
     "mvp_bid_submitted",         # Investor bid placed
     "mvp_offering_resolved",     # MVP offering completed
+    "ups_allocation_executed",   # 0102 allocation batch execution
+    "ups_allocation_result",     # Per-foundup allocation outcome
     "milestone_published",       # Distribution post published
     "proof_submitted",           # Work proof submitted
     "verification_recorded",     # Proof verified
     "payout_triggered",          # Token payout executed
+    "demurrage_cycle_completed", # Decay redistribution summary
+    "pavs_treasury_updated",     # pAVS/network balance update
+    "treasury_separation_snapshot",  # System vs FoundUp treasury view
     "fi_rating_updated",         # F_i rating color gradient
     "cabr_score_updated",        # CABR 3V consensus score
 }
@@ -50,11 +69,35 @@ STREAMABLE_EVENT_TYPES = {
 # fi_trade_executed
 {"quantity": int, "price": float, "ups_total": float, "side": str}
 
+# order_placed
+{"order_id": str, "side": "buy" | "sell", "owner_id": str, "price": float, "quantity": float, "status": str}
+
+# order_cancelled
+{"order_id": str, "owner_id": str, "reason": str | null}
+
+# order_matched
+{"trade_id": str, "buyer_id": str, "seller_id": str, "price": float, "quantity": float, "ups_total": float}
+
+# price_tick
+{"last_price": float, "best_bid": float | null, "best_ask": float | null, "spread": float | null, "mid_price": float | null}
+
+# orderbook_snapshot
+{"best_bid": float | null, "best_ask": float | null, "spread": float | null, "mid_price": float | null, "bids": list, "asks": list}
+
+# portfolio_updated
+{"owner_id": str, "ups_balance": float, "fi_positions": dict}
+
 # investor_funding_received
 {"btc_amount": float, "source_foundup_id": str}
 
 # mvp_subscription_accrued
 {"added_ups": int}
+
+# subscription_allocation_refreshed
+{"human_id": str, "tier": str, "allocation_ups": float, "remaining_allocation_ups": float, "wallet_ups": float}
+
+# subscription_cycle_reset
+{"human_id": str, "tier": str, "cycles_per_month": int}
 
 # mvp_bid_submitted
 {"bid_ups": int}
@@ -62,11 +105,26 @@ STREAMABLE_EVENT_TYPES = {
 # mvp_offering_resolved
 {"total_injection_ups": int}
 
+# ups_allocation_executed
+{"human_id": str, "strategy": str, "ups_requested": float, "ups_executed": float, "fi_received": float, "success_count": int, "pending_count": int, "remaining_allocation_ups": float}
+
+# ups_allocation_result
+{"human_id": str, "path": str, "ups_allocated": float, "fi_received": float, "fee_paid": float, "order_id": str | null}
+
 # proof_submitted
 {"proof_type": str}
 
 # payout_triggered
 {"amount": int}
+
+# demurrage_cycle_completed
+{"wallets_affected": int, "total_decay_ups": float, "network_pool_delta_ups": float, "pavs_treasury_delta_ups": float}
+
+# pavs_treasury_updated
+{"pavs_treasury_balance_ups": float, "network_pool_balance_ups": float, "treasury_health": float}
+
+# treasury_separation_snapshot
+{"pavs_treasury_ups": float, "network_pool_ups": float, "fund_pool_ups": float, "foundup_ups_treasury": {str: float}}
 
 # fi_rating_updated
 {"rating": {"velocity": float, "traction": float, "health": float, "potential": float, "composite": float}, "border_color": str, "tier_name": str}
@@ -77,6 +135,49 @@ STREAMABLE_EVENT_TYPES = {
 
 ## Service Contracts
 
+### FrameSchema (animation adapter)
+
+`modules/foundups/simulator/frame_schema.py` defines immutable snapshot contracts consumed by animation clients.
+
+Top-level envelope:
+```python
+{
+  "frame_schema_version": "1.0.0",
+  "tick": int,
+  "elapsed_seconds": float,
+  "foundups": [...],
+  "actors": [...],
+  "pools": {...},
+  "metrics": {...},
+  "recent_events": [str]
+}
+```
+
+Invariant:
+- Animation consumers read frame fields only.
+- Animation layer does not mutate simulator state or run economic logic.
+
+### Pure-step shadow parity telemetry
+
+`FoundUpsModel` supports an opt-in shadow parity gate (off by default) that runs
+immutable `step_pure.step()` alongside runtime tick execution.
+
+Config fields (`SimulatorConfig`):
+- `pure_step_shadow_enabled: bool`
+- `pure_step_shadow_log_interval: int`
+- `pure_step_shadow_max_actor_drift: float`
+- `pure_step_shadow_max_pool_drift: float`
+- `pure_step_shadow_max_fi_drift: float`
+
+Stats fields (`FoundUpsModel.get_stats()`):
+- `pure_step_shadow_checks`
+- `pure_step_shadow_failures`
+- `pure_step_shadow_last_tick`
+- `pure_step_shadow_last_ok`
+
+Parity drift signal:
+- Emits daemon event `pure_step_shadow_drift` when configured thresholds are exceeded.
+
 ### SSE Server Endpoints
 
 #### GET /api/sim-events
@@ -85,6 +186,9 @@ Server-Sent Events stream for simulator/FAMDaemon events.
 **Request:**
 - Method: `GET`
 - Headers: `Accept: text/event-stream`
+- Member gate headers (when enabled):
+  - `x-invite-key: <secret>` (or query `invite_key=...`)
+  - `x-member-role: observer_012|member|agent_trader|admin` (or query `role=...`)
 
 **Response:**
 - Content-Type: `text/event-stream`
@@ -230,6 +334,11 @@ Credentials: Allowed
 
 **Environment Variables:**
 - `PORT`: Server port (default: 8080)
+- `FAM_MEMBER_GATE_ENABLED`: `1` to enforce invite-only access on `/api/sim-events`
+- `FAM_MEMBER_INVITE_KEY`: Shared invite key for member-gated endpoints
+- `FAM_MEMBER_GATE_ALLOW_LOCAL_BYPASS`: `1` allows localhost bypass for dev
+- `FAM_MEMBER_GATE_PROTECT_HEALTH`: `1` also gates `/api/health`
+- `FAM_MEMBER_ALLOWED_ROLES`: Comma-separated role allowlist
 
 **Modes:**
 | Mode | Command | Description |

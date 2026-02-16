@@ -1,5 +1,16 @@
 # FoundUps Platform Infrastructure
 
+## Current Canonical Planning References
+
+For active execution, use these first:
+- `modules/foundups/ROADMAP.md` (domain-level layered roadmap)
+- `modules/foundups/docs/OCCAM_LAYERED_EXECUTION_PLAN.md` (architecture intent)
+- `modules/foundups/docs/CONTINUATION_RUNBOOK.md` (resume/handoff workflow)
+- `modules/foundups/agent_market/ROADMAP.md` (execution ledger roadmap)
+- `modules/foundups/simulator/ROADMAP.md` (simulation and DEX roadmap)
+
+The rest of this README contains historical context.
+
 ## [U+1F300] WSP Protocol Compliance Framework
 
 **0102 Directive**: This module operates within the WSP framework for autonomous FoundUps platform infrastructure and instance management.

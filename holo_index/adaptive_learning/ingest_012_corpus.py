@@ -37,7 +37,7 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def read_lines(path: Path) -> List[str]:
@@ -85,16 +85,50 @@ def extract_refs(text: str) -> Dict[str, Any]:
     return {"wsp_refs": wsps, "paths": paths, "commands": commands}
 
 
+def resolve_source_path(repo_root: Path, source_arg: str) -> Optional[Path]:
+    """
+    Resolve 012 corpus source path with deterministic fallback order.
+
+    Priority:
+    1. Explicit absolute path provided by --source
+    2. Explicit repo-relative path provided by --source
+    3. Local root scratchpad: 012.txt
+    4. Local ignored corpus mirror: holo_index/data/012.txt
+    5. Optional docs mirror: docs/012_moshpit/012.txt
+    """
+    source = (source_arg or "").strip()
+    if source and source.lower() not in {"auto", "default"}:
+        candidate = Path(source)
+        if not candidate.is_absolute():
+            candidate = repo_root / source
+        return candidate if candidate.exists() else None
+
+    candidates = [
+        repo_root / "012.txt",
+        repo_root / "holo_index" / "data" / "012.txt",
+        repo_root / "docs" / "012_moshpit" / "012.txt",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Ingest 012.txt into adaptive learning memory (WSP 60)")
-    parser.add_argument("--source", default="012.txt", help="Path to 012.txt")
+    parser.add_argument("--source", default="auto", help="Path to 012 corpus file (default: auto)")
     parser.add_argument("--chunk_lines", type=int, default=40, help="Max lines per chunk")
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[3]
-    source_path = (repo_root / args.source) if not Path(args.source).is_absolute() else Path(args.source)
-    if not source_path.exists():
-        print(f"[WARN] Source not found: {source_path}")
+    # Script lives at <repo>/holo_index/adaptive_learning/ingest_012_corpus.py
+    # parents[2] = <repo>
+    repo_root = Path(__file__).resolve().parents[2]
+    source_path = resolve_source_path(repo_root, args.source)
+    if not source_path:
+        print(
+            "[WARN] Source not found. Tried explicit path or defaults: "
+            "holo_index/data/012.txt, docs/012_moshpit/012.txt, 012.txt"
+        )
         return
 
     memory_dir = Path(__file__).resolve().parent / "012_corpus" / "memory"
@@ -155,5 +189,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

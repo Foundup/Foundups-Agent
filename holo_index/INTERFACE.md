@@ -50,6 +50,7 @@ results = holo.search(
 ```python
 # Index code entries
 holo.index_code_entries()
+# Includes NAVIGATION + web assets under HOLO_WEB_INDEX_ROOTS (default: public/)
 
 # Index WSP documents
 holo.index_wsp_entries(paths=[Path("WSP_framework/")])
@@ -57,6 +58,13 @@ holo.index_wsp_entries(paths=[Path("WSP_framework/")])
 # Index everything
 holo.index_all()
 ```
+
+Web indexing controls:
+- `HOLO_INDEX_WEB=1|0` (default `1`)
+- `HOLO_WEB_INDEX_ROOTS` (default `public`, semicolon-separated)
+- `HOLO_WEB_INDEX_EXTENSIONS` (default `.html;.js;.mjs;.cjs;.css`)
+- `HOLO_WEB_INDEX_MAX_FILES` (default `300`)
+- `HOLO_WEB_INDEX_MAX_CHARS` (default `5000`)
 
 ### HoloDAE Autonomous Intelligence Interface
 

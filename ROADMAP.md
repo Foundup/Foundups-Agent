@@ -6,7 +6,7 @@ Purpose: This is the 0102 navigation surface for building and coordinating the s
 
 Canonical Index (consult before action):
 - WSP Master Index: `WSP_framework/src/WSP_MASTER_INDEX.md`
-- Orchestration Hierarchy: `WSP_framework/src/WSP_ORCHESTRATION_HIERARCHY.md`
+- Orchestration Hierarchy (annex): `WSP_framework/docs/annexes/ORCHESTRATION_HIERARCHY_ANNEX.md`
 - Violations Log (triage/fix/defer): `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
 
 Enterprise Domain Map (WSP 3 – functional distribution):

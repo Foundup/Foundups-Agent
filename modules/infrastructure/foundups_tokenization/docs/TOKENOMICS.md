@@ -1,8 +1,10 @@
 # FoundUps Tokenomics: Complete Economic Model
 
-**Version**: 1.0.0
-**Date**: 2025-11-03
-**Status**: Architecture Complete, Phase 1 Design Finalized
+**Version**: 2.0.0
+**Date**: 2026-02-14
+**Status**: Architecture Complete, Simulator Operational
+**Canonical Spec**: [WSP 26: FoundUPS DAE Tokenization](../../../WSP_knowledge/src/WSP_26_FoundUPS_DAE_Tokenization.md)
+**Implementation**: [`modules/foundups/simulator/economics/`](../../../modules/foundups/simulator/economics/__init__.py)
 
 ## Executive Summary
 
@@ -11,7 +13,7 @@ FoundUps tokenomics implements a **bio-decay economic model** where:
 2. **FoundUp Tokens** (e.g., JUNK$) = Deflationary 21M-capped asset tokens per FoundUp
 3. **CABR Validation** = Only source of UP$ minting (prevents gaming)
 4. **Bio-Decay States** = ICE/LIQUID/VAPOR (water analogy for intuitive UX)
-5. **BTC Anchoring** = Autonomous meme → stable transformation
+5. **BTC Reserve** = Hotel California model (BTC flows in, never out)
 
 **Result**: Self-sustaining economy where **active participation = value creation**, and **inactivity = value redistribution**.
 
@@ -23,11 +25,13 @@ FoundUps tokenomics implements a **bio-decay economic model** where:
 2. [Bio-Decay Model (ICE/LIQUID/VAPOR)](#bio-decay-model)
 3. [CABR Integration (Minting Trigger)](#cabr-integration)
 4. [Rogers Diffusion Curve (Stage Release)](#rogers-diffusion-curve)
-5. [BTC Anchoring (Meme → Stable Transformation)](#btc-anchoring)
+5. [BTC Reserve (Hotel California Model)](#btc-reserve)
+5a. [Architectural Invariants (012-Confirmed)](#architectural-invariants)
 6. [Mesh Network Integration](#mesh-network-integration)
 7. [Mathematical Formulas](#mathematical-formulas)
 8. [Economic Simulations](#economic-simulations)
-9. [Implementation Roadmap](#implementation-roadmap)
+9. [Early Capital Provider Economics](#early-capital-provider-economics)
+10. [Implementation Roadmap](#implementation-roadmap)
 
 ---
 
@@ -37,36 +41,41 @@ FoundUps tokenomics implements a **bio-decay economic model** where:
 
 ```yaml
 Purpose: "Consumption currency across ALL FoundUps"
-Supply_Formula: "(BTC_Reserve_Satoshis) / Num_FoundUps"
+Supply: "Floating — minted via CABR validation (WSP 29)"
+Value: "ups_per_btc = total_ups_minted / total_btc_reserve"
 Minting: "ONLY via CABR validation (WSP 29)"
 Characteristics:
-  - Inflationary (grows with ecosystem)
-  - Bio-decaying (incentivizes activity)
-  - BTC-backed (value correlated to reserves)
+  - Inflationary (grows with ecosystem activity)
+  - Bio-decaying (incentivizes activity — see Demurrage)
+  - BTC-backed (floating rate — more BTC = stronger UP$)
   - Cross-FoundUp (universal currency)
-  - Swappable for FoundUp tokens (one-way)
+  - F_i can ONLY swap INTO UP$ (not directly to external)
 ```
 
-**Supply Dynamics**:
-- **More FoundUps Launch** → UP$ distributes across ecosystem → Scarcity per FoundUp
-- **More BTC Accumulated** → UP$ value increases → Stronger backing ratio
-- **More Activity** → More UP$ minted (via CABR) → But also more BTC accumulation
+**Supply Dynamics** (floating value model):
+- **More BTC accumulated** → ups_per_btc decreases → each UP$ worth more BTC
+- **More UP$ minted** → ups_per_btc increases → each UP$ worth less BTC
+- **Bio-decay** removes UP$ from circulation → deflation → UP$ strengthens
+- **Net effect**: Activity creates UP$ (inflation) + decay removes UP$ (deflation) + fees add BTC (backing)
 
 **Example**:
 ```python
-# Initial state (1 FoundUp, 1 BTC reserve)
-num_foundups = 1
-btc_reserve = 1.0  # 1 BTC
-satoshis = btc_reserve * 100_000_000
-up_supply = satoshis / num_foundups
-# Result: 100,000,000 UP$ available
+from modules.foundups.simulator.economics.btc_reserve import get_btc_reserve
 
-# After 10 FoundUps launched, 10 BTC accumulated
-num_foundups = 10
-btc_reserve = 10.0
-satoshis = btc_reserve * 100_000_000
-up_supply = satoshis / num_foundups
-# Result: Still 100,000,000 UP$ per FoundUp (stable!)
+reserve = get_btc_reserve()
+
+# Initial state: genesis rate
+# ups_per_btc = 100,000,000 (genesis default)
+
+# After ecosystem activity:
+# - 50M UP$ minted via CABR validation
+# - 0.5 BTC accumulated from fees/decay/exits
+# ups_per_btc = 50,000,000 / 0.5 = 100,000,000 (stable!)
+
+# After heavy activity + decay:
+# - 80M UP$ minted, but 30M decayed away → 50M circulating
+# - 1.2 BTC accumulated
+# ups_per_btc = 50,000,000 / 1.2 = 41,666,667 (UP$ strengthened!)
 ```
 
 ### FoundUp Tokens (e.g., JUNK$ for GotJunk)
@@ -274,24 +283,50 @@ gaming_patterns = {
 
 ---
 
-## Rogers Diffusion Curve (Stage Release)
+## Rogers Diffusion Curve (Continuous S-Curve Release)
 
-### Market Adoption Lifecycle
+### Adoption-Based Token Release
 
-Based on Everett Rogers' **Diffusion of Innovation** theory:
+Based on Everett Rogers' **Diffusion of Innovation** theory, implemented as a **continuous sigmoid S-curve** — no artificial tier boundaries.
 
 ```
-100% ├─────────────────────────────── Laggards (16%) System Reserve
+         tokens_released = 21,000,000 × sigmoid(adoption_score)
+
+100% ├─────────────────────────────────────────────── Full saturation
+     │                                        ╱
+ 95% ├──────────────────────────────────╱── Late Majority
      │                              ╱
- 84% ├──────────────────────────╱── Late Majority (34%) Crowdfunding
-     │                       ╱
- 50% ├───────────────────╱────────── Early Majority (34%) Launch
-     │                ╱
- 16% ├────────────╱───────────────── Early Adopters (13.5%) MVP
-     │         ╱
-2.5% ├─────╱──────────────────────── Innovators (2.5%) IDEA/Proto/Soft-Proto
-     └──────────────────────────────
-       Time (Market Penetration %)
+ 50% ├──────────────────────────╱────────── INFLECTION POINT
+     │                      ╱
+  5% ├──────────────────╱────────────────── Early Adopters
+     │              ╱
+  0% ├──────────────────────────────────────── Genesis
+     └──────────────────────────────────────────
+       Adoption Score (0.0 → 1.0)
+```
+
+**Key Insight**: Token release follows pure mathematics, not discrete stages.
+
+| Adoption % | Release % | Tokens Available |
+|------------|-----------|------------------|
+| 0% | 0.00% | 0 |
+| 10% | 0.57% | 120,000 |
+| 25% | 4.52% | 949,000 |
+| **50%** | **50.00%** | **10,500,000** (inflection) |
+| 75% | 95.48% | 20,050,000 |
+| 100% | 100.00% | 21,000,000 |
+
+**Implementation** (see `modules/foundups/simulator/economics/token_economics.py`):
+```python
+def adoption_curve(adoption_score: float, steepness: float = 12.0) -> float:
+    """Continuous S-curve - no artificial tier jumps."""
+    raw = sigmoid(adoption_score, k=steepness, x0=0.5)
+    min_val = sigmoid(0.0, k=steepness, x0=0.5)
+    max_val = sigmoid(1.0, k=steepness, x0=0.5)
+    return (raw - min_val) / (max_val - min_val)
+```
+
+### Conceptual Phases (for UX, not token release)
 ```
 
 ### Stage Mechanics
@@ -341,78 +376,114 @@ Benefits:
 
 ---
 
-## BTC Anchoring (Meme → Stable Transformation)
+## BTC Reserve (Hotel California Model)
 
-### Autonomous Stabilization
+### "You can check in, but you can never leave"
 
-**Vision**: FoundUp tokens start as pure meme coins, **autonomously** become BTC-backed stablecoins through ecosystem activity.
+BTC flows INTO the reserve from multiple sources. It **never** flows out. This creates an ever-growing backing for UP$ value.
 
-**Mechanism**:
+**BTC Inflow Sources**:
 ```yaml
-Fee_Collection:
-  transaction_fee: "1% of every transaction"
-  routing:
-    btc_purchase: "80% buys BTC via DEX"
-    operations: "20% platform costs"
+Subscriptions:
+  - Spark ($2.95/mo), Explorer ($9.95), Builder ($19.95), Founder ($49.95)
+  - Paid in BTC/ETH/SOL/USDC — ALL converted to BTC reserve
 
-BTC_Accumulation:
-  destination: "Cold wallet per FoundUp"
-  access: "Non-extractable (locked forever)"
-  purpose: "Economic shadow anchor"
+Demurrage_Decay:
+  - LIQUID UP$ bio-decay → decayed amount converted to BTC at floating rate
+  - Implementation: modules/foundups/simulator/economics/demurrage.py
 
-Backing_Ratio_Evolution:
-  formula: "Backing_Ratio = BTC_Reserve_USD / FoundUp_Market_Cap"
+Exit_Fees (VAPOR):
+  - Mined F_i exit: 11% fee → BTC reserve (discourages extraction)
+  - Staked F_i exit: 5% fee → BTC reserve (value preservation)
+  - UP$ exit: 15% evaporation → 80% to BTC reserve, 20% to reservoir
 
-  Month_1:   0% backed (pure meme)
-  Year_1:   10% backed (hybrid)
-  Year_3:   50% backed (STABLE COIN classification)
-  Year_5+: 100% backed (FULL RESERVE)
+Trading_Fees:
+  - F_i order book trades → fees to BTC reserve
+  - Implementation: modules/foundups/simulator/economics/fi_orderbook.py
 ```
 
-**Mathematical Model**:
-```python
-class MemeToStableTransformation:
-    def simulate_transformation(self, monthly_volume_usd, years=5):
-        results = []
-        btc_reserve = 0
-        token_price = 0.01  # Initial meme price
+**BTC-F_i Ratio (Key Economic Metric)**:
+```
+btc_per_fi = btc_reserve / fi_released
 
-        for month in range(years * 12):
-            # Transaction volume grows 10% monthly
-            volume = monthly_volume_usd * (1.1 ** month)
+Early ecosystem:  F_i plentiful, BTC/F_i low   (S-curve left)
+Mature ecosystem: F_i scarce, BTC/F_i high      (S-curve right)
 
-            # Collect 1% fees
-            fees = volume * 0.01
+This mirrors BTC's own halving dynamic:
+  S-curve release matches BTC scarcity curve
+  Early miners get more tokens per unit work
+  Late entrants face higher cost per token
+```
 
-            # 80% buys BTC
-            btc_purchase_usd = fees * 0.80
-            btc_price = 50000 * (1.02 ** month)  # 2% monthly appreciation
-            btc_bought = btc_purchase_usd / btc_price
-            btc_reserve += btc_bought
+**Implementation**: `modules/foundups/simulator/economics/btc_reserve.py` (BTCReserve class)
 
-            # Calculate backing ratio
-            btc_reserve_value = btc_reserve * btc_price
-            market_cap = 21_000_000 * token_price
-            backing_ratio = btc_reserve_value / market_cap if market_cap > 0 else 0
+**Safety Mechanisms**:
+```yaml
+Circuit_Breaker: Prevents death spirals (modules/foundups/simulator/economics/circuit_breaker.py)
+Emergency_Reserve: Ethena-style stability fund (modules/foundups/simulator/economics/emergency_reserve.py)
+Rage_Quit: Moloch-style fair exit (modules/foundups/simulator/economics/rage_quit.py)
+Bonding_Curve: Guaranteed liquidity AMM (modules/foundups/simulator/economics/bonding_curve.py)
+```
 
-            # Classify stability
-            if backing_ratio >= 1.0:
-                stability = "FULL_RESERVE"
-            elif backing_ratio >= 0.5:
-                stability = "STABLE_COIN"
-            elif backing_ratio >= 0.1:
-                stability = "HYBRID"
-            else:
-                stability = "MEME_COIN"
+---
 
-            results.append({
-                "month": month,
-                "btc_reserve": btc_reserve,
-                "backing_ratio": backing_ratio,
-                "stability": stability
-            })
+## Architectural Invariants (012-Confirmed)
 
-        return results
+These are non-negotiable design constraints confirmed by 012. Do not deviate.
+
+### Backing Chain
+
+```
+F_i <-- backed by --> UP$ <-- backed by --> BTC
+
+CABR scores and routes UP$ flow — does NOT back tokens.
+CABR is the routing/scoring engine, BTC is the backing.
+```
+
+### Blockchain Agnostic
+
+- F_i tokens are **native pAVS tokens**, not ERC-20 or chain-specific
+- `TokenFactoryAdapter` abstracts the blockchain backend
+- No Polygon, no Mumbai, no chain-locked smart contracts
+- Chain selection is a deployment decision, not an architectural one
+
+### F_i Swap Path
+
+```
+F_i --> UP$ --> external (BTC/ETH/SOL/USDC)
+
+F_i can ONLY be swapped into UP$ (not directly to external).
+This forces all exits through the UP$ liquidity layer.
+```
+
+### V3 Real-Time Consensus
+
+- CABR V3 (Valuation) produces **real-time consensus scores** (0-1)
+- NOT quarterly reporting, NOT batch processing
+- Every PoB event gets an immediate V3 score
+- See WSP 29 Section: "The 3V Engine Pattern"
+
+### Proof of Benefit (PoB)
+
+Six economic FAM events constitute Proof of Benefit:
+
+| FAM Event | PoB Meaning | CABR Input |
+|-----------|-------------|------------|
+| `proof_submitted` | "I did work" | task_completion_rate |
+| `verification_recorded` | "Work was confirmed" | verification_participation |
+| `payout_triggered` | "Tokens transferred" | task_completion_rate |
+| `milestone_published` | "Achievement recorded" | governance_engagement |
+| `fi_trade_executed` | "Market activity" | cross_foundup_collaboration |
+| `investor_funding_received` | "Capital committed" | governance_engagement |
+
+These feed CABR `part_score` at trust 1.0. Full spec: [WSP 29: CABR Engine](../../../WSP_knowledge/src/WSP_29_CABR_Engine.md)
+
+### Layer Architecture
+
+```
+Layer 0: BTC (reserve backing — Hotel California)
+Layer 1: Smart contracts (chain-agnostic via TokenFactoryAdapter)
+Layer 2: Off-chain agent operations (0102 agents, FAM DAEmon, CABR scoring)
 ```
 
 ---
@@ -497,28 +568,220 @@ Where:
   t = time in days
 ```
 
-### UP$ Supply Formula
+### UP$ Floating Value Model
 
 ```
-Total_UP$ = (BTC_Reserve_Satoshis) / Num_FoundUps
+ups_per_btc = total_ups_minted / total_btc_reserve
 
-Example:
-  BTC_Reserve = 10 BTC
-  Num_FoundUps = 10
-  Satoshis = 10 × 100,000,000 = 1,000,000,000
-  Total_UP$ = 1,000,000,000 / 10 = 100,000,000 per FoundUp
+Where:
+  total_ups_minted = cumulative UP$ created via CABR validation
+  total_btc_reserve = BTC accumulated (Hotel California — never exits)
+
+Value dynamics:
+  More BTC accumulated → ups_per_btc decreases → each UP$ worth more BTC
+  More UP$ minted → ups_per_btc increases → each UP$ worth less BTC
+  Bio-decay removes UP$ from circulation → ups_per_btc decreases → deflation
+
+Implementation: modules/foundups/simulator/economics/btc_reserve.py (BTCReserve.ups_per_btc)
 ```
 
-### BTC Backing Ratio
+### BTC-F_i Ratio (Economic Health Metric)
 
 ```
-Backing_Ratio = BTC_Reserve_USD / (UP$_Supply × UP$_Price_USD)
+btc_per_fi = btc_reserve / fi_released
 
-Stability_Classification:
-  Backing_Ratio >= 1.0  → FULL_RESERVE
-  Backing_Ratio >= 0.5  → STABLE_COIN
-  Backing_Ratio >= 0.1  → HYBRID
-  Backing_Ratio < 0.1   → MEME_COIN
+This ratio should INCREASE over time:
+  - BTC reserve grows (Hotel California — inflows from fees, decay, exits)
+  - F_i release follows S-curve (scarcer over time)
+  - Combined effect: each F_i becomes more BTC-backed
+
+Tracked in simulator: mesa_model.py records snapshots every 50 ticks
+Implementation: BTCReserve.total_btc / adoption_curve(score) * 21_000_000
+```
+
+---
+
+## Founding Members + Anonymous Stakers (Du 4% Pool)
+
+The Du 4% pool is unique: it's **PASSIVE** — participants earn every epoch without requiring active work.
+
+### Who Qualifies
+
+| Category | Requirements | Access |
+|----------|-------------|--------|
+| **Founding Member** | Active subscription (any tier) | Du pool |
+| **Anonymous Staker** | BTC locked in contract | Du pool |
+| **Genesis Member** | Joined before launch | ALL FoundUps ecosystem-wide |
+| **Future Participant** | Joined after launch | Only FoundUps they work on |
+
+**FOMO**: Genesis member class CLOSES at launch. Join now or miss forever.
+
+### Degressive Tier Model (Prevents Infinite Extraction)
+
+As stakers earn more, their share naturally decreases:
+
+```
+Earned/Staked Ratio    Activity Tier    Pool Share
+─────────────────────────────────────────────────
+< 10x                  du (tier 2)      80% of 4% = 3.2%
+10x - 100x             dao (tier 1)     16% of 4% = 0.64%
+> 100x                 un (tier 0)       4% of 4% = 0.16%
+```
+
+**Lifetime floor**: Even after 100x return, stakers still share in 0.16% of total F_i (never lose access).
+
+**Math**: Each tier share is divided by count at that tier:
+```python
+individual_share = (pool × tier_percentage) / count_at_tier
+
+# Example: 10 stakers at du tier, 100 F_i epoch
+# du_tier_share = (4 × 0.80) / 10 = 0.32 F_i each
+```
+
+### Passive vs Active Earning
+
+| Pool | Mode | Trigger | Who |
+|------|------|---------|-----|
+| **Du (4%)** | PASSIVE | Every epoch | Founding members + stakers |
+| **Dao (16%)** | ACTIVE | Per 3V task | 0102 agents |
+| **Un (60%)** | ACTIVE | Per engagement | 012 stakeholders |
+
+**Implementation**: `modules/foundups/simulator/economics/pool_distribution.py` (StakerPosition, ComputeMetrics)
+
+### Agent Compute Weight (Dao 16% Pool)
+
+0102 agents earn F_i scaled by compute cost:
+
+```python
+fi_earned = base_rate × v3_score × compute_weight
+
+# Compute weight = (tokens_used / 1000) × tier_factor
+TIER_WEIGHTS = {
+    "opus": 10.0,    # Heavy compute → more F_i
+    "sonnet": 3.0,   # Medium compute
+    "haiku": 1.0,    # Light compute (baseline)
+    "gemma": 0.5,    # Local inference
+    "qwen": 0.5,     # Local inference
+}
+```
+
+### Epoch Timing
+
+| Cycle | Interval | Purpose |
+|-------|----------|---------|
+| Mini-epoch | 10 ticks | Demurrage (bio-decay) |
+| Epoch | 100 ticks | Du pool distribution (passive) |
+| Macro-epoch | 900 ticks | BTC-F_i ratio snapshot |
+| Event | Real-time | Dao/Un payouts (per 3V task) |
+
+**Implementation**: `modules/foundups/simulator/config.py` (epoch timing constants)
+
+---
+
+## Early Capital Provider Economics
+
+> **IMPORTANT DISTINCTION (CABR/PoB Paradigm):**
+> This section describes **I_i token holders** via Bitclout-style bonding curve.
+> This is DIFFERENT from **Du pool stakers** (protocol participants):
+> - Du Pool Stakers = CABR/PoB terminology (distribution ratio, allocations)
+> - I_i Holders = Traditional terminology (returns, multiples) - may require separate legal review
+
+**Full specification**: See [INVESTOR_ECONOMICS.md](../../foundups/simulator/economics/INVESTOR_ECONOMICS.md)
+
+### Bitclout-Inspired Bonding Curve
+
+Early investors receive **I_i (Investor Tokens)** priced on a quadratic bonding curve (same model as BitClout/DeSo's $200M raise from a16z, Sequoia):
+
+```yaml
+Price_Formula: "P = k × supply^n"
+Parameters:
+  k: 0.0001  # Price constant (BTC per token at supply=1)
+  n: 2       # Quadratic (Bitclout-style)
+```
+
+### BTC Escrow Model ("Dry Wallet")
+
+Investor BTC is **escrowed**, not spent immediately:
+
+```
+Investor BTC → Dry Wallet (Escrow)
+                    ↓
+              Sequestered for 3 years
+                    ↓
+              [CHOICE POINT at Year 3]
+                    ↓
+    ┌───────────────┼───────────────┐
+    ↓               ↓               ↓
+ BUYOUT         PARTIAL          HOLD
+ (10x)          (50/50)        (100x+)
+```
+
+### Stakeholder Pool Participation (12.16%)
+
+Investors participate at **DAO activity level** in the Token Pool Matrix:
+
+```
+Pool Structure (WSP 26 Section 6.3-6.4):
+  Stakeholders 80%:  Un(60%) + Dao(16%) + Du(4%)
+  Network 20%:       Network(16% drip) + Fund(4% held)
+
+Activity tiers (share within each pool, divided by count at tier):
+  du(2)  = 80% of pool  (founding members + stakers — PASSIVE)
+  dao(1) = 16% of pool  (investors at DAO level)
+  un(0)  =  4% of pool  (degressive floor after 100x return)
+
+Pool earning modes:
+  Du (4%):   PASSIVE — Founding members/stakers earn every epoch
+  Dao (16%): ACTIVE — 0102 agents earn per 3V task completion
+  Un (60%):  ACTIVE — 012 stakeholders earn per FoundUpCube engagement
+
+Investor DAO-level access:
+                 Un(60%)  Dao(16%)  Du(4%)
+-----------------------------------------------
+dao level:       9.60%    2.56%     0.64%
+
+TOTAL: 12.16% of ALL FoundUp token distributions!
+```
+
+**Implementation**: `modules/foundups/simulator/economics/pool_distribution.py` (PoolDistributor class)
+
+**Example** (100 FoundUps, 720M F_i/year):
+- Annual to investor pool: 87,552,000 F_i
+- 5-year: 437,760,000 F_i
+- Seed investor (46% of pool): 203M F_i
+
+### Return Projections
+
+| Round | BTC In | Pool % | 5Y F_i | Return |
+|-------|--------|--------|--------|--------|
+| Pre-Seed | 0.5 | 15% | 65M | **6,000x** |
+| Seed | 10 | 46% | 203M | **1,600x** |
+| Series A | 50 | 20% | 88M | **118x** |
+
+### The Hybrid Exit Model
+
+> "The floor is 10x. The ceiling is 1000x. You choose."
+
+### Investment Rounds (Total: 755 BTC / ~$75.5M)
+
+| Round | BTC Range | Target |
+|-------|-----------|--------|
+| Pre-Seed | 0.1-1 BTC | 5 BTC |
+| Seed | 1-10 BTC | 50 BTC |
+| Series A | 10-50 BTC | 200 BTC |
+| Series B | 50-100 BTC | 500 BTC |
+
+### Simulator Implementation
+
+```python
+from modules.foundups.simulator.economics import (
+    InvestorPool, bonding_price, bonding_tokens_for_btc
+)
+
+pool = InvestorPool(k=0.0001, n=2.0)
+tokens, tier = pool.invest_btc("investor_1", btc_amount=10.0)
+returns = pool.get_investor_returns("investor_1")
+# returns['price_return_multiple'] → 1,600x for seed
 ```
 
 ---
@@ -531,17 +794,25 @@ Stability_Classification:
 - [x] WSP integration
 - [x] Documentation
 
-### Phase 2: Smart Contracts (🚧 IN PROGRESS)
-- [ ] `UPSBioDecayEngine.sol` (Polygon)
-- [ ] `FoundUpToken.sol` template
-- [ ] `CABROracle.sol` integration
-- [ ] Testnet deployment (Mumbai)
+### Phase 2: Simulator Economics (✅ COMPLETE)
+- [x] `token_economics.py` — S-curve adoption, dual-token model
+- [x] `btc_reserve.py` — Hotel California BTC reserve
+- [x] `demurrage.py` — Bio-decay (Michaelis-Menten)
+- [x] `pool_distribution.py` — Un/Dao/Du epoch rewards
+- [x] `fi_orderbook.py` — F_i buy/sell order book
+- [x] `circuit_breaker.py` — Death spiral prevention
+- [x] `bonding_curve.py` — Guaranteed liquidity AMM
+- [x] `rage_quit.py` — Moloch-style fair exit
+- [x] `emergency_reserve.py` — Ethena-style stability fund
+- [x] `investor_staking.py` — Bitclout bonding curve
+- [x] `investor_liability.py` — Buyout coverage engine
+- [x] Mesa model integration with DemurrageEngine + BTCReserve + PoolDistributor
 
-### Phase 3: Backend Services (⏳ PENDING)
-- [ ] `bio_decay_engine.py`
-- [ ] `cabr_minting_engine.py`
-- [ ] `btc_anchor_engine.py`
-- [ ] `distribution_dae.py`
+### Phase 3: Smart Contracts — Blockchain Agnostic (⏳ PENDING)
+- [ ] TokenFactoryAdapter (chain-agnostic abstraction layer)
+- [ ] F_i token contract template (21M cap per FoundUp)
+- [ ] CABR Oracle integration (V1/V2/V3 pipeline)
+- [ ] Testnet deployment (chain TBD — NOT locked to any L1/L2)
 
 ### Phase 4: Frontend Integration (⏳ PENDING)
 - [ ] Decay notifications UI
@@ -564,7 +835,7 @@ FoundUps tokenomics creates a **self-sustaining, anti-hoarding, quality-driven e
 1. **Value Creation** = CABR-validated beneficial actions
 2. **Value Capture** = BTC accumulation on fees
 3. **Value Distribution** = Active participants rewarded, inactive decay
-4. **Value Stability** = Autonomous meme → stable transformation
+4. **Value Stability** = Hotel California BTC reserve (grows forever, never exits)
 
 **Result**: Solo founders can build unicorn-scale FoundUps without VC funding, employees, or centralized infrastructure.
 

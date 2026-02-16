@@ -178,3 +178,95 @@ class MoltbookDistributionAdapter:
     ) -> List[Dict[str, object]]:
         """List published milestones for a FoundUp."""
         raise NotImplementedError
+
+
+class MvpOfferingService:
+    """MVP pre-launch token offering (F_0 investor program)."""
+
+    def accrue_investor_terms(
+        self,
+        investor_id: str,
+        terms: int = 1,
+        term_ups: int = 200,
+        max_terms: int = 5,
+    ) -> Dict[str, int]:
+        """Accrue F_0 investor subscription terms capped at max_terms."""
+        raise NotImplementedError
+
+    def place_mvp_bid(
+        self,
+        foundup_id: str,
+        investor_id: str,
+        bid_ups: int,
+    ) -> str:
+        """Place bid using hoarded UP$ allocation for upcoming MVP token access."""
+        raise NotImplementedError
+
+    def get_mvp_bids(self, foundup_id: str) -> List[Dict[str, object]]:
+        """List bids for a FoundUp."""
+        raise NotImplementedError
+
+    def resolve_mvp_offering(
+        self,
+        foundup_id: str,
+        actor_id: str,
+        token_amount: int,
+        top_n: int = 1,
+    ) -> List[Dict[str, object]]:
+        """Resolve MVP offering by allocating tokens to highest bids."""
+        raise NotImplementedError
+
+
+class ComputeAccessService:
+    """Metered compute access contract for FAM execution surfaces."""
+
+    def ensure_access(
+        self,
+        actor_id: str,
+        capability: str,
+        foundup_id: Optional[str] = None,
+    ) -> Dict[str, object]:
+        """Check whether actor can execute a metered capability."""
+        raise NotImplementedError
+
+    def get_wallet(self, actor_id: str) -> Dict[str, object]:
+        """Return compute-credit wallet state."""
+        raise NotImplementedError
+
+    def purchase_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        rail: str,
+        payment_ref: str,
+    ) -> Dict[str, object]:
+        """Credit wallet from subscription/top-up rail."""
+        raise NotImplementedError
+
+    def debit_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        reason: str,
+        foundup_id: Optional[str] = None,
+    ) -> Dict[str, object]:
+        """Debit wallet for metered execution."""
+        raise NotImplementedError
+
+    def record_compute_session(
+        self,
+        actor_id: str,
+        foundup_id: str,
+        workload: Dict[str, object],
+    ) -> str:
+        """Record workload metadata for debit->proof lineage."""
+        raise NotImplementedError
+
+    def rebate_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        reason: str,
+    ) -> Dict[str, object]:
+        """Rebate credits after policy-qualified outcomes."""
+        raise NotImplementedError

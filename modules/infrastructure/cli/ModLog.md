@@ -2,6 +2,24 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.3.4 - Follow-WSP CLI Wiring (2026-02-14)
+
+### Added
+- New CLI switch `--follow-wsp [task]` in `src/main_menu.py`.
+- New interactive menu option `15` for follow-WSP execution.
+- `_run_follow_wsp(task)` helper that routes to `WSPOrchestrator.follow_wsp(...)` and reports WSP_00 gate status.
+- Test file `tests/test_follow_wsp_menu.py` covering:
+  - empty task guard
+  - success path output
+  - blocked gate path output
+
+### Changed
+- `tests/README.md` updated with follow-WSP test and pytest command.
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+- **WSP 5**: test coverage for new CLI routing
+
 ## V0.3.1 - Channel Registry Controls (2026-02-02)
 
 ### Added

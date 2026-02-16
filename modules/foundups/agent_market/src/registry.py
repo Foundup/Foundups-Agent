@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List
 
-from .exceptions import NotFoundError, ImmutableFieldError
+from .exceptions import ImmutableFieldError, PermissionDeniedError
 from .interfaces import FoundupRegistryService
 from .models import EventRecord, Foundup
 from .persistence.sqlite_adapter import SQLiteAdapter
@@ -45,6 +45,25 @@ class PersistentFoundupRegistry(FoundupRegistryService):
         """
         self._adapter = adapter
 
+    def _enforce_compute_access(
+        self,
+        actor_id: str,
+        capability: str,
+        foundup_id: str,
+        reason: str,
+    ) -> None:
+        ensure = getattr(self._adapter, "ensure_access", None)
+        debit = getattr(self._adapter, "debit_credits", None)
+        if not callable(ensure) or not callable(debit):
+            return
+
+        decision = ensure(actor_id=actor_id, capability=capability, foundup_id=foundup_id)
+        if not bool(decision.get("allowed")):
+            raise PermissionDeniedError(str(decision.get("reason", "compute access denied")))
+        required = int(decision.get("required_credits", 0))
+        if required > 0:
+            debit(actor_id=actor_id, amount=required, reason=reason, foundup_id=foundup_id)
+
     def create_foundup(self, foundup: Foundup) -> Foundup:
         """Create a new Foundup.
 
@@ -54,6 +73,12 @@ class PersistentFoundupRegistry(FoundupRegistryService):
         Returns:
             Created Foundup.
         """
+        self._enforce_compute_access(
+            actor_id=foundup.owner_id,
+            capability="foundup.launch",
+            foundup_id=foundup.foundup_id,
+            reason="create_foundup",
+        )
         created = self._adapter.create_foundup(foundup)
         logger.info("Foundup created: %s (%s)", foundup.foundup_id, foundup.name)
         return created

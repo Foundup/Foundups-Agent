@@ -303,17 +303,31 @@ class UserAgent(BaseSimAgent):
         return False
 
     def _do_claim_task(self, tick: int) -> bool:
-        """Claim an open task."""
+        """Claim an open task with ORCH handshake (WSP 15 MPS gatekeeping)."""
         open_tasks = self._fam.get_open_tasks()
         if not open_tasks:
             return False
 
         task = random.choice(open_tasks)
-        success, msg = self._fam.claim_task(task.task_id, self.agent_id)
 
-        if success:
-            logger.debug(f"[USER] {self.agent_id} claimed task {task.task_id}")
-            return True
+        # Agent-ORCH handshake before claiming
+        agent_reputation = min(1.0, 0.5 + len(self._liked_foundups) * 0.05)
+        decision, details = self._fam.request_work_handshake(
+            agent_id=self.agent_id,
+            task_id=task.task_id,
+            agent_reputation=agent_reputation,
+            agent_skills=["promote", "verify", "engage"],
+        )
+
+        if decision == "APPROVED":
+            success, msg = self._fam.claim_task(task.task_id, self.agent_id)
+            if success:
+                logger.debug(f"[USER] {self.agent_id} claimed task {task.task_id} (MPS:{details.get('mps_score', 0):.2f})")
+                return True
+        elif decision == "PROMOTER_TRACK":
+            # Route to promotion activities instead
+            logger.debug(f"[USER] {self.agent_id} routed to promoter track (MPS:{details.get('mps_score', 0):.2f})")
+            return False
 
         return False
 

@@ -21,12 +21,15 @@ from .exceptions import (
     InvalidStateTransitionError,
     NotFoundError,
     PermissionDeniedError,
+    ValidationError,
 )
 from .interfaces import (
     AgentJoinService,
     CABRHookService,
+    ComputeAccessService,
     DistributionService,
     FoundupRegistryService,
+    MvpOfferingService,
     ObservabilityService,
     RepoProvisioningAdapter,
     TaskPipelineService,
@@ -91,6 +94,8 @@ class InMemoryAgentMarket(
     ObservabilityService,
     DistributionService,
     RepoProvisioningAdapter,
+    MvpOfferingService,
+    ComputeAccessService,
 ):
     """Single-process PoC adapter with deterministic behavior for tests.
 
@@ -101,6 +106,9 @@ class InMemoryAgentMarket(
         self,
         actor_roles: Optional[Dict[str, str]] = None,
         deterministic: bool = False,
+        compute_access_enforced: bool = False,
+        compute_default_credits: int = 0,
+        capability_costs: Optional[Dict[str, int]] = None,
     ):
         # Check env var for deterministic mode (useful for pytest fixtures)
         use_deterministic = deterministic or os.getenv("DETERMINISTIC_IDS", "0") == "1"
@@ -121,6 +129,36 @@ class InMemoryAgentMarket(
         self.cabr_outputs: Dict[str, List[Dict[str, object]]] = {}
         self.distributions_by_task: Dict[str, DistributionPost] = {}
         self.repos: Dict[str, Dict[str, object]] = {}
+        self.mvp_investor_terms: Dict[str, Dict[str, int]] = {}
+        self.mvp_bids_by_foundup: Dict[str, List[Dict[str, object]]] = {}
+        self.mvp_allocations_by_foundup: Dict[str, List[Dict[str, object]]] = {}
+        self.mvp_treasury_injections: Dict[str, int] = {}
+
+        # Investor program is anchored to F_0 only.
+        self.investor_source_foundup_id = "F_0"
+        self.investor_term_ups_default = 200
+        self.investor_max_terms_default = 5
+        self.compute_access_enforced = compute_access_enforced or (
+            os.getenv("FAM_COMPUTE_ACCESS_ENFORCED", "0") == "1"
+        )
+        self.compute_default_credits = max(
+            0,
+            int(os.getenv("FAM_COMPUTE_DEFAULT_CREDITS", str(compute_default_credits))),
+        )
+        self.compute_plans: Dict[str, Dict[str, object]] = {}
+        self.compute_wallets: Dict[str, Dict[str, int]] = {}
+        self.compute_ledger: List[Dict[str, object]] = []
+        self.compute_sessions: Dict[str, Dict[str, object]] = {}
+        self.compute_meter_costs: Dict[str, int] = capability_costs or {
+            "foundup.launch": 10,
+            "task.create": 2,
+            "task.claim": 1,
+            "proof.submit": 2,
+            "proof.verify": 2,
+            "payout.trigger": 1,
+            "distribution.publish": 1,
+            "treasury.transfer_propose": 1,
+        }
 
     def _role(self, actor_id: str) -> str:
         return self.actor_roles.get(actor_id, "advisory")
@@ -151,8 +189,86 @@ class InMemoryAgentMarket(
         )
         self.events.append(event)
 
+    def _ensure_compute_wallet(self, actor_id: str) -> Dict[str, int]:
+        wallet = self.compute_wallets.get(actor_id)
+        if wallet is None:
+            wallet = {
+                "credit_balance": self.compute_default_credits,
+                "reserved_credits": 0,
+            }
+            self.compute_wallets[actor_id] = wallet
+        return wallet
+
+    def _compute_cost(self, capability: str) -> int:
+        return max(0, int(self.compute_meter_costs.get(capability, 0)))
+
+    def _enforce_compute_access(
+        self,
+        actor_id: str,
+        capability: str,
+        foundup_id: Optional[str] = None,
+        reason: Optional[str] = None,
+    ) -> None:
+        if not self.compute_access_enforced:
+            return
+        decision = self.ensure_access(actor_id, capability, foundup_id=foundup_id)
+        if not bool(decision.get("allowed")):
+            raise PermissionDeniedError(str(decision.get("reason", "access denied")))
+        required = int(decision.get("required_credits", 0))
+        if required > 0:
+            self.debit_credits(
+                actor_id=actor_id,
+                amount=required,
+                reason=reason or capability,
+                foundup_id=foundup_id,
+            )
+
+    def activate_compute_plan(
+        self,
+        actor_id: str,
+        tier: str = "builder",
+        monthly_credit_allocation: int = 0,
+    ) -> Dict[str, object]:
+        if not actor_id:
+            raise PermissionDeniedError("actor_id is required")
+        if tier not in {"scout", "builder", "swarm", "sovereign"}:
+            raise InvalidStateTransitionError(f"unsupported tier '{tier}'")
+        allocation = max(0, int(monthly_credit_allocation))
+        plan = {
+            "plan_id": self._id_gen.next_id("plan", 10),
+            "actor_id": actor_id,
+            "tier": tier,
+            "status": "active",
+            "monthly_credit_allocation": allocation,
+        }
+        self.compute_plans[actor_id] = plan
+        if allocation:
+            wallet = self._ensure_compute_wallet(actor_id)
+            wallet["credit_balance"] += allocation
+        self._emit(
+            "compute_plan_activated",
+            actor_id,
+            {
+                "plan_id": plan["plan_id"],
+                "tier": tier,
+                "monthly_credit_allocation": allocation,
+            },
+        )
+        return dict(plan)
+
     # FoundupRegistryService
     def create_foundup(self, foundup: Foundup) -> Foundup:
+        self._enforce_compute_access(
+            actor_id=foundup.owner_id,
+            capability="foundup.launch",
+            foundup_id=foundup.foundup_id,
+            reason="create_foundup",
+        )
+        for existing in self.foundups.values():
+            if existing.token_symbol.lower() == foundup.token_symbol.lower():
+                raise ValidationError(
+                    f"token_symbol '{foundup.token_symbol}' already exists"
+                )
         self.foundups[foundup.foundup_id] = foundup
         self.agents_by_foundup.setdefault(foundup.foundup_id, [])
         self._emit(
@@ -242,6 +358,12 @@ class InMemoryAgentMarket(
     # TaskPipelineService
     def create_task(self, task: Task) -> Task:
         self.get_foundup(task.foundup_id)
+        self._enforce_compute_access(
+            actor_id=task.creator_id,
+            capability="task.create",
+            foundup_id=task.foundup_id,
+            reason="create_task",
+        )
         self.tasks[task.task_id] = task
         self._emit(
             "task.created",
@@ -262,6 +384,12 @@ class InMemoryAgentMarket(
         task = self.get_task(task_id)
         if task.status != TaskStatus.OPEN:
             raise InvalidStateTransitionError("task can only be claimed from open state")
+        self._enforce_compute_access(
+            actor_id=agent_id,
+            capability="task.claim",
+            foundup_id=task.foundup_id,
+            reason="claim_task",
+        )
         task.status = TaskStatus.CLAIMED
         task.assignee_id = agent_id
         self._emit(
@@ -279,6 +407,12 @@ class InMemoryAgentMarket(
             raise InvalidStateTransitionError("proof can only be submitted from claimed state")
         if task.assignee_id and task.assignee_id != proof.submitter_id:
             raise PermissionDeniedError("proof submitter must match task assignee")
+        self._enforce_compute_access(
+            actor_id=proof.submitter_id,
+            capability="proof.submit",
+            foundup_id=task.foundup_id,
+            reason="submit_proof",
+        )
         self.proofs[proof.proof_id] = proof
         task.proof_id = proof.proof_id
         task.status = TaskStatus.SUBMITTED
@@ -301,6 +435,12 @@ class InMemoryAgentMarket(
             raise InvalidStateTransitionError("verification requires proof")
         if not verification.approved:
             raise InvalidStateTransitionError("PoC supports approved verification only")
+        self._enforce_compute_access(
+            actor_id=verification.verifier_id,
+            capability="proof.verify",
+            foundup_id=task.foundup_id,
+            reason="verify_proof",
+        )
         self.verifications[verification.verification_id] = verification
         task.verification_id = verification.verification_id
         task.status = TaskStatus.VERIFIED
@@ -319,6 +459,12 @@ class InMemoryAgentMarket(
         self._require_role(actor_id, "treasury")
         if task.status != TaskStatus.VERIFIED:
             raise InvalidStateTransitionError("payout requires verified state")
+        self._enforce_compute_access(
+            actor_id=actor_id,
+            capability="payout.trigger",
+            foundup_id=task.foundup_id,
+            reason="trigger_payout",
+        )
         payout = Payout(
             payout_id=self._id_gen.next_id("pay", 10),
             task_id=task.task_id,
@@ -367,6 +513,12 @@ class InMemoryAgentMarket(
     # TreasuryGovernanceService
     def propose_transfer(self, foundup_id: str, amount: int, reason: str, proposer_id: str) -> str:
         self.get_foundup(foundup_id)
+        self._enforce_compute_access(
+            actor_id=proposer_id,
+            capability="treasury.transfer_propose",
+            foundup_id=foundup_id,
+            reason="propose_transfer",
+        )
         proposal_id = self._id_gen.next_id("prop", 10)
         self.transfer_proposals[proposal_id] = {
             "foundup_id": foundup_id,
@@ -506,6 +658,12 @@ class InMemoryAgentMarket(
         self._require_role(actor_id, "distribution")
         if task.status not in {TaskStatus.VERIFIED, TaskStatus.PAID}:
             raise InvalidStateTransitionError("distribution requires verified or paid state")
+        self._enforce_compute_access(
+            actor_id=actor_id,
+            capability="distribution.publish",
+            foundup_id=task.foundup_id,
+            reason="publish_verified_milestone",
+        )
 
         # CABR gate check
         if cabr_threshold > 0.0:
@@ -590,6 +748,444 @@ class InMemoryAgentMarket(
         self.get_foundup(foundup_id)
         return self.repos.get(foundup_id)
 
+    # MvpOfferingService
+    def accrue_investor_terms(
+        self,
+        investor_id: str,
+        terms: int = 1,
+        term_ups: int = 200,
+        max_terms: int = 5,
+    ) -> Dict[str, int]:
+        if not investor_id:
+            raise PermissionDeniedError("investor_id is required")
+        if terms <= 0:
+            raise InvalidStateTransitionError("terms must be positive")
+        if term_ups <= 0:
+            raise InvalidStateTransitionError("term_ups must be positive")
+        if max_terms <= 0:
+            raise InvalidStateTransitionError("max_terms must be positive")
+
+        entry = self.mvp_investor_terms.setdefault(
+            investor_id,
+            {"terms": 0, "available_ups": 0, "spent_ups": 0},
+        )
+        previous_terms = entry["terms"]
+        next_terms = min(max_terms, previous_terms + terms)
+        added_terms = next_terms - previous_terms
+        added_ups = added_terms * term_ups
+
+        entry["terms"] = next_terms
+        entry["available_ups"] += added_ups
+
+        result = {
+            "terms": entry["terms"],
+            "available_ups": entry["available_ups"],
+            "spent_ups": entry["spent_ups"],
+            "added_terms": added_terms,
+            "added_ups": added_ups,
+        }
+        self._emit(
+            "mvp.subscription_accrued",
+            investor_id,
+            {
+                "source_foundup_id": self.investor_source_foundup_id,
+                "terms": result["terms"],
+                "available_ups": result["available_ups"],
+                "added_terms": result["added_terms"],
+                "added_ups": result["added_ups"],
+            },
+            foundup_id=self.investor_source_foundup_id,
+        )
+        return result
+
+    def place_mvp_bid(
+        self,
+        foundup_id: str,
+        investor_id: str,
+        bid_ups: int,
+    ) -> str:
+        self.get_foundup(foundup_id)
+        if not investor_id:
+            raise PermissionDeniedError("investor_id is required")
+        if bid_ups <= 0:
+            raise InvalidStateTransitionError("bid_ups must be positive")
+
+        entry = self.mvp_investor_terms.setdefault(
+            investor_id,
+            {"terms": 0, "available_ups": 0, "spent_ups": 0},
+        )
+        if entry["available_ups"] < bid_ups:
+            raise PermissionDeniedError(
+                f"insufficient UP$ balance for investor '{investor_id}' "
+                f"(available={entry['available_ups']}, requested={bid_ups})"
+            )
+
+        entry["available_ups"] -= bid_ups
+        entry["spent_ups"] += bid_ups
+
+        bid = {
+            "bid_id": self._id_gen.next_id("bid", 10),
+            "foundup_id": foundup_id,
+            "investor_id": investor_id,
+            "bid_ups": bid_ups,
+        }
+        self.mvp_bids_by_foundup.setdefault(foundup_id, []).append(bid)
+        self._emit(
+            "mvp.bid_submitted",
+            investor_id,
+            {
+                "bid_id": bid["bid_id"],
+                "source_foundup_id": self.investor_source_foundup_id,
+                "bid_ups": bid_ups,
+                "remaining_ups": entry["available_ups"],
+            },
+            foundup_id=foundup_id,
+        )
+        return str(bid["bid_id"])
+
+    def get_mvp_bids(self, foundup_id: str) -> List[Dict[str, object]]:
+        self.get_foundup(foundup_id)
+        return [dict(item) for item in self.mvp_bids_by_foundup.get(foundup_id, [])]
+
+    def resolve_mvp_offering(
+        self,
+        foundup_id: str,
+        actor_id: str,
+        token_amount: int,
+        top_n: int = 1,
+    ) -> List[Dict[str, object]]:
+        self.get_foundup(foundup_id)
+        self._require_role(actor_id, "treasury")
+        if token_amount <= 0:
+            raise InvalidStateTransitionError("token_amount must be positive")
+        if top_n <= 0:
+            raise InvalidStateTransitionError("top_n must be positive")
+
+        bids = self.mvp_bids_by_foundup.get(foundup_id, [])
+        if not bids:
+            return []
+
+        sorted_bids = sorted(
+            bids,
+            key=lambda item: (int(item["bid_ups"]), str(item["bid_id"])),
+            reverse=True,
+        )
+        winners = sorted_bids[:top_n]
+        winner_ids = {str(item["bid_id"]) for item in winners}
+
+        # Refund non-winning bids.
+        for bid in sorted_bids[top_n:]:
+            investor_id = str(bid["investor_id"])
+            entry = self.mvp_investor_terms.setdefault(
+                investor_id,
+                {"terms": 0, "available_ups": 0, "spent_ups": 0},
+            )
+            refund_ups = int(bid["bid_ups"])
+            entry["available_ups"] += refund_ups
+            entry["spent_ups"] = max(0, entry["spent_ups"] - refund_ups)
+
+        winner_count = len(winners)
+        per_winner_tokens = token_amount // winner_count
+        remainder_tokens = token_amount % winner_count
+        total_injection_ups = 0
+        allocations: List[Dict[str, object]] = []
+
+        for idx, bid in enumerate(winners):
+            bid_id = str(bid["bid_id"])
+            bid_ups = int(bid["bid_ups"])
+            token_slice = per_winner_tokens + (1 if idx < remainder_tokens else 0)
+            total_injection_ups += bid_ups
+            allocations.append(
+                {
+                    "allocation_id": self._id_gen.next_id("alloc", 10),
+                    "foundup_id": foundup_id,
+                    "bid_id": bid_id,
+                    "investor_id": str(bid["investor_id"]),
+                    "bid_ups": bid_ups,
+                    "token_amount": token_slice,
+                    "allocation_rank": idx + 1,
+                }
+            )
+
+        self.mvp_bids_by_foundup[foundup_id] = [b for b in bids if str(b["bid_id"]) not in winner_ids]
+        self.mvp_allocations_by_foundup.setdefault(foundup_id, []).extend(allocations)
+        self.mvp_treasury_injections[foundup_id] = (
+            self.mvp_treasury_injections.get(foundup_id, 0) + total_injection_ups
+        )
+        self._emit(
+            "mvp.offering_resolved",
+            actor_id,
+            {
+                "source_foundup_id": self.investor_source_foundup_id,
+                "winner_count": winner_count,
+                "token_amount": token_amount,
+                "total_injection_ups": total_injection_ups,
+                "allocations": allocations,
+            },
+            foundup_id=foundup_id,
+        )
+        return allocations
+
+    # Convenience helpers for simulator/testing
+    def get_investor_subscription_state(self, investor_id: str) -> Dict[str, int]:
+        entry = self.mvp_investor_terms.get(investor_id)
+        if not entry:
+            return {"terms": 0, "available_ups": 0, "spent_ups": 0}
+        return dict(entry)
+
+    def get_mvp_treasury_injection(self, foundup_id: str) -> int:
+        return self.mvp_treasury_injections.get(foundup_id, 0)
+
+    # ComputeAccessService
+    def ensure_access(
+        self,
+        actor_id: str,
+        capability: str,
+        foundup_id: Optional[str] = None,
+    ) -> Dict[str, object]:
+        required = self._compute_cost(capability)
+        wallet = self._ensure_compute_wallet(actor_id)
+        available = int(wallet["credit_balance"])
+        plan = self.compute_plans.get(actor_id)
+        tier = str(plan["tier"]) if plan else "scout"
+
+        if not self.compute_access_enforced or required <= 0:
+            return {
+                "allowed": True,
+                "reason": "access not enforced" if not self.compute_access_enforced else "unmetered capability",
+                "required_credits": required,
+                "available_credits": available,
+                "tier": tier,
+                "capability": capability,
+            }
+
+        if plan is None or str(plan.get("status")) != "active":
+            reason = "active compute plan required"
+            self._emit(
+                "paywall_access_denied",
+                actor_id,
+                {"capability": capability, "reason": reason, "required_credits": required, "available_credits": available},
+                foundup_id=foundup_id,
+            )
+            return {
+                "allowed": False,
+                "reason": reason,
+                "required_credits": required,
+                "available_credits": available,
+                "tier": tier,
+                "capability": capability,
+            }
+
+        if tier == "scout":
+            reason = "tier 'scout' cannot execute metered capabilities"
+            self._emit(
+                "paywall_access_denied",
+                actor_id,
+                {"capability": capability, "reason": reason, "required_credits": required, "available_credits": available},
+                foundup_id=foundup_id,
+            )
+            return {
+                "allowed": False,
+                "reason": reason,
+                "required_credits": required,
+                "available_credits": available,
+                "tier": tier,
+                "capability": capability,
+            }
+
+        if available < required:
+            reason = "insufficient compute credits"
+            self._emit(
+                "paywall_access_denied",
+                actor_id,
+                {"capability": capability, "reason": reason, "required_credits": required, "available_credits": available},
+                foundup_id=foundup_id,
+            )
+            return {
+                "allowed": False,
+                "reason": reason,
+                "required_credits": required,
+                "available_credits": available,
+                "tier": tier,
+                "capability": capability,
+            }
+
+        return {
+            "allowed": True,
+            "reason": "ok",
+            "required_credits": required,
+            "available_credits": available,
+            "tier": tier,
+            "capability": capability,
+        }
+
+    def get_wallet(self, actor_id: str) -> Dict[str, object]:
+        wallet = self._ensure_compute_wallet(actor_id)
+        plan = self.compute_plans.get(actor_id)
+        return {
+            "actor_id": actor_id,
+            "credit_balance": int(wallet["credit_balance"]),
+            "reserved_credits": int(wallet["reserved_credits"]),
+            "tier": str(plan["tier"]) if plan else "scout",
+            "plan_status": str(plan["status"]) if plan else "none",
+        }
+
+    def purchase_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        rail: str,
+        payment_ref: str,
+    ) -> Dict[str, object]:
+        if amount <= 0:
+            raise InvalidStateTransitionError("amount must be positive")
+        if not rail:
+            raise InvalidStateTransitionError("rail is required")
+        if not payment_ref:
+            raise InvalidStateTransitionError("payment_ref is required")
+
+        wallet = self._ensure_compute_wallet(actor_id)
+        wallet["credit_balance"] += amount
+        entry = {
+            "entry_id": self._id_gen.next_id("cc", 10),
+            "actor_id": actor_id,
+            "entry_type": "purchase",
+            "amount": int(amount),
+            "rail": rail,
+            "reason": "purchase_credits",
+            "payment_ref": payment_ref,
+            "foundup_id": None,
+        }
+        self.compute_ledger.append(entry)
+        self._emit(
+            "compute_credits_purchased",
+            actor_id,
+            {
+                "entry_id": entry["entry_id"],
+                "amount": amount,
+                "rail": rail,
+                "payment_ref": payment_ref,
+                "credit_balance": int(wallet["credit_balance"]),
+            },
+        )
+        return dict(entry)
+
+    def debit_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        reason: str,
+        foundup_id: Optional[str] = None,
+    ) -> Dict[str, object]:
+        if amount <= 0:
+            raise InvalidStateTransitionError("amount must be positive")
+        if not reason:
+            raise InvalidStateTransitionError("reason is required")
+        wallet = self._ensure_compute_wallet(actor_id)
+        available = int(wallet["credit_balance"])
+        if available < amount:
+            self._emit(
+                "paywall_access_denied",
+                actor_id,
+                {
+                    "capability": reason,
+                    "reason": "insufficient compute credits",
+                    "required_credits": amount,
+                    "available_credits": available,
+                },
+                foundup_id=foundup_id,
+            )
+            raise PermissionDeniedError(
+                f"insufficient compute credits (available={available}, requested={amount})"
+            )
+
+        wallet["credit_balance"] -= amount
+        entry = {
+            "entry_id": self._id_gen.next_id("cc", 10),
+            "actor_id": actor_id,
+            "entry_type": "debit",
+            "amount": int(amount),
+            "rail": "metered_execution",
+            "reason": reason,
+            "payment_ref": None,
+            "foundup_id": foundup_id,
+        }
+        self.compute_ledger.append(entry)
+        self._emit(
+            "compute_credits_debited",
+            actor_id,
+            {
+                "entry_id": entry["entry_id"],
+                "amount": amount,
+                "reason": reason,
+                "credit_balance": int(wallet["credit_balance"]),
+            },
+            foundup_id=foundup_id,
+        )
+        return dict(entry)
+
+    def record_compute_session(
+        self,
+        actor_id: str,
+        foundup_id: str,
+        workload: Dict[str, object],
+    ) -> str:
+        if not foundup_id:
+            raise InvalidStateTransitionError("foundup_id is required")
+        self.get_foundup(foundup_id)
+        session_id = self._id_gen.next_id("ccsess", 10)
+        self.compute_sessions[session_id] = {
+            "session_id": session_id,
+            "actor_id": actor_id,
+            "foundup_id": foundup_id,
+            "workload": dict(workload),
+        }
+        self._emit(
+            "compute_session_recorded",
+            actor_id,
+            {
+                "session_id": session_id,
+                "workload": dict(workload),
+            },
+            foundup_id=foundup_id,
+        )
+        return session_id
+
+    def rebate_credits(
+        self,
+        actor_id: str,
+        amount: int,
+        reason: str,
+    ) -> Dict[str, object]:
+        if amount <= 0:
+            raise InvalidStateTransitionError("amount must be positive")
+        if not reason:
+            raise InvalidStateTransitionError("reason is required")
+        wallet = self._ensure_compute_wallet(actor_id)
+        wallet["credit_balance"] += amount
+        entry = {
+            "entry_id": self._id_gen.next_id("cc", 10),
+            "actor_id": actor_id,
+            "entry_type": "rebate",
+            "amount": int(amount),
+            "rail": "rebate",
+            "reason": reason,
+            "payment_ref": None,
+            "foundup_id": None,
+        }
+        self.compute_ledger.append(entry)
+        self._emit(
+            "compute_credits_rebated",
+            actor_id,
+            {
+                "entry_id": entry["entry_id"],
+                "amount": amount,
+                "reason": reason,
+                "credit_balance": int(wallet["credit_balance"]),
+            },
+        )
+        return dict(entry)
+
     # Test isolation helpers
     def reset(self) -> None:
         """Reset all state for test isolation.
@@ -611,6 +1207,14 @@ class InMemoryAgentMarket(
         self.cabr_outputs.clear()
         self.distributions_by_task.clear()
         self.repos.clear()
+        self.mvp_investor_terms.clear()
+        self.mvp_bids_by_foundup.clear()
+        self.mvp_allocations_by_foundup.clear()
+        self.mvp_treasury_injections.clear()
+        self.compute_plans.clear()
+        self.compute_wallets.clear()
+        self.compute_ledger.clear()
+        self.compute_sessions.clear()
         self._id_gen.reset()
 
     def get_tasks_by_foundup(self, foundup_id: str) -> List[Task]:

@@ -13,6 +13,15 @@ prompt/
 +-- README.md                    # This file - system overview and execution logic
 +-- Prometheus.md                # Master recursive prompt logic and protocol templates
 +-- starter_prompts.md           # Seed instructions for 0102 initialization
++-- WSP_SWARM_DAE_PROMPTING_SYSTEM.md  # Swarm execution contract (ORCH/lanes/skill wardrobe)
++-- swarm/
+    +-- ORCH_PLANNING_PROMPT.md
+    +-- WORKER_EXECUTION_PROMPT.md
+    +-- QA_REVIEW_ONLY_PROMPT.md
+    +-- SENTINEL_SECURITY_PROMPT.md
+    +-- SKILL_WARDROBE_MANIFEST_TEMPLATE.yaml
+    +-- 0102_M2M_SCHEMA.yaml     # M2M compact schema (WSP 99)
+    +-- m2m_compiler.py          # Qwen-callable 012->M2M compiler
 +-- WSP_agentic/                 # Advanced AI protocols and research frameworks
 +-- WSP_framework/               # Core operational procedures and WSP rules
 +-- WSP_appendices/              # Supplementary reference materials and templates
@@ -33,6 +42,37 @@ Comprehensive initialization sequences including:
 - **Advanced Bootstrap**: Full system deployment sequences
 - **Diagnostic Tools**: Loop verification and architecture understanding tests
 - **Troubleshooting**: VI role correction and protocol drift recovery
+
+### Swarm Prompt Pack
+
+Use these for parallel 0102 operations:
+- `WSP_SWARM_DAE_PROMPTING_SYSTEM.md` for system rules.
+- `swarm/ORCH_PLANNING_PROMPT.md` for planning-only orchestration (**includes WSP_00 condensed identity**).
+- `swarm/WORKER_EXECUTION_PROMPT.md` for lane execution with strict ownership and skill allowlists.
+- `swarm/QA_REVIEW_ONLY_PROMPT.md` for review-only verification.
+- `swarm/SENTINEL_SECURITY_PROMPT.md` for security gating and incidents.
+- `swarm/SKILL_WARDROBE_MANIFEST_TEMPLATE.yaml` for per-operation skill policy.
+
+### M2M Prompting (WSP 99)
+
+Machine-to-machine compact format for swarm-internal communication:
+- `swarm/0102_M2M_SCHEMA.yaml` - Canonical K:V schema definition
+- `swarm/m2m_compiler.py` - Qwen-delegatable 012 prose -> M2M compiler
+
+**012 Compact Format** (4x token reduction):
+```yaml
+L:A S:modules/sim/ M:exec T:sse_001 R:[50,22] I:{atomic:true} O:[ModLog.md] F:[test_fail]
+```
+
+**Trade-off**: Less readable to 012 (human), but 0102 parses faster and cheaper.
+
+**Identity Hierarchy**:
+| Role | WSP_00 | Rationale |
+|------|--------|-----------|
+| ORCH | Condensed (identity + coherence monitoring) | Strategic decisions require Zen state |
+| Worker | None (role-scoped from lane assignment) | Bounded execution, not orchestration |
+| QA | None (observer mode) | No mutation = no identity crisis |
+| Sentinel | Minimal (security posture) | Policy enforcement only |
 
 ### [U+1F4C1] WSP Framework Structure
 Complete WSP knowledge base for autonomous operation:

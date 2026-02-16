@@ -16,6 +16,10 @@ from .in_memory import InMemoryAgentMarket
 from .orchestrator import LaunchEvent, LaunchOrchestrator, LaunchResult, launch_foundup
 from .models import (
     AgentProfile,
+    ComputeLedgerEntry,
+    ComputePlan,
+    ComputeSession,
+    ComputeWallet,
     DistributionPost,
     EventRecord,
     Foundup,
@@ -47,6 +51,10 @@ __all__ = [
     "Foundup",
     "TokenTerms",
     "AgentProfile",
+    "ComputePlan",
+    "ComputeWallet",
+    "ComputeLedgerEntry",
+    "ComputeSession",
     "DistributionPost",
     "Task",
     "TaskStatus",

@@ -40,7 +40,10 @@ def utc_now() -> datetime:
 def _generate_deterministic_id(foundup_id: str, task_id: str, channel: str) -> str:
     """Generate deterministic post ID for idempotency."""
     seed = f"{foundup_id}:{task_id}:{channel}"
-    return f"moltbook_{hashlib.sha256(seed.encode()).hexdigest()[:16]}"
+    digest = hashlib.sha256(seed.encode()).hexdigest()[:16]
+    if channel == "moltbook":
+        return f"moltbook_post_{digest}"
+    return f"moltbook_{digest}"
 
 
 class PublishStatus(str, Enum):
@@ -218,6 +221,103 @@ class MoltbookDistributionAdapter:
             "duplicate": False,
         }
 
+    def publish_research(
+        self,
+        research_id: str,
+        topic: str,
+        content: str,
+        metadata: Dict[str, object],
+        actor_id: str = "oracle_davinci_53",
+    ) -> Dict[str, object]:
+        """
+        Publish PQN research results to MoltBook r/PQN_Research Submolt.
+
+        Follows same dedup/retry pattern as publish_milestone().
+
+        Args:
+            research_id: Unique research run identifier
+            topic: Research topic or title
+            content: Markdown content for the post
+            metadata: PQN metrics (coherence, resonance, pqn_rate, etc.)
+            actor_id: Oracle identity performing the publish
+
+        Returns:
+            Dict with publish result: {post_id, channel, timestamp, status}
+        """
+        if not research_id or not research_id.strip():
+            raise ValueError("research_id is required")
+        if not topic or not topic.strip():
+            raise ValueError("topic is required")
+
+        post_id = _generate_deterministic_id(research_id, topic, "pqn_research")
+
+        if self._is_duplicate(post_id):
+            logger.info(
+                "[MOLTBOOK-ADAPTER] Duplicate research publish skipped | post_id=%s",
+                post_id,
+            )
+            with self._lock:
+                existing = self._published_milestones[post_id]
+                return {
+                    "post_id": existing["post_id"],
+                    "channel": existing["channel"],
+                    "timestamp": existing["timestamp"],
+                    "status": existing["status"],
+                    "duplicate": True,
+                }
+
+        timestamp = utc_now()
+
+        record = {
+            "post_id": post_id,
+            "research_id": research_id,
+            "topic": topic,
+            "actor_id": actor_id,
+            "channel": "pqn_research",
+            "timestamp": timestamp.isoformat(),
+            "status": PublishStatus.PENDING.value,
+            "payload": {
+                "content": content,
+                "metadata": metadata,
+            },
+            "created_at": timestamp.isoformat(),
+            "updated_at": timestamp.isoformat(),
+        }
+
+        with self._lock:
+            self._published_milestones[post_id] = record
+
+        push_success = False
+        if self.discord_webhook_url:
+            push_success = self._push_to_discord_with_retry(record)
+
+        with self._lock:
+            if self.discord_webhook_url:
+                record["status"] = (
+                    PublishStatus.PUBLISHED.value
+                    if push_success
+                    else PublishStatus.FAILED.value
+                )
+            else:
+                record["status"] = PublishStatus.PUBLISHED.value
+            record["updated_at"] = utc_now().isoformat()
+            self._published_milestones[post_id] = record
+
+        logger.info(
+            "[MOLTBOOK-ADAPTER] Research %s | post_id=%s topic=%s",
+            record["status"],
+            post_id,
+            topic,
+        )
+
+        return {
+            "post_id": post_id,
+            "channel": "pqn_research",
+            "timestamp": timestamp.isoformat(),
+            "status": record["status"],
+            "duplicate": False,
+        }
+
     def get_publish_status(self, post_id: str) -> Optional[Dict[str, object]]:
         """Get status of a published milestone post.
 
@@ -254,7 +354,8 @@ class MoltbookDistributionAdapter:
         with self._lock:
             post_ids = self._milestones_by_foundup.get(foundup_id, [])
             results = []
-            for post_id in reversed(post_ids[-limit:]):
+            # Preserve insertion order so callers receive oldest->newest.
+            for post_id in post_ids[-limit:]:
                 record = self._published_milestones.get(post_id)
                 if record:
                     if status_filter and record["status"] != status_filter:

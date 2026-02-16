@@ -1,6 +1,7 @@
 """CABR Score Estimator for FoundUps.
 
-Estimates Conscious Autonomous Benefit Rate scores:
+Estimates Consensus-Driven Autonomous Benefit Rate scores
+(also referred to as Collective Autonomous Benefit Rate) to power Proof of Benefit (PoB):
 - env_score: Environmental impact (0-1)
 - soc_score: Social impact (0-1)
 - part_score: Participation metrics (0-1, derived from FAM data)
@@ -72,7 +73,7 @@ class CABREstimator:
         "education": {"env": 0.1, "soc": 0.9},
         "infrastructure": {"env": 0.5, "soc": 0.5},
         # New domains
-        "waste": {"env": 0.9, "soc": 0.6},       # GotJunk - high env (recycling/diversion)
+        "waste": {"env": 0.85, "soc": 0.75},    # GotJunk - env (reuse>landfill) + soc (affordable access)
         "healthcare": {"env": 0.2, "soc": 0.9},  # High social (health access)
         "realestate": {"env": 0.3, "soc": 0.7},  # Medium env (land use), high social (housing)
         "logistics": {"env": 0.7, "soc": 0.6},   # High env (efficiency), medium social

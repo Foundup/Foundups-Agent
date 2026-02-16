@@ -7,6 +7,50 @@
 
 ## Change Log
 
+### 2026-02-12 - ALLY Detection: Anti-MAGA Agreement Mode (#FFCPLN)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 96 (WRE Skills)
+
+**Problem:** Comments criticizing Trump/MAGA (anti-fascist allies) received generic corporate responses instead of agreement and amplification. Example: "@StevenAustin-f5d: Our 'president' isn't qualified to run a fake University..." got "We value your privacy..." instead of joining in on Trump trolling.
+
+**Root Cause:** CommenterClassifier only had 3 tiers:
+- 0✊ MAGA_TROLL (previously whacked users)
+- 1✋ REGULAR (everyone else)
+- 2🖐️ MODERATOR (community leaders)
+
+No detection for anti-Trump ALLIES who deserve agreement, not neutral responses.
+
+**Solution:** Added ALLY classification (3🤝) for anti-Trump/anti-MAGA sentiment.
+
+**Changes (2 files):**
+
+**commenter_classifier.py:**
+- Added `CommenterType.ALLY = 3` enum value with 🤝 emoji
+- Added `ANTI_TRUMP_ALLY_PATTERNS` (40+ patterns):
+  - Direct Trump criticism: "isn't qualified", "worst president", "impeach"
+  - MAGA mockery: "maga cult", "magats", "brainwashed"
+  - Fascism awareness: "fascist", "authoritarian", "1933", "nazi"
+  - Scandal refs: "pedo", "epstein", "fake university", "fraud"
+- Returns `method: 'sentiment_ally'` with 0.85 confidence
+
+**intelligent_reply_generator.py:**
+- Added `CommenterType.ALLY = "ally"` enum
+- Updated `to_012_code()` to return 3 for ALLY
+- Added `TIER_EMOJI[3] = "🤝"`
+- Added `ALLY_RESPONSES` templates (10 agreement responses with #FFCPLN)
+- Added ALLY routing in skill router: generates LLM agreement or uses templates
+- Custom ally prompt: "AGREES with criticism, AMPLIFIES anti-Trump sentiment"
+
+**Expected Impact:** Anti-MAGA allies now get engaged responses that agree and join in Trump trolling instead of generic corporate text. #FFCPLN skill properly utilized for all anti-fascist content.
+
+**Example Flow:**
+- Comment: "Our 'president' isn't qualified to run a fake University..."
+- Classification: 3🤝 ALLY (pattern: "fake university")
+- Response: "EXACTLY! 🎯 The guy couldn't even run a fake university without fraud. #FFCPLN ✊✋🖐️"
+
+---
+
 ### 2026-02-04 - VoiceMemory Integration for Reply Grounding (Anti-Fabrication)
 
 **By:** 0102

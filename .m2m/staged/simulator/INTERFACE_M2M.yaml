@@ -1,0 +1,57 @@
+# M2M v1.0 | INTERFACE.md | 20260213
+
+INTERFACE___FOUNDUPS_SIMULATOR:
+MODULE_CONTRACT:
+CORE_SCHEMAS:
+SSE_EVENT_ENVELOPE:
+STREAMABLE_EVENT_TYPES:
+EVENT_PAYLOADS_BY_TYPE:
+SERVICE_CONTRACTS:
+SSE_SERVER_ENDPOINTS:
+GET__API_SIM_EVENTS:
+  METHOD: `GET`
+  HEADERS: `Accept: text/event-stream`
+  CONTENT-TYPE: `text/event-stream`
+  CACHE-CONTROL: `no-cache`
+  CONNECTION: `keep-alive`
+  X-ACCEL-BUFFERING: `no` (nginx SSE compatibility)
+  EVENT: connected` - Sent on connection with mode and heartbeat interval
+  EVENT: heartbeat` - Sent every 15 seconds for connection keepalive
+  EVENT: error` - Sent on internal server error
+GET__API_HEALTH:
+GET:
+FAMEVENTSOURCE:
+  CONNECT()_->_BOOL: Connect to FAMDaemon singleton
+  DISCONNECT()_->_NONE: Disconnect and cleanup
+  GET_EVENT(TIMEOUT: float = 1.0) -> dict | None`: Get next queued event
+  IS_CONNECTED_->_BOOL: Connection status property
+SIMULATEDEVENTSOURCE:
+  GENERATE_EVENT()_->_DICT_|_NON: Generate random simulated event
+BACKGROUNDSIMULATOR:
+  START()_->_BOOL: Start Mesa simulator in background thread
+  STOP()_->_NONE: Stop simulator gracefully (2s join timeout)
+  IS_RUNNING_->_BOOL: Running status property
+  EVENTS_FLOW: Mesa Model → FAMDaemon.emit() → FAMEventSource queue → SSE stream
+SEQUENCE_ID_SEMANTICS:
+HEARTBEAT_PROTOCOL:
+CORS_CONFIGURATION:
+  HTTPS: //foundups.com` (production)
+  HTTPS: //foundupscom.web.app` (Firebase preview)
+  HTTPS: //foundupscom.firebaseapp.com` (Firebase hosting)
+  HTTP: //localhost:5000` (local dev)
+  HTTP: //127.0.0.1:5000` (local dev)
+BACKPRESSURE_SAFETY:
+  ON_QUEUE_FULL: event dropped, warning logged
+  EXPONENTIAL_BACKOFF_WITH_JITTE: `min(30000, base * 1.5^attempts + random(0, 1000))`
+  BASE_DELAY: 2000ms
+  MAX_DELAY: 30000ms
+  MAX_ATTEMPTS: 5
+DEPLOYMENT:
+  PORT: Server port (default: 8080)
+  DEPLOY: `./deploy-sse.sh`
+FRONTEND_INTEGRATION:
+WSP_REFERENCES:
+  WSP: [50]
+  WSP: [22]
+  WSP: [11]
+  WSP: [72]

@@ -2,6 +2,15 @@
 
 ## Latest Changes
 
+### V059 - Lazy Package Exports + OAuth Import Path Fallbacks
+**Date**: 2026-02-17
+**Changes**:
+- Refactored `__init__.py` and `src/__init__.py` to lazy-load `linkedin_agent` symbols through `__getattr__` instead of importing `linkedin_agent` at package import time.
+- Updated OAuth fallback imports to check `modules.platform_integration.utilities.oauth_management` when the legacy infrastructure path is unavailable.
+- Fixed priority scorer fallback path to `modules.ai_intelligence.priority_scorer`.
+**Impact**: Prevents unrelated startup warnings/side effects when callers import only `git_linkedin_bridge` (e.g., GitPushDAE) and keeps LinkedIn auth boot resilient in both legacy/new module layouts.
+**WSP**: WSP 22 (ModLog), WSP 49 (module boundaries), WSP 91 (operational clarity)
+
 ### V058 - Dependency Launcher Cross-References (LEGO Compliance)
 **Date**: 2026-01-26
 **Changes**: Added explicit cross-references to `dependency_launcher/INTERFACE.md` and `foundups_vision/` in handoff and README for LEGO pattern compliance.

@@ -1,6 +1,7 @@
 """CABR Hook Service for FoundUps Agent Market.
 
-Provides evidence chain for Conscious AI-Based Rating (CABR) scoring.
+Provides evidence chain for Consensus-Driven Autonomous Benefit Rate (CABR)
+(also referred to as Collective Autonomous Benefit Rate) scoring for PoB.
 Collects task metrics, agent performance, and FoundUp health indicators.
 
 WSP References:
@@ -75,8 +76,9 @@ class CABROutput:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "foundup_id": self.foundup_id,
-            "score": self.score,
-            "confidence": self.confidence,
+            # Normalize floating point artifacts for deterministic audit output.
+            "score": round(self.score, 10),
+            "confidence": round(self.confidence, 10),
             "factors": self.factors,
             "window": self.window,
             "computed_at": self.computed_at.isoformat(),

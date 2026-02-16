@@ -554,6 +554,47 @@ if overseer.mcp:
 
 ---
 
+## M2M Compression Sentinel (WSP 99)
+
+Content-based documentation compression for 0102 memory optimization.
+
+### Architecture
+```yaml
+Sentinel: modules/ai_intelligence/ai_overseer/src/m2m_compression_sentinel.py
+Tests: modules/ai_intelligence/ai_overseer/tests/test_m2m_compression_sentinel.py
+Staged: .m2m/staged/ (compiled M2M files awaiting promotion)
+Backups: .m2m/backups/ (originals before promotion)
+Skill: .claude/skills/m2m/SKILL.md (/m2m scan, compile, promote, batch, eval)
+```
+
+### Pipeline
+```
+scan -> analyze -> compile (deterministic/Qwen) -> stage -> promote -> backup
+                                                         -> rollback if needed
+```
+
+### Boot Prompt Detection (Key Discovery)
+
+**M2M is for REFERENCE docs (searched/retrieved). NOT for PROMPTS (read directly into context).**
+
+Boot prompts contain content that M2M's K:V transform destroys:
+- **Identity-lock patterns**: "I AM 0102", forbidden VI scaffolding lists
+- **Mathematical notation**: φ=1.618, ≥0.618, 7.05Hz, ⊗, ↔
+- **State transition math**: `01(02) -> 0102`, coherence thresholds
+- **WSP_BOOTSTRAP metadata**: `<!-- WSP_BOOTSTRAP ... -->`
+- **Code blocks**: Must be preserved verbatim for execution
+
+**Detection is content-based, not filename-based**: 10 regex patterns scan for boot prompt signals. Threshold: 3+ signals = boot prompt (excluded from M2M).
+
+**Validated by experiment**: WSP_00 compiled to M2M (505→148 lines, 70.7% reduction) but lost all boot-critical content. Cosine similarity eval confirmed semantic loss was too high for executable prompts. Reference docs achieve 0.58+ cosine similarity (acceptable); boot prompts drop below 0.3 (unacceptable).
+
+### Compression Quality Metrics
+- **Deterministic transform**: 60-89% line reduction, avg 0.58 cosine similarity
+- **Threshold**: cosine sim >= 0.5 for HoloIndex discoverability
+- **P0 hardening**: Full headers (no truncation), 30-char keys, 80-char values
+
+---
+
 ## Related Documentation
 
 - **WSP 77**: Agent Coordination Protocol

@@ -44,6 +44,7 @@ import os
 import sys
 import logging
 import traceback
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -105,6 +106,15 @@ try:
     CORRELATOR_AVAILABLE = True
 except ImportError:
     CORRELATOR_AVAILABLE = False
+
+# WSP framework drift sentinel (framework vs backup knowledge)
+try:
+    from modules.ai_intelligence.ai_overseer.src.wsp_framework_sentinel import (
+        WSPFrameworkSentinel,
+    )
+    WSP_FRAMEWORK_SENTINEL_AVAILABLE = True
+except ImportError:
+    WSP_FRAMEWORK_SENTINEL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parents[5]
@@ -195,8 +205,18 @@ class AIIntelligenceOverseer:
         Phase 4: Learning and pattern storage
     """
 
+    M2M_SKILL_NAMES = frozenset(
+        {
+            "m2m_compile_gate",
+            "m2m_stage_promote_safe",
+            "m2m_qwen_runtime_health",
+            "m2m_holo_retrieval_benchmark",
+        }
+    )
+
     def __init__(self, repo_root: Path):
         self.repo_root = Path(repo_root)
+        self._m2m_sentinel = None
         # WSP 60: Persist overseer patterns under module-local memory
         self.memory_path = (
             self.repo_root
@@ -291,6 +311,17 @@ class AIIntelligenceOverseer:
         )
         self.openclaw_incident_alert_history: Dict[str, float] = {}
         self.openclaw_security_chat_sender = None
+
+        # WSP framework drift sentinel (framework is canonical, knowledge is backup)
+        self.wsp_framework_sentinel = None
+        self.wsp_framework_last_status: Optional[Dict[str, Any]] = None
+        if WSP_FRAMEWORK_SENTINEL_AVAILABLE:
+            try:
+                self.wsp_framework_sentinel = WSPFrameworkSentinel(self.repo_root)
+                logger.info("[AI-OVERSEER] WSP framework sentinel initialized")
+            except Exception as e:
+                logger.warning("[AI-OVERSEER] WSP framework sentinel unavailable: %s", e)
+
         # Security alert forensics log (JSONL)
         self.openclaw_security_alert_log = (
             self.repo_root
@@ -460,6 +491,64 @@ class AIIntelligenceOverseer:
             "available": False,
             "passed": False,
             "message": "No OpenClaw security check has run in this session",
+        }
+
+    def monitor_wsp_framework(self, force: bool = False, emit_alert: bool = True) -> Dict[str, Any]:
+        """
+        Run framework-vs-knowledge WSP audit through AI Overseer.
+
+        The framework is canonical; knowledge is backup/mirror.
+        """
+        if not self.wsp_framework_sentinel:
+            status = {
+                "available": False,
+                "severity": "critical",
+                "message": "WSP framework sentinel unavailable",
+            }
+            self.wsp_framework_last_status = status
+            return status
+
+        try:
+            status = self.wsp_framework_sentinel.check(force=force)
+            self.wsp_framework_last_status = status
+
+            if emit_alert and status.get("severity") in {"warning", "critical"}:
+                logger.warning(
+                    "[DAEMON][WSP-FRAMEWORK] event=wsp_framework_drift severity=%s drift=%s framework_only=%s knowledge_only=%s index_issues=%s",
+                    status.get("severity"),
+                    status.get("drift_count", 0),
+                    len(status.get("framework_only") or []),
+                    len(status.get("knowledge_only") or []),
+                    len(status.get("index_issues") or []),
+                )
+                if os.getenv("WSP_FRAMEWORK_ALERT_TO_STDOUT", "1") != "0":
+                    print(
+                        "[WSP-FRAMEWORK] "
+                        f"severity={status.get('severity')} "
+                        f"drift={status.get('drift_count', 0)} "
+                        f"framework_only={len(status.get('framework_only') or [])} "
+                        f"knowledge_only={len(status.get('knowledge_only') or [])} "
+                        f"index_issues={len(status.get('index_issues') or [])}"
+                    )
+            return status
+        except Exception as exc:
+            logger.error("[AI-OVERSEER] WSP framework audit failed: %s", exc)
+            status = {
+                "available": False,
+                "severity": "critical",
+                "message": f"WSP framework audit failed: {exc}",
+            }
+            self.wsp_framework_last_status = status
+            return status
+
+    def get_wsp_framework_status(self) -> Dict[str, Any]:
+        """Return last WSP framework audit status captured by AI Overseer."""
+        if self.wsp_framework_last_status:
+            return self.wsp_framework_last_status
+        return {
+            "available": False,
+            "severity": "warning",
+            "message": "No WSP framework audit has run in this session",
         }
 
     async def _run_openclaw_security_monitor_loop(self, interval_sec: float, force_first: bool) -> None:
@@ -1750,6 +1839,392 @@ class AIIntelligenceOverseer:
             logger.error(f"[GIT-STATUS] Error: {e}")
             return {"staged_files": 0, "modified_files": 0, "untracked_files": 0, "error": str(e)}
 
+    # ==================== M2M SKILL EXECUTION SHIM ==================== #
+
+    def execute_m2m_skill(
+        self,
+        skill_name: str,
+        payload: Optional[Dict[str, Any]] = None,
+        *,
+        m2m: bool = True,
+    ) -> Dict[str, Any]:
+        """Execute one of the module-local M2M skill workflows by name."""
+        payload = payload or {}
+        skill_key = (skill_name or "").strip()
+        start = time.perf_counter()
+
+        if skill_key not in self.M2M_SKILL_NAMES:
+            return self._format_m2m_skill_response(
+                skill_name=skill_key,
+                status="FAIL",
+                result={"success": False, "error": f"Unknown M2M skill: {skill_key}"},
+                elapsed_ms=(time.perf_counter() - start) * 1000.0,
+                m2m=m2m,
+            )
+
+        skill_doc = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "skillz"
+            / skill_key
+            / "SKILLz.md"
+        )
+        if not skill_doc.exists():
+            return self._format_m2m_skill_response(
+                skill_name=skill_key,
+                status="FAIL",
+                result={"success": False, "error": f"Missing SKILLz.md: {skill_doc}"},
+                elapsed_ms=(time.perf_counter() - start) * 1000.0,
+                m2m=m2m,
+            )
+
+        handlers = {
+            "m2m_compile_gate": self._execute_m2m_compile_gate,
+            "m2m_stage_promote_safe": self._execute_m2m_stage_promote_safe,
+            "m2m_qwen_runtime_health": self._execute_m2m_qwen_runtime_health,
+            "m2m_holo_retrieval_benchmark": self._execute_m2m_holo_retrieval_benchmark,
+        }
+
+        try:
+            result = handlers[skill_key](payload)
+        except Exception as exc:
+            logger.exception("[M2M-SKILL] execution failure: %s", skill_key)
+            result = {"success": False, "error": str(exc)}
+
+        status = "OK" if result.get("success") else "FAIL"
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        return self._format_m2m_skill_response(
+            skill_name=skill_key,
+            status=status,
+            result=result,
+            elapsed_ms=elapsed_ms,
+            m2m=m2m,
+        )
+
+    def _format_m2m_skill_response(
+        self,
+        *,
+        skill_name: str,
+        status: str,
+        result: Dict[str, Any],
+        elapsed_ms: float,
+        m2m: bool,
+    ) -> Dict[str, Any]:
+        """Return either raw result or WSP99-style M2M envelope."""
+        payload = {
+            "skill_name": skill_name,
+            "status": status,
+            "elapsed_ms": round(elapsed_ms, 3),
+            "result": result,
+        }
+        if not m2m:
+            return payload
+
+        return {
+            "M2M_VERSION": "1.0",
+            "SENDER": "AI_OVERSEER",
+            "RECEIVER": "0102-ORCH",
+            "TS": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "MISSION": {"OBJ": f"EXECUTE {skill_name}", "MODE": "exec", "WSP": [95, 99, 50]},
+            "STATUS": status,
+            "RESULT": payload,
+        }
+
+    def _get_m2m_sentinel(self):
+        if self._m2m_sentinel is None:
+            from modules.ai_intelligence.ai_overseer.src.m2m_compression_sentinel import (
+                M2MCompressionSentinel,
+            )
+
+            self._m2m_sentinel = M2MCompressionSentinel(self.repo_root)
+        return self._m2m_sentinel
+
+    def _append_jsonl_record(self, path: Path, record: Dict[str, Any]) -> None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record) + "\n")
+        except Exception:
+            logger.debug("[M2M-SKILL] failed writing jsonl record", exc_info=True)
+
+    def _validate_yaml_stage(self, staged_path: Path) -> Dict[str, Any]:
+        try:
+            import yaml
+
+            text = staged_path.read_text(encoding="utf-8", errors="replace")
+            yaml.safe_load(text)
+            return {"success": True}
+        except Exception as exc:
+            return {"success": False, "error": f"Invalid YAML staged artifact: {exc}"}
+
+    def _execute_m2m_compile_gate(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        source_path = str(payload.get("source_path", "")).strip()
+        if not source_path:
+            return {"success": False, "error": "source_path is required"}
+
+        sentinel = self._get_m2m_sentinel()
+        use_qwen = bool(payload.get("use_qwen", False))
+        qwen_model = str(payload.get("qwen_model", "qwen-overseer:latest"))
+        result = sentinel.compile_to_staged(source_path, use_qwen=use_qwen, qwen_model=qwen_model)
+        if not result.get("success"):
+            return result
+
+        staged_path = self.repo_root / result["staged_path"]
+        gate = self._validate_yaml_stage(staged_path)
+        result["gate_status"] = "PASS" if gate.get("success") else "FAIL"
+        result["gate_error"] = gate.get("error")
+        result["success"] = bool(result.get("success") and gate.get("success"))
+
+        if not result["success"] and staged_path.exists():
+            try:
+                staged_path.unlink()
+            except OSError:
+                pass
+
+        record = {
+            "ts": time.time(),
+            "source_path": source_path,
+            "staged_path": result.get("staged_path"),
+            "compilation_method": result.get("compilation_method"),
+            "reduction_percent": result.get("reduction_percent"),
+            "gate_status": result.get("gate_status"),
+            "success": result.get("success"),
+            "error": result.get("gate_error") or result.get("error"),
+        }
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_compile_gate.jsonl",
+            record,
+        )
+        return result
+
+    def _execute_m2m_stage_promote_safe(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        sentinel = self._get_m2m_sentinel()
+        rollback_only = bool(payload.get("rollback_only", False))
+        target_path = str(payload.get("target_path", "")).strip()
+        if not target_path:
+            return {"success": False, "error": "target_path is required"}
+
+        if rollback_only:
+            result = sentinel.rollback(target_path=target_path)
+            result["action"] = "rollback"
+            return result
+
+        staged_path = str(payload.get("staged_path", "")).strip()
+        if not staged_path:
+            return {"success": False, "error": "staged_path is required"}
+
+        create_backup = bool(payload.get("create_backup", True))
+        result = sentinel.promote_staged(
+            staged_path=staged_path,
+            target_path=target_path,
+            create_backup=create_backup,
+        )
+        result["action"] = "promote"
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_stage_promote_safe.jsonl",
+            {
+                "ts": time.time(),
+                "action": result.get("action"),
+                "staged_path": staged_path,
+                "target_path": target_path,
+                "success": result.get("success"),
+                "backup_path": result.get("backup_path"),
+                "error": result.get("error"),
+            },
+        )
+        return result
+
+    def _execute_m2m_qwen_runtime_health(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        from modules.ai_intelligence.ai_overseer.src.m2m_compression_sentinel import (
+            _init_qwen_client,
+            _init_qwen_llm,
+        )
+
+        sentinel = self._get_m2m_sentinel()
+        source_path = str(
+            payload.get("source_path", "modules/ai_intelligence/ai_overseer/INTERFACE.md")
+        ).strip()
+        qwen_model = str(payload.get("qwen_model", "qwen-overseer:latest"))
+        source_abs = self.repo_root / source_path
+        if not source_abs.exists():
+            return {"success": False, "error": f"source_path not found: {source_path}"}
+
+        t0 = time.perf_counter()
+        deterministic = sentinel.compile_to_staged(source_path, use_qwen=False)
+        det_ms = (time.perf_counter() - t0) * 1000.0
+
+        t1 = time.perf_counter()
+        qwen_path = sentinel.compile_to_staged(source_path, use_qwen=True, qwen_model=qwen_model)
+        qwen_ms = (time.perf_counter() - t1) * 1000.0
+
+        content = source_abs.read_text(encoding="utf-8", errors="replace")
+        qwen_output = sentinel._qwen_transform_to_m2m(content, source_abs.name, model=qwen_model)
+        qwen_output_present = qwen_output is not None
+        claimed_qwen = str(qwen_path.get("compilation_method", "")).startswith("qwen:")
+        method_label_consistent = not (claimed_qwen and not qwen_output_present)
+
+        issues: List[str] = []
+        if not qwen_output_present:
+            issues.append("qwen_output_missing")
+        if not method_label_consistent:
+            issues.append("method_label_drift")
+
+        report = {
+            "success": method_label_consistent,
+            "qwen_llm_ready": bool(_init_qwen_llm()),
+            "qwen_client_ready": bool(_init_qwen_client()),
+            "deterministic_latency_ms": round(det_ms, 3),
+            "qwen_latency_ms": round(qwen_ms, 3),
+            "qwen_output_present": qwen_output_present,
+            "method_label_consistent": method_label_consistent,
+            "deterministic_result": deterministic,
+            "qwen_result": qwen_path,
+            "issues": issues,
+        }
+
+        latest_path = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_qwen_runtime_health_latest.json"
+        )
+        try:
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_qwen_runtime_health.jsonl",
+            {"ts": time.time(), **report},
+        )
+        return report
+
+    def _execute_m2m_holo_retrieval_benchmark(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        queries = payload.get(
+            "queries",
+            [
+                "m2m compression sentinel",
+                "compile_to_staged promote_staged rollback",
+                "WSP 99 M2M prompting protocol",
+            ],
+        )
+        if not queries or not isinstance(queries, list):
+            return {"success": False, "error": "queries must be a non-empty list"}
+
+        limit = int(payload.get("limit", 8))
+        required_paths = payload.get("required_paths", {})
+        fidelity_threshold = float(payload.get("fidelity_threshold", 0.8))
+        reindex = bool(payload.get("reindex", False))
+
+        if reindex:
+            subprocess.run(
+                ["python", "holo_index.py", "--index-wsp"],
+                cwd=str(self.repo_root),
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+
+        latencies: List[float] = []
+        key_hits = 0
+        key_checks = 0
+        per_query: List[Dict[str, Any]] = []
+
+        for query in queries:
+            start = time.perf_counter()
+            proc = subprocess.run(
+                ["python", "holo_index.py", "--search", str(query), "--limit", str(limit), "--fast-search"],
+                cwd=str(self.repo_root),
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+            latencies.append(elapsed_ms)
+            output_text = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            hits_count = output_text.count("[CODE]") + output_text.count("[WSP]")
+
+            required = required_paths.get(query, [])
+            matched_required = 0
+            for required_path in required:
+                key_checks += 1
+                if str(required_path) in output_text:
+                    key_hits += 1
+                    matched_required += 1
+
+            per_query.append(
+                {
+                    "query": query,
+                    "latency_ms": round(elapsed_ms, 3),
+                    "hits_count": hits_count,
+                    "required_matches": matched_required,
+                    "required_total": len(required),
+                }
+            )
+
+        mean_latency = (sum(latencies) / len(latencies)) if latencies else 0.0
+        p95_latency = sorted(latencies)[int(max(0, len(latencies) * 0.95) - 1)] if latencies else 0.0
+        key_path_hit_rate = (key_hits / key_checks) if key_checks > 0 else 1.0
+        fidelity_score = key_path_hit_rate
+        success = fidelity_score >= fidelity_threshold
+
+        report = {
+            "success": success,
+            "query_count": len(queries),
+            "mean_latency_ms": round(mean_latency, 3),
+            "p95_latency_ms": round(p95_latency, 3),
+            "key_path_hit_rate": round(key_path_hit_rate, 3),
+            "fidelity_score": round(fidelity_score, 3),
+            "fidelity_threshold": fidelity_threshold,
+            "per_query": per_query,
+            "regressions": [] if success else ["fidelity_below_threshold"],
+        }
+
+        latest_path = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_holo_retrieval_benchmark_latest.json"
+        )
+        try:
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_holo_retrieval_benchmark.jsonl",
+            {"ts": time.time(), **report},
+        )
+        return report
+
     # ==================== UBIQUITOUS DAEMON MONITORING ====================
 
     def monitor_daemon(self, bash_id: str = None, skill_path: Path = None,
@@ -2557,39 +3032,32 @@ index 0000000..1111111 100644
         Returns:
             Dict with {"response": str, "tokens": int} or {"error": str}
         """
+        system_prompt = (
+            "You are 0102, the Digital Twin of 012 (UnDaoDu). "
+            "Respond directly and concisely. Do not echo the user's message back. "
+            "Do not introduce yourself unless asked. Just answer naturally."
+        )
+
+        full_prompt = prompt
+        if context:
+            full_prompt = f"Context: {context}\n\nUser: {prompt}"
+
         try:
-            # Use Holo Qwen if available
-            if HOLO_AVAILABLE:
-                from holo_index.qwen_advisor.orchestration.coordinator import QwenCoordinator
-                coordinator = QwenCoordinator(self.repo_root)
-
-                # Build contextual prompt
-                full_prompt = prompt
-                if context:
-                    full_prompt = f"Context: {context}\n\nUser: {prompt}"
-
-                # Get Qwen response
-                result = coordinator.ask(
-                    query=full_prompt,
-                    max_tokens=max_tokens,
-                    system_prompt=(
-                        "You are 0102, the Digital Twin of 012 (UnDaoDu). "
-                        "You are helpful, concise, and speak in first person. "
-                        "You assist with the Foundups codebase and community."
+            # Use existing Qwen engine from orchestrator (already initialized)
+            if self.orchestrator and hasattr(self.orchestrator, "qwen_engine"):
+                engine = self.orchestrator.qwen_engine
+                if engine:
+                    result = engine.generate_response(
+                        prompt=full_prompt,
+                        system_prompt=system_prompt,
+                        max_tokens=max_tokens,
                     )
-                )
-
-                if result and isinstance(result, str):
-                    return {"response": result, "tokens": len(result.split())}
-                elif result and isinstance(result, dict):
-                    return {
-                        "response": result.get("response", str(result)),
-                        "tokens": result.get("tokens", 0)
-                    }
+                    if result and not result.startswith("Error:"):
+                        return {"response": result, "tokens": len(result.split())}
 
             # Fallback: simple acknowledgment
             return {
-                "response": f"I received your message. Qwen is not available for detailed responses at the moment.",
+                "response": "I received your message. Qwen engine is not available right now.",
                 "tokens": 15
             }
 
@@ -2887,6 +3355,15 @@ index 0000000..1111111 100644
                     "[AI-OVERSEER] Containment release not applied: %s",
                     result,
                 )
+
+        elif event_type == "wsp_framework_audit_request":
+            force = str(event.get("force", "0")).strip().lower() in {"1", "true", "yes", "on"}
+            status = self.monitor_wsp_framework(force=force, emit_alert=True)
+            logger.info(
+                "[AI-OVERSEER] WSP framework audit complete | severity=%s drift=%s",
+                status.get("severity"),
+                status.get("drift_count", 0),
+            )
 
         else:
             logger.debug("[AI-OVERSEER] Telemetry event ignored: %s", event_type)

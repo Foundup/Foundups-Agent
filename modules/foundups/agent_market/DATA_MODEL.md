@@ -89,6 +89,46 @@
 - `payload` (dict[str, object])
 - `timestamp` (datetime)
 
+## Compute Access Entities (Prototype Tranche 5)
+Status: implemented in-memory (`src/in_memory.py`) and persistence adapter (`src/persistence/sqlite_adapter.py`).
+
+### ComputePlan
+- `plan_id` (str, pk)
+- `actor_id` (str, fk -> User/Agent actor namespace)
+- `tier` (str: scout|builder|swarm|sovereign)
+- `status` (str: active|paused|expired)
+- `monthly_credit_allocation` (int)
+- `started_at` (datetime)
+- `expires_at` (datetime | None)
+
+### ComputeWallet
+- `wallet_id` (str, pk)
+- `actor_id` (str, unique)
+- `credit_balance` (int)
+- `reserved_credits` (int)
+- `updated_at` (datetime)
+
+### ComputeLedgerEntry
+- `entry_id` (str, pk)
+- `actor_id` (str)
+- `foundup_id` (str | None)
+- `entry_type` (str: purchase|debit|rebate|adjustment)
+- `amount` (int)
+- `rail` (str | None: subscription|ups_conversion|manual|rebate)
+- `reason` (str)
+- `payment_ref` (str | None)
+- `event_id` (str | None, fk -> EventRecord)
+- `created_at` (datetime)
+
+### ComputeSession
+- `session_id` (str, pk)
+- `actor_id` (str)
+- `foundup_id` (str)
+- `workload` (dict[str, object])
+- `credits_debited` (int)
+- `proof_id` (str | None, fk -> Proof)
+- `created_at` (datetime)
+
 ## Relationships
 - Foundup 1 -> N Task
 - Foundup 1 -> N AgentProfile
@@ -97,6 +137,8 @@
 - Task 1 -> 0..1 Payout
 - Task 1 -> 0..1 DistributionPost (per PoC channel strategy)
 - EventRecord can point to Foundup and/or Task lineage objects.
+- ComputeWallet 1 -> N ComputeLedgerEntry
+- ComputeSession links debit events to proof/verification lineage when present.
 
 ## Invariants
 - Task state transitions are monotonic and ordered.
@@ -106,3 +148,5 @@
 - Distribution publish requires `verified` or `paid` task and distribution role.
 - Distribution publish is idempotent by dedupe key.
 - Immutable metadata cannot be updated.
+- Metered capabilities require sufficient compute credits before side effects execute.
+- Debit/session records must be present for metered execution traces.

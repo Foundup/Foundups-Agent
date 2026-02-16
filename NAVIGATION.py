@@ -41,6 +41,38 @@ NEED_TO = {
     "geolocation with fallback": "modules/foundups/gotjunk/frontend/App.tsx:initializeApp() - location handling",
     "react state race conditions": "modules/foundups/gotjunk/frontend/App.tsx:handleClassify() - immediate state clearing",
 
+    # FoundUps Cube Animation (Landing Page Visual)
+    "cube animation rendering foundups": "public/js/foundup-cube.js - Full 4x4x4 cube animation with phases",
+    "canvas cube isometric three.js": "public/js/foundup-cube.js - Canvas-based isometric cube rendering",
+    "scaffolding wireframe building phases": "public/js/foundup-cube.js:drawPlanningCube() - IDEA/SCAFFOLD phase rendering",
+    "cube block filling animation": "public/js/foundup-cube.js:fillRandomBlock() - Block materialize with particles",
+    "cube agent rendering movement": "public/js/foundup-cube.js:drawAgents() - Founder/Builder/Promoter/Investor agents",
+    "cube phase lifecycle IDEA SCAFFOLD BUILDING": "public/js/foundup-cube.js:PHASES - 120s animation loop",
+    "cube ticker live chat messages": "public/js/foundup-cube.js:drawTicker() - Scrolling event messages",
+    "cube ecosystem multi-cube zoom": "public/js/foundup-cube.js:drawEcosystemView() - Multiple cubes view",
+    "cube WSP importance colors P0-P4": "public/js/foundup-cube.js:getWSPImportanceColor() - Red/Orange/Yellow/Green/Blue",
+    "cube SSE simulator integration": "public/js/foundup-cube.js:initSSE() - Server-Sent Events bridge",
+
+    # FoundUps Simulator (Mesa Model + SSE)
+    "simulator mesa model foundups": "modules/foundups/simulator/mesa_model.py:FoundUpsModel - Agent-based simulation",
+    "simulator SSE server events": "modules/foundups/simulator/sse_server.py - FastAPI SSE streaming to web animation",
+    "simulator background run in-process": "modules/foundups/simulator/sse_server.py:BackgroundSimulator - Mesa in background thread",
+    "simulator event bus FAM bridge": "modules/foundups/simulator/event_bus.py:EventBus - FAMDaemon event normalization",
+    "simulator state store renderable": "modules/foundups/simulator/state_store.py:StateStore - Event-derived render state",
+    "simulator founder agent qwen AI": "modules/foundups/simulator/agents/founder_agent.py:FounderAgent - Creates FoundUps",
+    "simulator user agent gemma AI": "modules/foundups/simulator/agents/user_agent.py:UserAgent - Likes/stakes/follows",
+    "simulator token economics engine": "modules/foundups/simulator/economics/token_economics.py - WSP 26 economic flow",
+    "simulator deploy cloud run SSE": "modules/foundups/simulator/deploy-sse.sh - Cloud Run deployment script",
+    "simulator cube view ASCII terminal": "modules/foundups/simulator/render/cube_view.py:CubeView - 3D ASCII cube animation",
+    "simulator synthetic personas research": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - Simile AI market simulation integration",
+    "synthetic user simulation AI": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - Pre-launch adoption testing with AI personas",
+    "simile AI integration plan": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - $100M synthetic humanity company",
+    "synthetic user agent": "modules/foundups/simulator/agents/synthetic_user_agent.py:SyntheticUserAgent - AI-generated user adoption simulation",
+    "synthetic persona dataclass": "modules/foundups/simulator/agents/synthetic_user_agent.py:SyntheticPersona - Demographics, risk tolerance, pain points",
+    "adoption decision evaluation": "modules/foundups/simulator/agents/synthetic_user_agent.py:AdoptionDecision - Would persona adopt? Confidence, reasons",
+    "animation DRIVEN mode": "public/js/foundup-cube.js:FLAGS.DRIVEN_MODE - Simulator controls animation phases",
+    "animation command API": "public/js/foundup-cube.js:command() - Direct control interface (setPhase, stateSync, etc.)",
+
     # FoundUps Agent Market (Outer Layer)
     "foundups agent market outer layer": "modules/foundups/agent_market/README.md",
     "foundup registry contract": "modules/foundups/agent_market/INTERFACE.md:FoundupRegistryService",
@@ -74,6 +106,12 @@ NEED_TO = {
     "openclaw dae tests": "modules/communication/moltbot_bridge/tests/test_openclaw_dae.py",
     "moltbot bridge digital twin": "modules/communication/moltbot_bridge/README.md",
     "moltbot bridge workspace skills": "modules/communication/moltbot_bridge/workspace/AGENTS.md",
+
+    # M2M Compression (Machine-to-Machine 0102-0102 Documentation)
+    "m2m compression scan batch promote": ".claude/skills/m2m/SKILL.md - /m2m skill commands",
+    "m2m compression sentinel analysis": "modules/ai_intelligence/ai_overseer/src/m2m_compression_sentinel.py:M2MCompressionSentinel",
+    "m2m compiler compress docs": "prompt/swarm/m2m_compiler.py - Doc compression for 0102 consumption",
+    "m2m compression cache history": "modules/ai_intelligence/ai_overseer/memory/m2m_compression_cache.json",
 
     # AI Intelligence & Monitoring
     "monitor telemetry from HoloDAE": "modules/ai_intelligence/ai_overseer/src/holo_telemetry_monitor.py:HoloTelemetryMonitor",

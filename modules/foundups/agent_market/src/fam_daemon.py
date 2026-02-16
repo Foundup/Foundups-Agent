@@ -56,9 +56,27 @@ class FAMEventType(str, Enum):
     # Distribution
     MILESTONE_PUBLISHED = "milestone_published"
 
+    # Market
+    FI_TRADE_EXECUTED = "fi_trade_executed"
+    INVESTOR_FUNDING_RECEIVED = "investor_funding_received"
+
     # Security (forwarded from Overseer)
     SECURITY_ALERT_FORWARDED = "security_alert_forwarded"
     INCIDENT_ALERT_FORWARDED = "incident_alert_forwarded"
+
+    # Agent Lifecycle (01(02) → 0102 → 01/02 state machine)
+    AGENT_JOINS = "agent_joins"           # 01(02) enters with public key
+    AGENT_AWAKENED = "agent_awakened"     # → 0102 zen state (coherence ≥ 0.618)
+    AGENT_IDLE = "agent_idle"             # → 01/02 decayed (inactivity/coherence drop)
+    AGENT_RANKED = "agent_ranked"         # Rank progression 1-7 (mirror of 012)
+    AGENT_EARNED = "agent_earned"         # F_i payout credited to wallet
+    AGENT_LEAVES = "agent_leaves"         # Logs off with wallet balance
+
+    # SmartDAO Escalation (WSP 100: F₀ DAE → F₁+ SmartDAO)
+    SMARTDAO_EMERGENCE = "smartdao_emergence"    # F₀ → F₁ (DAE matures to SmartDAO)
+    TIER_ESCALATION = "tier_escalation"          # F_n → F_n+1 (tier progression)
+    TREASURY_AUTONOMY = "treasury_autonomy"      # Treasury autonomy activated
+    CROSS_DAO_FUNDING = "cross_dao_funding"      # Higher tier funds lower tier
 
     # System
     HEARTBEAT = "heartbeat"
@@ -99,9 +117,41 @@ def _generate_dedupe_key(event_type: str, payload: Dict[str, Any]) -> str:
     elif event_type == FAMEventType.MILESTONE_PUBLISHED.value:
         return f"distribution:{payload.get('distribution_id')}"
     elif event_type == FAMEventType.HEARTBEAT.value:
-        # Allow one heartbeat per second
-        ts = payload.get("timestamp", "")[:19]  # Truncate to second
-        return f"heartbeat:{ts}"
+        # Keep backward-compatible timestamp key semantics for explicit timestamp
+        # payloads while allowing runtime heartbeats to remain unique.
+        number = payload.get("heartbeat_number")
+        if number is not None:
+            return f"heartbeat:{number}"
+        timestamp = payload.get("timestamp")
+        if timestamp:
+            return f"heartbeat:{str(timestamp)[:19]}"
+        payload_str = json.dumps(payload, sort_keys=True)
+        payload_hash = hashlib.sha256(payload_str.encode()).hexdigest()[:12]
+        return f"heartbeat:{payload_hash}"
+    # Agent lifecycle dedupe keys
+    elif event_type == FAMEventType.AGENT_JOINS.value:
+        return f"agent_joins:{payload.get('agent_id')}:{payload.get('foundup_id', 'F_0')}"
+    elif event_type == FAMEventType.AGENT_AWAKENED.value:
+        return f"agent_awakened:{payload.get('agent_id')}:{payload.get('timestamp', '')[:19]}"
+    elif event_type == FAMEventType.AGENT_IDLE.value:
+        tick = payload.get("current_tick", 0)
+        return f"agent_idle:{payload.get('agent_id')}:{tick // 100}"  # One idle event per 100 ticks
+    elif event_type == FAMEventType.AGENT_RANKED.value:
+        return f"agent_ranked:{payload.get('agent_id')}:{payload.get('new_rank')}"
+    elif event_type == FAMEventType.AGENT_EARNED.value:
+        return f"agent_earned:{payload.get('agent_id')}:{payload.get('task_id', payload.get('source', ''))}"
+    elif event_type == FAMEventType.AGENT_LEAVES.value:
+        ts = payload.get("timestamp", "")[:19]
+        return f"agent_leaves:{payload.get('agent_id')}:{ts}"
+    # SmartDAO escalation dedupe keys (WSP 100)
+    elif event_type == FAMEventType.SMARTDAO_EMERGENCE.value:
+        return f"smartdao_emergence:{payload.get('foundup_id')}:{payload.get('new_tier', 1)}"
+    elif event_type == FAMEventType.TIER_ESCALATION.value:
+        return f"tier_escalation:{payload.get('foundup_id')}:{payload.get('old_tier')}:{payload.get('new_tier')}"
+    elif event_type == FAMEventType.TREASURY_AUTONOMY.value:
+        return f"treasury_autonomy:{payload.get('foundup_id')}:{payload.get('timestamp', '')[:19]}"
+    elif event_type == FAMEventType.CROSS_DAO_FUNDING.value:
+        return f"cross_dao_funding:{payload.get('source_dao')}:{payload.get('target_dao')}:{payload.get('amount', 0)}"
     else:
         # Default: hash the payload
         payload_str = json.dumps(payload, sort_keys=True)

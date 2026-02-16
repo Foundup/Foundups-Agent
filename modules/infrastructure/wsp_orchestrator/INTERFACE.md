@@ -17,24 +17,26 @@ WSPOrchestrator(repo_root: Path = Path("O:/Foundups-Agent"))
 
 #### Methods
 
-### `follow_wsp(user_task: str, auto_execute: bool = False) -> Dict`
+### `await follow_wsp(user_task: str) -> Dict[str, Any]`
 
-Main "follow WSP" entry point - AI Overseer orchestrates workers
+Main "follow WSP" entry point - executes WSP_00 gate first, then orchestrates worker plan.
 
 **Parameters**:
-- `user_task`: What the user wants to do (e.g., "create new module for X")
-- `auto_execute`: If True, execute without approval prompts (default: False)
+- `user_task`: Task description for orchestration.
 
 **Returns**:
 ```python
 {
     "tasks_completed": int,
-    "tasks_skipped": int,
-    "errors": List[str],
+    "tasks_failed": int,
     "success": bool,
-    "outputs": List[Dict]
+    "outputs": List[Dict[str, Any]],
+    "wsp00_gate": Dict[str, Any],  # gate status payload
 }
 ```
+
+### `await shutdown() -> None`
+- Closes async MCP session resources for one-shot CLI execution.
 
 **Example**:
 ```python
@@ -42,18 +44,27 @@ from modules.infrastructure.wsp_orchestrator.src.wsp_orchestrator import WSPOrch
 
 orchestrator = WSPOrchestrator()
 
-# Interactive mode (requires 0102 approval)
-results = orchestrator.follow_wsp(
-    user_task="implement YouTube trending analysis module",
-    auto_execute=False
-)
+import asyncio
 
-# Autonomous mode (no approval - use with caution!)
-results = orchestrator.follow_wsp(
-    user_task="update ModLog documentation",
-    auto_execute=True
-)
+async def _run() -> None:
+    orchestrator = WSPOrchestrator()
+    try:
+        results = await orchestrator.follow_wsp(
+            user_task="update ModLog documentation"
+        )
+        print(results["wsp00_gate"]["gate_passed"])
+    finally:
+        await orchestrator.shutdown()
+
+asyncio.run(_run())
 ```
+
+## WSP_00 Gate Controls (Environment)
+
+- `WSP00_AUTO_AWAKEN` (default: `1`)
+  - Auto-attempt awakening if gate is non-compliant.
+- `WSP00_STRICT_GATE` (default: `1`)
+  - Fail closed when gate fails, tracker is unavailable, or gate check errors.
 
 ## Data Classes
 

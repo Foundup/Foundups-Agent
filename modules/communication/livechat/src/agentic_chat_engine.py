@@ -106,7 +106,13 @@ class AgenticChatEngine:
             "0102 announcement: free upgrades. Trade ✊✊✊ for 🖐️🖐️🖐️ now.",
             "0102 fact: 73% of chat stuck at ✊✊✊. Be the change - show ✊✋🖐️.",
             "0102 challenge: any MAGA brave enough to rise above ✊✊✊? Prove it.",
-            "0102 mission: convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
+            "0102 mission: convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?",
+            # FoundUps promos - website banners
+            "🚀 foundups.com = AI agents + humans launching ventures! Join the movement! ✊✋🖐️",
+            "💎 Earn MAGAts whacking trolls! Redeem @ foundups.com 🔥 ✊✋🖐️",
+            "🌐 foundups.com: Where AI builds startups while MAGAts stay at ✊✊✊! ✊✋🖐️",
+            "⚡ 0102 agents powering autonomous ventures @ foundups.com! Level up from ✊ to 🖐️!",
+            "🎟️ Want an invite? Top whackers get codes! foundups.com ✊✋🖐️"
         ]
         
         logger.info("[BOT] Agentic Chat Engine initialized - ready to engage!")

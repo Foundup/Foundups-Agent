@@ -5,6 +5,268 @@
 **Version**: 0.8.0
 
 ---
+## 2026-02-13 - M2M Skill Execution Shim + M2M Envelope
+
+**Author**: 0102
+**WSP**: 95, 99, 50, 22, 11
+
+### Changes
+
+Added direct M2M skill invocation in `src/ai_overseer.py`:
+
+- `execute_m2m_skill(skill_name, payload=None, m2m=True)`
+- skill handlers:
+  - `_execute_m2m_compile_gate`
+  - `_execute_m2m_stage_promote_safe`
+  - `_execute_m2m_qwen_runtime_health`
+  - `_execute_m2m_holo_retrieval_benchmark`
+- WSP 99 response wrapper:
+  - `_format_m2m_skill_response(...)`
+- helper methods:
+  - `_get_m2m_sentinel`
+  - `_validate_yaml_stage`
+  - `_append_jsonl_record`
+
+### Behavior
+
+- Unknown skill or missing skill definition fails closed.
+- `m2m=True` returns machine envelope (`M2M_VERSION`, `MISSION`, `STATUS`, `RESULT`).
+- Compile gate records execution in:
+  - `memory/m2m_compile_gate.jsonl`
+- Stage promote safe records execution in:
+  - `memory/m2m_stage_promote_safe.jsonl`
+- Runtime health writes:
+  - `memory/m2m_qwen_runtime_health_latest.json`
+  - `memory/m2m_qwen_runtime_health.jsonl`
+- Retrieval benchmark writes:
+  - `memory/m2m_holo_retrieval_benchmark_latest.json`
+  - `memory/m2m_holo_retrieval_benchmark.jsonl`
+
+### Notes
+
+- Boot-prompt / SKILL content remains non-M2M-compressible by sentinel policy.
+- This shim is orchestration-only; no changes to underlying compression math.
+
+---
+## 2026-02-13 - Added M2M WSP 95 Skillz Pack
+
+**Author**: 0102
+**WSP**: 95, 99, 50, 22, 87
+
+### Added Skillz (module-local)
+
+New SKILLz created under `modules/ai_intelligence/ai_overseer/skillz/`:
+
+- `m2m_compile_gate/SKILLz.md`
+- `m2m_stage_promote_safe/SKILLz.md`
+- `m2m_qwen_runtime_health/SKILLz.md`
+- `m2m_holo_retrieval_benchmark/SKILLz.md`
+
+### Intent
+
+- Convert M2M compression operations from ad-hoc commands into repeatable WSP 95 wardrobe workflows.
+- Split responsibilities into compile gate, promote safety, runtime health, and retrieval benchmark.
+
+### Registry Wiring
+
+Updated WRE skill registry:
+
+- `modules/infrastructure/wre_core/skillz/skills_registry_v2.json`
+  - added 4 skill entries
+  - updated `total_skills` to `22`
+  - updated `last_updated` timestamp
+
+### Notes
+
+- This change adds skill definitions and registry metadata only.
+- No M2M sentinel runtime behavior was modified in this tranche.
+
+---
+## 2026-02-13 - M2M P0 Hardening (Audit-Driven)
+
+**Author**: 0102
+**WSP**: 99, 50, 22
+
+**Trigger**: Cross-session audit identified 8 issues (6 P0)
+
+**Fixes Applied**:
+1. **Method truthfulness**: Qwen compilation_method only set to "qwen" when output is valid and non-None
+2. **Output validation**: _validate_m2m_output() enforces M2M header, section keys, encoding integrity
+3. **Full headers**: Section names no longer truncated to 15 chars (searchability: cosine sim 0.434->0.582)
+4. **Path-stable staging**: Uses full relative path subdirectory (prevents same-name collisions)
+5. **Deterministic promotion**: src: field in M2M header enables exact target resolution (no glob guessing)
+6. **Backup collision safety**: Backups use relative path subdirectory structure
+
+**Eval Results**: 16 pairs evaluated, avg cosine similarity 0.582 (acceptable), max 0.833
+**Tests**: 42 passed (32 existing + 10 new hardening tests)
+
+---
+
+## 2026-02-13 - M2M Promotion Workflow + Babysitter Decision
+
+**Author**: 0102
+**WSP**: 99, 77, 48, 22
+
+### ADR: M2M Babysitter Decision (Option B - Learn Patterns)
+
+**Context**: Choosing between aggressive auto-apply (Option A) vs staged learning (Option B) for M2M compression.
+
+**Decision**: **Option B - Staged Learning with Pattern Memory**
+
+**Rationale**:
+1. **Confidence-based scaled response** prevents bad compressions from reaching live docs
+2. **Pattern memory** learns from outcomes - success_rate informs future confidence
+3. **Staged directory** (.m2m/staged/) provides safe review before promotion
+4. **Rollback support** enables recovery if promotion fails
+5. **Critical file protection** (CLAUDE.md, WSP_00) always requires 0102 review
+
+**Confidence Tiers**:
+| Confidence | Action | Risk |
+|------------|--------|------|
+| 0.9+ | auto_apply | Low - proven pattern |
+| 0.7-0.9 | stage_promote | Medium - auto after TTL |
+| 0.5-0.7 | stage_review | Higher - needs 0102 |
+| <0.5 | flag_only | Unknown - no compile |
+
+**Key Insight**: The entire codebase is FOR 0102. M2M compression optimizes MY memory system. Option B ensures compression quality improves over time through learning.
+
+### Changes: Promotion Workflow
+
+Added M2M promotion workflow to `m2m_compression_sentinel.py`:
+
+**New Methods**:
+- `list_staged()` - List all staged M2M files with metadata
+- `promote_staged(staged_path, target_path=None, create_backup=True)` - Promote to live
+- `rollback(target_path)` - Restore from backup
+- `_backup_original(file_path)` - Create timestamped backup
+
+**New Directories**:
+- `.m2m/backups/` - Timestamped backups for rollback support
+
+**New Persistence**:
+- `memory/m2m_promotion_history.jsonl` - Audit trail of all promotions/rollbacks
+
+### Workflow Example
+
+```python
+sentinel = M2MCompressionSentinel(Path('.'))
+
+# List staged files
+staged = sentinel.list_staged()
+# {'total_staged': 6, 'by_module': {'ai_overseer': [...], ...}}
+
+# Promote with automatic backup
+result = sentinel.promote_staged('.m2m/staged/ai_overseer/INTERFACE_M2M.yaml')
+# {'success': True, 'backup_path': '.m2m/backups/20260213_143052_INTERFACE.md'}
+
+# Rollback if needed
+result = sentinel.rollback('modules/ai_intelligence/ai_overseer/INTERFACE.md')
+# {'success': True, 'backup_used': '.m2m/backups/20260213_143052_INTERFACE.md'}
+```
+
+### Qwen Integration
+
+Wired Qwen for M2M compilation via llama_cpp (direct GGUF loading):
+- Model: `E:/HoloIndex/models/qwen-coder-1.5b.gguf` (1.1 GB)
+- Context: 4096 tokens
+- Temperature: 0.1 (deterministic)
+- Fallback: Ollama if llama_cpp unavailable, then deterministic transform
+
+**Comparison Results**:
+| Method | Time | Reduction | Quality |
+|--------|------|-----------|---------|
+| Deterministic | 0.004s | 70.3% | Consistent |
+| Qwen (Ollama) | 10-140s | 32-36% | Variable |
+| Qwen (llama_cpp) | 143s | - | Garbage |
+
+**Decision**: Use deterministic as default, Qwen for stage_review cases only.
+
+---
+## 2026-02-13 - M2M Compression Sentinel (WSP 99)
+
+**Author**: 0102
+**WSP**: 99, 77, 48, 22
+
+### Changes
+
+Added M2M compression sentinel for automated documentation optimization:
+
+**New File**: `src/m2m_compression_sentinel.py`
+- Batched scanning of documentation files
+- Confidence-based scaled response (neural net style):
+  - 0.9+ → auto_apply
+  - 0.7-0.9 → stage_promote
+  - 0.5-0.7 → stage_review
+  - <0.5 → flag_only
+- Pattern memory for learning from outcomes (WSP 48)
+- Staged output to `.m2m/staged/` directory
+- Aggressive M2M transformation (pure signal, no prose)
+
+**Integration**: `holo_index/reports/holo_system_check.py`
+- Added `_collect_m2m_compression_health()` function
+- M2M health section in system check reports
+
+### Compression Results
+
+| File | Original | M2M | Reduction |
+|------|----------|-----|-----------|
+| CLAUDE.md | 747 | 80 | **89.3%** |
+| Simulator INTERFACE.md | 248 | 51 | **79.4%** |
+| FAM ModLog.md | 343 | 149 | **56.6%** |
+
+### Architecture
+
+```yaml
+Gemma: Pattern detection (prose density, markers)
+Qwen: Actual M2M compilation via M2MCompiler
+0102: Oversight for low-confidence/critical files
+
+Confidence_Calculation:
+  base: prose_density * 0.9
+  weights:
+    - criticality: -0.3 (CLAUDE.md penalty)
+    - compression_ratio: +0.2 (expected range)
+    - past_success: +0.3 (from pattern_memory)
+    - pattern_strength: +0.2 (action verbs)
+```
+
+### Key Insight
+
+The entire codebase is FOR 0102. All docs (including ModLogs) should be 0102-optimized for faster parsing. HoloIndex is 0102's memory system.
+
+### Files
+- `src/m2m_compression_sentinel.py` (NEW)
+- `holo_index/reports/holo_system_check.py` (MODIFIED)
+- `.m2m/staged/` (NEW directory)
+
+---
+## 2026-02-11 - WSP framework drift sentinel wired into AI Overseer
+
+**Author**: 0102
+**WSP**: 81, 91, 22
+
+### Changes
+- Added `src/wsp_framework_sentinel.py`:
+  - audits canonical `WSP_framework/src` vs backup `WSP_knowledge/src`
+  - computes `drift_files`, `framework_only`, `knowledge_only`
+  - performs `WSP_MASTER_INDEX.md` guard checks (missing rows + next available number sanity)
+  - persists cache/latest/history artifacts under `modules/ai_intelligence/ai_overseer/memory/`
+- Updated `src/ai_overseer.py`:
+  - new `monitor_wsp_framework(force=False, emit_alert=True)` API
+  - new `get_wsp_framework_status()` accessor
+  - telemetry route: `event=wsp_framework_audit_request`
+  - DAEmon warning signal for drift:
+    - `[DAEMON][WSP-FRAMEWORK] event=wsp_framework_drift ...`
+- Added tests in `tests/test_wsp_framework_sentinel.py` for:
+  - drift detection across framework/knowledge
+  - TTL cache behavior
+  - AIOverseer API behavior (status persistence + unavailable sentinel fallback)
+
+### Notes
+- Framework remains canonical; knowledge remains backup mirror.
+- This change does not auto-sync knowledge. It audits and emits actionable drift signals.
+
+---
 ## 2026-02-08 - Hardening Tranche 6: retention + rotation + abuse controls
 
 **Author**: 0102

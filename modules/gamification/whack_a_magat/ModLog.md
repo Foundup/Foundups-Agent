@@ -1,5 +1,174 @@
 # ModLog — MAGADOOM Whack-a-Magat Autonomous DAE
 
+## Random Presenter Selection for Invite Distribution (2026-02-12)
+**WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog)
+
+**Feature Implemented**
+Random mod/managing director selection when distributing TOP 10 invites:
+
+**Community Presenters**:
+- Invites now appear as "Presented by @{presenter} - {title}"
+- Random selection from COMMUNITY_PRESENTERS list
+- Makes distribution feel community-driven rather than bot-automated
+
+**New Infrastructure**:
+- `COMMUNITY_PRESENTERS` list with usernames and titles
+- `get_random_presenter()` function for random selection
+- Updated `auto_distribute_top10_invites()` to include presenter in messages
+
+**Example Output**:
+```
+🎟️ TOP 3 REWARD! @WhackerPro earned an invite! Code: FUP-ABCD-1234 → foundups.com 🎁 Get 5 codes to share! (Presented by @Al-sq5ti - Managing Director) ✊✋🖐️
+```
+
+**Files Modified**:
+- `src/invite_distributor.py`: Added COMMUNITY_PRESENTERS, get_random_presenter(), updated message format
+
+**Impact**:
+- ✅ Invites feel more personal/community-driven
+- ✅ Random selection adds variety to messages
+- ✅ MODs/Directors get recognition for community building
+
+---
+
+## ALLY Detection Integration with #FFCPLN (2026-02-12)
+**WSP References**: WSP 77 (Agent Coordination), WSP 96 (WRE Skills)
+
+**Feature Implemented**
+Enhanced video_comments module to detect anti-Trump/anti-MAGA ALLIES and respond with agreement:
+
+**New CommenterType**: ALLY (3🤝)
+- Detects anti-fascist allies via 40+ patterns (Trump criticism, MAGA mockery, fascism awareness)
+- Routes to new ALLY response system instead of generic Skill 1
+
+**ALLY Response Strategy**:
+- LLM generates agreement responses that amplify anti-Trump sentiment
+- Always includes #FFCPLN hashtag (FFCPLN = nickname for MAGA trolls being whacked)
+- Joins in on Trump trolling instead of neutral corporate text
+
+**Example Responses**:
+- "EXACTLY! 🎯 The guy couldn't even run a fake university without fraud. #FFCPLN ✊✋🖐️"
+- "THIS. 👆 Say it louder for the MAGAts in the back! #FFCPLN ✊✋🖐️"
+- "Preach! 🙌 The Epstein bestie really out here pretending to be a leader. #FFCPLN ✊✋🖐️"
+
+**Files Modified**:
+- `modules/communication/video_comments/src/commenter_classifier.py`: Added ALLY enum + detection patterns
+- `modules/communication/video_comments/src/intelligent_reply_generator.py`: Added ALLY routing + responses
+
+**Impact**:
+- ✅ Anti-MAGA allies get engagement (not ignored)
+- ✅ #FFCPLN skill properly utilized
+- ✅ Amplifies anti-fascist sentiment in comments
+
+---
+
+## TOP 10 Auto-Distribution System (2026-02-12)
+**WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog), WSP 50 (Pre-Action)
+
+**Feature Implemented**
+SQLite-backed automatic invite distribution to TOP 10 whackers:
+
+**Database Tracking** (HoloIndex Memory Pattern):
+- `invite_distributions` table in magadoom_scores.db
+- Tracks: user_id, username, invite_code, invite_type, distributed_at
+- UNIQUE constraint on (user_id, invite_type) prevents duplicates
+
+**Auto-Distribution Logic**:
+- `auto_distribute_top10_invites()` - Gets top 10, checks DB, distributes to new users only
+- Runs automatically after 30 min of stream (once per session)
+- Also triggerable via `/fuc distribute` command (OWNER only)
+
+**New Commands**:
+- `/fuc distribute` - Manually trigger TOP 10 invite distribution
+- `/fuc stats` - Show invite distribution statistics
+
+**Files Modified**:
+- `src/invite_distributor.py`: Added SQLite tracking + auto_distribute_top10_invites()
+- `command_handler.py`: Added /fuc distribute and /fuc stats
+- `livechat_core.py`: Added proactive auto-distribution after 30 min
+
+**Database Schema**:
+```sql
+CREATE TABLE invite_distributions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    username TEXT NOT NULL,
+    invite_code TEXT NOT NULL,
+    invite_type TEXT DEFAULT 'auto_top10',
+    distributed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, invite_type)
+)
+```
+
+---
+
+## Invite System Auto-Generation & Stream Duration Gate (2026-02-12)
+**WSP References**: WSP 50 (Pre-Action), WSP 77 (Agent Coordination)
+
+**Feature Implemented**
+Enhanced `invite_distributor.py` with auto-generation and stream duration requirements:
+
+**Auto-Generation** (no manual seeding required):
+- `create_firebase_invite()` - Generates FUP-XXXX-XXXX codes and saves directly to Firestore
+- Codes created with `createdBy: 'agent'` (vs 'admin' for seeded)
+- Tracks `generatedFor` user_id and username for audit
+
+**Stream Duration Gate** (prevents drive-by requests):
+- `MIN_STREAM_DURATION_MINUTES = 30` - Stream must run 30+ min before invites unlock
+- `stream_start_time` passed from message_processor to track duration
+- Returns friendly message with remaining time if too early
+
+**Invite Distribution Rules**:
+1. Stream running 30+ minutes
+2. User cooldown (24h between requests)
+3. Population < 20 OR user is TOP 5 whacker
+4. Auto-generates to Firebase OR falls back to local if unavailable
+
+**Files Modified**:
+- `src/invite_distributor.py`: Added create_firebase_invite(), stream duration check
+- `command_handler.py`: Pass stream_start_time to get_invite_code()
+- `command_handler.py`: Updated /help to show /fuc subcommands
+
+---
+
+## MAGAts Token Economy - FFCPLN Mining System (2026-02-12)
+**WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog), WSP 50 (Pre-Action)
+
+**Feature Implemented**
+Created `magats_economy.py` - FFCPLN mining system that converts whacks into MAGAts tokens:
+- **Token Rate**: 10 whacks = 1 MAGAt
+- **Secure Claims**: HMAC-based claim links tied to YouTube channel_id
+- **Consciousness Levels**: ✊ (000) → ✋ (111) → 🖐️ (222) based on MAGAts earned
+- **Claim Verification**: OAuth verification at foundups.com/claim
+
+**New `/fuc` Command Suite**:
+1. `/fuc` or `/fuc status` - Show MAGAt balance and mining progress
+2. `/fuc claim` - Generate secure claim link for pending MAGAts
+3. `/fuc top` - MAGAts leaderboard (top miners)
+4. `/fuc mine` - Visual mining progress with progress bar
+
+**Architecture**:
+- F_0: Platform (foundups.com)
+- F_1: Move2Japan
+- F_2: Whack-a-MAGA (FFCPLN mining)
+
+**Files Added/Modified**:
+- `src/magats_economy.py` (300 lines): Core economy logic
+- `command_handler.py`: Added /fuc command routing
+- `__init__.py`: Exported MAGAtsEconomy, get_magats_economy, MAGAtBalance
+
+**Database Tables**:
+- `magats_claims`: Tracks claimed MAGAts per user
+- `magats_claim_history`: Audit trail of all claims
+
+**Impact**:
+- ✅ Converts whacking into tokenized rewards
+- ✅ Secure claim system prevents link sharing abuse
+- ✅ Integrates with existing MAGADOOM leaderboard
+- ✅ Gamification → Token economy pipeline established
+
+---
+
 ## Qwen Duke Announcer Integration
 **WSP References**: WSP 77 (Agent Coordination), WSP 90, WSP 1
 

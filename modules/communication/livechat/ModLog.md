@@ -10,6 +10,38 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-02-12 - Managing Directors + /fuc Command Enhancements
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+### Managing Directors Access
+Added elevated MOD access for /fuc commands:
+
+```python
+MANAGING_DIRECTORS = {
+    'UCcnCiZV5ZPJ_cjF7RsWIZ0w',  # JS (Al-sq5ti) - Move2Japan Managing Director
+}
+```
+
+**Problem:** Trusted MODs like JS couldn't use /fuc commands (OWNER-only).
+
+**Solution:** Added `MANAGING_DIRECTORS` set - these users get owner-level /fuc access.
+
+**Files Modified:**
+- `src/command_handler.py`: Added MANAGING_DIRECTORS set and permission check
+
+### Random Presenter Selection for Invite Distribution
+Invites now display random community presenter:
+- "Presented by @Al-sq5ti - Managing Director"
+- "Presented by @Move2Japan - Host"
+
+Makes distribution feel community-driven rather than bot-automated.
+
+**Cross-Reference:** `modules/gamification/whack_a_magat/src/invite_distributor.py`
+
+---
+
 ## 2026-02-06 - Architecture Fix: Complete System Separation
 
 **By:** 0102

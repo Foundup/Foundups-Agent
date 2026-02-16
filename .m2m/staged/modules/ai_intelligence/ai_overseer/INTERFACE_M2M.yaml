@@ -1,0 +1,122 @@
+# M2M v1.0 | INTERFACE.md | 20260213 | src:modules/ai_intelligence/ai_overseer/INTERFACE.md
+
+AI_INTELLIGENCE_OVERSEER___PUBLIC_API:
+  WSP: [11]
+OVERVIEW:
+  WSP: [77]
+  WSP: [54]
+  WSP: [96]
+  WSP: [48]
+  WSP: [60]
+  WSP: [78]
+CORE_CLASSES:
+AIINTELLIGENCEOVERSEER:
+INIT___REPO_ROOT__PATH:
+  REPO_ROOT: Path to repository root directory
+MONITOR_OPENCLAW_SECURITY_FORCE__BOOL___FALSE_____DICT_STR__ANY:
+  FORCE: If `True`, bypass TTL cache and force a fresh scan
+START_OPENCLAW_SECURITY_MONITORING_INTERVAL_SEC__OPTIONAL_FLOAT____NONE__FORCE_FIRST__BOOL___FALSE_____NONE:
+STOP_OPENCLAW_SECURITY_MONITORING______NONE:
+GET_OPENCLAW_SECURITY_STATUS______DICT_STR__ANY:
+MONITOR_WSP_FRAMEWORK_FORCE__BOOL___FALSE__EMIT_ALERT__BOOL___TRUE_____DICT_STR__ANY:
+  FORCE: bypass cache and force immediate re-audit
+  EMIT_ALERT: emit DAEmon drift warning when severity is `warning`/`critical`
+  CACHE: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_cache.json`
+  LATEST: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_latest.json`
+  HISTORY: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_history.jsonl`
+GET_WSP_FRAMEWORK_STATUS______DICT_STR__ANY:
+RELEASE_OPENCLAW_CONTAINMENT_TARGET_TYPE__STR__TARGET_ID__STR__REQUESTED_BY__STR____OPERATOR___REASON__STR____MANUAL_OVERRIDE______DICT_STR__ANY:
+RELEASE_OPENCLAW_CONTAINMENT_AUTHENTICATED_TARGET_TYPE__STR__TARGET_ID__STR__TOKEN__STR__NONCE__STR__REQUESTED_BY__STR__REASON__STR__SOURCE_IP__STR____UNKNOWN___SESSION_ID__STR__________DICT_STR__ANY:
+  TARGET_TYPE: "sender" or "channel"
+  TARGET_ID: The sender/channel ID to release
+  TOKEN: Operator authentication token (matches `OPENCLAW_OPERATOR_TOKEN` or `OPENCLAW...
+  NONCE: Unique request nonce for replay prevention
+  REQUESTED_BY: Operator identifier (email, username)
+  REASON: Reason for release
+  SOURCE_IP: Source IP of request (for audit)
+  SESSION_ID: Session identifier (for audit)
+  AUTHENTICATION_FAILED: Token missing, not configured, or invalid
+  REPLAY_DETECTED: Nonce already used within replay window
+  RATE_LIMITED: Release requests exceeded per-operator/session window
+  LOCKED_OUT: Operator/session temporarily locked after repeated auth failures
+GET_AUDIT_RECORDS_LIMIT__INT___100__TARGET_ID__OPTIONAL_STR____NONE_____LIST_DICT:
+  LIMIT: Maximum records to return
+  TARGET_ID: Optional filter by target
+SECURITY_EVENT_CORRELATOR:
+INGEST_SECURITY_EVENT_EVENT_TYPE__STR__SENDER__STR__CHANNEL__STR__DETAILS__DICT_____OPTIONAL_DICT:
+CHECK_CONTAINMENT_SENDER__STR__CHANNEL__STR_____OPTIONAL_DICT:
+GET_CORRELATOR_STATS______DICT_STR__ANY:
+COORDINATE_MISSION_MISSION_DESCRIPTION__STR__MISSION_TYPE__MISSIONTYPE___MISSIONTYPE_CUSTOM__AUTO_APPROVE__BOOL___FALSE_____DICT_STR__ANY:
+  MISSION_DESCRIPTION: Human-readable description of mission
+  MISSION_TYPE: Type of mission (see MissionType enum)
+  AUTO_APPROVE: Skip approval prompts if True
+  FEATURE_FLAG: `II_AGENT_ENABLED=true`
+  CLI: set `II_AGENT_CLI` or `II_AGENT_COMMAND` (template with `{task}`)
+  HTTP: set `II_AGENT_MODE=http` and `II_AGENT_ENDPOINT`
+  ALLOWED_MISSION_TYPES: `II_AGENT_MISSION_TYPES` (comma-separated, default: documentation_generation,...
+SPAWN_AGENT_TEAM_MISSION_DESCRIPTION__STR__MISSION_TYPE__MISSIONTYPE___MISSIONTYPE_CUSTOM__AUTO_APPROVE__BOOL___FALSE_____AGENTTEAM:
+  WSP: [54]
+  MISSION_DESCRIPTION: Mission to accomplish
+  MISSION_TYPE: Type of mission
+  AUTO_APPROVE: Skip approval prompts
+  MISSION_ID: Unique identifier
+  MISSION_TYPE: MissionType enum
+  PARTNER: "qwen" (Qwen Partner)
+  PRINCIPAL: "0102" (0102 Principal)
+  ASSOCIATE: "gemma" (Gemma Associate)
+  STATUS: "initialized", "executing", "completed", "failed"
+  RESULTS: Execution results dict
+ANALYZE_MISSION_REQUIREMENTS_MISSION_DESCRIPTION__STR__MISSION_TYPE__MISSIONTYPE___MISSIONTYPE_CUSTOM_____DICT_STR__ANY:
+  MISSION_DESCRIPTION: Mission description
+  MISSION_TYPE: Type of mission
+GENERATE_COORDINATION_PLAN_ANALYSIS__DICT_STR__ANY______COORDINATIONPLAN:
+  ANALYSIS: Results from Gemma analysis
+  MISSION_ID: Unique identifier
+  MISSION_TYPE: MissionType enum
+  PHASES: List of phase dicts with WSP 15 MPS scoring
+  ESTIMATED_COMPLEXITY: 1-5 scale
+  RECOMMENDED_APPROACH: "autonomous_execution", "supervised_execution", or "collaborative_orchestration"
+  LEARNING_PATTERNS: Detected patterns from memory
+STORE_MISSION_PATTERN_TEAM__AGENTTEAM:
+  WSP: [48]
+  WSP: [60]
+  WSP: [78]
+  TEAM: Completed AgentTeam object
+ENUMS:
+AGENTROLE:
+  WSP: [54]
+  SIG: class AgentRole
+MISSIONTYPE:
+  SIG: class MissionType
+DATA_CLASSES:
+AGENTTEAM:
+  WSP: [54]
+  SIG: class AgentTeam
+COORDINATIONPLAN:
+  SIG: class CoordinationPlan
+CLI_INTERFACE:
+WSP_COMPLIANCE:
+WSP_77__AGENT_COORDINATION_PROTOCOL:
+  PHASE_1: Gemma Associate (fast pattern matching)
+  PHASE_2: Qwen Partner (strategic planning)
+  PHASE_3: 0102 Principal (execution oversight)
+  PHASE_4: Learning (pattern storage)
+WSP_54__ROLE_ASSIGNMENT__AGENT_TEAMS:
+  PARTNER: Qwen (does simple stuff, scales up)
+  PRINCIPAL: 0102 (lays out plan, oversees execution)
+  ASSOCIATE: Gemma (pattern recognition, scales up)
+WSP_96__MCP_GOVERNANCE:
+WSP_48__RECURSIVE_SELF_IMPROVEMENT:
+  FILES: ['holo_index/adaptive_learning/ai_overseer_patterns.json']
+ERROR_HANDLING:
+PERFORMANCE:
+PHASE_TIMING:
+  WSP: [15]
+TOKEN_EFFICIENCY:
+  WSP: [77]
+DEPENDENCIES:
+HOLOADAPTER_GUARD_OUTPUT:
+  SILENT: no warnings attached to results
+  SUMMARY: first warning + suppression count (default)
+  ATTACH: include up to `HOLO_GUARD_MAX_WARNINGS`
+  FILES: ['tests/test_ai_overseer.py']

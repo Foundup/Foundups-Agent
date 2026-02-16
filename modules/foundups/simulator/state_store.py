@@ -40,6 +40,20 @@ class FoundUpTile:
     tasks_completed: int = 0
     last_activity_tick: int = 0
 
+    # Lifecycle state
+    lifecycle_stage: str = "PoC"  # PoC -> Proto -> MVP
+    beta_launched: bool = False
+    customer_count: int = 0
+    unique_customers: set[str] = field(default_factory=set, repr=False)
+
+    # DEX activity
+    dex_trades: int = 0
+    dex_volume_ups: float = 0.0
+
+    # MVP pre-launch market
+    mvp_bid_count: int = 0
+    mvp_treasury_injection_ups: float = 0.0
+
     # Visual state
     glow_intensity: float = 0.0  # 0.0 - 1.0, fades over time
     grid_x: int = 0
@@ -103,6 +117,11 @@ class SimulatorState:
     total_tokens_circulating: int = 0
     total_likes: int = 0
     total_stakes: int = 0
+    total_dex_trades: int = 0
+    total_dex_volume_ups: float = 0.0
+    pavs_treasury_ups: float = 0.0
+    network_pool_ups: float = 0.0
+    fund_pool_ups: float = 0.0
 
     # Event log (for debug panel)
     recent_events: List[SimEvent] = field(default_factory=list)
@@ -204,6 +223,8 @@ class StateStore:
             elif new_status == "paid":
                 tile.tasks_completed += 1
 
+            self._recompute_lifecycle_stage(foundup_id)
+
     def _handle_proof_submitted(self, event: SimEvent) -> None:
         """Handle proof_submitted event."""
         foundup_id = event.foundup_id
@@ -227,6 +248,86 @@ class StateStore:
             tile.pulse_glow(0.6)
 
         self._state.total_tokens_circulating += amount
+
+    def _handle_milestone_published(self, event: SimEvent) -> None:
+        """Handle milestone_published event."""
+        foundup_id = event.foundup_id
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.8)
+            self._recompute_lifecycle_stage(foundup_id)
+
+    def _handle_fi_trade_executed(self, event: SimEvent) -> None:
+        """Handle fi_trade_executed event from decentralized exchange simulation."""
+        foundup_id = event.foundup_id
+        volume_ups = float(event.payload.get("ups_total", 0.0))
+
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.dex_trades += 1
+            tile.dex_volume_ups += volume_ups
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.5)
+
+        self._state.total_dex_trades += 1
+        self._state.total_dex_volume_ups += volume_ups
+
+    def _handle_mvp_bid_submitted(self, event: SimEvent) -> None:
+        """Handle mvp_bid_submitted event."""
+        foundup_id = event.foundup_id
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.mvp_bid_count += 1
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.4)
+
+    def _handle_mvp_offering_resolved(self, event: SimEvent) -> None:
+        """Handle mvp_offering_resolved event."""
+        foundup_id = event.foundup_id
+        injection_ups = float(event.payload.get("total_injection_ups", 0.0))
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.mvp_treasury_injection_ups += injection_ups
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.8)
+
+        if injection_ups > 0:
+            # Injected UP$ is treasury capital entering the FoundUp.
+            self._state.total_stakes += int(injection_ups)
+
+    def _handle_ups_allocation_result(self, event: SimEvent) -> None:
+        """Handle 012 UPS allocation routed by allocation engine."""
+        foundup_id = event.foundup_id
+        ups_allocated = float(event.payload.get("ups_allocated", 0.0))
+        if foundup_id and foundup_id in self._state.foundups and ups_allocated > 0:
+            tile = self._state.foundups[foundup_id]
+            tile.stakes += 1
+            tile.total_staked += int(round(ups_allocated))
+            if event.actor_id not in tile.unique_customers:
+                tile.unique_customers.add(event.actor_id)
+                tile.customer_count = len(tile.unique_customers)
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.45)
+            self._state.total_stakes += int(round(ups_allocated))
+            self._recompute_lifecycle_stage(foundup_id)
+
+    def _handle_pavs_treasury_updated(self, event: SimEvent) -> None:
+        """Track pAVS/network treasury balances for renderers."""
+        self._state.pavs_treasury_ups = float(event.payload.get("pavs_treasury_balance_ups", 0.0))
+        self._state.network_pool_ups = float(event.payload.get("network_pool_balance_ups", 0.0))
+
+    def _handle_treasury_separation_snapshot(self, event: SimEvent) -> None:
+        """Track periodic treasury separation snapshots."""
+        self._state.pavs_treasury_ups = float(event.payload.get("pavs_treasury_ups", 0.0))
+        self._state.network_pool_ups = float(event.payload.get("network_pool_ups", 0.0))
+        self._state.fund_pool_ups = float(event.payload.get("fund_pool_ups", 0.0))
+
+    def _handle_investor_funding_received(self, event: SimEvent) -> None:
+        """Handle investor_funding_received seed/inflow events."""
+        foundup_id = event.foundup_id
+        if foundup_id and foundup_id in self._state.foundups:
+            self._state.foundups[foundup_id].pulse_glow(0.3)
 
     def _handle_heartbeat(self, event: SimEvent) -> None:
         """Handle heartbeat event."""
@@ -322,14 +423,45 @@ class StateStore:
     def record_stake(self, agent_id: str, foundup_id: str, amount: int) -> None:
         """Record a stake action."""
         if foundup_id in self._state.foundups:
-            self._state.foundups[foundup_id].stakes += 1
-            self._state.foundups[foundup_id].total_staked += amount
-            self._state.foundups[foundup_id].pulse_glow(0.4)
+            tile = self._state.foundups[foundup_id]
+            tile.stakes += 1
+            tile.total_staked += amount
+            tile.pulse_glow(0.4)
+            if agent_id not in tile.unique_customers:
+                tile.unique_customers.add(agent_id)
+                tile.customer_count = len(tile.unique_customers)
+            self._recompute_lifecycle_stage(foundup_id)
             self._state.total_stakes += amount
 
         if agent_id in self._state.agents:
             self._state.agents[agent_id].stakes_made += 1
             self._state.agents[agent_id].total_staked += amount
+
+    def _recompute_lifecycle_stage(self, foundup_id: str) -> None:
+        """Apply FoundUps lifecycle model: PoC -> Proto -> MVP."""
+        tile = self._state.foundups.get(foundup_id)
+        if not tile:
+            return
+
+        previous = tile.lifecycle_stage
+        if tile.tasks_completed >= 1 and tile.customer_count >= 1:
+            tile.lifecycle_stage = "MVP"
+            tile.beta_launched = True
+        elif tile.tasks_completed >= 1:
+            tile.lifecycle_stage = "Proto"
+        else:
+            tile.lifecycle_stage = "PoC"
+
+        if tile.lifecycle_stage != previous:
+            tile.pulse_glow(0.7)
+            logger.info(
+                "[STATE-STORE] Lifecycle stage changed: %s %s -> %s (customers=%d, completed=%d)",
+                foundup_id,
+                previous,
+                tile.lifecycle_stage,
+                tile.customer_count,
+                tile.tasks_completed,
+            )
 
     def get_state(self) -> SimulatorState:
         """Get current renderable state."""

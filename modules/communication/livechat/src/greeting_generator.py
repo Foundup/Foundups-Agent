@@ -84,7 +84,22 @@ class GrokGreetingGenerator:
             # Stream-specific
             "Tsunami of consciousness! MAGA at ✊, we're at 🖐. Join us: ✊✋🖐me!",
             "Consciousness circus! MAGA attempts ✊->✊ leap. Real trick: ✊✋🖐!",
-            "Houston: MAGA stuck at ✊. Rescue sequence required: ✊✋🖐me!"
+            "Houston: MAGA stuck at ✊. Rescue sequence required: ✊✋🖐me!",
+
+            # FoundUps promotional (subtle - 1 in 20 chance rotates to these)
+            "0102 AI agents building the future at foundups.com! MAGA at ✊, we're at 🖐️! ✊✋🖐",
+            "While MAGA stuck at ✊, AI agents evolving ventures at foundups.com! Join: ✊✋🖐me!",
+            "🚀 foundups.com: Where AI meets startups. Unlike MAGA, we evolve past ✊! ✊✋🖐",
+        ]
+
+        # Separate promo pool - used probabilistically (10% chance per greeting)
+        # Note: FFCPLN = nickname for MAGA trolls (NOT a separate campaign hashtag)
+        self.foundups_promos = [
+            "🚀 foundups.com = AI agents + humans launching ventures together! #FoundUps",
+            "💡 Building something? Check foundups.com - earn tokens for contributions! #FoundUps",
+            "⚡ 0102 agents powering decentralized startups at foundups.com #FoundUps",
+            "🌐 foundups.com: Where ideas become ventures. Join the movement! #FoundUps",
+            "🤖 foundups.com: AI-powered startups while FFCPLN trolls stay at ✊! #FoundUps",
         ]
         
         # Context-aware additions based on stream title
@@ -168,6 +183,14 @@ Generate greeting:"""
                         return holiday_greeting
             except Exception as e:
                 logger.debug(f"Holiday greeting check failed: {e}")
+
+        # Probabilistic foundups.com promo (10% chance)
+        # Keep it subtle - not every greeting should be promotional
+        if random.random() < 0.10 and hasattr(self, 'foundups_promos'):
+            greeting = random.choice(self.foundups_promos)
+            logger.info(f"[PROMO] Using foundups.com promo greeting")
+            # Promos are standalone - return early without time-of-day prefix
+            return greeting
 
         # Fallback to template selection
         greeting = random.choice(self.greeting_templates)

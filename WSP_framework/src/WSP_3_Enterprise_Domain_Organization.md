@@ -19,12 +19,12 @@ FoundUps is the engine that builds FoundUps. This protocol ensures all modules a
 Platform functionality MUST be **distributed across domains by function**, NOT consolidated into single platform-specific domains.
 
 **[U+2705] CORRECT (Functional Distribution)**:
-- `modules/communication/livechat/` (Chat functionality)
-- `modules/platform_integration/youtube_auth/` (Authentication)
-- `modules/infrastructure/youtube_sessions/` (Session management)
+- Communication interaction block (chat behavior and transport)
+- Platform integration auth block (OAuth/API handshake)
+- Infrastructure session block (runtime/session lifecycle)
 
 **[U+274C] INCORRECT (Platform Consolidation)**:
-- `modules/youtube/` (Mixing auth, chat, and sessions in one place)
+- Single platform mega-domain that mixes auth, chat, and sessions
 
 ## 2. Directory Hierarchy (Domain -> Block -> Cube + Wardrobe)
 
@@ -63,6 +63,26 @@ The following are the official, top-level domains. Each has a specific functiona
 - **development/**: Autonomous development tools and coding environments.
 - **monitoring/**: Logging, telemetry, observability, and health tracking (WSP 91).
 - **aggregation/**: Cross-platform data aggregation and unified interface patterns.
+
+### 3.1 Domain Routing Quick Matrix (Operator)
+
+Use this as a fast routing gate before creating or moving a module:
+
+| Primary Purpose | Canonical Domain | Not This Domain |
+|---|---|---|
+| Points, XP, leveling, game loops | `modules/gamification/` | `modules/communication/` |
+| Chat moderation and rules enforcement | `modules/communication/` | `modules/gamification/` |
+| Live chat interaction and polling | `modules/communication/` | `modules/gamification/` |
+| LLM logic, reasoning, response generation | `modules/ai_intelligence/` | `modules/communication/` |
+| OAuth, API clients, external connectors | `modules/platform_integration/` | `modules/communication/` |
+
+### 3.2 Domain Decision Rule
+
+If usage context and domain conflict, route by **primary purpose**, not where it is called.
+
+- A game feature called from chat remains `gamification`.
+- Moderation trigger logic remains in communication; reward logic remains in gamification.
+- Integration transport/auth remains `platform_integration`; AI policy remains `ai_intelligence`.
 
 ## 4. Module Independence Rules
 

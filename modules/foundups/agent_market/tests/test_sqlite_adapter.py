@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
 
 from modules.foundups.agent_market.src.models import Foundup
 from modules.foundups.agent_market.src.persistence.sqlite_adapter import (
@@ -48,11 +49,8 @@ class TestSQLiteAdapterInit:
     def test_wal_mode_enabled(self, adapter):
         """Test that WAL mode is enabled."""
         with adapter.session() as sess:
-            result = sess.execute(
-                sess.bind.execute("PRAGMA journal_mode")
-            )
-            # WAL mode should be set by event listener
-            # Note: This test verifies the pragma was executed
+            mode = sess.execute(text("PRAGMA journal_mode")).scalar_one()
+            assert str(mode).lower() == "wal"
 
     def test_tables_created(self, adapter):
         """Test that all tables are created."""
@@ -71,6 +69,10 @@ class TestSQLiteAdapterInit:
             "payouts",
             "distribution_posts",
             "event_records",
+            "compute_plans",
+            "compute_wallets",
+            "compute_ledger_entries",
+            "compute_sessions",
         ]
         for table in expected_tables:
             assert table in tables, f"Table {table} not found"

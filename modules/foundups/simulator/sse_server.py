@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -39,7 +40,7 @@ import random
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, Optional
 
@@ -47,7 +48,7 @@ from typing import Any, AsyncGenerator, Dict, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 try:
-    from fastapi import FastAPI, Request
+    from fastapi import FastAPI, HTTPException, Request
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     import uvicorn
@@ -64,22 +65,145 @@ logger = logging.getLogger(__name__)
 SSE_HEARTBEAT_INTERVAL = 15  # seconds
 SSE_RECONNECT_RETRY = 3000   # ms (sent to client)
 
+_ROLE_RANK = {
+    "observer_012": 0,
+    "member": 1,
+    "agent_trader": 2,
+    "admin": 3,
+}
+
 # Event types we stream to frontend (matches SIM_EVENT_MAP in foundup-cube.js)
 STREAMABLE_EVENT_TYPES = {
+    # Foundup lifecycle
     "foundup_created",
     "task_state_changed",
-    "fi_trade_executed",
-    "investor_funding_received",
-    "mvp_subscription_accrued",
-    "mvp_bid_submitted",
-    "mvp_offering_resolved",
-    "milestone_published",
     "proof_submitted",
     "verification_recorded",
     "payout_triggered",
-    "fi_rating_updated",  # F_i rating color temperature gradient
-    "cabr_score_updated",  # CABR 3V engine score (env + soc + part)
+    "milestone_published",
+    # Market activity
+    "fi_trade_executed",
+    "order_placed",
+    "order_cancelled",
+    "order_matched",
+    "price_tick",
+    "orderbook_snapshot",
+    "portfolio_updated",
+    "investor_funding_received",
+    "mvp_subscription_accrued",
+    "subscription_allocation_refreshed",
+    "subscription_cycle_reset",
+    "mvp_bid_submitted",
+    "mvp_offering_resolved",
+    "ups_allocation_executed",
+    "ups_allocation_result",
+    "demurrage_cycle_completed",
+    "pavs_treasury_updated",
+    "treasury_separation_snapshot",
+    # Rating/scoring
+    "fi_rating_updated",      # F_i rating color temperature gradient
+    "cabr_score_updated",     # CABR 3V engine score (env + soc + part)
+    # Agent lifecycle (01(02) → 0102 → 01/02 state machine)
+    "agent_joins",            # 01(02) enters with public key
+    "agent_awakened",         # → 0102 zen state (coherence ≥ 0.618)
+    "agent_idle",             # → 01/02 decayed (inactivity)
+    "agent_ranked",           # Rank progression 1-7 (mirror of 012)
+    "agent_earned",           # F_i payout credited to wallet
+    "agent_leaves",           # Logs off with wallet balance
+    # SmartDAO escalation (WSP 100: F₀ DAE → F₁+ SmartDAO)
+    "smartdao_emergence",     # F₀ → F₁ (DAE matures to SmartDAO)
+    "tier_escalation",        # F_n → F_n+1 (tier progression)
+    "treasury_autonomy",      # Treasury autonomy activated
+    "cross_dao_funding",      # Higher tier funds lower tier
+    # State sync for DRIVEN_MODE (simulator controls animation)
+    "state_sync",             # Full state snapshot for animation sync
+    "phase_command",          # Direct phase control command
+    # Synthetic user simulation (Simile AI pattern - pre-launch market testing)
+    "synthetic_user_adopted", # Synthetic persona adopted a FoundUp
+    "synthetic_user_rejected", # Synthetic persona rejected a FoundUp
 }
+
+
+def _truthy_env(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _member_gate_config() -> Dict[str, Any]:
+    allowed_roles_raw = os.environ.get(
+        "FAM_MEMBER_ALLOWED_ROLES",
+        "observer_012,member,agent_trader,admin",
+    )
+    allowed_roles = {
+        role.strip().lower()
+        for role in allowed_roles_raw.split(",")
+        if role.strip()
+    }
+    return {
+        "enabled": _truthy_env("FAM_MEMBER_GATE_ENABLED", "0"),
+        "invite_key": os.environ.get("FAM_MEMBER_INVITE_KEY", "").strip(),
+        "allow_local_bypass": _truthy_env("FAM_MEMBER_GATE_ALLOW_LOCAL_BYPASS", "1"),
+        "protect_health": _truthy_env("FAM_MEMBER_GATE_PROTECT_HEALTH", "0"),
+        "allowed_roles": allowed_roles or set(_ROLE_RANK.keys()),
+    }
+
+
+def _request_host(request: Request) -> str:
+    client = getattr(request, "client", None)
+    return (getattr(client, "host", "") or "").lower()
+
+
+def _is_local_host(host: str) -> bool:
+    return host in {"127.0.0.1", "localhost", "::1"}
+
+
+def _normalize_role(role: str) -> str:
+    return (role or "").strip().lower()
+
+
+def _authorize_member_request(
+    request: Request,
+    required_role: str = "observer_012",
+) -> tuple[bool, str, str]:
+    """Authorize member-only endpoint access with optional local bypass.
+
+    Returns:
+        (allowed, reason, role)
+    """
+    config = _member_gate_config()
+    if not config["enabled"]:
+        return True, "gate_disabled", "observer_012"
+
+    host = _request_host(request)
+    if config["allow_local_bypass"] and _is_local_host(host):
+        return True, "local_bypass", "admin"
+
+    expected_key = config["invite_key"]
+    if not expected_key:
+        return False, "member_gate_misconfigured", ""
+
+    provided_key = (
+        request.headers.get("x-invite-key")
+        or request.query_params.get("invite_key")
+        or ""
+    ).strip()
+    if not hmac.compare_digest(provided_key, expected_key):
+        return False, "invalid_invite_key", ""
+
+    role = _normalize_role(
+        request.headers.get("x-member-role")
+        or request.query_params.get("role")
+        or "member"
+    )
+    if role not in config["allowed_roles"]:
+        return False, "role_not_allowed", role
+
+    min_role = _normalize_role(required_role)
+    role_rank = _ROLE_RANK.get(role, -1)
+    min_rank = _ROLE_RANK.get(min_role, -1)
+    if role_rank < min_rank:
+        return False, "insufficient_role", role
+
+    return True, "ok", role
 
 # ============================================================================
 # FAMDaemon Connection
@@ -148,6 +272,29 @@ class FAMEventSource:
                 f"[SSE] Event queue full, dropping event "
                 f"(total dropped: {self._dropped_event_count})"
             )
+
+    def _on_fam_event_dict(self, event_dict: Dict[str, Any]) -> None:
+        """Handle pre-formatted event dict (for state_sync from BackgroundSimulator)."""
+        event_type = event_dict.get("event_type", "")
+        if event_type not in STREAMABLE_EVENT_TYPES:
+            return
+
+        self._sequence_id += 1
+        event_data = {
+            "event_id": f"state_sync_{self._sequence_id}",
+            "sequence_id": self._sequence_id,
+            "event_type": event_type,
+            "actor_id": None,
+            "foundup_id": None,
+            "task_id": None,
+            "payload": event_dict.get("payload", {}),
+            "timestamp": event_dict.get("timestamp", datetime.now(UTC).isoformat()),
+        }
+
+        try:
+            self._event_queue.put_nowait(event_data)
+        except asyncio.QueueFull:
+            self._dropped_event_count += 1
 
     @property
     def is_connected(self) -> bool:
@@ -247,7 +394,7 @@ class SimulatedEventSource:
             "foundup_id": foundup_id,
             "task_id": f"task_{random.randint(1, 100):04d}" if "task" in event_type else None,
             "payload": payload,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def _generate_payload(
@@ -314,6 +461,8 @@ class BackgroundSimulator:
         self._model: Optional[Any] = None
         self._thread: Optional[threading.Thread] = None
         self._running = False
+        self._state_sync_interval = 10  # Emit state_sync every N ticks
+        self._tick_count = 0
 
     def start(self) -> bool:
         """Start simulator in background thread."""
@@ -359,10 +508,93 @@ class BackgroundSimulator:
         while self._running:
             try:
                 self._model.step()
+                self._tick_count += 1
+
+                # Emit state_sync periodically for DRIVEN_MODE animation
+                if self._tick_count % self._state_sync_interval == 0:
+                    self._emit_state_sync()
+
                 time.sleep(tick_interval)
             except Exception as e:
                 logger.error(f"[SIM] Error in simulation loop: {e}")
                 time.sleep(1)  # Prevent tight error loop
+
+    def _emit_state_sync(self) -> None:
+        """Emit state_sync event with full simulation state snapshot."""
+        try:
+            stats = self._model.get_stats()
+            state = self._model.get_state()
+
+            # Map lifecycle stage to animation phase
+            lifecycle_stage = stats.get("lifecycle_stage", "PoC")
+            phase = self._lifecycle_to_phase(lifecycle_stage, stats)
+
+            # Calculate filled blocks from FoundUp progress
+            total_foundups = len(state.foundups) if hasattr(state, 'foundups') else 1
+            completed_tasks = stats.get("completed_tasks", 0)
+            total_blocks = 64  # 4x4x4 cube
+
+            # Estimate filled blocks from task completion rate
+            filled_blocks = min(total_blocks, int(completed_tasks * 2))
+
+            state_sync_event = {
+                "event_type": "state_sync",
+                "payload": {
+                    "phase": phase,
+                    "tick": self._tick_count,
+                    "foundups_count": total_foundups,
+                    "agents_count": stats.get("agent_count", 0),
+                    "total_fi": stats.get("total_fi", 0),
+                    "lifecycle_stage": lifecycle_stage,
+                    "filled_blocks": filled_blocks,
+                    "total_blocks": total_blocks,
+                },
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+
+            # Queue for SSE streaming
+            if hasattr(self, '_event_source') and self._event_source:
+                self._event_source._on_fam_event_dict(state_sync_event)
+            else:
+                # Fallback: emit via FAMDaemon if available
+                try:
+                    from modules.foundups.agent_market.src.fam_daemon import get_fam_daemon
+                    daemon = get_fam_daemon()
+                    daemon.emit_custom_event("state_sync", state_sync_event["payload"])
+                except Exception:
+                    pass  # Silent fail - don't break simulation loop
+
+        except Exception as e:
+            logger.debug(f"[SIM] state_sync emission failed: {e}")
+
+    def _lifecycle_to_phase(self, lifecycle_stage: str, stats: dict) -> str:
+        """Map simulator lifecycle stage to animation phase."""
+        phase_map = {
+            "PoC": "IDEA",
+            "Proto": "BUILDING",
+            "MVP": "LAUNCH",
+            "smartDAO": "CELEBRATE",
+        }
+        base_phase = phase_map.get(lifecycle_stage, "BUILDING")
+
+        # Refine based on stats
+        if lifecycle_stage == "Proto":
+            # Check progress percentage
+            completed = stats.get("completed_tasks", 0)
+            total = stats.get("total_tasks", 1) or 1
+            progress = completed / total
+            if progress < 0.3:
+                return "SCAFFOLD"
+            elif progress < 0.8:
+                return "BUILDING"
+            else:
+                return "PROMOTING"
+
+        return base_phase
+
+    def set_event_source(self, event_source: "FAMEventSource") -> None:
+        """Set FAMEventSource for direct state_sync emission."""
+        self._event_source = event_source
 
     def stop(self) -> None:
         """Stop simulator gracefully."""
@@ -408,7 +640,10 @@ _background_sim: Optional[BackgroundSimulator] = None
 _use_simulation = False
 
 
-async def event_generator(request: Request) -> AsyncGenerator[str, None]:
+async def event_generator(
+    request: Request,
+    member_role: str = "observer_012",
+) -> AsyncGenerator[str, None]:
     """Generate SSE events for client."""
     global _fam_source, _sim_source, _use_simulation
 
@@ -422,6 +657,7 @@ async def event_generator(request: Request) -> AsyncGenerator[str, None]:
             "status": "connected",
             "mode": "simulated" if _use_simulation else "live",
             "heartbeat_interval": SSE_HEARTBEAT_INTERVAL,
+            "member_role": member_role,
         },
         sequence_id=0,
     )
@@ -458,7 +694,7 @@ async def event_generator(request: Request) -> AsyncGenerator[str, None]:
                 yield format_sse_event(
                     "heartbeat",
                     {
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                         "mode": "simulated" if _use_simulation else "live",
                     },
                     sequence_id=0,
@@ -471,7 +707,7 @@ async def event_generator(request: Request) -> AsyncGenerator[str, None]:
         logger.error(f"[SSE] Error in event generator: {e}")
         yield format_sse_event(
             "error",
-            {"error": str(e), "timestamp": datetime.utcnow().isoformat()},
+            {"error": str(e), "timestamp": datetime.now(UTC).isoformat()},
             sequence_id=0,
         )
 
@@ -492,8 +728,18 @@ def format_sse_event(event_type: str, data: Dict[str, Any], sequence_id: int) ->
 @app.get("/api/sim-events")
 async def sim_events(request: Request):
     """SSE endpoint for simulator events."""
+    allowed, reason, role = _authorize_member_request(
+        request,
+        required_role="observer_012",
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "member_access_denied", "reason": reason},
+        )
+
     return StreamingResponse(
-        event_generator(request),
+        event_generator(request, member_role=role),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -504,15 +750,27 @@ async def sim_events(request: Request):
 
 
 @app.get("/api/health")
-async def health():
+async def health(request: Request):
     """Health check endpoint."""
+    config = _member_gate_config()
+    if config["enabled"] and config["protect_health"]:
+        allowed, reason, _ = _authorize_member_request(
+            request,
+            required_role="observer_012",
+        )
+        if not allowed:
+            raise HTTPException(
+                status_code=403,
+                detail={"error": "member_access_denied", "reason": reason},
+            )
+
     return {
         "status": "healthy",
         "mode": "simulated" if _use_simulation else "live",
         "fam_connected": _fam_source.is_connected,
         "queue_size": _fam_source.queue_size,
         "dropped_events": _fam_source.dropped_event_count,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -614,6 +872,9 @@ def main() -> int:
         )
         if _background_sim.start():
             _use_simulation = False  # Force live mode - simulator is emitting events
+            # Wire simulator to FAMEventSource for state_sync emission
+            _background_sim.set_event_source(_fam_source)
+            logger.info("[SSE] Background simulator wired to FAMEventSource for state_sync")
         else:
             logger.warning("[SSE] Background simulator failed to start, falling back to simulated events")
             _background_sim = None

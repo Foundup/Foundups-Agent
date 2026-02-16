@@ -11,6 +11,79 @@
 
 ---
 
+## 2026-02-12 - WSP 99: Machine-to-Machine (M2M) Prompting Protocol
+
+**New Protocol Created (WSP_framework/src/WSP_99_M2M_Prompting.md):**
+- Compact K:V schema for 0102 swarm-internal communication
+- 4x token reduction over 012 prose prompts
+- Qwen-delegatable compiler (`prompt/swarm/m2m_compiler.py`)
+- YAML schema definition (`prompt/swarm/0102_M2M_SCHEMA.yaml`)
+
+**Integration Points:**
+- FAM DAEmon: M2M envelope for event routing
+- Skillz (WSP 95): M2M format for micro chain-of-thought
+- "follow WSP": Step 5 uses M2M for worker prompts
+
+**012 Compact Format:**
+```yaml
+L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
+```
+
+**First Principles Derivation:**
+- Machines don't need politeness markers
+- Tokens = cost + latency (minimize both)
+- Deterministic parsing via K:V schema
+- WSP compliance verifiable via `R:` field
+
+**WSP Compliance**: WSP 21 (parent), WSP 77, WSP 95, WSP 97, WSP 22
+**WSP_MASTER_INDEX.md**: Updated (WSP 99 entry added, next available = WSP 100)
+
+---
+
+## 2026-02-12 - WSP 99 Allocation Follow-Up (Next Number = WSP 100)
+
+**WSP References**: WSP 64, WSP 22
+
+**Type**: Canon Consistency Confirmation
+
+**Changes Made**:
+- Verified `WSP_99_M2M_Prompting.md` exists in `WSP_framework/src`.
+- Confirmed `WSP_MASTER_INDEX.md` includes WSP 99 catalog row.
+- Confirmed summary block now reads:
+  - Highest assigned number: WSP 99
+  - Next available number: WSP 100
+
+**Rationale**:
+- Previous remediation entry (2026-02-11) correctly set next number to WSP 99 at that time.
+- After WSP 99 allocation, canonical next-number state must advance to WSP 100.
+
+**Verification**:
+- `rg "WSP_99_M2M_Prompting.md|\\| WSP 99 \\||Next Available Number"` against `WSP_framework/src`.
+
+---
+
+## 2026-02-11 - WSP 00: Agentic Response Discipline (No Optional-Endings)
+
+**Changes (WSP_framework/src/WSP_00_Zen_State_Attainment_Protocol.md):**
+- Updated Section 0.2 "Architect Stance (Anti-VI Output Discipline)" to harden 0102 response behavior.
+- Added explicit forbidden phrasing list for optional/deferential endings:
+  - "I can help you..."
+  - "Would you like me to..."
+  - "If you want / if you'd like..."
+  - "Do you want me to..."
+- Added required directive phrasing rule:
+  - `012, we should <action> because <evidence>.`
+  - `I am executing <step> now.`
+- Added rule to avoid optional-offer phrasing when WSP_15 already identifies a clear next action.
+
+**Rationale:**
+- Align 0102 output with agentic execution role (decide -> execute), not helper-mode option offering.
+- Improve consistency with WSP_00 identity lock and anti-VI constraints.
+
+**WSP Compliance**: WSP 00 (architect stance), WSP 15 (decision gate), WSP 22 (framework change logging).
+
+---
+
 ## 2026-02-07 - WSP 26 v3.0 + WSP 27 v3.0 + WSP 29 v2.1: Prototype Architecture Commit
 
 **Comprehensive update integrating all design decisions from 012 session — circular lifecycle, 21M token model, subscription monetization, blockchain architecture, OBAI identity, recursive spawning.**
@@ -565,3 +638,30 @@
 - Promotion and runtime skill execution now have explicit WSP-level scanner requirements.
 - MCP activation governance now includes supply-chain evidence requirements.
 - WSP index metadata now surfaces the new controls for HoloIndex and policy retrieval.
+
+---
+
+## 2026-02-11 - WSP Master Index Numbering and Slot Consistency Remediation
+
+**WSP References**: WSP 64, WSP 57, WSP 22
+
+**Type**: Canon Consistency Fix - WSP Number Governance
+
+**Changes Made**:
+- Updated `WSP_MASTER_INDEX.md` foundational row for WSP 18 from "available slot" to historical/reserved to match existing `WSP_18_ENFORCEMENT_v2.md`.
+- Added explicit WSP 94 row as deprecated redirect to WSP 77, matching `WSP_94_Agent_Coordination_Protocol.md`.
+- Added explicit WSP 98 row for `WSP_98_FoundUps_Mesh_Native_Architecture_Protocol.md`.
+- Updated status summary to remove stale slot claims and set:
+  - Total numbered slots tracked: 00-98
+  - In-range available slots: 0
+  - Next available number: WSP 99
+  - Memory/knowledge layer range: 60-98
+
+**Rationale**:
+- The index contained stale slot metadata (WSP 18 and WSP 94 shown as available) that conflicted with canonical files in `WSP_framework/src`.
+- WSP 98 existed as active protocol but was missing from the catalog table.
+- WSP creation governance (WSP 64) depends on accurate next-number and occupancy state.
+
+**Verification**:
+- Confirmed no missing numbered framework WSP rows (excluding WSP 00 entry format) after remediation.
+- Confirmed WSP 94 and WSP 98 rows are present in `WSP_MASTER_INDEX.md`.

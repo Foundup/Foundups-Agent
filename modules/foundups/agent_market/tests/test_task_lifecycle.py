@@ -1,4 +1,7 @@
-﻿from modules.foundups.agent_market.src.in_memory import InMemoryAgentMarket
+import pytest
+
+from modules.foundups.agent_market.src.exceptions import ValidationError
+from modules.foundups.agent_market.src.in_memory import InMemoryAgentMarket
 from modules.foundups.agent_market.src.models import (
     Foundup,
     Proof,
@@ -6,6 +9,31 @@ from modules.foundups.agent_market.src.models import (
     TaskStatus,
     Verification,
 )
+
+
+def test_token_symbol_uniqueness_in_memory():
+    market = InMemoryAgentMarket()
+    market.create_foundup(
+        Foundup(
+            foundup_id="f_a",
+            name="alpha",
+            owner_id="owner_a",
+            token_symbol="ALPHA",
+            immutable_metadata={},
+            mutable_metadata={},
+        )
+    )
+    with pytest.raises(ValidationError):
+        market.create_foundup(
+            Foundup(
+                foundup_id="f_b",
+                name="beta",
+                owner_id="owner_b",
+                token_symbol="alpha",
+                immutable_metadata={},
+                mutable_metadata={},
+            )
+        )
 
 
 def test_task_lifecycle_open_to_paid():

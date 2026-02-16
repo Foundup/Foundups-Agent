@@ -26,6 +26,9 @@ from .src.quiz_engine import (
 # Historical facts provider
 from .src.historical_facts import HistoricalFacts, get_random_fact, get_parallel, get_warning
 
+# MAGAts economy (FFCPLN mining)
+from .src.magats_economy import MAGAtsEconomy, get_magats_economy, MAGAtBalance
+
 # Game commands system - commented out due to circular dependencies
 # from .src.game_commands import GameCommandSystem, CommandType, CommandContext
 
@@ -52,7 +55,11 @@ __all__ = [
     "HistoricalFacts",
     "get_random_fact",
     "get_parallel",
-    "get_warning"
+    "get_warning",
+    # MAGAts economy
+    "MAGAtsEconomy",
+    "get_magats_economy",
+    "MAGAtBalance"
 ]
 
 

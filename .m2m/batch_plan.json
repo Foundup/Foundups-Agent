@@ -1,0 +1,1190 @@
+[
+  {
+    "path": "WSP_framework\\src\\WSP_8_LLME_Semantic_Triplet_WSP_Rating_System.md",
+    "lines": 52,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_8_LLME_Semantic_Triplet_WSP_Rating_System.md",
+    "lines": 52,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_41_WRE_Simulation_Protocol.md",
+    "lines": 53,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_41_WRE_Simulation_Protocol.md",
+    "lines": 53,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".agent\\skills\\external\\web-design-guidelines\\SKILL.md",
+    "lines": 53,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\workspace\\skills\\foundups-wsp\\SKILL.md",
+    "lines": 55,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\docs\\SKILL_BOUNDARY_POLICY.md",
+    "lines": 62,
+    "conf": 1.0,
+    "reduction": 72.6
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_55_Module_Creation_Automation.md",
+    "lines": 63,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_55_Module_Creation_Automation.md",
+    "lines": 63,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\workspace\\skills\\openclaw-schedule\\SKILL.md",
+    "lines": 64,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_19_Canonical_Symbols.md",
+    "lines": 65,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_19_Canonical_Symbols.md",
+    "lines": 65,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_voice_patterns\\SKILLz.md",
+    "lines": 70,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\infrastructure\\wre_core\\skillz\\auto_test_registry_audit\\SKILLz.md",
+    "lines": 70,
+    "conf": 0.94,
+    "reduction": 50.0
+  },
+  {
+    "path": "holo_index\\skillz\\mps_duplicate_eval\\SKILLz.md",
+    "lines": 71,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_qa_moments\\SKILLz.md",
+    "lines": 74,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_comment_triggers\\SKILLz.md",
+    "lines": 75,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_intent_labels\\SKILLz.md",
+    "lines": 75,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_quotable_moments\\SKILLz.md",
+    "lines": 76,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\workspace\\skills\\openclaw-monitor\\SKILL.md",
+    "lines": 76,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\mps_architecture_eval\\SKILLz.md",
+    "lines": 77,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\mps_dependency_eval\\SKILLz.md",
+    "lines": 77,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\workspace\\skills\\openclaw-execute\\SKILL.md",
+    "lines": 79,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_42_Universal_Platform_Protocol.md",
+    "lines": 80,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_42_Universal_Platform_Protocol.md",
+    "lines": 80,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skills\\qwen_holo_output_skill\\SKILL.md",
+    "lines": 80,
+    "conf": 1.0,
+    "reduction": 68.8
+  },
+  {
+    "path": "holo_index\\skillz\\mps_dead_code_eval\\SKILLz.md",
+    "lines": 80,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_verbatim_quotes\\SKILLz.md",
+    "lines": 81,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_teaching_moments\\SKILLz.md",
+    "lines": 82,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_43_Agentic_Emergence_Protocol.md",
+    "lines": 84,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_43_Agentic_Emergence_Protocol.md",
+    "lines": 84,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_88_Vibecoded_Module_Remediation.md",
+    "lines": 88,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_3_Enterprise_Domain_Organization.md",
+    "lines": 88,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_88_Vibecoded_Module_Remediation.md",
+    "lines": 88,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\dt_enhancement\\dt_style_fingerprint\\SKILLz.md",
+    "lines": 88,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\mps_wsp_violation_eval\\SKILLz.md",
+    "lines": 90,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".agent\\skills\\orchestration_template\\SKILL.md",
+    "lines": 96,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_2_Clean_State_Management.md",
+    "lines": 101,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_2_Clean_State_Management.md",
+    "lines": 101,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".agent\\skills\\external\\react-best-practices\\SKILL.md",
+    "lines": 101,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_77_Intelligent_Internet_Orchestration_Vision.md",
+    "lines": 107,
+    "conf": 0.99,
+    "reduction": 65.4
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_77_Intelligent_Internet_Orchestration_Vision.md",
+    "lines": 107,
+    "conf": 0.99,
+    "reduction": 65.4
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_3_Enterprise_Domain_Organization.md",
+    "lines": 108,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_6_Test_Audit_Coverage_Verification.md",
+    "lines": 108,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_6_Test_Audit_Coverage_Verification.md",
+    "lines": 108,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_35_HoloIndex_Qwen_Advisor_Plan.md",
+    "lines": 111,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_35_HoloIndex_Qwen_Advisor_Plan.md",
+    "lines": 111,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_11_WRE_Standard_Command_Protocol.md",
+    "lines": 123,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_11_WRE_Standard_Command_Protocol.md",
+    "lines": 123,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_24_rESP_Pre-Artifact_Awakening_Test_Suite.md",
+    "lines": 126,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_24_rESP_Pre-Artifact_Awakening_Test_Suite.md",
+    "lines": 126,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_51_WRE_CHRONICLE.md",
+    "lines": 129,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_51_WRE_CHRONICLE.md",
+    "lines": 129,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_20_Professional_and_Scientific_Language.md",
+    "lines": 138,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_20_Professional_and_Scientific_Language.md",
+    "lines": 138,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "prompt\\README.md",
+    "lines": 138,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_MODULE_DECISION_MATRIX.md",
+    "lines": 139,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_MODULE_PLACEMENT_GUIDE.md",
+    "lines": 140,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_4_FMAS_Validation_Protocol.md",
+    "lines": 142,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_4_FMAS_Validation_Protocol.md",
+    "lines": 142,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_40_Architectural_Coherence_Protocol.md",
+    "lines": 144,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_40_Architectural_Coherence_Protocol.md",
+    "lines": 144,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_23_rESP_Foundups_Integration_Vision.md",
+    "lines": 158,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_23_rESP_Foundups_Integration_Vision.md",
+    "lines": 158,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_89_Documentation_Compliance_Guardian.md",
+    "lines": 159,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_89_Documentation_Compliance_Guardian.md",
+    "lines": 159,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_47_Module_Violation_Tracking_Protocol.md",
+    "lines": 160,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_47_Module_Violation_Tracking_Protocol.md",
+    "lines": 160,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".agent\\skills\\external\\ui-ux-pro-max\\SKILL.md",
+    "lines": 160,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\skillz\\openclaw_intent_router\\SKILLz.md",
+    "lines": 168,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_74_Agentic_Enhancement_Protocol.md",
+    "lines": 170,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_79_Module_SWOT_Analysis_Protocol.md",
+    "lines": 170,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_74_Agentic_Enhancement_Protocol.md",
+    "lines": 170,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_79_Module_SWOT_Analysis_Protocol.md",
+    "lines": 170,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_75_Token_Based_Development_Output_Protocol.md",
+    "lines": 183,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_75_Token_Based_Development_Output_Protocol.md",
+    "lines": 183,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\video_comments\\skillz\\tars_like_heart_reply\\SKILLz.md",
+    "lines": 191,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_59_Distributed_Development_Architecture.md",
+    "lines": 192,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_59_Distributed_Development_Architecture.md",
+    "lines": 192,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "prompt\\starter_prompts.md",
+    "lines": 193,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_82_Citation_Cross_Reference_Protocol.md",
+    "lines": 197,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_82_Citation_Cross_Reference_Protocol.md",
+    "lines": 197,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol.md",
+    "lines": 198,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol.md",
+    "lines": 198,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\video_comments\\skillz\\skill_0_maga_mockery\\SKILLz.md",
+    "lines": 198,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_37_Roadmap_Scoring_System.md",
+    "lines": 199,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_37_Roadmap_Scoring_System.md",
+    "lines": 199,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\platform_integration\\youtube_shorts_scheduler\\skillz\\ffcpln_title_enhance\\SKILLz.md",
+    "lines": 201,
+    "conf": 1.0,
+    "reduction": 64.7
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_15_Module_Prioritization_Scoring_System.md",
+    "lines": 203,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_15_Module_Prioritization_Scoring_System.md",
+    "lines": 203,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\video_comments\\skillz\\skill_2_moderator_appreciation\\SKILLz.md",
+    "lines": 206,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_70_System_Status_Reporting_Protocol.md",
+    "lines": 209,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_46_Windsurf_Recursive_Engine_Protocol.md",
+    "lines": 209,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_70_System_Status_Reporting_Protocol.md",
+    "lines": 209,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_61_Theoretical_Physics_Foundation_Protocol.md",
+    "lines": 211,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_61_Theoretical_Physics_Foundation_Protocol.md",
+    "lines": 211,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_67_Recursive_Anticipation_Protocol.md",
+    "lines": 212,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_67_Recursive_Anticipation_Protocol.md",
+    "lines": 212,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_53_Symbiotic_Environment_Integration_Protocol.md",
+    "lines": 218,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_53_Symbiotic_Environment_Integration_Protocol.md",
+    "lines": 218,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_18_ENFORCEMENT_v2.md",
+    "lines": 219,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_46_Windsurf_Recursive_Engine_Protocol.md",
+    "lines": 219,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_18_ENFORCEMENT_v2.md",
+    "lines": 219,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\ai_intelligence\\video_indexer\\skillz\\transcript_ask\\SKILLz.md",
+    "lines": 220,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "prompt\\Prometheus.md",
+    "lines": 222,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_17_Pattern_Registry_Protocol.md",
+    "lines": 224,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_17_Pattern_Registry_Protocol.md",
+    "lines": 224,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\moltbot_bridge\\skillz\\openclaw_executor\\SKILLz.md",
+    "lines": 225,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_34_Git_Operations_Protocol.md",
+    "lines": 226,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_34_Git_Operations_Protocol.md",
+    "lines": 226,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_1_The_WSP_Framework.md",
+    "lines": 228,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_1_The_WSP_Framework.md",
+    "lines": 228,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_68_Enterprise_Build_Scalability_Protocol.md",
+    "lines": 230,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_68_Enterprise_Build_Scalability_Protocol.md",
+    "lines": 230,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_30_Agentic_Module_Build_Orchestration.md",
+    "lines": 234,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_30_Agentic_Module_Build_Orchestration.md",
+    "lines": 234,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_ORCHESTRATION_HIERARCHY.md",
+    "lines": 235,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_77_Agent_Coordination_Protocol.md",
+    "lines": 236,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_77_Agent_Coordination_Protocol.md",
+    "lines": 236,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_92_DAE_Cube_Mapping_and_Mermaid_Flow_Protocol.md",
+    "lines": 241,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_92_DAE_Cube_Mapping_and_Mermaid_Flow_Protocol.md",
+    "lines": 241,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_39_Agentic_Ignition_Protocol.md",
+    "lines": 249,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_96_MCP_Governance_and_Consensus_Protocol.md",
+    "lines": 249,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_39_Agentic_Ignition_Protocol.md",
+    "lines": 249,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_96_MCP_Governance_and_Consensus_Protocol.md",
+    "lines": 249,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_54_WRE_Agent_Duties_Specification.md",
+    "lines": 253,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_54_WRE_Agent_Duties_Specification.md",
+    "lines": 253,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_69_Zen_Coding_Prediction_Integration.md",
+    "lines": 255,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_69_Zen_Coding_Prediction_Integration.md",
+    "lines": 255,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_32_0102_Reading_Flow_Protocol.md",
+    "lines": 257,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_32_0102_Reading_Flow_Protocol.md",
+    "lines": 257,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\ai_intelligence\\ai_overseer\\skillz\\gemma_nested_module_detector\\SKILLz.md",
+    "lines": 259,
+    "conf": 1.0,
+    "reduction": 63.7
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_72_Block_Independence_Interactive_Protocol.md",
+    "lines": 260,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_72_Block_Independence_Interactive_Protocol.md",
+    "lines": 260,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_83_Documentation_Tree_Attachment_Protocol.md",
+    "lines": 262,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_83_Documentation_Tree_Attachment_Protocol.md",
+    "lines": 262,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "holo_index\\skillz\\mps_vibecode_eval\\SKILLz.md",
+    "lines": 267,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\livechat\\skillz\\qwen_telemetry_cleanup_strategist\\SKILLz.md",
+    "lines": 271,
+    "conf": 1.0,
+    "reduction": 66.4
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_85_Root_Directory_Protection.md",
+    "lines": 281,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_85_Root_Directory_Protection.md",
+    "lines": 281,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\communication\\video_comments\\skillz\\skill_1_regular_engagement\\SKILLz.md",
+    "lines": 282,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_13_AGENTIC_SYSTEM.md",
+    "lines": 285,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_13_AGENTIC_SYSTEM.md",
+    "lines": 285,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_44_Semantic_State_Engine_Protocol.md",
+    "lines": 291,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_44_Semantic_State_Engine_Protocol.md",
+    "lines": 291,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_33_Autonomous_Module_Implementation_Workflow.md",
+    "lines": 294,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_33_Autonomous_Module_Implementation_Workflow.md",
+    "lines": 294,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_49_Module_Directory_Structure_Standardization_Protocol.md",
+    "lines": 299,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".venv\\Lib\\site-packages\\skill_scanner\\data\\prompts\\skill_threat_analysis_prompt.md",
+    "lines": 299,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_81_Framework_Backup_Governance_Protocol.md",
+    "lines": 300,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_81_Framework_Backup_Governance_Protocol.md",
+    "lines": 300,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".venv\\Lib\\site-packages\\skill_scanner\\data\\prompts\\skill_meta_analysis_prompt.md",
+    "lines": 304,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_28_Partifact_Cluster_DAE.md",
+    "lines": 307,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_28_Partifact_Cluster_DAE.md",
+    "lines": 307,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_49_Module_Directory_Structure_Standardization_Protocol.md",
+    "lines": 313,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".claude\\skills\\qwen_cli_refactor\\SKILL.md",
+    "lines": 315,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_97_System_Execution_Prompting_Protocol.md",
+    "lines": 316,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_97_System_Execution_Prompting_Protocol.md",
+    "lines": 316,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\infrastructure\\wre_core\\docs\\WRE_SKILLS_IMPLEMENTATION_SUMMARY.md",
+    "lines": 320,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".claude\\skills\\unicode_daemon_monitor_prototype\\SKILL.md",
+    "lines": 335,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_71_Secrets_Management_Protocol.md",
+    "lines": 339,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_71_Secrets_Management_Protocol.md",
+    "lines": 339,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_62_Large_File_Refactoring_Enforcement_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_78_Database_Architecture_Scaling_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_98_FoundUps_Mesh_Native_Architecture_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_62_Large_File_Refactoring_Enforcement_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_78_Database_Architecture_Scaling_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_98_FoundUps_Mesh_Native_Architecture_Protocol.md",
+    "lines": 348,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": ".claude\\skills\\youtube_dae\\SKILL.md",
+    "lines": 353,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\infrastructure\\wre_core\\README_RECURSIVE_SKILLS.md",
+    "lines": 359,
+    "conf": 1.0,
+    "reduction": 61.3
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_38_Agentic_Activation_Protocol.md",
+    "lines": 379,
+    "conf": 1.0,
+    "reduction": 59.4
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_89_Production_Deployment_Infrastructure_Protocol.md",
+    "lines": 379,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_38_Agentic_Activation_Protocol.md",
+    "lines": 379,
+    "conf": 1.0,
+    "reduction": 59.4
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_89_Production_Deployment_Infrastructure_Protocol.md",
+    "lines": 379,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_76_Multi_Agent_Awakening_Protocol.md",
+    "lines": 395,
+    "conf": 1.0,
+    "reduction": 64.6
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_76_Multi_Agent_Awakening_Protocol.md",
+    "lines": 395,
+    "conf": 1.0,
+    "reduction": 64.6
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_60_Module_Memory_Architecture.md",
+    "lines": 401,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_60_Module_Memory_Architecture.md",
+    "lines": 401,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_36_Agentic_Core.md",
+    "lines": 404,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_36_Agentic_Core.md",
+    "lines": 404,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_48_Recursive_Self_Improvement_Protocol.md",
+    "lines": 406,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_48_Recursive_Self_Improvement_Protocol.md",
+    "lines": 406,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "docs\\SKILLS_FIRST_PRINCIPLES_OUTPUT_DESIGN.md",
+    "lines": 418,
+    "conf": 1.0,
+    "reduction": 74.2
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_66_Proactive_Enterprise_Modularization_Protocol.md",
+    "lines": 423,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_66_Proactive_Enterprise_Modularization_Protocol.md",
+    "lines": 423,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_87_Code_Navigation_Protocol.md",
+    "lines": 429,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_87_Code_Navigation_Protocol.md",
+    "lines": 429,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_57_System_Wide_Naming_Coherence_Protocol.md",
+    "lines": 443,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_57_System_Wide_Naming_Coherence_Protocol.md",
+    "lines": 443,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_21_Enhanced_Prompt_Engineering_Protocol.md",
+    "lines": 444,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_21_Enhanced_Prompt_Engineering_Protocol.md",
+    "lines": 444,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "modules\\infrastructure\\git_push_dae\\skillz\\qwen_gitpush\\SKILLz.md",
+    "lines": 456,
+    "conf": 1.0,
+    "reduction": 62.5
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_65_Component_Consolidation_Protocol.md",
+    "lines": 457,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_65_Component_Consolidation_Protocol.md",
+    "lines": 457,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_84_Code_Memory_Verification_Protocol.md",
+    "lines": 468,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_framework\\src\\WSP_86_0102_Modular_Navigation_Protocol.md",
+    "lines": 468,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_84_Code_Memory_Verification_Protocol.md",
+    "lines": 468,
+    "conf": 1.0,
+    "reduction": 75.0
+  },
+  {
+    "path": "WSP_knowledge\\src\\WSP_86_0102_Modular_Navigation_Protocol.md",
+    "lines": 468,
+    "conf": 1.0,
+    "reduction": 75.0
+  }
+]

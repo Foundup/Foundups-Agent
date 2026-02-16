@@ -1,0 +1,11 @@
+{
+  "params": {
+    "num_founder_agents": 8,
+    "num_user_agents": 80,
+    "tick_rate_hz": 4.0,
+    "max_ticks": 5000,
+    "seed": 1337,
+    "agent_action_probability": 0.55,
+    "agent_cooldown_ticks": 2
+  }
+}

@@ -1,5 +1,92 @@
 # HoloIndex Package ModLog
 
+## [2026-02-12] 012 Scratchpad Ingest Auto-Path Hardening
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 60 (Memory)  
+**Status**: [OK] COMPLETE
+
+### Context
+`012.txt` is used as a local ignored scratchpad for session posting/training. Ingest path resolution could miss this file due repo-root drift and rigid source defaults.
+
+### Actions
+- `holo_index/adaptive_learning/ingest_012_corpus.py`:
+  - Added deterministic source resolver `resolve_source_path(...)`.
+  - Added fallback order for `--source auto`:
+    1) `012.txt`
+    2) `holo_index/data/012.txt`
+    3) `docs/012_moshpit/012.txt`
+  - Fixed repo root resolution to `parents[2]` (actual repo root for this script path).
+  - Updated CLI default from `--source 012.txt` to `--source auto`.
+- Added tests:
+  - `holo_index/tests/test_ingest_012_corpus.py`
+
+### Result
+- 012 scratchpad ingest now resolves automatically from ignored local corpus paths.
+- Verified ingest run completed and rewrote memory artifacts from `holo_index/data/012.txt`.
+
+---
+
+## [2026-02-11] WSP Framework Drift Added to Holo Health Checks
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Operational Health)  
+**Status**: [OK] COMPLETE
+
+### Context
+Holo health routines (`--health-check`, `--system-check`) did not include the framework-vs-knowledge WSP drift audit already available in AI Overseer sentinel.
+
+### Actions
+- `holo_index/reports/holo_system_check.py`:
+  - Added `_collect_wsp_framework_health(repo_root)` integration with `WSPFrameworkSentinel`.
+  - Included `wsp_framework_health` payload in `run_system_check(...)`.
+  - Extended report output with a dedicated `WSP Framework Health` section.
+- `holo_index/cli.py`:
+  - `--health-check` now prints WSP framework drift summary line.
+  - `--system-check` now prints WSP framework drift summary line.
+- Added tests:
+  - `holo_index/tests/test_holo_system_check.py`
+
+### Result
+- 0102 health checks now include framework/knowledge drift visibility.
+- Report output includes sentinel severity, drift count, and framework/knowledge counts.
+
+---
+
+## [2026-02-11] Web Asset Semantic Indexing for Public UI Retrieval
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Reliability), WSP 50 (Memory Discoverability)  
+**Status**: [OK] COMPLETE
+
+### Context
+`public` UI artifacts (including `public/js/foundup-cube.js`) were not consistently discoverable via Holo semantic retrieval. Exact-match fallback could miss ignored paths.
+
+### Actions
+- `holo_index/core/holo_index.py`:
+  - Extended `index_code_entries()` to include web assets alongside `NAVIGATION.py` entries.
+  - Added `_resolve_web_index_roots()` and `_collect_web_asset_entries()` for controlled public-asset ingestion.
+  - Added keyword metadata scoring support in `_search_collection()` and `_lexical_search_collection()`.
+  - Added env controls:
+    - `HOLO_INDEX_WEB`
+    - `HOLO_WEB_INDEX_ROOTS`
+    - `HOLO_WEB_INDEX_EXTENSIONS`
+    - `HOLO_WEB_INDEX_MAX_FILES`
+    - `HOLO_WEB_INDEX_MAX_CHARS`
+- `holo_index/tests/test_web_asset_indexing.py`:
+  - New unit tests for web asset collection, disable toggle, and merged code+web indexing path.
+- Documentation updates:
+  - `holo_index/README.md`
+  - `holo_index/tests/README.md`
+
+### Result
+- `--index-code` now stores `public` web assets in code memory as `web_asset` entries.
+- Post-index search verifies retrieval:
+  - `python holo_index.py --search "public/js/foundup-cube.js" --fast-search`
+  - `python holo_index.py --search "planning promoting FoundUP cube" --fast-search`
+
+---
+
 ## [2026-02-08] Windows Subprocess Decode Hardening + Cache Verification
 
 **Agent**: 0102  

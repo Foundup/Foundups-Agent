@@ -133,6 +133,7 @@ When 0102 runs a search, HoloDAE executes current features (health checks, vibec
 - **Ghost Hit Filtering**: Similarity threshold (`HOLO_MIN_SIMILARITY=0.35`) eliminates low-relevance results near vector centroid
 - **Robust Deduplication**: Path normalization (Windows/Unix, absolute/relative) prevents duplicate hits
 - **Batched Symbol Indexing**: ChromaDB writes chunked at 5000 entries to prevent overflow on large codebases
+- **Web Asset Indexing**: `public` HTML/JS/CSS assets are indexed into code memory for UI retrieval
 - **Quiet by Default**: Chain-of-thought and health OK messages suppressed; enable with `HOLO_VERBOSE=1`
 
 ### Search Quality Tuning (Env Vars)
@@ -143,6 +144,11 @@ When 0102 runs a search, HoloDAE executes current features (health checks, vibec
 | `HOLO_OUTPUT_HISTORY_MODE` | `verbose` | Controls history logging: `verbose`, `errors`, `signals`. |
 | `HOLO_OUTPUT_HISTORY_MAX_MB` | `10` | Max size for output history log rotation. |
 | `HOLO_SYMBOL_AUTO` | `1` | Auto-index symbols during `--index-code`. Set `0` to skip. |
+| `HOLO_INDEX_WEB` | `1` | Include web assets in code index during `--index-code`. |
+| `HOLO_WEB_INDEX_ROOTS` | `public` | Semicolon-separated roots for web indexing (relative or absolute). |
+| `HOLO_WEB_INDEX_EXTENSIONS` | `.html;.js;.mjs;.cjs;.css` | File extensions indexed as web assets. |
+| `HOLO_WEB_INDEX_MAX_FILES` | `300` | Max web files indexed per refresh. |
+| `HOLO_WEB_INDEX_MAX_CHARS` | `5000` | Max normalized content chars embedded per web file. |
 
 ### [MEMORY] Retrieval Contract (0102 System)
 HoloIndex is the memory retrieval system. It must be self-maintaining and semantic-first.

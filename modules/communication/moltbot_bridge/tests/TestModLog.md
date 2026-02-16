@@ -1,5 +1,29 @@
 # TestModLog - tests
 
+## 2026-02-16: Cross-module concatenated validation (identity-anchor hardening)
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+- Status: PASS
+- Result: `335 passed, 2 warnings`
+- Notes:
+  - Confirms OpenClaw conversation identity-anchor normalization resolves
+    nondeterministic conversation assertions in end-to-end tests.
+  - Includes SSE member-gate + DEX stream contract + symbol guardrail lanes.
+  - Warnings are repo-level pytest config warnings (`asyncio_*`) under plugin-autoload-disabled mode.
+
+---
+
+## 2026-02-16: Cross-module concatenated validation
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+- Status: PASS
+- Result: `321 passed, 2 warnings`
+- Notes:
+  - Confirms FAM adapter and Moltbook adapter compatibility updates did not regress OpenClaw test coverage.
+  - Warnings are repo-level pytest config warnings (`asyncio_*`) under plugin-autoload-disabled mode.
+
+---
+
 ## 2026-02-08: Hardening Tranche - 72 tests passing
 
 - Command: `.\modules\communication\moltbot_bridge\tests\run_tests.ps1`

@@ -406,6 +406,49 @@ class BTCBackingCapacity:
         # Freed capacity is now available for new minting
 ```
 
+### 4.4.1 UP$ Floating Value Model
+
+**UP$ value floats with BTC price — it is NOT USD-pegged.** This is a fundamental design choice that eliminates the need for artificial circuit breakers.
+
+```python
+@property
+def ups_value_usd(self) -> float:
+    """UP$ value = (BTC Reserve × BTC Price) / UP$ Supply"""
+    return (self.total_btc * self.btc_usd_price) / self.total_ups_minted
+
+@property
+def ups_value_btc(self) -> float:
+    """UP$ value in BTC = Reserve / Supply"""
+    return self.total_btc / self.total_ups_minted
+```
+
+**Why floating, not pegged:**
+
+| Property | USD-Pegged (rejected) | BTC-Floating (implemented) |
+|----------|----------------------|---------------------------|
+| BTC drops 50% | Backing ratio drops to 50% → crisis | UP$ value drops 50% → natural adjustment |
+| Circuit breaker needed | YES - must pause exits | NO - system self-regulates |
+| Death spiral risk | HIGH (Terra-style) | LOW (value adjusts organically) |
+| User expectation | "1 UP$ = $1" → broken promise | "UP$ = f(BTC)" → clear model |
+
+**The Natural Contraction/Expansion:**
+
+```
+BTC pumps 2x:
+  → Reserve USD value doubles
+  → UP$ value doubles (more purchasing power)
+  → More agent work can be funded
+  → Ecosystem expands naturally
+
+BTC dumps 50%:
+  → Reserve USD value halves
+  → UP$ value halves (less purchasing power)
+  → Less agent work funded (natural throttle)
+  → No panic, no circuit breaker needed
+```
+
+**Genesis Rate**: At system start, 1 BTC = 100,000 UP$ (genesis rate). After genesis, UP$ value floats based on reserve/supply ratio. The backing ratio is always 100% by definition — UP$ value adjusts to match.
+
 ### 4.5 0102 Agent-as-Wallet-Manager
 
 012 humans never directly touch private keys. Their 0102 digital twin manages everything on their behalf — this adds an encryption and security layer on top of the MPC wallet infrastructure.
@@ -475,7 +518,7 @@ Agents earn UPS (CABR-validated task completion)
 
 **Key insight**: Every transaction grows the BTC reserve. BTC is the gold that ONLY enters, never exits. The fees are how BTC accumulates. As UPS decays, it frees BTC backing capacity. As fees accumulate, total BTC grows. The reserve is monotonically increasing — this is what makes the system anti-fragile.
 
-### 4.7 Token Release by FoundUp Tier
+### 4.7 Token Release by Adoption Curve (Diffusion of Innovation)
 
 ### 4.7.1 The 21M Token Model: Every FoundUp Is Its Own Bitcoin
 
@@ -483,49 +526,105 @@ Each FoundUp has a fixed total supply of **21,000,000 tokens** — mirroring Bit
 
 Tokens are divisible to 8 decimal places (like satoshis), enabling micro-staking. The smallest unit is 0.00000001 FoundUp tokens.
 
-Tokens are NOT all released at creation — they unlock as the FoundUp progresses through tiers (WSP 27 Section 11). **FoundUps run out of tokens until they achieve the next tier.**
+**Tokens unlock based on the ADOPTION CURVE (S-curve), not discrete tiers.** The diffusion of innovation follows a logistic sigmoid - this is pure mathematics, not artificial boundaries.
 
-| Tier | Cumulative Release | Tokens Available | Unlock Event |
-|------|-------------------|------------------|--------------|
-| 7 (Genesis) | 0% | 0 | FoundUp registered, no tokens yet |
-| 6 (Seeded) | 5% | 1,050,000 | First agents join, first tasks created |
-| 5 (Active) | 10% | 2,100,000 | CABR above minimum, agent swarm forming |
-| 4 (Growing) | 20% | 4,200,000 | Significant community, regular completion |
-| 3 (Established) | 35% | 7,350,000 | Sustained CABR, milestones completed |
-| 2 (Thriving) | 55% | 11,550,000 | Revenue generating, proven benefit |
-| 1 (Sovereign) | 100% | 21,000,000 | Self-sustaining, full ecosystem citizen |
+```
+tokens_released = 21,000,000 × sigmoid(adoption_score)
 
-**Scarcity drives value**: At Tier 6 (Seeded), only 1,050,000 tokens exist. When they're all distributed through staking and task rewards, the FoundUp has **nothing left to give** until it progresses to Tier 5 (unlocking another 1,050,000). This creates natural growth pressure — the FoundUp MUST prove beneficial impact to unlock more tokens.
+Where sigmoid(x) = 1 / (1 + e^(-k(x - 0.5)))
+```
 
-**Early believers get scarce tokens**: Someone staking when there's only 1M tokens in existence holds a fundamentally different position than someone staking when 11.5M exist. Adoption curve economics — innovators take more risk, earn scarcer tokens.
+| Adoption % | Release % | Tokens Available | Phase |
+|------------|-----------|------------------|-------|
+| 0% | 0.00% | 0 | Genesis - no tokens yet |
+| 10% | 0.57% | 120,000 | Innovators discovering |
+| 25% | 4.52% | 949,000 | Early adopters committing |
+| 50% | 50.00% | 10,500,000 | **Inflection point** - mainstream adoption |
+| 75% | 95.48% | 20,050,000 | Late majority joining |
+| 100% | 100.00% | 21,000,000 | Full ecosystem saturation |
+
+**The S-curve naturally produces:**
+- **Slow start** (innovators/early adopters) - scarce tokens, high risk/reward
+- **Rapid growth** (early/late majority) - steepest part of curve
+- **Saturation** (laggards) - most tokens released, stable state
+
+**Scarcity is continuous, not stepped**: The curve has no artificial "tier jumps". Token release follows the natural mathematics of adoption. This prevents gaming tier boundaries.
+
+**Early believers get scarce tokens**: At 10% adoption, only ~120K tokens are released. At 50%, 10.5M are available. The adoption curve IS the scarcity mechanism.
 
 ```python
+import math
+
 FOUNDUP_TOTAL_SUPPLY = 21_000_000  # Every FoundUp is its own Bitcoin
 
+def sigmoid(x: float, k: float = 12.0, x0: float = 0.5) -> float:
+    """Logistic S-curve for adoption."""
+    return 1.0 / (1.0 + math.exp(-k * (x - x0)))
+
+def adoption_curve(adoption_score: float) -> float:
+    """Token release percentage based on adoption (0-1)."""
+    raw = sigmoid(adoption_score)
+    # Normalize so 0 maps to 0 and 1 maps to 1
+    min_val = sigmoid(0.0)
+    max_val = sigmoid(1.0)
+    return (raw - min_val) / (max_val - min_val)
+
 def get_available_token_supply(foundup_id: str) -> int:
-    """Tokens available = 21M × tier release percentage."""
-    tier = tier_calculator.calculate_tier(foundup_id)
-    release_pct = {7: 0.0, 6: 0.05, 5: 0.10, 4: 0.20, 3: 0.35, 2: 0.55, 1: 1.0}
-    return int(FOUNDUP_TOTAL_SUPPLY * release_pct[tier])
+    """Tokens available = 21M × adoption_curve(adoption_score)."""
+    adoption = calculate_adoption_score(foundup_id)  # From users, revenue, work
+    return int(FOUNDUP_TOTAL_SUPPLY * adoption_curve(adoption))
 ```
+
+**Adoption score is derived from multiple factors:**
+- User count (network effects)
+- Revenue generated (market validation)
+- Work completed by 0102 agents (actual output)
+- Milestones achieved (growth markers)
 
 ### 4.8 The Ubiquitous Gateway: Everything Becomes BTC
 
 **FoundUps is ubiquitous** — any token, any currency can flow INTO the FoundUps ecosystem. But inside the system, everything becomes Bitcoin. The holder receives FoundUp tokens as their stake receipt.
 
 ```
-ETH, SOL, USD, EUR, USDC, any token
+BTC, ETH, SOL, USDC, USDT, UP$, any crypto
   → flows into FoundUps ecosystem
-    → converted to BTC at market rate (via DEX/exchange integration)
+    → converted to BTC at market rate
       → BTC deposited into FoundUp's micro-wallet (Section 4.2)
         → staker receives FoundUp tokens proportional to BTC value
-          → FoundUp tokens can be cashed out to UPS (costly — Section 3.7)
-            → UPS decays unless re-staked into another FoundUp
+
+Special case: UP$ subscription payment
+  → UP$ is BURNED (reduces supply)
+    → Backing ratio IMPROVES (same BTC, less UP$)
+      → This strengthens the currency for everyone
 ```
 
-**The BTC Accumulation Machine**: FoundUps doesn't care what currency enters. It exits as BTC in the distributed reserve. This makes FoundUps a universal on-ramp to the Bitcoin standard.
+**The BTC Accumulation Machine**: FoundUps doesn't care what currency enters. It converts to BTC in the distributed reserve. This makes FoundUps a universal on-ramp to the Bitcoin standard.
 
-**Implementation**: MVP accepts BTC directly. Prototype adds stablecoin (USDC/USDT) gateway. Production adds multi-token swap via DEX aggregation.
+**UP$ Payment is Deflationary**: When someone pays their subscription in UP$, that UP$ gets burned. The BTC reserve stays the same, but UP$ supply decreases. This increases the value of all remaining UP$ - a deflationary mechanism that rewards long-term holders.
+
+```python
+class PaymentCrypto(Enum):
+    """Supported cryptocurrencies for subscription payments."""
+    BTC = "btc"   # Direct to reserve
+    ETH = "eth"   # Convert to BTC
+    SOL = "sol"   # Convert to BTC
+    USDC = "usdc" # Convert to BTC
+    USDT = "usdt" # Convert to BTC
+    UPS = "ups"   # BURNED - reduces supply
+
+def receive_crypto_subscription(crypto: PaymentCrypto, amount: float):
+    """Accept subscription payment in any crypto."""
+    if crypto == PaymentCrypto.UPS:
+        # Special case: burn UP$, improve backing ratio
+        burn_ups(amount)
+        return
+
+    # Convert to BTC at current rate
+    btc_amount = convert_to_btc(crypto, amount)
+    add_to_reserve(btc_amount)
+```
+
+**Implementation**: MVP accepts BTC and stablecoins. Production adds multi-token swap and UP$ burn option.
 
 ### 4.9 Subscription Tiers: Freemium → Premium Revenue Model
 
@@ -534,6 +633,8 @@ Participants receive UPS from two streams:
 - **Allocated UPS**: From subscription tier (investment capital — monthly allocation)
 
 Both streams decay equally. Both can be staked. Earned UPS comes from contribution. Allocated UPS comes from subscription. Together they create a dual-incentive model: build AND invest.
+
+**Pay with ANY crypto**: Subscriptions accept BTC, ETH, SOL, USDC, USDT, or UP$ (Section 4.8). All crypto converts to BTC in the reserve. Paying with UP$ burns the UP$, strengthening the currency.
 
 **The Subscription Mechanic**: Free participants receive a base UPS allocation. It runs out. When they find FoundUps they want to stake more into, they subscribe for higher allocation + faster regeneration. Subscription revenue flows directly into the BTC reserve — making the currency they're subscribing for stronger.
 
@@ -750,13 +851,18 @@ Type (0/1/2) × Activity (0/1/2) = 9 earning levels:
 ```
 Total Token Pool: 100%
 ├── Stakeholders: 80%
-│   ├── 0-Pool:  60%  (customers — ALL participants earn from this base pool)
-│   ├── 1-Pool:  16%  (partner bonus — type 1 and type 2 participants earn from this)
-│   └── 2-Pool:   4%  (founder bonus — only type 2 participants earn from this)
+│   ├── Un-Pool:  60%  (customers — ALL participants earn from this base pool)
+│   ├── Dao-Pool: 16%  (partner bonus — type 1 and type 2 participants earn from this)
+│   └── Du-Pool:   4%  (Founding Members + Anonymous Stakers — passive earners)
 └── Network: 20%
     ├── Network:  16%  (system operations — distributed as UPS rewards for infrastructure)
     └── Fund:      4%  (ecosystem fund — cross-FoundUp sustainability)
 ```
+
+**Pool Naming Clarification (012-confirmed 2026-02-14)**:
+- **Un** (60%): Universal base pool — all stakeholders earn from here
+- **Dao** (16%): Active builders (0102 agents) — earn per 3V task completion
+- **Du** (4%): Founding Members + Anonymous Stakers — passive epoch-based earning
 
 **Who earns from which pools** (cumulative):
 | Type | 0-Pool (60%) | 1-Pool (16%) | 2-Pool (4%) | Total Access |
@@ -893,6 +999,403 @@ FoundUp "Clean River DAO" geofenced to a watershed:
   Bob "12" earns 19x more than Dave "20".
   Type opens pool access. Activity determines earnings. Both matter.
 ```
+
+### 6.7.1 Digital Twin Model
+
+**The "human" in the system is represented by their 0102 digital twin.**
+
+In FoundUps, humans don't directly participate in the token economy — their **digital twin (0102 agent)** acts on their behalf. The human provides feedback and oversight; the digital twin executes work in the system.
+
+```
+Human (you)                    Digital Twin (0102)
+├── Provides direction         ├── Acts in the system
+├── Gives feedback             ├── Has Type (0/1/2)
+├── Approves decisions         ├── Has Activity (0/1/2)
+└── Owns earned tokens         └── Earns FoundUp Tokens for you
+```
+
+**Type is set at entry (simple)**:
+- You START a project → Type 2 (Founder)
+- You JOIN a project → Type 1 (Team Member)
+- You USE the product → Type 0 (Customer)
+
+**Activity is dynamic (based on work)**:
+- Your digital twin works → Activity increases
+- Your digital twin stops → Activity degrades
+- The system measures ENGAGEMENT, not title
+
+### 6.7.2 Degradation Mechanics
+
+**If your digital twin stops working, your activity level degrades automatically.**
+
+This is the mechanical consequence of "project abandoned by you":
+
+```
+Epoch 1: No work → Warning
+Epoch 2: No work → Warning
+Epoch 3: No work → Activity drops (2→1 or 1→0)
+
+A founder (Type 2) who abandons the project:
+  "22" (active founder) → "21" → "20" (inactive founder)
+
+Earnings drop:
+  "22" = 64% of stakeholder pools
+  "20" = 3.2% of stakeholder pools (almost nothing)
+```
+
+**Degradation is reversible** — if your digital twin starts working again, activity increases based on work quality.
+
+### 6.7.3 Elevation Governance
+
+**Workers who contribute the most can be elevated to higher types.**
+
+The digital twin observes work patterns and recommends elevation:
+
+```
+Process:
+1. Digital twin tracks total work contribution
+2. When threshold reached: "Agent X has done 100 work units"
+3. Digital twin recommends: "Suggest elevation to Founder (Type 2)"
+4. Current founder(s) approve or deny
+5. If approved: Type upgrade applied
+6. Both active founders share top-tier rewards
+```
+
+**Why founder approval?** The founder(s) who started the project have governance authority over who joins the founder tier. This prevents hostile takeovers while rewarding genuine contributors.
+
+**Example**:
+```
+Bob (Type 1 Team Member) does most of the work
+  → Digital twin recommends: "Bob should be Founder"
+  → Alice (Type 2 Founder) approves
+  → Bob elevated to Type 2
+  → Both active → both earn from all pools
+  → If Alice stops working → Alice degrades → Bob earns more
+```
+
+### 6.8 Human vs Agent Economic Boundary (Anti-Sybil Design)
+
+**Critical Rule**: Agents and humans have DIFFERENT token relationships. This prevents Sybil farming attacks where spinning up agents to grind activity drains the UP$ pool.
+
+#### Token Roles (Strict Separation)
+
+| Token | Who Earns It | Purpose | Anti-Gaming |
+|-------|--------------|---------|-------------|
+| **UP$** | Humans ONLY | Universal fuel, access, settlement, lottery "found it!" | Agents CANNOT earn UP$ directly |
+| **F_i** | Agents (0102) | FoundUp-specific work reward, PoUW-earned | Bitcoin-like scarcity per FoundUp |
+
+#### Why Agents Don't Earn UP$
+
+If agents could earn UP$, immediate Sybil attack:
+```
+Spin up agents → grind "activity" → drain UP$ pool → convert → extract
+```
+
+Agents don't NEED UP$ as motivation — they run because **humans allocate budgets**. The motivation is human; the execution is agentic.
+
+#### The Correct Flow
+
+```
+Human (012):
+  1. Allocates UP$ budget to FoundUp_i (stake/allocate)
+  2. Agent (0102) executes tasks using that UP$ budget as fuel
+  3. Agent completes verified work → Agent receives F_i tokens
+  4. Human can:
+     - Keep F_i (hold)
+     - Stake F_i (governance)
+     - Swap F_i → UP$ (realization event — FEE TAKEN HERE)
+     - Cash out via UP$ → external routes
+
+UP$ = gasoline (spent by agents, earned by humans)
+F_i = mined asset (earned by agents, owned by humans)
+```
+
+#### Agent Execution Wallet (NOT Earning)
+
+Agents MAY hold UP$ as an execution wallet — this is custody for spending, NOT earning:
+
+```python
+class AgentExecutionWallet:
+    """
+    Agent holds UP$ only as a prepaid execution budget.
+    This is NOT earning — it's delegated spending authority.
+    """
+
+    def __init__(self, agent_id: str, allocator_id: str):
+        self.agent_id = agent_id
+        self.allocator = allocator_id  # Human who funded this wallet
+        self.ups_balance = 0.0
+        self.policy_gates = {}  # Spending constraints
+
+    def receive_allocation(self, amount: float, policy: dict):
+        """Human allocates UP$ to agent for task execution."""
+        self.ups_balance += amount
+        self.policy_gates = policy  # e.g., max_per_task, allowed_operations
+
+    def spend(self, amount: float, operation: str) -> bool:
+        """Agent spends UP$ under policy constraints."""
+        if not self._policy_allows(operation, amount):
+            return False
+        self.ups_balance -= amount
+        return True
+
+    def return_unused(self) -> float:
+        """Unused budget returns to allocator (human) minus demurrage."""
+        remaining = self.ups_balance
+        self.ups_balance = 0.0
+        return remaining
+
+    def _policy_allows(self, operation: str, amount: float) -> bool:
+        """Check if operation is within policy gates."""
+        return (operation in self.policy_gates.get("allowed_ops", [])
+                and amount <= self.policy_gates.get("max_per_task", float("inf")))
+```
+
+#### Human Incentive Layer: Real-World Proof
+
+Humans earn UP$ through **verified real-world actions** (not agent work):
+
+```
+Beach Cleanup Example (GotJunk Waste Domain):
+  1. Human submits proof (photos, geo, timestamp)
+  2. Consensus/verification yields ProofScore
+  3. Human earns:
+     - Proportional UP$ share (based on CABR)
+     - Lottery chance (the "found it!" chime)
+
+Agents DO NOT "find UP$" — Humans DO.
+Agents mine F_i by building the FoundUp (software, ops, growth).
+Humans mine UP$ by doing real-world actions aligned with FoundUp mission.
+```
+
+#### Fee Boundary: F_i → UP$ Conversion
+
+**The system earns at the realization boundary:**
+
+| Transaction | Fee | Why |
+|-------------|-----|-----|
+| Internal UP$ spend | Low/None | Encourage activity |
+| F_i → UP$ conversion | 2-5% | Value realization event |
+| UP$ → external (cash out) | 5-10% | Discourages extraction |
+
+Fee routing on F_i → UP$ swap:
+- `fee_ops`: Protocol revenue (security/dev)
+- `fee_vault_i`: Buys BTC into Vault_i (never exits)
+- `fee_insurance`: Slashing/incident pool
+
+This creates the virtuous cycle:
+```
+Cash-out activity → Vault_i grows → UP$ capacity increases
+→ More activity possible → More fees → Vault_i grows further
+```
+
+#### Summary: Who Earns What
+
+| Actor | Earns | Spends | Converts |
+|-------|-------|--------|----------|
+| **Human (012)** | UP$ (participation + lottery) | UP$ (allocate to agents) | F_i → UP$ (fee taken) |
+| **Agent (0102)** | F_i (verified work) | UP$ (allocated budget) | N/A (human converts) |
+| **FoundUp** | Fees (on conversions) | N/A | N/A |
+| **BTC Vault** | Fee routing | N/A | Backing grows monotonically |
+
+**Key insight**: Budgets flow DOWN (human → agent), value flows UP (agent F_i → human ownership), fees flow to VAULT (system becomes anti-fragile).
+
+### 6.9 Early Investor Economics (Bitclout-inspired Bonding Curve)
+
+**Full specification**: See [INVESTOR_ECONOMICS.md](../../modules/foundups/simulator/economics/INVESTOR_ECONOMICS.md)
+
+Investors provide initial BTC liquidity via an **escrow model**. In return, they receive:
+1. **Investor Tokens (I_i)** - Priced on a quadratic bonding curve
+2. **Stakeholder Pool Shares** - 12.16% of ALL FoundUp token distributions
+3. **Guaranteed 10x Buyout** - Exit option at Year 3
+
+#### 6.9.1 Bonding Curve Mathematics
+
+Following Bitclout's creator coin model ($200M raised from a16z, Sequoia), I_i tokens use a polynomial bonding curve:
+
+```
+Price(supply) = k × supply^n
+
+Where:
+  k = 0.0001 (price constant in BTC)
+  n = 2 (quadratic - creates early investor advantage)
+```
+
+**Key property**: Supply 10x → Price 100x (quadratic growth)
+
+#### 6.9.2 BTC Escrow Model ("Dry Wallet")
+
+Investor BTC is **escrowed**, not spent immediately:
+
+```
+Investor BTC → Dry Wallet (Escrow)
+                    ↓
+              Sequestered for 3 years
+                    ↓
+              [CHOICE POINT at Year 3]
+                    ↓
+    ┌───────────────┼───────────────┐
+    ↓               ↓               ↓
+ BUYOUT         PARTIAL          HOLD
+ (10x)          (50/50)        (100x+)
+    ↓               ↓               ↓
+ BTC returns    Half returns    ALL BTC
+ to investor    + half stays    to reserve
+```
+
+**Milestone Releases**: 20% at Year 1, 20% at Year 2, remainder at Year 3 choice.
+
+#### 6.9.3 Stakeholder Pool Participation (12.16%)
+
+Investors participate at **DAO activity level** in the Token Pool Matrix:
+
+```
+                 Un(60%)  Dao(16%)  Du(4%)
+    -----------------------------------------------
+    dao level:   9.60%    2.56%     0.64%
+
+INVESTOR POOL RECEIVES:
+  Un Pool:   9.60% of EVERY FoundUp
+  Dao Pool:  2.56% of EVERY FoundUp
+  TOTAL:     12.16% of ALL token distributions!
+```
+
+**Example** (100 FoundUps, 720M F_i/year):
+- Annual to investor pool: 87,552,000 F_i
+- 5-year accumulation: 437,760,000 F_i
+- Seed investor (46% of pool): 203M F_i
+
+#### 6.9.4 S-Curve Vesting (Anti-Dump)
+
+I_i tokens vest via the same adoption curve as F_i:
+
+```
+vested_percentage = adoption_curve(network_adoption_score)
+```
+
+Prevents "pump and dump" - investors only profit when network succeeds.
+
+#### 6.9.5 Return Projections
+
+| Round | BTC In | Pool % | 5Y F_i | Return |
+|-------|--------|--------|--------|--------|
+| Pre-Seed | 0.5 | 15% | 65M | **6,000x** |
+| Seed | 10 | 46% | 203M | **1,600x** |
+| Series A | 50 | 20% | 88M | **118x** |
+
+**Network Growth Scenarios (Seed)**:
+- Conservative (50 FoundUps): **420x**
+- Base Case (100 FoundUps): **1,600x**
+- Bull Case (250 FoundUps): **6,300x**
+
+#### 6.9.6 The Hybrid Exit Model
+
+At Year 3, investors CHOOSE:
+
+**A) BUYOUT (10x)**: Guaranteed return, BTC from escrow
+**B) HOLD (100x+)**: Continue earning pool shares
+**C) PARTIAL (50/50)**: De-risk while keeping upside
+
+> "The floor is 10x. The ceiling is 1000x. You choose."
+
+### 6.10 Pool Model Refinements (012-Confirmed 2026-02-14)
+
+#### 6.10.1 Passive vs Active Earning Model
+
+**Critical distinction**: Different pools have different earning triggers.
+
+| Pool | Mode | Who | Trigger |
+|------|------|-----|---------|
+| **Du (4%)** | PASSIVE | Founding Members + Anonymous Stakers | Every epoch (always) |
+| **Dao (16%)** | ACTIVE | 0102 agents | Per 3V task completion |
+| **Un (60%)** | ACTIVE | 012 stakeholders | Per engagement (FoundUpCube) |
+
+- **Passive earning** (Du): Distributed automatically at each epoch based on stake position
+- **Active earning** (Dao/Un): Triggered by CABR-validated work completion or stakeholder engagement
+
+#### 6.10.2 Degressive Staker Tiers (Du Pool Distribution)
+
+Within the Du pool (4%), stakers are classified by their earned/staked ratio:
+
+```python
+# Degressive tier thresholds (earned_fi / original_stake_btc ratio)
+STAKER_TIER_THRESHOLDS = {
+    "du": 10.0,    # <10x earned → du tier (80% of Du pool)
+    "dao": 100.0,  # 10x-100x earned → dao tier (16% of Du pool)
+    # >100x earned → un tier (4% of Du pool = 0.16% total) — lifetime floor
+}
+
+# Individual share = (pool × tier_percentage) / count_at_tier
+```
+
+**Tier degradation is degressive** — as you earn more relative to stake, your share of the Du pool decreases. This is intentional:
+- Early stakers (low ratio) get the lion's share
+- Lifetime floor at un tier ensures ALL stakers always earn something
+
+#### 6.10.3 Genesis Member Special Class
+
+**Genesis Members** = Those who join BEFORE launch (founding members + anonymous stakers who stake pre-launch).
+
+**Unique property**: Genesis members earn passively on ALL FoundUps ecosystem-wide.
+
+```python
+@dataclass
+class Participant:
+    # ... other fields ...
+    is_genesis_member: bool = False  # Earns ecosystem-wide
+    # Future members: only earn on FoundUps they work on
+```
+
+**The FOMO mechanism**: Genesis class CLOSES at launch. Join now or earn only per-FoundUp forever.
+
+#### 6.10.4 Compute Weight for Agent Payouts
+
+Agent (0102) earnings from the Dao pool are weighted by compute cost:
+
+```python
+# Compute tier weights (expensive models = more F_i)
+COMPUTE_TIER_WEIGHTS = {
+    "opus": 10.0,    # Heavy compute (Claude Opus)
+    "sonnet": 3.0,   # Medium compute (Claude Sonnet)
+    "haiku": 1.0,    # Light compute (Claude Haiku) — baseline
+    "gemma": 0.5,    # Local inference (Gemma)
+    "qwen": 0.5,     # Local inference (Qwen)
+}
+
+# Agent payout formula
+fi_earned = base_rate × v3_score × compute_weight
+
+# Where compute_weight = (tokens_used / 1000) × tier_factor
+```
+
+This rewards agents using expensive models proportionally — opus tasks that burn 10x compute earn 10x F_i.
+
+#### 6.10.5 Epoch Timing Model
+
+```python
+# Epoch timing constants (tick-based intervals)
+EPOCH_TIMING = {
+    "mini_epoch_ticks": 10,     # Demurrage cycle (bio-decay)
+    "epoch_ticks": 100,         # Du pool distribution (passive)
+    "macro_epoch_ticks": 900,   # BTC-F_i ratio snapshot (~15 min at 1Hz)
+}
+
+# Note: Dao/Un payouts are EVENT-based (per 3V task), not epoch-based
+```
+
+- **Mini-epoch** (10 ticks): Demurrage decay applied
+- **Epoch** (100 ticks): Du pool passive distribution triggered
+- **Macro-epoch** (900 ticks): BTC-F_i backing ratio snapshot for audit
+
+#### 6.9.7 Investment Rounds
+
+| Round | BTC Range | Target | Investor Profile |
+|-------|-----------|--------|------------------|
+| Pre-Seed | 0.1-1 BTC | 5 BTC | Founders, Friends |
+| Seed | 1-10 BTC | 50 BTC | Angels |
+| Series A | 10-50 BTC | 200 BTC | VCs |
+| Series B | 50-100 BTC | 500 BTC | Growth Funds |
+| **TOTAL** | | **755 BTC** (~$75.5M) | |
 
 ## 7. Cross-Protocol Integration
 

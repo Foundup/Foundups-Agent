@@ -19,6 +19,9 @@ _ALLOWLIST = {
     "test_ai_overseer_openclaw_security.py",
     "test_openclaw_security_alerts.py",
     "test_security_correlator.py",
+    "test_wsp_framework_sentinel.py",
+    "test_m2m_compression_sentinel.py",
+    "test_m2m_skill_shim.py",
 }
 
 _HEAVY_TARGETS = [

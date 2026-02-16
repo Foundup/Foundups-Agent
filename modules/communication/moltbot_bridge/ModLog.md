@@ -1,5 +1,74 @@
 # ModLog - moltbot_bridge
 
+## 2026-02-16: Conversation identity anchor normalization
+
+**Author**: 0102  
+**WSP**: 11, 22, 50
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added `_ensure_conversation_identity()` to normalize conversation outputs.
+  - All conversation execution branches (AI Gateway, Ollama, Qwen, fallback)
+    now return an identity-anchored response (`0102:` prefix) when missing.
+  - Prevents nondeterministic conversational output from breaking role/identity
+    expectations in end-to-end flows.
+
+### Validation
+- Targeted failing tests fixed:
+  - `test_conversation_returns_response`
+  - `test_blocked_command_downgrades_to_conversation`
+- Included in concatenated cross-module run:
+  - `modules/communication/moltbot_bridge/tests`
+  - `modules/foundups/agent_market/tests`
+  - `modules/foundups/simulator/tests`
+  - Result: **335 passed, 2 warnings**
+
+---
+
+## 2026-02-16: FAM token auto-resolution + collision safety
+
+**Author**: 0102  
+**WSP**: 11, 22, 50
+
+### Changes
+- `src/fam_adapter.py`:
+  - Added deterministic token auto-generation from FoundUp name when token is omitted.
+  - Added explicit `AUTO`/legacy `FUP` seed handling.
+  - Added collision-safe symbol resolution against existing registry symbols
+    (`BASE`, `BASE2`, `BASE3`, ...).
+  - Launch pipeline now uses resolved symbol for both `Foundup.token_symbol`
+    and `TokenTerms.token_symbol`.
+- `INTERFACE.md`:
+  - Documented FOUNDUP route token resolution behavior and command contracts.
+
+### Validation
+- Covered by targeted lane:
+  - `modules/foundups/agent_market/tests/test_e2e_integration.py`
+  - Included in 51/51 pass run logged in Agent Market + Simulator TestModLogs.
+
+---
+
+## 2026-02-16: FAM/Moltbook Compatibility Stabilization
+
+**Author**: 0102
+**WSP**: 11, 22, 50
+
+### Changes
+- `src/fam_adapter.py`:
+  - Knowledge/LLM responses now append deterministic command help.
+  - Help now includes both launch and create command variants.
+- `src/moltbook_distribution_adapter.py`:
+  - Deterministic milestone IDs now use `moltbook_post_` prefix for moltbook channel.
+  - Milestone listing now preserves insertion order (oldest -> newest).
+
+### Validation
+- Included in concatenated run:
+  - `modules/foundups/agent_market/tests`
+  - `modules/foundups/simulator/tests`
+  - Result: **229 passed**
+
+---
+
 ## 2026-02-08: Hardening Tranche 3 - Correlator Integration + Containment
 
 **Author**: 0102

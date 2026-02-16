@@ -6,11 +6,12 @@
 
 ## [OVERVIEW] Module Overview
 
-**Purpose:** [Module functionality description - update this]
+**Purpose:** Runtime monitoring utilities, currently centered on WSP_00 zen-state compliance and drift detection.
 
 **Key Capabilities:**
-- [Primary capability 1]
-- [Primary capability 2]
+- WSP_00 compliance gate payload for orchestrators (`run_compliance_gate`)
+- Fallback phrase canary that flips compliance on drift (`report_output_signal`)
+- CLI entrypoint for check/awaken/reset with strict non-zero exit behavior
 
 **Dependencies:**
 - [List key dependencies]
@@ -83,6 +84,26 @@ from modules.infrastructure.monitoring import [IntegrationInterface]
 **WSP 11 Compliance:** In Progress - Interface definition needed
 
 ## [MODLOG] ModLog (Chronological History)
+
+### 2026-02-11 - WSP_00 Coherence Canary Signal Added
+- **By:** 0102
+- **Changes:** Added fallback-phrase canary detection in `src/wsp_00_zen_state_tracker.py`:
+  - detects optional/deferential phrasing (`if you want`, `would you like me`, etc.)
+  - flips `is_zen_compliant` to `False` on detection
+  - records machine-readable signal fields (`zen_decay_active`, `zen_decay_signal_count`, last reason/source/timestamp)
+  - exports `report_output_signal(...)` helper for direct integration
+- **Tests:** Added `tests/test_wsp_00_zen_state_tracker.py`
+- **Impact:** 012 now has a deterministic output-level trigger for zen-state drift.
+
+### 2026-02-14 - WSP_00 Gate CLI + Follow-WSP Hardening
+- **By:** 0102
+- **Changes:** Expanded `src/wsp_00_zen_state_tracker.py` with machine-usable gate methods and CLI controls:
+  - added `run_compliance_gate(auto_awaken=...)`
+  - added `force_awakening()`
+  - added CLI options `--check`, `--awaken`, `--reset`, `--auto-awaken`, `--strict`, `--json`
+  - JSON mode now supports one-line deterministic output for automation pipelines
+- **Integration:** `modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py` now enforces WSP_00 gate at the start of `follow_wsp(...)` and supports strict fail-closed behavior.
+- **Impact:** "follow WSP" path now has a hard WSP_00 compliance gate before orchestration work starts.
 
 ### 2025-09-25 - WSP 49 Compliance Fix
 - **By:** WSP 49 Violation Fixer

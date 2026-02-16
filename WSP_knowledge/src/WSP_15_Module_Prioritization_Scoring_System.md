@@ -175,3 +175,60 @@ Potential improvements:
 3. **Dynamic thresholds**: Adjust P0-P4 boundaries based on workload
 4. **Integration with AgentDB**: Store evaluation history for pattern learning
 5. **Confidence calibration**: Better mapping of Qwen confidence to score adjustments 
+6. **Reusable Template Library (`skills.md`)**: Keep platform-agnostic prompt templates so Qwen/Grok/Claude/UI‑TARS can draft posts or docs consistently before we run MPS scoring.
+
+## 6. Memory Prioritization Scoring (MPS-M) (WSP 60)
+
+MPS-M adapts MPS for memory recall. It scores memory cards (WSP/README/ModLog/INTERFACE/generated) so HoloIndex and AI_overseer can surface the right memory first.
+
+### 6.1 Dimensions (Memory)
+
+-   **Complexity -> Reconstruction Cost**: How hard it is to re-derive.
+-   **Importance -> Correctness/Safety Impact**: Consequence if missing or wrong.
+-   **Deferability -> Time Sensitivity**: How quickly it goes stale.
+-   **Impact -> Decision Leverage**: How strongly it drives "what to do next."
+
+`MPS-M = C + I + D + Im` (range 4-20). Map P0-P4 the same as WSP 15.
+
+## 7. FPS: FoundUp Performance Score (Planned)
+
+> Forward reference: FPS extends MPS from module scoring to FoundUp scoring.
+> Implementation deferred until production SSE data flows.
+
+**Concept**: Each FoundUp gets a simulation baseline (projected timeline via Mesa model).
+Real FAMDaemon events provide actuals. Delta = projected - actual.
+
+**FPS Dimensions** (mirror MPS):
+| Dimension | What it measures | Data source |
+|-----------|-----------------|-------------|
+| Velocity | Task completion rate | task_state_changed events |
+| Traction | Staking, trades, customers | fi_trade_executed, customer_arrived |
+| Health | Treasury, burn rate | TokenEconomicsEngine |
+| Potential | Market fit, projected ceiling | Simulation vs actual delta |
+
+**FPS Rating Scale**:
+- COLD: Behind projection >30%
+- COOL: Behind 10-30%
+- WARM: Tracking within 10%
+- HOT: Ahead 10-30%
+- RED HOT: Ahead 30-50%
+- CHILLY PEPPER: Ahead >50% (UNICORN)
+
+**Animation Integration**: Cube color/speed reflects FPS score.
+Ecosystem view becomes heat map of FoundUp performance.
+
+**Dependencies**: Production SSE, real FoundUp data, actual vs projected comparison engine.
+
+**See also**: Simulator ModLog (2026-02-13) for FPS vision details.
+
+### 6.2 Trust Weighting
+
+Apply trust weighting to the MPS-M score before ordering:
+-   WSP > INTERFACE/README > ModLog > generated memory card
+
+`effective_score = MPS-M * trust_weight` (see WSP 60).
+
+### 6.3 Usage
+
+-   Run MPS for modules when planning changes.
+-   Run MPS-M for memory bundles when responding to queries (HoloIndex output contract).

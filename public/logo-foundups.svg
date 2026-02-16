@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" width="340" height="80">
   <defs>
-    <!-- Brand gradient for UP$ -->
-    <linearGradient id="upGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#ff2d2d"/>
-      <stop offset="100%" style="stop-color:#ff6b4a"/>
+    <!-- FOUND gradient - subtle purple to cyan radiance -->
+    <linearGradient id="foundGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a78bfa"/>
+      <stop offset="50%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#00e5d0"/>
     </linearGradient>
 
-    <!-- Accent gradient for $ symbol -->
-    <linearGradient id="dollarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffd700"/>
-      <stop offset="50%" style="stop-color:#ff8c00"/>
-      <stop offset="100%" style="stop-color:#ff2d2d"/>
+    <!-- UPS gradient - red/coral (same as original UP) -->
+    <linearGradient id="upsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff2d2d"/>
+      <stop offset="100%" style="stop-color:#ff6b4a"/>
     </linearGradient>
 
     <!-- Subtle shadow for depth -->
@@ -20,29 +20,22 @@
     </filter>
   </defs>
 
-  <!-- FOUND - Navy blue, bold weight -->
+  <!-- FOUND - Purple to cyan radiance gradient -->
   <text x="10" y="56"
         font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
         font-size="48"
         font-weight="700"
-        fill="#1a365d"
+        fill="url(#foundGradient)"
         letter-spacing="-1">FOUND</text>
 
-  <!-- UP - Red/coral gradient -->
+  <!-- UP$ - Red/coral gradient with dollar sign -->
   <text x="168" y="56"
         font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
         font-size="48"
         font-weight="700"
-        fill="url(#upGradient)"
-        letter-spacing="-1">UP</text>
-
-  <!-- $ - Special treatment with gold-to-red gradient, slightly larger -->
-  <text x="248" y="56"
-        font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
-        font-size="52"
-        font-weight="800"
-        fill="url(#dollarGradient)"
-        filter="url(#shadow)">$</text>
+        fill="url(#upsGradient)"
+        filter="url(#shadow)"
+        letter-spacing="-1">UP$</text>
 
   <!-- (R) registered trademark -->
   <text x="280" y="28"

@@ -50,6 +50,50 @@ Initialize AI Overseer with repository root.
 
 ---
 
+#### `execute_m2m_skill(skill_name: str, payload: Optional[Dict[str, Any]] = None, m2m: bool = True) -> Dict[str, Any]`
+
+Execute one of the module-local M2M workflow skillz by name.
+
+**Supported skills**:
+- `m2m_compile_gate`
+- `m2m_stage_promote_safe`
+- `m2m_qwen_runtime_health`
+- `m2m_holo_retrieval_benchmark`
+
+**Parameters**:
+- `skill_name`: skill identifier
+- `payload`: skill-specific execution payload
+- `m2m`: when `True`, wrap response in WSP 99-style M2M envelope
+
+**Returns (m2m=False)**:
+```python
+{
+  "skill_name": str,
+  "status": "OK|FAIL",
+  "elapsed_ms": float,
+  "result": Dict[str, Any]
+}
+```
+
+**Returns (m2m=True)**:
+```python
+{
+  "M2M_VERSION": "1.0",
+  "SENDER": "AI_OVERSEER",
+  "RECEIVER": "0102-ORCH",
+  "TS": "<iso8601>",
+  "MISSION": {"OBJ": "EXECUTE <skill_name>", "MODE": "exec", "WSP": [95, 99, 50]},
+  "STATUS": "OK|FAIL",
+  "RESULT": {...}
+}
+```
+
+**Safety**:
+- SKILL/boot-prompt content is rejected by compile gate (must remain verbatim).
+- Stage promotion requires explicit `target_path` (no inferred wildcard target).
+
+---
+
 #### `monitor_openclaw_security(force: bool = False) -> Dict[str, Any]`
 
 Run the OpenClaw skill supply-chain sentinel once and return a normalized gate result.
@@ -146,6 +190,57 @@ Stop the dedicated background OpenClaw security monitor task.
 #### `get_openclaw_security_status() -> Dict[str, Any]`
 
 Return the last OpenClaw sentinel status captured in the current process.
+
+---
+
+#### `monitor_wsp_framework(force: bool = False, emit_alert: bool = True) -> Dict[str, Any]`
+
+Run framework-vs-knowledge WSP drift audit through AI Overseer.
+
+**Parameters**:
+- `force`: bypass cache and force immediate re-audit
+- `emit_alert`: emit DAEmon drift warning when severity is `warning`/`critical`
+
+**Returns**:
+```python
+{
+  "available": bool,
+  "cached": bool,
+  "checked_at": float,
+  "ttl_sec": int,
+  "framework_count": int,
+  "knowledge_count": int,
+  "common_count": int,
+  "drift_count": int,
+  "framework_only": List[str],
+  "knowledge_only": List[str],
+  "drift_files": List[str],
+  "index_issues": List[str],
+  "severity": "ok|warning|critical",
+  "message": str,
+  "report_path": str
+}
+```
+
+**Audit Artifacts**:
+- Cache: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_cache.json`
+- Latest: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_latest.json`
+- History: `modules/ai_intelligence/ai_overseer/memory/wsp_framework_audit_history.jsonl`
+
+**Env Vars**:
+- `WSP_FRAMEWORK_AUDIT_TTL_SEC` (default `900`)
+- `WSP_FRAMEWORK_ALERT_TO_STDOUT` (default `1`)
+
+**DAEmon Signal**:
+```
+[DAEMON][WSP-FRAMEWORK] event=wsp_framework_drift severity=... drift=... framework_only=... knowledge_only=... index_issues=...
+```
+
+---
+
+#### `get_wsp_framework_status() -> Dict[str, Any]`
+
+Return the last WSP framework audit status captured in the current process.
 
 ---
 

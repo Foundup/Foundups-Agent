@@ -195,7 +195,7 @@ Creation      Processing        Memory            Management     Network
 
 - Orchestrion Blueprint (root roadmap for 0102): `ROADMAP.md`
 - WSP Master Index (consult before action): `WSP_framework/src/WSP_MASTER_INDEX.md`
-- Orchestration Hierarchy: `WSP_framework/src/WSP_ORCHESTRATION_HIERARCHY.md`
+- Orchestration Hierarchy (annex): `WSP_framework/docs/annexes/ORCHESTRATION_HIERARCHY_ANNEX.md`
 - Module Violations (triage/fix/defer): `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
 
 0102 Decision Heuristic:
@@ -988,3 +988,34 @@ Based on analysis of the **Open_Intelligence** project by milorddev, here's the 
 **VERDICT**: FoundUps has **zero direct competition** in intelligent internet orchestration. Open_Intelligence and similar projects are solving **fundamentally different problems** at a **much smaller scale**.
 
 **STRATEGIC CONFIDENCE**: ✅ **REVOLUTIONARY ADVANTAGE CONFIRMED** - Proceed with intelligent internet orchestration development at maximum velocity! 🚀
+
+
+---
+
+## Non-Developer Git Flow (Mainline)
+
+If you are not a developer, use this mental model:
+- Work happens on a branch, not directly on `main`.
+- The system should push branch updates first.
+- Then a Pull Request (PR) promotes branch -> `main`.
+- `main` is the trusted production history.
+
+Do not "push all branches" into `main` at once. That mixes unrelated work and increases merge risk.
+
+Recommended default for FoundUps automation:
+1. Commit on current working branch.
+2. Push branch to origin.
+3. Open PR to `main`.
+4. Merge PR after checks pass.
+
+This repo already supports PR-first remotes in GitPushDAE (GH013 ruleset compatible).
+
+## LitePaper Pivot (Compute Focus)
+
+Current framing:
+- Core question: **Where do you focus your compute?**
+- FoundUps is a compute-allocation system, not a startup fundraising funnel.
+- Compute is directed to ventures; CABR/PoB governs benefit-aligned output.
+
+LitePaper entrypoint:
+- `public/litepaper.html`

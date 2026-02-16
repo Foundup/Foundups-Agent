@@ -1,6 +1,6 @@
 # CABR Integration: UP$ Minting Trigger
 
-**Critical Insight**: UP$ is **ONLY** minted when CABR (Consensus-driven Autonomous Beneficial Reporting) validates a beneficial action. This prevents arbitrary token creation and ensures all value is tied to real benefit.
+**Critical Insight**: UP$ is **ONLY** minted when CABR (Consensus-Driven Autonomous Benefit Rate, also referred to as Collective Autonomous Benefit Rate) validates a beneficial action. This prevents arbitrary token creation and ensures all value is tied to real benefit.
 
 ## The Problem We're Solving
 

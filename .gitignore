@@ -75,6 +75,7 @@ env/
 logs/
 02_log/
 012.txt
+012.longlines.txt
 
 # Chrome profile data (browser automation)
 **/chrome_profile/

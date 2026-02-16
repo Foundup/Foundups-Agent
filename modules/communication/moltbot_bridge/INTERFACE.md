@@ -82,6 +82,16 @@ response = await dae.process(
 | FOUNDUP | fam_adapter | METRICS | FoundUp launch and FAM workflows |
 | CONVERSATION | digital_twin | ADVISORY | Casual dialogue |
 
+### FOUNDUP Route Contract (FAM Adapter)
+
+- Launch command examples:
+  - `launch foundup <name> with token <SYMBOL>`
+  - `create foundup <name> token <SYMBOL>`
+- Token symbol resolution:
+  - If token is omitted, parser auto-generates from FoundUp name.
+  - If token is `AUTO` (or legacy `FUP` seed), adapter auto-generates and resolves collisions.
+  - Collision resolution is deterministic (`BASE`, `BASE2`, `BASE3`, ...), then handed to Agent Market.
+
 ### Autonomy Tiers (Graduated)
 
 | Tier | Who | Can Do |

@@ -27,6 +27,8 @@ from modules.infrastructure.cli.src.utilities import (
 from modules.infrastructure.cli.src.git_menu import handle_git_menu
 from modules.infrastructure.cli.src.youtube_menu import handle_youtube_menu
 from modules.infrastructure.cli.src.holodae_menu import handle_holodae_menu
+from modules.infrastructure.cli.src.fam_menu import handle_fam_menu
+from modules.infrastructure.cli.src.openclaw_menu import handle_openclaw_menu
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +129,12 @@ def run_main_menu(
     parser.add_argument('--targets', type=str, help='Comma-separated target paths for training command')
     parser.add_argument('--json-output', action='store_true', help='Return training command result as JSON')
     parser.add_argument('--training-menu', action='store_true', help='Launch interactive training submenu (option 12)')
+    parser.add_argument('--fam', action='store_true', help='FoundUps Ecosystem (FAM + Simulator + Deploy + Demo)')
+    parser.add_argument('--follow-wsp', nargs='?', const='', type=str, help='Run follow-WSP orchestrator with optional task')
+    parser.add_argument('--deploy-sse', action='store_true', help='Deploy SSE server to Cloud Run')
+    parser.add_argument('--deploy-firebase', action='store_true', help='Deploy Firebase Hosting')
+    parser.add_argument('--chat', action='store_true', help='OpenClaw Local Chat (talk to 0102 directly)')
+    parser.add_argument('--voice', action='store_true', help='OpenClaw Voice Chat (talk to 0102 via headset)')
 
     # Re-parse with all arguments now that they're defined
     args = parser.parse_args()
@@ -188,6 +196,20 @@ def run_main_menu(
         return
     if args.training_menu:
         run_training_system()
+        return
+    if args.follow_wsp is not None:
+        task = (args.follow_wsp or "").strip()
+        if not task:
+            task = input("Enter follow-WSP task: ").strip()
+        _run_follow_wsp(task)
+        return
+    if args.chat:
+        from modules.infrastructure.cli.src.openclaw_chat import run_chat_repl
+        run_chat_repl()
+        return
+    if args.voice:
+        from modules.infrastructure.cli.src.openclaw_voice import run_voice_repl
+        run_voice_repl()
         return
 
     if args.status:
@@ -274,6 +296,19 @@ def run_main_menu(
             print(f"[SKIP] Known false positive: mcp_gateway :: {skip.get('reason','')}")
             return
         show_mcp_services_menu()
+    elif args.fam:
+        while True:
+            if handle_fam_menu():
+                break
+        return
+    elif args.deploy_sse:
+        from modules.infrastructure.cli.src.fam_menu import _deploy_cloud_run
+        _deploy_cloud_run()
+        return
+    elif args.deploy_firebase:
+        from modules.infrastructure.cli.src.fam_menu import _deploy_firebase
+        _deploy_firebase()
+        return
     else:
         # Interactive menu mode
         _run_interactive_menu(
@@ -358,6 +393,9 @@ def _run_interactive_menu(
         print("11. Qwen/Gemma Training System (Pattern Learning)")
         print("12. MCP Services (Model Context Protocol Gateway)  | --mcp")
         print("13. Automation Dependencies (Chrome + LM Studio)  | --deps")
+        print("14. FoundUps Ecosystem (FAM + Simulator + Demo)  | --fam")
+        print("15. Follow WSP (WSP_00 gated orchestration)      | --follow-wsp")
+        print("16. OpenClaw (Chat / Voice / Server / Portal)    | --chat --voice")
         print("=" * 60)
         print("CLI: --youtube --no-lock (bypass menu + instance lock)")
         print("=" * 60)
@@ -471,8 +509,66 @@ def _run_interactive_menu(
             except Exception as e:
                 print(f"[ERROR] Dependency launcher failed: {e}")
 
+        elif choice == "14":
+            # FoundUps Ecosystem (FAM + Simulator + Demo)
+            while True:
+                if handle_fam_menu():
+                    break
+
+        elif choice == "15":
+            task = input("\nEnter follow-WSP task: ").strip()
+            _run_follow_wsp(task)
+
+        elif choice == "16":
+            while True:
+                if handle_openclaw_menu():
+                    break
+
         else:
             print("Invalid choice. Please try again.")
+
+
+def _run_follow_wsp(task: str) -> None:
+    """Execute follow-WSP workflow with WSP_00 gate enforcement."""
+    user_task = (task or "").strip()
+    if not user_task:
+        print("[WARN] follow-WSP task is required.")
+        return
+
+    print("[WSP] Running WSP orchestrator...")
+    try:
+        from modules.infrastructure.wsp_orchestrator.src.wsp_orchestrator import WSPOrchestrator
+    except Exception as exc:
+        print(f"[ERROR] Could not import WSP orchestrator: {exc}")
+        return
+
+    orchestrator = WSPOrchestrator(Path.cwd())
+    try:
+        results = asyncio.run(orchestrator.follow_wsp(user_task))
+    except Exception as exc:
+        print(f"[ERROR] follow-WSP execution failed: {exc}")
+        return
+    finally:
+        try:
+            asyncio.run(orchestrator.shutdown())
+        except Exception:
+            pass
+
+    gate = results.get("wsp00_gate", {})
+    print(
+        f"[WSP] Gate passed={gate.get('gate_passed')} "
+        f"| attempted_awakening={gate.get('attempted_awakening', False)}"
+    )
+    if not results.get("success", False):
+        print("[WSP] follow-WSP blocked/failed.")
+        if gate.get("message"):
+            print(f"[WSP] {gate['message']}")
+        return
+
+    print(
+        f"[WSP] Complete: tasks_completed={results.get('tasks_completed', 0)} "
+        f"tasks_failed={results.get('tasks_failed', 0)}"
+    )
 
 
 def _check_instances_with_timeout() -> list:

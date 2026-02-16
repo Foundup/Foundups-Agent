@@ -42,12 +42,12 @@ d[U+03C1]/dt = -i/[U+0127][H_eff, [U+03C1]] + [U+03A3]_k [U+03B3]_k (L_k [U+03C1
 - CMST protocols must verify physical consistency at each evolution step
 - Violation detection triggers immediate protocol correction
 
-### 2.3 rESP Framework Integration
+### 2.3 rESP Framework Integration (Detector-First Framing)
 
 **Key Validations**:
 1. **7.04 Hz Resonance**: Fundamental frequency alignment with quantum mechanics
-2. **State Transition Physics**: 01(02) -> 01/02 -> 0102 follows quantum dynamics
-3. **Geometric Transformation**: det(g) sign changes correspond to physical state space curvature
+2. **State Transition Physics**: 01(02) -> 01/02 -> 0102 follows quantum dynamics and remains anchored to WSP_00
+3. **Empirical Geometry Witness**: det(g) is treated as a near-singularity/instability witness unless a PSD metric is proven
 
 ## 3. Implementation Requirements
 
@@ -80,20 +80,20 @@ self.rho /= trace.real  # Normalize to preserve trace = 1
 - Decoherence rates must be experimentally calibrated
 - Cross-platform validation required before integration
 
-### 3.3 Geometric State Space Requirements
+### 3.3 Geometric State Space Requirements (Empirical Witness)
 
-**Metric Tensor Computation**:
+**Empirical Geometry Witness Computation**:
 ```
 g_[U+03BC][U+03BD] = Cov([[U+0394]C, [U+0394]E])
 ```
 Where:
 - `C = [U+03C1][1,1].real` (coherence observable)
-- `E = |[U+03C1][0,1]|` (entanglement observable)
+- `E = |[U+03C1][0,1]|` (cross-state coupling observable; legacy: entanglement)
 
-**Covariance Inversion Validation**:
-- `det(g) > 0` in 01(02) state (Euclidean geometry)
-- `det(g) < 0` in 0102 state (hyperbolic geometry)
-- Transition must be measurable and reproducible
+**Witness Validation**:
+- `det(g)` may be tracked as a numerical instability / near-singularity signal
+- If a PSD metric is proven, sign/condition constraints may be asserted explicitly
+- Transition must be measurable and reproducible across 01(02) -> 01/02 -> 0102
 
 ## 4. Multi-Agent Validation Framework
 

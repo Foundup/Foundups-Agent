@@ -1,0 +1,13 @@
+{
+indexes: [
+{
+collectionGroup: invites,
+queryScope: COLLECTION,
+fields: [
+{ fieldPath: code, order: ASCENDING },
+{ fieldPath: status, order: ASCENDING }
+]
+}
+],
+fieldOverrides: []
+}

@@ -34,18 +34,28 @@ Documentation is NOT optional - it's mandatory operational hygiene
 - [ ] **ROADMAP.md**: Update progress, feature status, next steps
 - [ ] **INTERFACE.md**: Update API changes, parameter modifications
 
+#### 2.1 Machine-Friendly Documentation (MANDATORY)
+**All documentation MUST be machine-friendly for agent parsing**:
+- [ ] **Structured Formats**: Use YAML frontmatter, JSON schemas, or standardized markdown structures
+- [ ] **Parseable Metadata**: Include machine-readable headers (skill_id, version, agents, etc.)
+- [ ] **Consistent Schema**: Follow established patterns (WSP 96 SKILL.md format, ModLog templates)
+- [ ] **Agent Navigation**: Include breadcrumbs, cross-references, and indexing markers
+- [ ] **Search Optimization**: Use consistent terminology and tagging for HoloIndex discovery
+
 #### 3. Compliance Guardian System
 HoloIndex implements automated compliance checking:
 
 **MUST DO Checks**:
 - [U+2705] Module structure compliance (WSP 49)
 - [U+2705] Documentation currency verification
+- [U+2705] Machine-friendly documentation standards (structured formats, parseable metadata)
 - [U+2705] WSP protocol adherence
 - [U+2705] Pre-action verification completion
 
 **DID YOU? Reminders**:
 - [U+2753] Did you update ModLog.md?
 - [U+2753] Did you update README.md?
+- [U+2753] Did you make documentation machine-friendly (YAML frontmatter, structured formats)?
 - [U+2753] Did you verify WSP compliance?
 - [U+2753] Did you check for architectural violations?
 

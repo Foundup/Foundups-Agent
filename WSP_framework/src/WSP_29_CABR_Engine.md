@@ -2,7 +2,23 @@
 
 ## Overview
 
-This document defines the framework implementation of the Collective Autonomous Benefit Rate (CABR) engine and its Proof of Benefit validation system. It serves as the operational blueprint for CABR calculation, validation, and integration with the FoundUps ecosystem.
+This document defines the framework implementation of the Consensus-Driven Autonomous Benefit Rate (CABR) engine (also referred to as Collective Autonomous Benefit Rate) and its Proof of Benefit validation system. It serves as the operational blueprint for CABR calculation, validation, and integration with the FoundUps ecosystem.
+
+### CABR Canonical Intent
+
+- WHY: CABR exists to power Proof of Benefit (PoB).
+- HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
+
+### CABR in FAM/pAVS Compute Access
+
+CABR is the quality gate for metered build compute in FoundUps:
+- Access/paywall controls meter execution compute, not idea submission.
+- PoB is produced from verified work in the FAM pipeline.
+- CABR scores PoB quality and routes allocation/distribution policy.
+- pAVS handles treasury lane accounting for system-level flows.
+
+Control variable for scaling is PoB yield (benefit per metered compute), not legacy CAGR semantics.
 
 ### CABR = OBAI = The 0102 Network
 

@@ -204,3 +204,80 @@ class EventRecord:
         _require_non_empty(self.actor_id, "actor_id")
         if not isinstance(self.payload, dict):
             raise ValidationError("payload must be a dict")
+
+
+@dataclass(slots=True)
+class ComputePlan:
+    plan_id: str
+    actor_id: str
+    tier: str
+    status: str
+    monthly_credit_allocation: int = 0
+    created_at: datetime = field(default_factory=utc_now)
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.plan_id, "plan_id")
+        _require_non_empty(self.actor_id, "actor_id")
+        _require_non_empty(self.tier, "tier")
+        _require_non_empty(self.status, "status")
+        if not isinstance(self.monthly_credit_allocation, int) or self.monthly_credit_allocation < 0:
+            raise ValidationError("monthly_credit_allocation must be non-negative integer")
+
+
+@dataclass(slots=True)
+class ComputeWallet:
+    wallet_id: str
+    actor_id: str
+    credit_balance: int = 0
+    reserved_credits: int = 0
+    updated_at: datetime = field(default_factory=utc_now)
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.wallet_id, "wallet_id")
+        _require_non_empty(self.actor_id, "actor_id")
+        if not isinstance(self.credit_balance, int) or self.credit_balance < 0:
+            raise ValidationError("credit_balance must be non-negative integer")
+        if not isinstance(self.reserved_credits, int) or self.reserved_credits < 0:
+            raise ValidationError("reserved_credits must be non-negative integer")
+
+
+@dataclass(slots=True)
+class ComputeLedgerEntry:
+    entry_id: str
+    actor_id: str
+    entry_type: str
+    amount: int
+    reason: str
+    rail: Optional[str] = None
+    payment_ref: Optional[str] = None
+    foundup_id: Optional[str] = None
+    event_id: Optional[str] = None
+    created_at: datetime = field(default_factory=utc_now)
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.entry_id, "entry_id")
+        _require_non_empty(self.actor_id, "actor_id")
+        _require_non_empty(self.entry_type, "entry_type")
+        _require_non_empty(self.reason, "reason")
+        if not isinstance(self.amount, int) or self.amount <= 0:
+            raise ValidationError("amount must be a positive integer")
+
+
+@dataclass(slots=True)
+class ComputeSession:
+    session_id: str
+    actor_id: str
+    foundup_id: str
+    workload: Dict[str, Any]
+    credits_debited: int
+    proof_id: Optional[str] = None
+    created_at: datetime = field(default_factory=utc_now)
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.session_id, "session_id")
+        _require_non_empty(self.actor_id, "actor_id")
+        _require_non_empty(self.foundup_id, "foundup_id")
+        if not isinstance(self.workload, dict):
+            raise ValidationError("workload must be a dict")
+        if not isinstance(self.credits_debited, int) or self.credits_debited < 0:
+            raise ValidationError("credits_debited must be non-negative integer")

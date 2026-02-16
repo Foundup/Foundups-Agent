@@ -86,7 +86,7 @@ The new DAE Gateway (`wre_gateway/`) replaces the broken agent-based system:
 
 ### MLE-STAR DAE (AI Intelligence Domain)
 The 6th core DAE implements WSP 77's Intelligent Internet (II) orchestration vision:
-- **CABR Scoring**: Computes Compounded Annual Benefit Rate (env, soc, part, comp)
+- **CABR Scoring**: Computes Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate) (env, soc, part, comp)
 - **PoB Verification**: Validates Proof-of-Benefit receipts
 - **II Orchestration**: Coordinates Intelligent Internet operations
 - **Ablation Studies**: Identifies critical components through MLE-STAR framework

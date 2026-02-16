@@ -78,12 +78,16 @@ def run_system_check(
 
     summary = _summarize(results)
     skillz_inventory = _collect_skillz_inventory(repo_root)
+    wsp_framework_health = _collect_wsp_framework_health(repo_root)
+    m2m_compression_health = _collect_m2m_compression_health(repo_root)
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "mode": "wiring",
         "cli_path": str(cli_path),
         "summary": summary,
         "skillz_inventory": skillz_inventory,
+        "wsp_framework_health": wsp_framework_health,
+        "m2m_compression_health": m2m_compression_health,
         "checks": results,
     }
 
@@ -103,6 +107,7 @@ def write_system_check_report(report: Dict[str, Any], output_dir: Path) -> Path:
     skillz_total = skillz_inventory.get("total", 0)
     skillz_breakdown = skillz_inventory.get("by_root") or {}
     skillz_samples = skillz_inventory.get("samples") or []
+    wsp_framework_health = report.get("wsp_framework_health") or {}
 
     lines = [
         "# Holo System Check Report",
@@ -125,6 +130,23 @@ def write_system_check_report(report: Dict[str, Any], output_dir: Path) -> Path:
         note = check.get("note", "")
         lines.append(f"| `{flag}` | {status} | {parser} | {handler} | {note} |")
 
+    if wsp_framework_health:
+        lines.extend([
+            "",
+            "## WSP Framework Health",
+            "",
+            f"- Available: {wsp_framework_health.get('available', False)}",
+            f"- Severity: {wsp_framework_health.get('severity', 'unknown')}",
+            f"- Message: {wsp_framework_health.get('message', 'n/a')}",
+            f"- Drift Count: {wsp_framework_health.get('drift_count', 0)}",
+            f"- Framework Count: {wsp_framework_health.get('framework_count', 0)}",
+            f"- Knowledge Count: {wsp_framework_health.get('knowledge_count', 0)}",
+        ])
+
+        report_path = wsp_framework_health.get("report_path")
+        if report_path:
+            lines.append(f"- Sentinel Report: `{report_path}`")
+
     if skillz_breakdown:
         lines.extend([
             "",
@@ -142,6 +164,45 @@ def write_system_check_report(report: Dict[str, Any], output_dir: Path) -> Path:
         ])
         for path in skillz_samples:
             lines.append(f"- `{path}`")
+
+    # M2M Compression Health (WSP 99)
+    m2m_health = report.get("m2m_compression_health") or {}
+    if m2m_health.get("available"):
+        lines.extend([
+            "",
+            "## M2M Compression Opportunities (WSP 99)",
+            "",
+            f"- Severity: {m2m_health.get('severity', 'unknown')}",
+            f"- Message: {m2m_health.get('message', 'n/a')}",
+            f"- Files Scanned: {m2m_health.get('files_scanned', 0)}",
+            f"- Candidates Found: {m2m_health.get('candidates_found', 0)}",
+            f"- Auto-Apply Ready: {m2m_health.get('auto_apply_count', 0)}",
+            f"- Stage + Promote: {m2m_health.get('stage_promote_count', 0)}",
+            f"- Stage + Review: {m2m_health.get('stage_review_count', 0)}",
+            f"- Flag Only: {m2m_health.get('flag_only_count', 0)}",
+            f"- Est. Savings: {m2m_health.get('total_estimated_savings_percent', 0):.1f}%",
+        ])
+
+        m2m_report = m2m_health.get("report_path")
+        if m2m_report:
+            lines.append(f"- Full Report: `{m2m_report}`")
+
+        top_candidates = m2m_health.get("top_candidates") or []
+        if top_candidates:
+            lines.extend([
+                "",
+                "### Top Compression Candidates",
+                "",
+                "| File | Lines | Reduction | Confidence | Action |",
+                "| --- | --- | --- | --- | --- |",
+            ])
+            for candidate in top_candidates:
+                filename = candidate.get("filename", "?")
+                line_count = candidate.get("line_count", 0)
+                reduction = candidate.get("estimated_reduction", 0)
+                confidence = candidate.get("confidence", 0)
+                action = candidate.get("action", "?")
+                lines.append(f"| `{filename}` | {line_count} | {reduction:.0f}% | {confidence:.2f} | {action} |")
 
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return out_path
@@ -224,6 +285,101 @@ def _collect_skillz_inventory(repo_root: Path) -> Dict[str, Any]:
         "by_root": by_root,
         "samples": samples,
     }
+
+
+def _collect_wsp_framework_health(repo_root: Path) -> Dict[str, Any]:
+    """Collect WSP framework-vs-knowledge drift status via AI Overseer sentinel."""
+    try:
+        from modules.ai_intelligence.ai_overseer.src.wsp_framework_sentinel import WSPFrameworkSentinel
+    except Exception as exc:
+        return {
+            "available": False,
+            "severity": "unknown",
+            "message": f"wsp framework sentinel import failed: {exc}",
+            "drift_count": 0,
+            "framework_count": 0,
+            "knowledge_count": 0,
+            "report_path": None,
+        }
+
+    try:
+        sentinel = WSPFrameworkSentinel(Path(repo_root))
+        status = sentinel.check(force=False)
+        return {
+            "available": bool(status.get("available", False)),
+            "severity": status.get("severity", "unknown"),
+            "message": status.get("message", ""),
+            "drift_count": int(status.get("drift_count", 0)),
+            "framework_count": int(status.get("framework_count", 0)),
+            "knowledge_count": int(status.get("knowledge_count", 0)),
+            "report_path": status.get("report_path"),
+        }
+    except Exception as exc:
+        return {
+            "available": False,
+            "severity": "critical",
+            "message": f"wsp framework sentinel execution failed: {exc}",
+            "drift_count": 0,
+            "framework_count": 0,
+            "knowledge_count": 0,
+            "report_path": None,
+        }
+
+
+def _collect_m2m_compression_health(repo_root: Path) -> Dict[str, Any]:
+    """Collect M2M compression opportunities via AI Overseer sentinel (WSP 99).
+
+    Uses batched scanning with confidence-based scaled response:
+    - Gemma: Pattern detection (prose density, politeness markers)
+    - Qwen: Actual M2M compilation (if approved)
+    - 0102: Oversight for low-confidence/critical files
+
+    Returns compressed status for health report integration.
+    """
+    try:
+        from modules.ai_intelligence.ai_overseer.src.m2m_compression_sentinel import M2MCompressionSentinel
+    except Exception as exc:
+        return {
+            "available": False,
+            "severity": "unknown",
+            "message": f"m2m compression sentinel import failed: {exc}",
+            "files_scanned": 0,
+            "candidates_found": 0,
+            "auto_apply_count": 0,
+            "stage_review_count": 0,
+            "total_estimated_savings_percent": 0.0,
+            "report_path": None,
+        }
+
+    try:
+        sentinel = M2MCompressionSentinel(Path(repo_root))
+        status = sentinel.check(force=False)
+        return {
+            "available": bool(status.get("available", False)),
+            "severity": status.get("severity", "info"),
+            "message": status.get("message", ""),
+            "files_scanned": int(status.get("files_scanned", 0)),
+            "candidates_found": int(status.get("candidates_found", 0)),
+            "auto_apply_count": int(status.get("auto_apply_count", 0)),
+            "stage_promote_count": int(status.get("stage_promote_count", 0)),
+            "stage_review_count": int(status.get("stage_review_count", 0)),
+            "flag_only_count": int(status.get("flag_only_count", 0)),
+            "total_estimated_savings_percent": float(status.get("total_estimated_savings_percent", 0.0)),
+            "top_candidates": status.get("candidates", [])[:5],  # Top 5 for summary
+            "report_path": status.get("report_path"),
+        }
+    except Exception as exc:
+        return {
+            "available": False,
+            "severity": "unknown",
+            "message": f"m2m compression sentinel execution failed: {exc}",
+            "files_scanned": 0,
+            "candidates_found": 0,
+            "auto_apply_count": 0,
+            "stage_review_count": 0,
+            "total_estimated_savings_percent": 0.0,
+            "report_path": None,
+        }
 
 
 def _stamp(raw: Optional[str]) -> str:

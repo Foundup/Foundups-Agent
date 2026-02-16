@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from .exceptions import InvalidStateTransitionError, NotFoundError, ValidationError
+from .exceptions import InvalidStateTransitionError, NotFoundError, PermissionDeniedError, ValidationError
 from .interfaces import TaskPipelineService
 from .models import EventRecord, Payout, PayoutStatus, Proof, Task, TaskStatus, Verification
 from .persistence.sqlite_adapter import SQLiteAdapter
@@ -62,6 +62,25 @@ class PersistentTaskPipeline(TaskPipelineService):
             adapter: SQLiteAdapter instance for persistence.
         """
         self._adapter = adapter
+
+    def _enforce_compute_access(
+        self,
+        actor_id: str,
+        capability: str,
+        foundup_id: str,
+        reason: str,
+    ) -> None:
+        ensure = getattr(self._adapter, "ensure_access", None)
+        debit = getattr(self._adapter, "debit_credits", None)
+        if not callable(ensure) or not callable(debit):
+            return
+
+        decision = ensure(actor_id=actor_id, capability=capability, foundup_id=foundup_id)
+        if not bool(decision.get("allowed")):
+            raise PermissionDeniedError(str(decision.get("reason", "compute access denied")))
+        required = int(decision.get("required_credits", 0))
+        if required > 0:
+            debit(actor_id=actor_id, amount=required, reason=reason, foundup_id=foundup_id)
 
     def _emit_event(
         self,
@@ -112,6 +131,12 @@ class PersistentTaskPipeline(TaskPipelineService):
         if task.status != TaskStatus.OPEN:
             raise ValidationError("New task must have status OPEN")
 
+        self._enforce_compute_access(
+            actor_id=task.creator_id,
+            capability="task.create",
+            foundup_id=task.foundup_id,
+            reason="create_task",
+        )
         created = self._adapter.create_task(task)
         self._emit_event(
             event_type="task.created",
@@ -139,6 +164,12 @@ class PersistentTaskPipeline(TaskPipelineService):
         """
         task = self._adapter.get_task(task_id)
         self._validate_transition(task.status, TaskStatus.CLAIMED)
+        self._enforce_compute_access(
+            actor_id=agent_id,
+            capability="task.claim",
+            foundup_id=task.foundup_id,
+            reason="claim_task",
+        )
 
         task.status = TaskStatus.CLAIMED
         task.assignee_id = agent_id
@@ -175,6 +206,12 @@ class PersistentTaskPipeline(TaskPipelineService):
             raise ValidationError(
                 f"Proof submitter {proof.submitter_id} is not task assignee {task.assignee_id}"
             )
+        self._enforce_compute_access(
+            actor_id=proof.submitter_id,
+            capability="proof.submit",
+            foundup_id=task.foundup_id,
+            reason="submit_proof",
+        )
 
         # Save proof
         self._adapter.create_proof(proof)
@@ -219,6 +256,12 @@ class PersistentTaskPipeline(TaskPipelineService):
 
         if verification.task_id != task_id:
             raise ValidationError(f"Verification task_id mismatch: {verification.task_id} != {task_id}")
+        self._enforce_compute_access(
+            actor_id=verification.verifier_id,
+            capability="proof.verify",
+            foundup_id=task.foundup_id,
+            reason="verify_proof",
+        )
 
         # Save verification
         self._adapter.create_verification(verification)
@@ -268,6 +311,12 @@ class PersistentTaskPipeline(TaskPipelineService):
 
         if task.assignee_id is None:
             raise ValidationError("Task has no assignee for payout")
+        self._enforce_compute_access(
+            actor_id=actor_id,
+            capability="payout.trigger",
+            foundup_id=task.foundup_id,
+            reason="trigger_payout",
+        )
 
         # Create payout
         payout = Payout(

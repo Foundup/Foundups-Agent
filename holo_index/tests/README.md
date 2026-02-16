@@ -18,6 +18,7 @@
 - OutputComposer trims noise and respects verbosity caps per intent.
 - HoloDAE orchestration emits structured reports without flooding alerts.
 - Video search health probe + metadata audit DB tests run without external deps.
+- Web asset indexing tests verify `public` HTML/JS discovery remains searchable.
 
 ## Integration Requirements
 - Some integration tests require local model assets and may be skipped by default.

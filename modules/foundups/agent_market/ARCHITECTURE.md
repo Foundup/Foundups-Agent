@@ -37,6 +37,13 @@ Provide a generic outer layer for tokenized Foundup launch and agent swarm execu
 - Publishes verified milestones to external distribution channels (for example Moltbook/X adapters).
 - Enforces idempotent publish semantics keyed by task + channel + milestone state.
 
+9. Compute Access and Paywall Boundary (Prototype, P0 implemented)
+- Gates metered build capabilities (launch/orchestration/premium automation).
+- Maintains compute-credit wallet and debit ledger.
+- Emits deterministic access/debit/rebate events to FAMDaemon.
+- Routes configured fee slices into pAVS/system treasury lanes.
+- Runtime wiring currently active in in-memory flows and persistent registry/task pipeline paths.
+
 ## Data Flow
 1. Foundup created in Registry.
 2. Token adapter called to prepare tokenization terms.
@@ -46,6 +53,8 @@ Provide a generic outer layer for tokenized Foundup launch and agent swarm execu
 6. Payout triggered by treasury role.
 7. Event trail links all lifecycle objects.
 8. Verified milestones are published through distribution adapters.
+9. Metered actions debit compute credits before execution.
+10. Verified PoB can trigger configured credit rebates and standard payout flow.
 
 ## State Machine
 - `open -> claimed -> submitted -> verified -> paid`
@@ -62,6 +71,8 @@ Provide a generic outer layer for tokenized Foundup launch and agent swarm execu
 - Duplicate claim/proof/payout attempts.
 - Duplicate distribution publish attempts (must resolve idempotently).
 - Missing linkage objects during trace assembly.
+- Insufficient compute-credit balance on metered routes.
+- Debit/session and payout lineage mismatch.
 
 ## PoC Runtime
 - In-memory adapter only.
