@@ -2028,15 +2028,24 @@
             }
 
             // === SIMULATION LOGIC ===
+            let startingAgents = 3; // Stored from slider
+
             function tick() {
                 epoch++;
 
-                // Agents join — rate follows S-curve derivative (slow-fast-slow)
-                const joinProb = 0.2 + Sprime(adoption) * 0.6 * cabrScore;
-                if (Math.random() < joinProb) {
-                    const n = 1 + Math.floor(Math.random() * (1 + adoption * 4));
-                    agents += n;
-                    log('+' + n + ' agent' + (n > 1 ? 's' : '') + ' joined', 'agent');
+                // Agents grow EXPONENTIALLY with adoption (network effects)
+                // Formula: agents = starting * e^(growthFactor * adoption)
+                // At 10%: ~2x agents, At 50%: ~150x agents, At 90%: ~8000x agents
+                const growthFactor = 9; // Controls exponential steepness
+                const prevAgents = agents;
+                agents = Math.floor(startingAgents * Math.exp(growthFactor * adoption));
+
+                // Minimum agents = starting agents
+                agents = Math.max(agents, startingAgents);
+
+                // Log significant agent growth
+                if (agents > prevAgents * 1.5 && agents > 100) {
+                    log('Agent swarm: ' + fmt(agents) + ' (exponential growth)', 'agent');
                 }
 
                 // Token release follows S-curve
@@ -2126,11 +2135,14 @@
             // === CONTROLS ===
             function start() {
                 if (running) return;
-                if (agents === 0) agents = parseInt(el('simAgentSlider').value) || 3;
+                if (startingAgents === 0 || agents === 0) {
+                    startingAgents = parseInt(el('simAgentSlider').value) || 3;
+                    agents = startingAgents;
+                }
                 running = true;
                 el('simStart').disabled = true;
                 el('simStop').disabled = false;
-                log('Building started — ' + agents + ' agents deploying...', 'info');
+                log('Building started — ' + agents + ' starting agents (exponential growth enabled)', 'info');
                 timer = setInterval(tick, speed);
             }
 
@@ -2144,7 +2156,8 @@
             function reset() {
                 stop();
                 epoch = 0; adoption = 0; mined = 0; btcReserve = 0; lastRewardPerAgent = 0;
-                agents = parseInt(el('simAgentSlider').value) || 3;
+                startingAgents = parseInt(el('simAgentSlider').value) || 3;
+                agents = startingAgents;
                 kValue = parseInt(el('simCategorySelect').value) || 12;
                 el('simLog').innerHTML = '';
                 el('simInsight').innerHTML = 'Press <strong>Start</strong> to begin building. Adjust agents and venture type to see how the S-curve and CABR score affect token distribution.';
@@ -2156,7 +2169,10 @@
             // Agent slider
             el('simAgentSlider').addEventListener('input', function () {
                 el('simAgentVal').textContent = this.value;
-                if (!running && epoch === 0) agents = parseInt(this.value);
+                if (!running && epoch === 0) {
+                    startingAgents = parseInt(this.value);
+                    agents = startingAgents;
+                }
             });
 
             // Category dropdown (k value)
