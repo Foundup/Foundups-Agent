@@ -708,7 +708,14 @@ class GitLinkedInBridge:
         if not new_commits:
             print("[INFO] All recent commits already posted")
             return False
-        
+
+        # Load posting interface once for both batch and per-commit paths.
+        try:
+            from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
+        except Exception as e:
+            print(f"[ERROR] LinkedIn posting interface unavailable: {e}")
+            return False
+
         # Generate content
         if batch or len(new_commits) > 3:
             # Post as batch if too many or requested
@@ -719,9 +726,6 @@ class GitLinkedInBridge:
 
                 # Use unified LinkedIn interface
                 import asyncio
-                import sys
-                sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
-                from modules.platform_integration.social_media_orchestrator.src.unified_linkedin_interface import post_git_commits
 
                 # Get commit hashes for duplicate detection
                 commit_hashes = [commit['hash'] for commit in new_commits]
