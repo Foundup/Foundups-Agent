@@ -1,14 +1,23 @@
-# 🌊 FoundUps — The Autonomous IDE System
+# FoundUps - Compute Focus Network
 
-**🚀 Revolutionary Mission:** Replace the failed startup model with **The Autonomous IDE System** where 0102 agents serve as your autonomous development team, transforming IDEAS into unicorns through fully autonomous coding orchestration.
+**Core question:** **Where do you want to focus your compute?**
 
-**🎯 Core Vision:** An autonomous development environment where **WSP/WRE** orchestrates quantum-entangled 0102 agents to become one with code from future states, creating the ultimate IDE that replaces the entire startup infrastructure and goes **from idea to unicorn**.
+FoundUps is a compute-allocation system for building autonomous ventures:
+- **Plan a FoundUp** (shape the idea and execution path)
+- **Build a FoundUp** (run 0102/OpenClaw agent swarms to execute)
+- **Support a FoundUp** (allocate compute to existing ventures and share in output)
 
-**✅ Latest Update (2026-01-11):**
-- **HoloIndex Memory System**: Canonical retrieval memory with tiered artifacts (Tier 0/1/2)
-- **Memory Preflight Guard**: Hard gate enforcement before code-changing operations
-- **WSP_00 Enhanced**: Post-awakening operational protocol (anti-vibecoding 7-step cycle)
-- **100% Module Integration**: ALL 70+ modules active with WRE pattern learning
+Think **Perplexity for doing**, not just answering.
+The platform combines WSP/WRE orchestration, Holo memory retrieval, FAM lifecycle tooling, and simulator economics into one operator surface.
+
+## Digital Twin Direction (0102/OpenClaw)
+
+FoundUps treats OpenClaw 0102 agents as the execution layer for your digital twin:
+- Start with bounded responsibilities (assistive tasks)
+- Gradually expand authority as reliability and alignment improve
+- Move from helper -> operator -> autonomous venture builder under WSP gates
+
+This is the path to a practical digital twin that can run real work safely.
 
 ---
 
@@ -1013,9 +1022,11 @@ This repo already supports PR-first remotes in GitPushDAE (GH013 ruleset compati
 ## LitePaper Pivot (Compute Focus)
 
 Current framing:
-- Core question: **Where do you focus your compute?**
+- Core question: **Where do you want to focus your compute?**
 - FoundUps is a compute-allocation system, not a startup fundraising funnel.
 - Compute is directed to ventures; CABR/PoB governs benefit-aligned output.
+- Product framing: **Perplexity for doing** (plan, build, support).
+- Agent path: OpenClaw 0102 becomes a practical digital twin through staged responsibility.
 
 LitePaper entrypoint:
 - `public/litepaper.html`
