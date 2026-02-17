@@ -1894,6 +1894,58 @@
             </div>
         </div>
 
+        <!-- CAGR vs CABR Comparison -->
+        <div class="comparison-section" style="margin-top:2rem;">
+            <h3 style="text-align:center;margin-bottom:1rem;">💀 Traditional Startup vs ⚡ FoundUp</h3>
+            <p style="text-align:center;font-size:0.85rem;color:var(--text-dim);margin-bottom:1.5rem;">
+                Same idea. Two models. Which captures value for the builders?
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                <!-- Traditional Startup Column -->
+                <div style="background:rgba(255,68,68,0.05);border:1px solid rgba(255,68,68,0.2);border-radius:8px;padding:1rem;">
+                    <h4 style="color:#ff4444;margin-bottom:0.75rem;font-size:0.9rem;">💀 Traditional Startup (CAGR/ROI)</h4>
+                    <div style="font-size:0.8rem;line-height:1.6;">
+                        <p><strong>Seed Round:</strong> $500K for 20% equity</p>
+                        <p><strong>Series A:</strong> $2M for 25% → Founders: 55%</p>
+                        <p><strong>Series B:</strong> $8M for 20% → Founders: 35%</p>
+                        <p><strong>Series C:</strong> $20M for 15% → Founders: 20%</p>
+                        <hr style="border:none;border-top:1px solid rgba(255,68,68,0.2);margin:0.75rem 0;">
+                        <p style="color:#ff4444;"><strong>Total raised:</strong> $30.5M</p>
+                        <p style="color:#ff4444;"><strong>Founder equity:</strong> 20% (diluted from 100%)</p>
+                        <p style="color:#ff4444;"><strong>Investor equity:</strong> 80%</p>
+                        <p><strong>25% CAGR × 5 years:</strong> 3x value</p>
+                        <p style="color:#ff4444;"><strong>Failure rate:</strong> 90% total loss</p>
+                        <p><strong>Exit:</strong> IPO/acquisition (5-10 years)</p>
+                    </div>
+                </div>
+
+                <!-- FoundUp Column -->
+                <div style="background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;">
+                    <h4 style="color:#4ade80;margin-bottom:0.75rem;font-size:0.9rem;">⚡ FoundUp (CABR/PoB)</h4>
+                    <div style="font-size:0.8rem;line-height:1.6;">
+                        <p><strong>Compute:</strong> Subscriptions fund 0102 agents</p>
+                        <p><strong>Tokens:</strong> 21M F<sub>i</sub> (fixed, no dilution)</p>
+                        <p><strong>Distribution:</strong> S-curve × CABR score</p>
+                        <p><strong>Backing:</strong> BTC reserve (Hotel California)</p>
+                        <hr style="border:none;border-top:1px solid rgba(74,222,128,0.2);margin:0.75rem 0;">
+                        <p style="color:#4ade80;"><strong>Stakeholder share:</strong> 80% (Un+Dao+Du)</p>
+                        <p style="color:#4ade80;"><strong>Network share:</strong> 20% (drip + fund)</p>
+                        <p style="color:#4ade80;"><strong>Dilution:</strong> ZERO</p>
+                        <p><strong>CABR 0.85:</strong> 1.37x distribution multiplier</p>
+                        <p style="color:#4ade80;"><strong>Floor:</strong> BTC backing ratio</p>
+                        <p><strong>Exit:</strong> Bonding curve (anytime)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;text-align:center;">
+                <strong>The Math:</strong> Traditional startup founders end up with 20% after dilution.
+                FoundUp stakeholders keep 80% — and there's a BTC floor, not a 90% failure rate.<br><br>
+                <em class="highlight">CAGR measures investor returns. CABR measures benefit to everyone.</em>
+            </div>
+        </div>
+
         <div class="footnote">
             <p><strong>References</strong></p>
             <ol>
@@ -2133,12 +2185,25 @@
                 lastReleased = nowReleased;
 
                 // Distribute this epoch's tokens to agents (scaled by CABR)
+                // CABR acts as PoB multiplier: higher benefit = more distribution
+                // Formula: base * (1 + (cabr - threshold) * phi) where threshold=0.618, phi=1.618
                 let epochMined = 0;
                 if (epochReleased > 0 && agents > 0) {
-                    // CABR scales distribution efficiency (0.5-1.0 realistic range)
-                    epochMined = epochReleased * cabrScore;
+                    const CABR_THRESHOLD = 0.618;
+                    const PHI = 1.618;
+                    // CABR multiplier: 1.0x at threshold, up to ~1.62x at CABR=1.0
+                    const cabrMultiplier = cabrScore >= CABR_THRESHOLD
+                        ? 1.0 + (cabrScore - CABR_THRESHOLD) * PHI
+                        : cabrScore / CABR_THRESHOLD; // Below threshold = reduced distribution
+
+                    epochMined = epochReleased * cabrMultiplier;
                     mined += epochMined;
                     lastRewardPerAgent = epochMined / agents;
+
+                    // Log CABR boost for high-benefit ventures
+                    if (epoch % 5 === 0 && cabrMultiplier > 1.1) {
+                        log('CABR boost: ' + cabrMultiplier.toFixed(2) + 'x (high benefit)', 'info');
+                    }
                     if (epoch % 3 === 0) log(fmt(epochMined) + ' F\u1D62 distributed to ' + agents + ' agents', 'gold');
                 }
 
