@@ -5,6 +5,37 @@
 **Version**: 0.8.0
 
 ---
+## 2026-02-17 - Added Strategic Diligence Gate SKILLz
+
+**Author**: 0102
+**WSP**: 15, 50, 64, 77, 91, 95, 22
+
+### Changes
+
+Added a generic wardrobe skill for high-impact decision gating:
+
+- `skillz/strategic_diligence_gate/SKILLz.md`
+- `skillz/strategic_diligence_gate/decision_card_template.json`
+
+Updated WRE registry wiring:
+
+- `modules/infrastructure/wre_core/skillz/skills_registry_v2.json`
+  - added `strategic_diligence_gate`
+  - updated `total_skills` to `23`
+  - updated `last_updated` timestamp
+
+### Intent
+
+- Standardize CTO-grade diligence for architecture/product/security decisions.
+- Enforce Holo-first evidence retrieval + WSP 15 scoring + rollback planning.
+- Keep conclusions flexible while hardening decision quality and handoff structure.
+
+### Notes
+
+- This change adds skill definition and registry metadata only.
+- No runtime execution path was modified in AI Overseer code.
+
+---
 ## 2026-02-13 - M2M Skill Execution Shim + M2M Envelope
 
 **Author**: 0102

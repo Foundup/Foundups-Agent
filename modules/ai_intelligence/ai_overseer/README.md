@@ -595,6 +595,27 @@ Boot prompts contain content that M2M's K:V transform destroys:
 
 ---
 
+## Strategic Diligence Gate SKILLz
+
+Generic wardrobe skill for high-blast-radius decisions:
+
+```yaml
+Skill: modules/ai_intelligence/ai_overseer/skillz/strategic_diligence_gate/SKILLz.md
+Template: modules/ai_intelligence/ai_overseer/skillz/strategic_diligence_gate/decision_card_template.json
+Registry: modules/infrastructure/wre_core/skillz/skills_registry_v2.json
+```
+
+This skill standardizes:
+- Holo-first evidence retrieval
+- WSP 15 scoring
+- Reversibility and blast-radius diligence
+- Rollback trigger definition
+- Worker-lane execution prompt emission
+
+Use it for architecture, product positioning, security, and governance decisions where bad choices are expensive to reverse.
+
+---
+
 ## Related Documentation
 
 - **WSP 77**: Agent Coordination Protocol

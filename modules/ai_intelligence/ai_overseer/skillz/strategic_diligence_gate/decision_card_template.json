@@ -1,0 +1,26 @@
+{
+  "status": "OK",
+  "decision": "",
+  "selected_option": "option_none",
+  "wsp15": {
+    "complexity": 0,
+    "importance": 0,
+    "deferability": 0,
+    "impact": 0,
+    "total": 0
+  },
+  "cto_diligence": {
+    "reversibility": 0,
+    "blast_radius": 0,
+    "security_risk": 0,
+    "ops_burden": 0,
+    "rollback_readiness": 0
+  },
+  "evidence_refs": [],
+  "inferences": [],
+  "assumptions": [],
+  "risks": [],
+  "rollback_triggers": [],
+  "first_step": "",
+  "worker_prompt": ""
+}
