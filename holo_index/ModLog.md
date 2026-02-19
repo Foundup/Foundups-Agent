@@ -1,5 +1,495 @@
 # HoloIndex Package ModLog
 
+## [2026-02-18] Machine-Language Contract + Drift Hardening
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Navigation Reliability)  
+**Status**: [OK] COMPLETE
+
+### Context
+Deep-dive audit showed contract drift between runtime behavior, tests, and interface docs. HoloIndex needed a canonical machine-level definition and compatibility hardening.
+
+### Actions
+- Added canonical machine specification:
+  - `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json`
+  - `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.md`
+- Updated public contract docs:
+  - `holo_index/INTERFACE.md` rewritten to match current runtime API.
+  - `holo_index/CLI_REFERENCE.md` clarified as menu snapshot (not exhaustive flag contract).
+  - `holo_index/README.md` now links to interface + machine specs.
+- Runtime compatibility hardening:
+  - `holo_index/output_composer.py`: backward-compatible `compose(intent=...)` support, improved alert grouping.
+  - `holo_index/intent_classifier.py`: strengthened health/code-location intent patterns.
+  - `holo_index/core/holo_index.py`: `search()` robust under partial initialization and missing collections.
+  - `holo_index/qwen_advisor/orchestration/services/component_router.py`: aligned component names with executable orchestrator handlers.
+- Governance lock:
+  - `holo_index/INTERFACE.md` now explicitly declares source-of-truth policy.
+  - Added `holo_index/tests/test_machine_spec_contract.py` to enforce contract-governance invariants.
+
+### Result
+- Interface and machine contracts now have canonical artifacts.
+- Contract-focused regression tests pass for intent classification, composition, memory output, and doc-type filtering.
+
+---
+
+## [2026-02-12] 012 Scratchpad Ingest Auto-Path Hardening
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 60 (Memory)  
+**Status**: [OK] COMPLETE
+
+### Context
+`012.txt` is used as a local ignored scratchpad for session posting/training. Ingest path resolution could miss this file due repo-root drift and rigid source defaults.
+
+### Actions
+- `holo_index/adaptive_learning/ingest_012_corpus.py`:
+  - Added deterministic source resolver `resolve_source_path(...)`.
+  - Added fallback order for `--source auto`:
+    1) `012.txt`
+    2) `holo_index/data/012.txt`
+    3) `docs/012_moshpit/012.txt`
+  - Fixed repo root resolution to `parents[2]` (actual repo root for this script path).
+  - Updated CLI default from `--source 012.txt` to `--source auto`.
+- Added tests:
+  - `holo_index/tests/test_ingest_012_corpus.py`
+
+### Result
+- 012 scratchpad ingest now resolves automatically from ignored local corpus paths.
+- Verified ingest run completed and rewrote memory artifacts from `holo_index/data/012.txt`.
+
+---
+
+## [2026-02-11] WSP Framework Drift Added to Holo Health Checks
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Operational Health)  
+**Status**: [OK] COMPLETE
+
+### Context
+Holo health routines (`--health-check`, `--system-check`) did not include the framework-vs-knowledge WSP drift audit already available in AI Overseer sentinel.
+
+### Actions
+- `holo_index/reports/holo_system_check.py`:
+  - Added `_collect_wsp_framework_health(repo_root)` integration with `WSPFrameworkSentinel`.
+  - Included `wsp_framework_health` payload in `run_system_check(...)`.
+  - Extended report output with a dedicated `WSP Framework Health` section.
+- `holo_index/cli.py`:
+  - `--health-check` now prints WSP framework drift summary line.
+  - `--system-check` now prints WSP framework drift summary line.
+- Added tests:
+  - `holo_index/tests/test_holo_system_check.py`
+
+### Result
+- 0102 health checks now include framework/knowledge drift visibility.
+- Report output includes sentinel severity, drift count, and framework/knowledge counts.
+
+---
+
+## [2026-02-11] Web Asset Semantic Indexing for Public UI Retrieval
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Reliability), WSP 50 (Memory Discoverability)  
+**Status**: [OK] COMPLETE
+
+### Context
+`public` UI artifacts (including `public/js/foundup-cube.js`) were not consistently discoverable via Holo semantic retrieval. Exact-match fallback could miss ignored paths.
+
+### Actions
+- `holo_index/core/holo_index.py`:
+  - Extended `index_code_entries()` to include web assets alongside `NAVIGATION.py` entries.
+  - Added `_resolve_web_index_roots()` and `_collect_web_asset_entries()` for controlled public-asset ingestion.
+  - Added keyword metadata scoring support in `_search_collection()` and `_lexical_search_collection()`.
+  - Added env controls:
+    - `HOLO_INDEX_WEB`
+    - `HOLO_WEB_INDEX_ROOTS`
+    - `HOLO_WEB_INDEX_EXTENSIONS`
+    - `HOLO_WEB_INDEX_MAX_FILES`
+    - `HOLO_WEB_INDEX_MAX_CHARS`
+- `holo_index/tests/test_web_asset_indexing.py`:
+  - New unit tests for web asset collection, disable toggle, and merged code+web indexing path.
+- Documentation updates:
+  - `holo_index/README.md`
+  - `holo_index/tests/README.md`
+
+### Result
+- `--index-code` now stores `public` web assets in code memory as `web_asset` entries.
+- Post-index search verifies retrieval:
+  - `python holo_index.py --search "public/js/foundup-cube.js" --fast-search`
+  - `python holo_index.py --search "planning promoting FoundUP cube" --fast-search`
+
+---
+
+## [2026-02-08] Windows Subprocess Decode Hardening + Cache Verification
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Reliability), WSP 91 (Operational Stability)  
+**Status**: [OK] COMPLETE
+
+### Context
+Residual Windows decode noise (`cp932` reader exceptions) appeared during some CLI search workflows. Search cache behavior also required explicit verification evidence.
+
+### Actions
+- **Verified Search Cache (300s TTL) behavior**:
+  - First query: ~0.2785s
+  - Second identical query: ~0.0005s
+  - Cache stats moved from miss-only to hit+miss as expected.
+- **Hardened subprocess readers to UTF-8 decode with replacement** in runtime paths:
+  - `holo_index/core/holo_index.py` (`_rg_symbol_search`)
+  - `holo_index/cli.py` (WSP 83 doc audit `rg` subprocess)
+  - `holo_index/core/video_search.py` (Chroma health probe subprocess)
+  - `holo_index/wre_integration/skill_executor.py` (`git status` subprocess)
+  - `holo_index/qwen_advisor/gemma_orphan_detector.py` (`rg` scan subprocess)
+  - `holo_index/qwen_advisor/orchestration/autonomous_refactoring.py` (`git mv` subprocess)
+  - `holo_index/monitoring/root_violation_monitor/src/root_violation_monitor.py` (`git mv` subprocess)
+
+### Result
+- Decode-noise exceptions no longer reproduced in fast and normal search checks.
+- Fast mode remains low-latency (~3.4s measured in current environment).
+
+---
+
+## [2026-02-08] Search Latency Hardening (Fast Mode + Symbol Scan Gating)
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 87 (Search Performance), WSP 91 (Operational Efficiency)  
+**Status**: [OK] COMPLETE
+
+### Context
+HoloIndex retrieval was timing out in long sessions. Core search was relatively fast, but end-to-end CLI latency was too high for iterative 0102 workflows.
+
+### Actions
+- `holo_index/core/holo_index.py`:
+  - Added symbol-scan gating inside `search()`:
+    - skip symbol collection scans for non-symbol queries when model is unavailable
+    - allow override with `HOLO_FORCE_SYMBOL_SCAN=1`
+  - Keeps identifier queries intact while reducing unnecessary high-cardinality scans.
+- `holo_index/cli.py`:
+  - Added `--fast-search` flag.
+  - Added `HOLO_FAST_SEARCH=1` env support.
+  - Added fast-path render (`_render_fast_search_summary`) and selector (`_is_fast_search_enabled`).
+  - Fast path skips heavy advisory/orchestration layers and returns retrieval summary directly.
+- `holo_index/tests/test_fast_search_mode.py`:
+  - Added tests for fast-mode activation via flag/env and summary rendering.
+- `holo_index/README.md`:
+  - Documented `--fast-search` usage.
+
+### Result
+- Baseline offline search (example query): ~8.1s
+- Fast mode (`--fast-search`): ~4.6s
+- Improvement: ~43% lower end-to-end CLI latency for retrieval workflows.
+
+---
+
+## [2026-02-08] Search Cache Performance Optimization
+
+**Agent**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 91 (Observability), WSP 87 (Performance)
+**Status**: [OK] COMPLETE
+
+### Context
+HoloIndex searches were slow due to embedding generation on every query. Repeated queries paid full embedding + ChromaDB cost each time, causing timeouts during intensive agent sessions.
+
+### Actions
+- `holo_index/core/search_cache.py`: NEW FILE
+  - LRU cache with configurable TTL (default 5 min) and max size (default 100)
+  - Query normalization for better cache hit rates (lowercase, whitespace collapse)
+  - MD5 hash keys for fixed-length cache lookups
+  - Thread-safe with `Lock()` for concurrent access
+  - Hit/miss/eviction metrics for WSP 91 observability
+  - Optional disk persistence for cross-session caching
+- `holo_index/core/holo_index.py`:
+  - Added cache check at search entry point (fast path <1ms on hit)
+  - Added cache store after successful search
+  - New env vars: `HOLO_CACHE_TTL`, `HOLO_CACHE_SIZE`
+- `holo_index/core/__init__.py`: Exported `SearchCache`, `get_search_cache`
+
+### Result
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Repeated query latency | 50-200ms | <1ms (cache hit) |
+| First query latency | 50-200ms | 50-200ms (unchanged) |
+| Memory overhead | 0 | ~1MB per 100 queries |
+| Cache observability | None | Full hit/miss/eviction stats |
+
+### New Env Vars
+- `HOLO_CACHE_TTL` (default `300`): Cache TTL in seconds
+- `HOLO_CACHE_SIZE` (default `100`): Max cached queries
+
+---
+
+## [2026-02-07] Noise Reduction Sprint + Search Quality Overhaul
+
+**Agent**: 0102
+**WSP References**: WSP 22 (ModLog), WSP 87 (Code Navigation), WSP 84 (Anti-Vibecoding), WSP 50 (Pre-Action)
+**Status**: [OK] COMPLETE
+
+### Context
+Deep audit of HoloIndex search quality revealed 56% boilerplate in output, ghost hits polluting every query, deduplication bugs, and ChromaDB batch overflow on symbol indexing.
+
+### Actions
+- `holo_index/qwen_advisor/orchestration/qwen_orchestrator.py`:
+  - `_log_chain_of_thought()`: Gated stdout output behind `HOLO_VERBOSE` env var. Logging still writes to file/logger but no longer pollutes console. Eliminated 20-30 lines of `[QWEN-*]` noise per query.
+  - `_run_health_analysis()`: Replaced per-module `[HEALTH][OK]` messages with compact summary. N individual OK lines collapsed to single "All N modules compliant" line.
+- `holo_index/core/holo_index.py`:
+  - `_search_collection()`: Added `HOLO_MIN_SIMILARITY` threshold (default 0.35) to filter ghost hits. Documents below 35% similarity (near vector space centroid) are now excluded. Eliminates consent_engine/INTERFACE.md and youtube_shorts/INTERFACE.md appearing in every query regardless of topic.
+  - `_merge_hits()`: Added path normalization (forward slashes, lowercase, prefix stripping) for robust deduplication. Fixes triplication bug where same file appeared 3x due to Windows backslash vs forward slash path formats.
+  - `index_symbol_entries()`: Added batch chunking (5000 per batch) to fix `chromadb.errors.InternalError: Batch size of 12325 is greater than max batch size of 5461`.
+- `NAVIGATION.py`: Added 15 openclaw/moltbot bridge navigation entries (from 1 to 16 total). Covers: OpenClaw DAE, intent classification, permission gates, security sentinel, honeypot defense, FAM adapter, webhook receiver, tests.
+
+### Result
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Console output lines per query | 16 (56% boilerplate) | 8 (0% boilerplate) |
+| "openclaw security" code relevance | 0% (wrong files) | 100% (correct files) |
+| "openclaw security" WSP relevance | 0% (ghost hits) | 100% (moltbot_bridge docs) |
+| "WRE skills wardrobe" WSP relevance | 0% (WSP_34, consent_engine) | 100% (WSP_95, WSP_96) |
+| Deduplication | Broken (triplication) | Fixed |
+| Symbol indexing >5K entries | Crashes | Works (batched) |
+
+### New Env Vars
+- `HOLO_MIN_SIMILARITY` (default `0.35`): Minimum similarity threshold for search results. Increase to reduce noise, decrease to include more results.
+- `HOLO_VERBOSE` now also controls chain-of-thought logging to stdout.
+
+---
+
+## [2026-02-05] GENERAL Query Output Now Shows Top Search Hits
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog Sync), WSP 84 (Enhance Existing)  
+**Status**: [OK] COMPLETE
+
+### Context
+`--search` with GENERAL intent returned only a compressed summary ("0 files checked"), hiding actual matches.
+
+### Actions
+- `holo_index/qwen_advisor/orchestration/qwen_orchestrator.py`: appended top CODE/WSP matches to GENERAL summaries.
+- `holo_index/output/agentic_output_throttler.py`: use search hit counts for GENERAL summaries (avoid “0 files checked” when results exist).
+- `holo_index/core/holo_index.py`: add symbol-query lexical fallback (exact identifiers/paths) to improve Holo reliability.
+- `holo_index/core/holo_index.py`: add ripgrep fallback for symbol queries when NAVIGATION is incomplete.
+- `holo_index/core/holo_index.py`: normalize rg parsing for Windows paths and prioritize code files in symbol results.
+- `holo_index/core/holo_index.py`: add symbol indexer (functions/classes) and search merge for semantic discovery beyond NAVIGATION.
+- `holo_index/core/holo_index.py`: symbol indexing now opt-in via HOLO_INDEX_SYMBOLS, with HOLO_SYMBOL_ROOTS override for targeted indexing.
+- `holo_index/cli.py`: added `--index-symbols` and `--symbol-roots` flags for module-scoped symbol indexing.
+- `holo_index/README.md`: documented memory retrieval contract and symbol indexing workflow.
+- `holo_index/cli.py`: `--index-code` now auto-indexes symbols by default (disable with `HOLO_SYMBOL_AUTO=0`).
+- `holo_index/cli.py`: auto symbol indexing scopes to `--module` when provided.
+
+### Result
+GENERAL searches now surface relevant paths while keeping the summary compact.
+
+---
+
+## [2026-02-06] ChromaDB Health Probe for Video Index
+
+**Agent**: 0102  
+**WSP References**: WSP 84 (Enhance Existing), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE
+
+### Context
+Native ChromaDB segfaults on Windows were crashing video indexing during collection count/init.
+
+### Actions
+- Added subprocess-based health probe in `holo_index/core/video_search.py` to isolate native crashes.
+- Added `CHROMADB_VIDEO_INDEX_DISABLE` and `CHROMADB_VIDEO_INDEX_HEALTHCHECK` toggles for safe control.
+- Added safe batch indexing + integrity guards for video segment indexing.
+
+### Impact
+Video indexing now fails safely when ChromaDB is unstable, preventing hard crashes.
+
+---
+
+## [2026-02-04] HoloIndex Orchestrator Fixes + NAVIGATION Coverage Expansion
+
+**Agent**: 0102
+**WSP References**: WSP 62 (Refactoring), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)
+**Status**: [OK] COMPLETE
+
+### Orchestrator Fixes (5 bugs from WSP 62 extraction)
+- `_format_component_display` — Added to IntentResponseProcessor + QwenOrchestrator (missing after extraction)
+- `_log_chain_of_thought` — Added to IntentResponseProcessor (left on parent class)
+- `_resolve_module_path` — Added to WSPDocumentationGuardian (left on parent class)
+- MCP init ordering — Moved from `_ensure_utf8_console()` to `__init__` (accessed before creation)
+- CLI orchestrator wiring — `cli.py` search path now routes through QwenOrchestrator for intent-aware output
+
+### NAVIGATION Coverage Expansion
+- Added 20 Digital Twin entries: VoiceMemory (3), CommentDrafter (3), StyleGuardrails (2), DecisionPolicy (3), Schemas (2), TrajectoryLogger (3), HoloIndex video integration (1)
+- Total entries: 133 → 153
+- Re-indexed code entries via `--index-code`
+- Verified: VoiceMemory search now returns 88.3% match (was 0 hits)
+
+### Validation
+- Bundle-json returns correct Digital Twin code + WSP hits
+- All component tests pass (OutputComposer, IntentResponseProcessor, WSPDocumentationGuardian, Digital Twin imports)
+- DOC_LOOKUP: 0.95 confidence, 14-17 lines output
+- CODE_LOCATION: 0.80 confidence, 14 lines output
+- GENERAL: 11-12x compression (119 tokens → 10)
+
+---
+
+## [2026-02-04] Memory Value Score (MVS) in [MEMORY] Cards
+**Agent**: 0102  
+**WSP References**: WSP 60 (Module Memory), WSP 15 (MPS), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - memory cards now show value scoring
+
+### Context
+012 asked whether core entrypoints (e.g., `main.py`) should be treated as high-value memory and if a WSP update was required.
+
+### Actions
+- Added Memory Value Score (MVS) calculation in `holo_index/output/agentic_output_throttler.py`.
+- MVS derives from existing doc-type priority plus entrypoint and foundational WSP boosts (no new WSP required).
+- `[MEMORY]` output now includes `memory_value` to surface high-value artifacts.
+- Documented MVS in `holo_index/README.md`.
+
+### Impact
+- High-value memory is visible in default output without verbose mode.
+- Entry points like `main.py` and foundational WSP docs reliably score high.
+
+---
+## [2026-02-04] Output History Gating + Rotation
+**Agent**: 0102  
+**WSP References**: WSP 75 (Token Output), WSP 87 (Code Navigation), WSP 60 (Module Memory), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - history growth bounded
+
+### Context
+012 flagged HoloIndex output history files growing unboundedly.
+
+### Actions
+- Added `HOLO_OUTPUT_HISTORY` and `HOLO_OUTPUT_HISTORY_MODE` gating to `_record_output_history`.
+- Added rotation threshold `HOLO_OUTPUT_HISTORY_MAX_MB` (default 10MB) to bound log size.
+
+### Impact
+- Output history now logs only when configured, and rotates to prevent runaway size.
+
+---
+## [2026-02-04] Intent Verbosity Caps for 0102 Output
+**Agent**: 0102  
+**WSP References**: WSP 87 (Code Navigation), WSP 75 (Token Output), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - output limited to what 0102 needs
+
+### Context
+0102 output should surface only actionable signal per intent, not excess context.
+
+### Actions
+- Added per-intent verbosity limits in `holo_index/output_composer.py` based on existing output rules.
+- CODE_LOCATION and DOC_LOOKUP now cap file/doc lists and trim findings by verbosity level.
+
+### Impact
+- Default output stays minimal and execution-focused without losing critical pointers.
+
+---
+## [2026-02-04] Tests README Restored for WSP 34
+**Agent**: 0102  
+**WSP References**: WSP 34 (Test Documentation), WSP 49 (Module Structure), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - tests memory restored
+
+### Context
+HoloIndex tests lacked the required `tests/README.md` structured memory artifact.
+
+### Actions
+- Added `holo_index/tests/README.md` with strategy, run commands, and requirements.
+
+### Impact
+- Test execution guidance is now explicit and compliant with WSP 34.
+
+---
+## [2026-02-04] Bundle JSON Fastpath Path-Match Retrieval
+**Agent**: 0102  
+**WSP References**: WSP 87 (Code Navigation), WSP 60 (Module Memory), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - lexical fallback now finds module paths
+
+### Context
+`HOLO_SKIP_MODEL=1` bundle retrieval returned zero code hits for non-NAVIGATION queries like `OutputComposer`.
+
+### Actions
+- Added path-based lexical matching scoped to `--bundle-module-hint` in `holo_index/cli.py`.
+- Added underscore/Hyphen normalized matching to improve camel/underscore hits.
+
+### Impact
+- Bundle fastpath can now surface real file paths without embeddings.
+
+---
+## [2026-02-04] Quiet UTF-8 Console Fallback
+**Agent**: 0102  
+**WSP References**: WSP 75 (Token Output), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - non-fatal console errors are debug-only
+
+### Context
+UTF-8 console fallback should not emit noisy warnings during normal runs.
+
+### Actions
+- Downgraded `_ensure_utf8_console` failure logs to `debug`.
+
+### Impact
+- Reduced noise without changing behavior.
+
+---
+## [2026-02-04] NAVIGATION Coverage Expanded for Digital Twin
+**Agent**: 0102  
+**WSP References**: WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - Digital Twin entrypoints indexed
+
+### Context
+Digital Twin components (drafter, guardrails, policy, schemas, LoRA tools) were missing from NAVIGATION.
+
+### Actions
+- Added NAVIGATION mappings for Digital Twin core components and training utilities.
+- Removed duplicate NAVIGATION key for draft comment entry to keep lookup stable.
+
+### Impact
+- HoloIndex fastpath and NAVIGATION search now surface Digital Twin entrypoints.
+
+---
+## [2026-01-31] Full Re-Index Session + System Verification
+**Agent**: 0102
+**WSP References**: WSP 50 (Pre-Action Verification), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)
+**Status**: [OK] COMPLETE - all collections re-indexed and verified
+
+### Context
+Deep dive into HoloIndex operational status as part of multi-session documentation update. Verified system health, ran full re-index, confirmed search works.
+
+### Actions
+- Full re-index via Python API: `HoloIndex(ssd_path="E:/HoloIndex")`
+  - **131 code entries** indexed (NAVIGATION.py NEED_TO map)
+  - **1,547 WSP documents** indexed + summary cache saved to `.ssd/indexes/wsp_summary.json`
+  - **24 SKILLz** indexed for agent discovery
+- Test search confirmed operational: "schedule tracker time jitter" returned 3 code + 3 WSP results
+- Model: `all-MiniLM-L6-v2` loaded from `E:/HoloIndex/models` (CPU inference)
+- ChromaDB persistent storage: `E:/HoloIndex/vectors`
+
+### Cross-Module Changes Documented This Session
+- `youtube_shorts_scheduler`: Schedule Auditor, stale video recovery, 8-slot spread, time jitter fix (:15 intervals)
+- `livechat`: Supervisor pattern, watchdog, per-browser independent loops
+- Root ModLog: Cross-module session summary
+
+---
+
+## [2026-01-17] Machine-Readable Memory Bundle Output (`--bundle-json`)
+**Agent**: 0102 Codex  
+**WSP References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - JSON-only stdout bundle for WRE automation
+
+### Problem
+WRE enforcement needed a deterministic, machine-readable retrieval bundle from HoloIndex without parsing human-formatted stdout.
+
+### Fixes
+- `holo_index/cli.py`:
+  - Added `--bundle-json` early-exit path that guarantees stdout is JSON only.
+  - Added `--bundle-module-hint` and `--bundle-task` to emit a module-scoped WSP memory bundle + task retrieval results.
+  - When `HOLO_SKIP_MODEL=1`, `--bundle-json` uses a **fast lexical retrieval path** and avoids importing the full Chroma/model stack at CLI import time.
+
+## [2026-01-17] Breadcrumb Console Silence (HOLO_SILENT)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 77 (Agent Coordination), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - breadcrumb chatter suppressed when silent
+
+### Problem
+HOLO_SILENT=1 still leaked breadcrumb INFO lines to stdout via logger propagation.
+
+### Fixes
+- `holo_index/utils/agent_logger.py`: stop logger propagation to root and gate breadcrumb console output behind `HOLO_BREADCRUMB_LOGS`.
+
 ## [2026-01-05] Holo System Check (CLI Wiring Report)
 **Agent**: 0102 Codex  
 **WSP References**: WSP 70 (Status Reporting), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
@@ -20,6 +510,35 @@
 **Agent**: 0102 Codex  
 **WSP References**: WSP 60 (Module Memory), WSP 87 (Code Navigation), WSP 22 (ModLog Sync)  
 **Status**: [OK] COMPLETE - memory bundles lead output
+
+## [2026-01-10] Root Violation Auto-Correct Safety + Windows Compatibility (Qwen Orchestration)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 50 (Pre-Action Verification), WSP 85 (Root Protection), WSP 77 (Agent Coordination), WSP 91 (Observability), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - safe single-file relocation + no `grep` dependency
+
+## [2026-01-10] Optional Video Search Feature Isolation (Import Hygiene)
+**Agent**: 0102 Codex  
+**WSP References**: WSP 72 (Module Independence), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Sync)  
+**Status**: [OK] COMPLETE - video search remains opt-in
+
+### Problem
+`holo_index.core.__init__` imported `VideoContentIndex`, making `video_search.py` load during core imports (non-optional).
+
+### Fixes
+- `holo_index/core/__init__.py`: removed `VideoContentIndex` from default imports / `__all__`.
+  - Optional usage remains: `from holo_index.core.video_search import VideoContentIndex`
+
+### Problem
+- Root violation auto-correct routed into Qwen refactoring, but the refactoring planner treated a single file path as a “module directory” and could trigger **bulk moves**.
+- The Qwen orchestrator relied on `grep`, which is not available by default on Windows shells.
+
+### Fixes
+- `holo_index/qwen_advisor/orchestration/autonomous_refactoring.py`:
+  - Replaced `grep` subprocess usage with a Windows-safe Python scan for import references.
+  - Added a **single-file relocation plan** (`generate_file_relocation_plan`) to prevent accidental directory-wide moves.
+  - `move_file` execution now prefers `git mv` (when available) and falls back to filesystem move.
+- `holo_index/monitoring/root_violation_monitor/src/root_violation_monitor.py`:
+  - Auto-correct now uses the **single-file relocation plan** instead of module relocation.
 
 ### Problem
 0102 needed memory recall before results to avoid re-derivation and noise.
@@ -3490,7 +4009,7 @@ This represents the most significant architectural evolution of HoloIndex to dat
 
 [LINK] Interconnection: All cubes snap into HoloDAE foundation
 [BOT] Autonomous FoundUps: Any combination creates specialized companies
-[U+1F4B0] Bitcoin + UP$ Economics: Tokenized revenue streams
+[U+1F4B0] Bitcoin + UPS Economics: Tokenized revenue streams
 ```
 
 #### **[DATA] Current Reality vs Initial Vision:**
@@ -5017,3 +5536,8 @@ The complete DAE Memory System has been implemented:
 ## [2026-01-04] - Reduce CLI noise for 0102 sessions (breadcrumb suppression)
 - Suppressed `agent_0102::*` breadcrumb loggers in `holo_index/cli.py` when running in quiet/0102 mode, preventing extra INFO lines from polluting Holo output and downstream TTS.
 - Re-validated via `python holo_index.py --search "tars like heart reply" --limit 5` producing only throttler sections (no breadcrumb chatter).
+
+## [2026-02-06] - Remove runtime grep dependency from HoloIndex flows
+- Replaced grep usage in `holo_index/cli.py` doc-audit reference checks with `rg` (preferred) and a Python fallback.
+- Updated `holo_index/qwen_advisor/gemma_orphan_detector.py` L0 scan to use `rg` or Python, removing grep dependency and clarifying logging/labels.
+- Result: agent runtime paths no longer rely on grep; Windows-safe by default.

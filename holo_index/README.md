@@ -85,6 +85,9 @@ HoloIndex + **HoloDAE** = Complete autonomous code intelligence system:
 
 ## Operational Documentation
 - **[CLI_REFERENCE.md](CLI_REFERENCE.md)** — Verbatim menu snapshot and CLI command mappings (for 0102_gpt parsing)
+- **[INTERFACE.md](INTERFACE.md)** — Public runtime interface contract (programmatic + CLI)
+- **[Machine Spec (JSON)](docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json)** — Canonical machine-readable architecture/spec contract
+- **[Machine Spec (Markdown)](docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.md)** — Human-readable first-principles architecture analysis
 - [Operational Playbook](docs/OPERATIONAL_PLAYBOOK.md) — step-by-step pre-code checklist, TODO workflow, and doc compliance rules for 0102.
 - [Telemetry & Breadcrumb Guide](docs/MULTI_AGENT_BREADCRUMB_EXAMPLE.md) — how to follow the live JSONL stream (`holo_index/logs/telemetry/`) and coordinate hand-offs between sessions.
 - [CLI Refactoring Plan](docs/CLI_REFACTORING_PLAN.md) — deeper design notes for the search/CLI pipeline.
