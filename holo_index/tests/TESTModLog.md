@@ -1,4 +1,91 @@
-﻿# HoloIndex Test Suite TESTModLog
+# HoloIndex Test Suite TESTModLog
+## [2026-02-18] Machine Contract Governance Lock
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_machine_spec_contract.py` to enforce source-of-truth governance:
+  - machine JSON spec remains authoritative
+  - `INTERFACE.md` declares policy
+  - `CLI_REFERENCE.md` remains explicitly non-normative
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_machine_spec_contract.py -q`
+
+## [2026-02-18] Contract Drift Hardening Regression
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Re-ran targeted contract suite after runtime/interface hardening:
+  - intent classification
+  - output composition compatibility
+  - memory output contract
+  - doc-type filtering behavior
+- Verified that previously drifting contracts now align.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_intent_classifier.py holo_index/tests/test_output_composer.py holo_index/tests/test_memory_output_contract.py holo_index/tests/test_doc_type_filtering.py -q`
+- Result: `45 passed` (2 pytest config warnings in this environment)
+
+## [2026-02-12] 012 Scratchpad Source Resolver Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_ingest_012_corpus.py` to validate deterministic source resolution for 012 corpus ingest.
+- Covers:
+  - Auto mode prefers root `012.txt` scratchpad.
+  - Explicit relative path resolution works for docs mirror path.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_ingest_012_corpus.py -q`
+
+## [2026-02-11] Holo System Check WSP Sentinel Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_holo_system_check.py` to validate WSP framework sentinel integration in system-check output.
+- Covers:
+  - `run_system_check(...)` includes `wsp_framework_health` payload.
+  - `write_system_check_report(...)` renders `WSP Framework Health` section.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_holo_system_check.py -q`
+
+## [2026-02-11] Web Asset Indexing Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_web_asset_indexing.py` to validate semantic ingestion of `public` HTML/JS assets.
+- Covers enabled path, disabled toggle path, and merged indexing with NAVIGATION entries.
+- Locks retrieval behavior needed for FoundUP cube animation artifacts.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_web_asset_indexing.py -q`
+
+## [2026-02-08] Windows Decode Hardening Verification
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Verified search cache hit path with repeated-query timing + cache stats.
+- Validated CLI search no longer emits Windows cp932 decode thread noise under current repro commands.
+- Covered runtime subprocess hardening paths with UTF-8 decode settings.
+
+### Verification
+- `python - <<script>>` timing harness for repeated `HoloIndex.search()` (cache hit/miss stats).
+- `python holo_index.py --offline --fast-search --search "persistence" --limit 6 --quiet-root-alerts`
+- `python holo_index.py --offline --search "persistence" --limit 6 --quiet-root-alerts`
+- `Measure-Command { python holo_index.py --offline --fast-search --search "persistence" --limit 6 --quiet-root-alerts | Out-Null }`
+
+## [2026-02-08] Fast Search Mode Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_fast_search_mode.py` to validate retrieval fast-path controls.
+- Covers activation via `--fast-search` and `HOLO_FAST_SEARCH=1`.
+- Verifies compact fast-path summary output format.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_fast_search_mode.py -q`
+
 ## ++ CodeIndex Circulation Monitor Coverage
 **WSP Protocol**: WSP 93 (CodeIndex), WSP 35 (HoloIndex Qwen Advisor Plan), WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 
@@ -34,6 +121,49 @@
 - Added tests for HoloOutputFormatter summary/TODO structure and telemetry JSONL logging.
 - Existing coordinator tests now validate structured response still includes arbitration/execution details.
 - Pending: module map + doc consumption tests once coordinator integration lands.
+
+## [2026-02-06] Holo vs grep Integration Test Refresh
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Updated `test_holo_vs_grep.py` assertions to reflect current CLI output formatting.
+- Added UTF-8 safe subprocess decoding for HoloIndex and rg outputs.
+- Reframed TSX preview test to semantic-result availability when literal rg fails.
+- Documented SWOT comparison in `holo_index/tests/TEST_SUITE_DOCUMENTATION.md`.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_holo_vs_grep.py -q`
+
+## [2026-02-06] Video Search Health Probe Tests
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 34 (Test Documentation), WSP 22 (Documentation)
+
+### Summary
+- Added `test_video_search_healthcheck.py` to validate video index health probe toggles.
+- Covers disable flag, healthcheck disable path, and failure blocking.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_video_search_healthcheck.py -q`
+
+## [2026-02-06] Video Search SQLite Metadata Index Tests
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 34 (Test Documentation), WSP 22 (Documentation)
+
+### Summary
+- Added `test_video_search_metadata_db.py` to verify SQLite audit index writes.
+- Uses a manual instance (no ChromaDB init) to keep tests isolated.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest holo_index/tests/test_video_search_metadata_db.py -q`
+
+## [2026-02-06] Benchmark Runner Controls
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 22 (Documentation)
+
+### Summary
+- Added BENCH_* env timeouts and BENCH_MAX_QUERIES to keep benchmark runs bounded.
+- Forced UTF-8 subprocess decoding and ASCII-only report markers to avoid Windows encoding crashes.
+
+### Verification
+- `BENCH_MAX_QUERIES=4 python holo_index/tests/benchmark_holo_vs_tools.py`
+  - Bounded run executed with `BENCH_MAX_QUERIES=2` (literal queries only).
 
 
 ## Purpose (Read Before Writing Tests)
@@ -303,4 +433,3 @@
 - **Script Dependencies**: Python standard library + HoloIndex components
 - **Error Handling**: Comprehensive exception catching with diagnostic output
 - **Performance**: Optimized for fast execution in CI/CD pipelines
-

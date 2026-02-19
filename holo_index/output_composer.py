@@ -67,8 +67,9 @@ class OutputComposer:
 
     def compose(
         self,
-        intent_classification: IntentClassification,
-        findings: str,
+        intent_classification: Optional[IntentClassification] = None,
+        intent: Optional[IntentType] = None,
+        findings: str = "",
         mcp_results: Optional[str] = None,
         alerts: Optional[List[str]] = None,
         query: str = "",
@@ -78,7 +79,8 @@ class OutputComposer:
         Compose structured output with context-aware priority sections.
 
         Args:
-            intent_classification: IntentClassification with output formatting rules
+            intent_classification: IntentClassification with output formatting rules.
+            intent: Backward-compatible alias for callers that pass IntentType directly.
             findings: Raw findings from component execution
             mcp_results: Optional MCP research results
             alerts: Optional list of alert/warning strings
@@ -90,6 +92,17 @@ class OutputComposer:
 
         Token Budget: ~300 tokens (context-aware formatting)
         """
+        # Backward compatibility: support legacy compose(intent=IntentType, ...)
+        if intent_classification is None:
+            if intent is None:
+                raise ValueError("compose requires intent_classification or intent")
+            intent_classification = IntentClassification(
+                intent=intent,
+                confidence=1.0,
+                patterns_matched=[],
+                raw_query=query or "",
+            )
+
         # Get intent and output formatting rules
         intent = intent_classification.intent
         output_rules = intent_classification.output_rules
@@ -161,6 +174,7 @@ class OutputComposer:
                         sections.append("")
 
         # Always include intent section first (unless suppressed)
+        intent_section = self._build_intent_section(intent, query)
         if 'intent' not in output_rules.suppress_sections:
             intent_section = self._build_intent_section(intent, query)
             sections.insert(0, intent_section)
@@ -411,15 +425,17 @@ class OutputComposer:
         # Common patterns to extract
         patterns = [
             (r'ModLog\.md older than document', 'ModLog outdated'),
-            (r'missing ([\w\.]+)', r'Missing \1'),
-            (r'([\w/]+) missing ([\w\.]+)', r'\1 missing \2'),
+            (r'missing ([\w\.]+)', 'Missing documentation'),
+            (r'([\w/\\]+) missing ([\w\.]+)', 'Missing documentation'),
             (r'Large .* file ([\w/\\]+\.py)', 'Large file'),
+            (r'Large implementation file detected:\s*[\w/\\]+\.py', 'Large file'),
+            (r'[\w/\\]+ lacks matching tests', 'Orphan scripts lack tests'),
             (r'STALE-WARNING.*not updated in (\d+) days', r'Stale docs (\1 days)'),
             (r'coverage (\d+)%', r'Low coverage (\1%)'),
         ]
 
         for pattern, replacement in patterns:
-            match = re.search(pattern, alert)
+            match = re.search(pattern, alert, re.IGNORECASE)
             if match:
                 if isinstance(replacement, str) and '\\' in replacement:
                     return match.expand(replacement)

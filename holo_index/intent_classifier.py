@@ -73,10 +73,10 @@ class IntentClassification:
         """Get context-aware output formatting rules for this intent"""
         rules_map = {
             IntentType.DOC_LOOKUP: OutputFormattingRules(
-                priority_sections=['results', 'guidance', 'compliance'],
+                priority_sections=['results', 'guidance', 'compliance', 'alerts'],
                 verbosity_level='minimal',
                 focus_description='Direct answers to documentation questions',
-                suppress_sections=['orchestrator', 'alerts']
+                suppress_sections=['orchestrator']
             ),
             IntentType.CODE_LOCATION: OutputFormattingRules(
                 priority_sections=['results', 'context', 'health'],
@@ -134,7 +134,7 @@ class IntentClassifier:
             r'(?:wsp|protocol) (?:definition|explanation)',
         ],
         IntentType.CODE_LOCATION: [
-            r'where (?:is|does|can i find)',
+            r'where (?:is|are|does|can i find)',
             r'find (?:the )?(?:class|function|method|file)',
             r'locate (?:the )?(?:code|implementation|definition)',
             r'(?:which|what) file (?:contains|has|defines)',
@@ -151,6 +151,7 @@ class IntentClassifier:
             r'(?:is|are) (?:there )?(?:any )?(?:issues|problems|errors|violations)',
             r'(?:wsp|compliance) (?:violations|issues|problems)',
             r'(?:module|system|code) status',
+            r'(?:module|system) health',
             r'(?:show|list) (?:module |system )?(?:issues|problems|violations)',
             # Enhanced patterns for health checking
             r'(?:test|lint|coverage) (?:status|results?)',

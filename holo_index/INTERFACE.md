@@ -1,287 +1,155 @@
 # HoloIndex Public Interface
 
-## Overview
-HoloIndex has evolved into an autonomous intelligence foundation with HoloDAE - the "green foundation board agent" that comes with every LEGO set. Every search now triggers automatic intelligence analysis.
+## Scope
+This document is the stable public contract for consuming HoloIndex programmatically and via CLI.
+For exhaustive machine-level semantics, use:
+- `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.md`
+- `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json`
 
-## Module API
+Source-of-truth policy:
+- Authoritative machine contract: `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json`
+- Human-facing interface contract: this file
+- Menu/operator atlas: `holo_index/CLI_REFERENCE.md` (non-normative)
 
-### Core Search Interface (Now with HoloDAE Intelligence)
+## Programmatic API
 
+### Core Retrieval
 ```python
-from holo_index.cli import HoloIndex
+from holo_index.core.holo_index import HoloIndex
 
-# Initialize
-holo = HoloIndex(ssd_path="E:/HoloIndex")
+holo = HoloIndex(ssd_path="E:/HoloIndex", quiet=True)
+results = holo.search("send chat message", limit=5, doc_type_filter="all")
+```
 
-# Search for code and WSP guidance
-results = holo.search(
-    query="send chat message",
-    limit=5  # Results per category
-)
-
-# Results structure
+Search response contract:
+```python
 {
-    'code': [
-        {
-            'score': float,  # Similarity score
-            'module': str,   # Module path
-            'function': str, # Function/class name
-            'content': str,  # Code snippet
-            'file': str,     # Source file
-            'cube': str      # Optional cube tag
-        }
-    ],
-    'wsps': [
-        {
-            'score': float,
-            'wsp': str,      # WSP identifier
-            'title': str,    # WSP title
-            'content': str,  # Relevant section
-            'file': str      # Source document
-        }
-    ],
-    'health_notices': [...],  # Module health warnings
-    'adaptive_learning': {...}  # Learning metrics
-}
-```
-
-### Indexing Interface
-
-```python
-# Index code entries
-holo.index_code_entries()
-
-# Index WSP documents
-holo.index_wsp_entries(paths=[Path("WSP_framework/")])
-
-# Index everything
-holo.index_all()
-```
-
-### HoloDAE Autonomous Intelligence Interface
-
-```python
-from holo_index.qwen_advisor.autonomous_holodae import autonomous_holodae
-
-# Start autonomous monitoring (like YouTube DAE)
-autonomous_holodae.start_autonomous_monitoring()
-
-# Get status report
-status = autonomous_holodae.get_status_report()
-# Returns: {
-#     'active': bool,
-#     'uptime_minutes': int,
-#     'files_watched': int,
-#     'current_module': str,
-#     'task_pattern': str,
-#     'session_actions': int,
-#     'last_activity': str
-# }
-
-# Stop monitoring
-autonomous_holodae.stop_autonomous_monitoring()
-
-# Manual request handling (automatic via CLI)
-report = autonomous_holodae.handle_holoindex_request(query, search_results)
-```
-
-### AI Advisor Interface
-
-```python
-from holo_index.qwen_advisor.advisor import QwenAdvisor, AdvisorContext
-
-# Initialize advisor
-advisor = QwenAdvisor()
-
-# Create context
-context = AdvisorContext(
-    query="create new module",
-    code_hits=[...],  # From search results
-    wsp_hits=[...]    # From search results
-)
-
-# Get guidance
-result = advisor.generate_guidance(context)
-
-# Result structure
-{
-    'guidance': str,        # Primary guidance text
-    'reminders': List[str], # WSP reminders
-    'todos': List[str],     # Action items
-    'metadata': {
-        'risk_level': str,
-        'intent': str,
-        'violations': List[str],
-        'llm_used': bool,
-        'wsp_analysis': {...}
+  "code_hits": [
+    {
+      "need": str,
+      "location": str,
+      "similarity": "85.1%",
+      "type": str,
+      "priority": int,
+      "path": str | None,
+      "line": int | None,
+      "preview": str | None,
+      "cube": str | None,
     }
+  ],
+  "wsp_hits": [
+    {
+      "wsp": str,
+      "title": str,
+      "summary": str,
+      "path": str,
+      "similarity": "82.3%",
+      "type": str,
+      "priority": int,
+      "cube": str | None,
+    }
+  ],
+  "test_hits": list,
+
+  # Backward-compatible aliases
+  "code": list,
+  "wsps": list,
+  "tests": list,
+
+  "skills": list,
+  "skill_hits": list,
+  "symbol_hits": list,
+  "metadata": {
+    "query": str,
+    "code_count": int,
+    "wsp_count": int,
+    "test_count": int,
+    "skill_count": int,
+    "symbol_count": int,
+    "timestamp": str,
+    "cached": bool,
+  }
 }
 ```
 
-### Pattern Coach Interface
-
+### Indexing Methods
 ```python
-from holo_index.qwen_advisor.pattern_coach import PatternCoach
-
-# Initialize coach
-coach = PatternCoach()
-
-# Analyze and get coaching
-coaching = coach.analyze_and_coach(
-    query="test the system",
-    search_results=[...],
-    health_warnings=[...]
-)
-
-# Record outcome for learning
-coach.record_coaching_outcome(
-    coaching=coaching,
-    followed=True,
-    reward_earned=5
-)
-
-# Get statistics
-stats = coach.get_coaching_stats()
+holo.index_code_entries()
+holo.index_symbol_entries()
+holo.index_wsp_entries()
+holo.index_test_registry()
+holo.index_skillz_entries()
 ```
 
-### DAE Cube Organizer Interface
-
+### Module Compliance Helper
 ```python
-from holo_index.dae_cube_organizer.dae_cube_organizer import DAECubeOrganizer
-
-# Initialize organizer
-organizer = DAECubeOrganizer()
-
-# Get DAE context
-context = organizer.initialize_dae_context("YouTube Live")
-
-# Context structure
-{
-    'dae_identity': {
-        'name': str,
-        'emoji': str,
-        'description': str,
-        'orchestrator': str,
-        'main_py_reference': str
-    },
-    'module_map': {
-        'ascii_map': str,
-        'modules': List[Dict]
-    },
-    'orchestration_flow': {
-        'phases': List[str],
-        'loop_type': str
-    },
-    'quick_reference': {...},
-    'rampup_guidance': {...}
-}
+status = holo.check_module_exists("modules/communication/livechat")
 ```
 
-### Violation Tracking Interface
+Returns:
+- `exists`, `path`, `module_name`
+- doc/test presence booleans
+- `wsp_compliance`, `compliance_score`, `health_warnings`, `recommendation`
 
+### HoloDAE Coordinator API
 ```python
-from holo_index.violation_tracker import ViolationTracker
+from holo_index.qwen_advisor import start_holodae, stop_holodae, get_holodae_status
 
-# Initialize tracker
-tracker = ViolationTracker()
-
-# Record violation
-tracker.record_violation(
-    wsp="WSP 49",
-    module="holo_index",
-    severity="MEDIUM",
-    description="Missing required structure",
-    agent="0102"
-)
-
-# Query violations
-violations = tracker.get_violations_by_module("holo_index")
-summary = tracker.get_summary()
+start_holodae()
+status = get_holodae_status()
+stop_holodae()
 ```
 
-## CLI Commands
+## CLI API
 
-### Search
+### Retrieval
 ```bash
-python holo_index.py --search "query" [options]
-  --limit N           # Results per category (default: 5)
-  --llm-advisor      # Enable AI advisor
-  --no-advisor       # Disable advisor
+python holo_index.py --search "query" --limit 5
+python holo_index.py --search "query" --doc-type code
+python holo_index.py --search "query" --fast-search
 ```
 
 ### Indexing
 ```bash
-python holo_index.py --index-all     # Index everything
-python holo_index.py --index-code    # Index code only
-python holo_index.py --index-wsp     # Index WSP only
+python holo_index.py --index-all
+python holo_index.py --index-code
+python holo_index.py --index-wsp
+python holo_index.py --index-symbols --symbol-roots modules/foundups
+python holo_index.py --index-skillz
 ```
 
-### HoloDAE Autonomous Monitoring
+### Machine Bundle Output
 ```bash
-python holo_index.py --start-holodae  # Start autonomous monitoring
-python holo_index.py --stop-holodae   # Stop monitoring
-python holo_index.py --holodae-status # Get status report
-
-# Or via main.py:
-python main.py --holo                  # Start HoloDAE monitoring
+python holo_index.py --bundle-json --search "task" --bundle-module-hint modules/foundups/agent_market
 ```
 
-### DAE Initialization
+Bundle schema ID: `wsp_memory_bundle_v1`
+
+### Monitoring / Orchestration
 ```bash
-python holo_index.py --init-dae [DAE_NAME]
-  # Examples:
-  --init-dae                    # Auto-detect DAE
-  --init-dae "YouTube Live"     # YouTube DAE
-  --init-dae "AMO"             # Meeting orchestration
+python holo_index.py --start-holodae
+python holo_index.py --stop-holodae
+python holo_index.py --holodae-status
 ```
 
-### Feedback
+### Compliance / Diagnostics
 ```bash
-python holo_index.py --advisor-rating useful|needs_more
-python holo_index.py --ack-reminders  # Acknowledge reminders
+python holo_index.py --check-module "livechat"
+python holo_index.py --check-wsp-docs
+python holo_index.py --fix-ascii --check-wsp-docs
+python holo_index.py --system-check
+python holo_index.py --health-check
 ```
 
-## Integration Points
+## Environment Controls (Selected)
+- `HOLO_OFFLINE=1`: disable model downloads/auto-install.
+- `HOLO_SKIP_MODEL=1`: force lexical retrieval path.
+- `HOLO_MIN_SIMILARITY=0.35`: vector hit floor.
+- `HOLO_FAST_SEARCH=1`: retrieval-only fast path.
+- `HOLO_INDEX_WEB=1`: include web assets during `--index-code`.
+- `HOLO_SYMBOL_AUTO=1`: auto symbol indexing during `--index-code`.
 
-### With NAVIGATION.py
-```python
-# HoloIndex automatically loads NAVIGATION.py mappings
-from NAVIGATION import NEED_TO
-# These are integrated into search results
-```
-
-### With main.py
-```python
-# DAE Cube Organizer understands main.py structure
-# Provides menu option mappings and orchestrator references
-```
-
-### With WSP Framework
-```python
-# WSP Master loads all protocols from WSP_framework/
-# Provides intelligent protocol selection and guidance
-```
-
-## Error Handling
-
-All methods may raise:
-- `FileNotFoundError`: Missing required files
-- `ImportError`: Missing dependencies
-- `ValueError`: Invalid parameters
-- `RuntimeError`: Initialization failures
-
-## Performance Considerations
-
-- **First Load**: ~2-3 seconds (model loading)
-- **Subsequent Searches**: <200ms
-- **Memory Usage**: ~1GB with all models
-- **SSD Required**: For ChromaDB performance
-- **Cache**: Results cached for 15 minutes
-
-## WSP Compliance
-
-This interface follows:
-- **WSP 11**: Complete interface documentation
-- **WSP 49**: Module structure standards
-- **WSP 87**: Code navigation protocol
-- **WSP 84**: Code memory verification
+## Compatibility Notes
+- `code` / `wsps` keys remain present for backward compatibility.
+- `search()` degrades to lexical mode when embedding model is unavailable.
+- `CLI_REFERENCE.md` is a menu snapshot; use this file + machine spec JSON for exhaustive contracts.

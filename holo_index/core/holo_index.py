@@ -29,10 +29,13 @@ import json
 import logging
 import os
 import re
+import subprocess
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 import time
+import ast
 
 # Dependency bootstrap for this module
 try:
@@ -47,6 +50,15 @@ except ImportError as exc:
 
 # Lazy load sentence_transformers to prevent crash on import
 SentenceTransformer = None
+
+# Search cache for fast repeated queries (WSP 91 observability)
+try:
+    from .search_cache import SearchCache, get_search_cache
+    SEARCH_CACHE_AVAILABLE = True
+except ImportError:
+    SEARCH_CACHE_AVAILABLE = False
+    SearchCache = None  # type: ignore
+    get_search_cache = None  # type: ignore
 
 # Optional imports (disabled for stability)
 AGENT_LOGGER_AVAILABLE = False
@@ -127,6 +139,7 @@ class HoloIndex:
         self.wsp_collection = self._ensure_collection("navigation_wsp")
         self.test_collection = self._ensure_collection("navigation_tests")
         self.skill_collection = self._ensure_collection("navigation_skills")
+        self.symbol_collection = self._ensure_collection("navigation_symbols")
 
         self._log_agent_action("Loading sentence transformer (cached on SSD)...", "MODEL")
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(self.models_path)
@@ -188,6 +201,15 @@ class HoloIndex:
         else:
             self.breadcrumb_tracer = None  # Ensure it's always defined
 
+        # Initialize search cache for fast repeated queries
+        if SEARCH_CACHE_AVAILABLE:
+            cache_ttl = float(os.getenv("HOLO_CACHE_TTL", "300"))  # 5 min default
+            cache_size = int(os.getenv("HOLO_CACHE_SIZE", "100"))
+            self.search_cache = get_search_cache(max_size=cache_size, ttl_seconds=cache_ttl)
+            self._log_agent_action(f"Search cache initialized (size={cache_size}, ttl={cache_ttl}s)", "INFO")
+        else:
+            self.search_cache = None
+
         # Cache state for reuse and mark initialized
         HoloIndex._shared_state = dict(self.__dict__)
         HoloIndex._initialized = True
@@ -203,6 +225,13 @@ class HoloIndex:
         """Get count of indexed WSP entries."""
         try:
             return self.wsp_collection.count()
+        except:
+            return 0
+
+    def get_symbol_entry_count(self) -> int:
+        """Get count of indexed symbol entries."""
+        try:
+            return self.symbol_collection.count()
         except:
             return 0
 
@@ -284,15 +313,20 @@ class HoloIndex:
     # --------- Indexing --------- #
 
     def index_code_entries(self) -> None:
-        if not self.need_to:
-            self._log_agent_action("No NEED_TO entries to index", "WARN")
+        nav_entries = list(self.need_to.items())
+        web_assets = self._collect_web_asset_entries()
+
+        if not nav_entries and not web_assets:
+            self._log_agent_action("No code or web entries to index", "WARN")
             return
 
-        self._log_agent_action(f"Indexing {len(self.need_to)} code navigation entries...", "INDEX")
+        self._log_agent_action(f"Indexing {len(nav_entries)} code navigation entries...", "INDEX")
+        if web_assets:
+            self._log_agent_action(f"Indexing {len(web_assets)} web assets from public roots...", "INDEX")
         self.code_collection = self._reset_collection("navigation_code")
 
         ids, embeddings, documents, metadatas = [], [], [], []
-        for i, (need, location) in enumerate(self.need_to.items(), start=1):
+        for i, (need, location) in enumerate(nav_entries, start=1):
             ids.append(f"code_{i}")
             embeddings.append(self._get_embedding(need))
             documents.append(location)
@@ -306,8 +340,222 @@ class HoloIndex:
                 meta["cube"] = cube
             metadatas.append(meta)
 
+        next_idx = len(ids) + 1
+        for web_asset in web_assets:
+            ids.append(f"code_{next_idx}")
+            next_idx += 1
+            embeddings.append(self._get_embedding(web_asset["payload"]))
+            documents.append(web_asset["location"])
+            cube = self._infer_cube_tag(web_asset["need"], web_asset["location"], web_asset["summary"])
+            meta = {
+                "need": web_asset["need"],
+                "type": "web_asset",
+                "source": "public_asset_index",
+                "path": web_asset["location"],
+                "summary": web_asset["summary"],
+                "keywords": web_asset["keywords"],
+                "priority": 4,
+            }
+            if cube:
+                meta["cube"] = cube
+            metadatas.append(meta)
+
         self.code_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
         self._log_agent_action("Code index refreshed on SSD", "OK")
+        # Also index symbols for self-maintaining semantic search (opt-in)
+        if os.getenv("HOLO_INDEX_SYMBOLS", "0").lower() in {"1", "true", "yes", "on"}:
+            try:
+                self.index_symbol_entries()
+            except Exception as exc:
+                self._log_agent_action(f"Symbol index skipped: {exc}", "WARN")
+
+    def _resolve_web_index_roots(self) -> List[Path]:
+        """Resolve web asset roots for semantic indexing."""
+        roots_env = os.getenv("HOLO_WEB_INDEX_ROOTS", "public")
+        roots: List[Path] = []
+        for raw_root in roots_env.split(";"):
+            candidate = raw_root.strip()
+            if not candidate:
+                continue
+            root_path = Path(candidate)
+            if not root_path.is_absolute():
+                root_path = self.project_root / root_path
+            roots.append(root_path)
+        return roots
+
+    def _collect_web_asset_entries(self) -> List[Dict[str, str]]:
+        """Collect HTML/JS/CSS assets so UI artifacts are semantically retrievable."""
+        enabled = os.getenv("HOLO_INDEX_WEB", "1").lower() in {"1", "true", "yes", "on"}
+        if not enabled:
+            return []
+
+        roots = self._resolve_web_index_roots()
+        if not roots:
+            return []
+
+        extensions_env = os.getenv("HOLO_WEB_INDEX_EXTENSIONS", ".html;.js;.mjs;.cjs;.css")
+        allowed_extensions = {
+            ext.strip().lower() for ext in extensions_env.split(";") if ext.strip()
+        }
+        if not allowed_extensions:
+            allowed_extensions = {".html", ".js", ".mjs", ".cjs", ".css"}
+
+        max_files = int(os.getenv("HOLO_WEB_INDEX_MAX_FILES", "300"))
+        max_chars = int(os.getenv("HOLO_WEB_INDEX_MAX_CHARS", "5000"))
+        skip_dirs = {
+            ".git", "__pycache__", "node_modules", "dist", "build", ".next", "coverage"
+        }
+
+        entries: List[Dict[str, str]] = []
+        for root in roots:
+            if len(entries) >= max_files:
+                break
+            if not root.exists() or not root.is_dir():
+                continue
+
+            for file_path in root.rglob("*"):
+                if len(entries) >= max_files:
+                    break
+                if not file_path.is_file():
+                    continue
+                if file_path.suffix.lower() not in allowed_extensions:
+                    continue
+                if any(part in skip_dirs for part in file_path.parts):
+                    continue
+
+                try:
+                    raw_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
+                if not raw_text.strip():
+                    continue
+
+                normalized = re.sub(r"\s+", " ", raw_text).strip()
+                snippet = normalized[:max_chars]
+                try:
+                    location = str(file_path.relative_to(self.project_root)).replace("\\", "/")
+                except ValueError:
+                    location = str(file_path).replace("\\", "/")
+
+                token_hint = re.sub(r"[_\\-\\.]+", " ", file_path.stem).strip()
+                need = f"web asset {file_path.name}"
+                keyword_excerpt = snippet[:1200]
+                summary = f"{location} ({file_path.suffix.lower()}) {snippet[:240]}"
+                payload = (
+                    f"Web asset path: {location}\n"
+                    f"Filename: {file_path.name}\n"
+                    f"Token hint: {token_hint}\n"
+                    f"Content: {snippet}"
+                )
+                entries.append({
+                    "need": need,
+                    "location": location,
+                    "summary": summary,
+                    "keywords": keyword_excerpt,
+                    "payload": payload,
+                })
+
+        return entries
+
+    def index_symbol_entries(self, roots: Optional[List[Path]] = None) -> None:
+        """
+        Index Python symbols (functions/classes) for semantic discovery.
+
+        Goal: avoid NAVIGATION-only search for new functions.
+        """
+        env_roots = os.getenv("HOLO_SYMBOL_ROOTS")
+        if env_roots:
+            roots = [self.project_root / Path(r.strip()) for r in env_roots.split(";") if r.strip()]
+        else:
+            roots = roots or [
+                self.project_root / "modules",
+                self.project_root / "scripts",
+                self.project_root / "holo_index",
+            ]
+
+        max_files = int(os.getenv("HOLO_SYMBOL_MAX_FILES", "5000"))
+        max_entries = int(os.getenv("HOLO_SYMBOL_MAX_ENTRIES", "20000"))
+        skip_dirs = {
+            ".git", ".venv", "venv", "__pycache__", "node_modules",
+            "dist", "build", ".mypy_cache", ".pytest_cache"
+        }
+
+        self._log_agent_action("Indexing symbol entries (functions/classes)...", "INDEX")
+        self.symbol_collection = self._reset_collection("navigation_symbols")
+
+        ids: List[str] = []
+        embeddings: List[List[float]] = []
+        documents: List[str] = []
+        metadatas: List[Dict[str, Any]] = []
+
+        file_count = 0
+        entry_count = 0
+
+        for root in roots:
+            if not root.exists():
+                continue
+            for path in root.rglob("*.py"):
+                if any(part in skip_dirs for part in path.parts):
+                    continue
+                file_count += 1
+                if file_count > max_files:
+                    break
+                try:
+                    text = path.read_text(encoding="utf-8", errors="ignore")
+                    tree = ast.parse(text)
+                except Exception:
+                    continue
+
+                for node in ast.walk(tree):
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                        name = node.name
+                        if isinstance(node, ast.ClassDef):
+                            symbol = f"class {name}"
+                        else:
+                            args = []
+                            for a in getattr(node, "args", []).args:
+                                if hasattr(a, "arg"):
+                                    args.append(a.arg)
+                            sig = ", ".join(args[:8])
+                            symbol = f"{name}({sig})"
+                        doc = ast.get_docstring(node) or ""
+                        line_no = getattr(node, "lineno", None)
+                        doc_text = f"{symbol}\n{doc}\n{path}:{line_no or 1}"
+
+                        ids.append(f"sym_{len(ids)+1}")
+                        embeddings.append(self._get_embedding(doc_text))
+                        documents.append(doc_text)
+                        metadatas.append({
+                            "symbol": symbol,
+                            "path": str(path),
+                            "line": int(line_no) if line_no else 1,
+                            "type": "symbol"
+                        })
+
+                        entry_count += 1
+                        if entry_count >= max_entries:
+                            break
+                    if entry_count >= max_entries:
+                        break
+                if entry_count >= max_entries:
+                    break
+            if entry_count >= max_entries:
+                break
+
+        if ids:
+            # ChromaDB has a max batch size (~5000). Batch to avoid InternalError.
+            batch_size = 5000
+            for start in range(0, len(ids), batch_size):
+                end = start + batch_size
+                self.symbol_collection.add(
+                    ids=ids[start:end],
+                    embeddings=embeddings[start:end],
+                    documents=documents[start:end],
+                    metadatas=metadatas[start:end],
+                )
+            self._log_agent_action(f"Symbol index refreshed: {entry_count} entries", "OK")
+        else:
+            self._log_agent_action("Symbol index empty - no entries added", "WARN")
 
     def index_wsp_entries(self, paths: Optional[List[Path]] = None) -> None:
         from ..utils.helpers import DEFAULT_WSP_PATHS
@@ -316,10 +564,13 @@ class HoloIndex:
         files: List[Path] = []
         for base in paths:
             if base.exists():
-                # Get all .md files but exclude node_modules and CHANGELOG files
-                all_md_files = sorted(base.rglob("*.md"))
+                # Get all .md and .yaml files (M2M WSP 99 support)
+                # but exclude node_modules and CHANGELOG files
+                all_doc_files = sorted(
+                    list(base.rglob("*.md")) + list(base.rglob("*.yaml"))
+                )
                 filtered_files = [
-                    f for f in all_md_files
+                    f for f in all_doc_files
                     if 'node_modules' not in str(f)
                     and 'CHANGELOG' not in f.name.upper()
                     and 'package-lock' not in f.name.lower()
@@ -336,7 +587,13 @@ class HoloIndex:
         summary_cache: Dict[str, Dict[str, str]] = {}
 
         for idx, file_path in enumerate(files, start=1):
-            text = file_path.read_text(encoding='utf-8', errors='ignore')
+            # Detect UTF-16 LE (BOM FF FE) and decode correctly (WSP 90)
+            raw_head = file_path.read_bytes()[:2]
+            if raw_head == b'\xff\xfe':
+                text = file_path.read_bytes().decode('utf-16-le', errors='ignore').lstrip('\ufeff')
+                self._log_agent_action(f"UTF-16 detected: {file_path.name} (decoded)", "WARN")
+            else:
+                text = file_path.read_text(encoding='utf-8', errors='ignore')
             lines = [line.strip() for line in text.splitlines() if line.strip()]
             if not lines:
                 continue
@@ -489,23 +746,25 @@ class HoloIndex:
                     content = text
                 
                 # Extract key metadata
-                name = frontmatter.get('name', file_path.parent.name)
-                description = frontmatter.get('description', '')
+                name = str(frontmatter.get('name', file_path.parent.name) or file_path.parent.name)
+                description_raw = frontmatter.get('description', '')
+                description = str(description_raw) if description_raw is not None else ''
                 agents = frontmatter.get('agents', [])
-                primary_agent = frontmatter.get('primary_agent', 'unknown')
-                intent_type = frontmatter.get('intent_type', 'unknown')
-                promotion_state = frontmatter.get('promotion_state', 'prototype')
-                
+                primary_agent = str(frontmatter.get('primary_agent', 'unknown') or 'unknown')
+                intent_type = str(frontmatter.get('intent_type', 'unknown') or 'unknown')
+                promotion_state = str(frontmatter.get('promotion_state', 'prototype') or 'prototype')
+
                 # Create search payload
                 lines = content.strip().split('\n')
                 summary = ' '.join(lines[:10])[:500]
-                doc_payload = f"Skillz: {name}\nAgent: {primary_agent}\nType: {intent_type}\nDescription: {description}\n{summary}"
-                
-                ids.append(f"skill_{idx}")
-                embeddings.append(self._get_embedding(doc_payload))
-                documents.append(doc_payload)
-                
-                metadatas.append({
+                doc_payload = (
+                    f"Skillz: {name}\n"
+                    f"Agent: {primary_agent}\n"
+                    f"Type: {intent_type}\n"
+                    f"Description: {description}\n"
+                    f"{summary}"
+                )
+                metadata = {
                     "skill_name": name,
                     "description": description[:500],
                     "agents": ','.join(agents) if isinstance(agents, list) else str(agents),
@@ -514,14 +773,32 @@ class HoloIndex:
                     "promotion_state": promotion_state,
                     "path": str(file_path),
                     "type": "skillz",
-                    "priority": 9  # Skillz are high priority for agent discovery
-                })
+                    "priority": 9,  # Skillz are high priority for agent discovery
+                }
+
+                # Keep collection fields length-consistent by appending atomically.
+                embedding = self._get_embedding(doc_payload)
+                ids.append(f"skill_{idx}")
+                embeddings.append(embedding)
+                documents.append(doc_payload)
+                metadatas.append(metadata)
                 
             except Exception as e:
                 self._log_agent_action(f"Failed to parse SKILLz {file_path}: {e}", "WARN")
                 continue
         
         if embeddings:
+            if not (len(ids) == len(embeddings) == len(documents) == len(metadatas)):
+                self._log_agent_action(
+                    (
+                        "SKILLz index length mismatch detected "
+                        f"(ids={len(ids)}, embeddings={len(embeddings)}, "
+                        f"documents={len(documents)}, metadatas={len(metadatas)}). "
+                        "Aborting collection add."
+                    ),
+                    "ERROR",
+                )
+                return
             self.skill_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
             self._log_agent_action(f"SKILLz index refreshed: {len(embeddings)} skills indexed", "OK")
         else:
@@ -612,22 +889,150 @@ class HoloIndex:
             return f"WSP {match.group(1)}"
         return title.split()[0] if title else "WSP"
 
+    def _is_symbol_query(self, query: str) -> bool:
+        """Heuristic: detect symbol-like queries (identifiers, paths, function calls)."""
+        if not query:
+            return False
+        if "/" in query or "\\" in query or query.endswith(".py"):
+            return True
+        if "(" in query and ")" in query:
+            return True
+        if "_" in query:
+            return True
+        # Treat simple identifiers as symbols (e.g., run_council_with_llm)
+        if query.isidentifier():
+            return True
+        return False
+
+    def _merge_hits(self, primary: List[Dict[str, Any]], secondary: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
+        """Merge hit lists with robust de-duplication and cap to limit.
+
+        WSP 87 noise reduction: Normalizes paths (forward slashes, lowercase)
+        to prevent duplicate entries from path format variations (e.g., Windows
+        backslash vs forward slash, absolute vs relative).
+        """
+        seen = set()
+        merged: List[Dict[str, Any]] = []
+
+        def _normalize_key(raw_key: str) -> str:
+            """Normalize path-like keys for robust deduplication."""
+            k = raw_key.replace("\\", "/").lower().strip()
+            # Strip common prefixes for relative/absolute path matching
+            for prefix in ("o:/foundups-agent/", "o:\\foundups-agent\\"):
+                if k.startswith(prefix):
+                    k = k[len(prefix):]
+            return k
+
+        for hit in primary + secondary:
+            raw_key = hit.get("path") or hit.get("location") or hit.get("id") or hit.get("title")
+            if not raw_key:
+                continue
+            key = _normalize_key(raw_key)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(hit)
+            if len(merged) >= limit:
+                break
+        return merged
+
+    def _rg_symbol_search(self, query: str, limit: int) -> List[Dict[str, Any]]:
+        """Fallback: exact symbol search via ripgrep for NAVIGATION gaps."""
+        try:
+            root = str(self.project_root).replace("\\", "/")
+            rg_path = shutil.which("rg") or "rg"
+            cmd = [
+                rg_path,
+                "-n",
+                "--no-heading",
+                f"--max-count={max(1, limit * 3)}",
+                "-S",
+                query,
+                root
+            ]
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=15,
+            )
+        except Exception:
+            return []
+
+        if proc.returncode not in (0, 1):  # 1 = no matches
+            return []
+
+        hits: List[Dict[str, Any]] = []
+        for line in (proc.stdout or "").splitlines():
+            # format: path:line:content (Windows paths include drive letter)
+            match = re.match(r"^([A-Za-z]:\\\\.*?):(\d+):(.*)$", line)
+            if not match:
+                match = re.match(r"^(.*?):(\d+):(.*)$", line)
+            if not match:
+                continue
+            path = match.group(1).strip()
+            line_no = match.group(2).strip()
+            location = f"{path}:{line_no}"
+            hits.append({
+                "need": query,
+                "location": location,
+                "path": path,
+                "line": int(line_no) if line_no.isdigit() else None,
+                "type": "code",
+                "priority": 10
+            })
+        if not hits:
+            return []
+
+        # Prefer code files over docs for symbol queries
+        def _ext_rank(p: str) -> int:
+            p = p.lower()
+            if p.endswith((".py", ".ts", ".tsx", ".js", ".jsx")):
+                return 0
+            if p.endswith((".md", ".rst", ".txt")):
+                return 2
+            return 1
+
+        hits.sort(key=lambda h: (_ext_rank(h.get("path", "")), h.get("path", "")))
+        # De-dupe by path and cap to limit
+        filtered: List[Dict[str, Any]] = []
+        seen = set()
+        for hit in hits:
+            path = hit.get("path")
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            filtered.append(hit)
+            if len(filtered) >= limit:
+                break
+        return filtered
+
     # --------- Search --------- #
 
     def search(self, query: str, limit: int = 10, doc_type_filter: str = "all") -> Dict[str, Any]:
         """
         0102: Enhanced search with AST preview extraction for TypeScript/JSX files
-        
+
         Args:
             query: Search query string
             limit: Maximum number of results to return
             doc_type_filter: Filter by document type ('code', 'wsp', 'all')
-            
+
         Returns:
             Dictionary with legacy keys ('code', 'wsps') and modern keys
             ('code_hits', 'wsp_hits') plus metadata for telemetry.
         """
         try:
+            # Fast path: check cache first (WSP 91 performance optimization)
+            search_cache = getattr(self, "search_cache", None)
+            if search_cache is not None:
+                cached = search_cache.get(query, doc_type_filter)
+                if cached is not None:
+                    self._log_agent_action(f"[CACHE HIT] '{query}' (limit={limit})", "FAST")
+                    return cached
+
             # Log search initiation
             self._log_agent_action(f"Searching: '{query}' (limit={limit}, type={doc_type_filter})")
             
@@ -636,28 +1041,61 @@ class HoloIndex:
             wsp_hits = []
             test_hits = []
             skill_hits = []
-            
+            symbol_results: List[Dict[str, Any]] = []
+
+            # Symbol collection can be large; only query it when it will likely add value.
+            # This keeps non-symbol searches fast while preserving exact-identifier discovery.
+            symbol_query = self._is_symbol_query(query)
+            force_symbol_scan = os.getenv("HOLO_FORCE_SYMBOL_SCAN", "0").lower() in {"1", "true", "yes", "on"}
+            model = getattr(self, "model", None)
+            should_scan_symbols = force_symbol_scan or symbol_query or (model is not None)
+            code_collection = getattr(self, "code_collection", None)
+            symbol_collection = getattr(self, "symbol_collection", None)
+            wsp_collection = getattr(self, "wsp_collection", None)
+            test_collection = getattr(self, "test_collection", None)
+            skill_collection = getattr(self, "skill_collection", None)
+
             # Search code index if requested
-            if doc_type_filter in ["code", "all"]:
-                code_results = self._search_collection(self.code_collection, query, limit, kind="code")
+            if doc_type_filter in ["code", "all"] and code_collection is not None:
+                code_results = self._search_collection(code_collection, query, limit, kind="code")
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
+                # Also search symbol index for function/class hits
+                if should_scan_symbols and symbol_collection is not None:
+                    symbol_results = self._search_collection(symbol_collection, query, limit, kind="symbol")
+                if symbol_results:
+                    code_hits = self._merge_hits(symbol_results, code_hits, limit)
 
             # Search WSP index if requested
-            if doc_type_filter not in ["code", "test"]:
-                wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+            if doc_type_filter not in ["code", "test"] and wsp_collection is not None:
+                wsp_hits = self._search_collection(wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
                 
             # Search Test index if requested
-            if doc_type_filter in ["test", "all"]:
-                test_hits = self._search_collection(self.test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
+            if doc_type_filter in ["test", "all"] and test_collection is not None:
+                test_hits = self._search_collection(test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
 
             # Search Skillz index for agent discovery (only in full context)
-            if doc_type_filter == "all":
+            if doc_type_filter == "all" and skill_collection is not None:
                 try:
-                    skill_hits = self._search_collection(self.skill_collection, query, limit, kind="skill")
+                    skill_hits = self._search_collection(skill_collection, query, limit, kind="skill")
                 except Exception:
                     skill_hits = []
             
+            # Symbol-query fallback: add lexical hits for exact identifiers/paths
+            if symbol_query:
+                if doc_type_filter in ["code", "all"] and code_collection is not None:
+                    lexical_code = self._lexical_search_collection(code_collection, query, limit, kind="code")
+                    if lexical_code:
+                        code_hits = self._merge_hits(code_hits, lexical_code, limit)
+                    # NAVIGATION gaps: use rg to locate exact symbol definitions/usages
+                    rg_hits = self._rg_symbol_search(query, limit)
+                    if rg_hits:
+                        code_hits = self._merge_hits(rg_hits, code_hits, limit)
+                if doc_type_filter in ["all"] and not wsp_hits and wsp_collection is not None:
+                    lexical_wsp = self._lexical_search_collection(wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+                    if lexical_wsp:
+                        wsp_hits = self._merge_hits(wsp_hits, lexical_wsp, limit)
+
             # Log completion
             self._log_agent_action(
                 f"Search complete: {len(code_hits)} code, {len(wsp_hits)} WSP, "
@@ -674,15 +1112,23 @@ class HoloIndex:
                 'tests': test_hits,  # new key for test integration
                 'skills': skill_hits,
                 'skill_hits': skill_hits,
+                'symbol_hits': symbol_results if 'symbol_results' in locals() else [],
                 'metadata': {
                     'query': query,
                     'code_count': len(code_hits),
                     'wsp_count': len(wsp_hits),
                     'test_count': len(test_hits),
                     'skill_count': len(skill_hits),
-                    'timestamp': datetime.now().isoformat()
+                    'symbol_count': len(symbol_results) if 'symbol_results' in locals() else 0,
+                    'timestamp': datetime.now().isoformat(),
+                    'cached': False
                 }
             }
+
+            # Store in cache for fast repeated queries
+            if search_cache is not None:
+                search_cache.put(query, doc_type_filter, payload)
+
             return payload
             
         except Exception as e:
@@ -763,6 +1209,7 @@ class HoloIndex:
                 title = (meta.get('title') or '').lower()
                 path = (meta.get('path') or '').lower()
                 summary = (meta.get('summary') or '').lower()
+                keywords = (meta.get('keywords') or '').lower()
                 test_id = (meta.get('test_id') or '').lower()
                 capabilities = (meta.get('capabilities') or '').lower()
                 description = (meta.get('description') or '').lower()
@@ -776,6 +1223,8 @@ class HoloIndex:
                         keyword_score += 1.0
                     if token in summary:
                         keyword_score += 0.5
+                    if token in keywords:
+                        keyword_score += 1.25
                     if token in need:
                         keyword_score += 2.0
                     if token in doc_text:
@@ -857,14 +1306,21 @@ class HoloIndex:
         return formatted
 
     def _search_collection(self, collection, query: str, limit: int, kind: str, doc_type_filter: str = "all") -> List[Dict[str, Any]]:
-        if collection.count() == 0:
+        if collection is None:
             return []
 
-        if self.model is None:
+        try:
+            if collection.count() == 0:
+                return []
+        except Exception:
+            return []
+
+        model = getattr(self, "model", None)
+        if model is None:
             self._log_agent_action("Embedding model not available - using offline lexical scan", "WARN")
             return self._lexical_search_collection(collection, query, limit, kind, doc_type_filter)
         else:
-            embedding = self.model.encode(query, show_progress_bar=False).tolist()
+            embedding = model.encode(query, show_progress_bar=False).tolist()
             results = collection.query(query_embeddings=[embedding], n_results=limit)
 
         formatted: List[Dict[str, Any]] = []
@@ -877,6 +1333,11 @@ class HoloIndex:
         if doc_count == 0:
             return []
 
+        # WSP 87 noise reduction: Configurable similarity floor to filter ghost hits.
+        # Ghost hits = documents near vector space centroid that match every query.
+        # Default 0.35 filters results below 35% similarity (empirically tuned).
+        min_similarity = float(os.getenv('HOLO_MIN_SIMILARITY', '0.35'))
+
         # Collect all results first for filtering and ranking
         raw_results = []
         for i in range(doc_count):
@@ -887,6 +1348,10 @@ class HoloIndex:
             # Fix: L2 distance ranges 0→∞, convert to similarity 0→1
             # Using inverse formula: 1/(1+d) gives 1.0 for d=0, approaches 0 for large d
             similarity = 1.0 / (1.0 + float(distance))
+
+            # Filter ghost hits below similarity floor
+            if similarity < min_similarity:
+                continue
             doc_type = meta.get('type', 'other')
             priority = meta.get('priority', 1)
 
@@ -896,6 +1361,7 @@ class HoloIndex:
             title = (meta.get('title') or '').lower()
             path = (meta.get('path') or '').lower()
             summary = (meta.get('summary') or '').lower()
+            keywords = (meta.get('keywords') or '').lower()
             test_id = (meta.get('test_id') or '').lower() # Support test ID search
             capabilities = (meta.get('capabilities') or '').lower() # Support capability search
             
@@ -908,13 +1374,15 @@ class HoloIndex:
                     keyword_score += 1.0
                 if token in summary:
                     keyword_score += 0.5
+                if token in keywords:
+                    keyword_score += 1.25
                 if token in test_id:
                     keyword_score += 3.0 # High match for direct test ID
                 if token in capabilities:
                     keyword_score += 1.5
 
-            # Apply document type filtering
-            if doc_type_filter != "all" and doc_type != doc_type_filter:
+            # Apply document type filtering (prefix match: 'wsp' matches 'wsp_protocol')
+            if doc_type_filter != "all" and not doc_type.startswith(doc_type_filter):
                 continue
 
             if kind == "code":
