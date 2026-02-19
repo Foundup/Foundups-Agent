@@ -123,6 +123,59 @@ class GitLinkedInBridge:
         # Retry queue for failed social posts (lightweight)
         self.retry_queue_file = self.repo_root / "modules/platform_integration/linkedin_agent/data/social_post_retry_queue.json"
         self.retry_queue = self._load_retry_queue()
+
+    @staticmethod
+    def _env_flag(name: str, default: bool = False, env: Optional[Dict[str, str]] = None) -> bool:
+        source = env if env is not None else os.environ
+        raw = source.get(name)
+        if raw is None or raw.strip() == "":
+            return default
+        return raw.strip().lower() in ("1", "true", "yes", "y", "on")
+
+    @staticmethod
+    def _parse_csv_env(
+        name: str,
+        default: str,
+        env: Optional[Dict[str, str]] = None,
+    ) -> set[str]:
+        source = env if env is not None else os.environ
+        raw = source.get(name, default)
+        return {item.strip() for item in raw.split(",") if item.strip()}
+
+    @staticmethod
+    def _matches_branch_pattern(branch: str, pattern: str) -> bool:
+        normalized = pattern.strip()
+        if not normalized:
+            return False
+        if normalized.endswith("/*"):
+            return branch.startswith(normalized[:-1])
+        return branch == normalized
+
+    @classmethod
+    def _is_release_branch(cls, branch: str, env: Optional[Dict[str, str]] = None) -> bool:
+        patterns = cls._parse_csv_env(
+            "GIT_PUSH_RELEASE_BRANCH_PATTERNS",
+            "main,master,release/*,hotfix/*",
+            env=env,
+        )
+        return any(cls._matches_branch_pattern(branch, pattern) for pattern in patterns)
+
+    @classmethod
+    def _branch_requires_pr(cls, branch: str, env: Optional[Dict[str, str]] = None) -> bool:
+        if cls._env_flag("GIT_PUSH_REQUIRE_PR", default=False, env=env):
+            return True
+
+        protected = cls._parse_csv_env(
+            "GIT_PUSH_PROTECTED_BRANCHES",
+            "main,master",
+            env=env,
+        )
+        allow_direct_protected = cls._env_flag(
+            "GIT_PUSH_DIRECT_PROTECTED",
+            default=False,
+            env=env,
+        )
+        return branch in protected and not allow_direct_protected
         
     def _load_posted_commits(self) -> set:
         """Load set of already posted commit hashes"""
@@ -1228,6 +1281,7 @@ class GitLinkedInBridge:
             pr_url: Optional[str] = None
             pr_was_required = False
             pr_branch: Optional[str] = None
+            current_branch = ""
 
             def _is_pr_required_error(output: str) -> bool:
                 """Detect GitHub rulesets that reject direct pushes and require PRs."""
@@ -1282,6 +1336,13 @@ class GitLinkedInBridge:
                         enabled = env_setting.strip().lower() in ("1", "true", "yes", "y", "on")
 
                     if not enabled:
+                        return
+
+                    if not self._is_release_branch(current_branch):
+                        print(
+                            f"[INFO] Skipping PR auto-merge: branch '{current_branch}' "
+                            "does not match release branch patterns."
+                        )
                         return
 
                     merge_method = os.getenv("GIT_PUSH_PR_MERGE_METHOD", "merge").strip().lower()
@@ -1424,6 +1485,7 @@ class GitLinkedInBridge:
 
             def _push_current_branch(remote: str = "origin") -> bool:
                 """Push current branch; auto-set upstream when missing."""
+                nonlocal current_branch
                 branch_result = subprocess.run(
                     ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                     capture_output=True,
@@ -1434,6 +1496,16 @@ class GitLinkedInBridge:
                     cwd=str(self.repo_root),
                 )
                 branch = branch_result.stdout.strip()
+                current_branch = branch
+
+                if self._branch_requires_pr(branch):
+                    reason = (
+                        f"Policy enforced PR flow for protected branch '{branch}'. "
+                        "Set GIT_PUSH_DIRECT_PROTECTED=1 to override protected-branch behavior, "
+                        "or GIT_PUSH_REQUIRE_PR=0 to disable global PR enforcement."
+                    )
+                    print(f"[INFO] {reason}")
+                    return _create_pr_for_head(remote, reason)
 
                 push_result = subprocess.run(
                     ['git', 'push'],

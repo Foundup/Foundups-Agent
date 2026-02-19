@@ -2,6 +2,18 @@
 
 ## Latest Changes
 
+### V060 - Protected-Branch PR Enforcement + Release Auto-Merge Guard
+**Date**: 2026-02-19
+**Changes**:
+- Added explicit branch policy helpers in `src/git_linkedin_bridge.py`:
+  - `_branch_requires_pr(...)` with protected defaults (`main`, `master`)
+  - `_is_release_branch(...)` with default release patterns (`main`, `master`, `release/*`, `hotfix/*`)
+- `push_and_post()` now enforces PR flow by policy on protected branches before attempting direct `git push`.
+- PR auto-merge now skips when branch does not match release patterns.
+- Added test coverage: `tests/test_git_push_policy.py`.
+**Impact**: Prevents accidental direct protected-branch pushes and blocks auto-merging PRs from non-release branches in autonomous mode.
+**WSP**: WSP 22 (ModLog), WSP 91 (DAEMON safety), WSP 50 (Pre-action verification)
+
 ### V059 - Lazy Package Exports + OAuth Import Path Fallbacks
 **Date**: 2026-02-17
 **Changes**:
