@@ -7,11 +7,43 @@ Visual simulation of the autonomous FoundUp ecosystem.
 - `modules/foundups/docs/OCCAM_LAYERED_EXECUTION_PLAN.md`
 - `modules/foundups/docs/CONTINUATION_RUNBOOK.md`
 
+## Economics Documentation
+
+### F_i Exit Fee System (2026-02-17)
+- **Analysis**: `economics/FI_EXIT_SCENARIOS.md` - Full dialectic analysis of 5 fee models
+- **Simulation**: `economics/exit_scenario_sim.py` - Monte Carlo comparison
+- **Dynamic Taper**: `economics/dynamic_fee_taper.py` - Float system (fees adjust with reserve)
+
+**Recommended Model**: HYBRID (creation fee + vesting + dynamic taper)
+- Protocol capture: 22.4% average
+- Protects against miner dumps (25.7% capture)
+- Rewards long-term holders
+- Self-regulating (fees drop as reserve strengthens)
+
+```bash
+# Run exit scenario simulation
+python modules/foundups/simulator/economics/exit_scenario_sim.py
+
+# Run dynamic fee taper demo
+python modules/foundups/simulator/economics/dynamic_fee_taper.py
+```
+
+**WSP Reference**: WSP 26 Section 14.11
+
+### 10-Year Projection Hardening (2026-02-17)
+- Projection source: `economics/ten_year_projection.py`
+- Export includes:
+  - gross/protocol/platform fee lanes
+  - downside/base/upside confidence ratios
+  - market-calibrated daily volume (`raw` vs `adjusted`)
+  - compute graph payload for litepaper (`compute_graph`)
+
 ## CABR Canonical Intent
 
 - CABR = Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate).
 - WHY: CABR exists to power Proof of Benefit (PoB).
 - HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- CABR = pipe size (flow rate), PoB validation = valve.
 - RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
 
 ## Architecture
@@ -40,7 +72,7 @@ FAM modules (no new logic)
 1. **FAMDaemon events = Single Source of Truth (SSoT)**
 2. **state_store derives renderable state from event stream**
 3. **Render layer reads ONLY from state_store**
-4. **Adapters bridge to existing FAM code - NO logic invention**
+4. **Adapters bridge to FAM contracts; only deterministic simulation hardening is allowed**
 5. **Phantom plugs ONLY where logic is missing**
 
 ## Build Lifecycle Coverage
@@ -74,9 +106,9 @@ FoundUps lifecycle policy in simulator:
 Investment and exchange model:
 
 - `F_0` is the only investor source. Seed BTC enters once (`investor_funding_received` with `foundup_id=F_0`).
-- Investor subscriptions accrue at `200 UP$/term` with a `max 5 terms` hoard (`mvp_subscription_accrued`).
-- Proto-stage FoundUps accept UP$ bids for MVP pre-launch access (`mvp_bid_submitted`).
-- Winning bids inject UP$ treasury capital into the target FoundUp (`mvp_offering_resolved`).
+- Investor subscriptions accrue at `200 UPS/term` with a `max 5 terms` hoard (`mvp_subscription_accrued`).
+- Proto-stage FoundUps accept UPS bids for MVP pre-launch access (`mvp_bid_submitted`).
+- Winning bids inject UPS treasury capital into the target FoundUp (`mvp_offering_resolved`).
 - F_i decentralized exchange trades remain continuous (`fi_trade_executed` events).
 
 012 allocation + pAVS telemetry:
@@ -85,7 +117,7 @@ Investment and exchange model:
 - Subscription refresh emits `subscription_allocation_refreshed`; monthly rollovers emit `subscription_cycle_reset`.
 - 0102 allocation batches emit `ups_allocation_executed` plus per-FoundUp `ups_allocation_result`.
 - Demurrage cycles emit `demurrage_cycle_completed`, `pavs_treasury_updated`, and `treasury_separation_snapshot`.
-- Treasury separation is explicit in events/stats: system pAVS treasury vs per-FoundUp UP$ treasury lanes.
+- Treasury separation is explicit in events/stats: system pAVS treasury vs per-FoundUp UPS treasury lanes.
 
 Compute access/paywall simulation direction:
 - FAM paywall design is specified in `modules/foundups/agent_market/docs/COMPUTE_ACCESS_PAYWALL_SPEC.md`.
@@ -111,16 +143,21 @@ python -m modules.foundups.simulator.scenario_runner --scenario baseline --ticks
 
 # Monte Carlo batch
 python -m modules.foundups.simulator.scenario_runner --scenario high_adoption --ticks 300 --monte-carlo 5
+
+# Downside/base/upside confidence-band matrix (claim gate audit)
+python -m modules.foundups.simulator.sustainability_matrix --ticks 1500 --runs 9
 ```
 
 Scenario runner notes:
 - Each run uses an isolated FAM daemon store (`<out>/<run_label>_fam_daemon`) to avoid cross-run state bleed.
 - `frame_digest_sha256` is computed from a deterministic frame projection (state + pools + metrics), excluding volatile render fields.
+- Sustainability claims are gated by downside scenario p10 pass on platform-capture lane (`downside_revenue_cost_ratio_p10 >= 1.0`).
 
 ## Configuration
 
 Edit `config.py` to adjust:
 - Number of agents
+- Per-founder creation cap (`founder_max_foundups`, default `3`)
 - Tick rate (simulation speed)
 - Random seed (determinism)
 - Viewport size
@@ -147,7 +184,7 @@ python -m modules.foundups.simulator.run
 ### Cube View (3D Animation)
 - Isometric ASCII cube that builds up as agents work
 - Agents colored by WSP 15 priority level (P0-P4)
-- Phase-based story: SCAFFOLD → BUILD → PROMOTE → INVEST → LAUNCH
+- Phase-based story: SCAFFOLD → BUILD → PROMOTE → STAKING → CUSTOMERS → LAUNCH
 - Scrolling ticker with event notifications
 - Agent behaviors: spazzing, recruiting, level-ups
 
@@ -377,11 +414,11 @@ The simulator implements the full Freemium → Premium gamification loop:
 
 ### The Gamification Loop
 ```
-User plays → uses allocated UP$ to stake in FoundUps
-  → UP$ runs out (remaining_allocation = 0)
-    → Motivation: Subscribe to Spark → 4x more UP$
+User plays → uses allocated UPS to stake in FoundUps
+  → UPS runs out (remaining_allocation = 0)
+    → Motivation: Subscribe to Spark → 4x more UPS
       → Plays more → runs out again
-        → Motivation: Upgrade to Explorer → 9x more UP$
+        → Motivation: Upgrade to Explorer → 9x more UPS
           → Subscription revenue → BTC reserve → currency strengthens
 ```
 
@@ -397,7 +434,7 @@ alice = HumanUPSAccount(human_id="alice")
 print(f"Tier: {alice.subscription_tier.value}")  # "free"
 print(f"Allocation: {alice.remaining_allocation}")  # 100.0 (base)
 
-# Use UP$ - gamification loop in action
+# Use UPS - gamification loop in action
 alice.use_allocated_ups(80.0)  # Stake in FoundUps
 alice.use_allocated_ups(30.0)  # FAILS - insufficient, triggers upgrade motivation
 
@@ -411,7 +448,7 @@ print(f"Effective monthly: {config.effective_monthly_multiplier}x")  # 4x
 print(f"Staking fee discount: {config.staking_fee_discount * 100}%")  # 10%
 
 # Refresh allocation (bi-weekly for Spark)
-alice.refresh_allocation()  # +200 UP$ (cycle 2/2)
+alice.refresh_allocation()  # +200 UPS (cycle 2/2)
 
 # At month boundary
 alice.reset_monthly_cycles()  # Reset to cycle 0
@@ -456,7 +493,7 @@ The system distinguishes between TWO types of F_i tokens with different exit fee
 | F_i Type | Source | Exit Fee | Purpose |
 |----------|--------|----------|---------|
 | **MINED F_i** | Agent work (`mint_for_work`) | 11% | Discourages extraction, keeps value in ecosystem |
-| **STAKED F_i** | UP$ investment (`stake_ups`) | 5% | Value preservation (1:1 backed by UP$) |
+| **STAKED F_i** | UPS investment (`stake_ups`) | 5% | Value preservation (1:1 backed by UPS) |
 
 ```python
 from modules.foundups.simulator.economics import TokenEconomicsEngine, FeeConfig
@@ -466,14 +503,14 @@ human = engine.register_human("alice", initial_ups=1000.0)
 pool = engine.register_foundup("gotjunk_001")
 pool.update_adoption(users=50, revenue_ups=5000)  # Grow to ~40% adoption
 
-# STAKED F_i: User stakes UP$ for value preservation
+# STAKED F_i: User stakes UPS for value preservation
 # 3% entry fee + 5% exit fee = 8% total round-trip
 fi_received, entry_fee = engine.human_stakes_ups("alice", "gotjunk_001", 500.0)
-print(f"Staked 500 UP$ -> {fi_received:.2f} STAKED F_i (entry fee: {entry_fee:.2f})")
+print(f"Staked 500 UPS -> {fi_received:.2f} STAKED F_i (entry fee: {entry_fee:.2f})")
 
-# Later: unstake to get UP$ back (minus 5% exit fee)
+# Later: unstake to get UPS back (minus 5% exit fee)
 ups_back, exit_fee = engine.human_unstakes_fi("alice", "gotjunk_001", fi_received)
-print(f"Unstaked -> {ups_back:.2f} UP$ (exit fee: {exit_fee:.2f})")
+print(f"Unstaked -> {ups_back:.2f} UPS (exit fee: {exit_fee:.2f})")
 # Total lost: ~8% (value mostly preserved)
 
 # MINED F_i: Agent earns by doing work, higher exit fee
@@ -484,7 +521,7 @@ success, fi_mined = engine.agent_completes_task("agent_1", "gotjunk_001", 10.0, 
 
 # When human extracts MINED F_i -> 11% fee (discourages extraction)
 ups_received, fees = engine.human_converts_mined_fi_to_ups("alice", "gotjunk_001", fi_mined)
-print(f"Extracted {fi_mined:.2f} MINED F_i -> {ups_received:.2f} UP$ (11% fee: {fees['total']:.2f})")
+print(f"Extracted {fi_mined:.2f} MINED F_i -> {ups_received:.2f} UPS (11% fee: {fees['total']:.2f})")
 ```
 
 ### Fee Configuration Simulation
@@ -523,7 +560,7 @@ print(f"BTC vault accumulated: {result.btc_vault_total:.2f}")
 
 ### Demurrage Warning System
 
-UP$ in wallets decays over time (demurrage). Staked UP$ (as F_i) does NOT decay:
+UPS in wallets decays over time (demurrage). Staked UPS (as F_i) does NOT decay:
 
 ```python
 from modules.foundups.simulator.economics import HumanUPSAccount
@@ -534,7 +571,7 @@ alice.ups_balance = 500.0  # Sitting in wallet
 # Check for warnings
 warning = alice.get_demurrage_warning()
 if warning:
-    print(warning)  # "WARNING: 500.0 UP$ is DECAYING! Stake into a FoundUp..."
+    print(warning)  # "WARNING: 500.0 UPS is DECAYING! Stake into a FoundUp..."
 ```
 
 ## BTC Reserve - The "Hole in the Bucket"
@@ -545,11 +582,11 @@ FoundUps is a Bitcoin sink - BTC flows IN but NEVER flows OUT (Hotel California)
 | Source | Description |
 |--------|-------------|
 | **Subscriptions** | Monthly payments → Buy BTC → Reserve |
-| **Demurrage** | Decayed UP$ → Burned → BTC backing stays |
+| **Demurrage** | Decayed UPS → Burned → BTC backing stays |
 | **Mined Exit Fees** | 11% fee → BTC vault |
 | **Staked Exit Fees** | 5% fee → BTC vault |
 | **Trading Fees** | 2% on F_i orderbook → BTC vault |
-| **Cashout Fees** | 7% on UP$ → external → BTC vault |
+| **Cashout Fees** | 7% on UPS → external → BTC vault |
 
 ```python
 from modules.foundups.simulator.economics import (
@@ -565,7 +602,7 @@ print(f"Added {btc_added:.8f} BTC to reserve")
 
 # Check reserve stats
 print(f"Total BTC: {reserve.total_btc:.8f}")
-print(f"UP$ capacity: {reserve.ups_capacity:,.2f}")
+print(f"UPS capacity: {reserve.ups_capacity:,.2f}")
 print(f"Backing ratio: {reserve.backing_ratio:.2%}")
 ```
 
@@ -584,7 +621,7 @@ manager = OrderBookManager(trading_fee_rate=0.02)  # 2% fee
 order, trades = manager.place_buy(
     foundup_id="gotjunk_001",
     human_id="alice",
-    price=1.5,  # Max UP$ per F_i willing to pay
+    price=1.5,  # Max UPS per F_i willing to pay
     quantity=100.0  # F_i wanted
 )
 
@@ -592,7 +629,7 @@ order, trades = manager.place_buy(
 order, trades = manager.place_sell(
     foundup_id="gotjunk_001",
     human_id="bob",
-    price=1.4,  # Min UP$ per F_i
+    price=1.4,  # Min UPS per F_i
     quantity=50.0  # F_i offered
 )
 
@@ -605,7 +642,7 @@ for trade in trades:
 
 ## Demurrage (Bio-Decay)
 
-UP$ in wallets decays over time using Michaelis-Menten kinetics:
+UPS in wallets decays over time using Michaelis-Menten kinetics:
 
 ### Token States (ICE/LIQUID/VAPOR)
 | State | Location | Decay | Action |
@@ -627,12 +664,12 @@ engine.register_wallet("alice", initial_balance=1000.0)
 
 # After 7 days of inactivity, check decay
 decay_amount, new_balance = engine.apply_decay("alice", time_elapsed_days=7)
-print(f"Decayed: {decay_amount:.2f} UP$ -> new balance: {new_balance:.2f}")
+print(f"Decayed: {decay_amount:.2f} UPS -> new balance: {new_balance:.2f}")
 
 # Get decay warning
 warning = engine.get_decay_warning("alice")
 if warning:
-    print(warning)  # "WARNING: 950 UP$ is decaying at 0.12%/day..."
+    print(warning)  # "WARNING: 950 UPS is decaying at 0.12%/day..."
 
 # Activities that reset decay timer
 print(DECAY_RELIEF_ACTIVITIES)
@@ -669,7 +706,7 @@ Demurrage decay ───┼──> BTC Reserve (Hotel California)
 Exit fees ─────────┤         ├──> 10% → Emergency Reserve
                    │         │
 Trading fees ──────┘         ▼
-                      UP$ = f(BTC Reserve)
+                      UPS = f(BTC Reserve)
                              │
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
@@ -736,7 +773,7 @@ manager = BondingCurveManager()
 # Initialize a curve with starting liquidity
 curve = manager.get_or_create_curve(
     "foundup_001",
-    initial_ups=1000.0,  # UP$ seeding the curve
+    initial_ups=1000.0,  # UPS seeding the curve
     initial_price=1.0    # Starting price
 )
 
@@ -746,11 +783,11 @@ print(f"Bought: {fi_received:.2f} F_i (fee: {fee:.2f})")
 
 # Always-available sell (guaranteed exit)
 ups_received, fee = manager.sell("foundup_001", 50.0, "alice")
-print(f"Sold: {ups_received:.2f} UP$ (fee: {fee:.2f})")
+print(f"Sold: {ups_received:.2f} UPS (fee: {fee:.2f})")
 
 # Check slippage before large trade
 slippage = curve.get_slippage(1000.0, is_buy=True)
-print(f"Slippage for 1000 UP$ buy: {slippage*100:.1f}%")
+print(f"Slippage for 1000 UPS buy: {slippage*100:.1f}%")
 ```
 
 ### Rage Quit (Moloch DAO-style)
@@ -782,7 +819,7 @@ available, reason = rage_quit.is_rage_quit_available("foundup_001")
 if available:
     # Exit at pro-rata value with 2% fee (vs 11% normal)
     result = rage_quit.rage_quit("alice", "foundup_001", 100.0)
-    print(f"Rage quit: {result.fi_burned} F_i -> {result.ups_received:.2f} UP$")
+    print(f"Rage quit: {result.fi_burned} F_i -> {result.ups_received:.2f} UPS")
     print(f"Reason: {result.failure_reason.value}")  # "no_activity"
 ```
 

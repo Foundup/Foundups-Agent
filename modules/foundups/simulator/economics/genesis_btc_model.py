@@ -4,7 +4,7 @@ GOAL: Model what happens when 1 BTC enters the FoundUps ecosystem.
 
 EXPLICIT ASSUMPTIONS (need 012 validation):
 1. F_i minting is driven by AGENT WORK (0102 task completion)
-2. BTC backing determines UP$ capacity
+2. BTC backing determines UPS capacity
 3. Stakers earn F_i from Du pool (passive)
 4. F_i/BTC ratio is DERIVED from actual economics, not set arbitrarily
 

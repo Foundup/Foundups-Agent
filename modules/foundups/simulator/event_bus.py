@@ -114,17 +114,17 @@ class SimEvent:
             return f"Investor seed ({source}): {amount} BTC"
         elif event_type == "mvp_subscription_accrued":
             added_ups = payload.get("added_ups", 0)
-            return f"F_0 subscription accrued: +{added_ups} UP$"
+            return f"F_0 subscription accrued: +{added_ups} UPS"
         elif event_type == "mvp_bid_submitted":
             bid_ups = payload.get("bid_ups", 0)
-            return f"MVP bid submitted: {bid_ups} UP$"
+            return f"MVP bid submitted: {bid_ups} UPS"
         elif event_type == "mvp_offering_resolved":
             injection = payload.get("total_injection_ups", 0)
-            return f"MVP offering resolved: +{injection} UP$ treasury"
+            return f"MVP offering resolved: +{injection} UPS treasury"
         elif event_type == "subscription_allocation_refreshed":
             allocation = payload.get("allocation_ups", 0)
             tier = payload.get("tier", "free")
-            return f"Subscription refresh ({tier}): +{allocation} UP$"
+            return f"Subscription refresh ({tier}): +{allocation} UPS"
         elif event_type == "subscription_cycle_reset":
             tier = payload.get("tier", "free")
             return f"Subscription cycle reset ({tier})"
@@ -132,26 +132,49 @@ class SimEvent:
             requested = payload.get("ups_requested", 0)
             fi = payload.get("fi_received", 0)
             strategy = payload.get("strategy", "autonomous")
-            return f"0102 allocation ({strategy}): {requested} UP$ -> {fi} F_i"
+            return f"0102 allocation ({strategy}): {requested} UPS -> {fi} F_i"
         elif event_type == "ups_allocation_result":
             path = payload.get("path", "unknown")
             fi = payload.get("fi_received", 0)
             return f"Allocation result ({path}): +{fi} F_i"
         elif event_type == "demurrage_cycle_completed":
             decayed = payload.get("total_decay_ups", 0)
-            return f"Demurrage cycle: {decayed} UP$ decayed"
+            return f"Demurrage cycle: {decayed} UPS decayed"
         elif event_type == "pavs_treasury_updated":
             balance = payload.get("pavs_treasury_balance_ups", 0)
-            return f"pAVS treasury: {balance} UP$"
+            return f"pAVS treasury: {balance} UPS"
         elif event_type == "treasury_separation_snapshot":
             pavs = payload.get("pavs_treasury_ups", 0)
             network = payload.get("network_pool_ups", 0)
             return f"Treasury split pAVS={pavs} network={network}"
+        elif event_type == "fee_collected":
+            fee_type = payload.get("fee_type", "unknown")
+            amount = payload.get("amount_sats", 0)
+            return f"Fee collected ({fee_type}): {amount} sats"
+        elif event_type == "cabr_pipe_flow_routed":
+            routed = payload.get("routed_ups", 0)
+            pipe_size = payload.get("cabr_pipe_size", 0)
+            return f"CABR flow routed: {routed} UPS @ pipe {pipe_size:.2f}"
+        elif event_type == "tide_out":
+            amount = payload.get("amount_sats", 0)
+            return f"Tide out: {amount} sats to network pool"
+        elif event_type == "tide_in":
+            amount = payload.get("amount_sats", 0)
+            return f"Tide in: {amount} sats support received"
+        elif event_type == "tide_support_sent":
+            amount = payload.get("amount_sats", 0)
+            return f"Tide support sent: {amount} sats"
+        elif event_type == "tide_support_received":
+            amount = payload.get("amount_sats", 0)
+            return f"Tide support received: {amount} sats"
+        elif event_type == "sustainability_reached":
+            ratio = payload.get("revenue_cost_ratio", 0)
+            return f"Sustainability reached (ratio {ratio:.2f}x)"
         elif event_type == "fi_ups_exchange":
             fi = payload.get("foundup_idx", 1)
             fi_amount = payload.get("fi_amount", 0)
             ups_amount = payload.get("ups_amount", 0)
-            return f"F{_to_subscript(fi)} → UP$: {fi_amount} F_i ⟷ {ups_amount} UP$"
+            return f"F{_to_subscript(fi)} → UPS: {fi_amount} F_i ⟷ {ups_amount} UPS"
         elif event_type == "heartbeat":
             return f"[heartbeat #{payload.get('heartbeat_number', '?')}]"
         elif event_type == "daemon_started":

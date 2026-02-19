@@ -167,7 +167,7 @@ class EmergencyReserve:
         Args:
             target_backing_restoration: Target backing ratio (e.g., 0.80)
             current_backing: Current backing ratio
-            total_ups_supply: Total UP$ in circulation
+            total_ups_supply: Total UPS in circulation
             btc_price: Current BTC price in USD
 
         Returns:
@@ -176,7 +176,7 @@ class EmergencyReserve:
         if current_backing >= target_backing_restoration:
             return 0.0
 
-        # Calculate UP$ gap
+        # Calculate UPS gap
         current_ups_backed = current_backing * total_ups_supply
         target_ups_backed = target_backing_restoration * total_ups_supply
         ups_gap = target_ups_backed - current_ups_backed
@@ -257,7 +257,7 @@ class EmergencyReserve:
 
         Args:
             current_backing: Current backing ratio
-            total_ups_supply: Total UP$ supply
+            total_ups_supply: Total UPS supply
             btc_price: Current BTC price
             target_backing: Target backing to restore to
 

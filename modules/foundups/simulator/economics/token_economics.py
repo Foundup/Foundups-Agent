@@ -3,13 +3,13 @@
 Implements WSP 26 Section 6.8: Anti-Sybil dual-token design.
 
 Token Roles:
-- UP$: Universal fuel (humans EARN, agents SPEND allocated budgets)
+- UPS: Universal fuel (humans EARN, agents SPEND allocated budgets)
 - F_i: FoundUp-specific tokens (agents EARN through PoUW, humans OWN)
 
 Fee Boundary:
-- Internal UP$ spend: Low/none (encourage activity)
-- F_i -> UP$ conversion: 2-5% (realization event)
-- UP$ -> external: 5-10% (discourages extraction)
+- Internal UPS spend: Low/none (encourage activity)
+- F_i -> UPS conversion: 2-5% (realization event)
+- UPS -> external: 5-10% (discourages extraction)
 """
 
 from __future__ import annotations
@@ -76,7 +76,7 @@ def adoption_curve(adoption_score: float, steepness: float = 12.0) -> float:
 class TokenType(Enum):
     """Token types in the FoundUps ecosystem."""
 
-    UPS = "UP$"  # Universal participation/settlement token
+    UPS = "UPS"  # Universal participation/settlement token
     FOUNDUP = "F_i"  # FoundUp-specific work reward token
 
 
@@ -86,10 +86,10 @@ class FeeConfig:
 
     TWO F_i TYPES with different exit fees:
     - MINED F_i (earned by agents): 11% exit fee - discourages extraction
-    - STAKED F_i (from UP$ investment): 5% exit fee - preserves value
+    - STAKED F_i (from UPS investment): 5% exit fee - preserves value
     """
 
-    # Internal UP$ spend (agent execution)
+    # Internal UPS spend (agent execution)
     internal_spend_fee: float = 0.001  # 0.1% - very low to encourage activity
 
     # === MINED F_i FEES (earned by agents doing work) ===
@@ -101,18 +101,18 @@ class FeeConfig:
     mined_fee_insurance: float = 0.02  # 2% to insurance pool
     mined_fee_network: float = 0.01  # 1% to network drip
 
-    # === STAKED F_i FEES (from UP$ investment) ===
-    # Lower fee (5%) for value preservation - user is getting THEIR UP$ back
+    # === STAKED F_i FEES (from UPS investment) ===
+    # Lower fee (5%) for value preservation - user is getting THEIR UPS back
     staked_fi_entry_fee: float = 0.03  # 3% on staking entry
     staked_fi_exit_fee: float = 0.05  # 5% on unstaking exit
     # Total round-trip: 3% + 5% = 8% (much lower than 11% extraction)
 
-    # UP$ -> external (cash out)
+    # UPS -> external (cash out)
     cashout_fee: float = 0.07  # 7% discourages extraction
 
     @property
     def total_mined_conversion_fee(self) -> float:
-        """Total fee on MINED F_i -> UP$ conversion (11%)."""
+        """Total fee on MINED F_i -> UPS conversion (11%)."""
         return self.mined_fee_ops + self.mined_fee_vault + self.mined_fee_insurance + self.mined_fee_network
 
     @property
@@ -204,10 +204,10 @@ SUBSCRIPTION_TIERS: Dict[SubscriptionTier, SubscriptionConfig] = {
 
 @dataclass
 class AgentExecutionWallet:
-    """Agent wallet for holding allocated UP$ budgets.
+    """Agent wallet for holding allocated UPS budgets.
 
     This is NOT earning - it's delegated spending authority from humans.
-    Agents hold UP$ only as a prepaid execution budget.
+    Agents hold UPS only as a prepaid execution budget.
     """
 
     agent_id: str
@@ -218,15 +218,15 @@ class AgentExecutionWallet:
     policy_gates: Dict = field(default_factory=dict)
 
     def receive_allocation(self, amount: float, policy: Optional[Dict] = None) -> None:
-        """Human allocates UP$ to agent for task execution."""
+        """Human allocates UPS to agent for task execution."""
         self.ups_balance += amount
         self.total_allocated += amount
         if policy:
             self.policy_gates = policy
-        logger.info(f"[Wallet:{self.agent_id}] Received {amount:.2f} UP$ from {self.allocator_id}")
+        logger.info(f"[Wallet:{self.agent_id}] Received {amount:.2f} UPS from {self.allocator_id}")
 
     def spend(self, amount: float, operation: str) -> Tuple[bool, float]:
-        """Agent spends UP$ under policy constraints.
+        """Agent spends UPS under policy constraints.
 
         Returns:
             (success, fee_paid) tuple
@@ -248,14 +248,14 @@ class AgentExecutionWallet:
 
         self.ups_balance -= total_debit
         self.total_spent += amount
-        logger.info(f"[Wallet:{self.agent_id}] Spent {amount:.2f} UP$ on {operation} (fee: {fee:.4f})")
+        logger.info(f"[Wallet:{self.agent_id}] Spent {amount:.2f} UPS on {operation} (fee: {fee:.4f})")
         return (True, fee)
 
     def return_unused(self) -> float:
         """Unused budget returns to allocator (human) minus demurrage."""
         remaining = self.ups_balance
         self.ups_balance = 0.0
-        logger.info(f"[Wallet:{self.agent_id}] Returning {remaining:.2f} UP$ to {self.allocator_id}")
+        logger.info(f"[Wallet:{self.agent_id}] Returning {remaining:.2f} UPS to {self.allocator_id}")
         return remaining
 
     def _policy_allows(self, operation: str, amount: float) -> bool:
@@ -274,7 +274,7 @@ class AgentExecutionWallet:
 
 @dataclass
 class HumanUPSAccount:
-    """Human UP$ account - earned through real-world verified actions.
+    """Human UPS account - earned through real-world verified actions.
 
     WSP 26 Section 4.9: Subscription tiers determine allocation.
     - Earned UPS: From 0102 completing tasks (labor)
@@ -292,28 +292,28 @@ class HumanUPSAccount:
 
     # === WSP 26 Section 4.9: Subscription Tier System ===
     subscription_tier: SubscriptionTier = SubscriptionTier.FREE
-    base_allocation: float = 100.0  # Base UP$ per cycle
-    remaining_allocation: float = 100.0  # UP$ left in current cycle
+    base_allocation: float = 100.0  # Base UPS per cycle
+    remaining_allocation: float = 100.0  # UPS left in current cycle
     current_cycle: int = 0  # Which cycle we're in (0 to cycles_per_month-1)
     total_allocated: float = 0.0  # Lifetime allocated from subscription
 
     # === VALUE-BACKED STAKING ===
-    # Track staked positions per FoundUp (F_i that represents backed UP$)
+    # Track staked positions per FoundUp (F_i that represents backed UPS)
     staked_positions: Dict[str, float] = field(default_factory=dict)  # foundup_id -> staked F_i
-    total_ups_staked: float = 0.0  # Lifetime UP$ staked across all FoundUps
+    total_ups_staked: float = 0.0  # Lifetime UPS staked across all FoundUps
 
     def earn_ups(self, amount: float, source: str) -> None:
-        """Human earns UP$ through verified real-world action."""
+        """Human earns UPS through verified real-world action."""
         self.ups_balance += amount
         self.total_earned += amount
-        logger.info(f"[Human:{self.human_id}] Earned {amount:.2f} UP$ from {source}")
+        logger.info(f"[Human:{self.human_id}] Earned {amount:.2f} UPS from {source}")
 
     def earn_lottery(self, amount: float) -> None:
         """Human wins the 'found it!' lottery chime."""
         self.ups_balance += amount
         self.total_earned += amount
         self.lottery_wins += 1
-        logger.info(f"[Human:{self.human_id}] WON LOTTERY! +{amount:.2f} UP$ (total wins: {self.lottery_wins})")
+        logger.info(f"[Human:{self.human_id}] WON LOTTERY! +{amount:.2f} UPS (total wins: {self.lottery_wins})")
 
     def receive_fi(self, foundup_id: str, amount: float) -> None:
         """Human receives F_i tokens earned by their agent."""
@@ -322,9 +322,9 @@ class HumanUPSAccount:
         logger.info(f"[Human:{self.human_id}] Received {amount:.2f} F_{foundup_id}")
 
     def allocate_to_agent(self, amount: float, agent_wallet: AgentExecutionWallet) -> bool:
-        """Human allocates UP$ budget to agent."""
+        """Human allocates UPS budget to agent."""
         if amount > self.ups_balance:
-            logger.warning(f"[Human:{self.human_id}] Insufficient UP$ for allocation")
+            logger.warning(f"[Human:{self.human_id}] Insufficient UPS for allocation")
             return False
 
         self.ups_balance -= amount
@@ -337,12 +337,12 @@ class HumanUPSAccount:
         amount: float,
         fee_config: FeeConfig,
     ) -> Tuple[float, Dict[str, float]]:
-        """Convert MINED F_i to UP$ - HIGH FEE (11%) realization event.
+        """Convert MINED F_i to UPS - HIGH FEE (11%) realization event.
 
         MINED F_i = earned by agents doing work (like Bitcoin mining 2009)
         This is the "extraction" path - high fee discourages taking value out.
 
-        For STAKED F_i (from UP$ investment), use unstake_fi() instead (5% fee).
+        For STAKED F_i (from UPS investment), use unstake_fi() instead (5% fee).
 
         Returns:
             (ups_received, fee_breakdown) tuple
@@ -361,7 +361,7 @@ class HumanUPSAccount:
 
         ups_received = amount - total_fee
 
-        # Debit MINED F_i, credit UP$
+        # Debit MINED F_i, credit UPS
         self.foundup_tokens[foundup_id] = current - amount
         self.ups_balance += ups_received
 
@@ -376,7 +376,7 @@ class HumanUPSAccount:
 
         logger.info(
             f"[Human:{self.human_id}] Converted MINED {amount:.2f} F_{foundup_id} -> "
-            f"{ups_received:.2f} UP$ (11% extraction fee: {total_fee:.4f})"
+            f"{ups_received:.2f} UPS (11% extraction fee: {total_fee:.4f})"
         )
 
         return (ups_received, fee_breakdown)
@@ -403,9 +403,9 @@ class HumanUPSAccount:
         """Upgrade to a new subscription tier.
 
         The gamification loop:
-        1. User plays, uses UP$ to stake in FoundUps
-        2. UP$ runs out (remaining_allocation = 0)
-        3. User subscribes → gets more UP$, faster refresh
+        1. User plays, uses UPS to stake in FoundUps
+        2. UPS runs out (remaining_allocation = 0)
+        3. User subscribes → gets more UPS, faster refresh
         4. Subscription revenue → BTC reserve (self-reinforcing)
 
         Returns:
@@ -426,7 +426,7 @@ class HumanUPSAccount:
 
         logger.info(
             f"[Human:{self.human_id}] UPGRADED: {old_tier.value} -> {new_tier.value} "
-            f"(allocation: {allocation:.2f} UP$, {config.cycles_per_month} cycles/month, "
+            f"(allocation: {allocation:.2f} UPS, {config.cycles_per_month} cycles/month, "
             f"effective: {config.effective_monthly_multiplier:.0f}x)"
         )
         return True
@@ -442,7 +442,7 @@ class HumanUPSAccount:
         - Founder: 30 cycles/month (daily drip)
 
         Returns:
-            Amount of UP$ allocated this cycle
+            Amount of UPS allocated this cycle
         """
         config = self.get_subscription_config()
 
@@ -458,7 +458,7 @@ class HumanUPSAccount:
         self.current_cycle += 1
 
         logger.info(
-            f"[Human:{self.human_id}] ALLOCATION REFRESH: +{allocation:.2f} UP$ "
+            f"[Human:{self.human_id}] ALLOCATION REFRESH: +{allocation:.2f} UPS "
             f"(cycle {self.current_cycle}/{config.cycles_per_month}, tier: {config.tier.value})"
         )
         return allocation
@@ -469,9 +469,9 @@ class HumanUPSAccount:
         logger.info(f"[Human:{self.human_id}] Monthly cycles reset")
 
     def use_allocated_ups(self, amount: float) -> bool:
-        """Use UP$ from allocation (for staking into FoundUps).
+        """Use UPS from allocation (for staking into FoundUps).
 
-        This is separate from earned UP$ - allocated UP$ is the gamification currency.
+        This is separate from earned UPS - allocated UPS is the gamification currency.
         When this runs out, user is motivated to upgrade subscription.
 
         Returns:
@@ -486,7 +486,7 @@ class HumanUPSAccount:
 
         self.remaining_allocation -= amount
         logger.info(
-            f"[Human:{self.human_id}] Used {amount:.2f} allocated UP$ "
+            f"[Human:{self.human_id}] Used {amount:.2f} allocated UPS "
             f"(remaining: {self.remaining_allocation:.2f})"
         )
         return True
@@ -501,14 +501,14 @@ class HumanUPSAccount:
 
         Args:
             foundup_id: FoundUp staked into
-            ups_amount: UP$ spent (before fee)
+            ups_amount: UPS spent (before fee)
             fi_received: F_i tokens received
         """
         current = self.staked_positions.get(foundup_id, 0.0)
         self.staked_positions[foundup_id] = current + fi_received
         self.total_ups_staked += ups_amount
         logger.info(
-            f"[Human:{self.human_id}] STAKED: {ups_amount:.2f} UP$ -> {fi_received:.2f} F_i "
+            f"[Human:{self.human_id}] STAKED: {ups_amount:.2f} UPS -> {fi_received:.2f} F_i "
             f"in {foundup_id} (total staked positions: {len(self.staked_positions)})"
         )
 
@@ -518,7 +518,7 @@ class HumanUPSAccount:
         Args:
             foundup_id: FoundUp unstaked from
             fi_amount: F_i tokens unstaked
-            ups_received: UP$ received (after fee)
+            ups_received: UPS received (after fee)
         """
         current = self.staked_positions.get(foundup_id, 0.0)
         self.staked_positions[foundup_id] = max(0.0, current - fi_amount)
@@ -528,25 +528,25 @@ class HumanUPSAccount:
             del self.staked_positions[foundup_id]
 
         logger.info(
-            f"[Human:{self.human_id}] UNSTAKED: {fi_amount:.2f} F_i -> {ups_received:.2f} UP$ "
+            f"[Human:{self.human_id}] UNSTAKED: {fi_amount:.2f} F_i -> {ups_received:.2f} UPS "
             f"from {foundup_id} (balance now: {self.ups_balance:.2f})"
         )
 
     def get_demurrage_warning(self) -> Optional[str]:
-        """Check if UP$ is decaying and should be staked.
+        """Check if UPS is decaying and should be staked.
 
         Returns warning message if action recommended, None otherwise.
         """
         if self.ups_balance > 0 and len(self.staked_positions) == 0:
             return (
-                f"WARNING: {self.ups_balance:.2f} UP$ is DECAYING! "
+                f"WARNING: {self.ups_balance:.2f} UPS is DECAYING! "
                 f"Stake into a FoundUp to preserve value."
             )
         if self.remaining_allocation < self.base_allocation * 0.2:
             config = self.get_subscription_config()
             if config.tier != SubscriptionTier.FOUNDER:
                 return (
-                    f"LOW ALLOCATION: Only {self.remaining_allocation:.2f} UP$ left. "
+                    f"LOW ALLOCATION: Only {self.remaining_allocation:.2f} UPS left. "
                     f"Consider upgrading from {config.tier.value} tier."
                 )
         return None
@@ -569,16 +569,16 @@ class StakedPosition:
     """A human's staked position in a FoundUp.
 
     VALUE-BACKED STAKING:
-    - F_i tokens represent a CLAIM on staked UP$ (1:1 backed)
-    - The UP$ is held in FoundUp treasury
-    - Unstaking returns the backed UP$ (minus fee)
+    - F_i tokens represent a CLAIM on staked UPS (1:1 backed)
+    - The UPS is held in FoundUp treasury
+    - Unstaking returns the backed UPS (minus fee)
     - This PRESERVES value (minus fees) - no exchange rate risk
     """
 
     human_id: str
     foundup_id: str
-    ups_staked: float  # Original UP$ amount staked (before fee)
-    fi_received: float  # F_i tokens received (1:1 with post-fee UP$)
+    ups_staked: float  # Original UPS amount staked (before fee)
+    fi_received: float  # F_i tokens received (1:1 with post-fee UPS)
     staked_at_epoch: int
     is_locked: bool = True  # Auto-locked by default
 
@@ -605,9 +605,9 @@ class FoundUpTokenPool:
     - Uses logistic sigmoid - the natural curve of innovation diffusion
 
     VALUE-BACKED STAKING:
-    - ups_treasury holds the UP$ that backs staked F_i tokens
-    - When humans stake UP$, they get F_i 1:1 (after fee)
-    - When they unstake, they get their UP$ back (minus unstake fee)
+    - ups_treasury holds the UPS that backs staked F_i tokens
+    - When humans stake UPS, they get F_i 1:1 (after fee)
+    - When they unstake, they get their UPS back (minus unstake fee)
     - This PRESERVES value - no exchange rate gambling
     """
 
@@ -628,7 +628,7 @@ class FoundUpTokenPool:
     # BTC vault backing (from conversion fees)
     btc_vault_balance: float = 0.0
 
-    # UP$ treasury (backs staked F_i tokens - VALUE PRESERVATION)
+    # UPS treasury (backs staked F_i tokens - VALUE PRESERVATION)
     ups_treasury: float = 0.0
     staked_fi_outstanding: float = 0.0  # Total F_i from staking (not mining)
 
@@ -766,16 +766,16 @@ class FoundUpTokenPool:
         staker_id: str,
         staking_fee_rate: float = 0.03,  # 3% default
     ) -> Tuple[float, float]:
-        """Stake UP$ into this FoundUp, receive F_i tokens 1:1 (after fee).
+        """Stake UPS into this FoundUp, receive F_i tokens 1:1 (after fee).
 
         VALUE PRESERVATION:
-        - The UP$ goes into ups_treasury (backing)
-        - You get F_i = UP$ * (1 - fee)
-        - Your F_i is a CLAIM on that UP$
-        - Unstaking returns the UP$ (minus unstake fee)
+        - The UPS goes into ups_treasury (backing)
+        - You get F_i = UPS * (1 - fee)
+        - Your F_i is a CLAIM on that UPS
+        - Unstaking returns the UPS (minus unstake fee)
 
         Args:
-            ups_amount: Amount of UP$ to stake
+            ups_amount: Amount of UPS to stake
             staker_id: Human staking
             staking_fee_rate: Staking fee (e.g., 0.03 = 3%)
 
@@ -786,7 +786,7 @@ class FoundUpTokenPool:
         fee = ups_amount * staking_fee_rate
         ups_after_fee = ups_amount - fee
 
-        # F_i received = UP$ after fee (1:1 backing)
+        # F_i received = UPS after fee (1:1 backing)
         fi_tokens = ups_after_fee
 
         # Add to treasury (this backs the F_i)
@@ -794,7 +794,7 @@ class FoundUpTokenPool:
         self.staked_fi_outstanding += fi_tokens
 
         logger.info(
-            f"[Pool:{self.foundup_id}] STAKE: {staker_id} staked {ups_amount:.2f} UP$ "
+            f"[Pool:{self.foundup_id}] STAKE: {staker_id} staked {ups_amount:.2f} UPS "
             f"-> {fi_tokens:.2f} F_i (fee: {fee:.2f}, treasury: {self.ups_treasury:.2f})"
         )
 
@@ -806,11 +806,11 @@ class FoundUpTokenPool:
         staker_id: str,
         unstaking_fee_rate: float = 0.05,  # 5% default (discourages churn)
     ) -> Tuple[float, float]:
-        """Unstake F_i tokens, receive backed UP$ (minus fee).
+        """Unstake F_i tokens, receive backed UPS (minus fee).
 
         VALUE PRESERVATION:
-        - F_i is backed 1:1 by UP$ in treasury
-        - You get back your UP$ (minus unstake fee)
+        - F_i is backed 1:1 by UPS in treasury
+        - You get back your UPS (minus unstake fee)
         - No exchange rate risk - the backing IS the value
 
         Args:
@@ -828,7 +828,7 @@ class FoundUpTokenPool:
             )
             return (0.0, 0.0)
 
-        # F_i is backed 1:1 by UP$ in treasury
+        # F_i is backed 1:1 by UPS in treasury
         ups_backing = fi_amount  # 1:1 ratio
 
         if ups_backing > self.ups_treasury:
@@ -848,7 +848,7 @@ class FoundUpTokenPool:
 
         logger.info(
             f"[Pool:{self.foundup_id}] UNSTAKE: {staker_id} unstaked {fi_amount:.2f} F_i "
-            f"-> {ups_after_fee:.2f} UP$ (fee: {fee:.2f}, treasury: {self.ups_treasury:.2f})"
+            f"-> {ups_after_fee:.2f} UPS (fee: {fee:.2f}, treasury: {self.ups_treasury:.2f})"
         )
 
         return (ups_after_fee, fee)
@@ -909,7 +909,7 @@ class TokenEconomicsEngine:
         source: str,
         is_lottery: bool = False,
     ) -> None:
-        """Human earns UP$ through verified real-world action."""
+        """Human earns UPS through verified real-world action."""
         account = self.human_accounts.get(human_id)
         if not account:
             account = self.register_human(human_id)
@@ -926,7 +926,7 @@ class TokenEconomicsEngine:
         amount: float,
         policy: Optional[Dict] = None,
     ) -> bool:
-        """Human allocates UP$ budget to agent for task execution."""
+        """Human allocates UPS budget to agent for task execution."""
         account = self.human_accounts.get(human_id)
         wallet = self.agent_wallets.get(agent_id)
 
@@ -950,7 +950,7 @@ class TokenEconomicsEngine:
         task_cost_ups: float,
         work_reward_fi: float,
     ) -> Tuple[bool, float]:
-        """Agent completes task: spends UP$ budget, earns F_i for owner.
+        """Agent completes task: spends UPS budget, earns F_i for owner.
 
         Returns:
             (success, fi_earned) tuple
@@ -961,7 +961,7 @@ class TokenEconomicsEngine:
         if not wallet or not pool:
             return (False, 0.0)
 
-        # Agent spends UP$ budget
+        # Agent spends UPS budget
         success, fee = wallet.spend(task_cost_ups, f"task:{foundup_id}")
         if not success:
             return (False, 0.0)
@@ -985,7 +985,7 @@ class TokenEconomicsEngine:
         foundup_id: str,
         amount: float,
     ) -> Tuple[float, Dict[str, float]]:
-        """Human converts MINED F_i to UP$ - HIGH FEE (11%) extraction event.
+        """Human converts MINED F_i to UPS - HIGH FEE (11%) extraction event.
 
         MINED F_i = earned by agents doing work (Bitcoin mining 2009 model)
 
@@ -1025,7 +1025,7 @@ class TokenEconomicsEngine:
             # TODO: Route to network drip distributor
 
             logger.info(
-                f"[Engine] MINED F_i extraction: {amount:.2f} -> {ups_received:.2f} UP$ "
+                f"[Engine] MINED F_i extraction: {amount:.2f} -> {ups_received:.2f} UPS "
                 f"(11% fee breakdown: ops={fee_breakdown.get('ops', 0):.2f}, "
                 f"vault={vault_fee:.2f}, insurance={fee_breakdown.get('insurance', 0):.2f}, "
                 f"network={network_fee:.2f})"
@@ -1051,12 +1051,12 @@ class TokenEconomicsEngine:
         foundup_id: str,
         ups_amount: float,
     ) -> Tuple[float, float]:
-        """Human stakes UP$ into a FoundUp, receives STAKED F_i (3% entry fee).
+        """Human stakes UPS into a FoundUp, receives STAKED F_i (3% entry fee).
 
         STAKED F_i is value-backed:
-        - The UP$ goes into FoundUp treasury (1:1 backing)
+        - The UPS goes into FoundUp treasury (1:1 backing)
         - User gets F_i representing their claim
-        - Unstaking returns UP$ (minus 5% exit fee)
+        - Unstaking returns UPS (minus 5% exit fee)
         - Total round-trip: 8% (vs 11% for mined extraction)
 
         Returns:
@@ -1069,7 +1069,7 @@ class TokenEconomicsEngine:
             return (0.0, 0.0)
 
         if ups_amount > account.ups_balance:
-            logger.warning(f"[Engine] Insufficient UP$ for staking: {ups_amount:.2f}")
+            logger.warning(f"[Engine] Insufficient UPS for staking: {ups_amount:.2f}")
             return (0.0, 0.0)
 
         # Apply subscription tier discount to staking fee
@@ -1080,12 +1080,12 @@ class TokenEconomicsEngine:
         fi_received, fee_paid = pool.stake_ups(ups_amount, human_id, effective_fee)
 
         if fi_received > 0:
-            # Debit UP$ from human, record stake
+            # Debit UPS from human, record stake
             account.ups_balance -= ups_amount
             account.record_stake(foundup_id, ups_amount, fi_received)
 
             logger.info(
-                f"[Engine] STAKED: {human_id} staked {ups_amount:.2f} UP$ -> "
+                f"[Engine] STAKED: {human_id} staked {ups_amount:.2f} UPS -> "
                 f"{fi_received:.2f} STAKED F_i (entry fee: {fee_paid:.2f})"
             )
 
@@ -1097,11 +1097,11 @@ class TokenEconomicsEngine:
         foundup_id: str,
         fi_amount: float,
     ) -> Tuple[float, float]:
-        """Human unstakes STAKED F_i, receives backed UP$ (5% exit fee).
+        """Human unstakes STAKED F_i, receives backed UPS (5% exit fee).
 
         VALUE PRESERVATION:
-        - STAKED F_i is backed 1:1 by UP$ in treasury
-        - Unstaking returns the UP$ (minus 5% exit fee)
+        - STAKED F_i is backed 1:1 by UPS in treasury
+        - Unstaking returns the UPS (minus 5% exit fee)
         - This is much better than 11% extraction fee for MINED F_i
 
         Returns:
@@ -1131,7 +1131,7 @@ class TokenEconomicsEngine:
 
             logger.info(
                 f"[Engine] UNSTAKED: {human_id} unstaked {fi_amount:.2f} STAKED F_i -> "
-                f"{ups_received:.2f} UP$ (exit fee: {fee_paid:.2f})"
+                f"{ups_received:.2f} UPS (exit fee: {fee_paid:.2f})"
             )
 
         return (ups_received, fee_paid)

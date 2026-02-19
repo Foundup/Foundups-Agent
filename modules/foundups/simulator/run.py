@@ -66,6 +66,19 @@ class SimulatorRunner:
         self._running = False
         self._paused = False
 
+        # Central DAEmon adapter (cardiovascular observation)
+        self._central_adapter = None
+        try:
+            from modules.infrastructure.dae_daemon.src.dae_adapter import CentralDAEAdapter
+            self._central_adapter = CentralDAEAdapter(
+                dae_id="sim", dae_name="Simulator",
+                domain="foundups",
+                module_path="modules.foundups.simulator.run",
+            )
+            self._central_adapter.register()
+        except Exception:
+            pass
+
         # Register signal handlers
         signal.signal(signal.SIGINT, self._handle_signal)
         signal.signal(signal.SIGTERM, self._handle_signal)
@@ -79,6 +92,15 @@ class SimulatorRunner:
         """Run the main simulation loop."""
         self._running = True
         self._model.start()
+
+        if self._central_adapter:
+            try:
+                self._central_adapter.report_started()
+                self._central_adapter.start_heartbeat(
+                    health_fn=lambda: {"tick": self._model.tick, "running": self._running},
+                )
+            except Exception:
+                pass
 
         tick_interval = 1.0 / self._config.tick_rate_hz
         last_tick_time = time.time()
@@ -124,6 +146,11 @@ class SimulatorRunner:
         finally:
             self._running = False
             self._model.stop()
+            if self._central_adapter:
+                try:
+                    self._central_adapter.stop()
+                except Exception:
+                    pass
 
         # Final stats
         stats = self._model.get_stats()
@@ -136,7 +163,7 @@ class SimulatorRunner:
         print(f"  Total Stakes:   {stats['total_stakes']}")
         print(f"  Tokens Moved:   {stats['total_tokens']}")
         print(f"  DEX Trades:     {stats['total_dex_trades']}")
-        print(f"  DEX Volume:     {stats['total_dex_volume_ups']:.2f} UP$")
+        print(f"  DEX Volume:     {stats['total_dex_volume_ups']:.2f} UPS")
         print(f"  Investor Pool:  {stats['investor_pool_rate'] * 100:.2f}%")
         print(f"  Hurdle Met:     {stats['investor_hurdle_met']}")
         print(f"  F_0 Seed BTC:   {stats['f0_seed_btc']:.2f}")

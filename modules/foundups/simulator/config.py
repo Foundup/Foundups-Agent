@@ -39,6 +39,7 @@ class SimulatorConfig:
     # FoundUp parameters
     max_token_supply: int = 21_000_000
     token_release_per_tick: int = 100
+    founder_max_foundups: int = 3  # Per-founder cap for new FoundUps
 
     # Agent behavior
     agent_action_probability: float = 0.3  # Chance to act each tick

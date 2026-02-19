@@ -272,6 +272,12 @@ from .allocation_engine import (
     get_allocation_engine,
     reset_allocation_engine,
 )
+from .cabr_flow_router import (
+    CABRFlowInputs,
+    CABRFlowResult,
+    DEFAULT_RELEASE_RATE,
+    route_cabr_ups_flow,
+)
 
 from .pavs_audit import (
     PAVSAuditor,
@@ -289,6 +295,45 @@ from .ai_parameter_optimizer import (
     TUNABLE_PARAMETERS,
     OptimizerConfig,
     AIParameterOptimizer,
+)
+
+# Subscription Tiers (Stake-to-Spend Model - 2026-02-17)
+from .subscription_tiers import (
+    SubscriptionTier as SubTier,  # Alias to avoid collision with token_economics.SubscriptionTier
+    TIERS as SUBSCRIPTION_TIER_CONFIGS,
+    AGENT_COSTS as SUBSCRIPTION_AGENT_COSTS,
+    TOPUP_OPTIONS,
+    calculate_monthly_capacity,
+    model_usage_pattern,
+    recommend_tier,
+    project_subscription_revenue,
+)
+
+# Agent Compute Costs (Real Infrastructure Pricing - 2026-02-17)
+from .agent_compute_costs import (
+    TaskComplexity,
+    InfrastructureCost,
+    AGENT_INFRASTRUCTURE_COSTS,
+    UPsPricing,
+    calculate_ups_pricing,
+    FoundUpStake,
+    UserAccount,
+    simulate_user_journey,
+    analyze_openclaw_infrastructure,
+)
+
+# Ten Year Projection (Combined Revenue Model - 2026-02-17)
+from .ten_year_projection import (
+    GROWTH_SCENARIOS,
+    SUBSCRIBER_GROWTH_SCENARIOS,
+    YearSnapshot,
+    TenYearProjection,
+    interpolate_growth,
+    interpolate_subscribers,
+    calculate_subscription_revenue,
+    generate_projection,
+    generate_all_projections,
+    export_for_animation,
 )
 
 __all__ = [
@@ -481,6 +526,11 @@ __all__ = [
     "AllocationEngine",
     "get_allocation_engine",
     "reset_allocation_engine",
+    # CABR flow router (pipe-size treasury routing)
+    "CABRFlowInputs",
+    "CABRFlowResult",
+    "DEFAULT_RELEASE_RATE",
+    "route_cabr_ups_flow",
     # pAVS Audit (OpenClaw verification)
     "PAVSAuditor",
     "PAVSAuditReport",
@@ -495,4 +545,34 @@ __all__ = [
     "TUNABLE_PARAMETERS",
     "OptimizerConfig",
     "AIParameterOptimizer",
+    # Subscription Tiers (Stake-to-Spend Model)
+    "SubTier",
+    "SUBSCRIPTION_TIER_CONFIGS",
+    "SUBSCRIPTION_AGENT_COSTS",
+    "TOPUP_OPTIONS",
+    "calculate_monthly_capacity",
+    "model_usage_pattern",
+    "recommend_tier",
+    "project_subscription_revenue",
+    # Agent Compute Costs (Real Infrastructure)
+    "TaskComplexity",
+    "InfrastructureCost",
+    "AGENT_INFRASTRUCTURE_COSTS",
+    "UPsPricing",
+    "calculate_ups_pricing",
+    "FoundUpStake",
+    "UserAccount",
+    "simulate_user_journey",
+    "analyze_openclaw_infrastructure",
+    # Ten Year Projection (Combined Revenue)
+    "GROWTH_SCENARIOS",
+    "SUBSCRIBER_GROWTH_SCENARIOS",
+    "YearSnapshot",
+    "TenYearProjection",
+    "interpolate_growth",
+    "interpolate_subscribers",
+    "calculate_subscription_revenue",
+    "generate_projection",
+    "generate_all_projections",
+    "export_for_animation",
 ]

@@ -28,39 +28,69 @@ SSEEventEnvelope(
 ### STREAMABLE_EVENT_TYPES
 ```python
 STREAMABLE_EVENT_TYPES = {
-    "foundup_created",           # New FoundUp launched
-    "task_state_changed",        # Task status transition
-    "fi_trade_executed",         # DEX trade completed
-    "order_placed",              # DEX order accepted
-    "order_cancelled",           # DEX order cancelled
-    "order_matched",             # DEX order matched/executed
-    "price_tick",                # DEX ticker update
-    "orderbook_snapshot",        # DEX depth snapshot
-    "portfolio_updated",         # Wallet/portfolio update
-    "investor_funding_received", # BTC investment received
-    "mvp_subscription_accrued",  # Monthly UP$ accrued
-    "subscription_allocation_refreshed",  # 012 subscription cycle refresh
-    "subscription_cycle_reset",  # Monthly subscription reset
-    "mvp_bid_submitted",         # Investor bid placed
-    "mvp_offering_resolved",     # MVP offering completed
-    "ups_allocation_executed",   # 0102 allocation batch execution
-    "ups_allocation_result",     # Per-foundup allocation outcome
-    "milestone_published",       # Distribution post published
-    "proof_submitted",           # Work proof submitted
-    "verification_recorded",     # Proof verified
-    "payout_triggered",          # Token payout executed
-    "demurrage_cycle_completed", # Decay redistribution summary
-    "pavs_treasury_updated",     # pAVS/network balance update
-    "treasury_separation_snapshot",  # System vs FoundUp treasury view
-    "fi_rating_updated",         # F_i rating color gradient
-    "cabr_score_updated",        # CABR 3V consensus score
+    # Foundup lifecycle
+    "foundup_created",
+    "task_state_changed",
+    "proof_submitted",
+    "verification_recorded",
+    "payout_triggered",
+    "milestone_published",
+    # Market activity
+    "fi_trade_executed",
+    "order_placed",
+    "order_cancelled",
+    "order_matched",
+    "price_tick",
+    "orderbook_snapshot",
+    "portfolio_updated",
+    "investor_funding_received",
+    "mvp_subscription_accrued",
+    "subscription_allocation_refreshed",
+    "subscription_cycle_reset",
+    "mvp_bid_submitted",
+    "mvp_offering_resolved",
+    "ups_allocation_executed",
+    "ups_allocation_result",
+    "demurrage_cycle_completed",
+    "pavs_treasury_updated",
+    "treasury_separation_snapshot",
+    # Rating/scoring
+    "fi_rating_updated",
+    "cabr_score_updated",
+    "cabr_pipe_flow_routed",
+    # Agent lifecycle
+    "agent_joins",
+    "agent_awakened",
+    "agent_idle",
+    "agent_ranked",
+    "agent_earned",
+    "agent_leaves",
+    # SmartDAO escalation
+    "smartdao_emergence",
+    "tier_escalation",
+    "treasury_autonomy",
+    "cross_dao_funding",
+    # Full Tide economics
+    "fee_collected",
+    "tide_out",
+    "tide_in",
+    "sustainability_reached",
+    # Tide alias events for external consumers
+    "tide_support_sent",
+    "tide_support_received",
+    # State sync for DRIVEN_MODE
+    "state_sync",
+    "phase_command",
+    # Synthetic user simulation
+    "synthetic_user_adopted",
+    "synthetic_user_rejected",
 }
 ```
 
 ### Event Payloads by Type
 ```python
 # foundup_created
-{"name": str, "token_symbol": str}
+{"name": str, "token_symbol": str, "symbol_auto_resolved": bool}
 
 # task_state_changed
 {"new_status": str, "task_id": str}
@@ -131,6 +161,60 @@ STREAMABLE_EVENT_TYPES = {
 
 # cabr_score_updated
 {"env_score": float, "soc_score": float, "part_score": float, "total": float, "threshold": float, "threshold_met": bool, "confidence": float}
+
+# cabr_pipe_flow_routed
+{"task_id": str, "foundup_id": str, "assignee_id": str, "pob_validated": bool, "cabr_pipe_size": float, "requested_ups": float, "epoch_release_budget_ups": float, "routed_ups": float, "worker_ups": float, "foundup_treasury_ups": float, "network_pool_ups": float, "pavs_treasury_before_ups": float, "pavs_treasury_after_ups": float}
+
+# agent_joins
+{"agent_type": str, "public_key": str, "rank": int, "state": str, "foundup_idx": int}
+
+# agent_awakened
+{"coherence": float, "state": str}
+
+# agent_idle
+{"inactive_ticks": int, "current_tick": int, "state": str}
+
+# agent_ranked
+{"old_rank": int, "new_rank": int, "old_title": str, "new_title": str}
+
+# agent_earned
+{"amount": int, "foundup_idx": int, "task_id": str | null}
+
+# agent_leaves
+{"public_key": str, "wallet_balance": float}
+
+# fee_collected
+{"fee_type": str, "foundup_id": str, "amount_sats": int, "volume_sats": int, "tick": int, "source_ref": str | null, "distribution": {"fi_treasury": int, "network_pool": int, "pavs_treasury": int, "btc_reserve": int}}
+
+# tide_out / tide_in / tide_support_sent / tide_support_received
+{"foundup_id": str, "amount_sats": int, "from": str, "to": str, "tick": int, "reason": str}
+
+# sustainability_reached
+{"tick": int, "foundup_count": int, "daily_revenue_btc": float, "revenue_cost_ratio": float, "downside_revenue_cost_ratio_p10": float}
+
+# state_sync
+{"phase": str, "tick": int, "foundups_count": int, "agents_count": int, "total_fi": float, "lifecycle_stage": str, "filled_blocks": int, "total_blocks": int}
+
+# phase_command
+{"target_phase": str, "force": bool}
+
+# synthetic_user_adopted
+{"agent_id": str, "foundup_id": str, "confidence": float, "reasons": list[str], "price_sensitivity": float, "viral_coefficient": float, "persona_income": str, "persona_tech": str, "persona_risk": str, "tick": int}
+
+# synthetic_user_rejected
+{"agent_id": str, "foundup_id": str, "confidence": float, "reasons": list[str], "persona_income": str, "persona_tech": str, "persona_risk": str, "tick": int}
+
+# smartdao_emergence
+{"foundup_id": str, "old_tier": str, "new_tier": str, "adoption_ratio": float, "tick": int}
+
+# tier_escalation
+{"foundup_id": str, "old_tier": str, "new_tier": str, "adoption_ratio": float, "treasury_ups": float, "active_agents": int, "tick": int}
+
+# treasury_autonomy
+{"foundup_id": str, "tier": str, "treasury_ups": float, "spawning_fund_ups": float, "tick": int, "timestamp": str}
+
+# cross_dao_funding
+{"source_dao": str, "target_dao": str, "amount": int, "source_tier": str, "target_tier": str, "tick": int}
 ```
 
 ## Service Contracts

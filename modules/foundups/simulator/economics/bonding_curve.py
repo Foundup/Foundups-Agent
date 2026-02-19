@@ -59,7 +59,7 @@ class FiBondingCurve:
     config: BondingCurveConfig = field(default_factory=BondingCurveConfig)
 
     # Reserves
-    ups_reserve: float = 0.0  # UP$ held in curve
+    ups_reserve: float = 0.0  # UPS held in curve
     fi_supply: float = 0.0  # Total F_i minted by curve
 
     # Statistics
@@ -73,8 +73,8 @@ class FiBondingCurve:
         """Initialize curve with starting liquidity.
 
         Args:
-            initial_ups: UP$ to seed the reserve
-            initial_price: Starting price of F_i in UP$
+            initial_ups: UPS to seed the reserve
+            initial_price: Starting price of F_i in UPS
 
         Returns:
             Initial F_i supply created
@@ -88,13 +88,13 @@ class FiBondingCurve:
 
         logger.info(
             f"[BondingCurve:{self.foundup_id}] Initialized: "
-            f"{initial_ups:.2f} UP$ reserve, {self.fi_supply:.2f} F_i supply, "
-            f"price={self.get_spot_price():.4f} UP$/F_i"
+            f"{initial_ups:.2f} UPS reserve, {self.fi_supply:.2f} F_i supply, "
+            f"price={self.get_spot_price():.4f} UPS/F_i"
         )
         return self.fi_supply
 
     def get_spot_price(self) -> float:
-        """Get current spot price of F_i in UP$.
+        """Get current spot price of F_i in UPS.
 
         Formula: price = reserve / (supply * ratio)
         """
@@ -104,16 +104,16 @@ class FiBondingCurve:
         return self.ups_reserve / (self.fi_supply * self.config.reserve_ratio)
 
     def get_market_cap(self) -> float:
-        """Get current market cap in UP$."""
+        """Get current market cap in UPS."""
         return self.fi_supply * self.get_spot_price()
 
     def calculate_buy_return(self, ups_amount: float) -> Tuple[float, float, float]:
-        """Calculate F_i received for given UP$ input.
+        """Calculate F_i received for given UPS input.
 
         Uses Bancor formula for continuous token model.
 
         Args:
-            ups_amount: UP$ to spend
+            ups_amount: UPS to spend
 
         Returns:
             (fi_out, fee, effective_price) tuple
@@ -140,7 +140,7 @@ class FiBondingCurve:
         return (fi_out, fee, effective_price)
 
     def calculate_sell_return(self, fi_amount: float) -> Tuple[float, float, float]:
-        """Calculate UP$ received for given F_i input.
+        """Calculate UPS received for given F_i input.
 
         Args:
             fi_amount: F_i to sell
@@ -188,7 +188,7 @@ class FiBondingCurve:
         """Execute a buy order.
 
         Args:
-            ups_amount: UP$ to spend
+            ups_amount: UPS to spend
             buyer_id: Who is buying
 
         Returns:
@@ -217,7 +217,7 @@ class FiBondingCurve:
         self.total_fees_collected += fee
 
         logger.info(
-            f"[BondingCurve:{self.foundup_id}] BUY: {buyer_id} spent {ups_amount:.2f} UP$ "
+            f"[BondingCurve:{self.foundup_id}] BUY: {buyer_id} spent {ups_amount:.2f} UPS "
             f"-> {fi_out:.2f} F_i @ {effective_price:.4f} (fee: {fee:.2f})"
         )
 
@@ -236,7 +236,7 @@ class FiBondingCurve:
         ups_out, fee, effective_price = self.calculate_sell_return(fi_amount)
 
         if ups_out <= 0:
-            logger.warning(f"[BondingCurve:{self.foundup_id}] Sell failed: 0 UP$ output")
+            logger.warning(f"[BondingCurve:{self.foundup_id}] Sell failed: 0 UPS output")
             return (0.0, 0.0)
 
         if ups_out > self.ups_reserve:
@@ -254,7 +254,7 @@ class FiBondingCurve:
 
         logger.info(
             f"[BondingCurve:{self.foundup_id}] SELL: {seller_id} sold {fi_amount:.2f} F_i "
-            f"-> {ups_out:.2f} UP$ @ {effective_price:.4f} (fee: {fee:.2f})"
+            f"-> {ups_out:.2f} UPS @ {effective_price:.4f} (fee: {fee:.2f})"
         )
 
         return (ups_out, fee)

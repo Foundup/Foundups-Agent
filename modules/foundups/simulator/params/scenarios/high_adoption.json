@@ -2,6 +2,7 @@
   "params": {
     "num_founder_agents": 8,
     "num_user_agents": 80,
+    "founder_max_foundups": 24,
     "tick_rate_hz": 4.0,
     "max_ticks": 5000,
     "seed": 1337,

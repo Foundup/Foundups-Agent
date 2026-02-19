@@ -103,6 +103,7 @@ STREAMABLE_EVENT_TYPES = {
     # Rating/scoring
     "fi_rating_updated",      # F_i rating color temperature gradient
     "cabr_score_updated",     # CABR 3V engine score (env + soc + part)
+    "cabr_pipe_flow_routed",  # CABR pipe-size UPS routing after PoB validation
     # Agent lifecycle (01(02) → 0102 → 01/02 state machine)
     "agent_joins",            # 01(02) enters with public key
     "agent_awakened",         # → 0102 zen state (coherence ≥ 0.618)
@@ -115,6 +116,14 @@ STREAMABLE_EVENT_TYPES = {
     "tier_escalation",        # F_n → F_n+1 (tier progression)
     "treasury_autonomy",      # Treasury autonomy activated
     "cross_dao_funding",      # Higher tier funds lower tier
+    # Full Tide economics
+    "fee_collected",
+    "tide_out",
+    "tide_in",
+    "sustainability_reached",
+    # Tide alias events for external consumers
+    "tide_support_sent",
+    "tide_support_received",
     # State sync for DRIVEN_MODE (simulator controls animation)
     "state_sync",             # Full state snapshot for animation sync
     "phase_command",          # Direct phase control command

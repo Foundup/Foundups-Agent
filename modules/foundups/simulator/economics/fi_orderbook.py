@@ -1,18 +1,18 @@
 """F_i Token Order Book - Buy/Sell FoundUp Tokens.
 
 When F_i tokens are scarce (tier hasn't unlocked enough) or users want to trade:
-- BUY orders: Users bid UP$ for F_i tokens
-- SELL orders: Users offer F_i tokens for UP$
+- BUY orders: Users bid UPS for F_i tokens
+- SELL orders: Users offer F_i tokens for UPS
 
 This is a minimal exchange mechanism:
 - All trading fees → BTC Reserve (Hotel California)
 - Creates price discovery for each FoundUp's tokens
-- Agents earn F_i, but users can also BUY F_i with UP$
+- Agents earn F_i, but users can also BUY F_i with UPS
 
 Key Flows:
 1. Agent mines F_i → gives to human owner
-2. Human can SELL F_i on orderbook → gets UP$
-3. Other human can BUY F_i with UP$ → gets F_i
+2. Human can SELL F_i on orderbook → gets UPS
+3. Other human can BUY F_i with UPS → gets F_i
 4. Trading fee → BTC Reserve
 """
 
@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 class OrderSide(Enum):
     """Order side (buy or sell)."""
-    BUY = "buy"  # Bid: offering UP$ for F_i
-    SELL = "sell"  # Ask: offering F_i for UP$
+    BUY = "buy"  # Bid: offering UPS for F_i
+    SELL = "sell"  # Ask: offering F_i for UPS
 
 
 class OrderStatus(Enum):
@@ -50,7 +50,7 @@ class Order:
     foundup_id: str
     human_id: str
     side: OrderSide
-    price: float  # UP$ per F_i
+    price: float  # UPS per F_i
     quantity: float  # F_i amount
     filled: float = 0.0
     status: OrderStatus = OrderStatus.OPEN
@@ -76,10 +76,10 @@ class Trade:
     foundup_id: str
     buyer_id: str
     seller_id: str
-    price: float  # UP$ per F_i
+    price: float  # UPS per F_i
     quantity: float  # F_i traded
-    ups_total: float  # Total UP$ exchanged
-    fee_ups: float  # Trading fee in UP$
+    ups_total: float  # Total UPS exchanged
+    fee_ups: float  # Trading fee in UPS
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -121,11 +121,11 @@ class FiOrderBook:
         price: float,
         quantity: float,
     ) -> Tuple[Order, List[Trade]]:
-        """Place a buy order (bid for F_i with UP$).
+        """Place a buy order (bid for F_i with UPS).
 
         Args:
             human_id: Buyer
-            price: Max UP$ per F_i willing to pay
+            price: Max UPS per F_i willing to pay
             quantity: F_i amount wanted
 
         Returns:
@@ -151,7 +151,7 @@ class FiOrderBook:
 
         logger.info(
             f"[OrderBook:{self.foundup_id}] BUY order {order.order_id}: "
-            f"{quantity:.2f} F_i @ {price:.4f} UP$/F_i (filled: {order.filled:.2f})"
+            f"{quantity:.2f} F_i @ {price:.4f} UPS/F_i (filled: {order.filled:.2f})"
         )
 
         return (order, trades)
@@ -162,11 +162,11 @@ class FiOrderBook:
         price: float,
         quantity: float,
     ) -> Tuple[Order, List[Trade]]:
-        """Place a sell order (offer F_i for UP$).
+        """Place a sell order (offer F_i for UPS).
 
         Args:
             human_id: Seller
-            price: Min UP$ per F_i willing to accept
+            price: Min UPS per F_i willing to accept
             quantity: F_i amount offered
 
         Returns:
@@ -192,7 +192,7 @@ class FiOrderBook:
 
         logger.info(
             f"[OrderBook:{self.foundup_id}] SELL order {order.order_id}: "
-            f"{quantity:.2f} F_i @ {price:.4f} UP$/F_i (filled: {order.filled:.2f})"
+            f"{quantity:.2f} F_i @ {price:.4f} UPS/F_i (filled: {order.filled:.2f})"
         )
 
         return (order, trades)

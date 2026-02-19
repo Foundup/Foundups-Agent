@@ -34,12 +34,31 @@ Partner-Principal-Associate pattern for 012's digital representation.
 ### WSP 87 - Code Navigation
 Maximum 2000 lines per file. Use HoloIndex for navigation.
 
+### WSP 26 + WSP 29 Canonical Economic Semantics (Required)
+- CABR controls **flow rate** (pipe size), not token mint amount.
+- PoB validation controls **valve open/closed**.
+- UPS flow is routed from treasury/release budget; do not describe as CABR minting.
+- Prefer `total_ups_circulating` terminology. `total_ups_minted` is legacy alias only.
+
 ## Before Any Code Change
 
 1. Search HoloIndex: `python holo_index.py --search "topic"`
 2. Check WSP_MASTER_INDEX.md for relevant protocols
 3. Verify module structure compliance
 4. Update ModLog.md after changes
+
+## Tokenization-Consistency Checks (When touching simulator/economics/docs)
+
+1. Verify `modules/infrastructure/foundups_tokenization/docs/TOKENOMICS.md` matches:
+   - `WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md`
+   - `WSP_framework/src/WSP_29_CABR_Engine.md`
+2. Verify simulator contracts are aligned:
+   - `modules/foundups/simulator/README.md`
+   - `modules/foundups/simulator/INTERFACE.md`
+   - `modules/foundups/simulator/sse_server.py` (`STREAMABLE_EVENT_TYPES`)
+3. If semantics changed, update docs and add/adjust regression tests in:
+   - `modules/foundups/simulator/tests/`
+   - `modules/foundups/simulator/tests/TestModLog.md`
 
 ## Incomplete WSPs
 

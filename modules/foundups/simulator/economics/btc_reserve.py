@@ -1,22 +1,22 @@
 """BTC Reserve - The "Hole in the Bucket" for Bitcoin.
 
 FoundUps is a Bitcoin sink - BTC flows IN but NEVER flows OUT.
-BTC gets transformed into UP$ backing.
+BTC gets transformed into UPS backing.
 
 SUBSCRIPTION PAYMENTS (Multi-Crypto):
 - Pay in ANY crypto: BTC, ETH, SOL, USDC, etc.
 - All crypto converts to BTC → Reserve
-- Pay in UP$ → BURNS UP$ (reduces supply, strengthens currency)
+- Pay in UPS → BURNS UPS (reduces supply, strengthens currency)
 
 BTC Sources:
 1. Subscription payments (any crypto) → Convert to BTC → Reserve
-2. Demurrage decay from unused wallet UP$ → Reserve
+2. Demurrage decay from unused wallet UPS → Reserve
 3. Exit fees (11% mined, 5% staked) → Reserve
 4. F_i trading fees → Reserve
 
-UP$ VALUE MODEL:
-- UP$ floats with BTC price (not USD-pegged)
-- UP$ value = (BTC Reserve × BTC Price) / UP$ Supply
+UPS VALUE MODEL:
+- UPS floats with BTC price (not USD-pegged)
+- UPS value = (BTC Reserve × BTC Price) / UPS Supply
 - Natural contraction when BTC drops, expansion when BTC pumps
 - No artificial circuit breaker needed - organic adjustment
 
@@ -37,13 +37,13 @@ logger = logging.getLogger(__name__)
 class BTCSourceType(Enum):
     """Sources of BTC flowing into the reserve."""
     SUBSCRIPTION = "subscription"  # Monthly subscription payments
-    SUBSCRIPTION_UPS_BURN = "subscription_ups_burn"  # Subscription paid in UP$ (burned)
-    DEMURRAGE = "demurrage"  # Decay from unused UP$ in wallets
+    SUBSCRIPTION_UPS_BURN = "subscription_ups_burn"  # Subscription paid in UPS (burned)
+    DEMURRAGE = "demurrage"  # Decay from unused UPS in wallets
     MINED_EXIT_FEE = "mined_exit_fee"  # 11% fee on mined F_i extraction
     STAKED_EXIT_FEE = "staked_exit_fee"  # 5% fee on staked F_i unstaking
     STAKED_ENTRY_FEE = "staked_entry_fee"  # 3% fee on staking
     TRADING_FEE = "trading_fee"  # Fees from F_i order book
-    CASHOUT_FEE = "cashout_fee"  # 7% fee on UP$ → external
+    CASHOUT_FEE = "cashout_fee"  # 7% fee on UPS → external
 
 
 class PaymentCrypto(Enum):
@@ -53,7 +53,7 @@ class PaymentCrypto(Enum):
     SOL = "sol"
     USDC = "usdc"
     USDT = "usdt"
-    UPS = "ups"  # Pay with UP$ - gets BURNED
+    UPS = "ups"  # Pay with UPS - gets BURNED
 
 
 @dataclass
@@ -79,9 +79,9 @@ class CryptoRates:
         elif crypto == PaymentCrypto.USDT:
             return amount * self.btc_per_usdt
         elif crypto == PaymentCrypto.UPS:
-            # UP$ is valued at current UP$ price (floating with BTC)
+            # UPS is valued at current UPS price (floating with BTC)
             # This will be calculated by the reserve itself
-            return 0.0  # Handled specially - burns UP$
+            return 0.0  # Handled specially - burns UPS
         return 0.0
 
 
@@ -100,13 +100,13 @@ class BTCInflow:
 
 @dataclass
 class BTCReserve:
-    """The Bitcoin Reserve - backs UP$ supply.
+    """The Bitcoin Reserve - backs UPS supply.
 
     Hotel California: BTC checks in, never checks out.
 
-    UP$ VALUE MODEL (Floating):
-    - UP$ value floats with BTC price
-    - ups_value_usd = (total_btc * btc_usd_price) / total_ups_minted
+    UPS VALUE MODEL (Floating):
+    - UPS value floats with BTC price
+- ups_value_usd = (total_btc * btc_usd_price) / total_ups_circulating
     - Natural expansion/contraction with BTC price moves
     """
 
@@ -131,16 +131,16 @@ class BTCReserve:
     # Inflow history
     inflows: List[BTCInflow] = field(default_factory=list)
 
-    # UP$ supply tracking
-    total_ups_minted: float = 0.0
-    total_ups_burned: float = 0.0  # Track burns from UP$ subscriptions
+    # UPS supply tracking (canonical)
+    total_ups_circulating: float = 0.0
+    total_ups_burned: float = 0.0  # Track burns from UPS subscriptions
 
     # Crypto conversion rates (simulated, updateable)
     crypto_rates: CryptoRates = field(default_factory=CryptoRates)
 
-    # Genesis rate: initial UP$ per BTC when system starts
-    # After genesis, UP$ value floats with reserve
-    genesis_ups_per_btc: float = 100000.0  # 1 BTC = 100,000 UP$ at genesis
+    # Genesis rate: initial UPS per BTC when system starts
+    # After genesis, UPS value floats with reserve
+    genesis_ups_per_btc: float = 100000.0  # 1 BTC = 100,000 UPS at genesis
 
     @property
     def btc_usd_price(self) -> float:
@@ -154,20 +154,32 @@ class BTCReserve:
 
     @property
     def ups_value_usd(self) -> float:
-        """Current UP$ value in USD (floats with BTC).
+        """Current UPS value in USD (floats with BTC).
 
-        UP$ value = (BTC Reserve × BTC Price) / UP$ Supply
+        UPS value = (BTC Reserve × BTC Price) / UPS Supply
         """
-        if self.total_ups_minted <= 0:
+        if self.total_ups_circulating <= 0:
             return 1.0  # Genesis price
-        return (self.total_btc * self.btc_usd_price) / self.total_ups_minted
+        return (self.total_btc * self.btc_usd_price) / self.total_ups_circulating
 
     @property
     def ups_value_btc(self) -> float:
-        """Current UP$ value in BTC."""
-        if self.total_ups_minted <= 0:
+        """Current UPS value in BTC."""
+        if self.total_ups_circulating <= 0:
             return 1.0 / self.genesis_ups_per_btc
-        return self.total_btc / self.total_ups_minted
+        return self.total_btc / self.total_ups_circulating
+
+    @property
+    def total_ups_minted(self) -> float:
+        """Legacy alias for backward compatibility.
+
+        Canonical term is total_ups_circulating.
+        """
+        return self.total_ups_circulating
+
+    @total_ups_minted.setter
+    def total_ups_minted(self, value: float) -> None:
+        self.total_ups_circulating = max(0.0, float(value))
 
     def receive_btc(
         self,
@@ -245,8 +257,8 @@ class BTCReserve:
     ) -> Tuple[float, bool]:
         """Receive subscription payment in any cryptocurrency.
 
-        Pay with BTC, ETH, SOL, USDC, USDT, or UP$.
-        All crypto converts to BTC. UP$ gets BURNED (strengthens currency).
+        Pay with BTC, ETH, SOL, USDC, USDT, or UPS.
+        All crypto converts to BTC. UPS gets BURNED (strengthens currency).
 
         Args:
             crypto: Which cryptocurrency
@@ -257,7 +269,7 @@ class BTCReserve:
             (btc_equivalent, was_ups_burned) tuple
         """
         if crypto == PaymentCrypto.UPS:
-            # Special case: UP$ subscription BURNS the UP$
+            # Special case: UPS subscription BURNS the UPS
             return self.receive_ups_subscription(amount, human_id)
 
         # Convert crypto to BTC
@@ -286,26 +298,26 @@ class BTCReserve:
         ups_amount: float,
         human_id: str,
     ) -> Tuple[float, bool]:
-        """Receive subscription payment in UP$ - BURNS the UP$.
+        """Receive subscription payment in UPS - BURNS the UPS.
 
-        Paying with UP$ is special:
-        - UP$ gets burned (reduces supply)
-        - Backing ratio IMPROVES (same BTC, less UP$)
+        Paying with UPS is special:
+        - UPS gets burned (reduces supply)
+        - Backing ratio IMPROVES (same BTC, less UPS)
         - This strengthens the currency for everyone
 
         Args:
-            ups_amount: UP$ to burn for subscription
+            ups_amount: UPS to burn for subscription
             human_id: Subscriber
 
         Returns:
             (btc_equivalent, was_ups_burned=True) tuple
         """
-        # Calculate BTC equivalent at current UP$ value
+        # Calculate BTC equivalent at current UPS value
         btc_equivalent = ups_amount * self.ups_value_btc
 
-        # Burn the UP$ (reduce supply, BTC stays)
+        # Burn the UPS (reduce supply, BTC stays)
         self.total_ups_burned += ups_amount
-        self.total_ups_minted -= ups_amount  # Reduce circulating supply
+        self.total_ups_circulating = max(0.0, self.total_ups_circulating - ups_amount)
 
         # Track the burn (no BTC added, but track for analytics)
         self.btc_by_source[BTCSourceType.SUBSCRIPTION_UPS_BURN] = (
@@ -325,7 +337,7 @@ class BTCReserve:
         self.inflows.append(inflow)
 
         logger.info(
-            f"[Reserve] UP$ BURN: {human_id} paid {ups_amount:.2f} UP$ "
+            f"[Reserve] UPS BURN: {human_id} paid {ups_amount:.2f} UPS "
             f"(burned, new backing ratio: {self.backing_ratio:.2%})"
         )
         return (btc_equivalent, True)
@@ -393,75 +405,79 @@ class BTCReserve:
 
     @property
     def ups_per_btc(self) -> float:
-        """Current UP$ per BTC (floating rate).
+        """Current UPS per BTC (floating rate).
 
         At genesis this equals genesis_ups_per_btc.
-        As reserve grows relative to minted supply, this adjusts.
+        As reserve grows relative to circulating supply, this adjusts.
         """
-        if self.total_btc <= 0 or self.total_ups_minted <= 0:
+        if self.total_btc <= 0 or self.total_ups_circulating <= 0:
             return self.genesis_ups_per_btc
-        return self.total_ups_minted / self.total_btc
+        return self.total_ups_circulating / self.total_btc
 
     @property
     def ups_capacity(self) -> float:
-        """Maximum UP$ that can be minted at genesis rate.
+        """Maximum UPS that can be routed at genesis rate.
 
-        Note: With floating UP$, this represents theoretical max if
-        we used genesis conversion rate. Actual UP$ value floats.
+        Note: With floating UPS, this represents theoretical max if
+        we used genesis conversion rate. Actual UPS value floats.
         """
         return self.total_btc * self.genesis_ups_per_btc
 
     @property
     def ups_remaining(self) -> float:
-        """UP$ that can still be minted at genesis rate."""
-        return max(0.0, self.ups_capacity - self.total_ups_minted)
+        """UPS that can still be routed at genesis rate."""
+        return max(0.0, self.ups_capacity - self.total_ups_circulating)
 
     @property
     def backing_ratio(self) -> float:
-        """How much of minted UP$ is backed by BTC.
+        """How much of circulating UPS is backed by BTC.
 
-        With floating UP$, this is always 1.0 by definition
-        (UP$ value adjusts to match backing).
+        With floating UPS, this is always 1.0 by definition
+        (UPS value adjusts to match backing).
         This metric is kept for monitoring reserve health.
         """
-        if self.total_ups_minted == 0:
+        if self.total_ups_circulating == 0:
             return 1.0
         # In floating model, backing is always 100% by definition
         # But we track the ratio vs genesis rate for health monitoring
-        return self.ups_capacity / self.total_ups_minted
+        return self.ups_capacity / self.total_ups_circulating
 
     @property
     def reserve_usd_value(self) -> float:
         """Total USD value of BTC reserve."""
         return self.total_btc * self.btc_usd_price
 
-    def mint_ups(self, amount: float) -> float:
-        """Mint UP$ backed by BTC reserve.
+    def route_ups_from_treasury(self, amount: float) -> float:
+        """Route UPS from treasury capacity into circulation.
 
         Returns:
-            Actual amount minted (may be less if insufficient backing)
+            Actual routed amount (may be less if insufficient backing capacity)
         """
-        mintable = min(amount, self.ups_remaining)
-        if mintable <= 0:
-            logger.warning(f"[Reserve] Cannot mint {amount:.2f} UP$ - insufficient backing")
+        routable = min(amount, self.ups_remaining)
+        if routable <= 0:
+            logger.warning(f"[Reserve] Cannot route {amount:.2f} UPS - insufficient backing")
             return 0.0
 
-        self.total_ups_minted += mintable
+        self.total_ups_circulating += routable
         logger.info(
-            f"[Reserve] Minted {mintable:.2f} UP$ "
-            f"(total: {self.total_ups_minted:.2f}, backing: {self.backing_ratio:.2%})"
+            f"[Reserve] Routed {routable:.2f} UPS "
+            f"(circulating: {self.total_ups_circulating:.2f}, backing: {self.backing_ratio:.2%})"
         )
-        return mintable
+        return routable
+
+    def mint_ups(self, amount: float) -> float:
+        """Legacy alias for route_ups_from_treasury()."""
+        return self.route_ups_from_treasury(amount)
 
     def burn_ups(self, amount: float) -> None:
-        """Burn UP$ (e.g., from demurrage or fees).
+        """Burn UPS (e.g., from demurrage or fees).
 
-        The BTC backing stays in reserve - UP$ is destroyed.
+        The BTC backing stays in reserve - UPS is destroyed.
         """
-        self.total_ups_minted = max(0.0, self.total_ups_minted - amount)
+        self.total_ups_circulating = max(0.0, self.total_ups_circulating - amount)
         logger.info(
-            f"[Reserve] Burned {amount:.2f} UP$ "
-            f"(remaining: {self.total_ups_minted:.2f}, backing: {self.backing_ratio:.2%})"
+            f"[Reserve] Burned {amount:.2f} UPS "
+            f"(remaining: {self.total_ups_circulating:.2f}, backing: {self.backing_ratio:.2%})"
         )
 
     def get_stats(self) -> Dict:
@@ -470,9 +486,9 @@ class BTCReserve:
             "total_btc": self.total_btc,
             "btc_usd_price": self.btc_usd_price,
             "reserve_usd_value": self.reserve_usd_value,
-            "ups_minted": self.total_ups_minted,
+            "ups_minted": self.total_ups_circulating,  # legacy key
             "ups_burned": self.total_ups_burned,
-            "ups_circulating": self.total_ups_minted,  # After burns
+            "ups_circulating": self.total_ups_circulating,
             "ups_value_usd": self.ups_value_usd,
             "ups_value_btc": self.ups_value_btc,
             "backing_ratio_vs_genesis": self.backing_ratio,

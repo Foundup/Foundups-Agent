@@ -8,7 +8,7 @@ Triggers:
 3. BTC price crash > 30% in 24h → emergency mode
 
 Actions when triggered:
-- Pause F_i → UP$ conversions
+- Pause F_i → UPS conversions
 - Reduce demurrage to 0
 - Queue exits (gradual release)
 - Notify users
@@ -114,7 +114,7 @@ class CircuitBreaker:
         """Check all conditions and update state.
 
         Args:
-            backing_ratio: Current UP$ backing ratio
+            backing_ratio: Current UPS backing ratio
             current_btc_price: Current BTC price in USD
 
         Returns:

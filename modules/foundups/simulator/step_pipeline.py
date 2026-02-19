@@ -272,6 +272,14 @@ def run_step(model: "FoundUpsModel") -> None:
         model._emit_rating_updates()
         model._emit_cabr_updates()
 
+    # Full Tide Economics: Process tide every N ticks (012-approved 2026-02-17)
+    if model._tick % model._tide_epoch_interval == 0 and model._tick > 0:
+        model._process_tide_epoch()
+
+    # SmartDAO progression + cross-DAO funding (WSP 100 event wiring).
+    if model._tick % model._smartdao_epoch_interval == 0 and model._tick > 0:
+        model._process_smartdao_epoch()
+
     for agent_id in model._agent_order:
         balance = model._token_economy.get_balance(agent_id)
         current = model._state_store.get_state().agents.get(agent_id)

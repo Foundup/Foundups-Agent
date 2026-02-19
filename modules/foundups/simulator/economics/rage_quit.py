@@ -270,7 +270,7 @@ class RageQuitAdapter:
         foundup_id: str,
         fi_amount: float,
     ) -> Tuple[float, float]:
-        """Calculate pro-rata UP$ value for F_i tokens.
+        """Calculate pro-rata UPS value for F_i tokens.
 
         Returns:
             (ups_value, fee) tuple
@@ -363,7 +363,7 @@ class RageQuitAdapter:
 
         logger.info(
             f"[RageQuit:{foundup_id}] {human_id} rage quit: "
-            f"{fi_amount:.2f} F_i -> {ups_received:.2f} UP$ "
+            f"{fi_amount:.2f} F_i -> {ups_received:.2f} UPS "
             f"(fee: {fee:.2f}, reason: {reason.value if reason else 'unknown'})"
         )
 

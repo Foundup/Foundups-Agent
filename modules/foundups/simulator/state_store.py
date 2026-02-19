@@ -39,6 +39,11 @@ class FoundUpTile:
     task_count: int = 0
     tasks_completed: int = 0
     last_activity_tick: int = 0
+    cabr_score: float = 0.0
+    cabr_threshold_met: bool = False
+    cabr_pipe_size: float = 0.0
+    cabr_total_flow_ups: float = 0.0
+    cabr_last_flow_ups: float = 0.0
 
     # Lifecycle state
     lifecycle_stage: str = "PoC"  # PoC -> Proto -> MVP
@@ -293,7 +298,7 @@ class StateStore:
             tile.pulse_glow(0.8)
 
         if injection_ups > 0:
-            # Injected UP$ is treasury capital entering the FoundUp.
+            # Injected UPS is treasury capital entering the FoundUp.
             self._state.total_stakes += int(injection_ups)
 
     def _handle_ups_allocation_result(self, event: SimEvent) -> None:
@@ -322,6 +327,27 @@ class StateStore:
         self._state.pavs_treasury_ups = float(event.payload.get("pavs_treasury_ups", 0.0))
         self._state.network_pool_ups = float(event.payload.get("network_pool_ups", 0.0))
         self._state.fund_pool_ups = float(event.payload.get("fund_pool_ups", 0.0))
+
+    def _handle_cabr_score_updated(self, event: SimEvent) -> None:
+        """Track CABR score for render and downstream flow diagnostics."""
+        foundup_id = event.foundup_id
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.cabr_score = float(event.payload.get("total", tile.cabr_score))
+            tile.cabr_threshold_met = bool(event.payload.get("threshold_met", False))
+            tile.cabr_pipe_size = tile.cabr_score
+
+    def _handle_cabr_pipe_flow_routed(self, event: SimEvent) -> None:
+        """Track UPS routed through CABR-sized pipe for each FoundUp."""
+        foundup_id = event.foundup_id
+        routed_ups = float(event.payload.get("routed_ups", 0.0))
+        if foundup_id and foundup_id in self._state.foundups and routed_ups > 0:
+            tile = self._state.foundups[foundup_id]
+            tile.cabr_pipe_size = float(event.payload.get("cabr_pipe_size", tile.cabr_pipe_size))
+            tile.cabr_last_flow_ups = routed_ups
+            tile.cabr_total_flow_ups += routed_ups
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.25)
 
     def _handle_investor_funding_received(self, event: SimEvent) -> None:
         """Handle investor_funding_received seed/inflow events."""
