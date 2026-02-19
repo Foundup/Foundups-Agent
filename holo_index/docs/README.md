@@ -7,6 +7,8 @@ HoloIndex is a sophisticated semantic search system designed to prevent vibecodi
 ## Key Documentation
 
 **Active Documentation** (current reference):
+- [Machine Spec (JSON)](HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json) — Canonical machine-readable runtime contract
+- [Machine Spec (Markdown)](HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.md) — First-principles architecture and consistency analysis
 - [Operational Playbook](OPERATIONAL_PLAYBOOK.md) — Primary runbook for 0102 (checklists, workflows)
 - [ModLog.md](ModLog.md) — Change history and updates
 - [Holo Command Interface](Holo_Command_Interface.md) — CLI reference guide

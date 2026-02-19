@@ -1,5 +1,37 @@
 # HoloIndex Package ModLog
 
+## [2026-02-18] Machine-Language Contract + Drift Hardening
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Navigation Reliability)  
+**Status**: [OK] COMPLETE
+
+### Context
+Deep-dive audit showed contract drift between runtime behavior, tests, and interface docs. HoloIndex needed a canonical machine-level definition and compatibility hardening.
+
+### Actions
+- Added canonical machine specification:
+  - `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json`
+  - `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.md`
+- Updated public contract docs:
+  - `holo_index/INTERFACE.md` rewritten to match current runtime API.
+  - `holo_index/CLI_REFERENCE.md` clarified as menu snapshot (not exhaustive flag contract).
+  - `holo_index/README.md` now links to interface + machine specs.
+- Runtime compatibility hardening:
+  - `holo_index/output_composer.py`: backward-compatible `compose(intent=...)` support, improved alert grouping.
+  - `holo_index/intent_classifier.py`: strengthened health/code-location intent patterns.
+  - `holo_index/core/holo_index.py`: `search()` robust under partial initialization and missing collections.
+  - `holo_index/qwen_advisor/orchestration/services/component_router.py`: aligned component names with executable orchestrator handlers.
+- Governance lock:
+  - `holo_index/INTERFACE.md` now explicitly declares source-of-truth policy.
+  - Added `holo_index/tests/test_machine_spec_contract.py` to enforce contract-governance invariants.
+
+### Result
+- Interface and machine contracts now have canonical artifacts.
+- Contract-focused regression tests pass for intent classification, composition, memory output, and doc-type filtering.
+
+---
+
 ## [2026-02-12] 012 Scratchpad Ingest Auto-Path Hardening
 
 **Agent**: 0102  
@@ -3977,7 +4009,7 @@ This represents the most significant architectural evolution of HoloIndex to dat
 
 [LINK] Interconnection: All cubes snap into HoloDAE foundation
 [BOT] Autonomous FoundUps: Any combination creates specialized companies
-[U+1F4B0] Bitcoin + UP$ Economics: Tokenized revenue streams
+[U+1F4B0] Bitcoin + UPS Economics: Tokenized revenue streams
 ```
 
 #### **[DATA] Current Reality vs Initial Vision:**

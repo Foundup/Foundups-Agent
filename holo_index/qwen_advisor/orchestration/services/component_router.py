@@ -8,11 +8,11 @@ from enum import Enum
 COMPONENT_META = {
     'health_analysis': ('[PILL][OK]', 'Health & WSP Compliance'),
     'vibecoding_analysis': ('[AI]', 'Vibecoding Analysis'),
+    'file_size_monitor': ('[RULER]', 'File Size Monitor'),
+    'pattern_coach': ('[IDEA]', 'Pattern Coach'),
     'orphan_analysis': ('[GHOST]', 'Orphan Analysis'),
     'wsp_documentation_guardian': ('[BOOKS]', 'WSP Documentation Guardian'),
     'module_analysis': ('[LINK]', 'Module Analysis'),
-    'code_index_search': ('[SEARCH]', 'Code Index Search'),
-    'mcp_integration': ('[MCP]', 'MCP Integration'),
 }
 
 class ComponentRouter:
@@ -28,15 +28,15 @@ class ComponentRouter:
                 'module_analysis'              # Secondary - module context
             ],
             'code_location': [
-                'code_index_search',           # Primary - Find code
-                'module_analysis'              # Secondary - Verify location
+                'module_analysis',             # Primary - Verify module + location context
+                'file_size_monitor'            # Secondary - Surface large-file hotspots
             ],
             'fix_error': [
                 'health_analysis',             # Primary - Check for errors
-                'code_index_search'            # Secondary - Find context
+                'module_analysis'              # Secondary - Find local module context
             ],
             'research': [
-                'mcp_integration',             # Primary - External research
+                'pattern_coach',               # Primary - Explain architecture/patterns
                 'wsp_documentation_guardian'   # Secondary - Internal docs
             ],
             'general': [

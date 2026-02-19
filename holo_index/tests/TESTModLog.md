@@ -1,4 +1,31 @@
 # HoloIndex Test Suite TESTModLog
+## [2026-02-18] Machine Contract Governance Lock
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Added `test_machine_spec_contract.py` to enforce source-of-truth governance:
+  - machine JSON spec remains authoritative
+  - `INTERFACE.md` declares policy
+  - `CLI_REFERENCE.md` remains explicitly non-normative
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_machine_spec_contract.py -q`
+
+## [2026-02-18] Contract Drift Hardening Regression
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
+
+### Summary
+- Re-ran targeted contract suite after runtime/interface hardening:
+  - intent classification
+  - output composition compatibility
+  - memory output contract
+  - doc-type filtering behavior
+- Verified that previously drifting contracts now align.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_intent_classifier.py holo_index/tests/test_output_composer.py holo_index/tests/test_memory_output_contract.py holo_index/tests/test_doc_type_filtering.py -q`
+- Result: `45 passed` (2 pytest config warnings in this environment)
+
 ## [2026-02-12] 012 Scratchpad Source Resolver Coverage
 **WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 

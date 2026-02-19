@@ -746,23 +746,25 @@ class HoloIndex:
                     content = text
                 
                 # Extract key metadata
-                name = frontmatter.get('name', file_path.parent.name)
-                description = frontmatter.get('description', '')
+                name = str(frontmatter.get('name', file_path.parent.name) or file_path.parent.name)
+                description_raw = frontmatter.get('description', '')
+                description = str(description_raw) if description_raw is not None else ''
                 agents = frontmatter.get('agents', [])
-                primary_agent = frontmatter.get('primary_agent', 'unknown')
-                intent_type = frontmatter.get('intent_type', 'unknown')
-                promotion_state = frontmatter.get('promotion_state', 'prototype')
-                
+                primary_agent = str(frontmatter.get('primary_agent', 'unknown') or 'unknown')
+                intent_type = str(frontmatter.get('intent_type', 'unknown') or 'unknown')
+                promotion_state = str(frontmatter.get('promotion_state', 'prototype') or 'prototype')
+
                 # Create search payload
                 lines = content.strip().split('\n')
                 summary = ' '.join(lines[:10])[:500]
-                doc_payload = f"Skillz: {name}\nAgent: {primary_agent}\nType: {intent_type}\nDescription: {description}\n{summary}"
-                
-                ids.append(f"skill_{idx}")
-                embeddings.append(self._get_embedding(doc_payload))
-                documents.append(doc_payload)
-                
-                metadatas.append({
+                doc_payload = (
+                    f"Skillz: {name}\n"
+                    f"Agent: {primary_agent}\n"
+                    f"Type: {intent_type}\n"
+                    f"Description: {description}\n"
+                    f"{summary}"
+                )
+                metadata = {
                     "skill_name": name,
                     "description": description[:500],
                     "agents": ','.join(agents) if isinstance(agents, list) else str(agents),
@@ -771,14 +773,32 @@ class HoloIndex:
                     "promotion_state": promotion_state,
                     "path": str(file_path),
                     "type": "skillz",
-                    "priority": 9  # Skillz are high priority for agent discovery
-                })
+                    "priority": 9,  # Skillz are high priority for agent discovery
+                }
+
+                # Keep collection fields length-consistent by appending atomically.
+                embedding = self._get_embedding(doc_payload)
+                ids.append(f"skill_{idx}")
+                embeddings.append(embedding)
+                documents.append(doc_payload)
+                metadatas.append(metadata)
                 
             except Exception as e:
                 self._log_agent_action(f"Failed to parse SKILLz {file_path}: {e}", "WARN")
                 continue
         
         if embeddings:
+            if not (len(ids) == len(embeddings) == len(documents) == len(metadatas)):
+                self._log_agent_action(
+                    (
+                        "SKILLz index length mismatch detected "
+                        f"(ids={len(ids)}, embeddings={len(embeddings)}, "
+                        f"documents={len(documents)}, metadatas={len(metadatas)}). "
+                        "Aborting collection add."
+                    ),
+                    "ERROR",
+                )
+                return
             self.skill_collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
             self._log_agent_action(f"SKILLz index refreshed: {len(embeddings)} skills indexed", "OK")
         else:
@@ -1006,8 +1026,9 @@ class HoloIndex:
         """
         try:
             # Fast path: check cache first (WSP 91 performance optimization)
-            if self.search_cache is not None:
-                cached = self.search_cache.get(query, doc_type_filter)
+            search_cache = getattr(self, "search_cache", None)
+            if search_cache is not None:
+                cached = search_cache.get(query, doc_type_filter)
                 if cached is not None:
                     self._log_agent_action(f"[CACHE HIT] '{query}' (limit={limit})", "FAST")
                     return cached
@@ -1026,46 +1047,52 @@ class HoloIndex:
             # This keeps non-symbol searches fast while preserving exact-identifier discovery.
             symbol_query = self._is_symbol_query(query)
             force_symbol_scan = os.getenv("HOLO_FORCE_SYMBOL_SCAN", "0").lower() in {"1", "true", "yes", "on"}
-            should_scan_symbols = force_symbol_scan or symbol_query or (self.model is not None)
-            
+            model = getattr(self, "model", None)
+            should_scan_symbols = force_symbol_scan or symbol_query or (model is not None)
+            code_collection = getattr(self, "code_collection", None)
+            symbol_collection = getattr(self, "symbol_collection", None)
+            wsp_collection = getattr(self, "wsp_collection", None)
+            test_collection = getattr(self, "test_collection", None)
+            skill_collection = getattr(self, "skill_collection", None)
+
             # Search code index if requested
-            if doc_type_filter in ["code", "all"]:
-                code_results = self._search_collection(self.code_collection, query, limit, kind="code")
+            if doc_type_filter in ["code", "all"] and code_collection is not None:
+                code_results = self._search_collection(code_collection, query, limit, kind="code")
                 # 0102: Enhance with AST previews
                 code_hits = self._enhance_code_results_with_previews(code_results)
                 # Also search symbol index for function/class hits
-                if should_scan_symbols:
-                    symbol_results = self._search_collection(self.symbol_collection, query, limit, kind="symbol")
+                if should_scan_symbols and symbol_collection is not None:
+                    symbol_results = self._search_collection(symbol_collection, query, limit, kind="symbol")
                 if symbol_results:
                     code_hits = self._merge_hits(symbol_results, code_hits, limit)
 
             # Search WSP index if requested
-            if doc_type_filter not in ["code", "test"]:
-                wsp_hits = self._search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+            if doc_type_filter not in ["code", "test"] and wsp_collection is not None:
+                wsp_hits = self._search_collection(wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
                 
             # Search Test index if requested
-            if doc_type_filter in ["test", "all"]:
-                test_hits = self._search_collection(self.test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
+            if doc_type_filter in ["test", "all"] and test_collection is not None:
+                test_hits = self._search_collection(test_collection, query, limit, kind="test", doc_type_filter=doc_type_filter)
 
             # Search Skillz index for agent discovery (only in full context)
-            if doc_type_filter == "all":
+            if doc_type_filter == "all" and skill_collection is not None:
                 try:
-                    skill_hits = self._search_collection(self.skill_collection, query, limit, kind="skill")
+                    skill_hits = self._search_collection(skill_collection, query, limit, kind="skill")
                 except Exception:
                     skill_hits = []
             
             # Symbol-query fallback: add lexical hits for exact identifiers/paths
             if symbol_query:
-                if doc_type_filter in ["code", "all"]:
-                    lexical_code = self._lexical_search_collection(self.code_collection, query, limit, kind="code")
+                if doc_type_filter in ["code", "all"] and code_collection is not None:
+                    lexical_code = self._lexical_search_collection(code_collection, query, limit, kind="code")
                     if lexical_code:
                         code_hits = self._merge_hits(code_hits, lexical_code, limit)
                     # NAVIGATION gaps: use rg to locate exact symbol definitions/usages
                     rg_hits = self._rg_symbol_search(query, limit)
                     if rg_hits:
                         code_hits = self._merge_hits(rg_hits, code_hits, limit)
-                if doc_type_filter in ["all"] and not wsp_hits:
-                    lexical_wsp = self._lexical_search_collection(self.wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
+                if doc_type_filter in ["all"] and not wsp_hits and wsp_collection is not None:
+                    lexical_wsp = self._lexical_search_collection(wsp_collection, query, limit, kind="wsp", doc_type_filter=doc_type_filter)
                     if lexical_wsp:
                         wsp_hits = self._merge_hits(wsp_hits, lexical_wsp, limit)
 
@@ -1099,8 +1126,8 @@ class HoloIndex:
             }
 
             # Store in cache for fast repeated queries
-            if self.search_cache is not None:
-                self.search_cache.put(query, doc_type_filter, payload)
+            if search_cache is not None:
+                search_cache.put(query, doc_type_filter, payload)
 
             return payload
             
@@ -1279,14 +1306,21 @@ class HoloIndex:
         return formatted
 
     def _search_collection(self, collection, query: str, limit: int, kind: str, doc_type_filter: str = "all") -> List[Dict[str, Any]]:
-        if collection.count() == 0:
+        if collection is None:
             return []
 
-        if self.model is None:
+        try:
+            if collection.count() == 0:
+                return []
+        except Exception:
+            return []
+
+        model = getattr(self, "model", None)
+        if model is None:
             self._log_agent_action("Embedding model not available - using offline lexical scan", "WARN")
             return self._lexical_search_collection(collection, query, limit, kind, doc_type_filter)
         else:
-            embedding = self.model.encode(query, show_progress_bar=False).tolist()
+            embedding = model.encode(query, show_progress_bar=False).tolist()
             results = collection.query(query_embeddings=[embedding], n_results=limit)
 
         formatted: List[Dict[str, Any]] = []

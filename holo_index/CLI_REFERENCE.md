@@ -2,6 +2,11 @@
 
 0102 cheat sheet for HoloIndex + HoloDAE. Qwen leads orchestration, Gemma validates patterns, and this map keeps every CLI skill tied to the module that powers it. Because `holo_index/cli.py` enforces WSP 90 UTF-8 at the entry point, documentation can surface mnemonic tags for fast scanning without contaminating machine-to-machine output.
 
+Contract note:
+- This file is a menu-focused operations atlas, not an exhaustive CLI flag list.
+- Canonical interface contracts live in `holo_index/INTERFACE.md`.
+- Canonical machine schema lives in `holo_index/docs/HOLO_INDEX_MACHINE_LANGUAGE_SPEC_0102.json`.
+
 ## Menu Snapshot (0102 Ops)
 ```
 ============================================================
