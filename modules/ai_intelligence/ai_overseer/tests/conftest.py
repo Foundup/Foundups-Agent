@@ -14,6 +14,14 @@ _ALLOWLIST = {
     "test_mcp.py",
     "test_monitor_flow.py",
     "test_mixins_extended.py",
+    "test_ii_agent_adapter.py",
+    "test_openclaw_security_sentinel.py",
+    "test_ai_overseer_openclaw_security.py",
+    "test_openclaw_security_alerts.py",
+    "test_security_correlator.py",
+    "test_wsp_framework_sentinel.py",
+    "test_m2m_compression_sentinel.py",
+    "test_m2m_skill_shim.py",
 }
 
 _HEAVY_TARGETS = [

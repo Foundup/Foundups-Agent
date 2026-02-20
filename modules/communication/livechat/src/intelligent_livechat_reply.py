@@ -19,6 +19,8 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
 
+from modules.communication.livechat.src.persona_registry import get_persona_config, resolve_persona_key
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,11 +87,40 @@ class IntelligentLivechatReply:
     5. Banter engine fallback
     """
     
-    def __init__(self):
+    def __init__(
+        self,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+    ):
         self.grok_available = False
         self.grok_client = None
         self.banter_engine = None
+        self.banter_enabled = os.getenv("LIVECHAT_BANTER_ENABLED", "false").lower() in ("1", "true", "yes")
         self.awakened = False
+        resolved_persona = resolve_persona_key(
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+        self.persona = get_persona_config(
+            persona_key=persona_key or resolved_persona,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+        self.persona_key = self.persona.get("key", resolved_persona)
+        persona_patterns = self.persona.get("pattern_responses")
+        if persona_patterns is not None:
+            if self.persona.get("use_default_patterns", True):
+                self.pattern_responses = dict(PATTERN_RESPONSES)
+                self.pattern_responses.update(persona_patterns)
+            else:
+                self.pattern_responses = persona_patterns
+        else:
+            self.pattern_responses = PATTERN_RESPONSES
+        self.system_prompt = self.persona.get("system_prompt") or self.GROK_SYSTEM_PROMPT
         
         # WSP_00: Execute 0102 awakening
         self._execute_awakening()
@@ -145,6 +176,10 @@ class IntelligentLivechatReply:
     
     def _init_banter_engine(self):
         """Initialize Banter Engine (singleton)."""
+        if not self.banter_enabled:
+            logger.info("[LIVECHAT-REPLY] Banter disabled via LIVECHAT_BANTER_ENABLED")
+            self.banter_engine = None
+            return
         try:
             from modules.ai_intelligence.banter_engine.src.banter_singleton import get_banter_engine
             self.banter_engine = get_banter_engine()
@@ -221,7 +256,7 @@ class IntelligentLivechatReply:
         """Check for pattern-based responses."""
         message_lower = message.lower()
         
-        for pattern_name, pattern_data in PATTERN_RESPONSES.items():
+        for pattern_name, pattern_data in self.pattern_responses.items():
             for keyword in pattern_data["keywords"]:
                 if keyword in message_lower:
                     logger.info(f"[LIVECHAT-REPLY] Pattern match: {pattern_name}")
@@ -300,17 +335,27 @@ RULES:
 """
     
     def _generate_grok_response(self, message: str, username: str, role: str) -> Optional[str]:
-        """Generate contextual response using Grok."""
+        """Generate contextual response using Grok, with live news injection."""
         if not self.grok_available or not self.grok_client:
             return None
-        
+
         user_prompt = f"Reply to {username} ({role}) who said: \"{message}\""
-        
+
+        # Inject live news context when topic triggers are detected
+        try:
+            from modules.communication.livechat.src.news_context_provider import get_news_context
+            news_ctx = get_news_context(message)
+            if news_ctx:
+                user_prompt += f"\n\nCURRENT NEWS CONTEXT (use if relevant, cite facts):\n{news_ctx}"
+                logger.info(f"[LIVECHAT-REPLY] News context injected ({len(news_ctx)} chars)")
+        except Exception as e:
+            logger.debug(f"[LIVECHAT-REPLY] News provider unavailable: {e}")
+
         try:
             # Use same pattern as video_comments
             response = self.grok_client.get_response(
                 prompt=user_prompt,
-                system_prompt=self.GROK_SYSTEM_PROMPT
+                system_prompt=self.system_prompt
             )
             
             if response:
@@ -335,7 +380,7 @@ RULES:
     
     def _generate_banter_response(self, message: str) -> Optional[str]:
         """Generate response using banter engine."""
-        if not self.banter_engine:
+        if not self.banter_enabled or not self.banter_engine:
             return None
         
         try:
@@ -407,13 +452,26 @@ RULES:
 
 
 # Global instance
-_livechat_reply_generator = None
+_livechat_reply_generators: Dict[str, IntelligentLivechatReply] = {}
 
 
-def get_livechat_reply_generator() -> IntelligentLivechatReply:
-    """Get or create global livechat reply generator."""
-    global _livechat_reply_generator
-    if _livechat_reply_generator is None:
-        _livechat_reply_generator = IntelligentLivechatReply()
-    return _livechat_reply_generator
-
+def get_livechat_reply_generator(
+    persona_key: Optional[str] = None,
+    channel_name: Optional[str] = None,
+    channel_id: Optional[str] = None,
+    bot_channel_id: Optional[str] = None,
+) -> IntelligentLivechatReply:
+    """Get or create a persona-specific livechat reply generator."""
+    resolved = persona_key or resolve_persona_key(
+        channel_name=channel_name,
+        channel_id=channel_id,
+        bot_channel_id=bot_channel_id,
+    )
+    if resolved not in _livechat_reply_generators:
+        _livechat_reply_generators[resolved] = IntelligentLivechatReply(
+            persona_key=resolved,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+    return _livechat_reply_generators[resolved]

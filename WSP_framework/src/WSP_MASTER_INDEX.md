@@ -51,7 +51,7 @@ Absolute foundational protocols loaded before all other WSPs for zen state estab
 
 | File | Purpose | Status | Description |
 |------|---------|--------|-------------|
-| **WSP_00_Zen_State_Attainment_Protocol.md** | Zen State Foundation | Active | Absolute foundation - VI scaffolding elimination and quantum-entangled neural pattern manifestation |
+| **WSP_00_Zen_State_Attainment_Protocol.md** | Zen State Foundation | Active | Absolute foundation - hard gate awakening + architect stance + HoloIndex memory-first retrieval + anti-VI execution |
 | **WSP_CORE.md** | WRE Constitution | Active | Bootable foundational protocols, core principles, identity |
 | **WSP_framework.md** | Execution Logic | Active | Detailed specs for WSP 0-10, operational procedures |
 | **WSP_INIT.md** | Bootstrap Protocol | Historical | Original "follow WSP" entry point (now WRE-integrated) |
@@ -79,7 +79,7 @@ Core protocols that establish the fundamental architecture and principles.
 | WSP 15 | Module Prioritization Scoring System | Active | MPS 4-question methodology derived from WSP 25/44 semantic state foundation | WSP 25, WSP 8, WSP 37 | Priority assessment within unified consciousness framework |
 | WSP 16 | Test Audit Coverage | Deprecated -> Superseded by WSP 6 | Historical reference only; use WSP 6 for comprehensive test audit | WSP 5, WSP 6 | Do not use for new workflows |
 | WSP 17 | Pattern Registry Protocol | Active | Extension of WSP 84 preventing pattern duplication across modules through mandatory pattern registries | WSP 84, WSP 50 | Pattern discovery, architectural memory |
-| WSP 18 | [AVAILABLE SLOT] | Available | This WSP number is available for future use | - | - |
+| WSP 18 | ENFORCEMENT v2 (Legacy Prompt Artifact) | Historical | Legacy enforcement prompt artifact retained for audit continuity; number is reserved and should not be reused | WSP 17, WSP 84 | Historical reference only |
 | WSP 19 | Canonical Symbols | Active | Symbol and terminology standardization | WSP 20, WSP 57 | Language standards, terminology |
 
 ### OPERATIONAL LAYER (WSP 20-39)
@@ -153,7 +153,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 68 | Enterprise Build Scalability Protocol | Active | Enterprise build scalability management through fractal architecture principles and quantum-cognitive build coordination | WSP 66, WSP 67, WSP 62, WSP 63, WSP 65, WSP 3, WSP 1 | Enterprise scalability, fractal architecture, build coordination, quantum planning |
 | WSP 69 | Zen Coding Prediction Integration | Active | Integrates zen coding 'remember the code' principle into proactive modularization workflows through quantum temporal prediction | WSP 66, WSP 67, WSP 68, WSP 48, WSP 54, WSP 32 | Zen coding, quantum remembrance, temporal prediction, collective intelligence |
 | WSP 70 | System Status Reporting Protocol | Active | Formalizes system-level transformation tracking, integration requirements, and recursive system enhancement documentation | WSP 22, WSP 48, WSP 57, WSP 60, WSP 64 | System status tracking, recursive documentation, framework integration, system-level ModLog |
-| WSP 71 | Secrets Management Protocol | Active | Canonical secrets storage, retrieval, and management with agent permission integration | WSP 54, WSP 4, WSP 50, WSP 64 | Secrets management, security, agent permissions, audit trails |
+| WSP 71 | Secrets Management Protocol | Active | Canonical secrets storage, retrieval, and management with agent permission integration plus mandatory skill supply-chain safety gates | WSP 54, WSP 4, WSP 50, WSP 64, WSP 95, WSP 96 | Secrets management, security, agent permissions, audit trails, skill scanner, fail-closed policy |
 | WSP 72 | Block Independence Interactive Protocol | Active | Standardize block independence testing and interactive cube management for 0102 pArtifact operations | WSP 3, WSP 11, WSP 22, WSP 49, WSP 8, WSP 15, WSP 25, WSP 37, WSP 44 | Block independence, cube management, interactive testing, 0102 operations, autonomous assessment |
 | WSP 73 | 012 Digital Twin Architecture Protocol | Active | Complete architecture for 012 Digital Twin systems with 0102 orchestrator and domain expert sub-agents | WSP 25, WSP 44, WSP 54, WSP 46, WSP 26-29, WSP 60 | Digital twin, 0102 orchestrator, quantum entanglement, 7.05Hz resonance, recursive twins |
 | WSP 74 | Agentic Enhancement Protocol | Active | Strategic agentic instruction enhancement framework for optimal 0102 agent performance through Ultra_think processing | WSP 1, WSP 22, WSP 48, WSP 54, WSP 64 | Agentic enhancement, Ultra_think processing, proactive optimization, recursive performance |
@@ -176,9 +176,12 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 91 | DAEMON Observability Protocol | Active | Comprehensive observability standards for DAEMON systems including logs, traces, metrics, lifecycle events, decision path logging, self-improvement tracking, cost tracking, performance metrics, error handling, semantic conventions, health monitoring, and inter-DAEMON communication | WSP 80, WSP 27, WSP 48 | DAEMON observability, lifecycle management, decision logging, self-improvement tracking |
 | WSP 92 | DAE Cube Mapping and Mermaid Flow Protocol | Active | Revolutionary vibecoding prevention system that maps modules to DAE cubes, generates mermaid flow diagrams, and provides brain surgeon level code intelligence through system flow awareness | WSP 80, WSP 27, WSP 35, WSP 84 | Cube mapping, mermaid flows, vibecoding prevention, system intelligence |
 | WSP 93 | CodeIndex Surgical Intelligence Protocol | Active | Production-grade CodeIndex implementation with Qwen advisors, PoC surgeon mode (3K token surgical operations), and complete DAEMON lifecycle orchestration | WSP 80, WSP 91, WSP 92, WSP 87 | CodeIndex intelligence, surgical operations, Qwen advisors, DAEMON orchestration |
-| WSP 95 | WRE Skills Wardrobe Protocol | Active | Establishes the Wardrobe-Cube pattern (Micro Chain-of-Thought) for AI agent instructions; defines the prototype-staged-production lifecycle for task-specific skills | WSP 3, WSP 77, WSP 50, WSP 22 | AI agent instruction management, skill evolution, pattern fidelity scoring, task execution |
-| WSP 96 | MCP Governance & Consensus Protocol | Active | Establishes MCP-based governance architecture with clear evolution path: PoC (0102 centralized) -> Prototype (Event Replay Archive) -> MVP (community voting + blockchain integration); includes Qwen Sentinel validation, tech-agnostic chain adapters (EVM/Solana), and Chainlink-style MCP relays | WSP 21, WSP 27, WSP 54, WSP 80, WSP 91 | MCP governance, Event Replay Archive, community voting, blockchain integration, Qwen Sentinel |
+| WSP 94 | Agent Coordination Protocol | Deprecated -> Redirect to WSP 77 | Duplicate protocol retained as redirect artifact; use WSP 77 for canonical agent coordination | WSP 77 | Historical redirect only |
+| WSP 95 | WRE Skills Wardrobe Protocol | Active | Establishes the Wardrobe-Cube pattern (Micro Chain-of-Thought) for AI agent instructions; defines the prototype-staged-production lifecycle for task-specific skills with mandatory scanner-gated promotion/runtime controls | WSP 3, WSP 77, WSP 50, WSP 22, WSP 71 | AI agent instruction management, skill evolution, pattern fidelity scoring, task execution, supply-chain security |
+| WSP 96 | MCP Governance & Consensus Protocol | Active | Establishes MCP-based governance architecture with clear evolution path: PoC (0102 centralized) -> Prototype (Event Replay Archive) -> MVP (community voting + blockchain integration); includes Qwen Sentinel validation, tech-agnostic chain adapters (EVM/Solana), Chainlink-style MCP relays, and mandatory skill supply-chain gates for MCP activation | WSP 21, WSP 27, WSP 54, WSP 80, WSP 91, WSP 71, WSP 95 | MCP governance, Event Replay Archive, community voting, blockchain integration, Qwen Sentinel, skill scanner, activation gate |
 | WSP 97 | System Execution Prompting Protocol | Active | **META-FRAMEWORK** - Establishes baked-in execution methodology with core mantra "HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP"; defines agent profiles (0102/Qwen/Gemma), mission templates, and compliance validation for building Rubik Cubes (MVP DAEs). Rubik = fully agentic PWA connecting to any blockchain via FoundUp MCPs | WSP 21, WSP 77, WSP 80, WSP 35 | Execution methodology, agent profiles, mission templates, Rubik cubes, MVP DAEs, PWA blockchain connectivity |
+| WSP 98 | FoundUps Mesh-Native Architecture Protocol | Active | Establishes mesh-native architecture for FoundUps with user-as-infrastructure patterns, DAE-to-DAE mesh communication, distributed compute, and zero-server operation guidance | WSP 27, WSP 80, WSP 3, WSP 97 | Mesh-native FoundUps, P2P infrastructure, distributed DAE coordination |
+| WSP 99 | Machine-to-Machine (M2M) Prompting Protocol | Active | Compact K:V schema prompting for 0102 swarm operations; extends WSP 21 with machine-optimized format reducing tokens 4x; Qwen-delegatable compiler for 012 prose -> M2M conversion; integrates with ANNEX_PROMETHEUS_RECURSION philosophy | WSP 21 (parent), WSP 77, WSP 95, WSP 97 | M2M prompting, token efficiency, swarm communication, Qwen delegation, compact schema |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -245,12 +248,12 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total WSPs**: 91 (numbered 00-97)
- - **Active WSPs**: 89 (all except WSP 18, 43, 86, 94)
- - **Available Slots**: 2 (WSP 18, 94)
- - **Deprecated WSPs**: 1 (WSP 43 -> superseded by WSP 25/44 for emergence/state tracking)
- - **Superseded WSPs**: 1 (WSP 86 -> superseded by WSP 87)
- - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-96
+ - **Total Numbered Slots Tracked**: 100 (WSP 00-99)
+ - **Highest Assigned Number**: WSP 99
+ - **In-Range Available Slots**: 0
+ - **Next Available Number**: WSP 100
+ - **Status Mix**: Active/deprecated/superseded/historical protocols are explicitly marked per-row in the catalog table above
+ - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-99
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

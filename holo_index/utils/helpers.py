@@ -219,6 +219,7 @@ def get_wsp_paths():
             Path("docs"),  # Root docs: architecture, vision, first principles
             Path("holo_index/docs"),  # HoloIndex documentation
             Path("modules"),  # All module documentation
+            Path(".m2m/staged"),  # M2M compressed docs (WSP 99)
         ]
 
     # Filter to only existing paths

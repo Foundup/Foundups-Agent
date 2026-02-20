@@ -17,8 +17,9 @@ Fully autonomous git push daemon that monitors code changes and publishes develo
 ## Operational Guardrails
 - Filters volatile paths (e.g. `node_modules/`, telemetry output, Holo output history) out of the decision context so runtime churn doesn't trigger pushes.
 - Uses `FOUNDUPS_SKIP_POST_COMMIT=1` during automated commits so local git hooks can skip duplicate social posting.
-- Relies on `GitLinkedInBridge.push_and_post()` to push before posting and to auto-set upstream when missing.
+- Relies on `GitLinkedInBridge.push_and_post()` (or `push_and_post_planned()` when batching) to push before posting and to auto-set upstream when missing.
 - If the remote enforces PR-only changes (GH013), the git bridge pushes `HEAD` to an `auto-pr/<timestamp>` branch, opens a PR (prefers `GITHUB_TOKEN`; falls back to GitHub CLI `gh` if authenticated), and (in `auto_mode`) attempts to merge it via `gh pr merge` (012 observer).
+- Optional batch planning: set `FOUNDUPS_PUSH_PLAN=1` or tune `FOUNDUPS_PUSH_PLAN_MIN_FILES` to split large change sets into multiple commits.
 
 ## Usage Examples
 ```python
@@ -43,6 +44,19 @@ dae.start()
 - **Main.py Option 0**: Runs one GitPushDAE cycle and returns to menu
 - **HoloIndex**: Quality assessment for push decisions
 - **Social Media**: LinkedIn/X posting when conditions met
+
+## Branch -> Main Structure (Non-Dev View)
+
+Use this flow:
+1. Work and commit on a feature branch.
+2. Push that branch to remote.
+3. Open PR from branch to `main`.
+4. Merge to `main` after checks pass.
+
+Important:
+- Do not push all branches into `main` in one step.
+- `main` should only be updated by reviewed PR merges.
+- GitPushDAE is PR-first compatible for protected remotes (GH013).
 
 ## WSP Recursive Instructions
 [U+1F300] **Windsurf Protocol (WSP) Recursive Prompt**

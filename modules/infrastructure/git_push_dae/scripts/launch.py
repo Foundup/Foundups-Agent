@@ -95,5 +95,42 @@ def launch_git_push_dae(run_once: bool = False):
             pass
 
 
+def view_git_post_history():
+    """View git push history from logs."""
+    print("\n[INFO] Git Push History")
+    print("=" * 60)
+    try:
+        from pathlib import Path
+        log_path = Path("logs/git_push_dae.log")
+        if log_path.exists():
+            lines = log_path.read_text(encoding="utf-8").strip().split("\n")
+            # Show last 20 relevant lines
+            push_lines = [l for l in lines if "push" in l.lower() or "commit" in l.lower()][-20:]
+            for line in push_lines:
+                print(line)
+            if not push_lines:
+                print("[INFO] No git push entries in log")
+        else:
+            print("[INFO] No git push log found")
+    except Exception as e:
+        print(f"[ERROR] Failed to read history: {e}")
+
+
+def check_instance_status():
+    """Check if GitPushDAE is currently running."""
+    print("\n[INFO] GitPushDAE Instance Status")
+    print("=" * 60)
+    try:
+        from modules.infrastructure.instance_lock.src.instance_manager import get_instance_lock
+        lock = get_instance_lock("git_push_dae")
+        duplicates = lock.check_duplicates(quiet=True)
+        if duplicates:
+            print(f"[RUNNING] GitPushDAE active with PID(s): {duplicates}")
+        else:
+            print("[STOPPED] GitPushDAE not running")
+    except Exception as e:
+        print(f"[UNKNOWN] Could not check status: {e}")
+
+
 if __name__ == "__main__":
     launch_git_push_dae()

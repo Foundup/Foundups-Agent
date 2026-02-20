@@ -12,6 +12,28 @@ This log tracks changes specific to the **linkedin_scheduler** module in the **p
 
 ## MODLOG ENTRIES
 
+### [2026-01-20] - Scheduling Source of Truth Decision
+**WSP Protocol**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture)
+**Phase**: POC
+**Agent**: 0102
+
+#### Changes
+- Documented internal scheduler as source of truth with optional Google Calendar mirror.
+- Added autonomy/visibility rationale for 012 observer oversight.
+
+---
+
+### [2026-01-20] - Digital Twin LinkedIn Scheduling POC Alignment
+**WSP Protocol**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture)
+**Phase**: POC
+**Agent**: 0102
+
+#### Changes
+- Updated module purpose to schedule Digital Twin LinkedIn comment/post workflows.
+- Linked module scope to 012 studio comment style and 20-year video corpus.
+
+---
+
 
 ### [2025-08-10 12:04:44] - WSP Compliance Auto-Fix
 **WSP Protocol**: WSP 48 (Recursive Self-Improvement)

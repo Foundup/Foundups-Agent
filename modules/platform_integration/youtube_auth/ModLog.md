@@ -12,6 +12,69 @@ This log tracks changes specific to the **youtube_auth** module in the **platfor
 
 ## MODLOG ENTRIES
 
+### 2026-01-27 - Fix OAuth Browser Selection in get_authenticated_service()
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem:**
+- OAuth flow in `get_authenticated_service()` was opening WRONG browser
+- Set 1 (UnDaoDu) was opening Edge instead of Chrome
+- There were TWO OAuth flows with inconsistent browser selection:
+  1. `preflight_oauth_check()` - had browser selection (working)
+  2. `get_authenticated_service()` - used DEFAULT browser (broken)
+
+**Root Cause:**
+The OAuth flow at line 185-187 in `get_authenticated_service()` did not have browser override logic. It used `webbrowser.open()` default which opened Edge (system default).
+
+**Solution:**
+Added same browser selection logic to `get_authenticated_service()`:
+- Set 1: Chrome (UnDaoDu + Move2Japan)
+- Set 10: Edge (FoundUps + RavingANTIFA)
+
+Uses `subprocess.Popen()` with explicit browser path via monkey-patched `webbrowser.open`.
+
+**Note:** Only Set 1 and Set 10 are active. Old sets (2-9) deprecated.
+
+**Files Changed:**
+- `modules/platform_integration/youtube_auth/src/youtube_auth.py` (lines 184-227)
+
+---
+
+### 2026-01-26 - OAuth Preflight Check with Auto-Reauth
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 91 (Observability)
+
+**Problem:**
+- OAuth `invalid_grant` errors detected at runtime caused silent fallback to no-auth mode
+- Users unaware their tokens expired until chat messages failed with 401 errors
+- No proactive detection or recovery mechanism
+
+**Solution:**
+Added `preflight_oauth_check()` function that:
+1. Checks all configured credential sets at startup
+2. Detects `invalid_grant` (expired/revoked tokens)
+3. Optionally auto-triggers OAuth re-authentication flow
+4. Returns status dict with healthy/expired/missing sets
+
+**Integration:**
+- `main.py:monitor_youtube()` now runs preflight check before starting
+- If `auto_reauth=True` (default), automatically opens browser for re-auth
+- If `auto_reauth=False`, prompts user with options: re-auth / read-only / exit
+
+**Files Changed:**
+- `modules/platform_integration/youtube_auth/src/youtube_auth.py` (lines 391-494)
+- `main.py` (lines 155-233)
+
+**Usage:**
+```python
+from modules.platform_integration.youtube_auth.src.youtube_auth import preflight_oauth_check
+status = preflight_oauth_check(auto_reauth=True)
+# status = {'healthy': [1], 'expired': [10], 'missing': [], 'reauth_needed': True}
+```
+
+---
 
 ### 2025-12-16 - WSP 49 Compliance: Relocated OAuth Reauth Script
 

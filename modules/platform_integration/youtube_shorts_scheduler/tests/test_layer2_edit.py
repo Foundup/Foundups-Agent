@@ -183,8 +183,14 @@ def find_visibility_button(driver):
             return found.slice(0, 5);
         """)
         logger.info(f"  JS deep search found: {result}")
+        # Do NOT return a bool here; callers expect a WebElement or None.
         if result and len(result) > 0:
-            return True
+            try:
+                elem = driver.find_element(By.CSS_SELECTOR, "ytcp-video-metadata-visibility #select-button")
+                if elem.is_displayed():
+                    return elem
+            except Exception:
+                pass
     except Exception as e:
         logger.info(f"  JS error: {e}")
 
@@ -220,7 +226,7 @@ def main():
         # Step 2: Navigate to unlisted shorts
         if not navigate_to_unlisted_shorts(driver):
             print("[FAIL] Could not navigate to unlisted shorts\n")
-            return
+            raise SystemExit(1)
         print("[OK] Navigated to unlisted shorts\n")
 
         time.sleep(2)
@@ -229,22 +235,21 @@ def main():
         edit_url = get_first_video_edit_url(driver)
         if not edit_url:
             print("[FAIL] Could not find video edit URL\n")
-            return
+            raise SystemExit(1)
         print(f"[OK] Found video: {edit_url.split('/video/')[1].split('/')[0]}\n")
 
         # Step 4: Navigate to edit page
         if not navigate_to_video_edit(driver, edit_url):
             print("[FAIL] Could not navigate to edit page\n")
-            return
+            raise SystemExit(1)
         print("[OK] On video edit page\n")
 
         # Step 5: Find visibility button
         vis_btn = find_visibility_button(driver)
-        if vis_btn:
-            print("[OK] Found visibility button\n")
-        else:
-            print("[INFO] Visibility button not found via selectors\n")
-            print("       May need to scroll or use different approach\n")
+        if not vis_btn:
+            print("[FAIL] Visibility button not found via selectors\n")
+            raise SystemExit(1)
+        print("[OK] Found visibility button\n")
 
         print("="*60)
         print("LAYER 2 COMPLETE - On video edit page!")
@@ -255,8 +260,10 @@ def main():
         logger.error(f"Test failed: {e}")
         import traceback
         traceback.print_exc()
+        raise SystemExit(1)
 
     print("\n[INFO] Browser left open for inspection")
+    raise SystemExit(0)
 
 
 def test_layer2_enhance():

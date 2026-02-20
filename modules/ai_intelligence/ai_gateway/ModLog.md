@@ -1,5 +1,24 @@
 # AI Gateway Module Change Log
 
+## [2026-02-15] - Model Version Update (Obsolete → Current)
+
+**Who:** 0102 Claude
+**Type:** Configuration Update
+**What:** Updated all provider models to current versions
+
+**Changes:**
+| Provider | Old (Obsolete) | New (Current) |
+|----------|----------------|---------------|
+| OpenAI | `gpt-4`, `gpt-3.5-turbo` | `gpt-4o`, `gpt-4o-mini` |
+| Anthropic | `claude-3-opus-20240229`, `claude-3-sonnet-20240229`, `claude-3-haiku-20240307` | `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
+| Gemini | `gemini-pro`, `gemini-pro-vision` | `gemini-2.0-flash` |
+| Grok | `grok-3` | `grok-3` (unchanged - current) |
+
+**Why:** Old model IDs deprecated or sunset by providers
+**Impact:** Ensures API calls succeed with current model endpoints
+
+---
+
 ## [2025-09-29] - Module Creation and WSP Compliance
 **Who:** 0102 Claude (Assistant)
 **Type:** New Module Creation - WSP 49 Compliance

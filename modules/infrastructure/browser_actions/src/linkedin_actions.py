@@ -502,6 +502,138 @@ Guidelines:
         """Get session statistics."""
         return self._session_stats.copy()
 
+    async def run_digital_twin_flow(
+        self,
+        comment_text: str,
+        repost_text: str,
+        schedule_date: str,
+        schedule_time: str,
+        mentions: Optional[List[str]] = None,
+        identity_cycle: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> LinkedInActionResult:
+        """
+        Execute the LinkedIn Digital Twin workflow (L0-L3).
+        
+        Skill: linkedin_comment_digital_twin.json
+        
+        Flow:
+            L0: Context gate (validate post, AI gate)
+            L1: Post comment with @mentions, UI-TARS verification
+            L2: Identity cycle — switch accounts and like comment
+            L3: Schedule repost with thoughts
+        
+        Args:
+            comment_text: 012 Digital Twin comment text
+            repost_text: Repost-with-thoughts text
+            schedule_date: Scheduled date (calendar selection)
+            schedule_time: Scheduled time (15-min increments)
+            mentions: Mentions to insert (default: @foundups)
+            identity_cycle: Identities to like comment
+            dry_run: If True, validate without submitting
+        
+        Returns:
+            LinkedInActionResult with layer results
+        """
+        logger.info("[LINKEDIN] Starting Digital Twin flow (L0-L3)")
+        
+        mentions = mentions or ["@foundups"]
+        identity_cycle = identity_cycle or ["FOUNDUPS", "Move2Japan", "UnDaoDu", "EDUIT, Inc"]
+        
+        layer_results = {}
+        start_time = datetime.now()
+        
+        # Import layer tests
+        try:
+            from modules.platform_integration.linkedin_agent.tests.test_layer0_context_gate import (
+                test_layer0_selenium,
+            )
+            from modules.platform_integration.linkedin_agent.tests.test_layer1_comment import (
+                test_layer1_selenium,
+            )
+            from modules.platform_integration.linkedin_agent.tests.test_layer2_identity_likes import (
+                test_layer2_selenium,
+            )
+            from modules.platform_integration.linkedin_agent.tests.test_layer3_schedule_repost import (
+                test_layer3_selenium,
+            )
+        except ImportError as e:
+            logger.error(f"[LINKEDIN] Digital Twin tests not available: {e}")
+            return LinkedInActionResult(
+                success=False,
+                action="digital_twin_flow",
+                error=f"Layer tests unavailable: {e}",
+            )
+        
+        # L0: Context Gate
+        logger.info("[LINKEDIN] L0: Context Gate")
+        l0_result = test_layer0_selenium()
+        layer_results["L0"] = l0_result
+        
+        if not l0_result.get("success"):
+            return LinkedInActionResult(
+                success=False,
+                action="digital_twin_flow",
+                error=f"L0 failed: {l0_result.get('error')}",
+                details={"layer_results": layer_results},
+            )
+        
+        ai_gate_passed = l0_result.get("ai_post", False)
+        if not ai_gate_passed:
+            logger.info("[LINKEDIN] AI gate not passed — skipping engagement")
+            return LinkedInActionResult(
+                success=True,
+                action="digital_twin_flow",
+                details={"layer_results": layer_results, "skipped": "AI gate not passed"},
+            )
+        
+        # L1: Comment
+        logger.info("[LINKEDIN] L1: Comment")
+        l1_result = test_layer1_selenium(dry_run=dry_run, ai_gate_passed=ai_gate_passed)
+        layer_results["L1"] = l1_result
+        
+        if not l1_result.get("success"):
+            return LinkedInActionResult(
+                success=False,
+                action="digital_twin_flow",
+                error=f"L1 failed: {l1_result.get('error')}",
+                details={"layer_results": layer_results},
+            )
+        
+        # L2: Identity Likes
+        logger.info("[LINKEDIN] L2: Identity Likes")
+        l2_result = test_layer2_selenium(dry_run=dry_run)
+        layer_results["L2"] = l2_result
+        
+        # L3: Schedule Repost
+        logger.info("[LINKEDIN] L3: Schedule Repost")
+        l3_result = test_layer3_selenium(
+            schedule_date=schedule_date,
+            schedule_time=schedule_time,
+            dry_run=dry_run,
+        )
+        layer_results["L3"] = l3_result
+        
+        elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+        
+        all_success = all(
+            r.get("success", False)
+            for r in [l0_result, l1_result, l2_result, l3_result]
+        )
+        
+        self._session_stats["posts_engaged"] += 1
+        self._session_stats["comments_made"] += 1 if l1_result.get("success") else 0
+        
+        logger.info(f"[LINKEDIN] Digital Twin flow complete: {all_success}")
+        
+        return LinkedInActionResult(
+            success=all_success,
+            action="digital_twin_flow",
+            engagements=1 if all_success else 0,
+            duration_ms=elapsed_ms,
+            details={"layer_results": layer_results},
+        )
+
     def close(self) -> None:
         """Close router and release resources."""
         self.router.close()

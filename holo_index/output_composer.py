@@ -106,6 +106,7 @@ class OutputComposer:
         # Get intent and output formatting rules
         intent = intent_classification.intent
         output_rules = intent_classification.output_rules
+        self._current_output_rules = output_rules
 
         sections = []
         section_order = output_rules.priority_sections
@@ -313,6 +314,10 @@ class OutputComposer:
         Returns:
             Formatted findings section
         """
+        verbosity_level = "standard"
+        if getattr(self, "_current_output_rules", None):
+            verbosity_level = self._current_output_rules.verbosity_level
+
         # Extract key findings based on intent
         if intent == IntentType.DOC_LOOKUP:
             # Focus on documentation content, skip noise
@@ -320,7 +325,8 @@ class OutputComposer:
         elif intent == IntentType.CODE_LOCATION:
             # For CODE_LOCATION, show actual file paths from search results
             if search_results:
-                filtered = self._extract_search_file_paths(search_results)
+                code_limit, doc_limit, line_limit = self._get_limits_for_verbosity(verbosity_level)
+                filtered = self._extract_search_file_paths(search_results, code_limit=code_limit, doc_limit=doc_limit)
             else:
                 filtered = self._extract_file_locations(findings)
         elif intent == IntentType.MODULE_HEALTH:
@@ -333,7 +339,9 @@ class OutputComposer:
             # Show structured summary
             filtered = self._extract_general_summary(findings)
 
-        return f"[FINDINGS]\n{filtered}"
+        _, _, line_limit = self._get_limits_for_verbosity(verbosity_level)
+        trimmed = self._limit_lines(filtered, line_limit)
+        return f"[FINDINGS]\n{trimmed}"
 
     def _build_mcp_section(self, mcp_results: str) -> str:
         """
@@ -469,7 +477,7 @@ class OutputComposer:
 
         return "\n".join(doc_lines) if doc_lines else findings[:500]
 
-    def _extract_search_file_paths(self, search_results: Dict[str, Any]) -> str:
+    def _extract_search_file_paths(self, search_results: Dict[str, Any], code_limit: int = 10, doc_limit: int = 5) -> str:
         """
         Extract file paths directly from HoloIndex search results.
 
@@ -489,7 +497,7 @@ class OutputComposer:
             code_results = search_results['code']
             if code_results:
                 file_lines.append("[U+1F4C1] Code locations:")
-                for i, result in enumerate(code_results[:10], 1):
+                for i, result in enumerate(code_results[:max(1, code_limit)], 1):
                     # Code results use 'location' not 'path'
                     location = result.get('location', 'Unknown')
                     need = result.get('need', '')
@@ -509,7 +517,7 @@ class OutputComposer:
                 if file_lines:  # Add spacing if code results exist
                     file_lines.append("")
                 file_lines.append("[BOOKS] Documentation:")
-                for i, result in enumerate(wsp_results[:5], 1):
+                for i, result in enumerate(wsp_results[:max(1, doc_limit)], 1):
                     path = result.get('path', 'Unknown')
                     title = result.get('title', '')
                     wsp = result.get('wsp', '')
@@ -592,6 +600,27 @@ class OutputComposer:
                 section_count += 1
 
         return "\n".join(summary_lines) if summary_lines else findings[:1000]
+
+    def _get_limits_for_verbosity(self, verbosity_level: str) -> Tuple[int, int, int]:
+        """Return (code_limit, doc_limit, line_limit) based on verbosity."""
+        levels = {
+            "minimal": (3, 2, 6),
+            "balanced": (5, 3, 10),
+            "standard": (5, 3, 10),
+            "detailed": (7, 4, 14),
+            "comprehensive": (10, 5, 18),
+        }
+        return levels.get(verbosity_level, levels["standard"])
+
+    def _limit_lines(self, content: str, max_lines: int) -> str:
+        """Trim content to a maximum number of lines."""
+        if max_lines <= 0:
+            return ""
+        lines = content.splitlines()
+        if len(lines) <= max_lines:
+            return content
+        trimmed = lines[:max_lines]
+        return "\n".join(trimmed)
 
 
 # Singleton instance

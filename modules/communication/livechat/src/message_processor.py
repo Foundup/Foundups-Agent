@@ -45,6 +45,7 @@ from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import Age
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
+from modules.communication.livechat.src.persona_registry import get_persona_config, get_persona_greeting
 from modules.gamification.whack_a_magat.src.self_improvement import get_self_improvement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
@@ -63,16 +64,47 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    try:
+        return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+    except Exception:
+        return default.strip().lower() in ("1", "true", "yes", "y", "on")
+
+def _sanitize_username(username: str) -> str:
+    if not username:
+        return username
+    return username.strip().lstrip("@")
+
 class MessageProcessor:
     """Handles processing of chat messages and generating responses."""
     
-    def __init__(self, youtube_service=None, memory_manager=None, chat_sender=None):
+    def __init__(
+        self,
+        youtube_service=None,
+        memory_manager=None,
+        chat_sender=None,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+    ):
         self.youtube_service = youtube_service
         self.memory_manager = memory_manager  # WSP-compliant hybrid storage
         self.chat_sender = chat_sender  # To access bot channel ID and prevent self-responses
-        self.banter_engine = get_banter_engine()
+        self.persona_key = persona_key
+        self.channel_name = channel_name
+        self.channel_id = channel_id
+        self.bot_channel_id = bot_channel_id
+        self.persona_config = get_persona_config(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
+        self.banter_enabled = _env_truthy("LIVECHAT_BANTER_ENABLED", "false")
+        self.banter_engine = get_banter_engine() if self.banter_enabled else None
         self.llm_bypass_engine = LLMBypassEngine()
-        self.trigger_emojis = ["✊", "✋", "🖐️"]  # Configurable emoji trigger set
+        self.trigger_emojis = ["✊", "👊", "✋", "🖐️"]  # Configurable emoji trigger set
         self.last_trigger_time = {}  # Track last trigger time per user
         self.last_maga_time = {}  # Track last MAGA response time per user
         self.last_global_maga_time = 0  # Global MAGA response cooldown
@@ -80,9 +112,8 @@ class MessageProcessor:
         self.maga_cooldown = 600  # MAGA response cooldown (10 minutes to prevent spam)
         self.global_maga_cooldown = 300  # Global cooldown: 5 minutes between ANY MAGA responses
         self.memory_dir = "memory"
-        # Consciousness response mode: 'mod_only' or 'everyone' (default: everyone)
-        # Changed to 'everyone' so bot trolls ALL users showing ✊✊✊ consciousness!
-        self.consciousness_mode = 'everyone'
+        # Consciousness response mode: 'mod_only' or 'everyone' (default: mod_only)
+        self.consciousness_mode = os.getenv("YT_CONSCIOUSNESS_MODE", "mod_only").strip().lower()
         # Initialize handlers (WSP-compliant separation)
         self.event_handler = EventHandler(self.memory_dir)
         self.command_handler = CommandHandler(self.event_handler.get_timeout_manager(), self)
@@ -92,7 +123,12 @@ class MessageProcessor:
         self.self_improvement = get_self_improvement()
         
         # NEW: Intelligent livechat reply generator (Grok-powered)
-        self.intelligent_reply = get_livechat_reply_generator()
+        self.intelligent_reply = get_livechat_reply_generator(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+        )
         
         # NEW: Intelligent throttling systems
         self.emoji_limiter = EmojiResponseLimiter() if EmojiResponseLimiter else None
@@ -302,8 +338,16 @@ class MessageProcessor:
             has_whack_command = self._check_whack_command(message_text)
 
             # Check for MAGA content (WSP: use existing detector)
-            maga_response = self.greeting_generator.get_response_to_maga(message_text)
+            maga_response = None
+            allow_maga = self.persona_config.get("allow_maga_trolling", True)
+            if allow_maga:
+                maga_response = self.greeting_generator.get_response_to_maga(message_text)
             has_maga = maga_response is not None
+
+            # Determine role for troll classification
+            is_mod = author_details.get("isChatModerator", False)
+            is_owner = author_details.get("isChatOwner", False)
+            role = 'OWNER' if is_owner else 'MOD' if is_mod else 'USER'
 
             processed_message = {
                 "message_id": message_id,
@@ -319,8 +363,8 @@ class MessageProcessor:
                 "has_whack_command": has_whack_command,
                 "has_maga": has_maga,
                 "maga_response": maga_response,  # Store generated response to prevent double-call
-                "is_moderator": author_details.get("isChatModerator", False),
-                "is_owner": author_details.get("isChatOwner", False),
+                "is_moderator": is_mod,
+                "is_owner": is_owner,
                 "is_member": author_details.get("isChatSponsor", False),  # Blue badge = channel member
                 "live_chat_id": snippet.get("liveChatId"),  # Add for MAGADOOM timeouts
                 "raw_message": message,
@@ -330,6 +374,26 @@ class MessageProcessor:
                 "superchat_display": message.get("_superchat_display", ""),
                 "superchat_tier": message.get("_superchat_tier", 0)
             }
+
+            # History-based troll classification for non-mods
+            if role == 'USER' and self.memory_manager:
+                classification = self.memory_manager.classify_user(author_name)
+                processed_message["is_troll"] = classification.get("is_troll", False)
+                processed_message["troll_signals"] = classification.get("signals", [])
+            else:
+                processed_message["is_troll"] = False
+                processed_message["troll_signals"] = []
+
+            # Timeout-based troll tracking (whacked_users)
+            if role == 'USER' and author_id and _env_truthy("YT_TROLL_TRACK_BY_TIMEOUTS", "true"):
+                try:
+                    from modules.gamification.whack_a_magat.src.whack import get_profile_store
+                    profile_store = get_profile_store()
+                    if profile_store.is_whacked_user(author_id):
+                        processed_message["is_troll"] = True
+                        processed_message["troll_signals"].append("whacked")
+                except Exception as exc:
+                    logger.debug(f"[TROLL] Whack-based classification unavailable: {exc}")
             
             logger.debug(f"[NOTE] Processed message from {author_name}: {message_text[:50]}...")
             return processed_message
@@ -386,7 +450,7 @@ class MessageProcessor:
             Response text or None if no response should be generated
         """
         message_text = processed_message.get("text", "")
-        author_name = processed_message.get("author_name", "Unknown")
+        author_name = _sanitize_username(processed_message.get("author_name", "Unknown"))
         author_id = processed_message.get("author_id", "")
         is_mod = processed_message.get("is_moderator", False)
         is_owner = processed_message.get("is_owner", False)
@@ -398,6 +462,20 @@ class MessageProcessor:
         if role in ['MOD', 'OWNER']:
             # Learn from mod/owner patterns
             self.self_improvement.observe_command(message_text, 1.0)
+
+        # Engagement gate: engage mods/owner only, troll trolls if enabled
+        if _env_truthy("YT_LIVECHAT_ENGAGE_MODS_ONLY", "true") and role == 'USER':
+            if processed_message.get("is_superchat"):
+                pass
+            elif processed_message.get("has_maga") and _env_truthy("YT_LIVECHAT_TROLL_TROLLS", "true"):
+                pass
+            elif processed_message.get("is_troll") and _env_truthy("YT_LIVECHAT_TROLL_TROLLS", "true"):
+                logger.info(f"[ENGAGE] Troll classified for {author_name} - engage allowed")
+            elif self.persona_config.get("display_name") and f"@{self.persona_config.get('display_name')}".lower() in message_text.lower():
+                pass
+            else:
+                logger.info(f"[ENGAGE] Skipping user engagement for {author_name} (mods_only)")
+                return None
         
         try:
             # Priority 0: SUPERCHAT RESPONSES (HIGHEST PRIORITY - Always respond to paid supporters!)
@@ -663,7 +741,8 @@ class MessageProcessor:
                 self._update_trigger_time(author_id)
                 
                 # Try intelligent reply generator (Grok-powered with patterns)
-                from modules.communication.livechat.src.automation_gates import _env_truthy
+                # NOTE: _env_truthy is defined at module level (line 67) - do NOT import here
+                # Importing inside the function creates a local variable scoping issue
                 if self.intelligent_reply and _env_truthy("YT_COMMENT_REPLY_ENABLED", "true"):
                     is_member = processed_message.get("is_member", False)  # Blue badge
                     response = self.intelligent_reply.generate_reply(
@@ -723,6 +802,10 @@ class MessageProcessor:
                                     return None
 
                             # Response is valid, send it
+                            if _env_truthy("YT_CONTEXTUAL_FOLLOWUP_ENABLED", "true"):
+                                followup = self._build_followup_question(author_name, message_text)
+                                if followup:
+                                    proactive_response = f"{proactive_response} {followup}"
                             self.proactive_engaged.add(author_id)
                             logger.info(f"💬 Proactive engagement with {author_name} (once per stream)")
                             return proactive_response
@@ -733,7 +816,13 @@ class MessageProcessor:
             # Send ONE greeting per stream, not per user, to avoid spam
             if not hasattr(self, 'stream_greeting_sent') or not self.stream_greeting_sent:
                 # Generate a general stream greeting, not user-specific
-                greeting = self.greeting_generator.generate_greeting()
+                persona_greeting = get_persona_greeting(
+                    persona_key=self.persona_key,
+                    channel_name=self.channel_name,
+                    channel_id=self.channel_id,
+                    bot_channel_id=self.bot_channel_id,
+                )
+                greeting = persona_greeting or self.greeting_generator.generate_greeting()
                 if greeting:
                     # Qwen Message Diversity Check - Prevent repetitive greeting messages
                     if self.intelligent_throttle:
@@ -755,6 +844,8 @@ class MessageProcessor:
     
     async def _generate_banter_response(self, message_text: str, author_name: str) -> Optional[str]:
         """Generate response using the banter engine."""
+        if not self.banter_enabled or not self.banter_engine:
+            return None
         try:
             state_info, response = self.banter_engine.process_input(message_text)
             
@@ -770,6 +861,24 @@ class MessageProcessor:
             logger.error(f"[FAIL] Banter engine error: {e}")
             return None
     
+    def _build_followup_question(self, author_name: str, current_message: str) -> Optional[str]:
+        if not self.memory_manager:
+            return None
+        history = self.memory_manager.get_history(author_name, limit=5)
+        if not history:
+            return None
+        # Pick the most recent message that is not the current one
+        for entry in reversed(history):
+            if ": " in entry:
+                msg = entry.split(": ", 1)[1].strip()
+            else:
+                msg = entry.strip()
+            if msg and msg != current_message:
+                words = msg.split()
+                snippet = " ".join(words[:8])
+                return f"Last time you mentioned \"{snippet}\" — any update?"
+        return None
+
     async def _generate_fallback_response(self, message_text: str, author_name: str) -> Optional[str]:
         """Generate response using the fallback LLM bypass engine."""
         try:
@@ -944,6 +1053,7 @@ class MessageProcessor:
         commands = [
             '/score', '/rank', '/stats', '/leaderboard', '/frags', '/whacks',
             '/help', '/quiz', '/facts', '/sprees', '/toggle', '/session',
+            '/fuc',  # FFCPLN Mining economy (OWNER only)
             # Deprecated but handled with helpful messages:
             '/level', '/answer', '/top', '/fscale', '/rate'
         ]

@@ -106,6 +106,21 @@ The LinkedIn Agent integrates seamlessly with the Block Orchestrator system:
 
 The LinkedIn Agent module provides comprehensive automated LinkedIn interaction capabilities for the FoundUps ecosystem with full WRE (Windsurf Recursive Engine) integration. This module enables intelligent posting, feed reading, content generation, engagement automation, and professional network analysis while maintaining LinkedIn usage standards and autonomous development capabilities.
 
+## Digital Twin Alignment (Active POC)
+
+This module is the LinkedIn execution surface for the 012 Digital Twin:
+- **Drafting**: Digital Twin comment drafting (RAG + guardrails + Qwen) via `modules/ai_intelligence/digital_twin`
+- **Decisioning**: Comment / like / ignore policies from Digital Twin decision pipeline
+- **Scheduling**: Delegated to LinkedIn scheduler and social media orchestrator
+- **Data source**: 20 years of 012 video corpus + 012 studio comment style
+
+### Rotation Position (POC)
+
+LinkedIn actions execute **after** YouTube live chat replies and YouTube scheduling checks complete:
+1. YouTube Live Chat reply loop
+2. YouTube scheduling verification
+3. LinkedIn Digital Twin L0–L3 flow
+
 ## [OK] Implementation Status
 
 ### **Current Capabilities (OPERATIONAL)**
@@ -115,6 +130,7 @@ The LinkedIn Agent module provides comprehensive automated LinkedIn interaction 
 - [OK] **WRE Integration**: Full PrometheusOrchestrationEngine and ModuleDevelopmentCoordinator integration
 - [OK] **Autonomous Operations**: Zero-human-intervention professional networking automation
 - [OK] **Error Handling**: Comprehensive error recovery with WRE-aware logging and fallback systems
+- [OK] **Digital Twin Integration Path**: POC alignment for 012 comment processing and scheduling (LinkedIn-focused)
 - [OK] **Git Integration**: Automatic posting to LinkedIn and X/Twitter when pushing code changes
   - Uses SQLite database (`data/foundups.db`) per WSP 78
   - Tables: `modules_git_linkedin_posts`, `modules_git_x_posts`
@@ -241,6 +257,8 @@ The LinkedIn Agent properly coordinates with other enterprise domains:
 
 - **WRE Core**: PrometheusOrchestrationEngine, ModuleDevelopmentCoordinator, wre_log
 - **Playwright**: LinkedIn automation and browser interaction
+- **Dependency Launcher**: [`modules/infrastructure/dependency_launcher/`](../infrastructure/dependency_launcher/) — LM Studio + browser bootstrap for DAEs
+- **Foundups Vision**: [`modules/infrastructure/foundups_vision/`](../infrastructure/foundups_vision/) — UI-TARS bridge for visual verification
 - **Infrastructure**: OAuth management and authentication coordination
 - **AI Intelligence**: Future integration with banter_engine for content generation
 - **Communication**: Cross-platform coordination with other social modules
@@ -251,6 +269,10 @@ The LinkedIn Agent properly coordinates with other enterprise domains:
 - **[Development Roadmap](./ROADMAP.md)** - Phase progression and autonomous development plans
 - **[Interface Documentation](./INTERFACE.md)** - Complete API reference and usage examples
 - **[Memory Architecture](./memory/)** - WSP 60 compliant memory and state management
+- **[Digital Twin Flow](./docs/LINKEDIN_DIGITAL_TWIN_FLOW.md)** - UI-TARS layered flow for comment, likes, and scheduling
+- **[0102 Handoff](./docs/0102_handoff.md)** - Layered tests status and continuation notes
+- **[Identity Switcher Map](./data/linkedin_identity_switcher.json)** - Reusable identity list for like loop
+- **[Skill Templates](./data/linkedin_skill_templates.json)** - Digital Twin comment and repost templates
 
 ## [TARGET] Usage Example
 

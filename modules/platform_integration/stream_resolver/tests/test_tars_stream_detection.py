@@ -116,9 +116,10 @@ def main():
 
     # Test 2-4: Stream detection for all channels
     channels = [
-        ('UCklMTNnu5POwRmQsg5JJumA', 'MOVE2JAPAN'),
-        ('UCSNTUXjAgpd4sgWYP0xoJgw', 'UnDaoDu'),
-        ('UC-LSSlOZwpGIRIYihaz8zCw', 'FoundUps'),
+        ('UC-LSSlOZwpGIRIYihaz8zCw', 'Move2Japan'),
+        ('UCklMTNnu5POwRmQsg5JJumA', 'Move2Japan (alt)'),
+        ('UCfHM9Fw9HD-NwiS0seD_oIA', 'UnDaoDu'),
+        ('UCSNTUXjAgpd4sgWYP0xoJgw', 'FoundUps'),
     ]
 
     live_streams_found = []

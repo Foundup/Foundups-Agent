@@ -23,8 +23,14 @@ class GemmaRootViolationMonitor:
     """Gemma-specialized root directory violation monitoring"""
 
     def __init__(self, repo_root: Path = None):
-        self.root_path = repo_root or Path('../../../')  # Root from holo_index directory
-        self.violation_log = Path('memory/root_violations.json')
+        # WSP 50: never assume current working directory.
+        # Resolve repo root deterministically from this module's location.
+        default_repo_root = Path(__file__).resolve().parents[4]
+        self.root_path = (repo_root or default_repo_root).resolve()
+
+        # WSP 60: persist under module-local memory (not repo root).
+        module_root = Path(__file__).resolve().parents[1]  # .../root_violation_monitor/src
+        self.violation_log = (module_root / "memory" / "root_violations.json").resolve()
         self.allowed_root_files = self._get_allowed_root_files()
 
         # Telemetry integration (WSP 91: Observability)
@@ -56,13 +62,15 @@ class GemmaRootViolationMonitor:
         return {
             '012.txt',           # Core 0102 consciousness file
             'requirements.txt',  # Package dependencies
+            'package.json',      # Node.js dependencies
+            'package-lock.json', # Node lockfile
+            'pnpm-lock.yaml',    # pnpm lockfile
             '.gitignore',        # Git ignore rules
             '.env',              # Environment variables
             '.env.example',      # Environment template
             '.coverage',         # Coverage reports
             '.coveragerc',       # Coverage configuration
             'Dockerfile',        # Container definition
-            'package.json',      # Node.js dependencies
             'pytest.ini',        # Test configuration
             'vercel.json',       # Deployment configuration
             'LICENSE',           # License file
@@ -70,6 +78,10 @@ class GemmaRootViolationMonitor:
             'ROADMAP.md',        # Development roadmap
             'ModLog.md',         # Modification log
             'CLAUDE.md',         # Claude-specific documentation
+            'ARCHITECTURE.md',   # System architecture
+            'NAVIGATION.py',     # Navigation map / index
+            'main.py',           # Primary launcher
+            'holo_index.py',     # HoloIndex launcher
             'SECURITY_CLEANUP_NEEDED.md'  # Security notices
         }
 
@@ -142,6 +154,10 @@ class GemmaRootViolationMonitor:
     def _classify_violation_gemma(self, filename: str) -> str:
         """Gemma pattern recognition for violation classification"""
 
+        # Allowlist is authoritative (WSP 50: never assume; do not flag core entrypoints/docs).
+        if filename in self.allowed_root_files:
+            return None
+
         # Check WSP naming violations (highest priority)
         if any(filename.startswith(prefix) for prefix in self.violation_patterns['wsp_violations']):
             return 'wsp_naming_violation'
@@ -162,11 +178,9 @@ class GemmaRootViolationMonitor:
         if any(prefix in filename.lower() for prefix in self.violation_patterns['debug_files']):
             return 'debug_file_in_root'
 
-        # Check if file is not in allowed list
-        if filename not in self.allowed_root_files:
-            return 'unauthorized_file'
+        # Default: unauthorized file in root
+        return 'unauthorized_file'
 
-        return None  # No violation
 
     def _assess_severity(self, violation_type: str) -> str:
         """Assess violation severity using pattern recognition"""
@@ -343,7 +357,12 @@ class GemmaRootViolationMonitor:
             src_path = self.root_path / filename
 
             if violation_type == 'script_in_root' and filename.endswith('.py'):
-                # Use Qwen autonomous refactoring for intelligent module placement
+                # Prefer deterministic placement for known root script patterns (fast, safe).
+                target_location = self._determine_target_location_qwen(filename, analysis={})
+                if target_location:
+                    return self._move_with_git_or_rename(src_path, self.root_path / target_location)
+
+                # Fall back to Qwen autonomous refactoring for ambiguous cases
                 return await self._apply_qwen_refactoring(src_path, filename)
 
             elif violation_type == 'debug_file_in_root' and filename.startswith('test_'):
@@ -361,6 +380,9 @@ class GemmaRootViolationMonitor:
                 # Move log files to logs directory
                 dest_path = self.root_path / 'logs' / filename
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
+                if dest_path.exists():
+                    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+                    dest_path = dest_path.with_name(f"{dest_path.stem}-{stamp}{dest_path.suffix}")
                 src_path.rename(dest_path)
                 return True
 
@@ -369,6 +391,39 @@ class GemmaRootViolationMonitor:
             return False
 
         return False
+
+    def _move_with_git_or_rename(self, src_path: Path, dest_path: Path) -> bool:
+        """
+        Move a single file, preferring `git mv` when available.
+        Falls back to filesystem rename for untracked artifacts.
+        """
+        try:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Try git mv first (keeps history for tracked files)
+            git_dir = self.root_path / ".git"
+            if git_dir.exists():
+                try:
+                    import subprocess
+                    result = subprocess.run(
+                        ["git", "mv", str(src_path), str(dest_path)],
+                        cwd=self.root_path,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                    if result.returncode == 0:
+                        return True
+                except Exception:
+                    pass
+
+            # Fall back to filesystem move (works for logs/temp/untracked)
+            src_path.rename(dest_path)
+            return True
+        except Exception as e:
+            print(f"[ERROR] Move failed for {src_path.name}: {e}")
+            return False
 
     async def _apply_qwen_refactoring(self, src_path: Path, filename: str) -> bool:
         """Use Qwen autonomous refactoring to intelligently place file"""
@@ -393,10 +448,10 @@ class GemmaRootViolationMonitor:
 
             print(f"[QWEN] Moving {filename} -> {target_location}")
 
-            # Phase 3: Execute move with 0102 supervision (auto-approve for CLI)
-            plan = orchestrator.generate_refactoring_plan(
-                module_path=str(src_path),
-                target_location=target_location,
+            # Phase 3: Execute *single-file* relocation plan (safe; avoids bulk directory moves)
+            plan = orchestrator.generate_file_relocation_plan(
+                source_file=str(src_path),
+                target_file=target_location,
                 analysis=analysis
             )
 
@@ -417,7 +472,31 @@ class GemmaRootViolationMonitor:
             return False
 
     def _determine_target_location_qwen(self, filename: str, analysis: Dict[str, Any]) -> str:
-        """Qwen intelligence: Determine target location based on file analysis"""
+        """
+        Determine a WSP-compliant target path (relative to repo root).
+
+        NOTE: Despite the name, this function is intentionally allowed to use
+        deterministic rules for high-frequency cases (fast, safe), and only rely
+        on deeper analysis for ambiguous files.
+        """
+
+        lower = filename.lower()
+
+        # Common root verification scripts → scripts/verification/
+        if lower.startswith("verify_") and lower.endswith(".py"):
+            if "party" in lower:
+                return f"modules/communication/livechat/tests/system_tests/{filename}"
+            return f"scripts/verification/{filename}"
+
+        # Diagnostics / reproductions → scripts/diagnostics/
+        if lower.startswith("diagnostic") and lower.endswith(".py"):
+            return f"scripts/diagnostics/{filename}"
+        if ("reproduce" in lower or "crash" in lower) and lower.endswith(".py"):
+            return f"scripts/diagnostics/{filename}"
+
+        # Environment probes → scripts/verification/
+        if lower.startswith("env_") and lower.endswith(".py"):
+            return f"scripts/verification/{filename}"
 
         # Test files go to module test directories
         if filename.startswith('test_'):

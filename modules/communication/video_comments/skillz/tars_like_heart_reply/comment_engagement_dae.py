@@ -622,12 +622,12 @@ class CommentEngagementDAE:
 
         logger.info(f"[DAE-NAV] Navigating to Studio inbox with NOT_ENGAGED filter...")
         self.driver.get(target_url)
-        
-        # Human-like delay after navigation
+
+        # 2026-02-04: Reduced from 5s→3s (page loads fast on good connection)
         if self.human:
-            await asyncio.sleep(self.human.human_delay(5.0, 0.3))
+            await asyncio.sleep(self.human.human_delay(3.0, 0.3))
         else:
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
 
         logger.info(f"[DAE-NAV] Page ready for engagement")
 
@@ -925,20 +925,19 @@ class CommentEngagementDAE:
             if nested_results:
                 logger.info(f"[NESTED] Engaged with {len(nested_results)} nested replies in this thread")
 
-            # ANTI-DETECTION: Inter-comment "thinking" pause (2025-12-30)
-            # Human pattern: Pause after posting before moving to next action
-            # Variability: 3-7 seconds (shortened per user feedback)
+            # ANTI-DETECTION: Inter-comment "thinking" pause
+            # 2026-02-04: Reduced from 5s→2s base (was too slow for clearing inbox)
             multiplier = self.comment_processor.delay_multiplier if self.comment_processor else 1.0
             if multiplier >= 1.0:  # Only for standard tempo (not FAST/MEDIUM modes)
-                # Base 5s with 40% variance = 3s to 7s
+                # Base 2s with 40% variance = 1.2s to 2.8s
                 if self.human:
-                    base_pause = self.human.human_delay(5.0, 0.4)
+                    base_pause = self.human.human_delay(2.0, 0.4)
                 else:
-                    base_pause = random.uniform(3.0, 7.0)
+                    base_pause = random.uniform(1.2, 2.8)
 
                 # 10% chance of slightly longer pause (simulates brief distraction)
                 if random.random() < 0.10:
-                    extra_pause = random.uniform(2.0, 5.0)
+                    extra_pause = random.uniform(1.0, 3.0)
                     total_pause = base_pause + extra_pause
                     logger.info(f"[ANTI-DETECTION] 🧘 Extended pause: {total_pause:.1f}s")
                 else:
@@ -947,8 +946,8 @@ class CommentEngagementDAE:
 
                 await asyncio.sleep(total_pause)
             else:
-                # Fast modes: minimal pause (0.5-1.5s)
-                fast_pause = random.uniform(0.5, 1.5)
+                # Fast modes: minimal pause (0.3-0.8s)
+                fast_pause = random.uniform(0.3, 0.8)
                 logger.debug(f"[ANTI-DETECTION] Quick pause: {fast_pause:.1f}s (fast mode)")
                 await asyncio.sleep(fast_pause)
 
@@ -997,15 +996,15 @@ class CommentEngagementDAE:
                         self.driver.refresh()
                         self._comments_since_refresh = 0  # Reset counter
 
-                        # Human-like delay for page reload (3-7s range per user feedback)
-                        # 2025-12-30: Adjusted to 5.0±0.4 for balanced human-like variation
+                        # Human-like delay for page reload
+                        # 2026-02-04: Reduced from 5s→2.5s base (speed optimization)
                         multiplier = self.comment_processor.delay_multiplier if self.comment_processor else 1.0
                         if self.human:
-                            # Base 5s with 40% variance = 3s-7s
-                            base_delay = self.human.human_delay(5.0, 0.4) * multiplier
+                            # Base 2.5s with 40% variance = 1.5s-3.5s
+                            base_delay = self.human.human_delay(2.5, 0.4) * multiplier
                             # 10% chance of extra brief delay
                             if random.random() < 0.10:
-                                extra = random.uniform(2.0, 4.0)
+                                extra = random.uniform(1.0, 2.0)
                                 delay = base_delay + extra
                                 logger.info(f"[DAEMON][PHASE-3]   Refresh delay: {delay:.1f}s (extended)")
                             else:
@@ -1013,7 +1012,7 @@ class CommentEngagementDAE:
                                 logger.info(f"[DAEMON][PHASE-3]   Refresh delay: {delay:.1f}s")
                             await asyncio.sleep(delay)
                         else:
-                            await asyncio.sleep(5 * multiplier)
+                            await asyncio.sleep(2.5 * multiplier)
                         logger.info(f"[DAEMON][PHASE-3] ✅ Page refreshed - ready for next comment")
                 else:
                     logger.info(f"[DAEMON][PHASE-3] ⏭️ SKIP REFRESH: Batching comments (batch size: {self._comments_since_refresh}/5)")
@@ -1125,6 +1124,40 @@ class CommentEngagementDAE:
 
         return summary
     
+    def analyze_current_page(self) -> Optional[Dict[str, Any]]:
+        """
+        Take screenshot and ask UI-TARS what's available on the page.
+
+        Used by OODA heartbeat for periodic page state awareness.
+        Enables the system to detect available actions without explicit DOM parsing.
+
+        Returns:
+            Analysis result dict with 'summary', 'actions', etc., or None if vision unavailable
+        """
+        if not self.ui_tars_bridge:
+            logger.debug("[DAE-VISION] UI-TARS bridge not available")
+            return None
+
+        try:
+            # Take screenshot
+            screenshot = self.driver.get_screenshot_as_png()
+            if not screenshot:
+                return None
+
+            # Ask UI-TARS for page analysis
+            prompt = (
+                "What actions are available on this page? "
+                "List interactive elements like buttons, links, and input fields."
+            )
+
+            result = self.ui_tars_bridge.analyze_screenshot(screenshot, prompt)
+            logger.info(f"[DAE-VISION] Page analysis: {str(result)[:100]}...")
+            return result
+
+        except Exception as e:
+            logger.warning(f"[DAE-VISION] Page analysis failed: {e}")
+            return None
+
     def close(self) -> None:
         """Release resources."""
         if self.ui_tars_bridge:

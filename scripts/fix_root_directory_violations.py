@@ -13,6 +13,11 @@ Uses AI_Overseer + autonomous_cleanup_engine to:
 WSP Compliance: WSP 3, WSP 49, WSP 50, WSP 22
 """
 
+# 0102 NOTE (WSP 50 + WSP 64):
+# Use Holo's root violation monitor as source-of-truth for what is currently in root,
+# then relocate *with dependency rewrites* and update module docs/ModLogs.
+# This script contains a known-map for common cases; do not treat it as exhaustive.
+
 # === UTF-8 ENFORCEMENT (WSP 90) ===
 import sys
 import io

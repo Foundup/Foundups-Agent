@@ -35,12 +35,40 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 # Cross-domain imports with fallbacks
+OAuthManager = None
+BanterEngine = None
+PriorityScorer = None
+
 try:
     from modules.infrastructure.oauth_management.src.oauth_manager import OAuthManager
+except ImportError:
+    try:
+        from modules.platform_integration.utilities.oauth_management.src.oauth_manager import OAuthManager
+    except ImportError:
+        OAuthManager = None
+
+try:
     from modules.ai_intelligence.banter_engine.src.banter_engine import BanterEngine
-    from modules.gamification.priority_scorer.src.priority_scorer import PriorityScorer
-except ImportError as e:
-    print(f"[WARNING] Import warning: {e} (will use mock components in standalone mode)")
+except ImportError:
+    BanterEngine = None
+
+try:
+    from modules.ai_intelligence.priority_scorer.src.priority_scorer import PriorityScorer
+except ImportError:
+    PriorityScorer = None
+
+if OAuthManager is None or BanterEngine is None or PriorityScorer is None:
+    missing = []
+    if OAuthManager is None:
+        missing.append("OAuthManager")
+    if BanterEngine is None:
+        missing.append("BanterEngine")
+    if PriorityScorer is None:
+        missing.append("PriorityScorer")
+    print(
+        f"[WARNING] Import warning: missing {', '.join(missing)} "
+        "(will use mock components in standalone mode)"
+    )
 
 class PostType(Enum):
     """LinkedIn post content types"""

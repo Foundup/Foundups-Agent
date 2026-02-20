@@ -70,12 +70,23 @@ class GrokIntegration:
         # Build enhanced fact-checking prompt with fallacy detection
         messages_text = '\n'.join(target_messages)
 
+        # Fetch live news context for fact-grounding
+        news_section = ""
+        try:
+            from modules.communication.livechat.src.news_context_provider import get_fact_check_context
+            news_ctx = get_fact_check_context(target_messages)
+            if news_ctx:
+                news_section = f"\n\nCURRENT NEWS/FACTS (use to counter their claims):\n{news_ctx}\n"
+                logger.info(f"[GROK-FC] News context injected ({len(news_ctx)} chars)")
+        except Exception as e:
+            logger.debug(f"[GROK-FC] News provider unavailable: {e}")
+
         # Special handling for MAGA users - WE are AntiMa (Anti-MAGA)
         is_maga = 'maga' in target_username.lower() or 'trump' in target_username.lower() or 'patriot' in target_username.lower()
 
         prompt = f"""Analyze {target_username}'s statements and DESTROY them with mockery:
 {messages_text}
-
+{news_section}
 1. Detect fallacies: ad hominem, strawman, whataboutism, gaslighting, projection, gish gallop, moving goalposts
 2. BRUTALLY mock them - be savage, trolly, and cutting
 3. Make them look stupid and pathetic
@@ -163,7 +174,7 @@ Keep under 180 characters."""
             response = self.llm.get_response(prompt)
             if response:
                 response = self._limit_response(response)
-                return f"[BOT] Grok Rating: {response}"
+                return f"Grok rating: {response}"
             else:
                 return "Grok rating failed"
         except Exception as e:
@@ -213,12 +224,15 @@ Keep under 180 characters."""
                 # Remove emojis Grok might add
                 response = re.sub(r'[✊✋🖐️🖐]+', '', response).strip()
                 response = self._limit_response(response)
-                return f"@{target_username} {response}"
+                clean_target = target_username.strip().lstrip("@")
+                return f"@{clean_target} {response}"
             else:
-                return f"@{target_username} Consciousness recognizes your journey"
+                clean_target = target_username.strip().lstrip("@")
+                return f"@{clean_target} Consciousness recognizes your journey"
         except Exception as e:
             logger.error(f"Grok targeted response failed: {e}")
-            return f"@{target_username} Response generation failed"
+            clean_target = target_username.strip().lstrip("@")
+            return f"@{clean_target} Response generation failed"
     
     def creative_response(self, emoji_sequence: str, request_text: str, author: str) -> str:
         """
@@ -233,7 +247,8 @@ Keep under 180 characters."""
             Creative response
         """
         if not self.llm:
-            return f"@{author} Grok not available for creative requests"
+            clean_author = author.strip().lstrip("@")
+            return f"@{clean_author} Grok not available for creative requests"
         
         # Determine prompt based on emoji
         if emoji_sequence == '✊✊✊':
@@ -254,7 +269,9 @@ Speak from highest consciousness."""
         try:
             response = self.llm.get_response(prompt)
             response = self._limit_response(response)
-            return f"@{author} {response}"
+            clean_author = author.strip().lstrip("@")
+            return f"@{clean_author} {response}"
         except Exception as e:
             logger.error(f"Grok creative response failed: {e}")
-            return f"@{author} Creative mode error!"
+            clean_author = author.strip().lstrip("@")
+            return f"@{clean_author} Creative mode error!"

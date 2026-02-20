@@ -1,7 +1,7 @@
 {
   "name": "foundups-agent",
   "version": "1.0.0",
-  "description": "Autonomous development platform with AI-powered code intelligence",
+  "description": "Compute-focus platform for planning, building, and supporting FoundUps with OpenClaw 0102 agent swarms",
   "main": "main.py",
   "scripts": {
     "dev": "python main.py",
@@ -19,9 +19,10 @@
   },
   "keywords": [
     "ai",
-    "autonomous-development",
-    "code-intelligence",
-    "machine-learning",
+    "compute-marketplace",
+    "digital-twin",
+    "openclaw",
+    "foundups",
     "vercel"
   ],
   "author": "FoundUps",

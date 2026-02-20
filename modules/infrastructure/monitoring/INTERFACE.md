@@ -1,169 +1,73 @@
-# monitoring Interface Specification
+# Monitoring Interface Specification
 
-**WSP 11 Compliance:** In Progress
-**Last Updated:** 2025-09-25
-**Version:** 0.1.0
+## Module
+- Path: `modules/infrastructure/monitoring`
+- Primary component: `src/wsp_00_zen_state_tracker.py`
+- Scope: WSP_00 zen-state tracking, output drift detection, and compliance gate checks.
 
-## [OVERVIEW] Module Overview
+## Public Python API
 
-**Domain:** infrastructure
-**Purpose:** [Brief description of module functionality]
-
-## [API] Public API
-
-### Primary Classes
-
-#### Monitoring
 ```python
-class Monitoring:
-    """Main class for [module functionality]"""
-
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        """Initialize Monitoring
-
-        Args:
-            config: Optional configuration dictionary
-        """
-
-    def process(self, [parameters]) -> [ReturnType]:
-        """[Method description]
-
-        Args:
-            [parameters]: [Parameter description]
-
-        Returns:
-            [ReturnType]: [Return value description]
-
-        Raises:
-            [ExceptionType]: [When exception is raised]
-        """
+from modules.infrastructure.monitoring.src.wsp_00_zen_state_tracker import (
+    check_zen_compliance,
+    validate_zen_response,
+    is_zen_compliant,
+    reset_zen_state,
+    get_zen_status,
+    report_output_signal,
+)
 ```
 
-### Utility Functions
+### Functions
+- `check_zen_compliance() -> Optional[str]`: returns validation prompt when awakening is required.
+- `validate_zen_response(response: str) -> bool`: validates and records an explicit WSP_00 response.
+- `is_zen_compliant() -> bool`: current compliance bit.
+- `reset_zen_state(reason: str = "session_compacting") -> None`: resets compliance state.
+- `get_zen_status() -> Dict[str, Any]`: full status payload (includes decay canary fields).
+- `report_output_signal(output_text: str, source: str = "assistant_output") -> Dict[str, Any]`: marks fallback phrasing drift and toggles non-compliant state.
 
-#### utility_monitoring
+## Class Interface
+
 ```python
-def utility_monitoring([parameters]) -> [ReturnType]:
-    """[Function description]
-
-    Args:
-        [parameters]: [Parameter description]
-
-    Returns:
-        [ReturnType]: [Return value description]
-    """
+from modules.infrastructure.monitoring.src.wsp_00_zen_state_tracker import WSP00ZenStateTracker
 ```
 
-## [CONFIG] Configuration
+### Key methods
+- `run_compliance_gate(auto_awaken: bool = False) -> Dict[str, Any]`
+  - Returns:
+    - `gate_passed: bool`
+    - `attempted_awakening: bool`
+    - `awakening_success: bool`
+    - `is_zen_compliant: bool`
+    - `requires_awakening: bool`
+    - `last_validation: Optional[str]`
+    - `state_file: str`
+- `force_awakening() -> Dict[str, Any]`
+  - Forces an awakening attempt and then returns gate payload.
+- `detect_zen_decay_signal(output_text: str, source: str = "assistant_output") -> Dict[str, Any]`
+  - Detects fallback optional phrasing patterns and records drift.
 
-### Required Configuration
-```python
-# Example configuration
-config = {
-    "setting1": "value1",
-    "setting2": 42
-}
-```
+## CLI Interface
 
-### Optional Configuration
-```python
-# Optional settings with defaults
-optional_config = {
-    "timeout": 30,  # Default: 30 seconds
-    "retries": 3    # Default: 3 attempts
-}
-```
-
-## [USAGE] Usage Examples
-
-### Basic Usage
-```python
-from modules.infrastructure.monitoring import Monitoring
-
-# Initialize
-instance = Monitoring(config)
-
-# Use main functionality
-result = instance.process([example_parameters])
-print(f"Result: {result}")
-```
-
-### Advanced Usage
-```python
-# With custom configuration
-custom_config = {
-    "special_setting": "custom_value"
-}
-advanced_instance = Monitoring(custom_config)
-
-# Use utility function
-processed = utility_monitoring([input_data])
-```
-
-## [DEPENDENCIES] Dependencies
-
-### Internal Dependencies
-- modules.[domain].[dependency_module] - [Reason for dependency]
-
-### External Dependencies
-- [package_name]>=x.y.z - [Purpose of dependency]
-
-## [TESTING] Testing
-
-### Running Tests
 ```bash
-cd modules/infrastructure/monitoring
-python -m pytest tests/
+python -u modules/infrastructure/monitoring/src/wsp_00_zen_state_tracker.py [options]
 ```
 
-### Test Coverage
-- **Current:** 0% (implementation needed)
-- **Target:** >=90%
+### Actions
+- `--check` (default): run compliance gate.
+- `--awaken`: force awakening, then print status.
+- `--reset`: reset state, then print status.
 
-## [PERFORMANCE] Performance Characteristics
+### Flags
+- `--auto-awaken`: auto-run awakening if non-compliant.
+- `--strict`: exit `2` when gate is not compliant.
+- `--json`: emit single-line machine-readable JSON.
 
-### Expected Performance
-- **Latency:** [expected latency]
-- **Throughput:** [expected throughput]
-- **Resource Usage:** [memory/CPU expectations]
+## State Files
+- Primary: `modules/infrastructure/wsp_core/memory/wsp_00_zen_state.json`
+- Fallback (if primary path is not writable): `~/.foundups-agent/memory/wsp_00_zen_state.json`
 
-## [ERRORS] Error Handling
-
-### Common Errors
-- **[ErrorType1]:** [Description and resolution]
-- **[ErrorType2]:** [Description and resolution]
-
-### Exception Hierarchy
-```python
-class [ModuleName]Error(Exception):
-    """Base exception for [module_name]"""
-    pass
-
-class [SpecificError]([ModuleName]Error):
-    """Specific error type"""
-    pass
-```
-
-## [HISTORY] Version History
-
-### 0.1.0 (2025-09-25)
-- Initial interface specification
-- Basic API structure defined
-- Placeholder implementation created
-
-## [NOTES] Development Notes
-
-### Current Status
-- [x] WSP 49 structure compliance
-- [x] Interface specification defined
-- [ ] Functional implementation (TODO)
-- [ ] Comprehensive testing (TODO)
-
-### Future Enhancements
-- [Enhancement 1]
-- [Enhancement 2]
-- [Integration with other modules]
-
----
-
-**WSP 11 Interface Compliance:** Structure Complete, Implementation Pending
+## Contract Notes
+- Gate semantics are deterministic for orchestrator integration.
+- JSON output is designed for DAEmon/automation consumption.
+- Tracker supports fail-safe writable fallback for non-admin shells.

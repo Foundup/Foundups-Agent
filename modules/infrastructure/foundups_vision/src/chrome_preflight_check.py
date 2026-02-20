@@ -72,7 +72,7 @@ def check_chrome_availability(port: int = 9222) -> Dict[str, Any]:
             "message": f"Chrome debug port {port} is NOT reachable",
             "recommendation": (
                 f"Start Chrome with remote debugging:\n"
-                f"  → launch_chrome_youtube_studio.bat\n"
+                f"  → scripts/launch/launch_chrome_youtube_studio.bat\n"
                 f"  OR\n"
                 f"  → chrome.exe --remote-debugging-port={port}"
             )

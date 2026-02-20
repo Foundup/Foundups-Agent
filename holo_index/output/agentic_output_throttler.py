@@ -195,6 +195,54 @@ class AgenticOutputThrottler:
             return cleaned[: max_len - 3] + "..."
         return cleaned
 
+    def _compute_memory_value(self, doc_type: str, pointers: List[str], wsp: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Compute Memory Value Score (MVS) from existing WSP signals:
+        - Base score derived from doc_type priority (mirrors core HoloIndex priority map)
+        - Entry-point boosts for system boot/orchestration docs (e.g., main.py)
+        - Foundational WSP boosts (WSP_00, WSP_CORE, WSP_MASTER_INDEX)
+        """
+        priority_map = {
+            "wsp_protocol": 10,
+            "wsp": 10,
+            "interface": 9,
+            "module_readme": 8,
+            "documentation": 7,
+            "roadmap": 6,
+            "modlog": 5,
+            "readme": 4,
+            "test_documentation": 3,
+            "other": 2,
+        }
+
+        normalized_type = (doc_type or "other").lower()
+        score = float(priority_map.get(normalized_type, 2))
+        normalized_pointers = [(p or "").replace("\\", "/") for p in (pointers or [])]
+
+        # Entry-point boost (main.py and orchestrator roots)
+        if any("/main.py" in p or p.endswith("main.py") or "main.py:" in p for p in normalized_pointers):
+            score += 2.0
+
+        # Foundational WSP boost
+        if any(
+            token in p
+            for p in normalized_pointers
+            for token in ("WSP_00", "WSP_CORE", "WSP_MASTER_INDEX")
+        ):
+            score += 2.0
+        if wsp and str(wsp).strip().upper() in {"WSP 00", "WSP CORE", "WSP MASTER INDEX"}:
+            score += 1.0
+
+        score = max(1.0, min(score, 10.0))
+        if score >= 8.0:
+            band = "high"
+        elif score >= 5.0:
+            band = "medium"
+        else:
+            band = "low"
+
+        return {"score": round(score, 1), "band": band}
+
     def _make_memory_card(
         self,
         module: str,
@@ -207,6 +255,7 @@ class AgenticOutputThrottler:
     ) -> Dict[str, Any]:
         raw = f"{module}|{doc_type}|{wsp or ''}|{summary}|{pointers[:1]}"
         card_id = "mem:" + hashlib.sha1(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
+        memory_value = self._compute_memory_value(doc_type, pointers, wsp)
         return {
             "id": card_id,
             "module": module,
@@ -215,6 +264,7 @@ class AgenticOutputThrottler:
             "intent": "memory",
             "summary": summary,
             "pointers": pointers,
+            "memory_value": memory_value,
             "salience": round(salience, 2),
             "trust": round(trust, 2),
             "last_seen": datetime.now(timezone.utc).isoformat(),
@@ -331,6 +381,17 @@ class AgenticOutputThrottler:
             output_lines.append(f"  doc_type: {card.get('doc_type')}")
             if card.get('wsp'):
                 output_lines.append(f"  wsp: {card.get('wsp')}")
+            memory_value = card.get("memory_value")
+            if not memory_value:
+                memory_value = self._compute_memory_value(
+                    card.get("doc_type"),
+                    card.get("pointers") or [],
+                    card.get("wsp"),
+                )
+            if isinstance(memory_value, dict):
+                output_lines.append(
+                    f"  memory_value: {memory_value.get('score')} ({memory_value.get('band')})"
+                )
             output_lines.append(f"  intent: {card.get('intent')}")
             output_lines.append(f"  summary: \"{card.get('summary', '')}\"")
             pointers = card.get("pointers") or []
@@ -1058,7 +1119,19 @@ class AgenticOutputThrottler:
         # FIRST PRINCIPLES: If no significant findings, provide minimal useful info
         if not summary_parts:
             total_files = sum(len(results.get('files', [])) for results in component_results.values())
-            summary_parts.append(f"[OK] Analysis complete: {total_files} files checked, no critical issues found")
+            # Prefer search result counts over component-derived file counts when available
+            if hasattr(self, "_search_results") and self._search_results:
+                code_count = len(self._search_results.get('code', []) or [])
+                wsp_count = len(self._search_results.get('wsps', []) or [])
+                total_hits = code_count + wsp_count
+                if total_hits > 0:
+                    summary_parts.append(
+                        f"[OK] Analysis complete: {total_hits} hits (code={code_count}, wsp={wsp_count}), no critical issues found"
+                    )
+                else:
+                    summary_parts.append(f"[OK] Analysis complete: {total_files} files checked, no critical issues found")
+            else:
+                summary_parts.append(f"[OK] Analysis complete: {total_files} files checked, no critical issues found")
 
         # FIRST PRINCIPLES: Keep total output under 500 tokens
         final_summary = "\n".join(summary_parts)
@@ -1097,11 +1170,49 @@ class AgenticOutputThrottler:
         except Exception:
             return None
 
+    def _should_log_history(self, state: str, search_results: Dict[str, Any], verbose: bool) -> bool:
+        """Gate output history logging to avoid unbounded growth."""
+        raw_flag = os.getenv("HOLO_OUTPUT_HISTORY", "1").strip().lower()
+        if raw_flag in {"0", "false", "no", "off"}:
+            return False
+
+        mode = os.getenv("HOLO_OUTPUT_HISTORY_MODE", "all").strip().lower()
+        if mode == "verbose":
+            return verbose
+        if mode == "errors":
+            return state == "error"
+        if mode == "signals":
+            return bool(search_results.get("warnings")) or bool(search_results.get("reminders"))
+        return True
+
+    def _rotate_history_if_needed(self, max_mb: float) -> None:
+        """Rotate history file when it exceeds size threshold."""
+        if max_mb <= 0:
+            return
+        try:
+            if not self.history_path.exists():
+                return
+            size_bytes = self.history_path.stat().st_size
+            if size_bytes <= max_mb * 1024 * 1024:
+                return
+            rotated_path = self.history_path.with_suffix(self.history_path.suffix + ".1")
+            if rotated_path.exists():
+                rotated_path.unlink(missing_ok=True)
+            self.history_path.replace(rotated_path)
+        except Exception:
+            pass
+
     def _record_output_history(self, state: str, rendered_output: str, filtered_content: str, verbose: bool) -> None:
         """Persist structured output history for downstream pattern analysis."""
 
         def _write():
             try:
+                search_results = getattr(self, "_search_results", {}) or {}
+                if not self._should_log_history(state, search_results, verbose):
+                    return
+                max_mb_env = os.getenv("HOLO_OUTPUT_HISTORY_MAX_MB", "10").strip()
+                max_mb = float(max_mb_env) if max_mb_env else 10.0
+                self._rotate_history_if_needed(max_mb)
                 self.history_path.parent.mkdir(parents=True, exist_ok=True)
 
                 section_summaries = []
@@ -1113,7 +1224,6 @@ class AgenticOutputThrottler:
                         "line_count": len(section.get("content", "").splitlines()),
                     })
 
-                search_results = getattr(self, "_search_results", {}) or {}
                 advisor_info = search_results.get("advisor") or {}
 
                 record = {

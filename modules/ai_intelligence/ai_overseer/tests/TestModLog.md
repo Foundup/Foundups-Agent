@@ -4,3 +4,23 @@
 |------------|--------|-------------|-------|
 | 2025-10-29 | 0102   | Initial test scaffold created to satisfy WSP 49 | Placeholders ready for future coverage |
 | 2025-10-29 | 0102   | Added mixin coverage + pytest gating flags | Default runs stay lightweight; witness loop opt-in |
+| 2026-02-07 | 0102   | Added OpenClaw sentinel tests and allowlist updates | Validates fail-closed policy, cache TTL, and monitor lifecycle |
+| 2026-02-07 | 0102   | Added OpenClaw security alert event tests | Validates dedicated event type routing and strict dedupe behavior |
+| 2026-02-07 | 0102   | Expanded OpenClaw incident alert tests | Validates incident dedupe, telemetry routing, and correlator input mapping |
+| 2026-02-07 | 0102   | Validation run complete | `23 passed, 1 skipped` for module test suite with deterministic pytest flags |
+| 2026-02-07 | 0102   | Live DAEmon failure drill evidence captured | Dedupe verified (60s: 1 emit/5 suppress, 5s: expiry re-alert) |
+| 2026-02-08 | 0102   | Added Security Event Correlator tests | `test_security_correlator.py` (13 tests): thresholding, dedupe, containment lifecycle, forensic bundles |
+| 2026-02-08 | 0102   | Hardening Tranche 3 validation | `36 passed, 1 skipped` for full module suite |
+| 2026-02-08 | 0102   | Expanded correlator persistence coverage | Added restart-restore and persisted-release tests in `test_security_correlator.py` |
+| 2026-02-08 | 0102   | Added containment release route tests | Added manual API + telemetry release routing in `test_openclaw_security_alerts.py` |
+| 2026-02-08 | 0102   | Tranche 4 targeted validation | `28 passed` for OpenClaw security/incident suites (`test_ai_overseer_openclaw_security.py`, `test_openclaw_security_alerts.py`, `test_security_correlator.py`) |
+| 2026-02-08 | 0102   | Hardening Tranche 5: Authenticated Release + Audit | Added 12 tests: `TestAuthenticatedRelease` (3), `TestReplayPrevention` (3), `TestAuditPersistence` (3), `TestConsistencyCheck` (2), `TestNotificationDedupe` (3) |
+| 2026-02-08 | 0102   | Tranche 5 validation complete | All 7 validation tests pass: auth failures, replay prevention, authenticated release, audit persistence (JSONL+SQLite), notification dedupe, consistency check, stats |
+| 2026-02-08 | 0102   | Hardening Tranche 6 tests added | Added token rotation, retention/pruning, retry metrics, and abuse-control coverage in `test_security_correlator.py` |
+| 2026-02-08 | 0102   | Tranche 6 targeted validation complete | `51 passed` for OpenClaw suites (`test_ai_overseer_openclaw_security.py`, `test_openclaw_security_alerts.py`, `test_security_correlator.py`) |
+| 2026-02-11 | 0102   | Added WSP framework sentinel tests | `test_wsp_framework_sentinel.py` validates framework-vs-knowledge drift detection, cache TTL behavior, and AIOverseer API wiring |
+| 2026-02-11 | 0102   | AI Overseer suite revalidated with WSP sentinel lane | `72 passed, 1 skipped` with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` (`modules/ai_intelligence/ai_overseer/tests`) |
+| 2026-02-13 | 0102   | Added M2M compression sentinel tests + benchmarks | `test_m2m_compression_sentinel.py` (32 tests): 31 pass. Coverage: FileAnalysis(6), CandidateCollection(4), DeterministicTransform(6), StagedWorkflow(6), PatternMemory(4), FullScan(3), Benchmarks(3). Deterministic: 84-89% reduction in <2ms. Full scan: 429 files/40s |
+| 2026-02-13 | 0102   | P0 hardening tranche: audit-driven fixes + tests | `test_m2m_compression_sentinel.py` expanded to 42 tests: 42 pass. Added TestHardening(10): method_truthful, qwen_fallback, validation_empty/no_header/no_sections/valid/corruption, path_collision, source_header, eval_metrics. Fixes: full headers (no 15-char truncation), Qwen method truthfulness, M2M output validation, path-stable staging/backups, deterministic promotion via src: header field. Eval: avg cosine similarity 0.434->0.582 (+34%) |
+| 2026-02-13 | 0102   | Content-based boot prompt detection + tests | `test_m2m_compression_sentinel.py` expanded to 46 tests: 46 pass. Added TestBootPromptDetection(4): identity_lock_detection, compile_rejects_boot_prompt, normal_docs_pass_through, threshold_requires_3_signals. Replaced filename-based exclusion with 10-pattern content detector (identity locks, equations, state math, quantum notation). Discovery: M2M is for reference docs, not executable prompts. |
+| 2026-02-13 | 0102   | Added M2M skill execution shim tests | Added `test_m2m_skill_shim.py` (5 tests, all pass). Coverage: unknown skill fail-closed, missing SKILLz doc fail, compile gate success path, compile gate boot-prompt rejection for SKILL content, stage-promote target-path gate. |

@@ -8,6 +8,31 @@ Transform HoloIndex from semantic search tool into **CodeIndex**: a surgical cod
 - **WSP 92**: DAE Cube Mapping and Mermaid Flow Protocol
 - **WSP 87**: Code Navigation Protocol (HoloIndex)
 - **WSP 35**: Module Execution Automation (Qwen Advisor)
+- **WSP 77**: Agent Coordination Protocol (Multi-agent orchestration)
+
+## MCP Integration (Phase 0.1 Foundation)
+
+**Manifest Reference**: `docs/mcp/MCP_Windsurf_Integration_Manifest.md`
+**JSON Data**: `docs/mcp/MCP_Windsurf_Integration_Manifest.json`
+
+### CodeIndex MCP Orchestration
+
+CodeIndex now integrates with Foundational Rubiks for surgical code operations:
+
+| Rubik Integration | MCP Servers Used | CodeIndex Function |
+|-------------------|------------------|-------------------|
+| **Rubik_Compose** | Filesystem, Git, GitHub | Code editing, version control, repository operations |
+| **Rubik_Build** | Docker, E2B | Safe code execution, testing, build validation |
+| **Rubik_Knowledge** | Memory Bank, Knowledge Graph | Code analysis persistence, architectural memory |
+| **Rubik_Community** | Postman | Code review notifications, collaboration workflows |
+
+### Surgical Intelligence Workflow
+
+1. **CodeIndex Detection**: Identifies code issues requiring external tools
+2. **Rubik Selection**: Determines which Rubik can handle the operation
+3. **MCP Orchestration**: Dispatches to appropriate MCP servers
+4. **Agent Coordination**: Qwen coordinates, Gemma validates, 0102 approves
+5. **Bell State Verification**: Ensures all operations maintain coherence
 
 ---
 
@@ -591,3 +616,346 @@ This is not just better tooling—it's a fundamental transformation in how auton
 **Priority**: P0 (Critical - Foundational transformation)
 **Token Budget**: ~120-150K tokens (complete implementation via pattern recall)
 **Impact**: Revolutionary (97% token reduction per operation)
+
+---
+
+## [BOT] Sentinel Augmentation Analysis
+
+**SAI Score**: `222` (Speed: 2, Automation: 2, Intelligence: 2)
+
+**Priority**: **P0 - CRITICAL** (Maximum Sentinel value - Mission-critical autonomous capability)
+
+### Sentinel Use Case
+
+Gemma 3 270M Sentinel operates as the **Continuous Surgical Code Intelligence Engine**, autonomously indexing all functions in real-time, detecting complexity violations before commits, and presenting surgical targets with exact line numbers. This Sentinel embodies the CodeIndex vision: instant function-level awareness without manual searches.
+
+**Core Capabilities**:
+- **Instant Function Location**: Query "find quota check" -> Returns `no_quota_stream_checker.py:138` in <50ms
+- **Autonomous Complexity Monitoring**: Runs 5-minute circulation loops, flags functions >150 lines automatically
+- **Surgical Target Generation**: Produces fix strategies with exact line numbers and effort estimates
+- **Lego Block Mapping**: Generates Mermaid diagrams showing module snap points and dependencies
+
+### Expected Benefits
+
+- **Latency Reduction**: Manual function search (5-10 minutes) -> Sentinel instant lookup (<1 second, **600x faster**)
+- **Automation Level**: **Autonomous** (continuous monitoring, automatic surgical target generation, human confirms strategic decisions)
+- **Resource Savings**:
+  - 95% reduction in "where is this code?" time
+  - 97% token savings (200-500 tokens vs 15-25K for manual search)
+  - Proactive issue detection prevents 80% of complexity violations
+- **Accuracy Target**: >98% precision in function location and complexity classification
+
+### Implementation Strategy
+
+**Training Data Sources**:
+1. **Function Index Logs**: All function-level extractions from HoloIndex CodeIndex operations
+2. **Complexity Analysis History**: `holo_index/reports/CodeIndex_Report_*.md` files (surgical intelligence reports)
+3. **Git Commit Patterns**: Function changes, refactorings, and complexity evolution over time
+4. **WSP 62 Violations**: Large file violations with line-level analysis (files >1000 lines)
+5. **Mermaid Flow Diagrams**: Module relationship patterns and Lego block connections
+6. **HoloIndex Search Logs**: Natural language queries -> Function locations (semantic understanding)
+7. **Qwen Health Monitor Data**: 5-minute circulation reports showing module health trends
+
+**Integration Points**:
+
+**1. Real-Time Function Indexing** (Core Operation):
+```python
+# File: holo_index/code_index/function_indexer.py
+
+class CodeIndexSentinel:
+    """
+    On-device Gemma 3 270M Sentinel for surgical code intelligence
+    Runs continuously as background daemon
+    """
+
+    def __init__(self):
+        self.model = GemmaSentinel('codeindex_function_locator.tflite')
+        self.function_index = {}  # In-memory function registry
+        self.complexity_cache = {}
+
+    async def continuous_indexing(self):
+        """5-minute circulation loop (WSP 93 Qwen Health Monitor)"""
+        while True:
+            changed_files = await self.detect_modified_files()
+
+            for file_path in changed_files:
+                functions = await self.extract_functions(file_path)
+
+                for func in functions:
+                    # Sentinel predicts complexity classification
+                    complexity = self.model.predict_complexity(
+                        func_code=func['code'],
+                        line_count=func['line_count']
+                    )
+
+                    if complexity.score >= 3:  # High complexity
+                        self.flag_violation(func, complexity)
+
+                    # Update function index
+                    self.function_index[func['signature']] = {
+                        'file': file_path,
+                        'lines': f"{func['start']}-{func['end']}",
+                        'complexity': complexity.score,
+                        'snap_points': self.detect_snap_points(func)
+                    }
+
+            await asyncio.sleep(300)  # 5-minute cycle
+
+    def instant_locate(self, query: str) -> SurgicalTarget:
+        """
+        Instant function location from natural language query
+
+        Example:
+            query: "find quota check"
+            Returns: <50ms with 98% accuracy
+        """
+        # Sentinel understands semantic intent
+        embedding = self.model.embed_query(query)
+
+        # Search function index with semantic similarity
+        matches = self.semantic_search(embedding, self.function_index)
+
+        if matches[0].confidence > 0.85:
+            return SurgicalTarget(
+                file=matches[0].file,
+                function=matches[0].name,
+                lines=matches[0].line_range,
+                confidence=matches[0].confidence
+            )
+        else:
+            return None  # Escalate to Qwen Advisor
+```
+
+**2. Pre-Commit Complexity Gate**:
+```python
+# File: .git/hooks/pre-commit (Git Hook Integration)
+
+from holo_index.code_index.sentinel import CodeIndexSentinel
+
+sentinel = CodeIndexSentinel()
+
+# Check all staged files for complexity violations
+staged_files = get_staged_python_files()
+
+for file_path in staged_files:
+    violations = sentinel.check_complexity_violations(file_path)
+
+    if violations:
+        print(f"[SENTINEL-BLOCK] Complexity violations detected:")
+        for violation in violations:
+            print(f"  {violation.function} ({violation.lines}): "
+                  f"{violation.line_count} lines (threshold: 150)")
+
+        print("\n[SENTINEL] Commit blocked - Refactor functions first")
+        sys.exit(1)  # Block commit
+```
+
+**3. Surgical Target CLI**:
+```bash
+# Command: python holo_index.py --code-index "problem description"
+# Sentinel processes query -> Returns surgical target instantly
+
+python holo_index.py --code-index "stream detection not working"
+
+Output (Sentinel-powered):
+  [SENTINEL] Surgical target located in <47ms
+    File: no_quota_stream_checker.py
+    Function: check_channel_for_live
+    Lines: 596-597
+    Issue: recent_videos=[] immediately checked (always False)
+    Fix Strategy: Remove early return, allow fallback logic
+    Confidence: 0.98
+
+    [LEGO] Module snap points:
+      -> stream_resolver ⟷ auto_moderator_dae
+      -> stream_resolver ⟷ social_media_orchestrator
+```
+
+**4. Mermaid Lego Block Generator**:
+```python
+# File: holo_index/lego_blocks/sentinel_visualizer.py
+
+class LegoBlockSentinel:
+    """Sentinel generates Lego block Mermaid diagrams"""
+
+    def generate_snap_diagram(self, module_path: str) -> str:
+        """
+        Sentinel analyzes module and generates Mermaid showing:
+        - Input snap points (parameters, imports)
+        - Output snap points (returns, exports)
+        - Connection points to other modules
+        """
+        module_analysis = self.sentinel.analyze_module(module_path)
+
+        mermaid = "graph LR\n"
+
+        # Add module as central block
+        mermaid += f"  A[{module_analysis['name']}]\n"
+
+        # Add input snap points
+        for input_snap in module_analysis['inputs']:
+            mermaid += f"  I{input_snap['id']}[{input_snap['source']}] -->|{input_snap['type']}| A\n"
+
+        # Add output snap points
+        for output_snap in module_analysis['outputs']:
+            mermaid += f"  A -->|{output_snap['type']}| O{output_snap['id']}[{output_snap['destination']}]\n"
+
+        return mermaid
+```
+
+**Inference Pattern**:
+```python
+# Pseudo-code for Sentinel integration
+
+class CodeIndexSentinel:
+    def __init__(self):
+        # Load TFLite quantized Gemma 3 270M model
+        self.model = tf.lite.Interpreter('codeindex_sentinel.tflite')
+        self.model.allocate_tensors()
+
+    def predict_surgical_target(self, query: str, codebase_context: dict) -> dict:
+        """
+        Main inference: Query -> Surgical Target
+        Latency: <50ms on-device (no API calls)
+        """
+        # Embed query using Sentinel
+        query_embedding = self.embed_query(query)
+
+        # Semantic search through function index
+        candidates = self.function_index.search(query_embedding, top_k=5)
+
+        # Sentinel classifies best match
+        result = self.model.predict({
+            'query': query,
+            'candidates': candidates,
+            'context': codebase_context
+        })
+
+        if result.confidence > 0.85:
+            return {
+                'surgical_target': result.target,
+                'confidence': result.confidence,
+                'fix_strategy': result.strategy
+            }
+        else:
+            # Escalate to Qwen Advisor for complex cases
+            return {'escalate': True, 'reason': 'Low confidence'}
+```
+
+### Risk Assessment
+
+**Risks**:
+1. **False Positives in Complexity Detection**: Sentinel may flag complex-but-valid functions (e.g., DSL parsers)
+2. **Semantic Query Mismatch**: Natural language queries may not map to correct functions
+3. **Index Staleness**: Function index outdated if files changed but not re-indexed
+4. **Blocking Critical Commits**: Pre-commit hook may block urgent hotfixes
+
+**Mitigations**:
+1. **Confidence Thresholds**: Only auto-block if confidence >0.95; otherwise warn and allow override
+2. **Qwen Advisor Escalation**: Low-confidence cases (0.70-0.85) escalate to full Qwen analysis
+3. **Real-Time File Watching**: Use file system watchers to trigger instant re-indexing on changes
+4. **Emergency Override**: `git commit --no-verify` bypasses Sentinel for critical situations
+5. **Human-in-the-Loop**: Strategic decisions (Option A/B/C) always require 0102 approval
+
+**Fallback Strategy**:
+- **Primary**: Gemma 3 270M Sentinel (instant, on-device)
+- **Fallback 1**: Qwen-Coder 1.5B Advisor (semantic search + LLM analysis, ~500ms)
+- **Fallback 2**: Traditional HoloIndex search (vector DB + manual review, ~2-5 seconds)
+- **Fallback 3**: Manual grep/file search (last resort, minutes)
+
+**Error Handling**:
+```python
+try:
+    result = sentinel.instant_locate(query)
+except SentinelModelError:
+    # Sentinel unavailable -> Use Qwen Advisor
+    result = qwen_advisor.analyze_query(query)
+except Exception as e:
+    # Complete failure -> Fall back to traditional search
+    logger.warning(f"CodeIndex Sentinel failed: {e}")
+    result = traditional_search(query)
+```
+
+### Training Strategy
+
+**Phase 1: Data Collection** (Week 1-2)
+```bash
+# Extract function-level training data from existing codebase
+python scripts/extract_function_training_data.py \
+  --source modules/ \
+  --output training_data/codeindex_functions.jsonl
+
+# Generate complexity labels from existing CodeIndex reports
+python scripts/label_complexity_from_reports.py \
+  --reports holo_index/reports/ \
+  --output training_data/complexity_labels.jsonl
+
+# Mine natural language queries from HoloIndex logs
+python scripts/mine_query_patterns.py \
+  --logs holo_index/logs/ \
+  --output training_data/query_patterns.jsonl
+```
+
+**Training Data Format**:
+```jsonl
+{"query": "find quota check", "target_function": "check_quota_usage", "file": "quota_manager.py", "lines": "45-67", "confidence": 1.0}
+{"function_code": "def check_channel_for_live(...):", "line_count": 258, "complexity": 3, "label": "HIGH_COMPLEXITY"}
+{"module": "stream_resolver", "snap_in": ["channel_id", "service"], "snap_out": ["video_id", "chat_id"]}
+```
+
+**Phase 2: Fine-Tuning** (Week 3-4)
+```bash
+# Fine-tune Gemma 3 270M using LoRA
+python scripts/finetune_gemma_codeindex.py \
+  --model gemma-3-270m \
+  --train-data training_data/ \
+  --lora-rank 8 \
+  --epochs 3 \
+  --output models/codeindex_sentinel_lora.safetensors
+
+# Quantize to TFLite for on-device deployment
+python scripts/quantize_to_tflite.py \
+  --model models/codeindex_sentinel_lora.safetensors \
+  --output models/codeindex_sentinel.tflite \
+  --quantization int8
+```
+
+**Phase 3: Validation** (Week 5)
+```bash
+# Test Sentinel accuracy on held-out queries
+python scripts/validate_sentinel.py \
+  --model models/codeindex_sentinel.tflite \
+  --test-data test_data/queries.jsonl \
+  --metrics accuracy,latency,precision,recall
+
+Target Metrics:
+  - Accuracy: >95% (function location correctness)
+  - Latency: <100ms (on-device inference)
+  - Precision: >98% (no false positives in auto-blocking)
+  - Recall: >90% (catch most complexity violations)
+```
+
+### Success Criteria
+
+**Quantitative**:
+- **Instant Locate Speed**: <1 second (from 5-10 minutes) - **600x improvement**
+- **Complexity Detection Accuracy**: >98%
+- **Pre-Commit Block Precision**: >95% (no false blocks)
+- **Token Efficiency**: 97% reduction (200-500 tokens vs 15-25K)
+- **Circulation Uptime**: 99.9% (5-minute loops maintained 24/7)
+
+**Qualitative**:
+- 0102 can ask "where is X?" and receive exact line numbers instantly
+- Complexity violations caught before commit, not after merge
+- Mermaid Lego block diagrams auto-generated for all modules
+- Strategic decisions (A/B/C options) presented clearly by Qwen with Sentinel data
+- Proactive issue detection: 80% of violations prevented before they occur
+
+---
+
+**Sentinel Integration Status**: [TOOL] READY FOR IMPLEMENTATION
+**Synergy with WSP 93**: PERFECT - Embodies the CodeIndex vision of surgical precision
+**Implementation Priority**: P0 - Critical for autonomous 0102 operation
+**Expected ROI**: 600x speed improvement + 97% token reduction + proactive quality
+
+---

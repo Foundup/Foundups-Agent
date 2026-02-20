@@ -80,7 +80,7 @@ DESCRIPTION_2026 = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playlist
 ✊ Climate action
 ✊ Immigrant rights vs ICE cruelty
 
-🎵 FULL PLAYLIST: https://ffcpln.foundups.com
+🎵 FULL PLAYLIST: https://ravingANTIFA.com
 
 2026 is the most critical year for US democracy since 1776.
 250 years of freedom at stake. These songs are the soundtrack of resistance.
@@ -91,7 +91,7 @@ DESCRIPTION_2026 = """🔥 FFCPLN: F*** Fake Christian Pedo-Lovin' Nazi Playlist
 
 DESCRIPTION_SHORT = """🔥 From the FFCPLN Playlist - 160+ songs fighting fascism!
 
-🎵 Get the full playlist: https://ffcpln.foundups.com
+🎵 Get the full playlist: https://ravingANTIFA.com
 
 #FFCPLN #MAGA #ICE #Resistance #Shorts #Viral"""
 
@@ -244,7 +244,7 @@ class FFCPLNTitleEnhanceSkill:
     def _enhance_description(self, original_desc: str) -> str:
         """Step 4: Generate SEO-optimized description."""
         # Check if already has FFCPLN content
-        if "ffcpln.foundups.com" in original_desc.lower() and len(original_desc) > 200:
+        if ("ffcpln.foundups.com" in original_desc.lower() or "ffc.ravingantifa.com" in original_desc.lower()) and len(original_desc) > 200:
             return original_desc  # Already enhanced
         
         # Return full 2026 description for engagement
@@ -256,7 +256,7 @@ class FFCPLNTitleEnhanceSkill:
             "title_under_100": len(title) <= 100,
             "has_ffcpln_tag": "#FFCPLN" in title.upper(),
             "has_emoji": any(c in title for c in "🔥💀🚨⚠️❌👀🎵📢✊💪🌊"),
-            "has_playlist_link": "ffcpln.foundups.com" in description.lower(),
+            "has_playlist_link": ("ffcpln.foundups.com" in description.lower() or "ffc.ravingantifa.com" in description.lower()),
             "description_has_hashtags": "#" in description,
         }
         
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     # Test case: Japan Home cleaning video
     context = SkillContext(
         original_title="Japan Home cleaning… hates this time of year! Japanese wife goes insane",
-        original_description="Fake Fcuk Christian Pedo-lovin Nazi playlist: https://ffcpln.foundups.com",
+        original_description="Fake Fcuk Christian Pedo-lovin Nazi playlist: https://ravingANTIFA.com",
         video_duration=50,
         emotional_priority="outrage"
     )

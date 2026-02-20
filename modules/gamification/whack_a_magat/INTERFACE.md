@@ -139,3 +139,55 @@ profile = get_profile("mod123")
 - Functions remembered from 02 state via 0102 pArtifacts.
 - Autonomous calls from livechat adapters per WSP 3 integration.
 - Quiz XP integrates with MAGADOOM unified progression system.
+
+---
+
+## Invite Distributor API
+
+### auto_distribute_top10_invites() -> List[Dict]
+- **Purpose**: Automatically distribute invites to TOP 10 whackers who haven't received one.
+- **Returns**: List of dicts with user info, invite codes, and formatted messages.
+- **Tracking**: SQLite-backed (no duplicates per user/invite_type).
+- **Presenter**: Random community presenter selection per invite.
+
+**Example Return:**
+```python
+[{
+    'user_id': 'UC123',
+    'username': 'WhackerPro',
+    'rank': 3,
+    'code': 'FUP-ABCD-1234',
+    'presenter': 'Al-sq5ti',
+    'presenter_title': 'Managing Director',
+    'message': '🎟️ TOP 3 REWARD! @WhackerPro earned an invite! Code: FUP-ABCD-1234 → foundups.com 🎁 Get 5 codes to share! (Presented by @Al-sq5ti - Managing Director) ✊✋🖐️'
+}]
+```
+
+### get_random_presenter() -> Dict
+- **Purpose**: Select random community presenter for invite messages.
+- **Returns**: Dict with username and title.
+
+### COMMUNITY_PRESENTERS
+```python
+COMMUNITY_PRESENTERS = [
+    {"username": "Al-sq5ti", "title": "Managing Director", "user_id": "UCcnCiZV5ZPJ_cjF7RsWIZ0w"},
+    {"username": "Mike", "title": "Founder", "user_id": None},
+    {"username": "Move2Japan", "title": "Host", "user_id": None},
+]
+```
+
+### has_received_invite(user_id: str, invite_type: str) -> bool
+- **Purpose**: Check if user already received invite of this type.
+- **Tracking**: SQLite table `invite_distributions` with UNIQUE constraint.
+
+### record_invite_distribution(user_id, username, invite_code, invite_type) -> bool
+- **Purpose**: Record invite distribution (prevents duplicates).
+
+### get_invite_stats() -> Dict
+- **Purpose**: Get invite distribution statistics.
+- **Returns**: `{total_distributed, unique_recipients, by_type}`
+
+---
+
+**WSP 11 Compliance:** Complete
+**Last Updated:** 2026-02-12

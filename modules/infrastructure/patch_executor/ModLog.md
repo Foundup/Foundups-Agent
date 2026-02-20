@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-01-17 - Memory Preflight Gate (WSP_CORE Tier-0)
+
+**Change Type**: Safety / Enforcement Enhancement  
+**WSP Compliance**: WSP_CORE (WSP Memory System), WSP 50 (Pre-Action Verification), WSP 77 (Agent Coordination), WSP 22 (ModLog Sync)  
+**Impact Analysis**: Prevents patch application when Tier-0 contract memory is missing for touched modules. Enables deterministic, machine-first gating before autonomous writes.
+
+### What Changed
+- `src/patch_executor.py`:
+  - Added a memory preflight enforcement step after allowlist validation.
+  - Infers touched module roots from patch file paths (e.g., `modules/<domain>/<module>`).
+  - Runs `MemoryPreflightGuard.run_preflight()` per inferred module.
+  - Blocks patch application unless Tier-0 is complete (or degraded mode enabled in WRE preflight).
+
+### New Environment Flags
+- `PATCH_EXECUTOR_MEMORY_GUARD` (default: true): enable Tier-0 enforcement
+- `PATCH_EXECUTOR_ALLOW_NO_MEMORY` (default: false): override and allow proceed without inferred module context
+
 ## 2025-10-20 - Module Created (WSP 3 Compliance Fix)
 
 **Change Type**: Module Creation

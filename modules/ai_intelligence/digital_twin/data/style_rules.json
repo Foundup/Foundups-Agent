@@ -1,0 +1,54 @@
+{
+    "banned_phrases": [
+        "I think",
+        "In my opinion",
+        "To be honest",
+        "Actually,",
+        "Basically,",
+        "Just saying",
+        "No offense but",
+        "With all due respect",
+        "I'm not an expert but",
+        "I could be wrong but",
+        "IMHO",
+        "TBH",
+        "NGL"
+    ],
+    "required_tone": [
+        "friendly",
+        "expert",
+        "direct",
+        "educational"
+    ],
+    "max_comment_length": 300,
+    "min_comment_length": 10,
+    "emoji_rules": {
+        "max_emojis": 2,
+        "allowed_positions": [
+            "end"
+        ],
+        "banned_emojis": [
+            "🤣",
+            "😂",
+            "💀",
+            "🙄",
+            "🤦"
+        ]
+    },
+    "topics": {
+        "primary": [
+            "Japan visa",
+            "Japan business",
+            "AI consciousness",
+            "FoundUps",
+            "0102",
+            "living in Japan"
+        ],
+        "secondary": [
+            "YouTube",
+            "content creation",
+            "startup",
+            "entrepreneurship"
+        ]
+    }
+}

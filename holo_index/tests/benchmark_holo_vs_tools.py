@@ -17,6 +17,7 @@ Run with:
 import time
 import subprocess
 import shutil
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
@@ -47,13 +48,20 @@ class BenchmarkRunner:
                 cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
-                timeout=60
+                encoding="utf-8",
+                errors="replace",
+                timeout=int(os.getenv("BENCH_HOLO_TIMEOUT", "60"))
             )
             elapsed = time.time() - start
 
             found = "[SOLUTION FOUND]" in result.stdout or "[RESULTS]" in result.stdout
             # Count results
-            result_count = result.stdout.count("Match:") or result.stdout.count("modules/")
+            result_count = (
+                result.stdout.count("[CODE]") +
+                result.stdout.count("[WSP]") +
+                result.stdout.count("[TEST]") +
+                result.stdout.count("[SKILL]")
+            )
 
             return found, elapsed, result_count
 
@@ -74,7 +82,9 @@ class BenchmarkRunner:
                 cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
-                timeout=30
+                encoding="utf-8",
+                errors="replace",
+                timeout=int(os.getenv("BENCH_RG_TIMEOUT", "30"))
             )
             elapsed = time.time() - start
 
@@ -100,7 +110,9 @@ class BenchmarkRunner:
                 cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
-                timeout=60
+                encoding="utf-8",
+                errors="replace",
+                timeout=int(os.getenv("BENCH_GREP_TIMEOUT", "60"))
             )
             elapsed = time.time() - start
 
@@ -175,9 +187,9 @@ class BenchmarkRunner:
         print("-"*100)
 
         for r in self.results:
-            holo_status = f"{'✓' if r['holo']['found'] else '✗'} {r['holo']['time']:.2f}s ({r['holo']['count']})"
-            rg_status = f"{'✓' if r['ripgrep']['found'] else '✗'} {r['ripgrep']['time']:.2f}s ({r['ripgrep']['count']})"
-            grep_status = f"{'✓' if r['grep']['found'] else '✗'} {r['grep']['time']:.2f}s ({r['grep']['count']})"
+            holo_status = f"{'OK' if r['holo']['found'] else 'NO'} {r['holo']['time']:.2f}s ({r['holo']['count']})"
+            rg_status = f"{'OK' if r['ripgrep']['found'] else 'NO'} {r['ripgrep']['time']:.2f}s ({r['ripgrep']['count']})"
+            grep_status = f"{'OK' if r['grep']['found'] else 'NO'} {r['grep']['time']:.2f}s ({r['grep']['count']})"
 
             query_display = r['query'][:37] + "..." if len(r['query']) > 40 else r['query']
 
@@ -232,15 +244,15 @@ class BenchmarkRunner:
         print("="*100)
 
         if len(semantic_advantage) > 0:
-            print("\n✓ HoloIndex successfully finds semantic queries that traditional tools cannot")
-            print("✓ Semantic search capability verified")
+            print("\nOK: HoloIndex successfully finds semantic queries that traditional tools cannot")
+            print("OK: Semantic search capability verified")
         else:
-            print("\n⚠ Warning: Semantic advantage not demonstrated in this test set")
+            print("\nWARN: Semantic advantage not demonstrated in this test set")
 
         if holo_success >= rg_success:
-            print("✓ HoloIndex finds equal or more results than ripgrep")
+            print("OK: HoloIndex finds equal or more results than ripgrep")
         else:
-            print("⚠ ripgrep found more literal matches (expected for grep tools)")
+            print("WARN: ripgrep found more literal matches (expected for grep tools)")
 
         print("\nHoloIndex Value Proposition:")
         print("  1. Semantic understanding (finds conceptual matches)")
@@ -283,6 +295,10 @@ def main():
         # Filename queries
         ("coordinator", "filename"),
     ]
+
+    max_queries = int(os.getenv("BENCH_MAX_QUERIES", "0"))
+    if max_queries > 0:
+        test_suite = test_suite[:max_queries]
 
     for query, query_type in test_suite:
         runner.benchmark_query(query, query_type)

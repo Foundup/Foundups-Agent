@@ -78,16 +78,27 @@ if "--offline" in sys.argv:
     os.environ.setdefault('HF_HUB_OFFLINE', '1')
     os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
 
-try:
-    from holo_index.core import IntelligentSubroutineEngine, HoloIndex
-    from holo_index.output import AgenticOutputThrottler
-    from holo_index.utils import print_onboarding
-except ImportError:
-    # Fallback for when run as script
-    sys.path.insert(0, str(Path(__file__).parent))
-    from core import IntelligentSubroutineEngine, HoloIndex
-    from output import AgenticOutputThrottler
-    from utils import print_onboarding
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+# 0102 speed knob: allow bundle-json fastpath without importing Chroma/model stack.
+_bundle_json_fastpath = ("--bundle-json" in sys.argv) and _env_truthy("HOLO_SKIP_MODEL", "false")
+if not _bundle_json_fastpath:
+    try:
+        from holo_index.core import IntelligentSubroutineEngine, HoloIndex
+        from holo_index.output import AgenticOutputThrottler
+        from holo_index.utils import print_onboarding
+    except ImportError:
+        # Fallback for when run as script
+        sys.path.insert(0, str(Path(__file__).parent))
+        from core import IntelligentSubroutineEngine, HoloIndex
+        from output import AgenticOutputThrottler
+        from utils import print_onboarding
+else:
+    IntelligentSubroutineEngine = None  # type: ignore
+    HoloIndex = None  # type: ignore
+    AgenticOutputThrottler = None  # type: ignore
+    print_onboarding = None  # type: ignore
 
 # SSD locations (Phase 1 requirement)
 os.environ.setdefault('CHROMADB_DATA_PATH', 'E:/HoloIndex/vectors')
@@ -199,6 +210,44 @@ def render_response(throttler, outputs, args):
     output = throttler.render_prioritized_output(verbose=getattr(args, 'verbose', False))
     safe_print(output)
 
+
+def _is_fast_search_enabled(args) -> bool:
+    """
+    Decide whether to run fast retrieval-only search path.
+
+    Fast mode intentionally skips heavy advisory/orchestration layers to keep
+    CLI latency low for direct lookup workflows.
+    """
+    explicit = bool(getattr(args, "fast_search", False))
+    env_enabled = _env_truthy("HOLO_FAST_SEARCH", "false")
+    return explicit or env_enabled
+
+
+def _render_fast_search_summary(results: Dict[str, Any], limit: int = 5) -> None:
+    """Compact fast-mode output compatible with existing CLI usage."""
+    code_hits = results.get("code", []) or []
+    wsp_hits = results.get("wsps", []) or []
+    total_hits = len(code_hits) + len(wsp_hits)
+
+    safe_print(f"[OK] Analysis complete: {total_hits} hits (code={len(code_hits)}, wsp={len(wsp_hits)}), no critical issues found")
+    safe_print("[RESULTS] Top matches")
+
+    shown = 0
+    for hit in code_hits:
+        loc = hit.get("location") or hit.get("path") or "unknown"
+        safe_print(f"  [CODE] {loc}")
+        shown += 1
+        if shown >= limit:
+            return
+
+    for hit in wsp_hits:
+        title = hit.get("title") or "unknown"
+        path = hit.get("path") or "unknown"
+        safe_print(f"  [WSP] {path if path != 'unknown' else title}")
+        shown += 1
+        if shown >= limit:
+            return
+
 # Temporary stub - to be extracted later
 def _get_search_history_for_patterns():
     """Retrieve search history for pattern analysis (Phase 2)."""
@@ -283,10 +332,27 @@ def main():
     )
     parser.add_argument('--search', '-s', type=str, help='Search query')
     parser.add_argument('--limit', type=int, default=5, help='Number of results (default: 5)')
+    parser.add_argument(
+        '--bundle-json',
+        action='store_true',
+        help='Emit machine-readable WSP memory bundle JSON (stdout only, no extra text)'
+    )
+    parser.add_argument(
+        '--bundle-module-hint',
+        type=str,
+        help='Module hint or module path for bundle generation (e.g., modules/communication/livechat or livechat)'
+    )
+    parser.add_argument(
+        '--bundle-task',
+        type=str,
+        help='Override task string used for bundle generation (defaults to --search)'
+    )
     parser.add_argument('--index', action='store_true', help='Index both code and WSP (alias for --index-all)')
     parser.add_argument('--index-all', action='store_true', help='Index both code and WSP')
     parser.add_argument('--index-code', action='store_true', help='Index code (NAVIGATION.py)')
     parser.add_argument('--index-wsp', action='store_true', help='Index WSP documents')
+    parser.add_argument('--index-symbols', action='store_true', help='Index code symbols (functions/classes)')
+    parser.add_argument('--symbol-roots', nargs='*', help='Limit symbol indexing to specific roots (relative to repo)')
     parser.add_argument('--index-skillz', dest='index_skills', action='store_true', help='Index SKILLz.md files for agent discovery (preferred)')
     parser.add_argument('--index-skills', dest='index_skills', action='store_true', help='Legacy alias for --index-skillz')
     parser.add_argument('--reindex-skills', dest='index_skills', action='store_true', help='Alias for --index-skillz (WRE automation)')
@@ -300,6 +366,7 @@ def main():
     parser.add_argument('--benchmark', action='store_true', help='Benchmark SSD performance')
     parser.add_argument('--ssd', type=str, default='E:/HoloIndex', help='SSD base path (default: E:/HoloIndex)')
     parser.add_argument('--offline', action='store_true', help='Disable model downloads and pip installs; use offline lexical search if needed')
+    parser.add_argument('--fast-search', action='store_true', help='Fast retrieval-only mode (skips heavy advisory/orchestration steps)')
 
     parser.add_argument('--llm-advisor', action='store_true', help='Force enable Qwen advisor guidance')
     parser.add_argument('--init-dae', type=str, nargs='?', const='auto', help='Initialize DAE context (auto-detect or specify DAE focus)')
@@ -356,6 +423,334 @@ def main():
     parser.add_argument('--organize-docs', action='store_true', help='Allow DocDAE to reorganize docs during auto-refresh')
 
     args = parser.parse_args()
+
+    if getattr(args, "bundle_json", False):
+        # JSON-only output mode (WSP_CORE Memory System)
+        # NOTE: This mode must avoid all non-JSON stdout (no onboarding, no throttler rendering).
+        import json as _json
+        import re as _re
+        from datetime import datetime as _dt
+        from pathlib import Path as _Path
+        import ast as _ast
+
+        def _resolve_module_dir(repo_root: "_Path", hint: str) -> Optional["_Path"]:
+            raw = (hint or "").strip()
+            if not raw:
+                return None
+
+            norm = raw.replace("\\", "/").strip("/")
+
+            # Allow direct relative paths (modules/... or holo_index/...)
+            direct = repo_root / norm
+            if direct.exists() and direct.is_dir():
+                return direct
+
+            # Allow shorthand "communication/livechat" by prefixing "modules/"
+            if "/" in norm and not norm.startswith("modules/"):
+                prefixed = repo_root / "modules" / norm
+                if prefixed.exists() and prefixed.is_dir():
+                    return prefixed
+
+            # Allow module name-only resolution under modules/<domain>/<module>
+            modules_root = repo_root / "modules"
+            if modules_root.exists():
+                try:
+                    for domain_dir in modules_root.iterdir():
+                        if not domain_dir.is_dir():
+                            continue
+                        candidate = domain_dir / norm
+                        if candidate.exists() and candidate.is_dir():
+                            return candidate
+                except Exception:
+                    return None
+
+            return None
+
+        def _artifact_snapshot(module_dir: "_Path") -> Dict[str, Any]:
+            # Tier definitions mirror WSP_CORE "Tiered Holo Retrieval Targets" (minimal v1)
+            tiers: Dict[str, Dict[str, Any]] = {
+                "0": {
+                    "name": "Contract/Guardrails",
+                    "required": ["README.md", "INTERFACE.md"],
+                    "optional": ["SPEC.md", "PRD.md", "PROMPTS.md", "prompts/", "RUNBOOK.md"],
+                },
+                "1": {
+                    "name": "Evolution/Verification",
+                    "required": [],
+                    "optional": ["ROADMAP.md", "ModLog.md", "tests/TestModLog.md", "tests/README.md"],
+                },
+                "2": {
+                    "name": "Retrieval/Decisions/Failures",
+                    "required": [],
+                    "optional": ["memory/README.md", "HOLOINDEX.md", "ADR.md", "adr/", "INCIDENTS.md", "SEV.md"],
+                },
+            }
+
+            artifacts: List[Dict[str, Any]] = []
+            missing_required: List[str] = []
+            missing_optional: List[str] = []
+
+            def _exists(p: "_Path", is_dir: bool) -> bool:
+                try:
+                    return p.is_dir() if is_dir else p.exists()
+                except Exception:
+                    return False
+
+            for tier_key, tier_def in tiers.items():
+                tier_num = int(tier_key)
+                for name in tier_def["required"]:
+                    is_dir = name.endswith("/")
+                    p = module_dir / name.rstrip("/")
+                    exists = _exists(p, is_dir=is_dir)
+                    rel = str(p.relative_to(module_dir)).replace("\\", "/")
+                    artifacts.append({
+                        "tier": tier_num,
+                        "required": True,
+                        "name": name,
+                        "relative_path": rel + ("/" if is_dir else ""),
+                        "path": str(p),
+                        "exists": exists,
+                    })
+                    if not exists:
+                        missing_required.append(f"Tier-{tier_num}: {rel}{'/' if is_dir else ''}")
+
+                for name in tier_def["optional"]:
+                    is_dir = name.endswith("/")
+                    p = module_dir / name.rstrip("/")
+                    exists = _exists(p, is_dir=is_dir)
+                    rel = str(p.relative_to(module_dir)).replace("\\", "/")
+                    artifacts.append({
+                        "tier": tier_num,
+                        "required": False,
+                        "name": name,
+                        "relative_path": rel + ("/" if is_dir else ""),
+                        "path": str(p),
+                        "exists": exists,
+                    })
+                    if not exists:
+                        missing_optional.append(f"Tier-{tier_num}: {rel}{'/' if is_dir else ''}")
+
+            return {
+                "tiers": tiers,
+                "artifacts": artifacts,
+                "missing_required": missing_required,
+                "missing_optional": missing_optional,
+                "tier0_complete": len(missing_required) == 0,
+            }
+
+        def _tokenize(query: str) -> List[str]:
+            return [t for t in _re.findall(r"[a-z0-9_]+", (query or "").lower()) if t]
+
+        def _score_text(tokens: List[str], *fields: str) -> float:
+            score = 0.0
+            lowered = [(f or "").lower() for f in fields]
+            normalized = [f.replace("_", "").replace("-", "") for f in lowered]
+            for tok in tokens:
+                if not tok:
+                    continue
+                for idx, field in enumerate(lowered):
+                    if tok in field or tok in normalized[idx]:
+                        # Weight earlier fields slightly higher (title/need > summary/path)
+                        score += (2.0 if idx == 0 else 1.0 if idx == 1 else 0.5)
+            return score
+
+        def _load_need_to(repo_root: "_Path") -> Dict[str, str]:
+            nav_path = repo_root / "NAVIGATION.py"
+            if not nav_path.exists():
+                return {}
+            try:
+                tree = _ast.parse(nav_path.read_text(encoding="utf-8-sig", errors="ignore"))
+            except Exception:
+                return {}
+            for node in _ast.walk(tree):
+                if isinstance(node, _ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, _ast.Name) and target.id == "NEED_TO":
+                            try:
+                                return _ast.literal_eval(node.value)
+                            except Exception:
+                                return {}
+            return {}
+
+        def _load_wsp_summary(ssd_path: str) -> Dict[str, Dict[str, str]]:
+            try:
+                summary_path = _Path(ssd_path) / "indexes" / "wsp_summary.json"
+                if not summary_path.exists():
+                    return {}
+                return _json.loads(summary_path.read_text(encoding="utf-8", errors="ignore"))
+            except Exception:
+                return {}
+
+        def _lexical_task_retrieval(
+            repo_root: "_Path",
+            task: str,
+            limit: int,
+            ssd_path: str,
+            module_dir: Optional["_Path"] = None,
+        ) -> Dict[str, Any]:
+            tokens = _tokenize(task)
+            need_to = _load_need_to(repo_root)
+            wsp_summary = _load_wsp_summary(ssd_path)
+
+            code_hits: List[Dict[str, Any]] = []
+            for need, location in list(need_to.items()):
+                score = _score_text(tokens, need, location)
+                if score <= 0:
+                    continue
+                similarity = min(1.0, score / max(1.0, len(tokens) * 3.0))
+                code_hits.append({
+                    "need": need,
+                    "location": location,
+                    "similarity": f"{similarity*100:.1f}%",
+                    "cube": None,
+                    "type": "code",
+                    "priority": 1,
+                })
+
+            # Path-based fallback when module hint is provided (fast lexical, no embeddings)
+            if module_dir is not None and module_dir.exists():
+                allowed_ext = {".py", ".md", ".txt", ".json", ".yaml", ".yml"}
+                for path in module_dir.rglob("*"):
+                    if not path.is_file():
+                        continue
+                    if path.suffix.lower() not in allowed_ext:
+                        continue
+                    rel_path = str(path.relative_to(repo_root)).replace("\\", "/")
+                    score = _score_text(tokens, rel_path, path.name)
+                    if score <= 0:
+                        continue
+                    similarity = min(1.0, score / max(1.0, len(tokens) * 3.0))
+                    code_hits.append({
+                        "need": f"path match: {path.name}",
+                        "location": rel_path,
+                        "similarity": f"{similarity*100:.1f}%",
+                        "cube": None,
+                        "type": "code",
+                        "priority": 1,
+                    })
+
+            # Deduplicate by location while preserving score order
+            seen_locations = set()
+            deduped_hits = []
+            for hit in code_hits:
+                loc = hit.get("location")
+                if not loc or loc in seen_locations:
+                    continue
+                seen_locations.add(loc)
+                deduped_hits.append(hit)
+            code_hits = deduped_hits
+            code_hits.sort(key=lambda x: float((x.get("similarity") or "0%").rstrip("%")), reverse=True)
+            code_hits = code_hits[:limit]
+
+            wsp_hits: List[Dict[str, Any]] = []
+            for wsp_id, meta in wsp_summary.items():
+                title = meta.get("title", "")
+                path = meta.get("path", "")
+                summary = meta.get("summary", "")
+                score = _score_text(tokens, title, summary, path)
+                if score <= 0:
+                    continue
+                similarity = min(1.0, score / max(1.0, len(tokens) * 3.0))
+                wsp_hits.append({
+                    "wsp": wsp_id,
+                    "title": title,
+                    "summary": summary,
+                    "path": path,
+                    "similarity": f"{similarity*100:.1f}%",
+                    "cube": None,
+                    "type": "wsp_protocol" if str(wsp_id).startswith("WSP ") else "documentation",
+                    "priority": 5,
+                })
+            wsp_hits.sort(key=lambda x: float((x.get("similarity") or "0%").rstrip("%")), reverse=True)
+            wsp_hits = wsp_hits[:limit]
+
+            return {
+                "code_hits": code_hits,
+                "wsp_hits": wsp_hits,
+                "test_hits": [],
+                "skill_hits": [],
+                "code": code_hits,
+                "wsps": wsp_hits,
+                "tests": [],
+                "skills": [],
+                "metadata": {
+                    "query": task,
+                    "mode": "lexical",
+                    "skip_model": True,
+                    "code_count": len(code_hits),
+                    "wsp_count": len(wsp_hits),
+                    "test_count": 0,
+                    "skill_count": 0,
+                    "timestamp": _dt.utcnow().isoformat() + "Z",
+                }
+            }
+
+        # Hard silence: bundle-json requires stdout = JSON only
+        os.environ.setdefault("HOLO_SILENT", "1")
+        try:
+            logging.disable(logging.CRITICAL)
+        except Exception:
+            pass
+
+        repo_root = _Path(__file__).resolve().parents[1]
+        task = (getattr(args, "bundle_task", None) or getattr(args, "search", None) or "").strip()
+        module_hint = (getattr(args, "bundle_module_hint", None) or "").strip()
+
+        if not task:
+            sys.stdout.write(_json.dumps({
+                "schema_version": "wsp_memory_bundle_v1",
+                "generated_at": _dt.utcnow().isoformat() + "Z",
+                "ok": False,
+                "error": "bundle-json requires --search or --bundle-task",
+            }, ensure_ascii=True) + "\n")
+            return
+
+        module_dir = _resolve_module_dir(repo_root, module_hint) if module_hint else None
+        module_path = None
+        if module_dir is not None:
+            try:
+                module_path = str(module_dir.relative_to(repo_root)).replace("\\", "/")
+            except Exception:
+                module_path = str(module_dir).replace("\\", "/")
+
+        # Task retrieval: fast lexical path when HOLO_SKIP_MODEL=1, otherwise full HoloIndex search.
+        skip_model = _env_truthy("HOLO_SKIP_MODEL", "false")
+        if skip_model:
+            search_payload = _lexical_task_retrieval(repo_root, task, int(args.limit), str(args.ssd), module_dir=module_dir)
+        else:
+            try:
+                from holo_index.core import HoloIndex as _HoloIndex  # local import to avoid heavy imports in fastpath
+                holo = _HoloIndex(ssd_path=args.ssd, quiet=True)
+                search_payload = holo.search(task, limit=args.limit, doc_type_filter=getattr(args, "doc_type", "all"))
+            except Exception as exc:
+                sys.stdout.write(_json.dumps({
+                    "schema_version": "wsp_memory_bundle_v1",
+                    "generated_at": _dt.utcnow().isoformat() + "Z",
+                    "ok": False,
+                    "task": task,
+                    "module_hint": module_hint,
+                    "module_path": module_path,
+                    "error": f"holo_search_failed: {exc}",
+                }, ensure_ascii=True) + "\n")
+                return
+
+        structured_memory = None
+        if module_dir is not None:
+            structured_memory = _artifact_snapshot(module_dir)
+
+        bundle = {
+            "schema_version": "wsp_memory_bundle_v1",
+            "generated_at": _dt.utcnow().isoformat() + "Z",
+            "ok": True,
+            "task": task,
+            "module_hint": module_hint,
+            "module_path": module_path,
+            "structured_memory": structured_memory,
+            "task_retrieval": search_payload,
+        }
+
+        sys.stdout.write(_json.dumps(bundle, ensure_ascii=True) + "\n")
+        return
 
     verbose = bool(getattr(args, 'verbose', False))
     search_active = bool(getattr(args, 'search', None))
@@ -418,6 +813,11 @@ def main():
         os.environ['HOLO_DISABLE_PIP_INSTALL'] = '1'
         os.environ.setdefault('HF_HUB_OFFLINE', '1')
         os.environ.setdefault('TRANSFORMERS_OFFLINE', '1')
+
+    fast_search_mode = _is_fast_search_enabled(args)
+    if fast_search_mode:
+        # Fast mode is retrieval-focused; skip heavyweight embedding model load.
+        os.environ.setdefault('HOLO_SKIP_MODEL', '1')
 
     if args.code_index_report:
         _run_codeindex_report(args.code_index_report)
@@ -538,6 +938,7 @@ def main():
 
     index_code = args.index_code or args.index or args.index_all
     index_wsp = args.index_wsp or args.index or args.index_all
+    index_symbols = args.index_symbols
 
     indexing_awarded = False
     if index_code:
@@ -553,6 +954,35 @@ def main():
         except Exception as e:
             print(f"[WARN] Failed to record index refresh: {e}")
 
+        indexing_awarded = True
+        # Auto symbol indexing to keep memory self-maintaining (can disable with HOLO_SYMBOL_AUTO=0)
+        auto_symbols = os.getenv("HOLO_SYMBOL_AUTO", "1").lower() in {"1", "true", "yes", "on"}
+        if index_symbols or auto_symbols:
+            symbol_roots = None
+            if args.symbol_roots:
+                symbol_roots = [Path(r) for r in args.symbol_roots]
+            elif args.module:
+                candidate = Path(args.module)
+                if not candidate.exists():
+                    candidate = Path("modules") / args.module
+                symbol_roots = [candidate]
+            else:
+                env_roots = os.getenv("HOLO_SYMBOL_ROOTS")
+                if env_roots:
+                    symbol_roots = [Path(r.strip()) for r in env_roots.split(";") if r.strip()]
+                else:
+                    symbol_roots = [Path("modules")]
+            start_time = time.time()
+            holo.index_symbol_entries(roots=symbol_roots)
+            duration = time.time() - start_time
+            safe_print(f"[SYMBOLS] Indexed symbols in {duration:.2f}s")
+            indexing_awarded = True
+    if index_symbols and not index_code:
+        start_time = time.time()
+        roots = [Path(r) for r in args.symbol_roots] if args.symbol_roots else None
+        holo.index_symbol_entries(roots=roots)
+        duration = time.time() - start_time
+        safe_print(f"[SYMBOLS] Indexed symbols in {duration:.2f}s")
         indexing_awarded = True
     if index_wsp:
         start_time = time.time()
@@ -782,6 +1212,7 @@ def main():
 
         try:
             import subprocess
+            import shutil
 
             holoindex_root = Path(__file__).parent
             orphaned_files = []
@@ -795,12 +1226,57 @@ def main():
                 """Check if document is referenced by other docs (per WSP 83)"""
                 doc_name = Path(doc_path).name
                 try:
-                    # Use grep to find references, excluding the file itself
-                    result = subprocess.run(
-                        ['grep', '-r', '--include=*.md', '--exclude-dir=.git', doc_name, str(holoindex_root)],
-                        capture_output=True, text=True, cwd=holoindex_root
-                    )
-                    references = [line for line in result.stdout.split('\n') if line.strip() and not doc_path in line]
+                    rg_path = shutil.which("rg")
+                    doc_rel = str(doc_path).replace("\\", "/")
+                    references = []
+
+                    if rg_path:
+                        result = subprocess.run(
+                            [
+                                rg_path,
+                                "-n",
+                                "--fixed-strings",
+                                "--glob",
+                                "*.md",
+                                "--glob",
+                                "!**/.git/**",
+                                doc_name,
+                                str(holoindex_root)
+                            ],
+                            capture_output=True,
+                            text=True,
+                            encoding="utf-8",
+                            errors="replace",
+                            cwd=holoindex_root
+                        )
+                        for line in result.stdout.split('\n'):
+                            if not line.strip():
+                                continue
+                            parts = line.split(":", 2)
+                            if not parts:
+                                continue
+                            path_part = parts[0].replace("\\", "/")
+                            if path_part.endswith(doc_rel) or path_part == doc_rel:
+                                continue
+                            references.append(line)
+                    else:
+                        for root, dirs, files in os.walk(holoindex_root):
+                            dirs[:] = [d for d in dirs if d != ".git"]
+                            for filename in files:
+                                if not filename.endswith(".md"):
+                                    continue
+                                file_path = Path(root) / filename
+                                rel_path = file_path.relative_to(holoindex_root)
+                                if str(rel_path).replace("\\", "/") == doc_rel:
+                                    continue
+                                try:
+                                    content = file_path.read_text(encoding="utf-8", errors="ignore")
+                                except OSError:
+                                    continue
+                                if doc_name in content:
+                                    references.append(str(rel_path))
+                                    break
+
                     return len(references) > 0
                 except:
                     return False
@@ -1109,6 +1585,15 @@ def main():
         # Set query context
         throttler.set_query_context(args.search, results)
 
+        # Fast mode: retrieval-focused path for low-latency lookups.
+        if fast_search_mode:
+            _render_fast_search_summary(results, limit=args.limit)
+            search_results = results
+            if args.llm_advisor and results.get('advisor'):
+                add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
+            # Skip heavy post-processing pipeline.
+            return
+
         # P0 FIX: Integrate Gemma root violation monitor alerts
         # Shows real-time root directory violations in HoloIndex output
         if not args.quiet_root_alerts:
@@ -1215,10 +1700,22 @@ def main():
         # Memory recording
         _record_thought_to_memory(results, args.search, advisor, add_reward_event)
 
-        # Delegate rendering to throttler
-        throttler.display_results(results)
-        final_output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
-        safe_print(final_output)
+        # Route through Qwen orchestrator for intent-aware output (OutputComposer)
+        orchestrated_output = None
+        try:
+            from holo_index.qwen_advisor.orchestration.qwen_orchestrator import QwenOrchestrator
+            qwen_orch = QwenOrchestrator()
+            orchestrated_output = qwen_orch.orchestrate_holoindex_request(args.search, results)
+        except Exception as orch_exc:
+            logger.debug(f"[ORCHESTRATOR] Fallback to throttler: {orch_exc}")
+
+        if orchestrated_output:
+            safe_print(orchestrated_output)
+        else:
+            # Fallback: delegate rendering to throttler
+            throttler.display_results(results)
+            final_output = throttler.render_prioritized_output(verbose=args.verbose if hasattr(args, 'verbose') else False)
+            safe_print(final_output)
 
         if args.llm_advisor and results.get('advisor'):
             add_reward_event('advisor_usage', 3, 'Consulted Qwen advisor guidance', {'query': last_query})
@@ -1539,9 +2036,20 @@ def main():
         try:
             # Use intelligent subroutine engine
             from holo_index.core import IntelligentSubroutineEngine
+            from holo_index.reports.holo_system_check import run_system_check
             engine = IntelligentSubroutineEngine()
             results = engine.run_intelligent_analysis("health check", None)
             safe_print(results.get('summary', '[HEALTH-CHECK] Complete'))
+            system_report = run_system_check(project_root)
+            wsp_health = system_report.get("wsp_framework_health") or {}
+            safe_print(
+                "[HEALTH-CHECK][WSP] severity={severity} drift={drift} framework={framework} knowledge={knowledge}".format(
+                    severity=wsp_health.get("severity", "unknown"),
+                    drift=wsp_health.get("drift_count", 0),
+                    framework=wsp_health.get("framework_count", 0),
+                    knowledge=wsp_health.get("knowledge_count", 0),
+                )
+            )
         except Exception as e:
             safe_print(f"[ERROR] Health check failed: {e}")
         return
@@ -1565,12 +2073,21 @@ def main():
             output_dir = Path(__file__).parent / "reports"
             output_path = write_system_check_report(report, output_dir)
             summary = report.get("summary") or {}
+            wsp_health = report.get("wsp_framework_health") or {}
             safe_print(
                 "[SYSTEM-CHECK] Summary: ok {ok}, in_dev {in_dev}, missing {missing}, unwired {unwired}".format(
                     ok=summary.get("ok", 0),
                     in_dev=summary.get("in_dev", 0),
                     missing=summary.get("missing", 0),
                     unwired=summary.get("unwired", 0),
+                )
+            )
+            safe_print(
+                "[SYSTEM-CHECK][WSP] severity={severity} drift={drift} framework={framework} knowledge={knowledge}".format(
+                    severity=wsp_health.get("severity", "unknown"),
+                    drift=wsp_health.get("drift_count", 0),
+                    framework=wsp_health.get("framework_count", 0),
+                    knowledge=wsp_health.get("knowledge_count", 0),
                 )
             )
             safe_print(f"[SYSTEM-CHECK] Report saved -> {output_path}")
@@ -1674,6 +2191,7 @@ def main():
         safe_print("  python holo_index.py --search 'query'        # Search code + WSP guidance")
         safe_print("  python holo_index.py --search 'query' --limit 3")
         safe_print("  python holo_index.py --search 'query' --llm-advisor  # Add Qwen advisor guidance")
+        safe_print("  python holo_index.py --index-symbols --symbol-roots modules/ai_intelligence/pqn_alignment")
         safe_print("  python holo_index.py --link-modules          # Link all module documentation (Qwen)")
         safe_print("  python holo_index.py --link-modules --module liberty_alert  # Link one module")
         safe_print("  python holo_index.py --link-modules --interactive  # Interactive mode")
@@ -1688,6 +2206,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

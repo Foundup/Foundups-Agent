@@ -2,6 +2,91 @@
 
 ## Latest Changes
 
+### V060 - Protected-Branch PR Enforcement + Release Auto-Merge Guard
+**Date**: 2026-02-19
+**Changes**:
+- Added explicit branch policy helpers in `src/git_linkedin_bridge.py`:
+  - `_branch_requires_pr(...)` with protected defaults (`main`, `master`)
+  - `_is_release_branch(...)` with default release patterns (`main`, `master`, `release/*`, `hotfix/*`)
+- `push_and_post()` now enforces PR flow by policy on protected branches before attempting direct `git push`.
+- PR auto-merge now skips when branch does not match release patterns.
+- Added test coverage: `tests/test_git_push_policy.py`.
+**Impact**: Prevents accidental direct protected-branch pushes and blocks auto-merging PRs from non-release branches in autonomous mode.
+**WSP**: WSP 22 (ModLog), WSP 91 (DAEMON safety), WSP 50 (Pre-action verification)
+
+### V059 - Lazy Package Exports + OAuth Import Path Fallbacks
+**Date**: 2026-02-17
+**Changes**:
+- Refactored `__init__.py` and `src/__init__.py` to lazy-load `linkedin_agent` symbols through `__getattr__` instead of importing `linkedin_agent` at package import time.
+- Updated OAuth fallback imports to check `modules.platform_integration.utilities.oauth_management` when the legacy infrastructure path is unavailable.
+- Fixed priority scorer fallback path to `modules.ai_intelligence.priority_scorer`.
+**Impact**: Prevents unrelated startup warnings/side effects when callers import only `git_linkedin_bridge` (e.g., GitPushDAE) and keeps LinkedIn auth boot resilient in both legacy/new module layouts.
+**WSP**: WSP 22 (ModLog), WSP 49 (module boundaries), WSP 91 (operational clarity)
+
+### V058 - Dependency Launcher Cross-References (LEGO Compliance)
+**Date**: 2026-01-26
+**Changes**: Added explicit cross-references to `dependency_launcher/INTERFACE.md` and `foundups_vision/` in handoff and README for LEGO pattern compliance.
+**Impact**: Clarifies that no new modules were created — existing infrastructure was extended per WSP.
+**WSP**: WSP 22 (ModLog), WSP 3 (Enterprise Domain), WSP 73 (Digital Twin Architecture)
+
+### V057 - 0102 Handoff Audit (LinkedIn Layered Tests)
+**Date**: 2026-01-22
+**Changes**: Added `docs/0102_handoff.md` summarizing layered test status, audit notes, and dependency_launcher guidance.
+**Impact**: Centralizes continuation state for LinkedIn Digital Twin layered tests.
+**WSP**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination)
+
+### V056 - Slow-Step Test Controls
+**Date**: 2026-01-21
+**Changes**: Added per-step and per-layer delay controls for LinkedIn test flows to allow 012 live review and feedback.
+**Impact**: Tests run slower and more observable; easier human verification.
+**WSP**: WSP 22 (ModLog), WSP 34 (Test Documentation), WSP 50 (Pre-action verification)
+
+### V055 - UI-TARS Model Load Gate
+**Date**: 2026-01-21
+**Changes**: LM Studio precheck now validates the UI-TARS model is loaded; UI-TARS model name is configurable via `UI_TARS_MODEL`.
+**Impact**: Prevents running UI-TARS actions without the correct model loaded.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 73 (Digital Twin Architecture)
+
+### V054 - L1 UI-TARS Verification Wiring
+**Date**: 2026-01-21
+**Changes**: Added UI-TARS verification checks in L1 comment flow for editor visibility, typed text confirmation, and @mention selection.
+**Impact**: Ensures UI-TARS vision validation for critical LinkedIn comment actions.
+**WSP**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture), WSP 91 (DAEMON Observability)
+
+### V053 - L0 AI Gate for Promoted/Repost Skip
+**Date**: 2026-01-21
+**Changes**: Added AI-based promoted/repost classification (API with Qwen fallback) to L0 context gate; full-chain skips remaining layers when gate fails. Updated Digital Twin flow and test docs to reflect ad/repost exclusion.
+**Impact**: Prevents comments/reposts on ads or reposts; enforces Digital Twin safety gate with API/Qwen fallback.
+**WSP**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture), WSP 84 (Code Memory Verification)
+
+### V052 - LinkedIn Browser Boot + DAEmon Pulse Logging
+**Date**: 2026-01-21
+**Changes**: Added Selenium browser boot/login helper for LinkedIn layer tests and DAEmon pulse point logging in full chain test. Updated LinkedIn Digital Twin flow and tests README with rotation/login details.
+**Impact**: Ensures 012 session is active before LN automation; adds troubleshooting pulses per WSP 91.
+**WSP**: WSP 22 (ModLog), WSP 91 (DAEMON Observability), WSP 50 (Pre-action verification)
+
+### V051 - LinkedIn Digital Twin UI-TARS Flow + Templates
+**Date**: 2026-01-20
+**Changes**: Added UI-TARS layered flow documentation, identity switcher map, and Digital Twin templates. Added UI-TARS comment flow test and browser_actions skill for LinkedIn comment + scheduled repost.
+**Impact**: Establishes repeatable LinkedIn comment/like/schedule pipeline with UI-TARS validation gates.
+**WSP**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination), WSP 84 (No vibecoding)
+
+### V050 - Digital Twin LinkedIn POC Alignment
+**Date**: 2026-01-20
+**Changes**: Documented LinkedIn Agent role as the execution surface for 012 Digital Twin comment processing and scheduling.
+**Impact**: Aligns LinkedIn roadmap with POC focus (012 studio comment style + 20-year video corpus).
+**WSP**: WSP 22 (ModLog), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination)
+
+### V049 - Planned Batch Push + Social Retry Queue
+**Date**: 2026-01-09
+**Changes**: Added batch-aware commit planning and a lightweight retry queue for failed social posts. `push_and_post()` now supports optional path filtering and can defer social posting for intermediate batches.
+**Impact**: Avoids single mega-commit pushes and prevents MCP hiccups from dropping social posts.
+**WSP**: WSP 91 (DAEMON observability), WSP 15 (MPS), WSP 50 (Pre-action verification)
+**Details**:
+- New `push_and_post_planned()` uses Qwen batching + audit fallback to split commits by scope.
+- Retry queue persists failed LinkedIn/X posts to `modules/platform_integration/linkedin_agent/data/social_post_retry_queue.json`.
+- `push_and_post()` supports `paths_filter`, `post_social`, and `retry_queue` for batch orchestration.
+
 ### V048 - Autonomous PR Auto-Merge (012 Observer Mode)
 **Date**: 2025-12-14
 **Changes**: When GH013 rules require a PR, `push_and_post()` now attempts to merge the created PR automatically via `gh pr merge` when running in `auto_mode` (GitPushDAE). If immediate merge is blocked (checks/reviews), it falls back to enabling auto-merge (`--auto`).

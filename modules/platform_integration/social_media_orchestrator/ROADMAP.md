@@ -8,6 +8,8 @@
 
 Create a unified, intelligent social media orchestration layer that eliminates redundancy across LinkedIn modules and provides seamless cross-platform content management while maintaining full WSP compliance.
 
+**Digital Twin Alignment**: Orchestrate 012 Digital Twin comment processing and scheduling (LinkedIn-first POC), using decision outputs from `modules/ai_intelligence/digital_twin`.
+
 ## Current Status: CREATED
 
 **Phase**: Initial Implementation  
@@ -23,6 +25,7 @@ Create a unified, intelligent social media orchestration layer that eliminates r
 - [ ] Core orchestrator implementation
 - [ ] OAuth coordinator development
 - [ ] Platform adapter framework
+- [ ] Digital Twin comment routing into LinkedIn adapter (POC)
 
 ### Phase 2: Platform Integration
 - [ ] Twitter adapter implementation using existing x_twitter module

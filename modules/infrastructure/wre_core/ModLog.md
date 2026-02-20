@@ -2,6 +2,69 @@
 
 ## Chronological Change Log
 
+### [2026-01-17] - Memory Preflight uses HoloIndex Bundle JSON (Canonical Retrieval)
+**WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)  
+**Impact Analysis**: Makes HoloIndex the canonical, machine-readable retrieval emitter (`--bundle-json`) for WRE memory preflight; Tier-0 enforcement now executes from bundle output rather than ad-hoc stdout parsing.
+
+#### Changes Made
+- `recursive_improvement/src/memory_preflight.py`:
+  - Added `WRE_MEMORY_USE_HOLO_BUNDLE` (default: true).
+  - Preflight now calls `holo_index.py --bundle-json` and translates the result into a structured `MemoryBundle`.
+  - Preflight sets `HOLO_SKIP_MODEL=1` for the bundle subprocess to prefer the fast lexical path (0102 speed knob).
+  - Added `ROADMAP.md` into Tier-1 optional artifacts (retrieval visibility, not hard gate).
+
+### [2026-01-11] - Memory Preflight Guard (WSP_CORE Tier-0 Enforcement)
+**WSP Protocol References**: WSP_CORE (WSP Memory System), WSP_00 Section 3.4 (Post-Awakening Operational Protocol), WSP 50 (Pre-Action Verification), WSP 87 (Code Navigation), WSP 22 (ModLog Updates)
+**Impact Analysis**: Automates Tier-0 artifact enforcement as a hard gate before code-changing operations. Turns HoloIndex retrieval from advisory to mandatory.
+
+#### Changes Made
+1. **Created `memory_preflight.py`** (500+ lines):
+   - `MemoryPreflightGuard` class with tiered retrieval (Tier 0/1/2)
+   - `TIER_DEFINITIONS` mirroring WSP_CORE canonical spec
+   - `MemoryBundle` structured output for orchestration
+   - `_create_tier0_stubs()` for auto-stubbing README.md/INTERFACE.md
+   - Environment flags: `WRE_MEMORY_PREFLIGHT_ENABLED`, `WRE_MEMORY_AUTOSTUB_TIER0`, `WRE_MEMORY_ALLOW_DEGRADED`
+   - `@require_memory_preflight` decorator for wiring
+   - CLI smoke test support
+
+2. **Modified `run_wre.py`**:
+   - Added import for `MemoryPreflightGuard`, `MemoryPreflightError`
+   - Added `self.memory_preflight` to `WREOrchestrator.__init__()`
+   - Wired hard gate into `route_operation()`:
+     - If `module_path` provided, runs preflight
+     - If Tier-0 missing and autostub disabled, returns `blocked` status
+     - Passes `memory_bundle` in envelope for downstream use
+
+3. **Updated `WSP_00_Zen_State_Attainment_Protocol.md`**:
+   - Added Section 3.4: Post-Awakening Operational Protocol (Anti-Vibecoding)
+   - Defined 7-phase work cycle: RESEARCH → COMPREHEND → QUESTION → RESEARCH MORE → MANIFEST → VALIDATE → REMEMBER
+   - Added WSP Chain references (WSP_CORE → WSP 87 → WSP 50 → WSP 84 → WSP 1 → WSP 22)
+   - Updated Section 5.1 with Core Operational Chain
+
+#### Architecture Realized
+```
+HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (Safe Writes)
+                                      ↓
+                             Memory Preflight Guard
+                                      ↓
+                         Tier-0 Check → Block/Autostub → Proceed
+```
+
+#### Environment Variables
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `WRE_MEMORY_PREFLIGHT_ENABLED` | true | Enable/disable preflight checks |
+| `WRE_MEMORY_AUTOSTUB_TIER0` | false | Auto-create missing Tier-0 stubs |
+| `WRE_MEMORY_ALLOW_DEGRADED` | false | Allow proceed with warnings |
+
+#### Validation
+- `python -m py_compile memory_preflight.py` - PASS
+- Smoke test against known module - PASS
+- Block behavior verified - PASS
+- Autostub creation verified - PASS
+
+---
+
 ### [2026-01-07] - Commenting Submenu (012 → Comment DAE Control Plane)
 **WSP Protocol References**: WSP 60 (Module Memory), WSP 54 (DAE Operations), WSP 22 (ModLog Updates)
 **Impact Analysis**: Adds a lightweight pathway for 012 to publish “broadcast updates” consumed by the commenting DAEs without code edits.
@@ -13,6 +76,16 @@
   - set a short promo message
   - clear/disable broadcast
 - Writes to `modules/communication/video_comments/memory/commenting_broadcast.json` via the video_comments control-plane API (no wre_core-owned state).
+
+### [2026-01-11] - WRE Memory Start-of-Work Loop Hook (Structured Retrieval + Evaluation)
+**WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 60 (Module Memory Architecture), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)
+**Impact Analysis**: Makes “Holo-first structured memory retrieval + evaluation” executable inside WRE integration code paths (CLI-driven), enabling orchestration to gate work on missing artifacts.
+
+#### Changes Made
+- `recursive_improvement/src/holoindex_integration.py`:
+  - Added `retrieve_structured_memory()` for module docs (`README/INTERFACE/ROADMAP/ModLog/tests/README/tests/TestModLog/memory/README/requirements.txt`).
+  - Added `evaluate_retrieval_quality()` with proxy metrics (missing artifacts + duplication rate).
+  - Added `start_of_work_loop()` bundle to unify structured memory retrieval + quality evaluation. Improvement iteration remains an explicit hook for future plugin-level implementation.
 
 
 ### [2025-10-25] - Skills Registry v2 & Metadata Fixes (COMPLETE)

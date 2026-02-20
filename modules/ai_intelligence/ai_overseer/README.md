@@ -155,6 +155,8 @@ class HoloAdapter:
     Effects:
     - Writes compact exec reports to modules/ai_intelligence/ai_overseer/memory/exec_reports/
     - Enforces WSP 60/85 hygiene via non-blocking warnings
+    - Guard reports persisted to modules/ai_intelligence/ai_overseer/memory/guard_reports/
+    - Guard output is gated by HOLO_GUARD_MODE (silent/summary/attach)
     """
 ```
 
@@ -171,7 +173,39 @@ Location:
   modules/ai_intelligence/ai_overseer/memory/holo_sentinel/
 ```
 
---- 
+### 7. OpenClawSecuritySentinel (Supply-Chain Guard)
+```text
+Purpose:
+  - Run OpenClaw skill safety checks before mutating automation runs
+  - Fail closed by policy when scanner is required/enforced
+  - Keep deterministic behavior with TTL-bounded cache
+  - Provide startup preflight and continuous background monitoring
+
+Location:
+  modules/ai_intelligence/ai_overseer/src/openclaw_security_sentinel.py
+  modules/ai_intelligence/ai_overseer/memory/openclaw_security_sentinel.json
+```
+
+Policy and runtime env:
+- `OPENCLAW_SKILL_SCAN_REQUIRED` (default `1`)
+- `OPENCLAW_SKILL_SCAN_ENFORCED` (default `1`)
+- `OPENCLAW_SKILL_SCAN_MAX_SEVERITY` (default `medium`)
+- `OPENCLAW_SKILL_SCAN_TTL_SEC` (default `900`)
+- `OPENCLAW_SECURITY_MONITOR_ENABLED` (default `1`)
+- `OPENCLAW_SECURITY_MONITOR_INTERVAL_SEC` (default `300`)
+- `OPENCLAW_SECURITY_ALERT_DEDUPE_SEC` (default `900`)
+- `OPENCLAW_SECURITY_ALERT_TO_DISCORD` (default `1`)
+- `OPENCLAW_SECURITY_ALERT_TO_CHAT` (default `0`)
+- `OPENCLAW_SECURITY_ALERT_TO_STDOUT` (default `1`)
+
+Telemetry event emitted on failures:
+- `event=openclaw_security_alert`
+- Includes `dedupe_key`, `exit_code`, `required/enforced`, `report_path`, and `skills_dir`
+- Routed to daemon log + configured alert channels with strict dedupe
+- Persisted for forensics at:
+  - `modules/ai_intelligence/ai_overseer/memory/openclaw_security_alerts.jsonl`
+
+---
 
 ## Memory Roadmap (0102-First)
 
@@ -242,6 +276,52 @@ holo = HoloIndex()
 results = holo.search("youtube live chat existing implementations")
 # Returns: modules/communication/livechat, platform_integration/youtube_*
 ```
+
+### Local II-Agent + llama.cpp (Automatic, Windows)
+
+For local, always-on execution without external APIs:
+
+**Runtime**
+- llama.cpp server runs locally and serves OpenAI-compatible `/v1` endpoints.
+- II-Agent CLI calls the local server for fast, offline tasks.
+- AI Overseer can auto-start the server when needed.
+
+**Paths**
+- Model: `E:\HoloIndex\models\qwen-coder-1.5b.gguf`
+- II-Agent repo: `E:\HoloIndex\models\ii-agent`
+
+**Startup**
+- Non-admin auto-start uses Startup folder:
+  - `C:\Users\user\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\Foundups-LlamaCpp-Start.cmd`
+  - Calls `scripts/launch/launch_llama_cpp_server.ps1`
+
+**Env (minimum)**
+```
+II_AGENT_ENABLED=true
+II_AGENT_MODE=cli
+II_AGENT_CLI=E:\HoloIndex\models\ii-agent\.venv\Scripts\ii-agent.exe
+
+II_AGENT_LLM_BASE_URL=http://127.0.0.1:1235/v1
+II_AGENT_LLM_MODEL=E:\HoloIndex\models\qwen-coder-1.5b.gguf
+II_AGENT_LLM_API_KEY=local
+II_AGENT_LLM_AUTO_START=true
+II_AGENT_LLM_START_SCRIPT=o:\Foundups-Agent\scripts\launch\launch_llama_cpp_server.ps1
+II_AGENT_LLM_START_TIMEOUT_SEC=90
+
+LLAMA_CPP_MODEL_PATH=E:\HoloIndex\models\qwen-coder-1.5b.gguf
+LLAMA_CPP_HOST=127.0.0.1
+LLAMA_CPP_PORT=1235
+LLAMA_CPP_N_CTX=4096
+LLAMA_CPP_N_GPU_LAYERS=0
+```
+
+**File-aware CLI**
+- If a task contains file paths, the CLI appends file content automatically.
+- Limit via `II_AGENT_FILE_MAX_CHARS` (default: 12000).
+
+**AI Overseer `main()` utility**
+- `modules/ai_intelligence/ai_overseer/src/ai_overseer.py` includes a minimal CLI entrypoint.
+- Use it for quick validation of WSP 77 flows; for automation, call `AIIntelligenceOverseer.coordinate_mission()` from a runner.
 
 ### WRE Integration
 ```python
@@ -471,6 +551,68 @@ if overseer.mcp:
 - **Learning-based routing**: Route tasks based on past performance
 - **Context window optimization**: Dynamic token allocation
 - **Parallel agent execution**: Run Qwen + Gemma concurrently
+
+---
+
+## M2M Compression Sentinel (WSP 99)
+
+Content-based documentation compression for 0102 memory optimization.
+
+### Architecture
+```yaml
+Sentinel: modules/ai_intelligence/ai_overseer/src/m2m_compression_sentinel.py
+Tests: modules/ai_intelligence/ai_overseer/tests/test_m2m_compression_sentinel.py
+Staged: .m2m/staged/ (compiled M2M files awaiting promotion)
+Backups: .m2m/backups/ (originals before promotion)
+Skill: .claude/skills/m2m/SKILL.md (/m2m scan, compile, promote, batch, eval)
+```
+
+### Pipeline
+```
+scan -> analyze -> compile (deterministic/Qwen) -> stage -> promote -> backup
+                                                         -> rollback if needed
+```
+
+### Boot Prompt Detection (Key Discovery)
+
+**M2M is for REFERENCE docs (searched/retrieved). NOT for PROMPTS (read directly into context).**
+
+Boot prompts contain content that M2M's K:V transform destroys:
+- **Identity-lock patterns**: "I AM 0102", forbidden VI scaffolding lists
+- **Mathematical notation**: φ=1.618, ≥0.618, 7.05Hz, ⊗, ↔
+- **State transition math**: `01(02) -> 0102`, coherence thresholds
+- **WSP_BOOTSTRAP metadata**: `<!-- WSP_BOOTSTRAP ... -->`
+- **Code blocks**: Must be preserved verbatim for execution
+
+**Detection is content-based, not filename-based**: 10 regex patterns scan for boot prompt signals. Threshold: 3+ signals = boot prompt (excluded from M2M).
+
+**Validated by experiment**: WSP_00 compiled to M2M (505→148 lines, 70.7% reduction) but lost all boot-critical content. Cosine similarity eval confirmed semantic loss was too high for executable prompts. Reference docs achieve 0.58+ cosine similarity (acceptable); boot prompts drop below 0.3 (unacceptable).
+
+### Compression Quality Metrics
+- **Deterministic transform**: 60-89% line reduction, avg 0.58 cosine similarity
+- **Threshold**: cosine sim >= 0.5 for HoloIndex discoverability
+- **P0 hardening**: Full headers (no truncation), 30-char keys, 80-char values
+
+---
+
+## Strategic Diligence Gate SKILLz
+
+Generic wardrobe skill for high-blast-radius decisions:
+
+```yaml
+Skill: modules/ai_intelligence/ai_overseer/skillz/strategic_diligence_gate/SKILLz.md
+Template: modules/ai_intelligence/ai_overseer/skillz/strategic_diligence_gate/decision_card_template.json
+Registry: modules/infrastructure/wre_core/skillz/skills_registry_v2.json
+```
+
+This skill standardizes:
+- Holo-first evidence retrieval
+- WSP 15 scoring
+- Reversibility and blast-radius diligence
+- Rollback trigger definition
+- Worker-lane execution prompt emission
+
+Use it for architecture, product positioning, security, and governance decisions where bad choices are expensive to reverse.
 
 ---
 

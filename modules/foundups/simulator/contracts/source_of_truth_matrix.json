@@ -1,0 +1,86 @@
+{
+  "version": "2026-02-18",
+  "economic_invariants": [
+    {
+      "id": "ups_sat_accounting_unit",
+      "statement": "1 UPS equals 1 sat accounting unit in simulator treasury and fee routing math.",
+      "code_refs": [
+        "modules/foundups/simulator/mesa_model.py",
+        "modules/foundups/simulator/economics/fee_revenue_tracker.py",
+        "modules/foundups/simulator/economics/ten_year_projection.py"
+      ],
+      "doc_refs": [
+        "modules/foundups/simulator/README.md",
+        "modules/infrastructure/foundups_tokenization/docs/TOKENOMICS.md",
+        "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md"
+      ]
+    },
+    {
+      "id": "cabr_routes_not_mints",
+      "statement": "CABR determines treasury flow rate; it does not mint UPS.",
+      "code_refs": [
+        "modules/foundups/simulator/mesa_model.py",
+        "modules/foundups/simulator/economics/cabr_flow_router.py"
+      ],
+      "doc_refs": [
+        "modules/foundups/simulator/INTERFACE.md",
+        "modules/infrastructure/foundups_tokenization/docs/TOKENOMICS.md",
+        "WSP_framework/src/WSP_29_CABR_Engine.md"
+      ]
+    },
+    {
+      "id": "smartdao_threshold_time_compression",
+      "statement": "SmartDAO treasury thresholds use explicit simulator-time compression to preserve relative tier ordering while enabling observable transitions in finite runs.",
+      "code_refs": [
+        "modules/foundups/simulator/mesa_model.py",
+        "modules/foundups/simulator/economics/smartdao_spawning.py"
+      ],
+      "doc_refs": [
+        "modules/foundups/simulator/ModLog.md",
+        "modules/foundups/simulator/INTERFACE.md"
+      ]
+    }
+  ],
+  "event_contracts": {
+    "smartdao_emergence": {
+      "emitter_refs": [
+        "modules/foundups/simulator/mesa_model.py"
+      ],
+      "interface_ref": "modules/foundups/simulator/INTERFACE.md"
+    },
+    "tier_escalation": {
+      "emitter_refs": [
+        "modules/foundups/simulator/mesa_model.py"
+      ],
+      "interface_ref": "modules/foundups/simulator/INTERFACE.md"
+    },
+    "treasury_autonomy": {
+      "emitter_refs": [
+        "modules/foundups/simulator/mesa_model.py"
+      ],
+      "interface_ref": "modules/foundups/simulator/INTERFACE.md"
+    },
+    "cross_dao_funding": {
+      "emitter_refs": [
+        "modules/foundups/simulator/mesa_model.py"
+      ],
+      "interface_ref": "modules/foundups/simulator/INTERFACE.md"
+    },
+    "phase_command": {
+      "emitter_refs": [
+        "modules/foundups/simulator/mesa_model.py"
+      ],
+      "interface_ref": "modules/foundups/simulator/INTERFACE.md"
+    }
+  },
+  "doc_alignment": {
+    "tokenization_docs": [
+      "modules/infrastructure/foundups_tokenization/docs/TOKENOMICS.md",
+      "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md",
+      "WSP_framework/src/WSP_29_CABR_Engine.md"
+    ],
+    "skill_docs": [
+      "modules/communication/moltbot_bridge/workspace/skills/foundups-wsp/SKILL.md"
+    ]
+  }
+}

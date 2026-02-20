@@ -35,6 +35,21 @@ logger = logging.getLogger(__name__)
 
 EPOCH_ISO = datetime.fromtimestamp(0).isoformat()
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    try:
+        value = os.getenv(name, default).strip().lower()
+        return value in ("1", "true", "yes", "y", "on")
+    except Exception:
+        return default.strip().lower() in ("1", "true", "yes", "y", "on")
+
+def _parse_iso(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
 class InstanceLock:
     """Manage a single running instance via PID lock file and heartbeats with enhanced monitoring."""
 
@@ -163,6 +178,32 @@ class InstanceLock:
         with open(self.lock_file, "w", encoding="utf-8") as handle:
             json.dump(lock_data, handle, indent=2)
 
+    def _read_lock_data(self) -> Dict[str, Optional[str]]:
+        if not self.lock_file.exists():
+            return {}
+        try:
+            with open(self.lock_file, "r", encoding="utf-8") as handle:
+                raw_data = json.load(handle)
+            return self._normalize_lock_data(raw_data)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as error:
+            logger.warning("Failed to read lock file: %s", error)
+            return {}
+
+    def cleanup_stale_lockfile(self) -> bool:
+        """Remove lock file if the owning PID is not running."""
+        if not self.lock_file.exists():
+            return False
+        lock_data = self._read_lock_data()
+        pid = lock_data.get("pid")
+        if pid and self._is_process_running(pid):
+            return False
+        try:
+            self.lock_file.unlink(missing_ok=True)
+            return True
+        except Exception as error:
+            logger.warning("Failed to remove stale lock file: %s", error)
+            return False
+
     def _start_heartbeat(self) -> None:
         """Start heartbeat thread (health monitoring disabled for stability)."""
         if self.heartbeat_thread and self.heartbeat_thread.is_alive():
@@ -173,10 +214,8 @@ class InstanceLock:
         self.heartbeat_thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
         self.heartbeat_thread.start()
 
-        # Health monitoring temporarily disabled due to os.stat issues
-        # self.health_thread = threading.Thread(target=self._health_monitor_loop, daemon=True)
-        # self.health_thread.start()
-        # self._update_health_status("healthy", "Instance started successfully")
+        # Health monitoring remains disabled by default; status is derived from lock state.
+        self._update_health_status("running", "Instance started successfully")
 
     def _stop_heartbeat(self) -> None:
         """Stop heartbeat thread."""
@@ -199,9 +238,7 @@ class InstanceLock:
                 break
             try:
                 if self.lock_file.exists():
-                    with open(self.lock_file, "r", encoding="utf-8") as handle:
-                        raw_data = json.load(handle)
-                    lock_data = self._normalize_lock_data(raw_data)
+                    lock_data = self._read_lock_data()
                     lock_data["heartbeat"] = datetime.now().isoformat()
                     with open(self.lock_file, "w", encoding="utf-8") as handle:
                         json.dump(lock_data, handle, indent=2)
@@ -237,23 +274,18 @@ class InstanceLock:
 
     def _update_health_status(self, status: str, message: str) -> None:
         """Update the health status file."""
-        # Calculate uptime safely
         uptime_seconds = 0
-        try:
-            if self.lock_file.exists():
-                # Get creation time of lock file as approximate start time
-                start_time = os.path.getctime(str(self.lock_file))
-                uptime_seconds = time.time() - start_time
-        except Exception:
-            # If we can't calculate uptime, use 0
-            uptime_seconds = 0
+        lock_data = self._read_lock_data()
+        start_time = _parse_iso(lock_data.get("start_time")) or _parse_iso(lock_data.get("heartbeat"))
+        if start_time:
+            uptime_seconds = max(0.0, (datetime.now() - start_time).total_seconds())
 
         health_data = {
             "pid": self.pid,
             "status": status,
             "message": message,
             "timestamp": datetime.now().isoformat(),
-            "last_heartbeat": datetime.now().isoformat(),
+            "last_heartbeat": lock_data.get("heartbeat") or datetime.now().isoformat(),
             "uptime_seconds": uptime_seconds
         }
 
@@ -265,11 +297,30 @@ class InstanceLock:
             logger.warning("Failed to update health status: %s", error)
 
     def get_health_status(self) -> Dict[str, Any]:
-        """Get current health status (disabled for stability)."""
+        """Get current health status derived from lock state."""
+        lock_data = self._read_lock_data()
+        timestamp = datetime.now().isoformat()
+        if not lock_data:
+            return {
+                "status": "inactive",
+                "message": "No lock file present",
+                "timestamp": timestamp
+            }
+
+        pid = lock_data.get("pid")
+        heartbeat = lock_data.get("heartbeat", EPOCH_ISO)
+        start_time = lock_data.get("start_time", EPOCH_ISO)
+        is_running = self._is_process_running(pid) if pid else False
+        status = "running" if is_running else "stale"
+        message = "Process running" if is_running else "Stale lock file (PID not found)"
+
         return {
-            "status": "disabled",
-            "message": "Health monitoring temporarily disabled due to os.stat issues",
-            "timestamp": datetime.now().isoformat()
+            "pid": pid,
+            "status": status,
+            "message": message,
+            "timestamp": timestamp,
+            "last_heartbeat": heartbeat,
+            "start_time": start_time
         }
 
     def cleanup_browser_windows(self) -> int:
@@ -331,16 +382,40 @@ class InstanceLock:
 
         return closed_count
 
+    @staticmethod
+    def _get_ancestor_pids() -> set:
+        """Return PIDs of the current process and all its ancestors (parent chain).
+
+        Killing an ancestor on Windows can cascade-terminate the entire process
+        tree, so these PIDs must NEVER be targeted by stale-process cleanup.
+        """
+        ancestors = {os.getpid()}
+        try:
+            proc = psutil.Process(os.getpid())
+            while True:
+                parent = proc.parent()
+                if parent is None or parent.pid in ancestors:
+                    break
+                ancestors.add(parent.pid)
+                proc = parent
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+        return ancestors
+
     def _cleanup_stale_processes(self) -> None:
         # First cleanup any stale browser windows
         self.cleanup_browser_windows()
+
+        # Build ancestor set ONCE — killing any of these would kill us too
+        protected_pids = self._get_ancestor_pids()
+        logger.debug("[LOCK] Protected ancestor PIDs: %s", protected_pids)
 
         # Also cleanup any orphaned Python processes from previous sessions
         # This includes background shells that weren't properly terminated
         stale_pids = []
         for process in psutil.process_iter(["pid", "cmdline", "create_time", "name"]):
             pid = process.info.get("pid")
-            if pid == self.pid:
+            if pid in protected_pids:
                 continue
 
             # Check for Python processes
@@ -373,44 +448,92 @@ class InstanceLock:
                             logger.warning("Found orphaned main.py process %s (age: %.1f minutes)", pid, age_minutes)
 
         # Prompt user before killing stale processes (unless running non-interactively)
+        # HARDENED 2026-01-30: Entire kill block wrapped in safety net so launch
+        # ALWAYS continues even if kill logic crashes or kills the wrong thing.
         if stale_pids:
             print(f"\n[ALERT] Found {len(stale_pids)} stale process(es):")
             for pid in stale_pids:
                 print(f"  - PID {pid}")
             print()
 
+            # Double-check: filter out any PIDs that are ancestors (belt + suspenders)
+            safe_pids = [p for p in stale_pids if p not in protected_pids]
+            skipped = len(stale_pids) - len(safe_pids)
+            if skipped:
+                print(f"[PROTECT] Skipping {skipped} PID(s) in our ancestor chain")
+                logger.warning("[LOCK] Skipped %d ancestor PIDs: %s",
+                               skipped, [p for p in stale_pids if p in protected_pids])
+
             # Check if running interactively (has a TTY)
             import sys
+            killed_any = False
             if sys.stdin.isatty():
                 try:
                     choice = input("Kill stale processes? [Y/n]: ").strip().lower()
                     if choice in ('', 'y', 'yes'):
-                        for pid in stale_pids:
-                            logger.warning("Killing stale process %s", pid)
-                            self._kill_process(pid)
+                        for pid in safe_pids:
+                            try:
+                                logger.warning("Killing stale process %s", pid)
+                                self._kill_process(pid)
+                                killed_any = True
+                            except Exception as kill_err:
+                                logger.error("Error killing PID %s: %s", pid, kill_err)
                         print("[OK] Stale processes terminated.")
                         print("[INFO] Continuing launch...\n")
                     else:
                         print("[INFO] Keeping stale processes. You may experience conflicts.")
                         print("[INFO] Continuing launch anyway...\n")
-                        logger.info("User chose to keep stale processes: %s", stale_pids)
+                        logger.info("User chose to keep stale processes: %s", safe_pids)
                 except (EOFError, KeyboardInterrupt):
                     print("\n[INFO] Skipping cleanup. Continuing launch...\n")
+                except Exception as unexpected:
+                    # SAFETY NET: catch ANY exception so launch always continues
+                    logger.error("[LOCK] Unexpected error during interactive kill: %s", unexpected, exc_info=True)
+                    print(f"[WARN] Kill failed ({unexpected}), continuing launch anyway...\n")
             else:
                 # Non-interactive mode: auto-kill (e.g., --no-lock flag)
-                for pid in stale_pids:
-                    logger.warning("Killing stale process %s (non-interactive)", pid)
-                    self._kill_process(pid)
+                for pid in safe_pids:
+                    try:
+                        logger.warning("Killing stale process %s (non-interactive)", pid)
+                        self._kill_process(pid)
+                        killed_any = True
+                    except Exception as kill_err:
+                        logger.error("Error killing PID %s: %s", pid, kill_err)
+
+            # If we killed any processes, also clean up the lock file
+            if killed_any:
+                try:
+                    if self.lock_file.exists():
+                        self.lock_file.unlink(missing_ok=True)
+                        logger.info("[LOCK] Removed stale lock file after process cleanup")
+                except Exception as e:
+                    logger.debug("Could not remove stale lock file: %s", e)
+
+        if _env_truthy("INSTANCE_LOCK_AUTO_CLEAN_STALE", "true"):
+            self.cleanup_stale_lockfile()
 
     @staticmethod
     def _kill_process(pid: int) -> None:
         try:
             process = psutil.Process(pid)
             process.terminate()
+            # Wait for process to exit, but don't let it block us
             try:
                 process.wait(timeout=3)
             except psutil.TimeoutExpired:
-                process.kill()
+                try:
+                    process.kill()
+                    process.wait(timeout=2)
+                except Exception:
+                    pass  # Best effort
+            except psutil.NoSuchProcess:
+                pass  # Already dead - good
+            # Small sleep to let OS fully clean up
+            time.sleep(0.5)
+        except psutil.NoSuchProcess:
+            logger.debug("Process %s already terminated", pid)
+        except psutil.AccessDenied:
+            logger.warning("Access denied killing process %s (may need admin)", pid)
         except Exception as error:
             logger.error("Failed to kill process %s: %s", pid, error)
 

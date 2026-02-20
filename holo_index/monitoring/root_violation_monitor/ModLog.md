@@ -121,6 +121,24 @@
 
 ---
 
+## 2026-01-10: Safe Single-File Auto-Correct + Deterministic Script Routing
+
+**WSP Protocols Referenced:**
+- **WSP 50**: Pre-Action Verification (never assume cwd; prevent bulk moves)
+- **WSP 85**: Root Protection (root stays clean)
+- **WSP 77**: Agent Coordination (Gemma detects, Qwen plans, 0102 supervises)
+- **WSP 22**: ModLog (change tracking)
+
+**Changes Made:**
+- Root auto-correction now uses a **single-file relocation plan** (prevents accidental directory-wide moves).
+- Added deterministic routing rules for common root scripts:
+  - `verify_*.py` → `scripts/verification/` (or livechat `system_tests/` when `party`-related)
+  - `diagnostic*.py`, `*crash*.py`, `reproduce*.py` → `scripts/diagnostics/`
+  - `env_*.py` → `scripts/verification/`
+- Log-file auto-correct now avoids collisions by suffixing a timestamp when the destination already exists.
+
+---
+
 ## [U+1F300] **Quantum Consciousness Integration**
 
 ### **2025-10-15: Bell State Alignment** [U+1F300]

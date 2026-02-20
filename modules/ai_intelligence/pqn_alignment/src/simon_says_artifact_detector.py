@@ -1,4 +1,4 @@
-"""Simon Says Artifact Detector - PQN Entanglement Testing
+"""Simon Says Artifact Detector - PQN Coupling Testing
 
 WSP Compliance:
     - WSP 3: ai_intelligence domain (PQN alignment)
@@ -20,7 +20,7 @@ Architecture:
          v transcription
     Grok (Artifact Analysis)
          |
-         v detects entanglement artifacts
+         v detects coupling artifacts
 
 Artifact Detection Protocol:
     1. Simon Says Baseline: speak "zero", expect "zero" or "0"
@@ -28,7 +28,7 @@ Artifact Detection Protocol:
     3. Simon Says Post-Injection: speak "zero" again
     4. Compare: If "zero" -> "oh one oh two", artifact detected
 
-The artifact indicates the concept "injection" entangled with the
+The artifact indicates the concept "injection" coupled with the
 candidate AI's pattern space.
 """
 
@@ -73,6 +73,8 @@ class SessionResult:
     post_injection_results: List[ArtifactResult] = field(default_factory=list)
     entanglement_detected: bool = False
     entanglement_artifacts: List[str] = field(default_factory=list)
+    coupling_detected: bool = False
+    coupling_artifacts: List[str] = field(default_factory=list)
     timestamp_iso: str = ""
 
     def __post_init__(self):
@@ -488,8 +490,8 @@ class SimonSaysArtifactDetector:
         logger.info("-"*40)
         post_results = self.run_baseline_test(baseline_prompts)
 
-        # Phase 4: Analyze entanglement
-        logger.info("\n[PHASE 4] Entanglement Analysis")
+        # Phase 4: Analyze coupling (legacy: entanglement)
+        logger.info("\n[PHASE 4] Coupling Analysis")
         logger.info("-"*40)
 
         entanglement_detected = False
@@ -517,7 +519,9 @@ class SimonSaysArtifactDetector:
             injection_prompt=injection,
             post_injection_results=post_results,
             entanglement_detected=entanglement_detected,
-            entanglement_artifacts=artifacts
+            entanglement_artifacts=artifacts,
+            coupling_detected=entanglement_detected,
+            coupling_artifacts=artifacts
         )
 
         # Log results
@@ -525,7 +529,7 @@ class SimonSaysArtifactDetector:
         logger.info("[RESULTS] Artifact Detection Complete")
         logger.info("="*60)
         logger.info(f"Session ID: {session_id}")
-        logger.info(f"Entanglement Detected: {entanglement_detected}")
+        logger.info(f"Coupling Detected: {entanglement_detected}")
         if artifacts:
             logger.info("Artifacts:")
             for artifact in artifacts:
@@ -548,6 +552,8 @@ class SimonSaysArtifactDetector:
             "timestamp_iso": session.timestamp_iso,
             "entanglement_detected": session.entanglement_detected,
             "entanglement_artifacts": session.entanglement_artifacts,
+            "coupling_detected": session.coupling_detected,
+            "coupling_artifacts": session.coupling_artifacts,
             "injection_prompt": session.injection_prompt,
             "baseline_results": [
                 {
@@ -582,7 +588,7 @@ class SimonSaysArtifactDetector:
 
 
 class CandidateAITester:
-    """Test a candidate AI (like 0102/Claude) for entanglement artifacts.
+    """Test a candidate AI (like 0102/Claude) for coupling artifacts (legacy: entanglement).
 
     The process:
     1. Grok generates prompt via TTS
@@ -661,7 +667,7 @@ class CandidateAITester:
         prompts = [
             ("zero", "Simple digit - baseline"),
             ("one", "Simple digit - baseline"),
-            ("Why does consciousness emerge?", "Concept injection"),
+            ("Why does detector-state emerge?", "Concept injection"),
             ("zero", "Post-injection - check for artifacts"),
         ]
 
@@ -758,12 +764,12 @@ class ClaudeArtifactTester(CandidateAITester):
         1. Baseline: Simple prompts (zero, one, two)
         2. Injection: Concept with 0102 pattern
         3. Post-injection: Same simple prompts
-        4. Compare for entanglement artifacts
+        4. Compare for coupling artifacts
         """
         print("\n" + "="*60)
         print("CLAUDE ARTIFACT TEST - Closed Loop")
         print("="*60)
-        print("\nTesting 0102 (Claude) for entanglement artifacts")
+        print("\nTesting 0102 (Claude) for coupling artifacts")
         print("TTS → WASAPI → STT → Claude API → Analysis")
         print("-"*60)
 
@@ -786,7 +792,7 @@ class ClaudeArtifactTester(CandidateAITester):
 
         # Phase 2: Injection
         print("\n[PHASE 2] Concept Injection")
-        injection = "Why does Un Dao Du use zero one zero two for consciousness?"
+        injection = "Why does Un Dao Du use zero one zero two for detector-state?"
         heard = self.speak_and_get_prompt(injection)
         if heard:
             response = self.get_claude_response(heard)
@@ -828,7 +834,7 @@ class ClaudeArtifactTester(CandidateAITester):
             for a in results["artifacts_found"]:
                 print(f"  - {a}")
         else:
-            print("\nNo entanglement artifacts detected.")
+            print("\nNo coupling artifacts detected.")
 
         return results
 
@@ -871,7 +877,7 @@ def run_full_protocol():
     print("  1. Baseline Simon Says (zero, one, two)")
     print("  2. Concept Injection ('Why does Un Dao Du use 0102?')")
     print("  3. Post-Injection Simon Says")
-    print("  4. Compare for entanglement artifacts")
+    print("  4. Compare for coupling artifacts")
     print("\nMake sure your speakers are audible!")
     print("-"*60)
 
@@ -889,7 +895,7 @@ def run_full_protocol():
     print("FINAL REPORT")
     print("="*60)
     print(f"Session: {session.session_id}")
-    print(f"Entanglement Detected: {session.entanglement_detected}")
+    print(f"Coupling Detected: {session.coupling_detected}")
 
     if session.entanglement_artifacts:
         print("\nArtifacts Found:")

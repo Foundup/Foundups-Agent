@@ -4,7 +4,15 @@
 
 ## Purpose
 
-Comprehensive video content indexing for 012's YouTube channels (FoundUps, UnDaoDu, Move2Japan). Transforms raw video content into searchable knowledge artifacts that enable 0102 to learn from and recall 012's teachings.
+Comprehensive video content indexing for 012's YouTube channels (FoundUps, UnDaoDu, Move2Japan, RavingANTIFA). Transforms raw video content into searchable knowledge artifacts that enable 0102 to learn from and recall 012's teachings.
+
+Ask-Gemini browser indexing now persists JSON artifacts for continuity across pipelines.
+
+## Utility Routing (POC)
+
+Index outputs are used to route downstream behavior:
+- 012 voice content → Digital Twin memory and response training
+- music/video content → RavingANTIFA or faceless-video pipeline (module in development)
 
 ## Architecture
 
@@ -37,6 +45,23 @@ This module EXTENDS (not replaces) existing infrastructure:
 | Storage | `video_index/` JSON | Same artifact format |
 | Launcher | `dae_dependencies.py` | Auto-launch browsers |
 | Navigation | `YouTubeStudioDOM` | Reuse Selenium navigation |
+
+## Metadata Catalog (SQLite)
+
+For auditability and fast listing, a SQLite catalog is maintained alongside JSON:
+
+- Path: `memory/video_index/metadata.sqlite3`
+- Updated by: `VideoIndexStore.save_index()` and Gemini `save_analysis_result()`
+- Purpose: per-video metadata (channel, title, duration, topics, model, source path)
+
+## Daemon + Reindex Signals
+
+- STOP file: `memory/STOP_VIDEO_INDEXER` halts cycles safely.
+- One-shot reindex: create `memory/REINDEX_VIDEO_INDEXER` or set `VIDEO_INDEXER_FORCE_REINDEX=true`.
+- Progress telemetry: each cycle returns indexed/skip counts and per-channel JSON counts.
+- Telemetry emission mode:
+  - `INDEXER_TELEMETRY_MODE=full` (default) or `signal`
+  - `INDEXER_TELEMETRY_SIGNAL_EVERY=60` (emit baseline pulse every N cycles)
 
 ## Lego Block Dependencies
 
@@ -90,5 +115,6 @@ results = indexer.search("012 talks about Japan visa requirements")
 | Channel | Browser | Port | Channel ID |
 |---------|---------|------|------------|
 | Move2Japan | Chrome | 9222 | UC-LSSlOZwpGIRIYihaz8zCw |
-| UnDaoDu | Chrome | 9222 | (shared profile) |
+| UnDaoDu | Chrome | 9222 | UCfHM9Fw9HD-NwiS0seD_oIA |
 | FoundUps | Edge | 9223 | UCSNTUXjAgpd4sgWYP0xoJgw |
+| RavingANTIFA | Edge | 9223 | UCVSmg5aOhP4tnQ9KFUg97qA |

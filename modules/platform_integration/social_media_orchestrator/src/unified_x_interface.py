@@ -33,6 +33,9 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
 class XContentType(Enum):
     """Types of content that can be posted to X/Twitter"""
     STREAM_NOTIFICATION = "stream_notification"
@@ -98,6 +101,26 @@ class UnifiedXInterface:
                 json.dump(self.posted_content, f, indent=2)
         except Exception as e:
             logger.error(f"[UNIFIED X] Could not save history: {e}")
+
+    def _post_direct_via_selenium(self, request: XPostRequest) -> tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+        """Fallback posting without MCP (direct Selenium)."""
+        try:
+            from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
+            from modules.platform_integration.social_media_orchestrator.src.gemini_vision_analyzer import GeminiVisionAnalyzer
+
+            poster = AntiDetectionX(use_foundups=(request.account == XAccount.FOUNDUPS))
+            poster.setup_driver(use_existing_session=True)
+
+            gemini_analysis = None
+            if _env_truthy("FOUNDUPS_CAPTURE_SCREENSHOT", "true"):
+                screenshot = poster.driver.get_screenshot_as_png()
+                gemini = GeminiVisionAnalyzer(api_key=os.getenv('GOOGLE_AISTUDIO_API_KEY'))
+                gemini_analysis = gemini.analyze_posting_ui(screenshot)
+
+            success = poster.post_to_x(content=request.content)
+            return success, gemini_analysis, None
+        except Exception as e:
+            return False, None, str(e)
 
     def check_duplicate(self, request: XPostRequest) -> bool:
         """Check if content would be a duplicate post"""
@@ -220,6 +243,19 @@ class UnifiedXInterface:
         except Exception as e:
             error_message = str(e)
             logger.error(f"[UNIFIED X] Exception during MCP posting: {e}")
+
+        if not success and _env_truthy("FOUNDUPS_SOCIAL_POST_FALLBACK", "true"):
+            logger.warning("[UNIFIED X] MCP failed - attempting direct Selenium fallback")
+            direct_success, gemini_analysis, direct_error = self._post_direct_via_selenium(request)
+            if direct_success:
+                success = True
+                error_message = None
+                logger.info(f"[UNIFIED X] [OK] Direct Selenium post successful to @{request.account.value}")
+                if gemini_analysis:
+                    logger.info(f"[UNIFIED X] Gemini Vision UI analysis: {gemini_analysis.get('ui_state', 'N/A')}")
+            else:
+                error_message = direct_error or error_message or "Direct Selenium posting failed"
+                logger.warning(f"[UNIFIED X] [FAIL] Direct Selenium fallback failed: {error_message}")
 
         # Step 4: Update tracking and return result
         if success:

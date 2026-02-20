@@ -38,33 +38,62 @@ class YouTubeShortsUploader:
     Standalone module - no modifications to youtube_auth.
     """
 
+    DEFAULT_TOKEN_FILES = {
+        "move2japan": "credentials/oauth_token.json",   # Set 1 (shared with UnDaoDu)
+        "undaodu": "credentials/oauth_token.json",      # Set 1
+        "foundups": "credentials/oauth_token10.json",   # Set 10
+        "ravingantifa": "credentials/oauth_token10.json",  # Set 10 (shared account)
+    }
+    DEFAULT_TAGS = {
+        "move2japan": ["Shorts", "Japan", "Move2Japan"],
+        "undaodu": ["Shorts", "UnDaoDu"],
+        "foundups": ["Shorts", "FoundUps"],
+        "ravingantifa": ["Shorts", "RavingANTIFA"],
+    }
+
+    @classmethod
+    def get_supported_channels(cls) -> list:
+        """Return supported channel keys for API upload."""
+        return sorted(cls.DEFAULT_TOKEN_FILES.keys())
+
     def __init__(self, channel: str = "move2japan"):
         """
         Initialize uploader with existing YouTube OAuth.
 
         Args:
-            channel: Which channel to use ("move2japan" or "undaodu")
-                    - "move2japan": Set 2 (oauth_token2.json) - Move2Japan channel
+            channel: Which channel to use ("move2japan", "undaodu", "foundups", "ravingantifa")
+                    - "move2japan": Set 1 (oauth_token.json) - Move2Japan channel
                     - "undaodu": Set 1 (oauth_token.json) - UnDaoDu channel
+                    - "foundups": Set 10 (oauth_token10.json) - FoundUps channel
+                    - "ravingantifa": Set 10 (oauth_token10.json) - RavingANTIFA channel
 
         Uses youtube_auth.get_authenticated_service() - read-only.
         """
-        # Map channel names to token files
-        token_files = {
-            "move2japan": "credentials/oauth_token2.json",  # Set 2
-            "undaodu": "credentials/oauth_token.json"       # Set 1
-        }
+        token_files = {}
+        for key, default_path in self.DEFAULT_TOKEN_FILES.items():
+            env_key = f"YT_UPLOAD_TOKEN_FILE_{key.upper()}"
+            override = os.getenv(env_key, "").strip()
+            token_files[key] = override or default_path
 
         if channel not in token_files:
-            raise YouTubeUploadError(f"Unknown channel: {channel}. Use 'move2japan' or 'undaodu'")
+            supported = ", ".join(self.get_supported_channels())
+            raise YouTubeUploadError(f"Unknown channel: {channel}. Use: {supported}")
 
         token_file = token_files[channel]
 
+        authorize_hint = {
+            "move2japan": "python modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
+            "undaodu": "python modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
+            "foundups": "python modules/platform_integration/youtube_auth/scripts/authorize_set10.py",
+            "ravingantifa": "python modules/platform_integration/youtube_auth/scripts/authorize_set10.py",
+        }
+
         # Verify token file exists
         if not Path(token_file).exists():
+            hint = authorize_hint.get(channel, "")
             raise YouTubeUploadError(
                 f"Token file not found: {token_file}\n"
-                f"Run: python modules/platform_integration/youtube_auth/scripts/authorize_set2.py"
+                f"Run: {hint or 'python modules/platform_integration/youtube_auth/scripts/authorize_set1.py'}"
             )
 
         try:
@@ -133,7 +162,7 @@ class YouTubeShortsUploader:
 
         # Default tags
         if tags is None:
-            tags = ["Shorts", "Japan", "Move2Japan"]
+            tags = self.DEFAULT_TAGS.get(self.channel, ["Shorts"])
 
         # Ensure #Shorts in description for proper categorization
         if "#Shorts" not in description and "#shorts" not in description:

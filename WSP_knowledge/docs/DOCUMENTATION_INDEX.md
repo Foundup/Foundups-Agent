@@ -63,6 +63,7 @@ This comprehensive index provides structured navigation across the entire WSP Kn
 - **`clean_states.md`** - Operational procedures and protocols
 - **`esm_abstract.md`** - Current abstracts and summaries
 - **`LaTeX_Equation_Fix_Documentation.md`** - Technical fix documentation
+- **`VIDEO_AUTONOMY_PLAYBOOK.md`** - Video autonomy plan (headless/faceless pipeline)
 
 ## Quick Navigation Guide
 

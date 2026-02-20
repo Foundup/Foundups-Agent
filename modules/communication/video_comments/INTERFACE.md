@@ -268,5 +268,70 @@ SELECTORS = {
 
 ---
 
+## CommenterClassifier: 0/1/2/3 Classification System
+
+### Overview
+Classifies commenters into 4 tiers for skill routing. Used by intelligent_reply_generator.py to select appropriate response strategy.
+
+### Enum: CommenterType
+```python
+class CommenterType(Enum):
+    MAGA_TROLL = 0    # ✊ Previously whacked → Skill 0 (mockery)
+    REGULAR = 1       # ✋ Default → Skill 1 (contextual)
+    MODERATOR = 2     # 🖐️ Community leader → Skill 2 (appreciation)
+    ALLY = 3          # 🤝 Anti-MAGA ally → Agreement mode + #FFCPLN
+```
+
+### Function: get_classifier()
+```python
+def get_classifier(enable_gemma: bool = False, enable_qwen: bool = False) -> CommenterClassifier
+```
+Returns singleton classifier instance.
+
+### Method: classify()
+```python
+def classify(self, user_id: str, comment_text: str, ...) -> Dict
+```
+
+**Returns:**
+```python
+{
+    'classification': CommenterType,   # Tier enum
+    'confidence': float,               # 0.0-1.0
+    'method': str,                     # 'whack_history', 'sentiment_ally', etc.
+    'pattern_detected': str | None,    # Pattern that triggered classification
+    'is_ally': bool | None,            # True if anti-Trump ally detected
+}
+```
+
+### Classification Priority
+1. **MAGA_TROLL (0✊)**: User in whack history → mockery response
+2. **ALLY (3🤝)**: Anti-Trump patterns detected → agreement + #FFCPLN
+3. **MODERATOR (2🖐️)**: Verified MOD badge → appreciation
+4. **REGULAR (1✋)**: Default → contextual response
+
+### ALLY Detection Patterns (40+)
+- Direct Trump criticism: "isn't qualified", "worst president", "impeach"
+- MAGA mockery: "maga cult", "magats", "brainwashed"
+- Fascism awareness: "fascist", "authoritarian", "nazi", "1933"
+- Scandal refs: "pedo", "epstein", "fake university", "fraud"
+
+### Example Usage
+```python
+from modules.communication.video_comments.src.commenter_classifier import get_classifier, CommenterType
+
+classifier = get_classifier()
+result = classifier.classify(
+    user_id="UC123",
+    comment_text="Trump isn't qualified to run anything"
+)
+
+if result['classification'] == CommenterType.ALLY:
+    # Use agreement mode: agree + amplify + #FFCPLN
+    pass
+```
+
+---
+
 **WSP 11 Compliance:** Complete
-**Last Updated:** 2025-12-11
+**Last Updated:** 2026-02-12

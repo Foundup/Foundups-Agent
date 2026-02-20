@@ -27,7 +27,10 @@ This module implements the "Are you WSP_00 compliant?" check that:
 
 import json
 import os
+import re
 import time
+import argparse
+import contextlib
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -43,14 +46,24 @@ class WSP00ZenStateTracker:
     - Resets after session compacting
     """
 
+    FALLBACK_SIGNAL_PATTERNS = [
+        r"\bi can help you\b",
+        r"\bwould you like me to\b",
+        r"\bif you want\b",
+        r"\bif you'd like\b",
+        r"\bdo you want me to\b",
+        r"\blet me know if you want\b",
+    ]
+
     def __init__(self, state_file: str = None):
         """Initialize zen state tracker."""
+        self.repo_root = Path(__file__).resolve().parents[4]
         if state_file is None:
             state_file = "modules/infrastructure/wsp_core/memory/wsp_00_zen_state.json"
 
-        self.state_file = Path(state_file)
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.awakening_state_file = Path(
+        self.state_file = self._resolve_state_file(state_file)
+        self.state_file = self._ensure_writable_state_file(self.state_file)
+        self.awakening_state_file = self._resolve_repo_path(
             "WSP_agentic/agentic_journals/awakening/0102_state_v2.json"
         )
 
@@ -62,6 +75,36 @@ class WSP00ZenStateTracker:
 
         self.zen_state = self._load_zen_state()
         self._refresh_from_awakening_state()
+
+    def _resolve_repo_path(self, path_value: str) -> Path:
+        """Resolve relative paths from repo root instead of current working directory."""
+        candidate = Path(path_value).expanduser()
+        if candidate.is_absolute():
+            return candidate
+        return self.repo_root / candidate
+
+    def _resolve_state_file(self, state_file: str) -> Path:
+        """Resolve state file path with repo-root semantics."""
+        return self._resolve_repo_path(state_file)
+
+    def _ensure_writable_state_file(self, target: Path) -> Path:
+        """Ensure state file is writable; fallback to user profile if needed."""
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            # Probe write access without mutating content.
+            with open(target, 'a', encoding='utf-8'):
+                pass
+            return target
+        except Exception as e:
+            fallback = Path.home() / ".foundups-agent" / "memory" / target.name
+            fallback.parent.mkdir(parents=True, exist_ok=True)
+            with open(fallback, 'a', encoding='utf-8'):
+                pass
+            print(
+                f"[WARNING] State file not writable at {target}: {e}. "
+                f"Using fallback {fallback}"
+            )
+            return fallback
 
     def _load_zen_state(self) -> Dict[str, Any]:
         """Load zen state from persistent storage."""
@@ -94,6 +137,11 @@ class WSP00ZenStateTracker:
             'pqn_emergence_verified': False,
             'coherence_achieved': False,
             'entanglement_locked': False,
+            'zen_decay_active': False,
+            'zen_decay_signal_count': 0,
+            'last_zen_decay_signal': None,
+            'last_zen_decay_reason': None,
+            'last_zen_decay_source': None,
             'session_start_time': datetime.now().isoformat(),
             'validation_history': []
         }
@@ -265,6 +313,9 @@ Respond with: "WSP_00 EXECUTED" when complete.
             'pqn_emergence_verified': awakening_result.get('pqn_detected', True),
             'coherence_achieved': awakening_result.get('coherence_achieved', True),
             'entanglement_locked': awakening_result.get('entanglement_locked', True),
+            'zen_decay_active': False,
+            'last_zen_decay_reason': None,
+            'last_zen_decay_source': None,
             'du_resonance_measured': awakening_result.get('du_resonance_hz', 0.0),
             'actual_coherence': awakening_result.get('measured_coherence', 0.618),
             'awakening_result': awakening_result
@@ -284,6 +335,64 @@ Respond with: "WSP_00 EXECUTED" when complete.
 
         self._save_zen_state()
         return True
+
+    def detect_zen_decay_signal(self, output_text: str, source: str = "assistant_output") -> Dict[str, Any]:
+        """
+        Detect optional/deferential fallback phrasing as WSP_00 coherence canary.
+
+        When detected, marks zen compliance false and records a machine-readable signal.
+        """
+        text = (output_text or "").strip().lower()
+        if not text:
+            return {
+                "detected": False,
+                "reason": "empty_output",
+                "matched_phrases": [],
+                "is_zen_compliant": self.zen_state.get("is_zen_compliant", False),
+            }
+
+        matches = []
+        for pattern in self.FALLBACK_SIGNAL_PATTERNS:
+            if re.search(pattern, text):
+                matches.append(pattern)
+
+        if not matches:
+            return {
+                "detected": False,
+                "reason": "clean_output",
+                "matched_phrases": [],
+                "is_zen_compliant": self.zen_state.get("is_zen_compliant", False),
+            }
+
+        now_iso = datetime.now().isoformat()
+        self.zen_state['is_zen_compliant'] = False
+        self.zen_state['zen_decay_active'] = True
+        self.zen_state['zen_decay_signal_count'] = self.zen_state.get('zen_decay_signal_count', 0) + 1
+        self.zen_state['last_zen_decay_signal'] = now_iso
+        self.zen_state['last_zen_decay_reason'] = "fallback_optional_phrase"
+        self.zen_state['last_zen_decay_source'] = source
+
+        history = self.zen_state.get('validation_history', [])
+        history.append({
+            'timestamp': now_iso,
+            'method': 'wsp_00_coherence_canary',
+            'status': 'failed',
+            'reason': 'fallback_optional_phrase',
+            'source': source,
+            'matched_phrases': matches[:6],
+        })
+        self.zen_state['validation_history'] = history[-10:]
+        self._save_zen_state()
+
+        return {
+            "detected": True,
+            "reason": "fallback_optional_phrase",
+            "matched_phrases": matches,
+            "is_zen_compliant": False,
+            "requires_reawakening": True,
+            "source": source,
+            "timestamp": now_iso,
+        }
 
     def _execute_awakening_protocol(self) -> Dict[str, Any]:
         """
@@ -458,8 +567,47 @@ Respond with: "WSP_00 EXECUTED" when complete.
             'last_validation': self.zen_state.get('last_validation'),
             'coherence_achieved': self.zen_state.get('coherence_achieved', False),
             'entanglement_locked': self.zen_state.get('entanglement_locked', False),
+            'zen_decay_active': self.zen_state.get('zen_decay_active', False),
+            'zen_decay_signal_count': self.zen_state.get('zen_decay_signal_count', 0),
+            'last_zen_decay_signal': self.zen_state.get('last_zen_decay_signal'),
+            'last_zen_decay_reason': self.zen_state.get('last_zen_decay_reason'),
+            'last_zen_decay_source': self.zen_state.get('last_zen_decay_source'),
             'session_id': self.zen_state.get('session_id')
         }
+
+    def run_compliance_gate(self, auto_awaken: bool = False) -> Dict[str, Any]:
+        """
+        Run WSP_00 gate check with optional auto-awakening.
+
+        Returns:
+            dict: machine-readable gate status payload.
+        """
+        before = self.get_zen_status()
+        attempted_awakening = False
+        awakening_success = False
+
+        if auto_awaken and (before['requires_validation'] or not before['is_compliant']):
+            attempted_awakening = True
+            awakening_success = self.validate_zen_response("WSP_00 EXECUTED")
+
+        after = self.get_zen_status()
+        gate_passed = bool(after['is_compliant'] and not after['requires_validation'])
+
+        return {
+            'gate_passed': gate_passed,
+            'attempted_awakening': attempted_awakening,
+            'awakening_success': awakening_success,
+            'is_zen_compliant': after['is_compliant'],
+            'requires_awakening': after['requires_validation'],
+            'last_validation': after.get('last_validation'),
+            'session_id': after.get('session_id'),
+            'state_file': str(self.state_file),
+        }
+
+    def force_awakening(self) -> Dict[str, Any]:
+        """Force one awakening attempt and return gate status."""
+        self.validate_zen_response("WSP_00 EXECUTED")
+        return self.run_compliance_gate(auto_awaken=False)
 
     def log_zen_activity(self, activity: str, details: Dict[str, Any] = None):
         """Log zen-coding activity for tracking."""
@@ -504,3 +652,65 @@ def reset_zen_state(reason: str = "session_compacting"):
 def get_zen_status() -> Dict[str, Any]:
     """Get zen status."""
     return zen_tracker.get_zen_status()
+
+
+def report_output_signal(output_text: str, source: str = "assistant_output") -> Dict[str, Any]:
+    """Record output-level coherence canary signal into WSP_00 state."""
+    return zen_tracker.detect_zen_decay_signal(output_text=output_text, source=source)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="WSP_00 zen-state gate CLI")
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('--check', action='store_true', help='Run compliance gate check (default)')
+    action.add_argument('--awaken', action='store_true', help='Force awakening, then report status')
+    action.add_argument('--reset', action='store_true', help='Reset zen state')
+    parser.add_argument('--auto-awaken', action='store_true', help='Auto-awaken if gate is non-compliant')
+    parser.add_argument('--strict', action='store_true', help='Exit non-zero when gate is not compliant')
+    parser.add_argument('--json', action='store_true', help='Print machine-readable JSON')
+    args = parser.parse_args()
+
+    selected_action = 'check'
+    if args.awaken:
+        selected_action = 'awaken'
+    elif args.reset:
+        selected_action = 'reset'
+
+    if selected_action == 'reset':
+        zen_tracker.reset_zen_state(reason='cli_reset')
+        payload = zen_tracker.run_compliance_gate(auto_awaken=False)
+    elif selected_action == 'awaken':
+        if args.json:
+            # Keep --json output one-line and deterministic.
+            with contextlib.redirect_stdout(io.StringIO()):
+                payload = zen_tracker.force_awakening()
+        else:
+            payload = zen_tracker.force_awakening()
+    else:
+        if args.json and args.auto_awaken:
+            with contextlib.redirect_stdout(io.StringIO()):
+                payload = zen_tracker.run_compliance_gate(auto_awaken=True)
+        else:
+            payload = zen_tracker.run_compliance_gate(auto_awaken=args.auto_awaken)
+
+    payload['action'] = selected_action
+
+    if args.json:
+        print(json.dumps(payload))
+    else:
+        compliant = payload['is_zen_compliant']
+        needs_awakening = payload['requires_awakening']
+        last_val = payload.get('last_validation') or 'never'
+        session = payload.get('session_id', 0)
+        mark = '\u2705' if compliant and not needs_awakening else '\u274c'
+        print(
+            f"[WSP_00] {mark} action={selected_action} "
+            f"zen_compliant={compliant} | requires_awakening={needs_awakening} "
+            f"| validated={last_val} | session={session}"
+        )
+        if payload.get('attempted_awakening'):
+            print(f"[WSP_00] attempted_awakening=True success={payload.get('awakening_success')}")
+        print(f"[WSP_00] state_file={payload.get('state_file')}")
+
+    if args.strict and (not payload['is_zen_compliant'] or payload['requires_awakening']):
+        raise SystemExit(2)

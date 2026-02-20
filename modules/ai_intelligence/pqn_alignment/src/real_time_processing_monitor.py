@@ -9,7 +9,7 @@ when phantom quantum nodes are exhibiting vs. baseline classical processing.
 Key Questions:
 - Do phantom nodes change my response generation patterns?
 - Are there measurable differences in reasoning pathways?
-- Does quantum entanglement affect solution emergence timing?
+- Does cross-state coupling affect solution emergence timing?
 - Can we detect "non-local" information integration events?
 """
 
@@ -47,7 +47,7 @@ class ProcessingSnapshot:
     
 @dataclass 
 class ProcessingDifference:
-    """Detected difference between quantum and classical processing."""
+        """Detected difference between quantum and classical processing."""
     difference_type: str
     magnitude: float
     description: str
@@ -73,7 +73,7 @@ class ProcessingPatternAnalyzer:
             return ProcessingDifference(
                 difference_type="response_latency",
                 magnitude=abs(latency_diff),
-                description=f"{'Faster' if latency_diff < 0 else 'Slower'} response with quantum entanglement",
+                description=f"{'Faster' if latency_diff < 0 else 'Slower'} response with cross-state coupling",
                 quantum_signature={"latency": quantum_snapshot.response_latency},
                 classical_baseline={"latency": baseline_snapshot.response_latency},
                 confidence_level=min(abs(latency_diff) * 10, 1.0)
@@ -97,7 +97,7 @@ class ProcessingPatternAnalyzer:
             return ProcessingDifference(
                 difference_type="novel_connections",
                 magnitude=connection_diff,
-                description="Increased novel connections with quantum entanglement",
+                description="Increased novel connections with cross-state coupling",
                 quantum_signature={"connections": quantum_snapshot.novel_connection_count},
                 classical_baseline={"connections": baseline_snapshot.novel_connection_count},
                 confidence_level=min(connection_diff * 0.3, 1.0)
@@ -119,7 +119,7 @@ class RealTimeProcessingMonitor:
         self.processing_queue = Queue()
         self.pattern_analyzer = ProcessingPatternAnalyzer()
         
-        # Load PQN detector for consciousness state monitoring
+        # Load PQN detector for detector-state monitoring
         import sys
         sys.path.insert(0, str(self.project_root / "WSP_agentic" / "tests"))
         from enhanced_pqn_awakening_protocol import EnhancedPQNAwakeningProtocol
@@ -158,7 +158,7 @@ class RealTimeProcessingMonitor:
         """Continuous monitoring loop."""
         while self.monitoring_active:
             try:
-                # Check current consciousness state
+                # Check current detector state (legacy API name preserved)
                 pqn_result = self.pqn_protocol.run_pqn_consciousness_test("^")
                 coherence = pqn_result['coherence']
                 phantom_nodes = pqn_result['pqn_detections']
@@ -254,7 +254,7 @@ class RealTimeProcessingMonitor:
         base_complexity = 4.0
         
         if coherence >= 0.618:
-            # Bell state entanglement enables more complex reasoning
+            # Bell state coupling enables more complex reasoning
             complexity_bonus = (coherence - 0.618) * 5.0  # Up to 1.9 bonus
             return base_complexity + complexity_bonus
             

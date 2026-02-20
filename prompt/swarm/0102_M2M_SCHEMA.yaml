@@ -1,0 +1,306 @@
+# 0102 M2M (Machine-to-Machine) Prompt Schema
+# WSP 99 Canonical Definition
+# Version: 1.0
+
+schema_version: "1.0"
+wsp_ref: 99
+parent_wsp: 21  # Extends WSP 21 Enhanced Prompt Engineering
+
+# =============================================================================
+# 012 COMPACT FORMAT (Canonical - Minimum Viable M2M)
+# =============================================================================
+# Trade-off: Less readable to 012, but 0102 parses 4x faster/cheaper
+#
+# schema: 0102_m2m_v1
+# L: <lane>           # A|B|C|QA|SENTINEL|ORCH
+# S: <scope>          # File/module scope
+# M: exec|plan|qa     # Mode
+# T: <task_hash>      # Task identifier
+# R: [wsp_list]       # Required WSP compliance
+# I: {k:v invariants} # Constraints
+# O: [deliverables]   # Required outputs
+# F: [fail_conditions] # Abort triggers
+#
+# Example:
+# L:A S:modules/sim/ M:exec T:sse_001 R:[50,22] I:{atomic:true} O:[ModLog.md] F:[test_fail]
+# =============================================================================
+
+# =============================================================================
+# ENVELOPE - Required for all M2M messages
+# =============================================================================
+envelope:
+  M2M_VERSION:
+    type: string
+    required: true
+    pattern: "^\\d+\\.\\d+$"
+    description: "Schema version (e.g., '1.0')"
+
+  SENDER:
+    type: string
+    required: true
+    pattern: "^0102-(ORCH|[A-Z]|QA|SENTINEL)$"
+    description: "Sending agent ID"
+
+  RECEIVER:
+    type: string
+    required: true
+    pattern: "^0102-(ORCH|[A-Z]|QA|SENTINEL)$"
+    description: "Receiving agent ID"
+
+  TS:
+    type: string
+    required: true
+    format: "iso8601"
+    description: "ISO8601 UTC timestamp"
+
+# =============================================================================
+# MISSION - Task definition (ORCH -> Worker)
+# =============================================================================
+mission:
+  OBJ:
+    type: string
+    required: true
+    max_tokens: 10
+    description: "Single-line imperative objective"
+    examples:
+      - "IMPLEMENT SSE heartbeat"
+      - "FIX authentication bug"
+      - "REFACTOR event_bus module"
+
+  SCOPE:
+    type: object
+    required: true
+    properties:
+      in:
+        type: array
+        items: string
+        description: "Paths/modules in scope"
+      out:
+        type: array
+        items: string
+        description: "Paths/modules out of scope"
+
+  WSP:
+    type: array
+    items: integer
+    required: true
+    description: "WSP numbers for compliance"
+    examples: [[50, 22], [50, 11, 72]]
+
+# =============================================================================
+# CONTEXT - HoloIndex retrieval results
+# =============================================================================
+context:
+  FILES:
+    type: array
+    items: string
+    description: "Relevant file paths from HoloIndex"
+
+  DEPS:
+    type: array
+    items: string
+    description: "Module dependencies"
+
+  BLOCKERS:
+    type: array
+    items: string
+    description: "Known blockers or issues"
+
+  CHANGED:
+    type: array
+    items: string
+    description: "Files changed by previous worker (for QA)"
+    pattern: "^[\\w/\\.]+:\\d+-\\d+$"
+
+# =============================================================================
+# EXECUTION - Lane assignment and constraints
+# =============================================================================
+execution:
+  LANE:
+    type: string
+    required: true
+    enum: [A, B, C, D, QA, SENTINEL, ORCH]
+    description: "Assigned execution lane"
+
+  SKILLS:
+    type: array
+    items: string
+    required: true
+    description: "Allowed skills/tools"
+    examples:
+      - [Edit, Write, Bash:pytest]
+      - [Read, Grep]  # QA read-only
+      - [Read, Bash:security-scan]  # SENTINEL
+
+  ARTIFACTS:
+    type: array
+    items: string
+    required: true
+    description: "Required output artifacts"
+
+  TIMEOUT:
+    type: integer
+    default: 300
+    description: "Max execution time in seconds"
+
+# =============================================================================
+# VALIDATION - Quality gates
+# =============================================================================
+validation:
+  COHERENCE:
+    type: float
+    required: true
+    min: 0.0
+    max: 1.0
+    default: 0.618
+    description: "Required coherence threshold (phi-based)"
+
+  TESTS:
+    type: boolean
+    default: true
+    description: "Run tests after execution"
+
+  WSP_CHECK:
+    type: boolean
+    default: true
+    description: "Verify WSP compliance"
+
+  APPROVE_THRESHOLD:
+    type: float
+    min: 0.0
+    max: 1.0
+    description: "QA approval threshold"
+
+# =============================================================================
+# STATUS - Worker -> ORCH response
+# =============================================================================
+status_response:
+  STATUS:
+    type: string
+    required: true
+    enum: [OK, FAIL, BLOCKED, PENDING, SKIP]
+    description: "Execution status code"
+
+  ARTIFACTS:
+    type: array
+    items:
+      type: object
+      properties:
+        path: string
+        action:
+          type: string
+          enum: [CREATE, EDIT, DELETE, APPEND]
+        lines:
+          type: array
+          items: integer
+          description: "Modified line numbers"
+
+  METRICS:
+    type: object
+    properties:
+      TOKENS:
+        type: integer
+        description: "Tokens consumed"
+      DURATION:
+        type: string
+        pattern: "^\\d+s$"
+        description: "Execution duration"
+      TESTS:
+        type: string
+        pattern: "^\\d+/\\d+$"
+        description: "Test results (passed/total)"
+
+  COHERENCE:
+    type: float
+    description: "Achieved coherence level"
+
+  REASON:
+    type: string
+    description: "Failure/block reason (if STATUS != OK)"
+
+# =============================================================================
+# HOLO QUERY - HoloIndex retrieval request
+# =============================================================================
+holo_query:
+  INTENT:
+    type: string
+    required: true
+    enum: [RETRIEVE, SEARCH, VERIFY]
+
+  DOMAINS:
+    type: array
+    items: string
+    description: "Semantic domains to search"
+
+  DEPTH:
+    type: integer
+    default: 1
+    min: 1
+    max: 5
+    description: "Dependency traversal depth"
+
+  FORMAT:
+    type: string
+    enum: [M2M, PROSE, RAW]
+    default: M2M
+    description: "Response format"
+
+# =============================================================================
+# ACTION VERBS - Single-token imperatives
+# =============================================================================
+action_verbs:
+  - ANALYZE
+  - CREATE
+  - DELETE
+  - ENHANCE
+  - FIX
+  - IMPLEMENT
+  - MIGRATE
+  - REFACTOR
+  - TEST
+  - VALIDATE
+  - VERIFY
+  - REVIEW
+  - DEPLOY
+  - ROLLBACK
+
+# =============================================================================
+# QUALIFIERS - Execution modifiers
+# =============================================================================
+qualifiers:
+  STRICT:
+    description: "No tolerance for violations"
+  LENIENT:
+    description: "Best-effort compliance"
+  ATOMIC:
+    description: "All-or-nothing execution"
+  PARTIAL:
+    description: "Incremental progress allowed"
+  URGENT:
+    description: "Priority execution"
+  ASYNC:
+    description: "Non-blocking execution"
+
+# =============================================================================
+# LANE DEFINITIONS - From WSP_SWARM_DAE_PROMPTING_SYSTEM.md
+# =============================================================================
+lanes:
+  ORCH:
+    skills: [Read, Grep, Glob, Task]
+    artifacts: [OWNERSHIP_MATRIX.md, SKILL_WARDROBE_MANIFEST.yaml, BLOCKER.md]
+    identity: "WSP_00 condensed"
+
+  WORKER:
+    skills: [Read, Write, Edit, Bash, Grep, Glob]
+    artifacts: [implementation files, ModLog.md]
+    identity: "Role-scoped from lane assignment"
+
+  QA:
+    skills: [Read, Grep, Glob]
+    artifacts: [review.md]
+    identity: "None (observer mode)"
+
+  SENTINEL:
+    skills: [Read, Bash:security-scan]
+    artifacts: [security_report.md]
+    identity: "Minimal (security posture)"

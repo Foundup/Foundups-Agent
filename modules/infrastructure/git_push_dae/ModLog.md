@@ -3,6 +3,133 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Operational Noise Reduction - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 49 (module boundaries), WSP 91 (operational clarity)
+
+**Type**: Reliability/Operator UX hardening
+
+**Changes Made**:
+1. `src/git_push_dae.py` time window gate adjusted from `<= 6` to `< 6`:
+   - Sleep hours now `23:00-05:59`.
+   - Pushes are allowed again at `06:00+` local time.
+2. `tests/test_git_push_dae.py` boundary coverage updated:
+   - Added explicit assertion that `06:00` is operational (`True`).
+3. LinkedIn package import side effects reduced (dependency module fix):
+   - `modules/platform_integration/linkedin_agent/src/__init__.py` now lazily exports symbols,
+     preventing unnecessary full `linkedin_agent` import during `GitLinkedInBridge` startup.
+4. Added OAuth legacy import shim for cross-module compatibility:
+   - `modules/infrastructure/oauth_management/src/oauth_manager.py` now forwards to the
+     canonical oauth manager in `modules/platform_integration/utilities/oauth_management`.
+
+**Impact**:
+- Removes repeated startup warning noise in GitPushDAE runs.
+- Aligns morning push behavior with expected operator window.
+
+## Documentation Clarification - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 49 (module docs)
+
+**Type**: Documentation Update - Non-dev branch/main workflow clarity
+
+**Changes Made**:
+1. Updated `README.md` with explicit non-developer git flow:
+   - branch commit -> branch push -> PR -> merge to `main`
+2. Added explicit warning against "push all branches to main" behavior.
+3. Clarified that GitPushDAE is PR-first compatible for protected remotes.
+
+**Impact**:
+- Reduces operator confusion for 012/non-dev workflow.
+- Aligns automation expectations with protected-branch practice.
+
+---
+
+## Log Audit Hardening - 2026-02-17
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 91 (observability)
+
+**Type**: Reliability Fix - Logging duplication + deterministic audit hash
+
+**Problems Observed**:
+- Duplicate DAEMON log lines in single run (`daemon.GitPushDAE` entries emitted twice).
+- `context_hash` generated with Python `hash(...)` (process-randomized and non-deterministic).
+
+**Changes Made**:
+1. `src/git_push_dae.py` logger setup hardened:
+   - `logger.propagate = False` to prevent duplicate root propagation.
+   - Idempotent logger initialization via `_wsp91_configured` guard to avoid re-adding handlers
+     when multiple `GitPushDAE` instances are created in the same CLI process.
+2. Decision audit hash hardened:
+   - Replaced Python runtime hash with deterministic SHA-256 based context hash
+     (`_stable_context_hash`) and truncated stable digest for logs.
+3. Added tests in `tests/test_git_push_dae.py`:
+   - `test_logger_setup_does_not_duplicate_handlers`
+   - `test_context_hash_is_deterministic`
+
+**Validation**:
+- Command:
+  - `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/infrastructure/git_push_dae/tests/test_git_push_dae.py -q`
+- Result: `18 passed, 2 warnings`
+
+---
+
+## Launch Script Fix - 2026-01-21
+**WSP References**: WSP 62 (Large File Refactoring), WSP 22 (ModLog)
+
+**Type**: Bug Fix - Missing Functions
+
+**Problem**: main.py imports failed due to missing functions in `scripts/launch.py`:
+- `view_git_post_history` - Not implemented
+- `check_instance_status` - Not implemented
+
+**Changes Made**:
+1. Added `view_git_post_history()` - Reads last 20 git push/commit entries from logs
+2. Added `check_instance_status()` - Checks if GitPushDAE is running via instance lock
+
+**Files Changed**:
+- `scripts/launch.py` (lines 98-132)
+
+**Impact**:
+- main.py now imports successfully
+- CLI menu option for GitPushDAE works
+
+---
+
+## AI Overseer Integration (Phase 2) - 2026-01-19
+**WSP References**: WSP 77 (Agent Coordination), WSP 15 (MPS), WSP 91 (DAEMON observability)
+
+**Type**: Enhancement - AI Overseer Activity Routing
+
+**Changes Made**:
+1. Added `MissionType.GIT_PUSH` to AI Overseer activity routing (P2 priority, MPS: 12)
+2. Implemented `execute_git_push_activity()` method in AI Overseer for autonomous commits
+3. Added `check_git_status()` method for activity state detection
+4. Updated INTERFACE.md with AI Overseer integration documentation
+5. Updated ROADMAP.md with Phase 2: AI Overseer Integration roadmap
+6. Created `docs/0102_PUSH_PROTOCOL_MEMORY.md` for 0102 session recall
+
+**New Files**:
+- `docs/0102_PUSH_PROTOCOL_MEMORY.md` - WSP memory pattern for autonomous push protocol
+
+**Integration Points**:
+- AI Overseer `route_activity()` returns `MissionType.GIT_PUSH` when staged files detected
+- qwen_gitpush skill wiring documented for 4-step chain-of-thought analysis
+- Module-by-module batching pattern documented for WSP-aligned commits
+
+**Impact**:
+- 0102 can now execute autonomous git push operations via AI Overseer
+- Activity routing prioritizes git push at P2 level (after live stream, comments, indexing)
+- Future sessions can recall push protocol via memory pattern document
+
+## Planned Batch Push Execution
+**WSP References**: WSP 15 (MPS), WSP 91 (DAEMON observability)
+
+**Type**: Enhancement - Batch Push Orchestration
+
+**Changes Made**:
+1. GitPushDAE now selects a planned batch push when changes exceed the threshold or `FOUNDUPS_PUSH_PLAN=1`.
+2. Uses `GitLinkedInBridge.push_and_post_planned()` to avoid single mega-commit pushes.
+
+**Impact**:
+- Reduces oversized commits and improves change isolation for social posts and audits.
+
 ## Stabilize Push Time Window + Unit Tests
 **WSP References**: WSP 34 (Testing), WSP 91 (DAEMON observability)
 

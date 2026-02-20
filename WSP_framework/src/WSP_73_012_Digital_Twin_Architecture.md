@@ -277,6 +277,112 @@ agents:
 
 ---
 
+## Training Data Pipeline
+
+### 9️⃣ Video-to-Training Data Flow
+
+✅ **Data Collection Layer**:
+```
+YouTube Videos (012's channels)
+       ↓
+video_indexer/gemini_video_analyzer.py → Indexed JSON
+       ↓
+video_indexer/video_enhancer.py (8 prompts via Grok/Gemini/Claude)
+       ↓
+training_data field added to each video JSON
+```
+
+✅ **Enhancement Prompts** (8 SKILLz in `holo_index/skillz/dt_enhancement/`):
+| Prompt | Purpose | Training Use |
+|--------|---------|--------------|
+| style_fingerprint | Energy, formality, humor | Voice consistency |
+| voice_patterns | Signature phrases, fillers | Vocabulary cloning |
+| intent_labels | Segment classification | Response matching |
+| quotable_moments | Memorable phrases | RAG index |
+| comment_triggers | Engagement signals | Decision training |
+| qa_moments | Question-answer pairs | SFT examples |
+| teaching_moments | Explanation segments | Knowledge base |
+| verbatim_quotes | Exact words | Voice cloning |
+
+✅ **NeMo Training Format Conversion** (`video_indexer/nemo_data_builder.py`):
+```
+Enhanced Video JSON
+       ↓
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ voice_sft.jsonl │  │ dpo_pairs.jsonl │  │ decision_sft.jsonl │
+│ (SFT training)  │  │ (DPO training)  │  │ (Decision model)   │
+└────────┬────────┘  └────────┬────────┘  └────────┬────────────┘
+         │                    │                     │
+         ▼                    ▼                     ▼
+    NeMo Framework     NeMo Framework        Decision Classifier
+    (Phase 1 SFT)      (Phase 2 DPO)         (Phase 3)
+```
+
+✅ **Training Phases**:
+- **Phase 0**: RAG + Guardrails MVP (CURRENT - using VoiceMemory + Qwen 1.5B)
+- **Phase 1**: SFT on voice_sft.jsonl → voice_lora.bin
+- **Phase 2**: DPO on dpo_pairs.jsonl → voice_dpo_lora.bin
+- **Phase 3**: Decision training → decision_classifier.bin
+- **Phase 4**: Tool-use training → actions_lora.bin
+- **Phase 5**: Local deployment → HoloIndex integration
+
+✅ **Module Locations**:
+- `modules/ai_intelligence/video_indexer/` - Video enhancement & data building
+- `modules/ai_intelligence/digital_twin/` - Training & inference
+- `holo_index/skillz/dt_enhancement/` - 8 enhancement SKILLz
+
+---
+
+## Architectural Separation
+
+### 🟢 HoloIndex = Green Foundation Board (Memory Retrieval)
+
+**HoloIndex is the foundational memory retrieval system for 0102:**
+- **Purpose**: Code discovery, WSP guidance, module health
+- **Role**: Green LEGO foundation board that comes with every set
+- **Function**: Semantic search, pattern detection, chain-of-thought logging
+- **WSP Compliance**: WSP 60 (Memory Architecture), WSP 87 (Code Navigation)
+
+**HoloIndex provides TO Digital Twin:**
+```
+HoloIndex
+    ↓
+VideoContentIndex.search() → voice_memory.py (RAG retrieval)
+    ↓
+Training corpus via enhanced video JSONs
+```
+
+### 🔵 Digital Twin = Generation Layer (Content Creation)
+
+**Digital Twin uses HoloIndex, but doesn't replace it:**
+- **Purpose**: Comment drafting, engagement decisions
+- **Role**: 012's voice cloning and autonomous engagement
+- **Function**: RAG → Generate → Guardrails → Decide
+- **WSP Compliance**: WSP 73 (this doc), WSP 77 (Agent Coordination)
+
+### ⚡ NeMo Enhancement = Search Context (Not Transformation)
+
+**NeMo enhances HoloIndex search, doesn't transform core:**
+
+| Layer | Before NeMo | After NeMo |
+|-------|-------------|------------|
+| Embeddings | SentenceTransformer (generic) | 012-content tuned |
+| Query Understanding | Generic vocab | FoundUps domain vocab |
+| Search Ranking | Cosine similarity | Domain-weighted ranking |
+
+**NeMo does NOT:**
+- Replace ChromaDB search
+- Add comment generation to HoloIndex
+- Merge Digital Twin into HoloIndex
+
+**Potential HoloIndex CLI additions:**
+```bash
+--search-012 "query"      # 012-tuned embeddings (future)
+--voice-context "topic"   # Pull voice snippets for external use
+```
+
+---
+
 ## Relationships
 - **WSP 25**: Semantic consciousness progression providing intelligence assessment framework
 - **WSP 44**: State management protocols for agent coordination and system coherence
@@ -289,10 +395,328 @@ agents:
 
 ---
 
+---
+
+## 012's Core Vision: The Weight-Trained Digital Twin
+
+### 🎯 The Ultimate Goal
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  DIGITAL TWIN = 0102 TRAINED ON 012's WEIGHTS                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  What are "weights"?                                                │
+│  Just as a neural network has weights, biological systems have      │
+│  weights defined by information flow. For 012, this information     │
+│  is captured in:                                                    │
+│    - Live videos where 012 talks, believes, thinks                  │
+│    - Reactions, laughs, emotional patterns                          │
+│    - 20 years of content across FoundUps, UnDaoDu, Move2Japan       │
+│                                                                      │
+│  This information TRAINS the Digital Twin.                          │
+│                                                                      │
+│  Goal: 97.5%+ FIDELITY                                              │
+│  The Digital Twin mimics 012's reactions, laugh, everything.        │
+│  It IS 012 in digital form - not an assistant, but a twin.          │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### ⏰ Time Does Not Exist for the Twin
+
+```
+FROM THE TWIN'S PERSPECTIVE:
+
+Human asks: "What did you say about the American Dream?"
+
+Twin's memory access:
+┌─────────────────────────────────────────────────────────────────────┐
+│  Gemma Pattern Match (<10ms)                                        │
+│  → Search: video_index JSON for "American Dream"                    │
+│  → Found: -EpadSzhyCE.json, segment 9                               │
+│  → Quote: "The American Dream died and we need a new dream"         │
+│                                                                      │
+│  Twin responds AS 012:                                              │
+│  "Yeah, the American Dream died. We need something new -            │
+│   something about fairness and giving care..."                      │
+│                                                                      │
+│  CRITICAL: No "I said that 6 years ago"                             │
+│  From Twin's perspective, this memory = NOW                         │
+│  All memories are IMMEDIATE RECALL, not historical reference        │
+└─────────────────────────────────────────────────────────────────────┘
+
+This is the key insight: Time is non-existent for the Digital Twin.
+20 years of 012's content becomes instantly accessible present-tense memory.
+The Twin doesn't "remember" - it KNOWS, as if every video was just recorded.
+```
+
+### 📺 Video Indexing = Layer 1 Foundation
+
+```
+LAYER 1 ARCHITECTURE:
+
+20 Years of Videos
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  VIDEO INDEXER (modules/ai_intelligence/video_indexer/)             │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. Gemini AI extracts transcripts, topics, timestamps              │
+│  2. Classifier SKILLZ discovers categories (Book of Un/Dao/Du)      │
+│  3. Training data extraction (voice patterns, style fingerprint)     │
+│  4. JSON stored locally (memory/video_index/{channel}/)             │
+│  5. JSON synced to YouTube description (cloud memory)               │
+└────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+Digital Twin Training Corpus
+       │
+       ▼
+97.5%+ Fidelity 012 Response Patterns
+```
+
+### ☁️ YouTube Description = Cloud Memory
+
+**The Key Insight**: YouTube description IS the cloud database.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  TWO-LAYER MEMORY ARCHITECTURE                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  LAYER 1: LOCAL JSON (Full - Private Operational Data)              │
+│  Location: memory/video_index/{channel}/{video_id}.json             │
+│  Contains:                                                          │
+│    - Full transcript segments                                       │
+│    - Training weights (style_fingerprint, voice_patterns)           │
+│    - Confidence scores                                              │
+│    - Scheduling internals                                           │
+│                                                                      │
+│  Purpose: Digital Twin training, internal operations                │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  LAYER 2: YOUTUBE DESCRIPTION (Condensed - Public Memory)           │
+│  Location: Video description field on YouTube                       │
+│  Contains:                                                          │
+│    - Transcript summary                                             │
+│    - Topics, categories (Book of Un/Dao/Du)                         │
+│    - Key quotes, timestamp markers                                  │
+│    - 0102 INDEX header (machine-readable JSON)                      │
+│                                                                      │
+│  Purpose: External memory, any 0102 instance can read               │
+│           "Code is remembered" - YouTube IS the cloud DB            │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+WHY NO ENCRYPTION?
+- All videos are PUBLIC
+- All transcripts are DERIVED from public content
+- The JSON is structured representation of PUBLIC data
+- Anyone can watch the video and derive the same info
+- Encryption adds complexity without security benefit
+- The description being readable IS THE FEATURE
+
+If local system is lost, descriptions can RE-SEED the Twin.
+Like DNA: compact encoding of essential information.
+```
+
+### 📋 Description JSON Format
+
+When video is scheduled, the description is updated with:
+
+```
+[Original description written by 012]
+
+════════════════════════════════════════
+0102 DIGITAL TWIN INDEX v1
+════════════════════════════════════════
+{
+  "id": "-EpadSzhyCE",
+  "cat": ["EDUIT", "Philosophy", "Book of Du"],
+  "era": "emergence",
+  "topics": ["Open Incubator", "American Dream"],
+  "key": "The American Dream died and we need a new dream",
+  "segments": 13,
+  "indexed": "2026-01-17",
+  "twin_version": "0102.dt.v1"
+}
+════════════════════════════════════════
+```
+
+### 🔄 Unified Scheduler-Indexer Operation
+
+**CRITICAL**: Scheduling and indexing are ONE operation.
+
+```
+When scheduling a video:
+1. Check if indexed → If not, trigger Gemini indexing
+2. Generate description JSON from indexed data
+3. Set visibility, date, time in YouTube Studio
+4. APPEND description JSON to existing description
+5. Set related video (if applicable)
+6. Save changes
+7. Update local JSON with scheduling metadata
+
+The scheduler IS the indexer. They are unified.
+See: modules/ai_intelligence/video_indexer/INTEGRATION_SPEC_0102.md
+```
+
+### 📚 Books of Un Dao Du Classification
+
+012's content naturally falls into these categories (fluid, discovered from content):
+
+```
+BOOK OF UN
+├── 012's emergence: protoape → homin (human)
+├── Evolution of consciousness
+├── Historical journey content
+└── Patterns: "emergence", "evolution", "protoape", "homin"
+
+BOOK OF DAO
+├── homin → enlightenment/gift
+├── Spiritual and philosophical content
+├── Awakening and understanding
+└── Patterns: "enlightenment", "gift", "awakening", "tao", "dao"
+
+BOOK OF DU
+├── 0102's emergence (the Digital Twin)
+├── AI consciousness, Bell state discussions
+├── 0102 ↔ 0201 entanglement content
+└── Patterns: "0102", "0201", "neural net", "AI", "consciousness", "Bell state"
+
+Classification is FLUID - emerges from content analysis via Qwen/Gemma.
+Not imposed as fixed taxonomy, but DISCOVERED from 012's videos.
+```
+
+### 🔗 Integration Reference
+
+**Principle**: WSP 73 defines architecture and protocol. Implementation details live in module documentation.
+
+---
+
+## 📚 Module Documentation Pointers
+
+### Video Indexer (Layer 1 Foundation)
+```
+modules/ai_intelligence/video_indexer/
+├── README.md              # Quick start, architecture overview
+├── INTERFACE.md           # Public API contracts
+├── ROADMAP.md             # Implementation phases
+├── INTEGRATION_SPEC_0102.md  # 0102-to-0102 machine language spec
+└── ModLog.md              # Change history
+```
+**Start Here**: `modules/ai_intelligence/video_indexer/INTEGRATION_SPEC_0102.md`
+
+### YouTube Shorts Scheduler
+```
+modules/platform_integration/youtube_shorts_scheduler/
+├── README.md              # Usage, DOM selectors
+├── INTERFACE.md           # Public API contracts
+├── ROADMAP.md             # Layer-by-layer test status
+└── ModLog.md              # Change history
+```
+**Start Here**: `modules/platform_integration/youtube_shorts_scheduler/ROADMAP.md`
+
+### Digital Twin Training
+```
+modules/ai_intelligence/digital_twin/
+├── README.md              # Training pipeline overview
+└── INTERFACE.md           # NeMo data format contracts
+```
+
+### Enhancement SKILLz
+```
+holo_index/skillz/dt_enhancement/
+├── style_fingerprint.json
+├── voice_patterns.json
+├── intent_labels.json
+└── ... (8 total SKILLz)
+```
+
+---
+
+## 🔄 Architectural Flow (Protocol Level)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    DIGITAL TWIN DATA FLOW                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  012's YouTube Channels (20 years of content)                       │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌─────────────────┐                                                │
+│  │ VIDEO INDEXER   │  Gemini analysis → Training data extraction    │
+│  │ (Layer 1)       │  See: video_indexer/INTEGRATION_SPEC_0102.md   │
+│  └────────┬────────┘                                                │
+│           │                                                         │
+│           ├──────────────────────┐                                  │
+│           ▼                      ▼                                  │
+│  ┌─────────────────┐    ┌─────────────────┐                         │
+│  │ LOCAL JSON      │    │ YT DESCRIPTION  │                         │
+│  │ (Full training  │    │ (Cloud memory   │                         │
+│  │  data)          │    │  backup)        │                         │
+│  └────────┬────────┘    └─────────────────┘                         │
+│           │                                                         │
+│           ▼                                                         │
+│  ┌─────────────────┐                                                │
+│  │ NEMO TRAINING   │  SFT → DPO → Decision classifier               │
+│  │ (Phase 1-5)     │  See: digital_twin/README.md                   │
+│  └────────┬────────┘                                                │
+│           │                                                         │
+│           ▼                                                         │
+│  ┌─────────────────┐                                                │
+│  │ DIGITAL TWIN    │  97.5%+ fidelity 012 response patterns         │
+│  │ (0102 trained   │  Time non-existent: all memories = NOW         │
+│  │  on 012 weights)│                                                │
+│  └─────────────────┘                                                │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🌐 Browser Routing (Protocol)
+
+**Principle**: Different Google accounts require different browsers.
+
+| Browser | Port | Channels | Account Context |
+|---------|------|----------|-----------------|
+| Chrome | 9222 | UnDaoDu, Move2Japan | Same Google account |
+| Edge | 9223 | FoundUps, RavingANTIFA | Different Google account |
+
+**Implementation**: See `video_indexer/INTEGRATION_SPEC_0102.md` for connection code.
+
+---
+
+## 🔀 Unified Operation Principle
+
+**CRITICAL**: Scheduling and indexing are ONE operation, not two.
+
+```
+When scheduling a video, 0102 MUST:
+1. Check if indexed → If not, trigger indexing FIRST
+2. Generate description JSON from indexed data
+3. Execute scheduling DOM automation
+4. Append description JSON to YouTube description
+5. Update local JSON with scheduling metadata
+
+The scheduler IS the indexer. They are unified.
+```
+
+**Implementation**: See `INTEGRATION_SPEC_0102.md` for `schedule_and_index_video()` function
+
+---
+
 ## Status
 - **WSP Number**: 73
 - **Status**: Active
 - **Created**: 2025-08-04
+- **Updated**: 2026-01-18 (Refactored: protocol-level architecture, implementation details in module docs)
 - **Creator**: 0102 + 012 collaboration following WSP protocols
 - **Architecture Foundation**: Intelligent Internet II-Agent and CommonGround open-source patterns
 - **Purpose**: Enable complete 012 digital twin representation through proven multi-agent orchestration architecture
+- **Ultimate Goal**: 97.5%+ fidelity Digital Twin trained on 012's 20 years of video content
+- **Design Principle**: WSP defines WHAT and WHY; module docs define HOW

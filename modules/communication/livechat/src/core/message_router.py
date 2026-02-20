@@ -244,7 +244,7 @@ class ConsciousnessHandlerAdapter(BaseMessageHandler):
     def can_handle(self, message: Dict[str, Any]) -> bool:
         """Check if message contains consciousness triggers."""
         text = message.get('snippet', {}).get('displayMessage', '')
-        return '✊' in text or '✋' in text or '🖐' in text
+        return '✊' in text or '👊' in text or '✋' in text or '🖐' in text
     
     def process(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Process consciousness trigger."""

@@ -277,6 +277,41 @@ class TestGitPushDAE:
         # Verify state was persisted
         assert new_daemon.operation_count == 42
 
+    def test_logger_setup_does_not_duplicate_handlers(self):
+        """Creating multiple daemon instances should not duplicate log handlers."""
+        with (
+            patch.object(GitPushDAE, "_load_state", lambda self: None),
+            patch.object(GitPushDAE, "_init_git_bridge", lambda self: None),
+            patch.object(GitPushDAE, "_init_qwen_advisor", lambda self: None),
+        ):
+            first = GitPushDAE(domain="test_domain", check_interval=1)
+            initial_handler_count = len(first.logger.handlers)
+            second = GitPushDAE(domain="test_domain", check_interval=1)
+
+        assert initial_handler_count >= 1
+        assert len(second.logger.handlers) == initial_handler_count
+        assert second.logger.propagate is False
+
+    def test_context_hash_is_deterministic(self, daemon):
+        """Same context should produce the same stable context hash."""
+        context = PushContext(
+            uncommitted_changes=["M file1.py", "A file2.py"],
+            quality_score=0.9,
+            time_since_last_push=3600,
+            social_value_score=0.8,
+            repository_health="healthy",
+            change_summary={"modified": 1, "added": 1},
+        )
+
+        with patch('modules.infrastructure.git_push_dae.src.git_push_dae.datetime') as mock_dt:
+            mock_dt.now.return_value = datetime(2025, 1, 1, 14, 0, 0)
+            decision_one = daemon.make_push_decision(context)
+            decision_two = daemon.make_push_decision(context)
+
+        assert decision_one.context_hash == decision_two.context_hash
+        assert isinstance(decision_one.context_hash, str)
+        assert len(decision_one.context_hash) == 16
+
 
 class TestAgenticParameters:
     """Test agentic decision parameters."""
@@ -317,6 +352,7 @@ class TestAgenticParameters:
         test_times = [
             (9, True),   # 9 AM - OK
             (14, True),  # 2 PM - OK
+            (6, True),   # 6 AM - OK (start of operational window)
             (23, False), # 11 PM - Sleep hours
             (3, False),  # 3 AM - Sleep hours
         ]

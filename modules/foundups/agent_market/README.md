@@ -1,0 +1,66 @@
+﻿# FoundUps Agent Market (FAM)
+
+## Purpose
+FoundUps Agent Market (FAM) is the outer layer for launching tokenized FoundUps and coordinating agent swarms through a task to proof to verification to payout pipeline.
+
+## CABR Canonical Intent
+
+- CABR = Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate).
+- WHY: CABR exists to power Proof of Benefit (PoB).
+- HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
+
+This module is intentionally generic and chain-agnostic through Prototype, with persistence adapters behind stable contracts.
+
+## Compute Access (Paywall) Direction
+
+FAM is also the website execution surface for paid build compute (not an idea-submission paywall).
+The access layer is defined in:
+
+- `modules/foundups/agent_market/docs/COMPUTE_ACCESS_PAYWALL_SPEC.md`
+
+Design intent:
+- Discovery remains low-friction.
+- Execution actions are metered.
+- CABR keeps PoB quality-gated.
+- pAVS receives policy-defined treasury flows from metered usage.
+- Current status: P0 in-memory + persistence compute gates implemented; persistent registry/task pipeline wiring is active.
+
+## Scope in This PoC
+- Foundup registry with immutable vs mutable metadata rules.
+- Token factory adapter interface (no chain lock-in).
+- Agent join requests and capability tagging.
+- Task lifecycle: `open -> claimed -> submitted -> verified -> paid`.
+- Treasury and governance boundaries as interfaces.
+- CABR integration hooks as interfaces.
+- Event audit trail linking payout to proof to task to foundup.
+- Verified milestone distribution contract with idempotent publish semantics.
+- F_0 investor program for MVP pre-launch bidding (200 UP$/term, max 5-term hoard).
+- In-memory adapter for deterministic tests.
+- SQLite persistence adapter with schema migrations and query indexes.
+- Postgres adapter boundary and backend factory selection.
+
+## Out of Scope in This PoC
+- Production blockchain writes.
+- Production DAO/multisig execution.
+- UI implementation.
+- External DB dependencies.
+
+## Directory Layout
+- `src/models.py`: core schemas and validation.
+- `src/interfaces.py`: service contracts and adapter boundaries.
+- `src/in_memory.py`: PoC in-memory implementation.
+- `src/persistence/`: SQLite/Postgres adapters, migration manager, repository factory.
+- `src/exceptions.py`: domain errors.
+- `tests/`: schema, lifecycle, and permission tests.
+- `memory/`: module memory artifacts.
+
+## Quick Start
+```powershell
+cd o:\Foundups-Agent
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
+python -m pytest modules/foundups/agent_market/tests -q
+```
+
+## OpenClaw Execution Arm Alignment
+OpenClaw remains the execution ingress for intent routing. FAM provides explicit contracts that OpenClaw/WRE can call for launch and execution flows.

@@ -155,6 +155,13 @@ Based on enterprise patterns and 0102 feedback:
 3. **Graph Relationships**: Show how modules connect, not just list them
 4. **Problem-First**: Start with "what problem am I solving?"
 
+## HoloIndex vs Grep/Glob (Tooling Boundary)
+
+- **HoloIndex is primary** for semantic discovery and intent-based lookup.
+- **Grep/glob remain required** for deterministic file/path matching or exact string hunts.
+- **Use both**: Holo to locate the right area, grep/glob to confirm exact symbols or paths.
+- **STT note**: Speech-to-text may render "Holo" as "hollow"; treat them as the same term in prompts.
+
 ## Deprecation
 
 This WSP deprecates:

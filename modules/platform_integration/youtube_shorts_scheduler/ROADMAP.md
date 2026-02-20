@@ -2,12 +2,12 @@
 
 > **0102 Pickup Point**: Full WRE stack validated manually. Ready for Selenium automation.
 
-## Current Status: V0.5.0 (2026-01-01)
+## Current Status: V0.8.9 (2026-01-18)
 
-✅ **Layer 1-5 Manual Validation Complete**
-- All layers executed via browser subagent
-- DOM selectors identified and documented
-- Critical path: L0 → L1 → L2 → L3 → L4 → L5.1-5.5 → LOOP
+✅ **Full Cake in Production Orchestrator (Validated)**
+- Production chain executes: index (stub default) → (optional) index-informed title → description weave → schedule → dialog Done/Save → page Save
+- Selector hardening applied for dense schedule UI (date/time/timezone cluster)
+- Launcher stabilized against session-restore multi-tab focus drift
 
 ---
 
@@ -39,6 +39,23 @@ Each layer gets its own test file with two modes:
 - [ ] Add: Search feature support for related video
 - [ ] Selector: Need reliable DOM path for video grid
 
+### Sprint 1.3: Schedule → DBA (PatternMemory) Logging (NEW)
+- [x] Record successful schedule events to the existing WRE SQLite DBA (`wre_core/data/pattern_memory.db`)
+  - Skill name: `youtube_shorts_scheduler_schedule`
+  - Fields: channel_id, video_id, date_str, time_str, details (readback, selectors)
+- [ ] Add a minimal query/status command (read-only) to summarize recent schedule outcomes (future)
+
+### Sprint 1.4: Schedule → Index Weave (NEXT)
+- [x] Weave into `modules/ai_intelligence/video_indexer` + `memory/video_index/`
+  - Best-effort index creation via Gemini Tier 1 when index JSON is missing
+  - Append `0102 DIGITAL TWIN INDEX v1` JSON block into YouTube description (cloud memory)
+  - Update local index JSON with `scheduling` + `description_sync` after successful schedule
+  - Do NOT block scheduling on indexing failures (Occam layering)
+  - Toggle: `YT_SCHEDULER_INDEX_WEAVE_ENABLED=false` to disable
+- [ ] Index utility routing (POC)
+  - 012 voice → Digital Twin memory
+  - music/video → RavingANTIFA or faceless-video pipeline (module in development)
+
 ---
 
 ## Phase 2: Layer Linking (WRE Loop)
@@ -57,6 +74,16 @@ def run_scheduling_chain(video_index: int = 0):
     l5_return()       # Back to list
     l5_refresh()      # Refresh (CRITICAL before loop)
 ```
+
+### Sprint 2.3: Full Cake in Production Orchestrator (COMPLETE)
+- [x] Full cake executes via `src/scheduler.py` (no duplicated test selectors):
+  - index (stub by default) → index-informed title (optional) → description weave → schedule → dialog Done/Save → page Save
+- [x] Page Save selector hardened in `src/dom_automation.py`
+
+### Sprint 2.4: Scheduler Control Plane (COMPLETE)
+- [x] Centralize scheduler switches under YouTube Controls in `main.py`
+- [x] Add **content-type selector placeholder** (`YT_SCHEDULER_CONTENT_TYPE=shorts|videos`)
+  - `videos` remains a placeholder until the “Videos list” DOM selectors are implemented (next layer after Shorts stability)
 
 ### Sprint 2.2: Recursive Loop
 ```python
@@ -102,6 +129,14 @@ L5.4 Return:      #back-button
 L5.5 Refresh:     F5 key
 ```
 
+## Current Studio Scheduling DOM (0102-proven)
+
+The date/time fields are not always aria-labeled inputs until clicked. Current stable paths:
+
+- Date trigger text: `ytcp-text-dropdown-trigger#datepicker-trigger div.left-container`
+- Date picker input: `ytcp-date-picker tp-yt-paper-dialog#dialog input.tp-yt-paper-input`
+- Time input: `ytcp-form-input-container#time-of-day-container input.tp-yt-paper-input`
+
 ---
 
 ## Acceptance Criteria
@@ -125,4 +160,4 @@ L5.5 Refresh:     F5 key
 
 ## Last Updated
 
-**V0.5.0** (2026-01-01): WRE stack validated, layer tests planned
+**V0.8.9** (2026-01-18): Full cake validated; scheduler control plane added; launcher tab focus hardened

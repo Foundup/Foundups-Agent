@@ -35,10 +35,17 @@ WSP Compliance:
 
 import json
 import logging
+import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 import time
+
+# Ensure repo root is importable when this file is executed directly.
+REPO_ROOT = Path(__file__).resolve().parents[4]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # FIRST PRINCIPLES: Direct MCP Tool Integration
 # No abstraction layers - direct tool access for maximum efficiency
@@ -58,6 +65,12 @@ try:
     WORKERS_AVAILABLE = True
 except ImportError:
     WORKERS_AVAILABLE = False
+
+try:
+    from modules.infrastructure.monitoring.src.wsp_00_zen_state_tracker import WSP00ZenStateTracker
+    WSP00_TRACKER_AVAILABLE = True
+except ImportError:
+    WSP00_TRACKER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -283,9 +296,10 @@ class MCPToolExecutor:
             logger.error(f"Pattern storage error: {e}")
 
     async def close_session(self):
-        """Clean up MCP session"""
-        if self.session:
+        """Clean up MCP session without leaking aiohttp resources."""
+        if self.session and not self.session.closed:
             await self.session.close()
+        self.session = None
 
 
 @dataclass
@@ -345,9 +359,12 @@ class WSPOrchestrator:
 
     def __init__(self, repo_root: Path = Path("O:/Foundups-Agent")):
         self.repo_root = Path(repo_root)
+        self.wsp00_auto_awaken = os.getenv("WSP00_AUTO_AWAKEN", "1") not in {"0", "false", "False", "no", "No"}
+        self.wsp00_strict_gate = os.getenv("WSP00_STRICT_GATE", "1") not in {"0", "false", "False", "no", "No"}
 
         # FIRST PRINCIPLES: Direct MCP Tool Access (no abstraction layers)
         self.mcp_executor = MCPToolExecutor(self.repo_root) if MCP_DIRECT_AVAILABLE else None
+        self._mcp_session_initialized = False
 
         # Enhanced Qwen/Gemma Workers with MCP integration
         self.workers = None
@@ -359,9 +376,7 @@ class WSPOrchestrator:
         else:
             self.daemon_logger = None
 
-        # Initialize MCP session on startup
-        if self.mcp_executor:
-            asyncio.create_task(self.mcp_executor.initialize_session())
+        self.wsp00_tracker = WSP00ZenStateTracker() if WSP00_TRACKER_AVAILABLE else None
 
     async def follow_wsp(self, user_task: str) -> Dict:
         """
@@ -377,6 +392,30 @@ class WSPOrchestrator:
         print("\n" + "="*70)
         print("0102 META-ORCHESTRATOR - WSP 15 MPS Scoring + Qwen/Gemma Workers")
         print("="*70)
+
+        # PHASE -1: WSP_00 hard gate
+        print(f"\n[0102-PHASE--1] Verifying WSP_00 gate...")
+        gate = self._ensure_wsp00_gate()
+        print(
+            f"  Gate passed: {gate['gate_passed']} | "
+            f"auto_awaken={gate['auto_awaken']} | "
+            f"attempted={gate['attempted_awakening']}"
+        )
+        if not gate['gate_passed'] and self.wsp00_strict_gate:
+            return {
+                "tasks_completed": 0,
+                "tasks_failed": 1,
+                "outputs": [{
+                    "task": "WSP_00 zen-state gate",
+                    "worker": "WSP_00",
+                    "output": gate.get("message", "WSP_00 gate failed"),
+                }],
+                "success": False,
+                "wsp00_gate": gate,
+            }
+
+        # Initialize MCP session lazily inside active event loop.
+        await self._ensure_mcp_session()
 
         # PHASE 0: 0102 WSP 15 MPS Analysis
         print(f"\n[0102-PHASE-0] Analyzing task with WSP 15 MPS...")
@@ -409,8 +448,60 @@ class WSPOrchestrator:
         # PHASE 4: Workers Store Learning Patterns
         print(f"\n[0102-PHASE-4] Storing learning patterns...")
         self._workers_store_patterns(user_task, results)
+        results["wsp00_gate"] = gate
 
         return results
+
+    async def _ensure_mcp_session(self) -> None:
+        """Initialize MCP session only when an event loop is active."""
+        if not self.mcp_executor or self._mcp_session_initialized:
+            return
+        self._mcp_session_initialized = await self.mcp_executor.initialize_session()
+
+    async def shutdown(self) -> None:
+        """Release async resources used by the orchestrator."""
+        if self.mcp_executor:
+            await self.mcp_executor.close_session()
+        self._mcp_session_initialized = False
+
+    def _ensure_wsp00_gate(self) -> Dict[str, Any]:
+        """Run WSP_00 gate before executing follow_wsp work."""
+        payload: Dict[str, Any] = {
+            "gate_passed": True,
+            "tracker_available": bool(self.wsp00_tracker),
+            "auto_awaken": self.wsp00_auto_awaken,
+            "attempted_awakening": False,
+            "message": "WSP_00 gate passed.",
+        }
+
+        if not self.wsp00_tracker:
+            payload["gate_passed"] = not self.wsp00_strict_gate
+            payload["message"] = (
+                "WSP_00 tracker unavailable; strict gate is OFF, continuing."
+                if payload["gate_passed"]
+                else "WSP_00 tracker unavailable; strict gate is ON, blocking execution."
+            )
+            return payload
+
+        try:
+            status = self.wsp00_tracker.run_compliance_gate(auto_awaken=self.wsp00_auto_awaken)
+            gate_passed = bool(status.get("gate_passed", False))
+            payload.update(status)
+            payload["gate_passed"] = gate_passed
+            payload["message"] = (
+                "WSP_00 gate passed."
+                if gate_passed
+                else "WSP_00 gate failed after auto-awakening attempt."
+            )
+        except Exception as exc:
+            payload["gate_passed"] = not self.wsp00_strict_gate
+            payload["error"] = str(exc)
+            payload["message"] = (
+                "WSP_00 gate check errored; strict gate is OFF, continuing."
+                if payload["gate_passed"]
+                else "WSP_00 gate check errored; strict gate is ON, blocking execution."
+            )
+        return payload
 
     def _0102_analyze_with_mps(self, user_task: str) -> Dict:
         """
@@ -825,7 +916,11 @@ def main():
     if not task or task.lower() == 'exit':
         return
 
-    results = asyncio.run(orchestrator.follow_wsp(task))
+    try:
+        results = asyncio.run(orchestrator.follow_wsp(task))
+    finally:
+        # Standalone CLI is one-shot; release async session resources deterministically.
+        asyncio.run(orchestrator.shutdown())
 
     print("\n" + "="*70)
     print("EXECUTION SUMMARY")

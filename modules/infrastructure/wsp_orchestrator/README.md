@@ -1,17 +1,17 @@
-# WSP Orchestrator - AI Overseer + Worker Bee Architecture
+# WSP Orchestrator - 0102 Orchestrator + Worker Bee Architecture
 
 **WSP Domain**: `infrastructure` (WSP 3)
 
 ## Purpose
 
-Modular "follow WSP" system using AI Overseer (Qwen) + Worker Bees (Qwen/Gemma/MCP) architecture.
+Modular "follow WSP" system where 0102 orchestrates Qwen/Gemma/MCP workers.
 
 **CRITICAL**: This is a **standalone module** - **NO CODE IN MAIN.PY**.
 
 ## Architecture (Based on autonomous_refactoring.py Proven Pattern)
 
 ```
-AI Overseer (Qwen Meta-Orchestration)
+0102 Meta-Orchestration
     +-- Worker Bee 1: HoloIndex MCP (semantic search, WSP lookup)
     +-- Worker Bee 2: Gemma 3 270M (fast pattern matching)
     +-- Worker Bee 3: Qwen 1.5B (strategic planning)
@@ -21,11 +21,12 @@ AI Overseer (Qwen Meta-Orchestration)
 
 ### Execution Flow
 
-1. **Phase 0: Meta-Orchestration** - Qwen decides which workers to use
-2. **Phase 1: Generate Plan** - Create WSP execution plan
-3. **Phase 2: Assign Workers** - Route tasks to appropriate bees
-4. **Phase 3: Execute with Supervision** - 0102 oversight + worker execution
-5. **Phase 4: Learning** - Store patterns for future use
+0. **Phase -1: WSP_00 Gate** - zen-state compliance gate (fail-closed in strict mode)
+1. **Phase 0: Meta-Orchestration** - 0102 scores task via WSP 15
+2. **Phase 1: Generate Plan** - create WSP execution plan
+3. **Phase 2: Assign Workers** - route tasks to appropriate bees
+4. **Phase 3: Execute with Supervision** - worker execution under 0102 control
+5. **Phase 4: Learning** - store patterns for future use
 
 ## Usage
 
@@ -41,27 +42,41 @@ python modules/infrastructure/wsp_orchestrator/src/wsp_orchestrator.py "create n
 from modules.infrastructure.wsp_orchestrator.src.wsp_orchestrator import WSPOrchestrator
 
 orchestrator = WSPOrchestrator()
-results = orchestrator.follow_wsp(
-    user_task="implement new feature X",
-    auto_execute=False  # Requires 0102 approval
-)
+
+import asyncio
+
+async def _run():
+    try:
+        results = await orchestrator.follow_wsp("implement new feature X")
+        print(results["wsp00_gate"])
+    finally:
+        await orchestrator.shutdown()
+
+asyncio.run(_run())
 ```
 
 ## Key Features
 
-- **AI Overseer**: Qwen meta-orchestration decides execution strategy
+- **WSP_00 Hard Gate**: "follow WSP" blocks up front when compliance gate fails in strict mode
+- **0102 Orchestration**: 0102 controls execution strategy and worker assignment
 - **Worker Bees**: Specialized agents (Gemma/MCP/Qwen/Rules)
 - **MCP Integration**: HoloIndex search, WSP lookup via MCP servers
-- **0102 Supervision**: Human oversight for critical tasks
+- **Fail-Closed Safety**: missing tracker/gate errors block when strict mode is enabled
 - **Modular Design**: Zero code in main.py
 
 ## WSP Compliance
 
 - **WSP 77**: Agent Coordination Protocol (Overseer -> Workers)
 - **WSP 50**: Pre-Action Verification (HoloIndex first)
+- **WSP 00**: Zen-state compliance gate before orchestration
 - **WSP 84**: Code Memory Verification (MCP tools, no duplication)
 - **WSP 3**: Infrastructure Domain (orchestration)
 - **WSP 49**: Module Structure (complete)
+
+## Gate Controls (Env Vars)
+
+- `WSP00_AUTO_AWAKEN=1` (default): auto-attempt awakening when gate is non-compliant
+- `WSP00_STRICT_GATE=1` (default): fail closed when gate fails / tracker unavailable / gate check errors
 
 ## Worker Assignment Logic
 

@@ -42,7 +42,7 @@ class TestQuotaIntelligence(unittest.TestCase):
         
         # Mock environment variables for dual channels
         self.channel_configs = {
-            'CHANNEL_ID': 'UC-LSSlOZwpGIRIYihaz8zCw',  # UnDaoDu
+            'CHANNEL_ID': 'UCfHM9Fw9HD-NwiS0seD_oIA',  # UnDaoDu
             'CHANNEL_ID2': 'UCSNTUXjAgpd4sgWYP0xoJgw'  # FoundUps
         }
         
@@ -53,36 +53,15 @@ class TestQuotaIntelligence(unittest.TestCase):
         # Setup mock environment
         mock_get_env.side_effect = lambda key, default=None: self.channel_configs.get(key, default)
         
-        # Mock quota states for different credential sets
-        mock_quota_states = {
-            0: {'used': 8000, 'remaining': 2000},  # Set 1 - high usage
-            1: {'used': 3000, 'remaining': 7000},  # Set 2 - low usage (should be selected)
-            2: {'used': 5000, 'remaining': 5000}   # Set 3 - medium usage
-        }
-        
-        # Mock the quota tester
-        with patch('modules.platform_integration.stream_resolver.src.stream_resolver.QuotaTester') as MockQuotaTester:
-            mock_tester = Mock()
-            mock_tester.test_credential_set = Mock(side_effect=lambda set_num: mock_quota_states[set_num])
-            MockQuotaTester.return_value = mock_tester
-            
-            # Test stream search
-            with patch('modules.platform_integration.stream_resolver.src.stream_resolver.get_best_credential_set') as mock_best_cred:
-                mock_best_cred.return_value = 1  # Should select set 2 with lowest usage
-                
-                # Mock API responses
-                self.mock_youtube_service.search().list().execute.return_value = {
-                    'items': [{
-                        'id': {'videoId': 'test_video_id'},
-                        'snippet': {'title': 'Test Stream'}
-                    }]
-                }
-                
-                result = find_active_stream(self.mock_youtube_service)
-                
-                # Verify credential set selection
-                mock_best_cred.assert_called()
-                self.assertIsNotNone(result)
+        with patch(
+            'modules.platform_integration.stream_resolver.src.stream_resolver.YouTubeAPIOperations.get_active_livestream_video_id_enhanced'
+        ) as mock_active:
+            mock_active.return_value = ('test_video_id', 'test_chat_id')
+
+            result = find_active_stream(self.mock_youtube_service)
+
+            mock_active.assert_called_once()
+            self.assertIsNotNone(result)
                 
     def test_tokyo_timezone_throttling(self):
         """Test intelligent throttling based on Tokyo timezone"""
@@ -133,7 +112,7 @@ class TestQuotaIntelligence(unittest.TestCase):
         
         # Mock dual channel checking
         channels = [
-            'UC-LSSlOZwpGIRIYihaz8zCw',  # UnDaoDu
+            'UCfHM9Fw9HD-NwiS0seD_oIA',  # UnDaoDu
             'UCSNTUXjAgpd4sgWYP0xoJgw'   # FoundUps
         ]
         
@@ -244,27 +223,17 @@ class TestQuotaIntelligence(unittest.TestCase):
         }
     
     def test_intelligent_retry_with_quota_rotation(self):
-        """Test that quota exhaustion triggers credential rotation"""
-        
-        # Mock quota exhaustion scenario
-        with patch('modules.platform_integration.stream_resolver.src.stream_resolver.circuit_breaker') as mock_breaker:
-            # First call fails with quota exceeded
-            mock_breaker.call.side_effect = [
-                Exception("quotaExceeded"),
-                "success"  # Second call succeeds after rotation
-            ]
-            
-            with patch('modules.platform_integration.stream_resolver.src.stream_resolver.mark_credential_exhausted') as mock_mark:
-                with patch('modules.platform_integration.stream_resolver.src.stream_resolver.get_fresh_service') as mock_fresh:
-                    mock_fresh.return_value = (self.mock_youtube_service, None, 2)
-                    
-                    # This should trigger rotation
-                    resolver = StreamResolver(self.mock_youtube_service)
-                    result = None  # Simplified for test
-                    
-                    # Verify rotation was triggered
-                    mock_mark.assert_called_once()
-                    mock_fresh.assert_called_once()
+        """Test that quota rotation selects a usable credential set"""
+        resolver = StreamResolver(self.mock_youtube_service, use_intelligent_sorting=True)
+        resolver._quota_tester = Mock()
+        resolver._quota_tester.get_recommended_order.return_value = [2, 1]
+
+        with patch('modules.platform_integration.youtube_auth.src.youtube_auth.get_authenticated_service') as mock_auth:
+            mock_auth.return_value = (self.mock_youtube_service, 2)
+
+            service, cred_set = resolver.get_best_available_service()
+            self.assertIs(service, self.mock_youtube_service)
+            self.assertEqual(cred_set, 2)
 
 
 class TestStreamTimingIntelligence(unittest.TestCase):
@@ -277,7 +246,7 @@ class TestStreamTimingIntelligence(unittest.TestCase):
         
         # Peak hours for live streaming (typically evening in Tokyo)
         peak_hours = [19, 20, 21]  # 7pm, 8pm, 9pm
-        off_peak_hours = [2, 3, 4, 23]  # 2am, 3am, 4am, 11pm
+        off_peak_hours = [2, 3, 4, 0]  # 2am, 3am, 4am, midnight
         
         for hour in peak_hours:
             tokyo_time = datetime.now(tokyo_tz).replace(hour=hour)

@@ -7,37 +7,30 @@
 This module contains integration tests for YouTube Studio automation via Selenium.
 Tests require a Chrome browser running in debug mode on port 9222.
 
-## Selenium Test Suite (V0.7.0)
+## Selenium Test Suite (V0.8.x)
 
-| Menu | Test File | Description |
-|------|-----------|-------------|
-| 4 | `test_full_chain.py` | Full L0→L3 flow (navigate → enhance → schedule) |
-| 5 | `test_layer0_entry.py` | Navigate to unlisted, select video |
-| 6 | `test_layer1_filter.py` | Apply unlisted filter |
-| 7 | `test_layer2_edit.py` | Open edit page, find visibility |
-| 8 | `test_layer3_schedule.py` | Visibility → Schedule → date/time → Done |
+| Test File | Description |
+|-----------|-------------|
+| `test_full_chain.py` | Full cake via production scheduler (index → title → description → schedule → done/save → page save) |
+| `test_layer0_entry.py` | Navigate to unlisted, select video |
+| `test_layer1_filter.py` | Apply unlisted filter |
+| `test_layer2_edit.py` | Open edit page, find visibility |
+| `test_layer3_schedule.py` | Visibility → Schedule → date/time → Done |
+| `test_layer4_schedule_audit.py` | Scan scheduled list, detect date/time conflicts |
 
 ## Quick Run
 
 ```bash
-python main.py → 1 → 3 → [4-8]
+# Run the production-aligned full cake test
+python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_full_chain --selenium
 ```
 
-## Key Features (V0.7.0)
+## Key Features (V0.8.x)
 
-### Human Behavior Module
-```python
-from modules.infrastructure.foundups_selenium.src.human_behavior import get_human_behavior
-human = get_human_behavior(driver)
-human.human_click(element)  # Bezier curve mouse movement
-```
-
-### Ctrl+A Before Typing
-```python
-# CRITICAL: Select all existing text before typing new value
-ActionChains(driver).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
-element.send_keys("Jan 08, 2026")
-```
+### Deterministic 012 Interaction (Occam)
+- Production scheduling favors stability in dense UI clusters (date/time/timezone):
+  - `scrollIntoView` → delay → `.click()` → delay
+  - ActionChains/JS fallbacks only when needed
 
 ## Test Modes
 
@@ -54,8 +47,15 @@ python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer
 ### Layer 3 Schedule Test
 
 ```bash
-# Full schedule flow with human behavior
+# Full schedule flow (production-aligned DOM automation)
 python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer3_schedule --selenium
+```
+
+### Layer 4 Schedule Audit (Conflicts)
+
+```bash
+# Scan scheduled list and report duplicate date/time slots
+python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer4_schedule_audit --selenium
 ```
 
 ## Prerequisites
@@ -80,21 +80,31 @@ python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer
 | L3.3 | Date (Ctrl+A + type) | ✅ Selenium |
 | L3.4 | Time (Ctrl+A + type) | ✅ Selenium |
 | L4 | Done button | ✅ Selenium |
-| L5 | Save + Return | ⚠️ In progress |
+| L5 | Save + Return | ✅ Selenium (page save hardened) |
+
+## DBA Logging (PatternMemory)
+
+On successful scheduling, the production scheduler records an outcome into the existing WRE SQLite DBA:
+
+- **DB**: `modules/infrastructure/wre_core/data/pattern_memory.db`
+- **Skill name**: `youtube_shorts_scheduler_schedule`
+- **Purpose**: 0102 can recall what was scheduled without rescanning Studio.
+
+## Schedule → Index Weave (Digital Twin)
+
+When `YT_SCHEDULER_INDEX_WEAVE_ENABLED=true` (default), the production scheduler will:
+
+- Ensure an index artifact exists at `memory/video_index/{channel}/{video_id}.json` (Gemini Tier 1 when missing)
+- Append a compact `0102 DIGITAL TWIN INDEX v1` JSON block into the video description
+- Update the index JSON with `scheduling` + `description_sync` after successful scheduling
 
 ## Architecture Decisions
 
-- **ADR-014**: Human Behavior for Popups (V0.7.0)
-  - Standard JS `.click()` can close popups prematurely
-  - `human_behavior` uses Bezier curves that trigger hover states properly
-  - Slower but more reliable for YouTube Studio's reactive UI
-
-- **ADR-015**: Ctrl+A Before Input (V0.7.0)
-  - YouTube date/time inputs have existing values
-  - Must select all before typing to replace (not append)
-  - Critical for date formats: "Jan 08, 2026" not "Jan 01, 2026Jan 08, 2026"
+- **ADR-014**: Occam 012 Deterministic Clicks (V0.8.x)
+  - Dense schedule UI (date/time/timezone) is prone to mis-targets with Bezier/jitter.
+  - Deterministic click cadence reduces drift and improves repeatability.
 
 ## Last Updated
 
-- **V0.7.0** (2026-01-01): Human behavior, Ctrl+A fix, aligned test menu
+- **V0.8.x** (2026-01-18): Production-aligned full cake; deterministic click cadence; page save hardened
 

@@ -10,7 +10,577 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-02-12 - Managing Directors + /fuc Command Enhancements
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+### Managing Directors Access
+Added elevated MOD access for /fuc commands:
+
+```python
+MANAGING_DIRECTORS = {
+    'UCcnCiZV5ZPJ_cjF7RsWIZ0w',  # JS (Al-sq5ti) - Move2Japan Managing Director
+}
+```
+
+**Problem:** Trusted MODs like JS couldn't use /fuc commands (OWNER-only).
+
+**Solution:** Added `MANAGING_DIRECTORS` set - these users get owner-level /fuc access.
+
+**Files Modified:**
+- `src/command_handler.py`: Added MANAGING_DIRECTORS set and permission check
+
+### Random Presenter Selection for Invite Distribution
+Invites now display random community presenter:
+- "Presented by @Al-sq5ti - Managing Director"
+- "Presented by @Move2Japan - Host"
+
+Makes distribution feel community-driven rather than bot-automated.
+
+**Cross-Reference:** `modules/gamification/whack_a_magat/src/invite_distributor.py`
+
+---
+
+## 2026-02-06 - Architecture Fix: Complete System Separation
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 77 (Agent Coordination)
+
+### Architecture Redesign: Comment Engagement + Live Chat = INDEPENDENT SYSTEMS
+
+**Problem:** Vision stream detection was hijacking Chrome browser, disrupting comment engagement. The systems were incorrectly coupled through shared browser usage.
+
+**Root Cause:** Vision was used for stream DISCOVERY (navigating to `/@channel/live` for all 4 channels), sharing Chrome with comment engagement.
+
+**New Architecture (Complete Separation):**
+
+| System | Browser | Purpose |
+|--------|---------|---------|
+| Comment Engagement | Chrome (9222) | Studio inbox like/heart/reply |
+| Stream Discovery | None (HTTP) | NO-QUOTA scraping for streams |
+| Live Chat Verification | Edge (9223) | Verify known video is still live |
+
+**Changes to stream_resolver:**
+1. Vision REMOVED from discovery chain (`resolve_stream()`)
+2. NO-QUOTA (HTTP) is now PRIMARY discovery method
+3. Vision refactored to VERIFY-ONLY mode:
+   - `verify_video_is_live(video_id)` - checks specific video
+   - Edge-only (Chrome fallback removed)
+   - No channel navigation
+
+**Live Chat can use vision for verification:**
+```python
+from stream_resolver.src.vision_stream_checker import verify_video_with_vision
+result = verify_video_with_vision('VIDEO_ID')  # Uses Edge, checks specific video
+```
+
+**Files Modified:**
+- `modules/platform_integration/stream_resolver/src/stream_resolver.py` - Vision removed from discovery
+- `modules/platform_integration/stream_resolver/src/vision_stream_checker.py` - Verify-only + Edge-only
+
+---
+
+### Problem 1: Rotation mid-processing
+System was rotating away from comment engagement mid-processing. When comments still existed on a channel, the system would switch to another channel, then return - causing disruption and reset of the comment processing flow.
+
+**Root Cause:**
+1. Rotation check at line 644 only checked if task was `.done()`, not if comments existed
+2. After `_verify_and_retry_engagement()`, loop continued to next channel even if inbox NOT clear
+3. No DOM check for actual comment count before allowing rotation
+
+**Solution:**
+1. `auto_moderator_dae.py`: Added DOM check for `ytcp-comment-thread` count before allowing account rotation
+   - If comments > 0, logs "STAYING to process them" and skips rotation
+   - If comments == 0, logs "allowing rotation"
+2. `multi_channel_coordinator.py` (Chrome + Edge loops): Added re-run logic after verify/retry
+   - If DOM shows comments still pending, re-runs engagement for same channel
+   - New env var `YT_STAY_UNTIL_COMMENTS_CLEAR` (default: true)
+
+### Problem 2: Live chat verification BEFORE terminating comments
+Comment engagement was terminated BEFORE verifying live chat was actually available. If live chat failed to initialize (common when stream just ended), comments were already cancelled.
+
+**Root Cause:**
+- Line 865: `terminate_comment_engagement()` called before `start_listening()`
+- `start_listening()` silently returns if init fails (doesn't raise exception)
+- Comments already cancelled, then 2+ minute stream search disrupts browser
+
+**Solution:**
+- Call `livechat.initialize()` FIRST to verify chat is available
+- Only THEN call `terminate_comment_engagement()`
+- If live chat unavailable, return immediately without disrupting comments
+- Logs: "Live chat CONFIRMED - disabling comment engagement" OR "Live chat NOT available - keeping comment engagement ACTIVE"
+
+**User Requirement:** "stay on commenting till they're all commented... if there's comments stay on comment if there's no comment rotate"
+
+**Files Modified:**
+- `src/auto_moderator_dae.py` - Rotation decision guard + Live chat verification before termination
+- `src/multi_channel_coordinator.py` - Chrome and Edge engagement re-run logic
+
+---
+
+## 2026-02-05 - Inbox verification hardening
+
+**Changes**
+- Added loading-state detection and OOPS/permission guardrails during Studio inbox verification.
+- Expanded empty-state selectors/text.
+- Added one refresh + recheck path when the DOM reports 0 threads but no empty state.
+
+**Why**
+- Reduce “verification inconclusive” churn seen in 2026-02-05 logs.
+
+---
+
+## 2026-02-05 - OOPS cooldown backoff
+
+**Changes**
+- Added per-channel OOPS cooldown (default 300s via `YT_OOPS_COOLDOWN_S`) to reduce repeated OOPS churn.
+- Records OOPS hits for target and fallback channels and skips during cooldown window.
+
+**Why**
+- Logs show repeated OOPS detection and fallback loops; cooldown reduces wasted rotation cycles.
+
+---
+
 ## MODLOG ENTRIES
+
+### 2026-02-03: Chrome Rotation OOPS Recovery via swap_from_oops_page
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 87 (Navigation Protocol)
+
+**Problem:** Chrome rotation in `multi_channel_coordinator.py` called `swap_to(fallback_channel)` on OOPS pages, which hit the same `click_avatar()` failure loop (no avatar on OOPS pages).
+
+**Solution:** Updated `_run_chrome_engagement()` to:
+1. Use `swap_from_oops_page(account_name)` as first-line OOPS recovery (5-step cascade with UI-TARS)
+2. Fallback channel also uses `swap_from_oops_page()` instead of `swap_to()`
+3. OOPS events now visible to orchestration switchboard via breadcrumb telemetry
+
+**Files Modified:**
+- `src/multi_channel_coordinator.py`
+
+---
+
+### 2026-02-02: Channel Registry Integration for Rotation Lists
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 60 (Memory Architecture), WSP 84 (No Vibecoding)
+
+**Problem:** Channel rotation lists were duplicated and required manual edits across multiple files when new channels were added.
+
+**Solution:** Switched live-check rotation, comment rotation grouping, per-browser engagement lists, shorts scheduling chain mapping, and account fallback mapping to read from the shared YouTube channel registry.
+
+**Files Modified:**
+- `src/stream_discovery_service.py`
+- `src/auto_moderator_dae.py`
+- `src/multi_channel_coordinator.py`
+- `src/community_monitor.py`
+
+---
+
+### 2026-02-01: Browser Lock + Stop Signal + Idle Detection
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 80 (DAE Pattern)
+
+**Root Cause**: Production logs showed Chrome browser contention — scheduler thread from previous cycle (Phase 3, via `asyncio.to_thread`) leaked and kept driving Chrome while the next cycle's Phase 1 (comments) started. Python threads can't be interrupted by `asyncio.wait_for` timeout.
+
+**Changes:**
+
+1. **Per-Browser `asyncio.Lock`** (`auto_moderator_dae.py`)
+   - Phase 1 (comments) and Phase 3 (scheduling) each acquire browser lock before touching browser
+   - Prevents contention: if Phase 3 thread leaks, Phase 1 waits for lock release
+   - Lock released in `finally` block — guaranteed even on crash/timeout
+
+2. **`threading.Event` Stop Signal** (`auto_moderator_dae.py` + `launch.py`)
+   - `scheduler_stop_event` passed to `run_multi_channel_scheduler(stop_event=...)`
+   - On Phase 3 timeout, DAE sets the event — scheduler thread checks between channels
+   - Thread stops touching browser within one channel boundary (graceful cooperative abort)
+   - Two check points: before each channel + after each channel completes
+
+3. **Idle Detection + Shortened Sleep** (`auto_moderator_dae.py`)
+   - After cycle with 0 comments + 0 scheduled + 0 errors: logs `[IDLE-DETECT]`
+   - Signals ActivityRouter with `idle=True` metadata
+   - Shortens sleep to `max(120s, interval/3)` instead of full 10-minute interval
+   - Edge RavingANTIFA with 0 comments now rechecks in ~2 min instead of 10
+
+---
+
+### 2026-01-31: Supervisor Pattern + Watchdog + Per-Browser Independent Loops
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 80 (DAE Pattern)
+
+**Changes:**
+
+1. **Supervisor Pattern Replaces asyncio.gather()** (`auto_moderator_dae.py`)
+   - Previous: `asyncio.gather(chrome_task, edge_task)` — one browser crash kills both
+   - Now: `_supervisor_loop()` wraps each browser in independent `try/except` with retry
+   - Each browser gets its own restart counter and backoff delay
+   - Supervisor catches `Exception` at browser level, logs, waits, retries
+   - Max retries configurable (default 3) before marking browser as degraded
+
+2. **Comment Engagement Task Watchdog** (`auto_moderator_dae.py`)
+   - `_watchdog_monitor()` tracks task heartbeats during engagement phases
+   - Detects hung tasks (no heartbeat for 120s) and cancels them
+   - Prevents single stuck comment from blocking entire engagement cycle
+   - Heartbeat updated on each successful comment/like action
+
+3. **Per-Browser Independent Scheduling Loops** (`auto_moderator_dae.py`)
+   - Chrome and Edge now run fully independent scheduling cycles
+   - Each browser: discover streams → engage → schedule shorts → loop
+   - No shared state between browser loops (each has own tracker instance)
+   - One browser can be restarting while the other continues working
+
+4. **Pre-Check Cache for Channel Rotation** (`auto_moderator_dae.py`)
+   - Before switching browser to a new channel, checks if that channel has work
+   - Avoids unnecessary account picker navigation when no unlisted videos exist
+   - Cache TTL: 5 minutes (channels checked recently are skipped)
+
+5. **Origin URL Restore After Scheduling** (`auto_moderator_dae.py`)
+   - After shorts scheduling completes, browser navigates back to original URL
+   - Prevents livechat monitoring from breaking when browser is left on Studio page
+   - Stores `driver.current_url` before scheduling, restores after
+
+**Architecture Impact:**
+- Resilience: Single browser crash no longer kills entire system
+- Throughput: Both browsers work independently, ~2x effective throughput
+- Recovery: Automatic retry with backoff, no manual intervention needed
+
+**Files Changed:**
+- `modules/communication/livechat/src/auto_moderator_dae.py` (supervisor, watchdog, independent loops)
+
+---
+
+### 2026-01-29: Agent Enhancement Sprint — News Context, Persona Config, Parallel Scheduling
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 77 (Agent Coordination)
+
+**Changes:**
+
+1. **News Context Provider** (`news_context_provider.py` — NEW)
+   - DuckDuckGo live news search with 1-hour TTL cache
+   - Topic-triggered search: ICE/deportation, MAGA/politics, anti-fascism, Japan
+   - Known-figure static context: Pretti, Renee Good
+   - Injected into Grok prompt pipeline and fact-check (/fc) flow
+
+2. **UnDaoDu Persona Updates** (`persona_registry.py`, `persona_undaodu.json`)
+   - System prompt: mods-focused engagement + MAGA trolling with zen wit
+   - `allow_maga_trolling: True`, `mods_only: true`, `troll_trolls: true`
+   - ICE/deportation pattern responses added
+   - @ravingANTIFA cross-promotion in music/community/greeting templates
+   - Current events awareness (early 2026, ICE escalation)
+
+3. **Grok Pipeline News Injection** (`intelligent_livechat_reply.py`)
+   - `_generate_grok_response()` now detects topic triggers and appends news context
+   - Graceful fallback if news provider unavailable
+
+4. **Fact-Check News Grounding** (`llm_integration.py`)
+   - `fact_check()` fetches live news for user claims before sending to Grok
+   - News section injected between user statements and fallacy analysis prompt
+
+5. **Parallel Browser Scheduling** (`auto_moderator_dae.py`)
+   - Phase 3 now runs Chrome + Edge scheduling simultaneously via `asyncio.gather()`
+   - Previous: sequential (Chrome blocks, then Edge) — ~2x total time
+   - Now: parallel (both browsers schedule at once) — ~50% time reduction
+   - `return_exceptions=True` ensures one browser crash doesn't kill the other
+
+**Files Changed:**
+- `modules/communication/livechat/src/news_context_provider.py` (NEW — 240 lines)
+- `modules/communication/livechat/src/persona_registry.py` (UnDaoDu system prompt + patterns)
+- `modules/communication/livechat/skillz/persona_undaodu.json` (engagement rules)
+- `modules/communication/livechat/src/intelligent_livechat_reply.py` (news injection)
+- `modules/communication/livechat/src/llm_integration.py` (fact-check news)
+- `modules/communication/livechat/src/auto_moderator_dae.py` (parallel scheduling)
+
+---
+
+### 2026-01-26: Cached Stream Channel Name Resolution Fix
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem:**
+- `_check_cached_stream()` in `stream_discovery_service.py` hardcoded `channel_name: 'Cached Stream'`
+- Social media orchestrator failed with "No configuration found for channel: Cached Stream"
+- Channel routing couldn't match the fake name to any configured channel
+
+**Root Cause Analysis:**
+- `resolve_stream(channel_id=None)` returns only `(video_id, chat_id)` tuple
+- The session cache DOES store `channel_id` per video, but `_check_cached_stream()` didn't read it
+- Result: Channel name defaulted to 'Cached Stream' instead of actual name like 'Move2Japan'
+
+**Solution:**
+- Import `SessionUtils` from shared_utilities
+- After getting `video_id` from cached stream, read session cache to get `channel_id`
+- Use `stream_resolver._get_channel_display_name(channel_id)` to resolve proper name
+- Return actual channel_id and channel_name in the result dict
+
+**Files Changed:**
+- `modules/communication/livechat/src/stream_discovery_service.py` (lines 22, 145-165)
+
+**Testing:**
+- Syntax verified via `py_compile`
+- Next production run will validate channel routing works correctly
+
+---
+
+### 2026-01-23: Channel-Pinned Credential Sets
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 15 (Decision Gate)
+
+**Problem:**
+- Credential rotation could authenticate the wrong account for a channel.
+
+**Solution:**
+- Added channel->credential set mapping and pinning.
+- Auto-moderator now selects the channel's set before auth.
+- LiveChatCore disables rotation when a channel set is pinned.
+
+**Files:**
+- `modules/communication/livechat/src/persona_registry.py`
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+- `modules/communication/livechat/src/livechat_core.py`
+
+### 2026-01-23: Activity Router Integration + Breadcrumb Signaling
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Pattern), WSP 91 (Observability)
+
+**Problem:**
+- After comment rotation completes, no signal was emitted for activity coordination
+- Browser availability not communicated to other DAEs
+- No breadcrumb trail for activity routing decisions
+
+**Solution:**
+1. **Breadcrumb emission in `multi_channel_coordinator.py`:**
+   - Import `get_breadcrumb_telemetry` from breadcrumb_telemetry module
+   - Emit `rotation_complete` breadcrumb after all 4 channels processed
+   - Include browser availability flags in metadata
+
+2. **Activity Router integration in `auto_moderator_dae.py`:**
+   - Import `get_activity_router` and `ActivityType` from activity_control module
+   - After comment engagement: query router for next activity decision
+   - Emit `comment_engagement_complete` breadcrumb
+   - After video indexing: emit `video_indexing_complete` breadcrumb
+   - After shorts scheduling: emit `shorts_scheduling_complete` breadcrumb
+
+**Breadcrumb Flow:**
+```
+multi_channel_coordinator → rotation_complete (browsers available)
+    ↓
+auto_moderator_dae → comment_engagement_complete
+    ↓
+auto_moderator_dae → video_indexing_complete (if enabled)
+    ↓
+auto_moderator_dae → shorts_scheduling_complete (if enabled)
+    ↓
+Activity Router reads breadcrumbs → decides next activity
+```
+
+**Files Changed:**
+- `multi_channel_coordinator.py`: Added breadcrumb import and rotation_complete emission
+- `auto_moderator_dae.py`: Added activity router import and activity completion signals
+
+**Related:**
+- `modules/infrastructure/activity_control/src/activity_control.py`: Activity Router implementation
+- `modules/infrastructure/activity_control/ModLog.md`: V1.0.0 entry
+
+---
+
+### 2026-01-22: Timeout-Based Troll Tracking
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 60 (Memory)
+
+**Change:** Integrated whack-a-MAGA timeout history into livechat troll classification via `whacked_users` lookups.
+
+### 2026-01-22: History-Based Troll Classification
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 60 (Memory)
+
+**Change:** Added history-based troll classification for non-mod users and optional follow-up questions sourced from chat history.
+
+### 2026-01-22: Chat Memory History-Only Logs
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog), WSP 60 (Memory)
+
+**Change:** Stream chat transcripts now persist history-only lines for full and mod/owner logs, removing extra session metadata.
+
+### 2026-01-22: RavingANTIFA Rotation + Shorts Scheduling + Rotation Blocker Fixes
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 80 (DAE Pattern)
+
+**Problem:**
+- Channel rotation was missing RavingANTIFA (only 3 channels: Move2Japan, UnDaoDu, FoundUps)
+- After all comments processed, system looped back to comments instead of rotating to shorts scheduling
+- User reported: "FoundUps on EDGE doesn't rotate to ravingANTIFA comments"
+- **Rotation was BREAKING early** due to `is_live_stream_pending()` and `rotation_halt` checks
+
+**Root Causes:**
+1. Line 556 in `auto_moderator_dae.py` had hardcoded: `rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps"]`
+2. `multi_channel_coordinator.py` had `break` statements that stopped rotation:
+   - `is_live_stream_pending()` → break (stopped rotation after first channel)
+   - `rotation_halt = True` → break (stopped rotation on any error)
+
+**Solution:**
+1. Added RavingANTIFA to rotation list (line 557 now has all 4 channels)
+2. Added rotation tracking: `_rotation_processed_channels` set and `_shorts_scheduling_triggered` flag
+3. Added shorts scheduling integration after indexing (lines 1039-1066)
+4. **Fixed rotation blockers in `multi_channel_coordinator.py`:**
+   - Changed `YT_STOP_ROTATION_ON_LIVE` default from "true" to "false" (continue rotation)
+   - Added `YT_ROTATION_HALT_ON_ERROR` with default "false" (continue rotation on errors)
+   - Added logging before each break to show why rotation stops
+   - Reset `rotation_halt` flag after logging to continue to next channel
+
+**New Env Vars:**
+- `YT_SHORTS_SCHEDULING_ENABLED` (default: false) - Enable shorts scheduling after comments
+- `YT_SHORTS_PER_CYCLE` (default: 5) - Max shorts to schedule per channel
+- `YT_STOP_ROTATION_ON_LIVE` (default: false) - Set true to stop rotation when live stream pending
+- `YT_ROTATION_HALT_ON_ERROR` (default: false) - Set true to stop rotation on inbox errors
+
+**Flow After Fix:**
+```
+Comments: Move2Japan → UnDaoDu → FoundUps → RavingANTIFA (ALL 4 channels!)
+    ↓
+Video Indexing (if YT_VIDEO_INDEXING_ENABLED=true)
+    ↓
+Shorts Scheduling (if YT_SHORTS_SCHEDULING_ENABLED=true)
+    ↓
+Sleep → Repeat
+```
+
+**Files Changed:**
+- `auto_moderator_dae.py`: Added RavingANTIFA to rotation list, added shorts scheduling integration
+- `multi_channel_coordinator.py`: Fixed rotation blockers (default continue, not break)
+
+### 2026-01-22: Chat Output Cleanup (Mentions + Emojis)
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog)
+
+**Change:** Sanitized @mentions to avoid double-@, treated 👊 as ✊ in consciousness flow, and removed [BOT] prefix from user-facing responses.
+
+### 2026-01-22: Mods-Only Engagement + Persona Skillz
+
+**By:** 0102  
+**WSP References:** WSP 77 (Agent Coordination), WSP 73 (Digital Twin), WSP 22 (ModLog)
+
+**Change:** Added mods-only engagement gate with troll-trolls exception, set consciousness default to mod-only, and introduced persona Skillz profiles for FoundUps, UnDaoDu, RavingANTIFA, and Move2Japan.
+
+### 2026-01-22: Greeting Cooldown + Banter Disable Guards
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog)
+
+**Change:** Added greeting cooldown state and account-mismatch blocking for greetings/messages. Added `LIVECHAT_BANTER_ENABLED` guard to disable banter fallback and removed banter dependency from emoji conversion.
+
+### 2026-01-22: LiveChat Log Throttle (Spam Control)
+
+**By:** 0102  
+**WSP References:** WSP 22 (ModLog)
+
+**Change:** Added log rate limiting for repeated INFO messages to reduce chat spam during long-running rotations. New env toggle: `LIVECHAT_LOG_THROTTLE_SEC`.
+
+### 2026-01-21: Digital Twin Response Engine Alignment
+
+**By:** 0102  
+**WSP References:** WSP 73 (Digital Twin Architecture), WSP 22 (ModLog)
+
+**Change:** Documented Digital Twin as the primary live chat response engine, with BanterEngine as fallback and indexing-based routing (012 voice vs music content).
+
+### 2026-01-18: Persona Registry + Forced Credential Set
+
+**By:** 0102  
+**WSP References:** WSP 50 (Pre-Action Verification), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** Livechat responses were single-persona (MAGA trolling), and OAuth rotation made it hard to keep a specific bot identity (e.g., RavingANTIFA vs FoundUps).
+
+**Solution:**
+- Added persona registry (FoundUps/UnDaoDu/RavingANTIFA/Move2Japan) with system prompts and greetings.
+- LiveChatCore now resolves persona and wires it into SessionManager + MessageProcessor + reply generator.
+- MAGA trolling now respects persona (disabled for FoundUps/UnDaoDu).
+- New controls: `YT_ACTIVE_PERSONA` override and `YT_FORCE_CREDENTIAL_SET` (forced login).
+- Default channel lists now include `RAVINGANTIFA_CHANNEL_ID`.
+
+**Files Modified:**
+- `modules/communication/livechat/src/persona_registry.py`
+- `modules/communication/livechat/src/livechat_core.py`
+- `modules/communication/livechat/src/message_processor.py`
+- `modules/communication/livechat/src/session_manager.py`
+- `modules/communication/livechat/src/intelligent_livechat_reply.py`
+- `modules/communication/livechat/src/auto_moderator_dae.py`
+- `modules/communication/livechat/src/stream_discovery_service.py`
+- `main.py`
+- `.env.example`
+
+### 2026-01-18: Multi-Stream Detection Restored
+
+**By:** 0102
+**WSP References:** WSP 50 (Pre-Action Verification), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** Stream discovery stopped after the first live channel, so concurrent lives (e.g., Move2Japan + UnDaoDu) were not detected.
+
+**Solution:**
+- `stream_discovery_service.py`: scan all channels by default and keep collecting live streams.
+- New toggle `YT_SCAN_ALL_LIVE` (default true) allows returning to early-stop behavior when needed.
+- Cached stream check no longer blocks multi-stream scanning when the toggle is enabled.
+
+### 2026-01-18: Browser Routing Hardening - Bidirectional Fallback & Session Recovery
+
+**By:** 0102
+**WSP References:** WSP 73 (Digital Twin Architecture), WSP 62 (Large File Refactoring), WSP 84 (Code Reuse), WSP 22 (ModLog)
+
+**Problem:** When browser session fails (Edge window closed), or wrong account is logged in (Oops page), the system would crash or skip channels without recovery.
+
+**Solution - Browser Routing Hardening:**
+
+1. **Bidirectional Fallback Logic:**
+   - Chrome: Move2Japan ↔ UnDaoDu
+   - Edge: FoundUps ↔ RavingANTIFA
+   - If target channel shows "Oops" page, try fallback channel BEFORE account switch
+   - Reduces account switch operations by 50%+
+
+2. **Enhanced Oops Page Detection:**
+   - Added `_is_oops_page(driver)` function
+   - Detects: "don't have permission", "Oops", "access denied", "you need permission"
+   - Triggers fallback logic automatically
+
+3. **Browser Session Recovery:**
+   - Extended `_is_session_error()` to catch: "no such window", "window already closed", "web view not found"
+   - Step 1: Try reconnect to existing browser
+   - Step 2: If reconnect fails, relaunch browser via `launch_edge(force=True)`
+   - Step 3: If relaunch fails, skip remaining channels (graceful degradation)
+
+4. **Channel Mappings Added:**
+   - `CHANNEL_FALLBACKS`: Bidirectional fallback pairs
+   - `CHANNEL_IDS`: Name to ID mapping
+   - `CHANNEL_NAMES`: ID to name reverse mapping
+
+**Files Modified:**
+- `modules/communication/livechat/src/multi_channel_coordinator.py`
+
+**Impact:**
+- Handles NoSuchWindowException without crashing
+- Automatic fallback to sibling channel on Oops page
+- Browser relaunch capability on session failure
+- More resilient multi-channel rotation
+
+---
+
+### 2026-01-10: Root violation cleanup - relocate livechat party verification script
+
+**By:** 0102  
+**WSP References:** WSP 85 (Root Protection), WSP 49 (Module Structure), WSP 34 (Tests), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+**Change:** Moved root-level `verify_party.py` into `modules/communication/livechat/tests/system_tests/verify_party.py` and normalized repo-root resolution so it runs independent of current working directory.
+
+---
 
 ### 2026-01-09: Heartbeat emits comment-cleared state for AI Overseer orchestration
 

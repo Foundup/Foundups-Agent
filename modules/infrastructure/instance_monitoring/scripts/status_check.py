@@ -37,6 +37,10 @@ Function:
 import json
 
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
 def check_instance_status():
     """Check the status and health of running instances."""
     print("\n" + "="*60)
@@ -57,6 +61,8 @@ def check_instance_status():
         else:
             print("[INFO]No duplicate instances detected")
 
+        auto_clean = _env_truthy("INSTANCE_LOCK_AUTO_CLEAN_STALE", "true")
+
         # Check lock file status
         if lock.lock_file.exists():
             print("[INFO] Lock file exists:")
@@ -76,6 +82,10 @@ def check_instance_status():
                     print("   Status: [INFO]RUNNING")
                 else:
                     print("   Status: [ERROR]PROCESS NOT FOUND (stale lock)")
+                    if auto_clean:
+                        cleaned = lock.cleanup_stale_lockfile()
+                        if cleaned:
+                            print("   Action: [OK]Removed stale lock file")
 
             except Exception as e:
                 print(f"   Error reading lock file: {e}")
@@ -112,8 +122,7 @@ def check_instance_status():
         print("\n" + "-"*40)
         print("[SWITCHBOARD] FEATURE FLAGS")
         print("-"*40)
-        def _env_truthy(name: str, default: str = "false") -> bool:
-            return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+        auto_clean = _env_truthy("INSTANCE_LOCK_AUTO_CLEAN_STALE", "true")
 
         switches = {
             "FOUNDUPS_ENABLE_WRE": _env_truthy("FOUNDUPS_ENABLE_WRE", "true"),
@@ -175,6 +184,10 @@ def check_instance_status():
                         print("   Status: [INFO]RUNNING")
                     else:
                         print("   Status: [ERROR]PROCESS NOT FOUND (stale lock)")
+                        if auto_clean:
+                            cleaned = holodae_lock.cleanup_stale_lockfile()
+                            if cleaned:
+                                print("   Action: [OK]Removed stale lock file")
 
                 except Exception as e:
                     print(f"   Error reading lock file: {e}")

@@ -13,6 +13,7 @@ WSP 84: Code Memory - Surgical refactoring documented in docs/session_backups/
 from typing import Optional
 from dataclasses import dataclass
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -46,29 +47,53 @@ class SocialMediaRouter:
     - Clean separation of concerns
     """
 
-    # Channel routing mappings (single source of truth)
+    # Channel IDs from environment (single source of truth: .env file)
+    # Fallbacks are the known channel IDs for safety
+    _MOVE2JAPAN_ID = os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")
+    _MOVE2JAPAN_ALT_ID = os.getenv("MOVE2JAPAN_ALT_CHANNEL_ID", "UCklMTNnu5POwRmQsg5JJumA")
+    _FOUNDUPS_ID = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
+    _UNDAODU_ID = os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
+    _RAVINGANTIFA_ID = os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
+
+    # Channel routing mappings (uses env vars for channel IDs)
     CHANNEL_MAPPINGS = {
-        'UCSNTUXjAgpd4sgWYP0xoJgw': ChannelRouting(
-            channel_id='UCSNTUXjAgpd4sgWYP0xoJgw',
-            channel_name='UnDaoDu',
-            linkedin_page_id='165749317',
-            x_account='undaodu',
-            enabled=True
-        ),
-        'UC-LSSlOZwpGIRIYihaz8zCw': ChannelRouting(
-            channel_id='UC-LSSlOZwpGIRIYihaz8zCw',
+        _FOUNDUPS_ID: ChannelRouting(
+            channel_id=_FOUNDUPS_ID,
             channel_name='FoundUps',
             linkedin_page_id='1263645',
             x_account='foundups',
             enabled=True
         ),
-        'UCklMTNnu5POwRmQsg5JJumA': ChannelRouting(
-            channel_id='UCklMTNnu5POwRmQsg5JJumA',
+        _MOVE2JAPAN_ID: ChannelRouting(
+            channel_id=_MOVE2JAPAN_ID,
             channel_name='Move2Japan',
             linkedin_page_id='104834798',  # GeoZai page
             x_account='geozai',
             enabled=True
         ),
+        _MOVE2JAPAN_ALT_ID: ChannelRouting(
+            channel_id=_MOVE2JAPAN_ALT_ID,
+            channel_name='Move2Japan',
+            linkedin_page_id='104834798',  # GeoZai page
+            x_account='geozai',
+            enabled=True
+        ),
+        _UNDAODU_ID: ChannelRouting(
+            channel_id=_UNDAODU_ID,
+            channel_name='UnDaoDu',
+            linkedin_page_id='165749317',
+            x_account='undaodu',
+            enabled=True
+        ),
+        # RavingANTIFA - Edge browser (9223), shares with FoundUps
+        _RAVINGANTIFA_ID: ChannelRouting(
+            channel_id=_RAVINGANTIFA_ID,
+            channel_name='RavingANTIFA',
+            linkedin_page_id='1263645',  # Share FoundUps LinkedIn for now
+            x_account='ravingantifa',
+            enabled=True
+        ),
+        # Test channel (disabled by default)
         'UCROkIz1wOCP3tPk-1j3umyQ': ChannelRouting(
             channel_id='UCROkIz1wOCP3tPk-1j3umyQ',
             channel_name='FoundUps1934',
@@ -76,37 +101,17 @@ class SocialMediaRouter:
             x_account='foundups',
             enabled=False  # Safety: keep test channel disabled for social posting
         ),
-        'UCfHM9Fw9HD-NwiS0seD_oIA': ChannelRouting(
-            channel_id='UCfHM9Fw9HD-NwiS0seD_oIA',
-            channel_name='UnDaoDu',
-            linkedin_page_id='165749317',
-            x_account='undaodu',
-            enabled=True
-        ),
-        # RavingANTIFA - Edge browser (9223), different Google account
-        'UCVSmg5aOhP4tnQ9KFUg97qA': ChannelRouting(
-            channel_id='UCVSmg5aOhP4tnQ9KFUg97qA',
-            channel_name='RavingANTIFA',
-            linkedin_page_id='1263645',  # Share FoundUps LinkedIn for now
-            x_account='ravingantifa',
-            enabled=True
-        )
     }
 
-    # Display names with visual indicators (from stream_resolver)
-    # CORRECT MAPPINGS (verified 2025-12-27):
-    #   UC-LSSlOZwpGIRIYihaz8zCw = Move2Japan (Chrome)
-    #   UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu (Chrome, same Google account as Move2Japan)
-    #   UCSNTUXjAgpd4sgWYP0xoJgw = FoundUps (Edge, different Google account)
     # Display names with visual indicators
-    # UPDATED 2026-01-09: Added RavingANTIFA (Edge, same browser as FoundUps)
+    # Updated 2026-01-09: Uses env vars for channel IDs
     DISPLAY_NAMES = {
-        'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan [JAPAN]',
-        'UCfHM9Fw9HD-NwiS0seD_oIA': 'UnDaoDu [MINDFUL]',
-        'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps [LOYAL]',
-        'UCklMTNnu5POwRmQsg5JJumA': 'Move2Japan-Alt [JAPAN]',
+        _MOVE2JAPAN_ID: 'Move2Japan [JAPAN]',
+        _MOVE2JAPAN_ALT_ID: 'Move2Japan [JAPAN]',
+        _UNDAODU_ID: 'UnDaoDu [MINDFUL]',
+        _FOUNDUPS_ID: 'FoundUps [LOYAL]',
+        _RAVINGANTIFA_ID: 'RavingANTIFA [VOICE]',
         'UCROkIz1wOCP3tPk-1j3umyQ': 'FoundUps1934 [TEST]',
-        'UCVSmg5aOhP4tnQ9KFUg97qA': 'RavingANTIFA [VOICE]',
     }
 
     @classmethod

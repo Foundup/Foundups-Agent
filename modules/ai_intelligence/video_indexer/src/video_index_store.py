@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+try:
+    from .video_index_metadata_db import safe_upsert_from_index_data
+except Exception as e:
+    safe_upsert_from_index_data = None
+    logger.debug(f"[VIDEO-INDEX-STORE] Metadata DB unavailable: {e}")
 
 
 # =============================================================================
@@ -28,6 +33,11 @@ logger = logging.getLogger(__name__)
 class IndexData:
     """
     Complete index data for a video.
+    
+    V0.11.0: Added stacking fields for transcript sources:
+    - gemini_summary: Semantic analysis from Gemini API
+    - youtube_transcript: Verbatim from YouTube DOM (free)
+    - whisper_transcript: Word-level from Whisper (HIGH-tier only)
     """
     video_id: str
     channel: str
@@ -39,6 +49,13 @@ class IndexData:
     moments: List[Dict[str, Any]]  # Aligned moments
     clips: List[Dict[str, Any]]  # Clip candidates
     metadata: Dict[str, Any]  # Additional metadata
+    quality_metrics: Optional[Dict[str, Any]] = None  # V0.9.0: Resolution, bitrate, fps
+    # V0.11.0: Stacked transcript sources
+    gemini_summary: Optional[Dict[str, Any]] = None  # Semantic (always)
+    youtube_transcript: Optional[List[Dict[str, Any]]] = None  # DOM verbatim (free)
+    whisper_transcript: Optional[List[Dict[str, Any]]] = None  # Whisper verbatim (HIGH-tier)
+    transcript_source: Optional[str] = None  # "gemini" | "youtube" | "whisper" | "stacked"
+    quality_tier: Optional[int] = None  # 0=LOW, 1=MED, 2=HIGH (from gemma classifier)
 
 
 # =============================================================================
@@ -92,6 +109,9 @@ class VideoIndexStore:
         # Write JSON
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+
+        if safe_upsert_from_index_data:
+            safe_upsert_from_index_data(data, source_path=str(file_path))
 
         logger.info(f"[VIDEO-INDEX-STORE] Saved: {file_path}")
         return str(file_path)

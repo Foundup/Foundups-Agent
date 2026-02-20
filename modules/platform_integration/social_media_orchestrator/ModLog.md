@@ -1,4 +1,4 @@
-﻿# ModLog - Social Media Orchestrator
+# ModLog - Social Media Orchestrator
 
 **WSP Compliance**: WSP 22, WSP 49, WSP 42, WSP 11, WSP 3
 
@@ -20,6 +20,39 @@ Centralized orchestration system providing unified social media management acros
 - **Platform Adapters**: TwitterAdapter, LinkedInAdapter with unified interface
 
 ## Recent Changes
+
+### 2026-01-22 - Cached Stream channel_name=None Bug Fix
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification)
+
+**Problem Identified**
+- `refactored_posting_orchestrator.py` line 634 was passing `channel_id` (which is None for cached streams) instead of `channel_name`
+- This caused `AttributeError: 'NoneType' object has no attribute 'startswith'` in `channel_configuration_manager.py`
+- Bug triggered when processing cached streams from `stream_discovery_service.py`
+
+**Root Cause**
+```python
+# Line 634 BUG - was:
+channel_name=channel_id,  # channel_id is None for cached streams!
+
+# FIX - now:
+channel_name=channel_name,  # Use actual channel_name from stream dict
+```
+
+**Files Updated**
+- `modules/platform_integration/social_media_orchestrator/src/refactored_posting_orchestrator.py` (line 634)
+
+### 2026-01-21 - DAE Rotation Flow Documented
+**WSP References**: WSP 22 (ModLog), WSP 73 (Digital Twin), WSP 50 (Pre-action verification)
+
+**Changes Made**
+1. Documented rotation sequence: YouTube live chat → Studio comments → scheduling → LinkedIn Digital Twin flow.
+
+### 2026-01-20 - Digital Twin POC Alignment (LinkedIn-first)
+**WSP References**: WSP 22 (ModLog), WSP 73 (Digital Twin), WSP 77 (Agent Coordination)
+
+**Changes Made**
+1. Documented social_media_orchestrator as the execution layer for Digital Twin comment routing and scheduling.
+2. Linked LinkedIn-first POC path to Digital Twin decision outputs.
 
 ### 2025-12-15 - Add FoundUps1934 [TEST] Channel (Disabled by Default)
 **WSP References**: WSP 22 (ModLog), WSP 3 (Modular Build), WSP 49 (Platform Integration Safety)
@@ -56,6 +89,16 @@ Centralized orchestration system providing unified social media management acros
 - ✅ X/Twitter posts display properly with emoji
 - ✅ WSP 90 compliant across all social media posting
 - ✅ Professional appearance on social platforms
+
+---
+
+## 2026-02-05 - Channel routing alias update
+
+**Changes**
+- Added Move2Japan alternate channel ID mapping in `channel_routing.py` for consistent display/routing.
+
+**Impact**
+- Prevents "unknown channel" warnings for UCklMTN... and aligns stream-resolver tests with current registry.
 
 ---
 
@@ -941,5 +984,4 @@ schedule_id = await orchestrator.schedule_content(
 - 笨・WSP 22: Documented implementation in ModLogs
 
 ---
-
 

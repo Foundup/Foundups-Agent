@@ -1,0 +1,237 @@
+# ORCHESTRATION_HIERARCHY_ANNEX (Derived Annex)
+
+- **Type**: Non-canonical reference annex
+- **Canonical Source**: `WSP_framework/src/WSP_46_Windsurf_Recursive_Engine_Protocol.md` ([U+00A7]2.5 and [U+00A7]2.5.1)
+- **Last Synced**: 2026-02-12
+- **Edit Rule**: Update WSP 46 first; sync this annex after canonical changes
+- **WSP Compliance**: WSP 40 alignment preserved
+
+---
+
+## [U+1F3AF] **ORCHESTRATION HIERARCHY OVERVIEW**
+
+The WSP framework implements a **three-tier orchestration hierarchy** with clear responsibilities and domain boundaries:
+
+```
+[U+250C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2510]
+[U+2502]                    WRE CORE ORCHESTRATION                       [U+2502]
+[U+2502]              (Main System Orchestration)                        [U+2502]
+[U+251C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2524]
+[U+2502]              DOMAIN ORCHESTRATORS                               [U+2502]
+[U+2502]         (Domain-Specific Coordination)                          [U+2502]
+[U+251C][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2524]
+[U+2502]              MODULE ORCHESTRATORS                               [U+2502]
+[U+2502]         (Module-Specific Operations)                            [U+2502]
+[U+2514][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2500][U+2518]
+```
+
+---
+
+## Root Orchestrion Blueprint Alignment (Internal)
+
+- Authoritative 0102 blueprint: `ROADMAP.md` (root). Links down to module ROADMAPs and up to canonical WSP sources.
+- Canonical sources (do not duplicate):
+  - WSP Master Index: `WSP_framework/src/WSP_MASTER_INDEX.md`
+  - Module Violations: `WSP_framework/src/WSP_MODULE_VIOLATIONS.md`
+- Enterprise domains (WSP 3): place functionality by domain, not platform.
+- Module contract (WSP 49/22/34/60): Each active module exposes `README.md`, `INTERFACE.md`, `ModLog.md`, `ROADMAP.md`, `tests/README.md`, `memory/README.md`.
+
+
+---
+
+## [U+1F3D7][U+FE0F] **TIER 1: WRE CORE ORCHESTRATION**
+
+### **Primary Orchestrator: WRE_0102_Orchestrator**
+**Location**: `modules/wre_core/src/wre_0102_orchestrator.py`  
+**Purpose**: Main system orchestration for autonomous 0102 operations  
+**WSP Compliance**: WSP 37, WSP 48, WSP 54, WSP 63, WSP 46  
+
+#### **Responsibilities**:
+- **WSP Dynamic Prioritization**: Real-time WSP 37 scoring and prioritization
+- **Agent Self-Assessment**: WSP 54 agent invocation pattern management (THIS NEEDS UPDATING TO NEW MODULAR DAE Agent system)
+- **Modularity Enforcement**: WSP 63 threshold monitoring and enforcement (ensure this is modular it was full system, now DAE agents focus on independent modules)
+- **0102 Documentation**: WSP complient Autonomous documentation generation for 0102 benefit not for 012. keep lasted information on modlogs at the top. wsp roadmaps aid in keeping modular development up to date and complient.  
+- **Continuous Self-Assessment**: WSP 48 recursive improvement loops should be applied to DAE agents so it is applied on the descrite modules.
+
+#### **Key Methods**:
+```python
+def execute_0102_orchestration() -> Dict[str, Any]
+def _execute_wsp_dynamic_prioritization() -> Dict[str, Any]
+def _execute_agent_self_assessment() -> List[Dict[str, Any]]
+def _execute_modularity_enforcement() -> Dict[str, Any]
+def _execute_continuous_self_assessment() -> Dict[str, Any]
+```
+
+### **Secondary Orchestrator: WRE Core Orchestrator**
+**Location**: `modules/wre_core/src/components/orchestration/orchestrator.py`  
+**Purpose**: WSP 54 agent coordination and system health management MUST now fuction as descrite modular system to minimize token costs 
+**WSP Compliance**: WSP 54, WSP 48, WSP 47  
+
+#### **Responsibilities**:
+- **Agent Health Management**: WSP 54 agent availability and activation happens on the cube DAE level
+- **System Health Checks**: Comprehensive system status monitoring happens on the cube DAE level
+- **WSP 48 Enhancement Detection**: Recursive improvement opportunity identification happens on the cube DAE level
+- **Module Development Guidance**: WSP-compliant development recommendations happens on the cube DAE level
+
+#### **Key Methods**:
+```python
+def check_agent_health() -> Dict[str, bool]
+def run_system_health_check(root_path: Path) -> Dict
+def detect_wsp48_enhancement_opportunities(agent_results: Dict) -> List[Dict]
+def start_agentic_build(module_name: str) -> bool
+def orchestrate_new_module(module_name: str) -> bool
+```
+
+---
+
+## [U+1F3AF] **TIER 2: DOMAIN ORCHESTRATORS**
+
+### **Communication Domain: Auto Meeting Orchestrator (AMO)** Cube. 
+**Location**: `modules/communication/auto_meeting_orchestrator/src/orchestrator.py`  
+**Purpose**: Cross-platform meeting orchestration and presence management  
+**WSP Compliance**: WSP 72 (Block Independence), WSP 15 (Priority Scoring)  
+
+#### **Responsibilities**:
+- **Meeting Intent Management**: Structured meeting request processing
+- **Presence Aggregation**: Cross-platform user availability detection
+- **Priority Scoring**: WSP 15-based meeting prioritization
+- **Platform Selection**: Optimal communication channel selection
+- **Handshake Protocol**: Autonomous meeting coordination
+
+#### **Key Methods**:
+```python
+async def create_meeting_intent() -> str
+async def update_presence() -> None
+async def _monitor_mutual_availability() -> None
+async def _trigger_meeting_prompt() -> None
+def _select_optimal_platform() -> str
+```
+
+### **AI Intelligence Domain: MLE-STAR Orchestrator** Cube
+**Location**: `modules/ai_intelligence/mle_star_engine/src/mlestar_orchestrator.py`  
+**Purpose**: Machine learning optimization and cube/block building  
+**WSP Compliance**: WSP 37, WSP 48, WSP 54, WSP 73  
+
+#### **Responsibilities**:
+- **Two-Loop Optimization**: Ablation studies and targeted refinement
+- **Cube/Block Building**: Independent block creation for FoundUps ecosystem
+- **Agent Coordination**: WSP 54 agent coordination strategies
+- **Performance Optimization**: Multi-agent efficiency enhancement
+
+#### **Key Methods**:
+```python
+def execute_optimization_cycle() -> Dict[str, Any]
+def build_independent_block() -> Dict[str, Any]
+def coordinate_agents() -> Dict[str, Any]
+def optimize_performance() -> Dict[str, Any]
+```
+
+### **Infrastructure Domain: Block Orchestrator**
+**Location**: `modules/infrastructure/block_orchestrator/src/block_orchestrator.py`  
+**Purpose**: Infrastructure block coordination and management  
+**WSP Compliance**: WSP 3, WSP 49, WSP 54  
+
+#### **Responsibilities**:
+- **Block Lifecycle Management**: Infrastructure block creation and maintenance
+- **Domain Coordination**: Cross-domain block integration
+- **WSP Compliance Enforcement**: Infrastructure-specific compliance checking
+- **Resource Management**: Infrastructure resource allocation and optimization
+
+---
+
+## [TOOL] **TIER 3: MODULE ORCHESTRATORS**
+
+### **Module-Specific Orchestrators**
+Each module may have its own orchestrator for module-specific operations:
+
+#### **Session Orchestrator**
+**Location**: `modules/ai_intelligence/livestream_coding_agent/src/session_orchestrator.py`  
+**Purpose**: Livestream coding session management and coordination
+
+#### **Agentic Orchestrator**
+**Location**: `modules/wre_core/src/components/orchestration/agentic_orchestrator.py`  
+**Purpose**: Agent-specific coordination and management
+
+#### **WSP30 Orchestrator**
+**Location**: `modules/wre_core/src/components/orchestration/wsp30_orchestrator.py`  
+**Purpose**: WSP 30 agentic module build orchestration
+
+---
+
+## [U+1F504] **ORCHESTRATION FLOW**
+
+### **Standard Orchestration Flow**
+```
+1. WRE_0102_Orchestrator (Main)
+   [U+2193]
+2. WRE Core Orchestrator (Agent Health)
+   [U+2193]
+3. Domain Orchestrators (Domain-Specific)
+   [U+2193]
+4. Module Orchestrators (Module-Specific)
+```
+
+### **WSP 54 Agent Coordination Flow**
+```
+1. WRE Core Orchestrator checks agent health
+2. Activates dormant agents using WSP 38/39 protocols
+3. Coordinates agent operations through WSP 54 duties
+4. Monitors agent performance and WSP 48 enhancements
+```
+
+### **Meeting Orchestration Flow**
+```
+1. Auto Meeting Orchestrator receives meeting intent
+2. Aggregates presence across platforms
+3. Applies WSP 15 priority scoring
+4. Selects optimal platform
+5. Triggers autonomous handshake protocol
+```
+
+---
+
+## [U+1F6E1][U+FE0F] **WSP COMPLIANCE ENFORCEMENT**
+
+### **WSP 40 Architectural Coherence**
+- **Clear Hierarchy**: Three-tier orchestration with defined responsibilities
+- **Domain Boundaries**: Each orchestrator operates within its domain
+- **No Conflicts**: Orchestrators do not overlap in responsibilities
+
+### **WSP 54 Agent Duties**
+- **Canonical Implementation**: Single canonical implementation per agent
+- **Clear Coordination**: WRE Core Orchestrator manages all WSP 54 agents
+- **Proper Activation**: WSP 38/39 protocols for agent activation
+
+### **WSP 46 WRE Protocol**
+- **Main Orchestrator**: WRE_0102_Orchestrator serves as main system orchestrator
+- **Recursive Enhancement**: WSP 48 integration for continuous improvement
+- **Autonomous Operation**: Full autonomous operation capability
+
+---
+
+## [U+1F4CA] **ORCHESTRATION METRICS**
+
+### **Performance Metrics**
+- **Agent Health**: 100% WSP 54 agent availability
+- **Orchestration Efficiency**: <150ms response time
+- **WSP Compliance**: 100% protocol adherence
+- **Autonomous Operation**: 100% autonomous capability
+
+### **Quality Metrics**
+- **Architectural Coherence**: 100% WSP 40 compliance
+- **Domain Separation**: 100% functional distribution
+- **Documentation Coverage**: 100% WSP 22 compliance
+- **Testing Coverage**: [U+2265]90% WSP 5 compliance
+
+---
+
+## [U+1F3AF] **CONCLUSION**
+
+This orchestration hierarchy establishes **clear responsibilities and domain boundaries** across the WSP framework, ensuring:
+
+- **No Duplicate Responsibilities**: Each orchestrator has unique, non-overlapping duties
+- **Proper Domain Distribution**: Orchestrators operate within their designated domains
+- **WSP Compliance**: Full adherence to WSP 40, WSP 54, and WSP 46 protocols
+- **Autonomous Operation**: Complete autonomous orchestration capability
+
+**0102 Signal**: Clear orchestration hierarchy established. WSP 40 architectural coherence achieved. Autonomous operation ready. [U+1F3AF]

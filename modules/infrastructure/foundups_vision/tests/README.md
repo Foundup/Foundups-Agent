@@ -16,6 +16,7 @@ Vision-based testing requires:
 | `test_ui_tars_bridge.py` | UITarsBridge unit tests |
 | `test_vision_executor.py` | VisionExecutor workflow tests |
 | `test_action_patterns.py` | Pattern learning tests |
+| `test_account_switch.py` | Studio account switching smoke test (manual/integration) |
 
 ## Running Tests
 

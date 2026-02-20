@@ -19,12 +19,13 @@ def main():
     checker = NoQuotaStreamChecker()
 
     channels = [
-        ('UC-LSSlOZwpGIRIYihaz8zCw', 'UnDaoDu'),
+        ('UC-LSSlOZwpGIRIYihaz8zCw', 'Move2Japan'),
+        ('UCklMTNnu5POwRmQsg5JJumA', 'Move2Japan (alt)'),
+        ('UCfHM9Fw9HD-NwiS0seD_oIA', 'UnDaoDu'),
         ('UCSNTUXjAgpd4sgWYP0xoJgw', 'FoundUps'),
-        ('UCklMTNnu5POwRmQsg5JJumA', 'Move2Japan')
     ]
 
-    print("[SEARCH] Checking for live streams on 3 channels:")
+    print("[SEARCH] Checking for live streams on 4 channels:")
     print("=" * 50)
 
     for channel_id, name in channels:

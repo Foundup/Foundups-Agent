@@ -1,0 +1,388 @@
+# Simulator Tests ModLog
+
+## Test Modification Log (WSP 22 Compliance)
+
+### 2026-02-18 - Contract alignment guardrails (SSE interface + genesis doc math)
+**Command**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_docs_contract_alignment.py -q`
+
+**Status**:
+- `2/2 PASSED`
+
+**Coverage**:
+- Added `test_docs_contract_alignment.py`
+  - `test_sse_streamable_events_match_interface_contract()`
+  - `test_tokenomics_genesis_example_matches_btc_reserve_constant()`
+
+---
+
+### 2026-02-18 - Math hardening regression (fractional fees + symbol fallback)
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_parameter_registry.py modules/foundups/simulator/tests/test_fam_bridge_symbol_fallback.py modules/foundups/simulator/tests/test_full_tide_hardening.py modules/foundups/simulator/tests/test_ten_year_projection.py modules/foundups/simulator/tests/test_scenario_runner_determinism.py modules/foundups/simulator/tests/test_sustainability_matrix.py -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests -q --ignore=modules/foundups/simulator/tests/test_sse_server.py`
+
+**Status**:
+- `20/20 PASSED` (targeted hardening set)
+- `114/114 PASSED` (full simulator suite excluding SSE test module)
+
+**Coverage**:
+- Added `test_fam_bridge_symbol_fallback.py`
+  - verifies deterministic token-symbol auto-resolution on collision.
+- Updated `test_full_tide_hardening.py`
+  - `test_fractional_fee_carry_preserves_sub_sat_revenue()` confirms sub-sat fee accumulation is no longer truncated.
+- Updated `test_parameter_registry.py`
+  - validates `founder_max_foundups` parameter wiring.
+
+**Environment note**:
+- `test_sse_server.py` remains dependency-gated in this environment (`fastapi` missing).
+
+---
+
+### 2026-02-18 - BTC reserve canonical semantics regression
+**Command**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_btc_reserve_semantics.py modules/foundups/simulator/tests/test_cabr_flow_router.py modules/foundups/simulator/tests/test_compute_graph.py modules/foundups/simulator/tests/test_full_tide_hardening.py modules/foundups/simulator/tests/test_ten_year_projection.py modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py -q`
+
+**Status**:
+- `30/30 PASSED`
+
+**Coverage**:
+- Added `test_btc_reserve_semantics.py`:
+  - canonical `total_ups_circulating` behavior
+  - legacy alias `total_ups_minted` compatibility
+  - `route_ups_from_treasury(...)` canonical flow API
+  - legacy `mint_ups(...)` alias continuity
+  - stats key parity (`ups_minted` legacy + `ups_circulating` canonical)
+
+---
+
+### 2026-02-17 - Projection conservative-cap hardening
+**Command**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_ten_year_projection.py -q`
+
+**Status**:
+- `8/8 PASSED`
+
+**Coverage**:
+- Added `test_high_tier_volume_counts_are_capped_conservatively()`
+  - ensures upper-tier volume contributors are capped (`F3/F4/F5`)
+  - verifies cap signal (`tier_caps_applied`) in volume diagnostics
+
+---
+
+### 2026-02-17 - CABR/UPS routing guardrails (docs + runtime)
+**Command**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py modules/foundups/simulator/tests/test_cabr_flow_router.py modules/foundups/simulator/tests/test_compute_graph.py modules/foundups/simulator/tests/test_full_tide_hardening.py -q`
+
+**Status**:
+- `18/18 PASSED`
+
+**Coverage**:
+- `test_cabr_terminology_guardrail.py` (updated)
+  - validates tokenomics uses routing language (`routeUPSFromTreasury`, no `total_ups_minted`)
+  - validates CABR integration doc explicitly states CABR does not mint UPS
+- `test_cabr_flow_router.py`
+  - validates valve/pipe/release-budget invariants
+- `test_compute_graph.py`
+  - validates CABR pipe-size proportional flow semantics
+- `test_full_tide_hardening.py`
+  - regression check after CABR/UPS semantics updates
+
+---
+
+### 2026-02-17 - CABR pipe-flow routing regression
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest modules/foundups/simulator/tests/test_compute_graph.py modules/foundups/simulator/tests/test_cabr_flow_router.py -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest modules/foundups/simulator/tests/test_allocation_and_treasury_runtime.py modules/foundups/simulator/tests/test_fam_lifecycle_flow.py modules/foundups/simulator/tests/test_full_tide_hardening.py -q`
+
+**Status**:
+- `8/8 PASSED` (compute graph + CABR flow router unit tests)
+- `10/10 PASSED` (runtime regression around allocation/lifecycle/full-tide)
+
+**Coverage**:
+- `test_cabr_flow_router.py` (new)
+  - valve closed -> zero routed flow
+  - CABR pipe size linearly scales routed UPS
+  - release budget cap limits routed amount by treasury and release rate
+- `test_compute_graph.py` (updated)
+  - pipe-size semantics replace mint-multiplier semantics
+  - legacy alias compatibility (`cabr_v3_score`, `base_fi_rate`)
+  - total routed UPS respects pipe budget
+
+**Notes**:
+- `test_sse_server.py` was not runnable in this environment (missing `fastapi` dependency).
+
+---
+
+### 2026-02-17 - Projection lane hardening + compute graph payload tests
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 124/124 PASSED
+**Coverage** (added/validated):
+- `test_compute_graph.py` (new)
+  - Verifies compute-weight alignment with pool-distribution formula.
+  - Verifies CABR V3 scaling of F_i earned.
+  - Verifies tier ordering and Angel-seeding linearity.
+- `test_ten_year_projection.py` (extended)
+  - Verifies market-depth calibration impacts effective volume.
+  - Verifies gross/protocol/platform lane ordering.
+  - Verifies downside/base/upside ratio ordering in projection output.
+  - Verifies platform-capture sustainability gate behavior.
+
+---
+
+### 2026-02-17 - OPO lifecycle hardening corrections (stock-flow + Angel capacity)
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 118/118 PASSED
+**Coverage** (added/validated):
+- `test_ten_year_projection.py` (new)
+  - Verifies lifecycle stock conservation (`pre + post == total`).
+  - Verifies OPO throughput is bounded by Angel capacity.
+  - Verifies pass-fee revenue is capped by participating Angels per OPO.
+  - Verifies growth interpolation preserves year-0/year-10 anchor points.
+- Regression suite confirms no breakage across existing simulator lanes.
+
+---
+
+### 2026-02-17 - Stress scenario gate + confidence bands + claim control
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 113/113 PASSED
+**Coverage** (added/validated):
+- `test_market_stress.py` (new)
+  - Slippage increases with utilization.
+  - Elasticity reduces effective flow as total cost rises.
+  - Downside/base/upside confidence band ordering.
+- `test_sustainability_matrix.py` (new)
+  - Scenario matrix runner returns expected lane structure and quantile ordering.
+- `test_subscription_tier_capacity.py` (new)
+  - Validates reset-cadence-adjusted 30-day capacity and daily UP budget math.
+  - Validates projection exposes reset-aware effective monthly UP distribution.
+- `test_full_tide_hardening.py` (updated)
+  - Added `test_sustainability_claim_requires_downside_pass` to verify claim-gate coupling.
+- `test_scenario_runner_determinism.py`
+  - Remains green after per-run daemon directory cleanup + seed override support.
+
+---
+
+### 2026-02-17 - Investor hardening regression pass (conservative sustain gate + determinism)
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 103/103 PASSED
+**Coverage** (added/validated):
+- `test_full_tide_hardening.py`
+  - Added `test_sustainability_requires_min_sample_window`:
+    - verifies raw sustainability can be true while gated sustainability remains false until sample maturity.
+- Determinism suite remains green after digest precision stabilization (`scenario_runner.py`).
+- Full simulator regression confirms no breakage across allocation, SSE, underwriting, CABR guardrails.
+
+---
+
+### 2026-02-17 - Full Tide hardening regressions (dedupe, sync, support aliases)
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests/test_full_tide_hardening.py modules/foundups/simulator/tests/test_allocation_and_treasury_runtime.py modules/foundups/simulator/tests/test_sse_server.py modules/foundups/simulator/tests/test_underwriting_scenarios.py modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py -q`
+**Status**: 36/36 PASSED
+**Coverage** (added/validated):
+- `test_full_tide_hardening.py` (new):
+  - `fee_collected` dedupe key supports multiple same-tick source events.
+  - Network pool sync applies fee deltas once (no undercount/double count).
+  - CRITICAL FoundUp support emits both `tide_in` and `tide_support_received`.
+  - Sustainability metrics expose conservative capture gate vs gross flow.
+- Regression checks retained on:
+  - runtime allocation/treasury telemetry
+  - SSE stream contract
+  - underwriting scenarios
+  - CABR terminology guardrail
+
+---
+
+### 2026-02-17 - Ecosystem Revenue Regression Coverage + Startup Cost Import Fix
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests/test_ecosystem_revenue.py modules/foundups/simulator/tests/test_underwriting_scenarios.py modules/foundups/simulator/tests/test_cabr_terminology_guardrail.py -q`
+**Status**: 11/11 PASSED
+**Coverage** (added/validated):
+- `test_ecosystem_revenue.py` (new)
+  - Vesting exit-fee schedule behavior (including 2% long-hold floor).
+  - Fee component math for DEX fee, exit fee, and creation fee.
+  - Zero-count ecosystem input returns zero totals (no phantom revenue).
+- Regression checks retained on:
+  - underwriting scenario matrix (`test_underwriting_scenarios.py`)
+  - CABR/PoB terminology guardrail (`test_cabr_terminology_guardrail.py`)
+
+**Runtime verification**:
+- `python -m modules.foundups.simulator.economics.startup_cost_validation` now runs under module execution after import hardening (`dynamic_fee_taper` relative import fallback).
+
+---
+
+### 2026-02-16 - Cross-module concatenated validation (identity-anchor hardened)
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
+**Status**: 335/335 PASSED
+**Coverage**:
+- Confirms SSE member gate + DEX stream contract integration remains stable
+  under full OpenClaw/FAM/Simulator lane.
+- Confirms OpenClaw conversation identity anchor hardening resolves prior
+  end-to-end nondeterministic assertions.
+
+---
+
+### 2026-02-16 - SSE member gate + DEX stream contract coverage
+**Command**:
+`$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests/test_sse_server.py modules/foundups/agent_market/tests/test_e2e_integration.py modules/foundups/agent_market/tests/test_persistence.py modules/foundups/agent_market/tests/test_task_lifecycle.py -q`
+**Status**: 55/55 PASSED
+**Coverage** (added/validated):
+- `test_sse_server.py`
+  - Member gate authorization paths (disabled, missing key, valid key+role,
+    insufficient role, localhost bypass, misconfigured gate fail-closed).
+  - Endpoint gating checks for `/api/sim-events` and `/api/health`.
+  - DEX stream contract events present in `STREAMABLE_EVENT_TYPES`.
+- `test_e2e_integration.py`
+  - FAM adapter auto-symbol generation when token omitted.
+  - Collision-safe symbol resolution across repeated launches.
+- `test_persistence.py`, `test_task_lifecycle.py`
+  - Case-insensitive token symbol uniqueness in SQLite and in-memory registries.
+
+---
+
+### 2026-02-15 - Pure-Step Shadow Parity Tests
+**Command**: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 82/82 PASSED
+**Coverage** (added):
+- `test_step_shadow_parity.py`
+  - `test_shadow_parity_records_check_metrics`
+  - `test_shadow_parity_failure_counter_increments_on_drift`
+- Confirms shadow parity telemetry is active only when enabled and fail counters increment on drift.
+
+---
+
+### 2026-02-15 - Determinism + UTC Timestamp Hardening
+**Command**: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 80/80 PASSED
+**Coverage**:
+- `test_scenario_runner_determinism.py` now validates deterministic digest with:
+  - isolated per-run FAM daemon storage,
+  - FiRating singleton reset per run,
+  - stable/normalized frame digest projection.
+- `test_sse_server.py` updated to timezone-aware datetime usage (`datetime.now(UTC)`).
+- Demurrage warning dedupe hardening validated in full suite regression run.
+- `test_step_pipeline_extraction.py` verifies `FoundUpsModel.step()` delegates to `step_pipeline.run_step()`.
+- `test_step_core.py` validates pure tick scheduler logic (`compute_step_decision`) for boot tick and periodic action flags.
+- `test_state_contracts.py` validates immutable state contract bridge from runtime state.
+- `test_step_pure.py` validates side-effect-free `step()` evolution over immutable contracts.
+
+**Notes**:
+- Remaining warnings are project-level pytest config options (`asyncio_*`) with plugin autoload disabled, not simulator regressions.
+
+---
+
+### 2026-02-15 - AI Parameter Optimizer Tests (OpenClaw + GPT)
+**Command**: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests/test_ai_parameter_optimizer.py -v`
+**Status**: 21/21 PASSED
+**Coverage** (added):
+- `TestParameterBounds` (2 tests) - Parameter bounds validation, config matching
+- `TestMockAIGateway` (2 tests) - Mock gateway response format, JSON parsing
+- `TestAIParameterOptimizer` (7 tests) - Core optimizer: init, config conversion, GPT parsing, bounds clamping
+- `TestOptimizationObjectives` (3 tests) - Objective definitions, scoring functions
+- `TestOptimizerConfig` (2 tests) - Default/custom config validation
+- `TestOptimizationSummary` (2 tests) - Summary generation, history tracking
+- `TestIntegrationWithSimulator` (3 tests) - Prompt building, improvement calculation
+
+**Notes**:
+- Uses MockAIGateway for offline testing without API keys
+- Integrates with PAVSAuditor for compliance scoring
+- 4 optimization objectives: STAKER_DISTRIBUTION, ECOSYSTEM_GROWTH, TOKEN_VELOCITY, BALANCED
+
+---
+
+### 2026-02-15 - Refactor Foundations Test Additions
+**Command**: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: Added tests pass in full suite
+**Coverage** (added):
+- `test_parameter_registry.py` - schema/default/scenario load + config conversion.
+- `test_animation_adapter.py` - immutable frame contract output.
+- `test_scenario_runner_determinism.py` - same seed + scenario -> same frame digest.
+
+---
+
+### 2026-02-15 - 012 Allocation + pAVS Treasury Runtime Wiring
+**Command**: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv\\Scripts\\python.exe -m pytest modules/foundups/simulator/tests -q`
+**Status**: 48/48 PASSED
+**Coverage** (added):
+- `test_012_allocation_updates_state_and_emits_events` - Validates live allocation path updates state + emits batch/result telemetry.
+- `test_demurrage_emits_treasury_separation_events` - Validates demurrage emits pAVS/network/fund separation events.
+
+**Regression fixes validated**:
+- Demurrage threshold attribute mismatch (`pavs_treasury_*`) no longer raises runtime errors.
+- Allocation scoring uses available FiRatingEngine API (composite score) instead of missing `get_rating()`.
+
+---
+
+### 2026-02-12 - SSE Server Observability Test Added
+**Command**: `python -c "..." # Direct test runner (Windows)`
+**Status**: 12/12 PASSED
+**Coverage** (added):
+- `test_fam_event_source_observability_properties` - Dropped event count and queue size monitoring
+
+**Notes**:
+- Added test for `dropped_event_count` and `queue_size` properties
+- Health endpoint now exposes queue metrics for monitoring
+
+---
+
+### 2026-02-12 - SSE Server Unit Tests Added
+**Command**: `pytest modules/foundups/simulator/tests/test_sse_server.py -v`
+**Status**: 11/11 PASSED
+**Coverage**:
+- `test_format_sse_event_structure` - SSE event format validation
+- `test_format_sse_event_json_escaping` - JSON special character handling
+- `test_simulated_event_source_sequence_monotonic` - Sequence ID monotonicity
+- `test_simulated_event_source_event_types` - Event type filtering
+- `test_simulated_event_source_task_state_uses_new_status` - new_status vs new_state
+- `test_simulated_event_source_required_fields` - Required field validation
+- `test_fam_event_source_queue_bounded` - Queue maxsize=1000 verification
+- `test_fam_event_source_filters_non_streamable_events` - Event filtering
+- `test_fam_event_source_accepts_streamable_events` - Streamable event acceptance
+- `test_fam_event_source_queue_full_handling` - Graceful overflow handling
+- `test_streamable_event_types_includes_economic_events` - Economic events for earning pulses
+
+**Notes**:
+- Minor deprecation warnings for `datetime.utcnow()` (Python 3.12+)
+- All tests run without FAMDaemon dependency (unit tests on class internals)
+
+---
+
+### Existing Test Files
+- `test_ai_parameter_optimizer.py` - AI-driven parameter optimization (OpenClaw + GPT)
+- `test_alignment_and_tokenomics.py` - Token economics validation
+- `test_allocation_and_treasury_runtime.py` - 012 allocation + pAVS treasury telemetry wiring
+- `test_ecosystem_revenue.py` - DEX/exit/creation fee component validation
+- `test_full_tide_hardening.py` - Full Tide dedupe/delta sync/support alias hardening
+- `test_f0_mvp_offering_flow.py` - F_0 MVP offering
+- `test_fam_lifecycle_flow.py` - FAM event lifecycle
+- `test_investor_liability_engine.py` - Investor underwriting
+- `test_investor_share_contract.py` - Share contract logic
+- `test_lifecycle_stage_and_market.py` - Lifecycle stages
+- `test_underwriting_scenarios.py` - Underwriting scenarios
+
+---
+
+### 2026-02-18 - SmartDAO Runtime + Contract Matrix Regression
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_smartdao_runtime_events.py modules/foundups/simulator/tests/test_docs_contract_alignment.py -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests -q --ignore=modules/foundups/simulator/tests/test_sse_server.py`
+
+**Status**:
+- `7/7 PASSED` (targeted SmartDAO + contract checks)
+- `121/121 PASSED` (full simulator suite excluding SSE module)
+
+**Coverage**:
+- Added `test_smartdao_runtime_events.py`
+  - `test_smartdao_emergence_emits_with_phase_command`
+  - `test_smartdao_autonomy_and_cross_dao_funding_emit`
+- Expanded `test_docs_contract_alignment.py`
+  - source-of-truth matrix path integrity
+  - matrix event emitter presence validation
+  - skill/tokenomics CABR semantics alignment check
+
+**Environment note**:
+- `test_sse_server.py` remains dependency-gated in this environment (`fastapi` missing).

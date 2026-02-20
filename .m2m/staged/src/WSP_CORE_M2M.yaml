@@ -1,0 +1,169 @@
+# M2M v1.0 | WSP_CORE.md | 20260213
+
+WSP_CORE__THE_WRE_CONSTITUTION:
+DOC__WSP_CORE_MD__THE_WRE_CONSTITUTION:
+LAYER_0__FOUNDATIONAL_PROTOCOLS__THE_CONSTITUTION:
+  WSP: [00]
+U_1F6A8__MANDATORY_WSP_MASTER_INDEX_CONSULTATION_PROTOCOL__WSP_64____IMPORTANT:
+  WSP: [64]
+MANDATORY_PRE_ACTION_SEQUENCE___IMPORTANT:
+  FILES: ['WSP_MASTER_INDEX.md']
+  WSP: [64]
+  WSP: [1]
+  WSP: [64,58,58]
+  WSP: [25,37]
+  WSP: [54]
+  WSP: [39]
+  WSP: [1]
+  WSP: [2]
+  WSP: [3]
+  WSP: [19]
+  WSP: [20]
+  WSP: [32]
+  WSP: [40]
+  WSP: [50]
+  WSP: [60]
+  WSP: [61]
+  WSP: [62]
+  WSP: [63]
+  WSP: [64]
+  WSP: [65]
+  WSP: [66]
+  WSP: [71]
+  WSP: [67]
+  WSP: [68]
+  WSP: [69]
+  WSP: [70]
+  WSP: [71]
+  WSP: [72]
+U_1F6A8__MANDATORY_WSP_MASTER_INDEX_CONSULTATION_PROTOCOL__WSP_64:
+  WSP: [64]
+MANDATORY_PRE_ACTION_SEQUENCE:
+  FILES: ['WSP_MASTER_INDEX.md']
+  WSP: [64]
+  WSP: [58,58]
+WSP_MASTER_INDEX_REFERENCE:
+  WSP: [64]
+  WSP: [50]
+WSP_MEMORY_SYSTEM__0102:
+  WSP: [46,60,32,50,22,34]
+1__WSP_MODULE_DOCS___STRUCTURED_MEMORY__MODULE_LOCAL__MUST_BE_CURRENT:
+  FILES: ['README.md']
+  WSP: [11]
+  FILES: ['ROADMAP.md']
+  WSP: [22]
+  WSP: [34]
+  FILES: ['tests/TestModLog.md']
+2__HOLOINDEX___RETRIEVAL_MEMORY__CANONICAL:
+3__MANDATORY_START_OF_WORK_LOOP__WRE_RULE:
+  WSP: [46,60]
+  RETRIEVE: module `README.md`, `INTERFACE.md`, `ROADMAP.md`, `ModLog.md`, `tests/README....
+  ASSESS: noise, ordering, missing key artifacts, staleness vs current, and whether the...
+3_1_TIERED_HOLO_RETRIEVAL_TARGETS__MEMORY_ARTIFACTS__NOT__THE_REPO:
+TIER_0___CONTRACT___GUARDRAILS__HIGHEST_PRIORITY:
+  FILES: ['INTERFACE.md']
+  FILES: ['README.md']
+  FILES: ['SPEC.md', 'PRD.md']
+  FILES: ['PROMPTS.md']
+  FILES: ['RUNBOOK.md']
+TIER_1___CHANGE___VERIFICATION:
+  FILES: ['ModLog.md']
+  FILES: ['tests/TestModLog.md']
+  FILES: ['tests/README.md']
+TIER_2___RETRIEVAL___DECISIONS___FAILURES:
+  FILES: ['HOLOINDEX.md']
+  FILES: ['ADR.md']
+  FILES: ['INCIDENTS.md', 'SEV.md']
+  FILES: ['EXPERIMENTS.md']
+  FILES: ['README.md', 'INTERFACE.md']
+4__MULTI_MODEL_MEMORY_PROCESSING_PIPELINE__EXPLICIT_ROLES:
+  OUTPUT: candidate chunks + file pointers + “missing artifact” alerts.
+  DEEPER_LOGIC: deduplicate, resolve contradictions, propose plan, and generate actionable ne...
+  OUTPUT: a scoped action plan anchored to retrieved artifacts.
+REQUIRED_CHECKLIST__PASTE_AT_START_OF_EVERY_WSP_TASK:
+RETRIEVAL_QUALITY_METRICS__OPERATIONAL:
+  GOAL: increase (reduce noise) without missing key artifacts.
+  PROXY: average rank position of used chunks (lower is better).
+  PROXY: duplicate or near-duplicate chunks / returned chunks.
+  GOAL: reduce via dedup and chunk boundary fixes.
+  PROXY_FLAGS: retrieved docs older than the last relevant code changes, or missing the most...
+  GOAL: surface “stale memory” explicitly before acting.
+  PROXY: missing any of {README, INTERFACE, ROADMAP, ModLog, tests/README, tests/TestM...
+LAYER_1__WSP_FOUNDATIONAL_PROTOCOLS__WSP_1_70:
+STATUS_TAXONOMY___DEPRECATION_POLICY:
+  DO_NOT_DELETE_WSPS._USE_STATUS: Active, Deprecated, Superseded by <WSP #>, Research, Draft.
+  ANY_DEPRECATION_REQUIRES: rationale, successor reference, and cross-links updated in both documents (WS...
+INTENTIONAL_WSP_RECURSIVE_FRAMEWORK_EMBEDDING:
+DISTINGUISHING_INTENT_VS__DRIFT:
+LAYER_1__WRE___GOVERNANCE__SELF_KNOWLEDGE:
+  WSP: [46,46]
+  WSP: [54,54]
+LAYER_2__DEVELOPMENT_LIFECYCLE__ACTION___CREATION:
+NEW_MODULE_QUICK_WORKFLOW:
+  WSP: [3]
+REQUIRED_MODULE_STRUCTURE:
+  WSP: [11]
+  WSP: [34]
+U_1F4CB__MANDATORY_MODULE_FILES:
+  WSP: [11]
+  WSP: [34]
+  WSP: [11]
+  WSP: [34]
+  WSP: [4]
+  WSP: [47]
+  WSP: [25,15,37,8]
+  WSP: [11]
+  WSP: [12]
+  WSP: [5]
+  WSP: [34]
+  WSP: [6]
+  WSP: [4]
+  WSP: [5]
+  WSP: [34]
+CODING_PRINCIPLES___IMPORTANT:
+  FILES: ['scripts/validate.py']
+  FILES: ['ModLog.md']
+  WSP: [62]
+  KEEP_ALL_DOCUMENTATION_UP_TO_D: `README.md`, `INTERFACE.md`, `ROADMAP.md`, `ModLog.md`, and `tests/README.md`...
+EXISTING_CODE_QUICK_WORKFLOW:
+  WSP: [12,11]
+  WSP: [6]
+  WSP: [34]
+  WSP: [11]
+  WSP: [5]
+  WSP: [34]
+  WSP: [2]
+  WSP: [4]
+WSP_VIOLATION_ANALYSIS:
+  WSP: [47]
+  WSP: [4]
+  WSP: [5]
+  WSP: [11]
+  WSP: [40]
+  WSP: [49]
+  WSP: [47]
+  WSP: [48]
+LAYER_3__VERIFICATION___COMPLIANCE__THE_CONSCIENCE:
+TESTING_QUICK_WORKFLOW:
+  WSP: [34]
+U_1F3AF__MANDATORY_FIRST_STEP__READ_TESTS_README_MD_IN_TARGET_MODULE:
+  WSP: [34]
+U_1F3AF__WSP_5_TARGET___U_2265_90__COVERAGE_FOR_ALL_MODULES:
+U_1F50D__COMPREHENSIVE_SYSTEM_AUDIT:
+FULL_WSP_COMPLIANCE_AUDIT__WSP_4:
+COMPLETE_TEST_SUITE_STATUS__WSP_6:
+COVERAGE_ANALYSIS_ACROSS_ALL_MODULES__WSP_5:
+U_1F4CA__REAL_TIME_COMPLIANCE_STATUS:
+  WSP: [1]
+  WSP: [3]
+  WSP: [5]
+  WSP: [11]
+  WSP: [34]
+LAYER_4__AGENTIC_EVOLUTION__SELF_IMPROVEMENT___PURPOSE:
+  WSP: [25]
+  WSP: [17]
+  WSP: [18]
+  WSP: [38]
+  WSP: [45]
+  WSP: [48]
+  WSP: [51]

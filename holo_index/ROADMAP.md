@@ -38,11 +38,19 @@ HoloIndex has undergone a **fundamental transformation** from a search tool into
 - **Vibecoding Prevention**: Core coordinating intelligence that prevents vibecoding through intelligent oversight
 
 ### [OK] SEMANTIC SEARCH ENGINE - VIBECODING PREVENTION CORE (18/20 MPS)
-- **Status**: Fully Operational + Enhanced with HoloDAE
+- **Status**: Fully Operational + Enhanced with HoloDAE + Noise Reduction (2026-02-07)
 - **Features**: Vector-based code search, multi-modal results, SSD optimization
 - **Performance**: <200ms query response, 95%+ accuracy
 - **Vibecoding Prevention**: FINDS EXISTING CODE BEFORE VIBECODING occurs - critical prevention mechanism
 - **Enhancement**: Every search triggers automatic intelligence analysis
+- **2026-02-07 Improvements**:
+  - Ghost hit filtering via `HOLO_MIN_SIMILARITY=0.35` similarity threshold
+  - Path normalization deduplication (fixes Windows/Unix triplication bug)
+  - ChromaDB batch chunking for 12K+ symbol indexes
+  - Chain-of-thought logging gated behind `HOLO_VERBOSE` (quiet by default)
+  - Health OK messages collapsed into single summary line
+  - NAVIGATION.py expanded: 1 → 16 openclaw/moltbot entries
+  - Lazy HoloIndex loading in HoloAdapter (main.py startup 30s → 2s)
 
 ### [OK] WSP COMPLIANCE INTELLIGENCE - VIBECODING DETECTION (14/20 MPS)
 - **Status**: Fully Operational + HoloDAE Integration
@@ -279,6 +287,98 @@ HoloIndex Intelligence Platform
 - [ ] Runtime health monitoring and alerting (enhanced with logged analysis effectiveness)
 - [ ] Natural language DAE creation capabilities (using accumulated decision intelligence)
 - [ ] Chain-of-thought analytics and improvement (012 monitoring of logged AI behavior)
+
+---
+
+## 2026 Research-Based Improvements (Phase 5+)
+
+Based on comprehensive analysis of 2026 RAG research papers (arXiv:2506.00054, arXiv:2507.18910, arXiv:2504.14891), the following improvements are identified for HoloIndex:
+
+### Current Architecture (Working)
+- **Vector Search**: ChromaDB + sentence-transformers (all-MiniLM-L6-v2)
+- **Hybrid Keyword Scoring**: Title +2, Path +1, Summary +0.5, Keywords +1.25
+- **Similarity Floor**: 0.35 threshold to filter ghost hits
+- **Search Cache**: WSP 91 compliant fast repeated queries
+- **Multi-Index**: Code + WSP + Symbol + Test + Skillz collections
+
+### High-Priority Improvements (2026 Research)
+
+#### 1. BM25 Hybrid Retrieval
+**Research**: RAG-Fusion, Dual-Pathway approaches show 18% hallucination reduction
+**Implementation**:
+- Add BM25 scoring alongside vector similarity
+- Reciprocal Rank Fusion to combine dense + sparse results
+- Formula: `final_score = 0.5 * semantic + 0.3 * bm25 + 0.2 * keyword`
+
+#### 2. Cross-Encoder Re-ranking
+**Research**: RankRAG shows 7.8% MRR@10 improvement with re-ranking
+**Implementation**:
+- After initial top-20 retrieval, re-rank with cross-encoder
+- Model: `cross-encoder/ms-marco-MiniLM-L-6-v2` (fast, accurate)
+- Only apply to top results to minimize latency
+
+#### 3. HyDE (Hypothetical Document Embeddings)
+**Research**: Generates hypothetical answer from query, improves code search recall
+**Implementation**:
+- Use Qwen to generate expected code snippet from query
+- Embed hypothetical code alongside query
+- Average embeddings for improved semantic matching
+
+#### 4. Semantic Chunking (AST-Based)
+**Research**: LongRAG shows better retrieval with granularity-aware chunking
+**Implementation**:
+- Index by function/class boundaries, not whole files
+- Extract docstrings, function signatures, code bodies separately
+- Store AST metadata (imports, dependencies) for graph traversal
+
+#### 5. Graph RAG Integration
+**Research**: KRAGEN reduces hallucinations 20-30% with knowledge graph retrieval
+**Implementation**:
+- Already have `graphrag_exporter.py` - integrate into search path
+- Build dependency graph from imports/calls
+- Traverse graph for related code when initial search insufficient
+
+#### 6. Adaptive Retrieval (DRAGIN)
+**Research**: Token-level entropy triggers for when to retrieve
+**Implementation**:
+- Qwen evaluates query complexity
+- Simple queries: fast lexical lookup
+- Complex queries: full semantic + graph traversal
+- Confidence-based retrieval depth
+
+### Medium-Priority Improvements
+
+#### 7. Context Window Enhancement
+- Include 5-10 lines before/after matched code
+- Expand to full function when snippet returned
+- WSP 50 compliance: always show enough context
+
+#### 8. Query Expansion/Rewriting
+- Generate 3 query variants with Qwen
+- Fuse results across variants
+- RQ-RAG perplexity-driven decomposition
+
+#### 9. Self-RAG Validation
+- After retrieval, validate relevance iteratively
+- Discard low-confidence results before returning
+- Log validation for learning
+
+### Implementation Priority
+
+| Improvement | Impact | Effort | Priority |
+|-------------|--------|--------|----------|
+| BM25 Hybrid | High | Low | P0 |
+| Cross-Encoder Re-rank | High | Medium | P1 |
+| AST Chunking | High | High | P2 |
+| HyDE | Medium | Medium | P2 |
+| Graph RAG | High | High | P3 |
+| Adaptive Retrieval | Medium | Medium | P3 |
+
+**Sources**:
+- [RAG Comprehensive Survey](https://arxiv.org/html/2506.00054v1)
+- [RAG Systematic Review](https://arxiv.org/html/2507.18910v1)
+- [RAG Evaluation Survey](https://arxiv.org/html/2504.14891v1)
+- [RAG Techniques Repository](https://github.com/NirDiamant/RAG_Techniques)
 
 ---
 

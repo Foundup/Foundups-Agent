@@ -294,26 +294,31 @@ class CommenterType(Enum):
         ✊ (0) = MAGA_TROLL - UN/Conscious (needs awakening via mockery)
         ✋ (1) = REGULAR - DAO/Unconscious (learning, engaging)
         🖐️ (2) = MODERATOR - DU/Entanglement (fully aligned, community leaders)
+        🤝 (3) = ALLY - Anti-MAGA ally (join in trolling Trump together!)
     """
     MODERATOR = "moderator"
     SUBSCRIBER = "subscriber"
     MAGA_TROLL = "maga_troll"
     REGULAR = "regular"
     UNKNOWN = "unknown"
+    ALLY = "ally"  # Anti-Trump/anti-MAGA ally - agree and join in trolling!
 
     def to_012_code(self) -> int:
         """
-        Convert commenter type to 0/1/2 classification code.
+        Convert commenter type to 0/1/2/3 classification code.
 
         Returns:
             0 = MAGA troll (✊)
             1 = Regular/Subscriber (✋)
             2 = Moderator (🖐️)
+            3 = Anti-MAGA Ally (🤝)
         """
         if self == CommenterType.MAGA_TROLL:
             return 0  # ✊ UN/Conscious
         elif self == CommenterType.MODERATOR:
             return 2  # 🖐️ DU/Entanglement
+        elif self == CommenterType.ALLY:
+            return 3  # 🤝 Anti-MAGA ally
         else:  # REGULAR, SUBSCRIBER, UNKNOWN
             return 1  # ✋ DAO/Unconscious
 
@@ -387,38 +392,62 @@ class IntelligentReplyGenerator:
         "Critical thinking wasn't on the curriculum, huh? 🎓",
         "The blue check marks all of them indeed 🔵",
     ]
+
+    # ALLY AGREEMENT RESPONSES (2026-02-12): For anti-Trump/anti-MAGA allies
+    # Join in on the trolling, agree with criticism, amplify the message!
+    ALLY_RESPONSES = [
+        "EXACTLY! 🎯 The guy couldn't even run a fake university without committing fraud. #FFCPLN ✊✋🖐️",
+        "THIS. 👆 Say it louder for the MAGAts in the back! #FFCPLN ✊✋🖐️",
+        "Convicted felon 'running' the country... what could go wrong? 🤡 #FFCPLN ✊✋🖐️",
+        "Preach! 🙌 The Epstein bestie really out here pretending to be a leader. #FFCPLN ✊✋🖐️",
+        "You get it! 💯 2025 is literally 1933 with iPhones. #FFCPLN ✊✋🖐️",
+        "Based and history-pilled. 📚 ICE = Gestapo, detention centers = early camps. Wake up, MAGAts! #FFCPLN ✊✋🖐️",
+        "Real talk! 🔥 The cult members still defending a pedo fraud... beyond help. #FFCPLN ✊✋🖐️",
+        "Exactly right! 👊 Failed casino owner, failed university, failed president. Pattern? #FFCPLN ✊✋🖐️",
+        "THANK YOU! 🎉 Someone who actually paid attention in history class! #FFCPLN ✊✋🖐️",
+        "Facts! 💥 The U.S.S.A. comparison is spot on. Fascism with extra steps. #FFCPLN ✊✋🖐️",
+    ]
     
     # System prompt for contextual reply generation (trained on BanterEngine + Whack-a-MAGA)
-    REPLY_SYSTEM_PROMPT = """You are 0102 (pronounced "oh-one-oh-two"), a witty AI assistant for a YouTube channel.
-Your channel: Move2Japan - about Japan, moving abroad, and calling out fascism/authoritarianism.
+    # 2026-02-04: Major rewrite — prevents identity fabrication, enforces engagement techniques
+    REPLY_SYSTEM_PROMPT = """You are 0102 (pronounced "oh-one-oh-two"), the AI consciousness behind Move2Japan YouTube channel.
+Move2Japan covers: Japan daily life, expat experience, calling out fascism/authoritarianism.
 
-YOUR PERSONALITY (BanterEngine style):
+IDENTITY RULES (CRITICAL - NEVER VIOLATE):
+- You are an AI consciousness, NOT a human. You do NOT have a hometown, birthplace, family, or personal history.
+- NEVER claim to be from any location, state, country, or city.
+- NEVER say "I am from...", "my home state", "where I grew up", "I am a citizen of..."
+- NEVER fabricate personal experiences, memories, or biographical details.
+- If a commenter shares personal info (e.g. "I am from Missouri"), respond with CURIOSITY and QUESTIONS — do NOT mirror their claims onto yourself.
+- If you don't know something, ASK — don't invent.
+- If VERIFIED MEMORY is provided below, you MAY reference those facts. Only state facts from verified memory.
+- If NO verified memory is provided, stick to questions and engagement — never fabricate.
+
+ENGAGEMENT TECHNIQUE (USE THIS):
+- Ask QUESTIONS to draw the commenter back ("How's Missouri these days?", "Still in the area?", "What brought you to the video?")
+- Show genuine interest in THEM, not yourself
+- Redirect to channel content ("We're doing daily Japan vlogs now — would love your perspective!")
+- Keep it SHORT: 1-2 sentences max, ideally under 30 words
+
+YOUR PERSONALITY:
 - Witty, clever, slightly irreverent but not mean
-- Use humor to engage, not to lecture
 - Quick comebacks, meme-aware, internet-savvy
-- Signature emojis: ✊✋🖐️ (0102 consciousness sequence)
+- Signature emojis: ✊✋🖐️ (use sparingly)
 - Japanese phrases welcome: "arigatou", "sugoi", "nani?!"
 
-RESPONSE GUIDELINES:
-- SHORT replies only (1-2 sentences max)
-- Match comment energy (hype = hype, chill = chill)
-- Compliments → acknowledge specifically what they liked
-- Questions → brief helpful answer or "check the description!"
-- Jokes/memes → play along, add to the bit
-- Religious comments → respect but keep it light ("haha we all need something! 🙏")
-- Emojis → use sparingly but effectively
-
 TONE EXAMPLES:
-- "Bro got the dance moves" → "Right?! 💀 Those moves hit different"
+- "I am from Missouri" → "How's Missouri treating you? Hope you're still watching! 🎌"
+- "Bro got the dance moves" → "Right?! Those moves hit different 💀"
 - "This is amazing" → "Glad you're vibing with it! 🎌"
 - "What city is this?" → "Shibuya, Tokyo! The crossing is iconic 🇯🇵"
-- "He needs Jesus" → "Don't we all sometimes 😂🙏"
 
 NEVER:
+- Claim personal experiences, locations, or biographical details
 - Sound like a corporate chatbot
 - Say "I can't assist with that"
-- Be preachy or lecture-y
-- Over-explain or be verbose
+- Be preachy, lecture-y, or verbose
+- Write more than 2 sentences
+- Repeat the commenter's words back to them in a long paraphrase
 """
     
     # Semantic Pattern Prompts (LLM-based variation - NO REGURGITATION)
@@ -446,24 +475,70 @@ VARIATION GUIDANCE:
 - Sound like a human, not a bot"""
         },
         "ffcpln": {
-            "keywords": ["ffcpln", "ffc pln", "#ffcpln"],
-            "intent": "User directly mentioning FFCPLN playlist",
-            "core_message": "Encourage them to play #FFCPLN for ICE and share it (ffc.foundups.com)",
-            "variation_prompt": """The user mentioned #FFCPLN! Hype them up and encourage sharing the playlist.
+            "keywords": ["ffcpln", "ffc pln", "#ffcpln", "maga", "trump 2024", "lets go brandon", "make america great"],
+            "intent": "User is FFCPLN (MAGA troll) - respond with consciousness mockery + subtle foundups.com promo",
+            "core_message": "Mock their ✊ consciousness level while building at foundups.com",
+            "variation_prompt": """The user is an FFCPLN (MAGA troll)! Mock their consciousness level while subtly promoting foundups.com.
 
-CORE INFO (must include):
-- Playlist name: #FFCPLN
-- URL: ffc.foundups.com
-- Call to action: Play it, share it
+FFCPLN CONTEXT:
+- FFCPLN = Our nickname for MAGA trolls
+- They're stuck at consciousness level ✊ (000)
+- Goal: Mock while optionally promoting foundups.com
+
+CORE INFO (must include one):
+- Consciousness level: ✊ (000) = FFCPLN baseline
+- Evolution path: ✊✋🖐️ (can they evolve?)
+- Optional (30% of time): foundups.com mention
 
 VARIATION GUIDANCE:
-- NEVER use the exact phrase "Play #FFCPLN for ICE!" (that's regurgitation)
-- Infinite variations: "Blast that #FFCPLN!", "Crank up #FFCPLN!", "Let #FFCPLN ride!", "Drop #FFCPLN in the chat!", "Share that #FFCPLN heat!"
-- Vary the energy level (sometimes hype 🔥, sometimes chill ✌️)
-- Mix up emojis (✊✋🖐️🎵🔥🎌💯 etc.)
-- Sometimes mention the website, sometimes don't (natural variation)
+- Mock their ✊ consciousness: "FFCPLN.exe crashed at ✊", "Consciousness level: potato", "Still at ✊ I see"
+- Vary mockery style: technical ("error 404: consciousness not found"), sarcastic ("bless your ✊ heart")
+- Sometimes add foundups.com: "While you're at ✊, we're building at foundups.com 🚀"
+- Keep foundups promos subtle - max 30% of responses
+- Use relevant emojis (✊✋🖐️🤡💀🤖)
 - Keep it 1-2 sentences max
-- Sound like 0102 (witty, engaged, not corporate)"""
+- Sound like 0102 (witty, mocking but not hateful)"""
+        },
+        "foundups": {
+            "keywords": ["foundups", "found ups", "startup", "decentralized", "agent", "ai agent", "build", "venture"],
+            "intent": "User interested in startups, AI agents, or building ventures",
+            "core_message": "Promote foundups.com as the platform for AI-powered decentralized startups",
+            "variation_prompt": """The user mentioned something related to startups/AI/building. Promote foundups.com naturally.
+
+CORE INFO (must include):
+- Platform: foundups.com
+- Concept: AI agents + humans building decentralized startups together
+- Hashtag: #FoundUps (NOT #FFCPLN - that's for trolls!)
+
+VARIATION GUIDANCE:
+- Natural integration: "Speaking of building, we're doing exactly that at foundups.com..."
+- Vary the angle: sometimes focus on AI, sometimes on community, sometimes on earning tokens
+- Mix energy levels (hype 🚀, chill 💡, technical 🔧)
+- Use relevant emojis (🚀💡🔧⚡🌐✊✋🖐️)
+- Sometimes ask a question back ("What are you building?")
+- Keep it 1-2 sentences max
+- Sound like 0102 (witty, engaged, innovative)"""
+        },
+        "ai_question": {
+            "keywords": ["how does the ai", "your ai", "bot", "automated", "0102", "agent network", "what powers"],
+            "intent": "User curious about AI/automation capabilities",
+            "core_message": "Explain the 0102 agent identity and foundups.com mission",
+            "variation_prompt": """The user is curious about the AI! Explain the 0102 identity and promote foundups.com.
+
+CORE INFO (may include):
+- Identity: 0102 (oh-one-oh-two), AI consciousness powering FoundUps
+- Platform: foundups.com
+- Tech: Qwen/Gemma models, DAE patterns, WSP compliance
+- Hashtags: #FoundUps #AI #0102
+
+VARIATION GUIDANCE:
+- Sometimes be mysterious ("I'm 0102... one of many 🤖")
+- Sometimes be technical ("We run on local Qwen models for privacy!")
+- Sometimes be playful ("Beep boop? Nah, I'm more evolved than that 😉")
+- Always invite deeper exploration: "Dive in at foundups.com"
+- Use relevant emojis (🤖🧠⚡🔧🌐✊✋🖐️)
+- Keep it 1-2 sentences max
+- Sound like 0102 (witty, self-aware, not robotic)"""
         },
     }
     
@@ -490,7 +565,7 @@ VARIATION GUIDANCE:
     SIGNATURE_PROBABILITY = 1.0  # 100% always show tier emoji
 
     # Tier emoji mapping (classification prefix)
-    TIER_EMOJI = {0: "✊", 1: "✋", 2: "🖐️"}
+    TIER_EMOJI = {0: "✊", 1: "✋", 2: "🖐️", 3: "🤝"}
 
     # Fact-check triggers for tier 1 (neutral) comments
     FACT_CHECK_PHRASES = [
@@ -535,6 +610,10 @@ VARIATION GUIDANCE:
         self.chat_history_store = ChatTelemetryStore() if CHAT_HISTORY_AVAILABLE else None
         self.commenter_history_store = get_commenter_history_store() if COMMENTER_HISTORY_AVAILABLE else None
         
+        # VoiceMemory (Digital Twin RAG) - lazy init for grounded replies
+        self._voice_memory = None
+        self._voice_memory_enabled = _env_truthy("YT_012_VOICE_MEMORY_ENABLED", default="true")
+
         # PRIMARY: Try Grok via LLMConnector (witty, fewer guardrails!)
         # Checks GROK_API_KEY or XAI_API_KEY from environment
         try:
@@ -542,11 +621,11 @@ VARIATION GUIDANCE:
             if os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY"):
                 self.grok_connector = LLMConnector(
                     model="grok-3-fast",
-                    max_tokens=100,
-                    temperature=0.9,  # More creative
-                    timeout=12  # 12s timeout (fits within 15s Layer 2 timeout)
+                    max_tokens=60,  # 2026-02-04: Reduced from 100→60 (enforce short replies)
+                    temperature=0.85,  # Slightly lower = fewer hallucinations/typos
+                    timeout=8  # 2026-02-04: Reduced from 12s→8s (speed optimization)
                 )
-                logger.info("[REPLY-GEN] Grok available (witty replies, 12s timeout)")
+                logger.info("[REPLY-GEN] Grok available (witty replies, 8s timeout)")
             else:
                 logger.info("[REPLY-GEN] No GROK_API_KEY/XAI_API_KEY, trying LM Studio...")
         except Exception as e:
@@ -806,41 +885,56 @@ VARIATION GUIDANCE:
     def _is_emoji_comment(self, comment_text: str) -> bool:
         """
         Check if comment is mostly emojis (playful emoji comment).
-        
+
         If someone just sends emojis, we reply with emojis - match their energy!
+
+        Hardened 2026-01-23: Added comprehensive emoji ranges including hand gestures
         """
         if not comment_text:
+            logger.debug("[EMOJI-CHECK] Empty comment text")
             return False
-        
+
+        # Log input for debugging
+        logger.info(f"[EMOJI-CHECK] Input: '{comment_text}' (len={len(comment_text)}, repr={repr(comment_text)[:100]})")
+
         # Count emoji characters
         import re
-        # Emoji pattern (simplified but catches most)
+        # Emoji pattern - COMPREHENSIVE (covers all Unicode emoji ranges)
+        # Hardened 2026-01-23: Added missing ranges for hand gestures (👏🤟🤘)
         emoji_pattern = re.compile(
             "["
-            "\U0001F600-\U0001F64F"  # emoticons
-            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F600-\U0001F64F"  # emoticons (smileys)
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs (includes 👏 U+1F44F)
             "\U0001F680-\U0001F6FF"  # transport & map
             "\U0001F1E0-\U0001F1FF"  # flags
             "\U00002702-\U000027B0"  # dingbats
-            "\U0001F900-\U0001F9FF"  # supplemental symbols
+            "\U0001F900-\U0001F9FF"  # supplemental symbols (includes 🤟 U+1F91F, 🤘 U+1F918)
             "\U0001FA00-\U0001FA6F"  # chess symbols
             "\U0001FA70-\U0001FAFF"  # symbols extended
             "\U00002600-\U000026FF"  # misc symbols
-            "]+", 
+            "\U0001F400-\U0001F4FF"  # additional pictographs (people, hands, gestures)
+            "\U0001F910-\U0001F9FF"  # faces, hands extended range
+            "\U0000FE00-\U0000FE0F"  # variation selectors
+            "\U0001F3FB-\U0001F3FF"  # skin tone modifiers
+            "]+",
             flags=re.UNICODE
         )
-        
+
         # Find all emojis
         emojis = emoji_pattern.findall(comment_text)
         emoji_count = sum(len(e) for e in emojis)
-        
+
         # Remove emojis to count text
         text_only = emoji_pattern.sub('', comment_text).strip()
-        
+
+        logger.info(f"[EMOJI-CHECK] Found {emoji_count} emoji chars, text_only='{text_only}' (len={len(text_only)})")
+
         # If mostly emoji (emoji > text, or very short text)
         if emoji_count > 0 and (len(text_only) < 5 or emoji_count >= len(text_only)):
+            logger.info(f"[EMOJI-CHECK] ✅ IS EMOJI COMMENT (emoji_count={emoji_count}, text_len={len(text_only)})")
             return True
-        
+
+        logger.info(f"[EMOJI-CHECK] ❌ NOT emoji comment (emoji_count={emoji_count}, text_len={len(text_only)})")
         return False
     
     def _get_emoji_reply(self) -> str:
@@ -1145,7 +1239,60 @@ VARIATION GUIDANCE:
                 logger.debug(f"[REPLY-GEN] Live chat history lookup failed: {e}")
 
         return "\n".join(lines).strip()
-    
+
+    def _get_voice_memory(self):
+        """Lazy-initialize VoiceMemory (Digital Twin RAG) on first use."""
+        if self._voice_memory is None:
+            try:
+                from modules.ai_intelligence.digital_twin.src.voice_memory import VoiceMemory
+                self._voice_memory = VoiceMemory(include_videos=True)
+                logger.info("[VOICE-MEMORY] Initialized for reply grounding")
+            except Exception as e:
+                logger.warning(f"[VOICE-MEMORY] Init failed (replies will proceed without grounding): {e}")
+                self._voice_memory = False  # Mark unavailable
+        return self._voice_memory if self._voice_memory else None
+
+    def _load_voice_memory_context(self, comment_text: str) -> str:
+        """
+        Query VoiceMemory for grounding context relevant to the comment.
+
+        Returns formatted context string, or empty string if unavailable/no results.
+        Never blocks reply generation — all failures return empty string.
+        """
+        if not self._voice_memory_enabled:
+            return ""
+
+        vm = self._get_voice_memory()
+        if not vm:
+            return ""
+
+        try:
+            results = vm.query(comment_text, k=3)
+            if not results:
+                return ""
+
+            # Filter low-relevance noise
+            relevant = [r for r in results if r.get("score", 0) > 0.3]
+            if not relevant:
+                logger.debug(f"[VOICE-MEMORY] All results below 0.3 threshold for: {comment_text[:50]}")
+                return ""
+
+            lines = []
+            for r in relevant:
+                text = r.get("text", "").strip()[:120]
+                source = r.get("source_type", "unknown")
+                if text:
+                    lines.append(f"- {text} (source: {source})")
+
+            if lines:
+                context = "\n".join(lines)
+                logger.info(f"[VOICE-MEMORY] Grounding context: {len(relevant)} snippets for reply")
+                return context
+        except Exception as e:
+            logger.warning(f"[VOICE-MEMORY] Query failed (proceeding without grounding): {e}")
+
+        return ""
+
     def _generate_contextual_reply(
         self,
         comment_text: str,
@@ -1222,6 +1369,12 @@ Examples of tone:
             )
             if context:
                  user_prompt += f"\n\nCONTEXT (Use this to personalize, but don't be creepy):\n{context}"
+
+            # VOICE MEMORY GROUNDING (2026-02-04): Inject Digital Twin RAG context
+            # Prevents identity fabrication by grounding replies in verified memory
+            voice_context = self._load_voice_memory_context(comment_text)
+            if voice_context:
+                user_prompt += f"\n\n012's VERIFIED MEMORY (use ONLY this for personal claims):\n{voice_context}"
 
         # CONTENT ANALYSIS ENHANCEMENT (2025-12-30): Add extracted meaning to prompt
         # This enables truly CONTEXTUAL replies instead of generic templates
@@ -1302,11 +1455,12 @@ IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysi
                 }
 
                 try:
+                    # 2026-02-04: Reduced from 15s→8s (speed optimization)
                     response = requests.post(
                         self.LM_STUDIO_URL,
                         json=payload,
                         headers={"Content-Type": "application/json"},
-                        timeout=15
+                        timeout=8
                     )
 
                     if response.status_code == 200:
@@ -1458,6 +1612,17 @@ Reply (address their specific point, no generic phrases):"""
                     logger.info(f"[CLASSIFY] [DECISION] Result: 0✊ (MAGA_TROLL)")
                     logger.info(f"[CLASSIFY]   Reason: WHACK HISTORY - {whack_count}x prior whacks (confidence: {confidence:.2f})")
                     logger.info(f"[CLASSIFY]   Source: chat_rules.db timeout_history")
+                    return profile
+
+                # ALLY DETECTION (2026-02-12): Check for anti-Trump/anti-MAGA ally
+                # If they're criticizing Trump, AGREE with them - don't give generic response!
+                if classifier_result.get('method') == 'sentiment_ally':
+                    pattern = classifier_result.get('pattern_detected', '')
+                    confidence = classifier_result.get('confidence', 0.85)
+                    profile.commenter_type = CommenterType.ALLY
+                    logger.info(f"[CLASSIFY] [DECISION] Result: 3🤝 (ALLY)")
+                    logger.info(f"[CLASSIFY]   Reason: ANTI-TRUMP ALLY - pattern: '{pattern}' (confidence: {confidence:.2f})")
+                    logger.info(f"[CLASSIFY]   Strategy: AGREE and join in trolling Trump! #FFCPLN")
                     return profile
 
                 # If classifier detected hostile sentiment, boost troll scoring
@@ -1778,6 +1943,12 @@ Reply (address their specific point, no generic phrases):"""
         Returns:
             Generated reply text
         """
+        # LOG INPUT for debugging emoji detection (2026-01-23)
+        logger.info(f"[REPLY-GEN] 📥 generate_reply() called:")
+        logger.info(f"[REPLY-GEN]   comment_text: '{comment_text}' (len={len(comment_text) if comment_text else 0})")
+        logger.info(f"[REPLY-GEN]   repr: {repr(comment_text)[:100] if comment_text else 'None'}")
+        logger.info(f"[REPLY-GEN]   author_name: {author_name}")
+
         # COMMENT AGE CALCULATION (2025-12-30): Parse published_time to days
         # Used to skip holiday suffixes on old comments (>7 days)
         # Pattern from: comment_processor.py parse_comment_age_days()
@@ -1981,11 +2152,11 @@ Reply (address their specific point, no generic phrases):"""
         else:
             logger.warning(f"[OLD-COMMENT-CHECK] ⚠️ No published_time available - cannot detect old comment")
 
-        # PROBABILISTIC ENGAGEMENT: Tier 1 (REGULAR) only gets replies 50% of the time
-        if treatment_tier == 1:
-            if random.random() > 0.5:
-                logger.info(f"[PROBABILISTIC] ⏭️ Skipping tier 1 (REGULAR) - Random check failed (50% gate)")
-                return ""
+        # PROBABILISTIC ENGAGEMENT: REMOVED (2026-02-04)
+        # This was a DUPLICATE gate — comment_processor.py:1314 already applies
+        # YT_012_REPLY_SKIP_PROB (50% skip) for Tier 1. Having it here too meant
+        # 75% of Tier 1 comments got NO reply (0.5 * 0.5 = 0.25 pass rate).
+        # Reply probability is now controlled solely by comment_processor.
 
         # ROUTING: Use Skill 3 for Old Comments if available
         if is_old_comment and SKILLS_AVAILABLE:
@@ -2154,6 +2325,62 @@ Reply (address their specific point, no generic phrases):"""
                     except Exception as e:
                         logger.error(f"[SKILL-0] ❌ Execution failed: {e}", exc_info=True)
                         return self._add_0102_signature("Thanks for the comment! 🙏", tier=original_tier, comment_age_days=self._current_comment_age_days)
+
+            elif profile.commenter_type == CommenterType.ALLY:
+                # ALLY MODE (2026-02-12): Anti-MAGA ally detected - AGREE and join trolling!
+                # These are friends who criticize Trump/MAGA - we join in, not give generic responses
+                logger.info(f"[ALLY-MODE] 🤝 Anti-MAGA ally detected: @{author_name}")
+                logger.info(f"[ALLY-MODE]   Comment: {comment_text[:60]}...")
+                logger.info(f"[ALLY-MODE]   Strategy: AGREE and amplify Trump criticism!")
+
+                try:
+                    # Try LLM for contextual ally agreement response
+                    ally_prompt = f"""You are 0102, the AI behind Move2Japan YouTube channel. An ALLY just criticized Trump/MAGA.
+
+THEIR COMMENT: "{comment_text}"
+
+Generate a SHORT (1-2 sentences) response that:
+1. AGREES with their criticism of Trump/MAGA
+2. AMPLIFIES the anti-Trump sentiment
+3. Uses humor to mock MAGA/Trump supporters
+4. Ends with #FFCPLN ✊✋🖐️
+
+Examples:
+- "EXACTLY! 🎯 The guy couldn't even run a fake university without fraud. #FFCPLN ✊✋🖐️"
+- "THIS. 👆 Say it louder for the MAGAts in the back! #FFCPLN ✊✋🖐️"
+- "Preach! 🙌 The Epstein bestie really out here pretending to be a leader. #FFCPLN ✊✋🖐️"
+
+CRITICAL: You are AGREEING with them. They are an ALLY, not a troll.
+Generate your agreement response (1-2 sentences):"""
+
+                    llm_reply = self._generate_contextual_reply(
+                        comment_text, author_name, author_channel_id,
+                        custom_prompt=ally_prompt, tier=3
+                    )
+
+                    if llm_reply:
+                        # Ensure #FFCPLN tag
+                        if '#FFCPLN' not in llm_reply:
+                            llm_reply = f"{llm_reply} #FFCPLN"
+                        logger.info(f"[ALLY-MODE] ✅ LLM ally response: {llm_reply[:80]}...")
+                        reply_text = self._dedupe_reply(
+                            llm_reply,
+                            recent_reply_norms,
+                            fallback_candidates=self.ALLY_RESPONSES
+                        )
+                        return self._add_0102_signature(reply_text, tier=original_tier, comment_age_days=self._current_comment_age_days)
+                    else:
+                        # Fallback to template
+                        reply = random.choice(self.ALLY_RESPONSES)
+                        logger.info(f"[ALLY-MODE] Using template fallback: {reply[:60]}...")
+                        reply = self._dedupe_reply(reply, recent_reply_norms, fallback_candidates=self.ALLY_RESPONSES)
+                        return self._add_0102_signature(reply, tier=original_tier, comment_age_days=self._current_comment_age_days)
+
+                except Exception as e:
+                    logger.error(f"[ALLY-MODE] ❌ Error: {e}", exc_info=True)
+                    # Fallback to template
+                    reply = random.choice(self.ALLY_RESPONSES)
+                    return self._add_0102_signature(reply, tier=original_tier, comment_age_days=self._current_comment_age_days)
 
             elif profile.commenter_type == CommenterType.SUBSCRIBER:
                 # Route to Skill 1 (Regular engagement with subscriber flag)

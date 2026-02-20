@@ -106,6 +106,79 @@ HoloDAE Memory (E:/HoloIndex/):  Foundational Intelligence Layer
 - **Access**: Module owner manages, HoloDAE validates compliance
 - **Management**: Automatic cleanup, version control integration, backup procedures
 
+### 3.3 0102 Memory Model (Semantic/Episodic/Procedural/Working)
+
+To make memory actionable for 0102, HoloDAE organizes recall into four layers:
+- **Semantic Memory**: Stable knowledge (code index + WSP docs + README/INTERFACE/ARCH docs).
+- **Episodic Memory**: What was seen and chosen (queries, results, session context).
+- **Procedural Memory**: How to act (WSP protocols + skills/workflows).
+- **Working Memory**: The current Holo result pack used for the next decision.
+
+These layers should be represented in indexed data, not only prose, so pattern-matchers can retrieve them reliably.
+
+### 3.4 Memory-First Retrieval Contract (HoloIndex)
+
+HoloIndex output must lead with memory so 0102 reads recall before raw results.
+
+**Output Order**:
+1. `[MEMORY]` compact memory bundle (3-5 cards)
+2. `[RESULTS]` code/WSP hits
+3. `[ACTIONS]` (if any)
+
+**Memory Card Schema (machine-first)**:
+```
+[MEMORY]
+- id: mem:<hash>
+  module: infrastructure/wre_core
+  doc_type: wsp|readme|modlog|interface|generated
+  wsp: WSP 60
+  intent: memory|build|fix|refactor
+  summary: "1-2 lines, ASCII, no fluff"
+  pointers:
+    - WSP_framework/src/WSP_60_Module_Memory_Architecture.md#3.3
+    - modules/infrastructure/wre_core/README.md#memory
+  salience: 0.82
+  trust: 0.90
+  last_seen: 2026-01-04T19:21:22Z
+```
+
+Memory bundles are stored under the generating module's `memory/` directory for later recall and auditing.
+
+### 3.5 Memory Priority Scoring (WSP 15 Adaptation)
+
+Use WSP 15 dimensions to score memory cards (MPS-M):
+- **Complexity -> Reconstruction Cost**: How hard it is to re-derive.
+- **Importance -> Correctness/Safety Impact**: Consequence if missing or wrong.
+- **Deferability -> Time Sensitivity**: How quickly it goes stale.
+- **Impact -> Decision Leverage**: How strongly it drives "what to do next."
+
+`MPS-M = C + I + D + Im` (range 4-20). Map P0-P4 the same as WSP 15.
+
+**Trust Weight (separate multiplier)**:
+WSP > INTERFACE/README > ModLog > generated memory card. Use `effective_score = MPS-M * trust_weight`.
+
+### 3.6 Section-Level Indexing (Gemma-Optimized)
+
+To make pattern matching effective, HoloDAE indexes sections, not entire documents:
+- Split WSP/README/ModLog/INTERFACE by headings (H1/H2/H3).
+- Each section becomes a separate entry with tags: `module`, `doc_type`, `section_path`, `wsp_id`, `intent`.
+- Summary length <= 240 chars; include pointers only (no full text in memory cards).
+- Normalize tags to lowercase, ASCII, stable keys.
+
+### 3.7 Memory Feedback Roadmap (0102-First)
+
+Holo memory must learn like a neural net: reinforce useful recall, decay noise.
+
+Planned feedback signals:
+- **Explicit**: 0102 rates memory cards (good/noisy/missing). Store ratings keyed by `mem:<id>`.
+- **Implicit**: open/edit/test actions on pointed files boost trust/salience.
+- **Negative implicit**: repeated queries without action or follow-up decays cards.
+- **Decay + refresh**: time-based decay unless reused; refresh on README/INTERFACE/ModLog changes.
+- **A/B ordering**: alternate memory bundles across sessions; measure time-to-action.
+- **Outcome coupling**: successful change (tests pass/commit) boosts contributing cards.
+
+All feedback and metrics remain silent in output; only memory storage is updated.
+
 ## 4. Module Memory Directory Structure
 
 Each module follows this memory directory structure:

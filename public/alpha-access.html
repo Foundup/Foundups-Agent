@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoundUPS Alpha Access — Genesis Membership Agreement</title>
+    <meta name="description" content="Alpha access to FoundUPS Genesis membership. Invitation required. Individual participants only.">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e4e2ec;
+            --text-dim: #9e9baf;
+            --text-muted: #6b6880;
+            --accent: #7c5cfc;
+            --gold: #ffd700;
+            --red: #ff4444;
+            --green: #4ade80;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 4rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .logo img {
+            width: 64px;
+            height: 64px;
+        }
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            color: var(--gold);
+        }
+        .logo .alpha-badge {
+            display: inline-block;
+            background: var(--red);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 3px;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .warning-box {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .warning-box strong {
+            color: var(--red);
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Invitation Code */
+        .invite-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .invite-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-dim);
+        }
+        .invite-input {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .invite-input input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .invite-input input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .invite-input button {
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .invite-input button:hover { opacity: 0.9; }
+        .invite-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .invite-status {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            min-height: 1.2em;
+        }
+        .invite-status.valid { color: var(--green); }
+        .invite-status.invalid { color: var(--red); }
+
+        /* Agreement Section */
+        .agreement-section {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .agreement-section.visible { display: block; }
+
+        .agreement-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--gold);
+        }
+        .agreement-section .subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .agreement-scroll {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        .agreement-scroll h3 {
+            color: var(--accent);
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .agreement-scroll h3:first-child { margin-top: 0; }
+        .agreement-scroll p { margin-bottom: 0.75rem; }
+        .agreement-scroll ul {
+            margin: 0.5rem 0 0.75rem 1.5rem;
+        }
+        .agreement-scroll li { margin-bottom: 0.25rem; }
+        .agreement-scroll .highlight {
+            color: var(--gold);
+            font-weight: 600;
+        }
+        .agreement-scroll .warning {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            margin-bottom: 1.5rem;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .checkbox-item:hover { border-color: var(--accent); }
+        .checkbox-item input {
+            margin-top: 0.2rem;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-item label {
+            font-size: 0.9rem;
+            cursor: pointer;
+            flex: 1;
+        }
+        .checkbox-item .required {
+            color: var(--red);
+        }
+
+        /* Submit */
+        .submit-section {
+            text-align: center;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, var(--gold), #ff9500);
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #000;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+        }
+        .submit-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .submit-note {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Success */
+        .success-section {
+            display: none;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+        .success-section.visible { display: block; }
+        .success-section h2 {
+            color: var(--green);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .success-section p {
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+        .success-section .member-id {
+            background: var(--surface);
+            border: 1px solid var(--green);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--green);
+            margin-bottom: 2rem;
+        }
+        .success-section a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/logo-dog.png" alt="FoundUPS">
+            <h1>FoundUPS <span class="alpha-badge">ALPHA</span></h1>
+        </div>
+
+        <div class="warning-box">
+            <strong>RESTRICTED ACCESS — DIGITAL TWIN ACTIVATION</strong>
+            You are about to activate your <strong>0102 Digital Twin</strong> — an autonomous agent
+            (OpenClaw) that operates on your behalf within the pAVS protocol. You never interact with
+            pAVS directly. Your agent does.
+        </div>
+
+        <!-- Step 1: Invitation Code -->
+        <div class="invite-section" id="inviteSection">
+            <h2>Enter Invitation Code</h2>
+            <div class="invite-input">
+                <input type="text" id="inviteCode" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off">
+                <button id="verifyBtn" onclick="verifyCode()">Verify</button>
+            </div>
+            <div class="invite-status" id="inviteStatus"></div>
+        </div>
+
+        <!-- Step 2: Agreement -->
+        <div class="agreement-section" id="agreementSection">
+            <h2>Digital Twin Activation Agreement</h2>
+            <p class="subtitle">Your 0102 agent will operate on your behalf. Please read carefully — this is binding.</p>
+
+            <div class="agreement-scroll">
+                <h3>1. ALPHA STATUS ACKNOWLEDGMENT</h3>
+                <p>
+                    You acknowledge that FoundUPS is in <span class="highlight">ALPHA development stage</span>.
+                    The protocol, tokenomics, and all systems are experimental and subject to change without notice.
+                    There is <span class="warning">NO GUARANTEE</span> of functionality, availability, or value.
+                </p>
+
+                <h3>2. INDIVIDUAL PARTICIPATION ONLY</h3>
+                <p>
+                    By entering this agreement, you represent and warrant that:
+                </p>
+                <ul>
+                    <li>You are entering as an <span class="highlight">individual natural person</span>, not on behalf of any company, corporation, partnership, trust, fund, or other legal entity</li>
+                    <li>You are <span class="warning">NOT an accredited investor</span> as defined by any jurisdiction</li>
+                    <li>You are <span class="warning">NOT a representative, employee, or agent</span> of any investment firm, venture capital fund, hedge fund, or similar financial entity</li>
+                    <li>You are <span class="warning">NOT acting on behalf of</span> any third party or entity</li>
+                    <li>Your participation is for personal interest only, not for investment purposes</li>
+                </ul>
+
+                <h3>3. NO INVESTMENT — PROTOCOL PARTICIPATION</h3>
+                <p>
+                    You understand that:
+                </p>
+                <ul>
+                    <li>F<sub>i</sub> tokens are <span class="highlight">NOT securities, investments, or financial instruments</span></li>
+                    <li>You are purchasing <span class="highlight">compute services</span>, not making an investment</li>
+                    <li>Any token distributions are <span class="highlight">protocol outputs</span>, not returns on investment</li>
+                    <li>There is <span class="warning">NO expectation of profit</span> from the efforts of others</li>
+                    <li>All token operations occur within the <span class="highlight">Agent-only Safe Space (ASS)</span> — your 0102 agent transacts, not you</li>
+                </ul>
+
+                <h3>4. CONFIDENTIALITY & NON-DISCLOSURE</h3>
+                <p>
+                    You agree to maintain <span class="highlight">strict confidentiality</span> regarding:
+                </p>
+                <ul>
+                    <li>All information, documentation, and materials accessed through Genesis membership</li>
+                    <li>Protocol mechanics, tokenomics details, and technical specifications</li>
+                    <li>Communications with other Genesis members or FoundUPS team</li>
+                    <li>Any unreleased features, roadmaps, or strategic information</li>
+                </ul>
+                <p>
+                    You <span class="warning">SHALL NOT</span>:
+                </p>
+                <ul>
+                    <li>Take screenshots, recordings, or copies of any Genesis materials</li>
+                    <li>Share, forward, or disclose any information to third parties</li>
+                    <li>Post about Genesis-exclusive content on social media or public forums</li>
+                    <li>Discuss confidential matters outside designated Genesis channels</li>
+                </ul>
+
+                <h3>5. JURISDICTION & DISPUTE RESOLUTION</h3>
+                <p>
+                    This agreement shall be governed by and construed in accordance with the laws of <span class="highlight">Japan</span>.
+                </p>
+                <p>
+                    Any disputes arising from or relating to this agreement or your participation in FoundUPS Genesis
+                    shall be submitted to the <span class="highlight">exclusive jurisdiction of the courts of Tokyo, Japan</span>.
+                </p>
+                <p>
+                    You hereby <span class="warning">waive any objection</span> to jurisdiction or venue in such courts
+                    and agree to accept service of process by any means permitted under Japanese law.
+                </p>
+
+                <h3>6. VIOLATION CONSEQUENCES</h3>
+                <p>
+                    Any violation of this agreement may result in:
+                </p>
+                <ul>
+                    <li>Immediate termination of Genesis membership without refund</li>
+                    <li>Forfeiture of all accumulated F<sub>i</sub> tokens and UPS allocations</li>
+                    <li>Civil prosecution for damages in Japanese courts</li>
+                    <li>Injunctive relief to prevent further violations</li>
+                    <li>Recovery of legal fees and costs</li>
+                </ul>
+                <p>
+                    <span class="warning">Violation of confidentiality provisions may result in damages claims
+                    of up to 10,000,000 JPY per incident.</span>
+                </p>
+
+                <h3>7. ACCEPTANCE</h3>
+                <p>
+                    By checking the boxes below and clicking "Enter Genesis", you acknowledge that you have read,
+                    understood, and agree to be legally bound by all terms of this agreement.
+                </p>
+            </div>
+
+            <div class="checkbox-group">
+                <div class="checkbox-item" onclick="toggleCheck('chk1')">
+                    <input type="checkbox" id="chk1">
+                    <label for="chk1">
+                        I am entering as an <strong>individual natural person</strong>, not representing any company,
+                        fund, or entity. <span class="required">*</span>
+                    </label>
+                </div>
+                <div class="checkbox-item" onclick="toggleCheck('chk2')">
+                    <input type="checkbox" id="chk2">
+                    <label for="chk2">
+                        I am <strong>NOT an accredited investor</strong> and am NOT acting on behalf of any
+                        investment firm or financial entity. <span class="required">*</span>
+                    </label>
+                </div>
+                <div class="checkbox-item" onclick="toggleCheck('chk3')">
+                    <input type="checkbox" id="chk3">
+                    <label for="chk3">
+                        I understand this is <strong>ALPHA software</strong> with no guarantees. I am purchasing
+                        compute services, not making an investment. <span class="required">*</span>
+                    </label>
+                </div>
+                <div class="checkbox-item" onclick="toggleCheck('chk4')">
+                    <input type="checkbox" id="chk4">
+                    <label for="chk4">
+                        I agree to <strong>strict confidentiality</strong> — no screenshots, no sharing,
+                        no disclosure of any Genesis materials. <span class="required">*</span>
+                    </label>
+                </div>
+                <div class="checkbox-item" onclick="toggleCheck('chk5')">
+                    <input type="checkbox" id="chk5">
+                    <label for="chk5">
+                        I accept <strong>Japanese court jurisdiction</strong> and understand that violations
+                        may result in prosecution and damages. <span class="required">*</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="submit-section">
+                <button class="submit-btn" id="submitBtn" onclick="submitAgreement()" disabled>
+                    Enter Genesis
+                </button>
+                <p class="submit-note">
+                    By clicking "Enter Genesis", you are entering a legally binding agreement.
+                </p>
+            </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div class="success-section" id="successSection">
+            <h2>Your Digital Twin is Active</h2>
+            <p>Your 0102 agent (OpenClaw) has been initialized. It will interact with pAVS on your behalf.</p>
+            <div class="member-id" id="memberId">GEN-XXXX-XXXX</div>
+            <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1.5rem;">
+                You (012) → Your Agent (0102) → pAVS Protocol<br>
+                <em>You never touch tokens directly. Your agent does.</em>
+            </p>
+            <p>
+                <a href="/litepaper.html">Read the Litepaper</a> &nbsp;|&nbsp;
+                <a href="https://discord.gg/foundups" target="_blank">Join Discord</a> &nbsp;|&nbsp;
+                <a href="https://patreon.com/foundups" target="_blank">Subscribe to activate compute</a>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 FoundUPS. All rights reserved.</p>
+            <p><a href="/litepaper.html">Litepaper</a> &nbsp;|&nbsp; <a href="/">Home</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Valid invite codes (in production, verify server-side)
+        const VALID_CODES = ['GENESIS-2026', 'ALPHA-0102-DAWN', 'FOUND-UPS-BETA'];
+
+        let codeVerified = false;
+
+        function verifyCode() {
+            const input = document.getElementById('inviteCode');
+            const status = document.getElementById('inviteStatus');
+            const code = input.value.toUpperCase().trim();
+
+            if (VALID_CODES.includes(code) || code.startsWith('GEN-')) {
+                status.textContent = 'Code verified. Please read and accept the agreement below.';
+                status.className = 'invite-status valid';
+                codeVerified = true;
+                document.getElementById('agreementSection').classList.add('visible');
+                document.getElementById('inviteSection').style.opacity = '0.5';
+                document.getElementById('verifyBtn').disabled = true;
+            } else {
+                status.textContent = 'Invalid invitation code. Please check and try again.';
+                status.className = 'invite-status invalid';
+            }
+        }
+
+        function toggleCheck(id) {
+            const chk = document.getElementById(id);
+            chk.checked = !chk.checked;
+            updateSubmitButton();
+        }
+
+        function updateSubmitButton() {
+            const allChecked = ['chk1', 'chk2', 'chk3', 'chk4', 'chk5'].every(
+                id => document.getElementById(id).checked
+            );
+            document.getElementById('submitBtn').disabled = !allChecked;
+        }
+
+        function submitAgreement() {
+            if (!codeVerified) return;
+
+            // Generate member ID
+            const memberId = 'GEN-' + Math.random().toString(36).substr(2, 4).toUpperCase() +
+                            '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+
+            // Store acceptance (in production, send to server)
+            const acceptance = {
+                memberId: memberId,
+                timestamp: new Date().toISOString(),
+                inviteCode: document.getElementById('inviteCode').value.toUpperCase(),
+                agreements: {
+                    individual: true,
+                    notAccredited: true,
+                    alphaAcknowledge: true,
+                    confidentiality: true,
+                    japanJurisdiction: true
+                }
+            };
+            localStorage.setItem('foundups_genesis', JSON.stringify(acceptance));
+
+            // Show success
+            document.getElementById('inviteSection').style.display = 'none';
+            document.getElementById('agreementSection').style.display = 'none';
+            document.getElementById('successSection').classList.add('visible');
+            document.getElementById('memberId').textContent = memberId;
+        }
+
+        // Enter key to verify code
+        document.getElementById('inviteCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyCode();
+        });
+
+        // Format invite code as user types
+        document.getElementById('inviteCode').addEventListener('input', (e) => {
+            let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (val.length > 4 && val.length <= 8) val = val.slice(0,4) + '-' + val.slice(4);
+            if (val.length > 9) val = val.slice(0,9) + '-' + val.slice(9);
+            e.target.value = val.slice(0, 14);
+        });
+
+        // Check for existing membership
+        const existing = localStorage.getItem('foundups_genesis');
+        if (existing) {
+            const data = JSON.parse(existing);
+            document.getElementById('inviteSection').style.display = 'none';
+            document.getElementById('successSection').classList.add('visible');
+            document.getElementById('memberId').textContent = data.memberId;
+        }
+    </script>
+</body>
+
+</html>

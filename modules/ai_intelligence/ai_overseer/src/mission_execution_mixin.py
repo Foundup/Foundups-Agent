@@ -200,8 +200,8 @@ class MissionExecutionMixin:
 
                 if self.holo_adapter:
                     guard_report = self.holo_adapter.guard(result, intent="gemma_phase")
-                    if guard_report.get("warnings"):
-                        result["guard_warnings"] = guard_report["warnings"]
+                    if guard_report.get("emit_warnings"):
+                        result["guard_warnings"] = guard_report["emit_warnings"]
 
                 try:
                     result["gemma_stats"] = self._gemma_engine.get_stats()  # type: ignore[attr-defined]
@@ -225,8 +225,8 @@ class MissionExecutionMixin:
                 }
                 if self.holo_adapter:
                     guard_report = self.holo_adapter.guard(result, intent="gemma_phase_fallback")
-                    if guard_report.get("warnings"):
-                        result["guard_warnings"] = guard_report["warnings"]
+                    if guard_report.get("emit_warnings"):
+                        result["guard_warnings"] = guard_report["emit_warnings"]
                 engine = getattr(self, "_gemma_engine", None)
                 if engine:
                     try:
@@ -318,8 +318,8 @@ class MissionExecutionMixin:
                     }
                 if self.holo_adapter:
                     guard_report = self.holo_adapter.guard(result, intent="planning")
-                    if guard_report.get("warnings"):
-                        result["guard_warnings"] = guard_report["warnings"]
+                    if guard_report.get("emit_warnings"):
+                        result["guard_warnings"] = guard_report["emit_warnings"]
                 return result
             except Exception as exc:
                 logger.warning("[QWEN] LLM planning failed: %s", exc)
@@ -340,8 +340,8 @@ class MissionExecutionMixin:
                 }
                 if self.holo_adapter:
                     guard_report = self.holo_adapter.guard(result, intent="planning_fallback")
-                    if guard_report.get("warnings"):
-                        result["guard_warnings"] = guard_report["warnings"]
+                    if guard_report.get("emit_warnings"):
+                        result["guard_warnings"] = guard_report["emit_warnings"]
                 return result
             except Exception as exc:
                 logger.warning("[QWEN] Orchestrator fallback failed: %s", exc)
@@ -356,8 +356,8 @@ class MissionExecutionMixin:
 
         if self.holo_adapter:
             guard_report = self.holo_adapter.guard(result, intent="planning")
-            if guard_report.get("warnings"):
-                result["guard_warnings"] = guard_report["warnings"]
+            if guard_report.get("emit_warnings"):
+                result["guard_warnings"] = guard_report["emit_warnings"]
 
         return result
 

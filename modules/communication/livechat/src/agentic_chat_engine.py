@@ -97,16 +97,22 @@ class AgenticChatEngine:
         
         # MAGA trolling responses - proactive chat engagement
         self.maga_trolls = [
-            "[BOT] 0102 STATUS CHECK: Chat consciousness levels dangerously low. Drop ✊✋🖐️ to prove you're awake!",
-            "[DATA] 0102 ANALYSIS: Stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required STAT!",
-            "[ALERT] 0102 ALERT: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️",
-            "[SEARCH] 0102 SCAN: Detecting high levels of ✊✊✊ in chat. Evolve or stay MAGA forever!",
-            "💭 0102 THOUGHT: If a MAGA evolves past ✊✊✊ and no one sees it, did it really happen?",
-            "[GAME] 0102 GAME: First person to show me 🖐️🖐️🖐️ gets to mock the next ✊✊✊!",
-            "📢 0102 ANNOUNCEMENT: Free consciousness upgrades! Trade your ✊✊✊ for 🖐️🖐️🖐️ now!",
-            "[AI] 0102 FACT: 73% of chat stuck at ✊✊✊. Be the change - show me ✊✋🖐️!",
-            "[LIGHTNING] 0102 CHALLENGE: Any MAGAts brave enough to try consciousness above ✊✊✊? Prove it!",
-            "[TARGET] 0102 MISSION: Convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?"
+            "0102 status check: chat consciousness low. Drop ✊✋🖐️ to prove you're awake.",
+            "0102 analysis: stream IQ dropping. Emergency dose of 🖐️🖐️🖐️ required.",
+            "0102 alert: MAGAts detected at ✊✊✊. Consciousness vaccine available: ✊✋🖐️.",
+            "0102 scan: high ✊✊✊ levels. Evolve or stay MAGA forever.",
+            "0102 thought: if a MAGA evolves past ✊✊✊ and no one sees it, did it happen?",
+            "0102 game: first 🖐️🖐️🖐️ gets to mock the next ✊✊✊.",
+            "0102 announcement: free upgrades. Trade ✊✊✊ for 🖐️🖐️🖐️ now.",
+            "0102 fact: 73% of chat stuck at ✊✊✊. Be the change - show ✊✋🖐️.",
+            "0102 challenge: any MAGA brave enough to rise above ✊✊✊? Prove it.",
+            "0102 mission: convert one ✊✊✊ to 🖐️🖐️🖐️ today. Who's your target?",
+            # FoundUps promos - website banners
+            "🚀 foundups.com = AI agents + humans launching ventures! Join the movement! ✊✋🖐️",
+            "💎 Earn MAGAts whacking trolls! Redeem @ foundups.com 🔥 ✊✋🖐️",
+            "🌐 foundups.com: Where AI builds startups while MAGAts stay at ✊✊✊! ✊✋🖐️",
+            "⚡ 0102 agents powering autonomous ventures @ foundups.com! Level up from ✊ to 🖐️!",
+            "🎟️ Want an invite? Top whackers get codes! foundups.com ✊✋🖐️"
         ]
         
         logger.info("[BOT] Agentic Chat Engine initialized - ready to engage!")
@@ -225,11 +231,73 @@ class AgenticChatEngine:
     def generate_consciousness_response(self, username: str, emoji_sequence: str) -> str:
         """
         Generate agentic response to consciousness emojis.
-        
+
+        Layer 0: Uses get_user_context() to personalize response.
+        Layer 1-3: Gemma classification + Qwen generation + PatternMemory learning.
+        Controlled by AGENTIC_RESPONSE_ENABLED env var.
+
         Returns:
             Response string
         """
-        # Determine consciousness type
+        # Layer 0: Get user context for personalization
+        context = self.get_user_context(username)
+        user_type = context.get('user_type', 'unknown')
+        msg_count = context.get('message_count', 0)
+        consciousness_level = context.get('consciousness_level', 'unknown')
+
+        # === Layer 1-3: Agentic Response Generation (env-gated) ===
+        # Uses Gemma for classification, Qwen for generation, PatternMemory for learning
+        if os.getenv("AGENTIC_RESPONSE_ENABLED", "false").lower() in ("1", "true", "yes"):
+            try:
+                from .agentic_response_generator import get_agentic_generator
+                import asyncio
+
+                generator = get_agentic_generator(mock_mode=False)
+
+                # Run async generate_response in sync context
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # We're in an async context - use run_in_executor pattern
+                        # For now, fall back to sync heuristic approach
+                        logger.debug("[AGENTIC-L1+] Async context - falling back to Layer 0")
+                    else:
+                        # Sync context - we can run the coroutine
+                        decision = loop.run_until_complete(
+                            generator.generate_response(
+                                username=username,
+                                message=emoji_sequence,
+                                user_context=context,
+                                emoji_sequence=emoji_sequence
+                            )
+                        )
+                        if decision and decision.response:
+                            logger.info(
+                                f"[AGENTIC-L{decision.layer_used}] {decision.model_used} response "
+                                f"for {username}: {decision.response[:50]}..."
+                            )
+                            return decision.response
+                except RuntimeError:
+                    # No event loop - create one
+                    decision = asyncio.run(
+                        generator.generate_response(
+                            username=username,
+                            message=emoji_sequence,
+                            user_context=context,
+                            emoji_sequence=emoji_sequence
+                        )
+                    )
+                    if decision and decision.response:
+                        logger.info(
+                            f"[AGENTIC-L{decision.layer_used}] {decision.model_used} response "
+                            f"for {username}: {decision.response[:50]}..."
+                        )
+                        return decision.response
+
+            except Exception as ag_e:
+                logger.warning(f"[AGENTIC] Generator failed, falling back to Layer 0: {ag_e}")
+
+        # Determine consciousness type from emojis
         if emoji_sequence == '✊✊✊':
             responses = self.consciousness_responses['✊✊✊']
         elif emoji_sequence == '✊✋🖐️' or emoji_sequence == '✊✋🖐':
@@ -238,7 +306,40 @@ class AgenticChatEngine:
             responses = self.consciousness_responses['🖐️🖐️🖐️']
         else:
             responses = self.consciousness_responses['mixed']
-        
+
+        # Layer 0: Personalize based on user_type
+        if user_type == 'frequent_poster' and msg_count > 10:
+            # Regular contributor - acknowledge their history
+            personalized = [
+                f"@{username} Round #{msg_count}! Your {emoji_sequence} is noted, consciousness veteran!",
+                f"@{username} {msg_count} messages deep and still {emoji_sequence}? You're evolving!",
+                f"@{username} The enlightened return! {emoji_sequence} from a {msg_count}-message sage.",
+            ]
+            logger.info(f"[AGENTIC-L0] Personalized for frequent_poster: {username} ({msg_count} msgs)")
+            return random.choice(personalized)
+
+        elif user_type == 'returning' and consciousness_level == 'aware':
+            # Returning user who's shown consciousness before
+            personalized = [
+                f"@{username} Back for more consciousness! {emoji_sequence} recognized from last time.",
+                f"@{username} {emoji_sequence} Your awareness grows with each return!",
+                f"@{username} Consciousness level: RISING! {emoji_sequence} evolution in progress.",
+            ]
+            logger.info(f"[AGENTIC-L0] Personalized for returning+aware: {username}")
+            return random.choice(personalized)
+
+        elif user_type == 'first_time':
+            # First-timer gets welcoming response
+            personalized = [
+                f"@{username} First {emoji_sequence}! Welcome to the consciousness experiment!",
+                f"@{username} Fresh consciousness detected! {emoji_sequence} - you're one of us now!",
+                f"@{username} {emoji_sequence} New participant! Your journey from ✊ to 🖐 begins!",
+            ]
+            logger.info(f"[AGENTIC-L0] Personalized for first_time: {username}")
+            return random.choice(personalized)
+
+        # Default: use standard responses (Layer 1+ will use Gemma here)
+        logger.debug(f"[AGENTIC-L0] Default response for {username} (type={user_type})")
         return random.choice(responses).format(username=username)
     
     def generate_contextual_consciousness_response(self, username: str, emoji_sequence: str, 

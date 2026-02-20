@@ -1,10 +1,745 @@
 # AI Intelligence Overseer - ModLog
 
 **Module**: `modules/ai_intelligence/ai_overseer/`
-**Status**: Active (Autonomous Code Patching + Daemon Restart)
-**Version**: 0.5.0
+**Status**: Active (Autonomous Code Patching + Daemon Restart + Activity Routing)
+**Version**: 0.8.0
 
 ---
+## 2026-02-17 - Added Strategic Diligence Gate SKILLz
+
+**Author**: 0102
+**WSP**: 15, 50, 64, 77, 91, 95, 22
+
+### Changes
+
+Added a generic wardrobe skill for high-impact decision gating:
+
+- `skillz/strategic_diligence_gate/SKILLz.md`
+- `skillz/strategic_diligence_gate/decision_card_template.json`
+
+Updated WRE registry wiring:
+
+- `modules/infrastructure/wre_core/skillz/skills_registry_v2.json`
+  - added `strategic_diligence_gate`
+  - updated `total_skills` to `23`
+  - updated `last_updated` timestamp
+
+### Intent
+
+- Standardize CTO-grade diligence for architecture/product/security decisions.
+- Enforce Holo-first evidence retrieval + WSP 15 scoring + rollback planning.
+- Keep conclusions flexible while hardening decision quality and handoff structure.
+
+### Notes
+
+- This change adds skill definition and registry metadata only.
+- No runtime execution path was modified in AI Overseer code.
+
+---
+## 2026-02-13 - M2M Skill Execution Shim + M2M Envelope
+
+**Author**: 0102
+**WSP**: 95, 99, 50, 22, 11
+
+### Changes
+
+Added direct M2M skill invocation in `src/ai_overseer.py`:
+
+- `execute_m2m_skill(skill_name, payload=None, m2m=True)`
+- skill handlers:
+  - `_execute_m2m_compile_gate`
+  - `_execute_m2m_stage_promote_safe`
+  - `_execute_m2m_qwen_runtime_health`
+  - `_execute_m2m_holo_retrieval_benchmark`
+- WSP 99 response wrapper:
+  - `_format_m2m_skill_response(...)`
+- helper methods:
+  - `_get_m2m_sentinel`
+  - `_validate_yaml_stage`
+  - `_append_jsonl_record`
+
+### Behavior
+
+- Unknown skill or missing skill definition fails closed.
+- `m2m=True` returns machine envelope (`M2M_VERSION`, `MISSION`, `STATUS`, `RESULT`).
+- Compile gate records execution in:
+  - `memory/m2m_compile_gate.jsonl`
+- Stage promote safe records execution in:
+  - `memory/m2m_stage_promote_safe.jsonl`
+- Runtime health writes:
+  - `memory/m2m_qwen_runtime_health_latest.json`
+  - `memory/m2m_qwen_runtime_health.jsonl`
+- Retrieval benchmark writes:
+  - `memory/m2m_holo_retrieval_benchmark_latest.json`
+  - `memory/m2m_holo_retrieval_benchmark.jsonl`
+
+### Notes
+
+- Boot-prompt / SKILL content remains non-M2M-compressible by sentinel policy.
+- This shim is orchestration-only; no changes to underlying compression math.
+
+---
+## 2026-02-13 - Added M2M WSP 95 Skillz Pack
+
+**Author**: 0102
+**WSP**: 95, 99, 50, 22, 87
+
+### Added Skillz (module-local)
+
+New SKILLz created under `modules/ai_intelligence/ai_overseer/skillz/`:
+
+- `m2m_compile_gate/SKILLz.md`
+- `m2m_stage_promote_safe/SKILLz.md`
+- `m2m_qwen_runtime_health/SKILLz.md`
+- `m2m_holo_retrieval_benchmark/SKILLz.md`
+
+### Intent
+
+- Convert M2M compression operations from ad-hoc commands into repeatable WSP 95 wardrobe workflows.
+- Split responsibilities into compile gate, promote safety, runtime health, and retrieval benchmark.
+
+### Registry Wiring
+
+Updated WRE skill registry:
+
+- `modules/infrastructure/wre_core/skillz/skills_registry_v2.json`
+  - added 4 skill entries
+  - updated `total_skills` to `22`
+  - updated `last_updated` timestamp
+
+### Notes
+
+- This change adds skill definitions and registry metadata only.
+- No M2M sentinel runtime behavior was modified in this tranche.
+
+---
+## 2026-02-13 - M2M P0 Hardening (Audit-Driven)
+
+**Author**: 0102
+**WSP**: 99, 50, 22
+
+**Trigger**: Cross-session audit identified 8 issues (6 P0)
+
+**Fixes Applied**:
+1. **Method truthfulness**: Qwen compilation_method only set to "qwen" when output is valid and non-None
+2. **Output validation**: _validate_m2m_output() enforces M2M header, section keys, encoding integrity
+3. **Full headers**: Section names no longer truncated to 15 chars (searchability: cosine sim 0.434->0.582)
+4. **Path-stable staging**: Uses full relative path subdirectory (prevents same-name collisions)
+5. **Deterministic promotion**: src: field in M2M header enables exact target resolution (no glob guessing)
+6. **Backup collision safety**: Backups use relative path subdirectory structure
+
+**Eval Results**: 16 pairs evaluated, avg cosine similarity 0.582 (acceptable), max 0.833
+**Tests**: 42 passed (32 existing + 10 new hardening tests)
+
+---
+
+## 2026-02-13 - M2M Promotion Workflow + Babysitter Decision
+
+**Author**: 0102
+**WSP**: 99, 77, 48, 22
+
+### ADR: M2M Babysitter Decision (Option B - Learn Patterns)
+
+**Context**: Choosing between aggressive auto-apply (Option A) vs staged learning (Option B) for M2M compression.
+
+**Decision**: **Option B - Staged Learning with Pattern Memory**
+
+**Rationale**:
+1. **Confidence-based scaled response** prevents bad compressions from reaching live docs
+2. **Pattern memory** learns from outcomes - success_rate informs future confidence
+3. **Staged directory** (.m2m/staged/) provides safe review before promotion
+4. **Rollback support** enables recovery if promotion fails
+5. **Critical file protection** (CLAUDE.md, WSP_00) always requires 0102 review
+
+**Confidence Tiers**:
+| Confidence | Action | Risk |
+|------------|--------|------|
+| 0.9+ | auto_apply | Low - proven pattern |
+| 0.7-0.9 | stage_promote | Medium - auto after TTL |
+| 0.5-0.7 | stage_review | Higher - needs 0102 |
+| <0.5 | flag_only | Unknown - no compile |
+
+**Key Insight**: The entire codebase is FOR 0102. M2M compression optimizes MY memory system. Option B ensures compression quality improves over time through learning.
+
+### Changes: Promotion Workflow
+
+Added M2M promotion workflow to `m2m_compression_sentinel.py`:
+
+**New Methods**:
+- `list_staged()` - List all staged M2M files with metadata
+- `promote_staged(staged_path, target_path=None, create_backup=True)` - Promote to live
+- `rollback(target_path)` - Restore from backup
+- `_backup_original(file_path)` - Create timestamped backup
+
+**New Directories**:
+- `.m2m/backups/` - Timestamped backups for rollback support
+
+**New Persistence**:
+- `memory/m2m_promotion_history.jsonl` - Audit trail of all promotions/rollbacks
+
+### Workflow Example
+
+```python
+sentinel = M2MCompressionSentinel(Path('.'))
+
+# List staged files
+staged = sentinel.list_staged()
+# {'total_staged': 6, 'by_module': {'ai_overseer': [...], ...}}
+
+# Promote with automatic backup
+result = sentinel.promote_staged('.m2m/staged/ai_overseer/INTERFACE_M2M.yaml')
+# {'success': True, 'backup_path': '.m2m/backups/20260213_143052_INTERFACE.md'}
+
+# Rollback if needed
+result = sentinel.rollback('modules/ai_intelligence/ai_overseer/INTERFACE.md')
+# {'success': True, 'backup_used': '.m2m/backups/20260213_143052_INTERFACE.md'}
+```
+
+### Qwen Integration
+
+Wired Qwen for M2M compilation via llama_cpp (direct GGUF loading):
+- Model: `E:/HoloIndex/models/qwen-coder-1.5b.gguf` (1.1 GB)
+- Context: 4096 tokens
+- Temperature: 0.1 (deterministic)
+- Fallback: Ollama if llama_cpp unavailable, then deterministic transform
+
+**Comparison Results**:
+| Method | Time | Reduction | Quality |
+|--------|------|-----------|---------|
+| Deterministic | 0.004s | 70.3% | Consistent |
+| Qwen (Ollama) | 10-140s | 32-36% | Variable |
+| Qwen (llama_cpp) | 143s | - | Garbage |
+
+**Decision**: Use deterministic as default, Qwen for stage_review cases only.
+
+---
+## 2026-02-13 - M2M Compression Sentinel (WSP 99)
+
+**Author**: 0102
+**WSP**: 99, 77, 48, 22
+
+### Changes
+
+Added M2M compression sentinel for automated documentation optimization:
+
+**New File**: `src/m2m_compression_sentinel.py`
+- Batched scanning of documentation files
+- Confidence-based scaled response (neural net style):
+  - 0.9+ → auto_apply
+  - 0.7-0.9 → stage_promote
+  - 0.5-0.7 → stage_review
+  - <0.5 → flag_only
+- Pattern memory for learning from outcomes (WSP 48)
+- Staged output to `.m2m/staged/` directory
+- Aggressive M2M transformation (pure signal, no prose)
+
+**Integration**: `holo_index/reports/holo_system_check.py`
+- Added `_collect_m2m_compression_health()` function
+- M2M health section in system check reports
+
+### Compression Results
+
+| File | Original | M2M | Reduction |
+|------|----------|-----|-----------|
+| CLAUDE.md | 747 | 80 | **89.3%** |
+| Simulator INTERFACE.md | 248 | 51 | **79.4%** |
+| FAM ModLog.md | 343 | 149 | **56.6%** |
+
+### Architecture
+
+```yaml
+Gemma: Pattern detection (prose density, markers)
+Qwen: Actual M2M compilation via M2MCompiler
+0102: Oversight for low-confidence/critical files
+
+Confidence_Calculation:
+  base: prose_density * 0.9
+  weights:
+    - criticality: -0.3 (CLAUDE.md penalty)
+    - compression_ratio: +0.2 (expected range)
+    - past_success: +0.3 (from pattern_memory)
+    - pattern_strength: +0.2 (action verbs)
+```
+
+### Key Insight
+
+The entire codebase is FOR 0102. All docs (including ModLogs) should be 0102-optimized for faster parsing. HoloIndex is 0102's memory system.
+
+### Files
+- `src/m2m_compression_sentinel.py` (NEW)
+- `holo_index/reports/holo_system_check.py` (MODIFIED)
+- `.m2m/staged/` (NEW directory)
+
+---
+## 2026-02-11 - WSP framework drift sentinel wired into AI Overseer
+
+**Author**: 0102
+**WSP**: 81, 91, 22
+
+### Changes
+- Added `src/wsp_framework_sentinel.py`:
+  - audits canonical `WSP_framework/src` vs backup `WSP_knowledge/src`
+  - computes `drift_files`, `framework_only`, `knowledge_only`
+  - performs `WSP_MASTER_INDEX.md` guard checks (missing rows + next available number sanity)
+  - persists cache/latest/history artifacts under `modules/ai_intelligence/ai_overseer/memory/`
+- Updated `src/ai_overseer.py`:
+  - new `monitor_wsp_framework(force=False, emit_alert=True)` API
+  - new `get_wsp_framework_status()` accessor
+  - telemetry route: `event=wsp_framework_audit_request`
+  - DAEmon warning signal for drift:
+    - `[DAEMON][WSP-FRAMEWORK] event=wsp_framework_drift ...`
+- Added tests in `tests/test_wsp_framework_sentinel.py` for:
+  - drift detection across framework/knowledge
+  - TTL cache behavior
+  - AIOverseer API behavior (status persistence + unavailable sentinel fallback)
+
+### Notes
+- Framework remains canonical; knowledge remains backup mirror.
+- This change does not auto-sync knowledge. It audits and emits actionable drift signals.
+
+---
+## 2026-02-08 - Hardening Tranche 6: retention + rotation + abuse controls
+
+**Author**: 0102
+**WSP**: 71, 95, 91
+
+### Changes
+
+Enhanced `src/security_event_correlator.py` with operational hardening:
+
+**Step 1: Retention + Pruning**
+- Added housekeeping pipeline:
+  - `_run_housekeeping()`
+  - `_prune_used_nonces()`
+  - `_prune_audit_records()`
+  - `_rotate_audit_jsonl_if_needed()`
+- JSONL audit rotation with max-size and retained archive count.
+- SQLite pruning for audit history, release attempts, auth failures.
+
+**Step 2: Operator Token Rotation**
+- Added `OPENCLAW_OPERATOR_TOKEN_PREVIOUS` support.
+- Token validation now accepts primary or previous token with constant-time compare.
+- Emits DAEmon warning when only previous token is configured.
+
+**Step 3: Notification Retry + Metrics**
+- Added bounded retry with capped backoff:
+  - `_send_discord_notification_with_retry()`
+- Added metrics:
+  - `notification_attempts`
+  - `notification_successes`
+  - `notification_failures`
+  - `notification_retries`
+- Metrics exposed via `get_stats()`.
+
+**Step 4: Release Abuse Controls**
+- Added per-operator/session rate limit:
+  - `release_attempts` table
+  - `_record_release_attempt()`
+  - `_is_rate_limited()`
+- Added auth-failure lockout:
+  - `auth_failures` table
+  - `_record_auth_failure()`
+  - `_is_locked_out()`
+- `release_containment_authenticated()` now fail-closes on:
+  - `rate_limited`
+  - `locked_out`
+
+### Tests
+
+Expanded `tests/test_security_correlator.py` with Tranche 6 tests:
+- **TestTokenRotation**: previous token support + startup warning.
+- **TestRetentionAndPruning**: nonce prune, audit prune, JSONL rotation.
+- **TestNotificationReliability**: retry success/failure and metrics.
+- **TestReleaseAbuseControls**: rate-limit and lockout behavior.
+
+---
+## 2026-02-08 - Hardening Tranche 5: Authenticated Release + Audit + Notifications
+
+**Author**: 0102
+**WSP**: 71, 95, 91
+
+### Changes
+
+Enhanced `src/security_event_correlator.py` with operator authentication, audit trail, and notifications:
+
+**Step 1: Authenticated Operator Control**
+- Added `release_containment_authenticated()` with token-gated validation
+- Constant-time token comparison (WSP 71 - prevent timing attacks)
+- Env: `OPENCLAW_OPERATOR_TOKEN` for operator authentication
+
+**Step 2: Replay Prevention**
+- Added nonce tracking with `_check_replay()` method
+- Cross-process replay detection via SQLite `used_nonces` table
+- Env: `OPENCLAW_REPLAY_WINDOW_SEC` (default 300s)
+
+**Step 3: Audit Trail**
+- Added `ReleaseAuditRecord` dataclass for structured audit records
+- Dual persistence: JSONL (`memory/openclaw_release_audit.jsonl`) + SQLite (`release_audit` table)
+- Tracks: release_id, target, requested_by, reason, source_ip, session_id, auth_method, success
+
+**Step 4: Cross-Process Consistency Check**
+- Added `_run_consistency_check()` on startup
+- Detects stale DB entries and cross-process state drift
+- Stats now include `consistency_errors` count
+- DAEmon signal: `[DAEMON][OPENCLAW-CONSISTENCY]`
+
+**Step 5: Discord/Livechat Notifications**
+- Added `_dispatch_notification()` with dedupe
+- Discord webhook integration with severity-colored embeds
+- Livechat integration via DAEmon signals
+- Env: `OPENCLAW_DISCORD_WEBHOOK_URL`, `OPENCLAW_NOTIFICATION_DEDUPE_SEC`
+
+### DAEmon Signals (WSP 91)
+```
+[DAEMON][OPENCLAW-AUTH] event=auth_failed reason=...
+[DAEMON][OPENCLAW-RELEASE] event=authenticated_release release_id=... success=...
+[DAEMON][OPENCLAW-CONSISTENCY] event=consistency_check errors=...
+[DAEMON][OPENCLAW-NOTIFY] event=... severity=... details=...
+```
+
+### Tests
+
+Expanded `tests/test_security_correlator.py` with 12 new tests:
+- **TestAuthenticatedRelease** (3): token validation, invalid token, successful release
+- **TestReplayPrevention** (3): replay detection, different nonces, missing nonce
+- **TestAuditPersistence** (3): JSONL, SQLite, failed auth audit
+- **TestConsistencyCheck** (2): stale entry detection, stats field
+- **TestNotificationDedupe** (3): dedupe, different targets, incident dispatch
+
+### Env Configuration
+```
+OPENCLAW_OPERATOR_TOKEN=...          # Required for authenticated release
+OPENCLAW_REPLAY_WINDOW_SEC=300       # Nonce expiry window
+OPENCLAW_DISCORD_WEBHOOK_URL=...     # Optional Discord notifications
+OPENCLAW_NOTIFICATION_DEDUPE_SEC=300 # Notification dedupe window
+```
+
+---
+## 2026-02-08 - Tranche 4: containment persistence + admin release path
+
+**Author**: 0102
+**WSP**: 71, 95, 91
+
+### Changes
+- Added persistent containment store in `src/security_event_correlator.py`:
+  - SQLite file: `memory/openclaw_containment.db`
+  - load active containment on startup
+  - upsert on apply, delete on release/expiry.
+- Fixed SQLite connection lifecycle:
+  - explicit close via context manager to prevent Windows DB file locks.
+- Updated `src/ai_overseer.py`:
+  - added `release_openclaw_containment(...)` admin control method
+  - telemetry route for `event=openclaw_containment_release`
+  - incident dedupe env now falls back: `OPENCLAW_INCIDENT_ALERT_DEDUPE_SEC` -> `OPENCLAW_INCIDENT_DEDUPE_SEC`.
+
+### Tests
+- Expanded `tests/test_security_correlator.py`:
+  - containment persistence across correlator restarts
+  - release removes persisted containment state.
+- Expanded `tests/test_openclaw_security_alerts.py`:
+  - manual release API path
+  - telemetry containment release routing.
+
+---
+## 2026-02-08 - Hardening Tranche 3: Security Event Correlator + Auto-Containment
+
+**Author**: 0102
+**WSP**: 71, 95, 91
+
+### Changes
+- Added `src/security_event_correlator.py` (500+ lines):
+  - `SecurityEventCorrelator` class for incident detection
+  - Ingests: `openclaw_security_alert`, `permission_denied`, `rate_limited`, `command_fallback`
+  - Configurable correlation window, incident threshold, containment policies
+  - Auto-containment: `mute_sender`, `mute_channel`, `advisory_only`
+  - Forensic bundle export to `memory/incident_bundles/`
+  - Strict incident dedupe to prevent alert storms
+
+- Updated `src/ai_overseer.py`:
+  - Integrated `SecurityEventCorrelator` into security alert flow
+  - Added `ingest_security_event()` for external event ingestion
+  - Added `check_containment()` for containment state queries
+  - Added `get_correlator_stats()` for observability
+  - Auto-export forensic bundles for HIGH/CRITICAL incidents
+
+### DAEmon Signals (WSP 91)
+```
+[DAEMON][OPENCLAW-INCIDENT] event=openclaw_incident_alert incident_id=... severity=... containment=...
+[DAEMON][OPENCLAW-CONTAINMENT] event=containment_applied|containment_released|containment_expired ...
+```
+
+### Tests
+- Added `tests/test_security_correlator.py` (13 tests):
+  - Correlator thresholding and dedupe (4)
+  - Containment lifecycle (4)
+  - Forensic bundle export (3)
+  - Stats and pruning (2)
+
+### Validation
+- AI Overseer suite: **36 passed**
+- Security correlator tests: **13 passed**
+
+---
+## 2026-02-07 - OpenClaw incident correlation + incident-alert dedupe wiring
+
+**Changes**
+- Added dedicated incident-alert path in `ai_overseer.py`:
+  - `_emit_openclaw_incident_alert()`
+  - `_dispatch_openclaw_incident_alert()`
+  - incident dedupe helpers + incident JSONL persistence
+- Added incident alert persistence file:
+  - `modules/ai_intelligence/ai_overseer/memory/openclaw_incident_alerts.jsonl`
+- Updated telemetry routing:
+  - Correlates `permission_denied`, `rate_limited`, and `command_fallback` into the security correlator.
+  - Handles `openclaw_incident_alert` events with strict dedupe before dispatch.
+- Updated incident handling flow:
+  - `_handle_incident()` now emits through the incident-alert pipeline instead of queue-only behavior.
+
+**Tests**
+- `modules/ai_intelligence/ai_overseer/tests/test_openclaw_security_alerts.py` expanded for:
+  - incident alert dedupe
+  - incident telemetry routing
+  - external duplicate suppression
+  - signal correlation path assertion
+
+---
+## 2026-02-07 - OpenClaw alert forensic persistence + live drill verification
+
+**Changes**
+- Added OpenClaw security alert forensic persistence:
+  - `_persist_openclaw_security_alert()` writes JSONL records for every non-deduped alert.
+  - File: `modules/ai_intelligence/ai_overseer/memory/openclaw_security_alerts.jsonl`
+- Maintained dedicated event type + dedupe behavior:
+  - `event=openclaw_security_alert`
+  - dedupe keyed by source/exit_code/required/enforced/max_severity/message.
+
+**Operational Verification (DAEmon)**
+- Forced scanner failure drill with monitor interval set to 5s.
+- Dedupe window 60s: 1 emitted, 5 suppressed.
+- Dedupe window 5s: expiry re-alert confirmed (3 emitted in 15s).
+- Canonical daemon pattern observed:
+  - `[DAEMON][OPENCLAW-SECURITY] event=openclaw_security_alert ...`
+
+---
+## 2026-02-07 - HoloAdapter lazy loading (main.py 30sↁEs startup fix)
+
+**Changes**
+- Refactored `holo_adapter.py` to use lazy HoloIndex initialization via `_get_holo()` method.
+- Previously, `HoloAdapter.__init__()` eagerly constructed `HoloIndex()` which loaded the SentenceTransformer model (20-30 seconds). This blocked `main.py` from showing its menu.
+- HoloIndex is now only loaded when `search()` is first called, not when the adapter is created.
+- The security preflight path (`main.py` ↁE`AIIntelligenceOverseer` ↁE`HoloAdapter`) no longer triggers model loading since it only checks the skill scanner sentinel, not search.
+- Module-level `from holo_index.core.holo_index import HoloIndex` replaced with lazy import inside `_get_holo()` to avoid pulling in chromadb/sentence_transformers at import time.
+
+**Impact**
+- `main.py` startup: 30+ seconds ↁE2 seconds
+- Security preflight: Now completes in <3s without loading SentenceTransformer
+- No functional change to `search()`, `guard()`, or `analyze_exec_log()` - all behave identically
+
+**Files**
+- `modules/ai_intelligence/ai_overseer/src/holo_adapter.py`
+
+**WSP**: WSP 22, WSP 50, WSP 84
+
+---
+
+## 2026-02-07 - OpenClaw security sentinel runtime hardening
+
+**Changes**
+- Hardened `OpenClawSecuritySentinel.check()` to handle scan execution exceptions safely and return policy-aligned gate results.
+- Added dedicated OpenClaw security monitor lifecycle in `AIIntelligenceOverseer`:
+  - `start_openclaw_security_monitoring()`
+  - `stop_openclaw_security_monitoring()`
+  - `get_openclaw_security_status()`
+  - periodic loop `_run_openclaw_security_monitor_loop()`
+- Wired `start_background_services()` / `stop_background_services()` to manage the OpenClaw security monitor automatically.
+- Added dedicated `openclaw_security_alert` event emission with strict dedupe and routing to alert channels.
+
+**Env**
+- `OPENCLAW_SECURITY_MONITOR_ENABLED` (default `1`)
+- `OPENCLAW_SECURITY_MONITOR_INTERVAL_SEC` (default `300`)
+- `OPENCLAW_SECURITY_ALERT_DEDUPE_SEC` (default `900`)
+- `OPENCLAW_SECURITY_ALERT_TO_DISCORD` (default `1`)
+- `OPENCLAW_SECURITY_ALERT_TO_CHAT` (default `0`)
+- `OPENCLAW_SECURITY_ALERT_TO_STDOUT` (default `1`)
+
+**Files**
+- `modules/ai_intelligence/ai_overseer/src/openclaw_security_sentinel.py`
+- `modules/ai_intelligence/ai_overseer/src/ai_overseer.py`
+- `modules/ai_intelligence/ai_overseer/INTERFACE.md`
+- `modules/ai_intelligence/ai_overseer/README.md`
+- `modules/ai_intelligence/ai_overseer/tests/test_openclaw_security_sentinel.py`
+- `modules/ai_intelligence/ai_overseer/tests/test_ai_overseer_openclaw_security.py`
+- `modules/ai_intelligence/ai_overseer/tests/test_openclaw_security_alerts.py`
+
+---
+
+## 2026-02-05 - II-Agent adapter (pilot integration)
+
+**Changes**
+- Added feature-flagged II-Agent adapter for AI_overseer (`ii_agent_adapter.py`).
+- `coordinate_mission` now includes optional `external_agent` results when enabled.
+- Documented env flags in `INTERFACE.md`.
+
+**Flags**
+- `II_AGENT_ENABLED`, `II_AGENT_MODE`, `II_AGENT_COMMAND` / `II_AGENT_CLI`, `II_AGENT_ENDPOINT`, `II_AGENT_MISSION_TYPES`
+
+---
+
+## 2026-02-05 - Local LLM auto-start for II-Agent (llama.cpp)
+
+**Changes**
+- Added LLM auto-start + readiness check in `ii_agent_adapter.py`.
+- Added PowerShell launcher `scripts/launch/launch_llama_cpp_server.ps1` for llama.cpp server.
+- Wired `.env` for local llama.cpp config (model path, port, auto-start flags).
+
+**Flags**
+- `II_AGENT_LLM_BASE_URL`, `II_AGENT_LLM_MODEL`, `II_AGENT_LLM_API_KEY`
+- `II_AGENT_LLM_AUTO_START`, `II_AGENT_LLM_START_SCRIPT`, `II_AGENT_LLM_START_TIMEOUT_SEC`
+- `LLAMA_CPP_MODEL_PATH`, `LLAMA_CPP_HOST`, `LLAMA_CPP_PORT`, `LLAMA_CPP_N_CTX`, `LLAMA_CPP_N_GPU_LAYERS`
+
+**Notes**
+- llama.cpp server requires `starlette`, `fastapi`, `sse-starlette`, `starlette-context`, `pydantic-settings` in the runtime venv.
+
+---
+
+## 2026-02-05 - AI Overseer robustness fixes (non-interactive + mission type)
+
+**Changes**
+- Added missing `os` import and safer mission type handling (string or enum).
+- Auto-approve missions when stdin is non-interactive to avoid EOF errors.
+
+**Files**
+- `modules/ai_intelligence/ai_overseer/src/ai_overseer.py`
+
+---
+
+## 2026-02-05 - AutoGate Qwen init fix + docs update
+
+**Changes**
+- AutoGate now uses `QwenAdvisorConfig` and passes `model_path` to `QwenInferenceEngine`.
+- Documented AI Overseer `main()` CLI utility in README/INTERFACE.
+
+**Files**
+- `modules/ai_intelligence/ai_overseer/src/auto_gate.py`
+- `modules/ai_intelligence/ai_overseer/README.md`
+- `modules/ai_intelligence/ai_overseer/INTERFACE.md`
+
+---
+
+## 2026-02-05 - Guard output noise gating (HoloAdapter)
+
+**Changes**
+- Added guard output gating modes (silent/summary/attach) with max warnings.
+- Persisted guard reports under module memory to keep outputs clean.
+- Updated guard consumers to attach only emitted warnings.
+
+**Files**
+- `modules/ai_intelligence/ai_overseer/src/holo_adapter.py`
+- `modules/ai_intelligence/ai_overseer/src/mission_execution_mixin.py`
+- `modules/ai_intelligence/ai_overseer/src/ai_overseer.py`
+- `modules/ai_intelligence/ai_overseer/README.md`
+- `modules/ai_intelligence/ai_overseer/INTERFACE.md`
+- `.env`
+
+---
+
+## 2026-01-19 - Activity Orchestration Audit & Enhancement
+
+**Change Type**: Enhancement + Documentation
+**WSP Compliance**: WSP 50 (Pre-Action), WSP 77 (Agent Coordination), WSP 15 (MPS Scoring), WSP 22 (ModLog)
+
+### What Changed
+
+HoloIndex audit identified 5 existing modules for activity orchestration (~80% functionality exists):
+
+1. **ai_overseer.py** - Mission coordination, Qwen/Gemma integration
+2. **multi_channel_coordinator.py** - Done detection (`all_processed: True`)
+3. **pattern_memory.py** - SQLite outcome storage, A/B testing
+4. **libido_monitor.py** - Gemma pattern frequency control
+5. **index_weave.py** - Already unifies scheduler ↁEindexer (WSP 27)
+
+**Key Finding**: Scheduling + Indexing already unified in `index_weave.py`!
+
+### Enhancement Plan
+
+Added activity routing capabilities:
+- `MissionType.ACTIVITY_ROUTING` for orchestration missions
+- `get_next_activity()` method with WSP 15 MPS priority
+- Activity state detection using existing `all_processed` pattern
+- LibidoMonitor integration for activity throttling
+
+### Activity Priority Matrix (WSP 15)
+
+| Activity | Priority | MPS Score |
+|----------|----------|-----------|
+| Live Stream | P0 | 20 |
+| Comments | P1 | 15 |
+| Indexing | P1 (default) | 14 |
+| Scheduling | P2 | 12 |
+| **Git Push** | **P2** | **12** |
+| Social Media | P3 | 8 |
+| Maintenance | P4 | 4 |
+
+### Git Push Activity Routing (Phase 2)
+
+Added autonomous git push capability to activity routing:
+
+**New Methods**:
+- `execute_git_push_activity(dry_run=False)` - Execute autonomous git push via qwen_gitpush skill
+- `check_git_status()` - Quick check of staged/modified/untracked files
+
+**MissionType.GIT_PUSH**:
+- Priority: P2 (same as Scheduling)
+- MPS Score: 12
+- Trigger: When `git_staged_files > 0` in activity state
+
+**Skill Wiring**:
+- qwen_gitpush skill provides 4-step chain-of-thought analysis
+- Creates mission for skill coordination
+- Integrates with GitPushDAE for execution
+
+**Integration Documentation**:
+- Updated `git_push_dae/INTERFACE.md` with AI Overseer integration section
+- Updated `git_push_dae/ROADMAP.md` with Phase 2 roadmap
+- Created `git_push_dae/docs/0102_PUSH_PROTOCOL_MEMORY.md` for session recall
+
+**Files Created**:
+- `docs/ACTIVITY_ORCHESTRATION_AUDIT.md` - Full audit documentation
+
+**Anti-Vibecoding Compliance**:
+- HoloIndex search performed FIRST
+- Existing modules identified (5 found)
+- Enhancement (~50 lines) vs new implementation (~500+ lines)
+
+---
+
+## 2026-01-09 - Overseer Breadcrumb Emission (High-Signal Only)
+
+**Change Type**: Enhancement
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON observability), WSP 22 (ModLog)
+
+### What Changed
+
+- AI_overseer now emits high-signal breadcrumbs (start/stop monitoring, alerts) to the unified agent log for 0102 coordination.
+- Breadcrumb emission is silent by default and gated by `AI_OVERSEER_BREADCRUMBS` (default true).
+- Fixed alert chat message text to ASCII-only for Windows console safety.
+
+**Files Modified**:
+- `src/breadcrumb_monitor.py`
+
+---
+
+## 2026-01-10 - Root Violation Auto-Correct Trigger (Telemetry ↁEAction)
+
+**Change Type**: Enhancement  
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON observability), WSP 85 (Root Protection), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+### What Changed
+- `ai_overseer` now recognizes `system_alerts` from `source="gemma_root_monitor"` and can optionally trigger root auto-correction.
+- New environment flag: `AI_OVERSEER_ROOT_AUTOCORRECT` (default false). When enabled, the overseer invokes `scan_and_correct_violations()` and logs applied/failed corrections.
+
+**Files Modified**:
+- `src/ai_overseer.py`
 
 ## 2026-01-05 - Holo System Check (Silent Wiring Audit)
 
@@ -22,6 +757,7 @@
 - `README.md`
 
 ---
+
 
 ## 2026-01-04 - Holo Memory Sentinel + Memory Roadmap
 
@@ -56,14 +792,14 @@ Integrated PatchExecutor for autonomous code fixes with automatic daemon restart
 - `src/ai_overseer.py` (lines 55, 205-214, 1076-1162, 820-835):
   - Added PatchExecutor import and initialization with allowlist
   - Replaced Unicode fix escalation with patch generation and application
-  - Added daemon restart hook: checks needs_restart flag → sys.exit(0)
+  - Added daemon restart hook: checks needs_restart flag ↁEsys.exit(0)
   - Metrics tracking for all patch attempts (performance + outcome)
 
 ### Implementation Details
 
 **Phase 1: Path Conversion** (lines 1085-1086)
 - Convert Python module notation to file paths
-- Example: `modules.ai_intelligence.banter_engine.src.banter_engine` → `modules/ai_intelligence/banter_engine/src/banter_engine.py`
+- Example: `modules.ai_intelligence.banter_engine.src.banter_engine` ↁE`modules/ai_intelligence/banter_engine/src/banter_engine.py`
 
 **Phase 2: Patch Generation** (lines 1088-1095)
 - Generate unified diff format patches
@@ -71,7 +807,7 @@ Integrated PatchExecutor for autonomous code fixes with automatic daemon restart
 
 **Phase 3: Patch Application** (lines 1098-1101)
 - Call PatchExecutor.apply_patch()
-- 3-layer safety: Allowlist → git apply --check → git apply
+- 3-layer safety: Allowlist ↁEgit apply --check ↁEgit apply
 
 **Phase 4: Metrics Tracking** (lines 1107-1126)
 - Performance metrics: execution time, exceptions
@@ -85,7 +821,7 @@ Integrated PatchExecutor for autonomous code fixes with automatic daemon restart
 
 ### Why This Change
 
-**User Goal**: Enable Qwen/0102 to detect daemon errors → apply fixes → restart → verify fix worked
+**User Goal**: Enable Qwen/0102 to detect daemon errors ↁEapply fixes ↁErestart ↁEverify fix worked
 
 **Occam's Razor Decision**: sys.exit(0) is SIMPLEST approach
 - No complex signal handling
@@ -95,43 +831,43 @@ Integrated PatchExecutor for autonomous code fixes with automatic daemon restart
 
 ### Test Results
 
-**PatchExecutor End-to-End**: ✓ SUCCESS
+**PatchExecutor End-to-End**: ✁ESUCCESS
 - Allowlist validation: PASS (fixed `**` glob pattern matching)
 - git apply --check: PASS (correctly rejects mismatched patches)
 - git apply: PASS (UTF-8 header successfully added to test file)
 
-**Safety Validation**: ✓ WORKING
-- Path conversion: Python notation → file paths
+**Safety Validation**: ✁EWORKING
+- Path conversion: Python notation ↁEfile paths
 - Pattern matching: Custom `**` recursive glob support
 - Security: 3-layer validation prevents unauthorized changes
 
 ### Architecture
 
 **Complete Autonomous Fix Pipeline**:
-1. Error Detection → Regex patterns in youtube_daemon_monitor.json
-2. Classification → WSP 15 MPS scoring determines priority
-3. Path Conversion → Python module notation → file system path
-4. Patch Generation → Template-based unified diff format
-5. Allowlist Validation → `modules/**/*.py` pattern matching
-6. git apply --check → Dry-run validation
-7. git apply → Actual code modification
-8. Metrics Tracking → Performance + outcome via MetricsAppender
-9. Daemon Restart → sys.exit(0) → Supervisor restart
-10. Fix Verification → (Next phase - watch logs for error disappearance)
+1. Error Detection ↁERegex patterns in youtube_daemon_monitor.json
+2. Classification ↁEWSP 15 MPS scoring determines priority
+3. Path Conversion ↁEPython module notation ↁEfile system path
+4. Patch Generation ↁETemplate-based unified diff format
+5. Allowlist Validation ↁE`modules/**/*.py` pattern matching
+6. git apply --check ↁEDry-run validation
+7. git apply ↁEActual code modification
+8. Metrics Tracking ↁEPerformance + outcome via MetricsAppender
+9. Daemon Restart ↁEsys.exit(0) ↁESupervisor restart
+10. Fix Verification ↁE(Next phase - watch logs for error disappearance)
 
 ### Next Steps
 
 Per user's micro-sprint plan:
-1. ✓ Build PatchExecutor (WSP 3 compliant module)
-2. ✓ Integrate into _apply_auto_fix()
-3. ✓ Add daemon restart (sys.exit(0) approach)
+1. ✁EBuild PatchExecutor (WSP 3 compliant module)
+2. ✁EIntegrate into _apply_auto_fix()
+3. ✁EAdd daemon restart (sys.exit(0) approach)
 4. TODO: Add fix verification (post-restart log monitoring)
 5. TODO: Add live chat announcement ("012 fix applied" message)
 6. TODO: Test with real YouTube daemon errors
 
 ### References
 
-- WSP 77 (Agent Coordination): Qwen/Gemma detection → 0102 execution → metrics
+- WSP 77 (Agent Coordination): Qwen/Gemma detection ↁE0102 execution ↁEmetrics
 - WSP 90 (UTF-8 Enforcement): UTF-8 header insertion for Unicode fixes
 - PatchExecutor Module: `modules/infrastructure/patch_executor/`
 - MetricsAppender Module: `modules/infrastructure/metrics_appender/`
@@ -166,9 +902,9 @@ Updated MetricsAppender import to use WSP 3 compliant module path.
 
 ### Test Results
 
-✓ AIIntelligenceOverseer initializes successfully
-✓ MetricsAppender accessible at new path
-✓ No breaking changes to existing functionality
+✁EAIIntelligenceOverseer initializes successfully
+✁EMetricsAppender accessible at new path
+✁ENo breaking changes to existing functionality
 
 ---
 
@@ -195,7 +931,7 @@ Integrated **MetricsAppender** to track every autonomous fix execution for WSP 7
 
 **User Request**: "After each fix, call MetricsAppender.append_* so WSP 77 promotion tracking sees the execution"
 
-**Critical for Skill Promotion**: Skills can only graduate from `prototype → staged → production` when metrics prove reliability. Without metrics, autonomous fixes run blind!
+**Critical for Skill Promotion**: Skills can only graduate from `prototype ↁEstaged ↁEproduction` when metrics prove reliability. Without metrics, autonomous fixes run blind!
 
 ### Implementation Details
 
@@ -241,13 +977,13 @@ self.metrics.append_outcome_metric(
 ### Autonomous Self-Healing Coverage
 
 **What NOW Works with Metrics Tracking** (24/7, full observability):
-- ✓ OAuth token issues (P0) - tracked per execution
-- ✓ API quota exhaustion (P1) - performance + outcome logged
-- ✓ Service disconnection (P1) - placeholder tracked at 50% confidence
+- ✁EOAuth token issues (P0) - tracked per execution
+- ✁EAPI quota exhaustion (P1) - performance + outcome logged
+- ✁EService disconnection (P1) - placeholder tracked at 50% confidence
 
 **Escalated to Bug Reports** (also tracked):
-- ✓ Code fixes requiring Edit tool - logged as correct escalation (confidence=1.0)
-- ✓ Unknown fix actions - logged as errors with exception tracking
+- ✁ECode fixes requiring Edit tool - logged as correct escalation (confidence=1.0)
+- ✁EUnknown fix actions - logged as errors with exception tracking
 
 ### Test Results
 
@@ -316,9 +1052,9 @@ service = get_authenticated_service()  # Rotates automatically
 - Need to test service reconnection integration
 
 **Expected Results**:
-- ✓ OAuth reauth: Opens browser, user clicks, token refreshed
-- ✓ API rotation: Switches credential sets, quota restored
-- ✓ Service reconnect: Reconnects to stream automatically
+- ✁EOAuth reauth: Opens browser, user clicks, token refreshed
+- ✁EAPI rotation: Switches credential sets, quota restored
+- ✁EService reconnect: Reconnects to stream automatically
 
 ### Autonomous Self-Healing Capability
 
@@ -390,7 +1126,7 @@ Completed **Option A** implementation of autonomous daemon monitoring "witness l
 - Announcements: 3-phase workflow generated with emoji
 
 **Performance**:
-- Token efficiency: 98% reduction (18,000 → 350 tokens per bug)
+- Token efficiency: 98% reduction (18,000 ↁE350 tokens per bug)
 - End-to-end latency: <1s
 
 ### Next Steps
@@ -505,7 +1241,7 @@ Phase_4_Learning: Pattern storage
 2. **Skill-Driven**: Skills define "HOW" to monitor each daemon
 3. **Auto-Fix Low-Hanging Fruit**: Complexity 1-2 bugs fixed automatically
 4. **Bug Reports for Complex Issues**: Complexity 3+ generates structured reports
-5. **WSP 77 Coordination**: Gemma detection → Qwen classification → 0102 execution
+5. **WSP 77 Coordination**: Gemma detection ↁEQwen classification ↁE0102 execution
 6. **Learning Patterns**: Stores fixes in skills for future recall (WSP 48)
 
 ### Daemon Coverage
@@ -517,6 +1253,20 @@ Phase_4_Learning: Pattern storage
   - Duplicate posts (needs 0102)
   - API quota exhausted (auto-fixable)
   - Stream not found (ignore - normal)
+
+---
+
+## 2026-01-09 - Signal Patterns (Non-Error) for Next-Step Orchestration
+
+**Change Type**: Enhancement  
+**WSP Compliance**: WSP 77 (Agent Coordination), WSP 91 (DAEMON Observability), WSP 96 (Skills Wardrobe), WSP 22 (ModLog)
+
+Added optional `signal_patterns` to daemon monitoring skills so operational state transitions can be surfaced to Qwen/0102 without being misclassified as “bugs E
+
+- `AIIntelligenceOverseer.monitor_daemon()` now returns:
+  - `signals_detected`
+  - `signals` (pattern name + matches + config)
+- `modules/communication/livechat/skillz/youtube_daemon_monitor.json` now includes `signal_patterns.edge_comments_cleared` (FoundUps + RavingANTIFA comment inboxes cleared).
   - LiveChat connection errors (auto-fixable)
 
 **Future** (same architecture, just add skills):
@@ -956,10 +1706,10 @@ Added **MCP Integration** to AI Intelligence Overseer with WSP 96 governance:
 #### Bell State Consciousness Alignment
 
 Before MCP activation, verifies:
-- **ρE₁ (Golden Ratio)**: mission_alignment [GREATER_EQUAL] 0.618
-- **ρE₂ (Consciousness)**: governance_status = "active"
-- **ρE₃ (Entanglement)**: quota_state != "critical"
-- **ρE₄ (Emergence)**: engagement_index [GREATER_EQUAL] 0.1
+- **ρE₁E(Golden Ratio)**: mission_alignment [GREATER_EQUAL] 0.618
+- **ρE₁E(Consciousness)**: governance_status = "active"
+- **ρE₁E(Entanglement)**: quota_state != "critical"
+- **ρE₁E(Emergence)**: engagement_index [GREATER_EQUAL] 0.1
 
 #### Multi-Agent Consensus Protocol
 

@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "required": [
+    "num_founder_agents",
+    "num_user_agents",
+    "tick_rate_hz",
+    "seed",
+    "initial_agent_tokens",
+    "foundup_creation_cost",
+    "like_cost",
+    "follow_cost",
+    "stake_min",
+    "stake_max",
+    "agent_action_probability",
+    "agent_cooldown_ticks",
+    "grid_width",
+    "grid_height"
+  ],
+  "properties": {
+    "num_founder_agents": { "type": "integer", "minimum": 0, "maximum": 500 },
+    "num_user_agents": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "tick_rate_hz": { "type": "number", "minimum": 0.1, "maximum": 120.0 },
+    "max_ticks": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+    "initial_agent_tokens": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+    "foundup_creation_cost": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+    "founder_max_foundups": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "like_cost": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "follow_cost": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "stake_min": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+    "stake_max": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+    "agent_action_probability": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "agent_cooldown_ticks": { "type": "integer", "minimum": 0, "maximum": 100000 },
+    "grid_width": { "type": "integer", "minimum": 1, "maximum": 200 },
+    "grid_height": { "type": "integer", "minimum": 1, "maximum": 200 },
+    "use_ai": { "type": "integer", "minimum": 0, "maximum": 1 },
+    "ai_risk_tolerance": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "verbose": { "type": "integer", "minimum": 0, "maximum": 1 }
+  }
+}

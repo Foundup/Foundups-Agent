@@ -1,0 +1,57 @@
+# M2M v1.0 | INTERFACE.md | 20260213
+
+LIVECHAT_MODULE_INTERFACE:
+OVERVIEW:
+EXPORTS:
+  LIVECHATLISTENER: Class for connecting to and interacting with YouTube livestream chats
+  AUTOMODERATORDAE: WSP-compliant DAE orchestrator with QWEN intelligence
+  QWENYOUTUBEINTEGRATION: QWEN intelligence layer for channel prioritization
+CLASSES:
+QWENYOUTUBEINTEGRATION:
+PUBLIC_METHODS:
+GET_QWEN_YOUTUBE:
+  QWENYOUTUBEINTEGRATION: Singleton QWEN instance
+SHOULD_CHECK_NOW______TUPLE_BOOL__STR:
+  BOOL: Whether checking is recommended
+  STR: Reason for the decision
+PRIORITIZE_CHANNELS_CHANNELS__LIST_TUPLE_STR__STR_______LIST_TUPLE_STR__STR__FLOAT:
+  CHANNELS: List of (channel_id, channel_name) tuples
+RECORD_STREAM_FOUND_CHANNEL_ID__STR__CHANNEL_NAME__STR__VIDEO_ID__STR:
+  CHANNEL_ID: YouTube channel ID
+  CHANNEL_NAME: Display name of channel
+  VIDEO_ID: ID of detected stream
+AUTOMODERATORDAE:
+FEATURES:
+LIVECHATLISTENER:
+CONSTRUCTOR:
+INIT___YOUTUBE_SERVICE__VIDEO_ID__LIVE_CHAT_ID_NONE:
+  YOUTUBE_SERVICE: Authenticated YouTube API service object
+  VIDEO_ID: ID of the YouTube video/livestream to connect to
+  LIVE_CHAT_ID: Optional. If provided, uses this chat ID directly. Otherwise, it will be retr...
+PUBLIC_METHODS:
+ASYNC_START_LISTENING:
+  UPDATE: viewer count periodically to adjust polling interv
+ASYNC_SEND_CHAT_MESSAGE_MESSAGE_TEXT:
+  MESSAGE_TEXT: The text message to send to the chat
+  BOOL: True if message was sent successfully, False otherwise
+  SIG: async def main
+INTERNAL_METHODS:
+  _GET_LIVE_CHAT_ID(): Retrieves the liveChatId for the specified video_id
+  _UPDATE_VIEWER_COUNT(): Updates viewer count from livestream statistics
+  _POLL_CHAT_MESSAGES(): Polls the YouTube API for new chat messages
+  _PROCESS_MESSAGE(MESSAGE): Processes a single chat message and handles triggers
+  _LOG_TO_USER_FILE(MESSAGE): Appends a log entry to a user-specific file
+  _IS_RATE_LIMITED(USER_ID): Checks if a user is rate limited
+  _UPDATE_TRIGGER_TIME(USER_ID): Updates the last trigger time for a user
+  _HANDLE_AUTH_ERROR(ERROR): Handles authentication errors with token rotation
+FFCPLN_MINING_COMMANDS___FUC:
+ACCESS_CONTROL:
+COMMAND___FUC_STATUS:
+COMMAND___FUC_CLAIM:
+COMMAND___FUC_TOP:
+COMMAND___FUC_MINE:
+COMMAND___FUC_INVITE___USER:
+COMMAND___FUC_DISTRIBUTE:
+COMMAND___FUC_STATS:
+DEPENDENCIES:
+  WSP: [11]

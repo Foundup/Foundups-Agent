@@ -149,6 +149,42 @@ The class contains several internal methods not intended for direct public use:
 - `_update_trigger_time(user_id)`: Updates the last trigger time for a user
 - `_handle_auth_error(error)`: Handles authentication errors with token rotation
 
+## FFCPLN Mining Commands (/fuc)
+
+### Access Control
+- **OWNER**: Full access to all /fuc commands
+- **MANAGING_DIRECTORS**: Elevated MODs with owner-level /fuc access
+
+```python
+MANAGING_DIRECTORS = {
+    'UCcnCiZV5ZPJ_cjF7RsWIZ0w',  # JS (Al-sq5ti) - Move2Japan Managing Director
+}
+```
+
+### Command: /fuc status
+Shows MAGAt balance for the user.
+
+### Command: /fuc claim
+Generates HMAC-secured claim link for pending MAGAts.
+
+### Command: /fuc top
+Displays MAGAts leaderboard (top 5 miners).
+
+### Command: /fuc mine
+Shows mining progress bar toward next MAGAt.
+
+### Command: /fuc invite [@user]
+Distributes invite code to user or self.
+
+### Command: /fuc distribute
+Auto-distributes invites to TOP 10 whackers (OWNER only).
+- Random community presenter selection
+
+### Command: /fuc stats
+Shows invite distribution statistics.
+
+---
+
 ## Dependencies
 - googleapiclient.errors
 - asyncio
@@ -160,4 +196,9 @@ The class contains several internal methods not intended for direct public use:
 - modules.token_manager
 - modules.banter_engine
 - utils.throttling
-- utils.oauth_manager 
+- utils.oauth_manager
+
+---
+
+**WSP 11 Compliance:** Complete
+**Last Updated:** 2026-02-12

@@ -29,6 +29,11 @@ from modules.infrastructure.system_health_monitor.src.system_health_analyzer imp
 from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
 from modules.communication.livechat.src.stream_session_logger import get_session_logger
 from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+from modules.communication.livechat.src.persona_registry import (
+    get_persona_config,
+    resolve_persona_key,
+    resolve_channel_credential_set,
+)
 try:
     from modules.communication.livechat.src.quota_aware_poller import QuotaAwarePoller
 except ImportError:
@@ -57,6 +62,16 @@ logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 MAX_MESSAGES_PER_CALL = 200
+
+def _get_forced_credential_set() -> Optional[int]:
+    raw = os.getenv("YT_FORCE_CREDENTIAL_SET", "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
 
 class LiveChatCore:
     """
@@ -108,8 +123,6 @@ class LiveChatCore:
         self.memory_manager = ChatMemoryManager(self.memory_dir)
         
         # Initialize modular components
-        self.session_manager = SessionManager(youtube_service, video_id)
-        self.mod_stats = ModerationStats(self.memory_dir)
         self.chat_sender = ChatSender(youtube_service, live_chat_id)
 
         # Get bot channel ID to prevent self-responses
@@ -126,7 +139,41 @@ class LiveChatCore:
         except Exception as e:
             logger.debug(f"Could not get bot channel ID: {e}")
 
-        self.message_processor = MessageProcessor(youtube_service, self.memory_manager, self.chat_sender)
+        self.bot_channel_id = bot_channel_id
+        self.persona_key = resolve_persona_key(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.persona_config = get_persona_config(
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.pinned_credential_set = resolve_channel_credential_set(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.session_manager = SessionManager(
+            youtube_service,
+            video_id,
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+        self.mod_stats = ModerationStats(self.memory_dir)
+        self.message_processor = MessageProcessor(
+            youtube_service,
+            self.memory_manager,
+            self.chat_sender,
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
         self.chat_poller = ChatPoller(youtube_service, live_chat_id, self.channel_name, self.channel_id)
         
         # Health monitoring for duplicate detection and error tracking
@@ -219,6 +266,8 @@ class LiveChatCore:
         except Exception as e:
             logger.warning(f"[BREADCRUMB-HUB] Failed to initialize telemetry: {e}")
             self.breadcrumb_telemetry = None
+        self._force_credential_logged = False
+        self._force_credential_mismatch_logged = False
 
         logger.info(f"LiveChatCore initialized for video: {video_id}")
     
@@ -283,6 +332,14 @@ class LiveChatCore:
             logger.error("Cannot send message - no live chat ID")
             self.health_analyzer.analyze_message("ERROR: Cannot send message - no live chat ID")
             return False
+
+        if os.getenv("YT_BLOCK_MESSAGES_ON_ACCOUNT_MISMATCH", "true").lower() in ("1", "true", "yes"):
+            if self.bot_channel_id and self.channel_id and self.bot_channel_id != self.channel_id:
+                logger.warning(
+                    "[AUTH] Bot channel mismatch - blocking message send "
+                    f"(bot={self.bot_channel_id}, channel={self.channel_id})"
+                )
+                return False
         
         # AUTOMATIC: Intelligent throttling before sending
         if self.intelligent_throttle and not skip_delay:
@@ -733,6 +790,7 @@ class LiveChatCore:
         inactivity_timeout = 180  # Consider stream inactive after 3 minutes of no messages
         consecutive_poll_errors = 0  # Track consecutive polling errors
         consecutive_empty_polls = 0  # Track polls with no messages
+        invite_distribution_done = False  # Track if we've done auto-distribution this session
         # Dynamic troll interval based on chat activity
         base_troll_interval = 600  # Base: 10 minutes for quiet chat
         troll_interval = base_troll_interval
@@ -776,7 +834,28 @@ class LiveChatCore:
                         if record_success:
                             record_success('proactive_troll', {'activity': recent_msg_count, 'msg': troll_msg[:50]}, tokens_used=50)
                     last_troll = time.time()
-                
+
+                # Auto-distribute TOP 10 invites (once per session, after 30 min)
+                if not invite_distribution_done and hasattr(self.message_processor, 'stream_start_time'):
+                    stream_duration = time.time() - self.message_processor.stream_start_time
+                    if stream_duration > 1800:  # 30 minutes
+                        logger.info(f"[INVITE-AUTO] 🎟️ Stream running {stream_duration/60:.1f} min - checking TOP 10 invites...")
+                        try:
+                            from modules.gamification.whack_a_magat.src.invite_distributor import auto_distribute_top10_invites
+                            new_invites = auto_distribute_top10_invites()
+                            if new_invites:
+                                logger.info(f"[INVITE-AUTO] 📤 Sending {len(new_invites)} invite messages to chat...")
+                                for inv in new_invites:
+                                    await self.send_chat_message(inv['message'])
+                                    await asyncio.sleep(2)  # Delay between messages
+                                logger.info(f"[INVITE-AUTO] ✅ Distributed {len(new_invites)} TOP 10 invites")
+                            else:
+                                logger.info(f"[INVITE-AUTO] ⏭️ All TOP 10 whackers already have invites (no new distribution)")
+                            invite_distribution_done = True
+                        except Exception as e:
+                            logger.error(f"[INVITE-AUTO] ❌ Error: {e}")
+                            invite_distribution_done = True  # Don't retry on error
+
                 # Periodic stream health check - detect if stream ended
                 if time.time() - last_stream_check > stream_check_interval:
                     logger.info("[SEARCH] Checking if stream is still live...")
@@ -866,9 +945,37 @@ class LiveChatCore:
                         )
                         logger.debug(f"[REFRESH] [ROTATION-CHECK] Checking rotation for Set {current_set}")
 
-                        # Check if rotation is needed
-                        rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
-                        logger.debug(f"[REFRESH] [ROTATION-CHECK] Decision: should_rotate={rotation_decision['should_rotate']}, urgency={rotation_decision.get('urgency', 'N/A')}")
+                        forced_set = _get_forced_credential_set()
+                        pinned_set = self.pinned_credential_set
+                        if forced_set:
+                            if not self._force_credential_logged:
+                                logger.info(f"[REFRESH] Credential rotation disabled (YT_FORCE_CREDENTIAL_SET={forced_set})")
+                                self._force_credential_logged = True
+                            if current_set != forced_set and not self._force_credential_mismatch_logged:
+                                logger.warning(
+                                    f"[REFRESH] Active credential set {current_set} does not match forced {forced_set}"
+                                )
+                                self._force_credential_mismatch_logged = True
+                            # Skip rotation when a forced set is configured
+                            rotation_decision = {"should_rotate": False}
+                        elif pinned_set:
+                            if not self._force_credential_logged:
+                                logger.info(f"[REFRESH] Credential rotation disabled (channel pinned to Set {pinned_set})")
+                                self._force_credential_logged = True
+                            if current_set != pinned_set and not self._force_credential_mismatch_logged:
+                                logger.warning(
+                                    f"[REFRESH] Active credential set {current_set} does not match pinned {pinned_set}"
+                                )
+                                self._force_credential_mismatch_logged = True
+                            rotation_decision = {"should_rotate": False}
+                        else:
+                            # Check if rotation is needed
+                            rotation_decision = self.quota_intelligence.should_rotate_credentials(current_set)
+                            logger.debug(
+                                "[REFRESH] [ROTATION-CHECK] Decision: should_rotate=%s, urgency=%s",
+                                rotation_decision['should_rotate'],
+                                rotation_decision.get('urgency', 'N/A')
+                            )
 
                         if rotation_decision['should_rotate']:
                             urgency = rotation_decision['urgency']

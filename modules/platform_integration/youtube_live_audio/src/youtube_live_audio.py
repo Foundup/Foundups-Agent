@@ -443,9 +443,15 @@ class VideoArchiveExtractor:
                 'format': 'bestaudio[ext=m4a]/bestaudio/best',
                 'outtmpl': temp_path,
                 'postprocessors': [],  # No post-processing, we'll use ffmpeg
-                # Use browser cookies for authenticated content (private/unlisted)
-                'cookiesfrombrowser': ('chrome',),
             }
+
+            # Only use browser cookies if explicitly enabled (Chrome must be closed)
+            # Most public videos work without cookies - only needed for private/unlisted
+            import os
+            cookies_browser = os.getenv('YT_DLP_COOKIES_BROWSER', '').strip().lower()
+            if cookies_browser in ('chrome', 'firefox', 'edge', 'safari'):
+                ydl_opts['cookiesfrombrowser'] = (cookies_browser,)
+                logger.debug(f"[ARCHIVE] Using cookies from {cookies_browser}")
 
             # Download audio
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

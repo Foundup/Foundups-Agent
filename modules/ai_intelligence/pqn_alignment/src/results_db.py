@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timezone
@@ -25,10 +26,15 @@ def _default_db_path() -> str:
     return str(module_root / "results.db")
 
 
+@contextmanager
 def _connect(db_path: Optional[str] = None) -> sqlite3.Connection:
     db = db_path or _default_db_path()
     os.makedirs(os.path.dirname(db), exist_ok=True)
-    return sqlite3.connect(db)
+    conn = sqlite3.connect(db)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_db(db_path: Optional[str] = None) -> None:

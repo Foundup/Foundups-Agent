@@ -31,6 +31,17 @@ class IntentResponseProcessor:
         self.logger = logger
         self.breadcrumb_tracer = breadcrumb_tracer
         self.output_composer = output_composer
+        self.chain_of_thought_log: List[Dict[str, Any]] = []
+
+    def _log_chain_of_thought(self, step_type: str, message: str) -> None:
+        """Log orchestration chain-of-thought (mirrors QwenOrchestrator pattern)."""
+        from datetime import datetime
+        self.chain_of_thought_log.append({
+            'timestamp': datetime.now(),
+            'type': step_type,
+            'message': message,
+        })
+        self.logger.info(f"[QWEN-{step_type}] {message}")
 
     def _extract_component_results_from_report(self, analysis_report: str) -> Dict[str, Any]:
         """
@@ -350,4 +361,9 @@ class IntentResponseProcessor:
                     f"SKIP {display_name} (confidence: {confidence:.2f}) - insufficient trigger strength",
                 )
         return decisions
+
+    @staticmethod
+    def _format_component_display(component_name: str) -> str:
+        """Format component name for display (snake_case -> Title Case)."""
+        return component_name.replace("_", " ").title()
 

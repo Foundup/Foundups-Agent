@@ -195,9 +195,14 @@ class VisualAnalyzer:
                 'format': f'bestvideo[height<={max_height}][ext=mp4]+bestaudio[ext=m4a]/best[height<={max_height}][ext=mp4]/best',
                 'outtmpl': str(cache_path),
                 'merge_output_format': 'mp4',
-                # Use browser cookies for authenticated content
-                'cookiesfrombrowser': ('chrome',),
             }
+
+            # Only use browser cookies if explicitly enabled (Chrome must be closed)
+            # Most public videos work without cookies - only needed for private/unlisted
+            cookies_browser = os.getenv('YT_DLP_COOKIES_BROWSER', '').strip().lower()
+            if cookies_browser in ('chrome', 'firefox', 'edge', 'safari'):
+                ydl_opts['cookiesfrombrowser'] = (cookies_browser,)
+                logger.debug(f"[VISUAL-ANALYZER] Using cookies from {cookies_browser}")
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([video_url])

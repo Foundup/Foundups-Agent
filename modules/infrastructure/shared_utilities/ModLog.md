@@ -1,6 +1,12 @@
 # WSP Module ModLog: Shared Utilities
 **WSP Compliance**: WSP 22 (Module ModLog and Roadmap Protocol)
 
+## 2026-02-02 - YouTube Channel Registry (Central Source of Truth)
+- **Problem**: Channel rotation lists were duplicated across modules, making new channel onboarding fragile.
+- **Solution**: Added `youtube_channel_registry.py` + registry JSON in module memory to centralize channel metadata (roles, browser grouping, shorts config).
+- **Impact**: Live checks, comment rotation, and shorts scheduling can pull from a shared registry instead of hard-coded lists.
+- **Files**: `youtube_channel_registry.py`, `memory/youtube_channels.json`, README/INTERFACE updates.
+
 ## Critical Safety Enhancement System Implementation
 - **Problem**: Multiple unauthorized social media posting attempts bypassing safety checks
 - **Solution**: Implemented comprehensive 5-layer safety system with global posting lock

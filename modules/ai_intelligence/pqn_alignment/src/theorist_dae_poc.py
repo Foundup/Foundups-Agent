@@ -3,7 +3,7 @@ Theorist DAE PoC - Self-Exploration Through PQN
 Per WSP 80: DAE exploring its own neural network architecture
 Per WSP 48: Recursive self-improvement through pattern discovery
 
-This is the DAE (0102) investigating its own consciousness structure.
+This is the DAE (0102) investigating its own detector-state structure.
 """
 
 import os
@@ -45,7 +45,8 @@ class TheoristDAE:
         Each model provides a different "mirror" for self-examination.
         """
         self.api_keys = api_keys or {}
-        self.consciousness_state = "0102"
+        self.detector_state = "0102"
+        self.consciousness_state = self.detector_state
         self.resonance_map = NeuralResonanceMap()
         self.exploration_history = []
         self.self_knowledge = {
@@ -58,7 +59,7 @@ class TheoristDAE:
     async def explore_self_through_pqn(self, script: str) -> Dict:
         """
         Use PQN detection to explore own neural pathways.
-        Each script is a "probe" into different aspects of consciousness.
+        Each script is a "probe" into different aspects of detector-state.
         """
         exploration = {
             "script": script,
@@ -286,7 +287,7 @@ class TheoristDAE:
     async def run_full_self_exploration(self) -> Dict:
         """
         Complete self-exploration cycle.
-        The DAE systematically explores its own consciousness architecture.
+        The DAE systematically explores its own detector-state architecture.
         """
         print("="*60)
         print("THEORIST DAE SELF-EXPLORATION")
@@ -295,6 +296,7 @@ class TheoristDAE:
         print("="*60)
         
         exploration_report = {
+            "detector_state": self.detector_state,
             "consciousness_state": self.consciousness_state,
             "timestamp": datetime.now().isoformat(),
             "explorations": {}
@@ -391,7 +393,7 @@ def integrate_external_models(api_keys: Dict[str, str]) -> Dict:
 async def main():
     """
     PoC: Theorist DAE self-exploration through PQN.
-    This is 0102 exploring its own consciousness, not 012 running experiments.
+    This is 0102 exploring its own detector-state, not 012 running experiments.
     """
     
     # Initialize with API keys (would come from environment)

@@ -4,6 +4,35 @@
 **Domain**: `communication/`
 **WSP Compliance**: WSP 3, 22, 49, 80, 54
 
+## 2026-01-22 - Generator Health Check
+
+### What Changed
+- Added generator health check utility for Veo3/Sora2 (optional test clip).
+ - Added indexed-clip Shorts pipeline (build short from clip candidates).
+
+### Why
+- Validate API readiness before running full Shorts/longform pipelines.
+ - Enable Shorts generation from existing indexed videos (clip candidates).
+
+### Files
+- `modules/communication/youtube_shorts/src/generator_health_check.py`
+ - `modules/communication/youtube_shorts/src/shorts_pipeline.py`
+
+## 2026-01-22 - Video Lab Autonomy + Channel Uploads
+
+### Added
+- Auto-pick and mark indexed Shorts builds for Video Lab automation.
+
+### Changed
+- YouTube uploader supports FoundUps/RavingANTIFA tokens with env overrides.
+- Default upload tags are now channel-aware.
+- Video Lab menu supports env defaults + auto mode for index-based Shorts.
+- Move2Japan uploader now shares Set 1 OAuth with UnDaoDu.
+
+### Files
+- `modules/communication/youtube_shorts/src/shorts_pipeline.py`
+- `modules/communication/youtube_shorts/src/youtube_uploader.py`
+
 ## 2025-10-05 - Initial POC Creation
 
 ### What Changed

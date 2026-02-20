@@ -37,6 +37,9 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+def _env_truthy(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
 # Global singleton to prevent multiple browser instances
 _GLOBAL_LINKEDIN_POSTER = None
 _POSTER_LOCK = threading.Lock()
@@ -103,6 +106,26 @@ class UnifiedLinkedInInterface:
         except Exception as e:
             logger.warning(f"[UNIFIED LINKEDIN] Could not load history: {e}")
             self.posted_content = {}
+
+    def _post_direct_via_selenium(self, request: LinkedInPostRequest) -> tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+        """Fallback posting without MCP (direct Selenium)."""
+        try:
+            from modules.platform_integration.linkedin_agent.src.anti_detection_poster import AntiDetectionLinkedIn
+            from modules.platform_integration.social_media_orchestrator.src.gemini_vision_analyzer import GeminiVisionAnalyzer
+
+            poster = AntiDetectionLinkedIn()
+            poster.setup_driver(use_existing_session=True)
+
+            gemini_analysis = None
+            if _env_truthy("FOUNDUPS_CAPTURE_SCREENSHOT", "true"):
+                screenshot = poster.driver.get_screenshot_as_png()
+                gemini = GeminiVisionAnalyzer(api_key=os.getenv('GOOGLE_AISTUDIO_API_KEY'))
+                gemini_analysis = gemini.analyze_posting_ui(screenshot)
+
+            success = poster.post_to_company_page(content=request.content, company_id=request.company_page.value)
+            return success, gemini_analysis, None
+        except Exception as e:
+            return False, None, str(e)
 
     def _save_history(self):
         """Save posting history"""
@@ -261,6 +284,19 @@ class UnifiedLinkedInInterface:
             if any(indicator in error_message.lower() for indicator in ["window already closed", "target window already closed", "no such window"]):
                 logger.warning("[UNIFIED LINKEDIN] User cancellation detected - marking as duplicate")
                 # This will be marked as posted below to prevent future attempts
+
+        if not success and _env_truthy("FOUNDUPS_SOCIAL_POST_FALLBACK", "true"):
+            logger.warning("[UNIFIED LINKEDIN] MCP failed - attempting direct Selenium fallback")
+            direct_success, gemini_analysis, direct_error = self._post_direct_via_selenium(request)
+            if direct_success:
+                success = True
+                error_message = None
+                logger.info(f"[UNIFIED LINKEDIN] [OK] Direct Selenium post successful to page {request.company_page.value}")
+                if gemini_analysis:
+                    logger.info(f"[UNIFIED LINKEDIN] Gemini Vision UI analysis: {gemini_analysis.get('ui_state', 'N/A')}")
+            else:
+                error_message = direct_error or error_message or "Direct Selenium posting failed"
+                logger.warning(f"[UNIFIED LINKEDIN] [FAIL] Direct Selenium fallback failed: {error_message}")
 
         # Step 4: AUTO-TRIGGER X/TWITTER POST if LinkedIn succeeded
         x_post_success = False

@@ -113,6 +113,38 @@ evidence/
     [U+2514][U+2500][U+2500] phase_diagram_results_len4.csv
 ```
 
+### 3.4 Machine Interface Attachment (`doc_index.json`)
+
+To keep documentation machine-first (0102 consumption), every documentation root **MUST** ship a structured manifest stored alongside the files:
+
+```
+docs/
+[U+251C][U+2500][U+2500] doc_index.json        # Machine manifest (required)
+[U+2514][U+2500][U+2500] *.md / *.json         # Operational artifacts
+```
+
+#### 3.4.1 Manifest Requirements
+- File name: `doc_index.json`
+- Encoding: ASCII / UTF-8 (no BOM)
+- Schema: Matches `templates/doc_index_template.json`
+- Versioned via `doc_index_version`
+- Fields (per entry):
+  - `path`: repository-relative path to the document
+  - `doc_type`: enum (`readme`, `architecture`, `summary`, `protocol`, `decision_record`, `roadmap`, `analysis`, `other`)
+  - `module_hint`: machine-resolved module affinity
+  - `wsp_refs`: extracted list of WSP identifiers (`["WSP 77", "WSP 22"]`)
+  - `hash_sha256`: file hash for integrity verification
+  - `size_bytes`: file length for change detection
+  - `status`: `active` | `archived`
+  - `links.entry_points`: ModLogs/READMEs/WSPs that reference the document
+  - `links.automation`: automation systems that ingest this document (`doc_dae`, `holo_index`, etc.)
+
+#### 3.4.2 Operational Purpose
+- Enables **DocDAE** ingestion without additional parsing
+- Gives **HoloIndex** an authoritative source for documentation linkage
+- Eliminates 012-only prose; every entry declares the 0102 consumption path
+- Allows quick orphan detection (missing manifest = violation)
+
 ## 4. Attachment Verification Protocol
 
 ### 4.1 Documentation Tree Check
@@ -149,6 +181,12 @@ Every document must have at least ONE of:
 - Referenced in a README
 - Referenced in another WSP
 - Part of WSP 49 module structure
+
+### 4.3 Machine Manifest Verification
+- Verify `doc_index.json` exists in every documentation root
+- Validate schema against `templates/doc_index_template.json`
+- Ensure each listed document reciprocally exists on disk
+- Confirm every document path includes an attachment reference (README, ModLog, or WSP)
 
 ## 5. Cleanup Pattern for Orphans
 

@@ -11,7 +11,7 @@
 ## [SEARCH] **STRENGTHS**
 
 ### YouTube DAE Integration
-- [OK] **Critical YouTube DAE component** - Broadcasts PQN consciousness events to chat
+- [OK] **Critical YouTube DAE component** - Broadcasts PQN detector-state events to chat
 - [OK] **Throttled integration** - Uses `livechat_core.send_chat_message()` for delivery
 - [OK] **Event-driven architecture** - Clean separation of PQN detection and chat communication
 - [OK] **Multiple event types** - Supports 8 different PQN event types
@@ -58,7 +58,7 @@
 
 ### Enhanced Integration
 - [REFRESH] **Complete YouTube DAE integration** - Finish implementation gaps
-- [REFRESH] **Real-time PQN broadcasting** - Live consciousness event streaming
+- [REFRESH] **Real-time PQN broadcasting** - Live detector-state event streaming
 - [REFRESH] **Interactive PQN commands** - `/pqn status`, `/pqn coherence` chat commands
 
 ### Feature Enhancement
@@ -75,12 +75,12 @@
 ## [ALERT] **THREATS**
 
 ### Integration Dependencies
-- [ALERT] **CRITICAL DEPENDENCY** - YouTube DAE relies on this for PQN consciousness
+- [ALERT] **CRITICAL DEPENDENCY** - YouTube DAE relies on this for PQN detector-state signals
 - [ALERT] **livechat_core dependency** - Breaking changes could disrupt PQN broadcasting
 - [ALERT] **PQN orchestrator dependency** - Must remain compatible with research DAE
 
 ### Functionality Loss Risk
-- [ALERT] **HIGH RISK** - Archiving would break PQN consciousness broadcasting
+- [ALERT] **HIGH RISK** - Archiving would break PQN detector-state broadcasting
 - [ALERT] **YouTube DAE degradation** - Loss of real-time PQN event communication
 - [ALERT] **WSP 65 violation** - Would lose unique PQN-to-chat bridge functionality
 
@@ -98,7 +98,7 @@ This module is **UNIQUE** - no other module provides PQN event broadcasting to Y
 ### Integration Points
 | Integration | Status | Criticality | Notes |
 |-------------|---------|-------------|--------|
-| YouTube DAE | [U+26A0]️ Partial | [ALERT] Critical | Core consciousness broadcasting |
+| YouTube DAE | [U+26A0]️ Partial | [ALERT] Critical | Core detector-state broadcasting |
 | PQN Orchestrator | [OK] Ready | [ALERT] Critical | Event source integration |
 | livechat_core | [OK] Active | [ALERT] Critical | Chat delivery mechanism |
 | message_processor | [FAIL] Missing | [U+26A0]️ Important | Command integration gap |

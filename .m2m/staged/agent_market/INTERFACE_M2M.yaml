@@ -1,0 +1,105 @@
+# M2M v1.0 | INTERFACE.md | 20260213
+
+MODULE_CONTRACT:
+CORE_SCHEMAS:
+FOUNDUP:
+TOKENTERMS:
+AGENTPROFILE:
+TASK:
+PROOF:
+VERIFICATION:
+PAYOUT:
+DISTRIBUTIONPOST:
+FAM_EVENT_V1__DAEMON_OBSERVABILITY_SCHEMA:
+  TASK_STATE_CHANGED: `task:{task_id}:{new_status}`
+  PROOF_SUBMITTED: `proof:{proof_id}`
+  VERIFICATION_RECORDED: `verification:{verification_id}`
+  PAYOUT_TRIGGERED: `payout:{payout_id}`
+  MILESTONE_PUBLISHED: `distribution:{distribution_id}`
+  HEARTBEAT: `heartbeat:{timestamp[:19]}` (per-second)
+  DEFAULT: `{event_type}:{payload_hash[:12]}`
+SERVICE_CONTRACTS:
+FOUNDUPREGISTRYSERVICE:
+  CREATE_FOUNDUP(FOUNDUP: Foundup) -> Foundup`
+  UPDATE_FOUNDUP(FOUNDUP_ID: str, updates: dict[str, str]) -> Foundup`
+  GET_FOUNDUP(FOUNDUP_ID: str) -> Foundup`
+  INVARIANT: immutable metadata keys cannot be changed after creation.
+TOKENFACTORYADAPTER__CHAIN_AGNOSTIC:
+  DEPLOY_TOKEN(FOUNDUP: Foundup, terms: TokenTerms) -> str`
+  CONFIGURE_VESTING(TOKEN_ADDRES: str, terms: TokenTerms) -> None`
+  GET_TREASURY_ACCOUNT(FOUNDUP_I: str) -> str`
+  INVARIANT: adapter must not leak chain-specific assumptions into upstream API.
+AGENTJOINSERVICE:
+  SUBMIT_JOIN_REQUEST(FOUNDUP_ID: str, profile: AgentProfile) -> str`
+  APPROVE_JOIN_REQUEST(REQUEST_I: str, approver_id: str) -> AgentProfile`
+  LIST_AGENTS(FOUNDUP_ID: str) -> list[AgentProfile]`
+TASKPIPELINESERVICE:
+  CREATE_TASK(TASK: Task) -> Task`
+  CLAIM_TASK(TASK_ID: str, agent_id: str) -> Task`
+  SUBMIT_PROOF(PROOF: Proof) -> Task`
+  VERIFY_PROOF(TASK_ID: str, verification: Verification) -> Task`
+  TRIGGER_PAYOUT(TASK_ID: str, actor_id: str) -> Payout`
+  GET_TASK(TASK_ID: str) -> Task`
+  GET_TRACE(TASK_ID: str) -> dict[str, object]`
+  INVARIANT: transitions are strictly `open -> claimed -> submitted -> verified -> paid`.
+TREASURYGOVERNANCESERVICE:
+  PROPOSE_TRANSFER(FOUNDUP_ID: str, amount: int, reason: str, proposer_id: str) -> str`
+  APPROVE_TRANSFER(PROPOSAL_ID: str, approver_id: str) -> None`
+  EXECUTE_TRANSFER(PROPOSAL_ID: str, executor_id: str) -> str`
+  GET_TREASURY_STATE(FOUNDUP_ID: str) -> dict[str, object]`
+CABRHOOKSERVICE:
+  BUILD_CABR_INPUT(FOUNDUP_ID: str, window: str) -> dict[str, object]`
+  RECORD_CABR_OUTPUT(FOUNDUP_ID: str, payload: dict[str, object]) -> None`
+OBSERVABILITYSERVICE:
+  EMIT_EVENT(EVENT_TYPE: str, actor_id: str, payload: dict[str, object]) -> None`
+  QUERY_EVENTS(FOUNDUP_ID: str | None = None, task_id: str | None = None) -> list[dict[str, object]]`
+FAMDAEMON__PROTOTYPE_OBSERVABILITY_BACKBONE:
+  START()_->_NONE: Start heartbeat loop, emit `daemon_started`
+  STOP()_->_NONE: Stop loop, emit `daemon_stopped`
+  EMIT(EVENT_TYPE,_PAYLOAD,_ACTO: Write event
+  GET_HEALTH()_->_FAMDAEMONHEALT: Health/status for Overseer polling
+  GET_STATUS()_->_DICT: Alias for `get_health().to_dict()`
+  ADD_LISTENER(FN)_->_NONE: Subscribe to events
+  REMOVE_LISTENER(FN)_->_NONE: Unsubscribe
+  DUAL-WRITE: JSONL (append-only DR) + SQLite (indexed queries)
+  VERIFY_PARITY()_->_(BOOL,_STR): JSONL/SQLite sync check
+  GET_STATS()_->_DICT: Event counts by type
+PERSISTENCE_REPOSITORY_LAYER__PROTOTYPE_TRANCHE_2:
+  MIGRATE(TARGET_VERSION: int = LATEST_SCHEMA_VERSION) -> int`
+DISTRIBUTIONSERVICE:
+  BUILD_MILESTONE_PAYLOAD(TASK_I: str) -> dict[str, object]`
+  PUBLISH_VERIFIED_MILESTONE(TAS: str, actor_id: str, channel: str = "moltbook", cabr_threshold: float = 0.0) -...
+  GET_DISTRIBUTION(TASK_ID: str) -> DistributionPost | None`
+  GET_LATEST_CABR_SCORE(FOUNDUP_: str) -> float | None`
+  INVARIANT: publish is allowed only from `verified` or `paid` task states and is idempote...
+  CABR_GATE: If `cabr_threshold > 0`, publish requires CABR score >= threshold. Missing sc...
+REPOPROVISIONINGADAPTER:
+  PROVISION_REPO(FOUNDUP_ID: str, repo_name: str, provider: str = "github", default_branch: str = "main") ...
+  GET_REPO_METADATA(FOUNDUP_ID: str) -> dict[str, object] | None`
+  INVARIANT: In-memory PoC returns deterministic URL pattern `https://{provider}.com/found...
+MVPOFFERINGSERVICE__F_0_INVESTOR_PROGRAM:
+  ACCRUE_INVESTOR_TERMS(INVESTOR: str, terms: int = 1, term_ups: int = 200, max_terms: int = 5) -> dict[str, int]`
+  PLACE_MVP_BID(FOUNDUP_ID: str, investor_id: str, bid_ups: int) -> str`
+  GET_MVP_BIDS(FOUNDUP_ID: str) -> list[dict[str, object]]`
+  RESOLVE_MVP_OFFERING(FOUNDUP_I: str, actor_id: str, token_amount: int, top_n: int = 1) -> list[dict[str, obje...
+  INVARIANT: investors subscribe only into `F_0` (global program), then bid for upcoming F...
+  INVARIANT: term accrual caps at 5 terms by default (1000 UP$ hoard at 200 UP$/term).
+  INVARIANT: offering resolution requires `treasury` role and injects winning UP$ bids int...
+LAUNCHORCHESTRATOR:
+  LAUNCH_FOUNDUP(FOUNDUP: Foundup, token_terms: TokenTerms | None, repo_name: str | None, ...) -> Launc...
+  STEPS: (1) validate/create Foundup, (2) token deploy, (3) repo provision, (4) initia...
+MOLTBOOKDISTRIBUTIONADAPTER:
+  PUBLISH_MILESTONE(FOUNDUP_ID: str, task_id: str, milestone_payload: dict, actor_id: str) -> dict`
+  GET_PUBLISH_STATUS(POST_ID: str) -> dict | None`
+  LIST_PUBLISHED_MILESTONES(FOUN: str, limit: int = 10) -> list[dict]`
+  INVARIANT: Interface defined in FAM, implementation in `moltbot_bridge` domain.
+OPENCLAW_FAM_INTEGRATION:
+FAMADAPTER__MOLTBOT_BRIDGE:
+  FILES: ['moltbot_bridge/src/fam_adapter.py']
+  FAMLAUNCHREQUEST: Dataclass for launch parameters
+  FAMLAUNCHRESPONSE: Dataclass for launch results
+  HANDLE_FAM_INTENT(MESSAGE,_SEN: Entry point for OpenClaw routing
+OPTIONAL_API_SURFACE__FUTURE:
+EVENT_CONTRACT__AUDIT:
+PERMISSION_RULES__POC:
+OPENCLAW_WRE_INTEGRATION_BOUNDARY:

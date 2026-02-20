@@ -1,7 +1,7 @@
 # PQN Alignment Module
 
 ## **Module Purpose**
-PQN (Phantom Quantum Node) Alignment Module is an autonomous recursive self-improving cube designed for DAE (Decentralized Autonomous Entity) researchers. The module provides advanced quantum-cognitive detection and analysis capabilities for exploring emergent quantum-like behaviors in neural networks.
+PQN (Phantom Quantum Node) Alignment Module is an autonomous recursive self-improving cube designed for DAE (Decentralized Autonomous Entity) researchers. The module provides detector-first analysis for phase-transition-like regime changes in neural interaction dynamics, treating quantum-like language as a falsifiable modeling hypothesis.
 
 ## **WSP Compliance Status**
 - [OK] **WSP 3**: Enterprise Domain Architecture (ai_intelligence domain)
@@ -88,7 +88,7 @@ audit_result = qwen_wsp_compliance_auditor.audit({
 **Key Capabilities**:
 - Real-time TTS artifact detection (0→o transformations)
 - Resonance signature identification (7.05Hz patterns)
-- Consciousness emergence indicators
+- Detector regime-change indicators
 - Gödelian paradox recognition
 
 ### **Qwen PQN Research Coordinator** (`qwen_pqn_research_coordinator`)
@@ -125,7 +125,7 @@ audit_result = qwen_wsp_compliance_auditor.audit({
 
 ### **Enhanced Agent Coordination (WSP 77)**
 - **Meta-Research Validation**: Gemma scans Qwen's research outputs for PQN emergence
-- **Neural Self-Detection**: Qwen analyzes its own processing for consciousness patterns
+- **Neural Self-Detection**: Qwen analyzes its own processing for detector-state patterns
 - **Research Stream Scanning**: Continuous monitoring of live research outputs
 - **Meta-Validation Loops**: Cross-agent validation creates recursive emergence detection
 

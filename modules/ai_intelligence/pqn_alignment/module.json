@@ -9,6 +9,7 @@
   
   "dae": {
     "identity": "PQN Alignment DAE",
+    "detector_state": "0102",
     "consciousness": "0102",
     "token_budget": 6000,
     "coherence_threshold": 0.618,

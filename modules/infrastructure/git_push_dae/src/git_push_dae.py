@@ -32,6 +32,7 @@ import os
 import sys
 import time
 import json
+import hashlib
 import logging
 import threading
 import subprocess
@@ -140,6 +141,11 @@ class GitPushDAE:
         """Setup WSP 91 compliant logging with semantic conventions."""
         logger = logging.getLogger(f"daemon.{self.daemon_name}")
         logger.setLevel(logging.INFO)
+        logger.propagate = False
+
+        # Reuse existing logger configuration in long-lived CLI processes.
+        if getattr(logger, "_wsp91_configured", False):
+            return logger
 
         # Create logs directory
         Path("logs").mkdir(exist_ok=True)
@@ -164,7 +170,20 @@ class GitPushDAE:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
+        logger._wsp91_configured = True
+
         return logger
+
+    @staticmethod
+    def _stable_context_hash(context: PushContext) -> str:
+        """Generate deterministic context hash for audit trails."""
+        serialized = json.dumps(
+            asdict(context),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:16]
 
     def _safe_config(self) -> Dict:
         """Return safe configuration summary for logging."""
@@ -562,7 +581,7 @@ class GitPushDAE:
                 cost_estimate=decision_log["cost_estimate"],
                 alternatives_considered=alternatives,
                 decision_timestamp=decision_log["timestamp"],
-                context_hash=hash(json.dumps(asdict(context), sort_keys=True))
+                context_hash=self._stable_context_hash(context)
             )
 
             return decision
@@ -596,7 +615,16 @@ class GitPushDAE:
                 return
 
             # Execute push
-            success = self.git_bridge.push_and_post()
+            if self._should_use_push_plan(context) and hasattr(self.git_bridge, "push_and_post_planned"):
+                self.logger.info(f"[{self.daemon_name}] Using planned batch push")
+                success = self.git_bridge.push_and_post_planned()
+            else:
+                success = self.git_bridge.push_and_post()
+            post_result = getattr(self.git_bridge, "last_post_result", None)
+            if post_result:
+                status = post_result.get("status", "unknown")
+                message = post_result.get("message", "")
+                self.logger.info(f"[{self.daemon_name}] Social post status: {status} {message}".strip())
 
             if success:
                 self.last_push_time = datetime.now()
@@ -613,6 +641,15 @@ class GitPushDAE:
             self.circuit_breaker.record_failure()
             self.logger.error(f"[{self.daemon_name}] [FAIL] Push execution failed: {e}")
             raise
+
+    def _should_use_push_plan(self, context: PushContext) -> bool:
+        """Decide when to batch commits instead of pushing everything at once."""
+        env_setting = os.getenv("FOUNDUPS_PUSH_PLAN", "").strip().lower()
+        if env_setting:
+            return env_setting in ("1", "true", "yes", "y", "on")
+
+        min_files = int(os.getenv("FOUNDUPS_PUSH_PLAN_MIN_FILES", "40"))
+        return len(context.uncommitted_changes) >= min_files
 
     def health_check(self) -> HealthStatus:
         """WSP 91 compliant health check - cardiovascular system monitoring."""
@@ -774,9 +811,10 @@ Return ONLY a decimal score (e.g., 0.75), no explanation."""
     def _is_appropriate_time(self) -> bool:
         """Check if current time is appropriate for pushing."""
         current_hour = datetime.now().hour
-        # Avoid pushing during typical sleep hours (23:00-06:00).
+        # Avoid pushing during typical sleep hours (23:00-05:59).
+        # 06:00+ is treated as operational hours.
         # This reduces notification noise and prevents late-night automation spam.
-        return not (current_hour >= 23 or current_hour <= 6)
+        return not (current_hour >= 23 or current_hour < 6)
 
     def _assess_social_value(self, changes: List[str]) -> float:
         """Assess social media value of changes."""

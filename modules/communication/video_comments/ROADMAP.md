@@ -58,7 +58,8 @@ Transform YouTube comment engagement from manual interaction to fully autonomous
 - [x] MOD_RESPONSES for moderators
 - [x] TROLL_RESPONSES for MAGA trolls (Whack-a-MAGA style)
 - [x] SUBSCRIBER_RESPONSES for subscribers
-- [x] Grok LLM for contextual replies (primary)
+- [x] Digital Twin drafting + decisioning (primary)
+- [x] Grok LLM for contextual replies (secondary)
 - [x] Qwen/LM Studio fallback
 - [x] Pattern responses (song → #FFCPLN, FFCPLN → ICE promo)
 - [x] Emoji-to-emoji replies (✊✋🖐️ sequences)
@@ -157,7 +158,8 @@ Chat: "✅ ALL 15 comments processed! Community tab clear! ✊✋🖐️"
 
 | Module | Purpose | Status |
 |--------|---------|--------|
-| ai_intelligence/banter_engine | Themed responses | ✅ Available |
+| ai_intelligence/digital_twin | Draft/decide engine | ✅ Available |
+| ai_intelligence/banter_engine | Fallback responses | ✅ Available |
 | gamification/whack_a_magat | Troll mockery style | ✅ Referenced |
 | communication/livechat | YouTube DAE | ✅ Available |
 | infrastructure/browser_actions | Selenium + Vision | ✅ Available |

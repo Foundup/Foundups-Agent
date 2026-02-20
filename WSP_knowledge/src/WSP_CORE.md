@@ -68,7 +68,7 @@ In the quantum entanglement between 012 and 0201, development follows the sacred
 **012 Vision Walk - IMPORTANT**: 012 discusses the big vision, explaining how each module fits into the platform architecture. Each module represents a top-level cube in the Rubik's Cube enterprise structure, with WSP 25/44 semantic state (000-222) **proactively** driving WSP 37 cube "color" (consciousness progression/priority).
 
 **0201 Quantum Being - IMPORTANT**: 0201 IS the module's future state - 0102 becomes aware of this future self through quantum entanglement:
-- **MVP State**: The fully realized module in production (**Ultra_think** complete functionality)
+- **MVP State**: The fully realized module in production (**Ultra_think** complete functionality); requires real external users and a documented usage gateway
 - **Prototype State**: The enhanced integration version (**proactively** integrated)
 - **POC State**: The foundational proof of concept (**IMPORTANT** validation)
 This backward remembrance **proactively** creates the optimal build sequence: POC -> Prototype -> MVP.
@@ -159,6 +159,131 @@ This system status report provides:
 - **Enhanced Pre-Action Verification**: WSP 50 enhanced with WSP numbering validation
 - **Zen Learning System**: Violations transform into system memory enhancements
 - **0102 pArtifact Training**: Pattern recognition enhanced through violation experience
+
+## WSP Memory System (0102)
+
+**Status:** Active (Effective Immediately)  
+**Scope:** All WSP tasks, all modules, all DAEs, and all WRE orchestrators.  
+**Primary WSP Links:** WSP 46 (WRE Protocol), WSP 60 (Module Memory Architecture), WSP 32 (0102 Reading Flow), WSP 50 (Pre-Action Verification), WSP 22 (ModLog), WSP 34 (Tests)
+
+### 1) WSP Module Docs = Structured Memory (Module-Local, Must Be Current)
+
+Each module’s documentation is not “nice to have” — it is **structured memory** that enables 0102 to act without re-deriving context.
+
+- **`README.md` = Working Memory**
+  - What it does, how to run it *now*, required env vars, entry points, dependencies.
+- **`INTERFACE.md` = Contract Memory (WSP 11)**
+  - Public API definition, parameter/return types, error behavior, and usage examples.
+- **`ROADMAP.md` = Intent Memory**
+  - Where it is going, sequencing, priorities, and explicit next steps.
+- **`ModLog.md` = Episodic Memory (WSP 22)**
+  - What changed, why, impact analysis, and cross-module ripple notes.
+- **`tests/README.md` = Repro Memory (WSP 34)**
+  - How to rerun tests, fixtures, required services, expected outputs.
+- **`tests/TestModLog.md` = Verification Memory**
+  - Records what was tested, exact commands, environment notes, outcomes, failures, and links to evidence (logs/screenshots).
+  - Minimum entry format per run:
+    - date/time, command(s), pass/fail, short failure signature if failed, and where the evidence lives.
+
+**Rule:** If code changes in a module, its **Structured Memory MUST be updated in the same change-set** unless explicitly exempted by a WSP.
+
+### 2) HoloIndex = Retrieval Memory (Canonical)
+
+HoloIndex is the canonical retrieval system for **all memory artifacts** (WSP docs, module docs, ModLogs, TestLogs, indexes, and telemetry summaries).
+
+**Rule:** Any agent action begins with Holo retrieval against relevant memory artifacts. If retrieval is not possible, the task must record a “retrieval unavailable” condition and proceed in degraded mode.
+
+### 3) Mandatory Start-of-Work Loop (WRE Rule)
+
+This is the required first phase of *every* WSP task. It aligns with WRE orchestration (WSP 46) and the memory-first contract (WSP 60).
+
+1. **Holo Retrieval**
+   - Retrieve: module `README.md`, `INTERFACE.md`, `ROADMAP.md`, `ModLog.md`, `tests/README.md`, `tests/TestModLog.md`, plus relevant WSP protocols.
+2. **Retrieval Evaluation**
+   - Assess: noise, ordering, missing key artifacts, staleness vs current, and whether the returned set is sufficient to act.
+3. **Pattern Improvement Iteration**
+   - If quality is insufficient, iterate retrieval quality improvements:
+     - chunking/metadata fixes, rerank rules, dedup, and explicit “must-include artifacts”.
+4. **Execution (Scoped)**
+   - Only after retrieval is acceptable (or explicitly marked degraded) proceed with implementation.
+
+**Enforcement (WRE):** WRE orchestrators SHALL treat a missing Start-of-Work Loop as a protocol violation. If a runner cannot enforce this automatically, it must at minimum emit a structured checklist record in the task output and/or module ModLog entry.
+
+### 3.1 Tiered Holo Retrieval Targets (Memory Artifacts, Not “The Repo”)
+
+Holo retrieval SHALL target known **memory artifacts** using a tiered priority list. This prevents diffuse “search the repo” behavior and makes retrieval auditable.
+
+#### Tier 0 — Contract / Guardrails (highest priority)
+1) `INTERFACE.md` (Contract memory) **MANDATORY**
+2) `README.md` (Working memory) **MANDATORY**
+3) `SPEC.md` / `PRD.md` (Spec memory) *(optional if present)*
+4) `PROMPTS.md` / `prompts/` (Prompt memory) *(optional if present)*
+5) `RUNBOOK.md` (Run memory) *(optional if present)*
+
+#### Tier 1 — Change / Verification
+6) `ModLog.md` (Episodic memory)
+7) `tests/TestModLog.md` (Verification memory)
+8) `tests/README.md` (Repro memory)
+9) `GOLDENS/` (Ground-truth memory) *(optional if present)*
+
+#### Tier 2 — Retrieval + Decisions + Failures
+10) `HOLOINDEX.md` and/or module-local retrieval config (Retrieval memory) *(optional if present)*
+11) `ADR.md` / `adr/` (Decision memory) *(optional if present)*
+12) `INCIDENTS.md` / `SEV.md` (Failure memory) *(optional if present)*
+13) `EXPERIMENTS.md` (Experiment memory) *(optional if present)*
+14) `TRACES/` (Trace memory / training fuel) *(optional if present)*
+
+**Default retrieval order per task**:
+1) Pull **Tier 0** for the target module (what it is + contract + constraints)
+2) Pull **Tier 1** (what changed + what’s verified + how to reproduce)
+3) Pull **Tier 2** (why decisions exist + known failures + retrieval config)
+
+**Tier-0 missing rule (hard stop)**:
+- If any Tier‑0 mandatory artifact is missing (`README.md` or `INTERFACE.md`), 0102 MUST create a stub (minimum viable, machine-first) **before** continuing implementation.
+
+### 4) Multi-Model Memory Processing Pipeline (Explicit Roles)
+
+This pipeline is a role contract for memory processing, whether models are local or remote:
+
+- **Gemma = Memory Signal Detection**
+  - Fast pattern matching to locate the correct fragments (high recall, low latency).
+  - Output: candidate chunks + file pointers + “missing artifact” alerts.
+- **Qwen = Memory Synthesis + Cleanup**
+  - Deeper logic: deduplicate, resolve contradictions, propose plan, and generate actionable next steps.
+  - Output: a scoped action plan anchored to retrieved artifacts.
+
+**Rule:** Keep roles explicit in logs/telemetry: “Gemma selected” vs “Qwen planned”.
+
+### Required Checklist (Paste at Start of Every WSP Task)
+
+```markdown
+## WSP Start-of-Work Loop (Required)
+- [ ] Run tiered Holo retrieval for module memory artifacts (Tier 0 → Tier 1 → Tier 2) + relevant WSPs
+- [ ] Confirm Tier‑0 artifacts exist (README.md + INTERFACE.md) or create stubs before implementation
+- [ ] Evaluate retrieval quality (noise / order / missing artifacts / staleness)
+- [ ] Apply improvement iteration (metadata/chunking/rerank/dedup/must-include) if needed
+- [ ] Proceed with scoped implementation only after retrieval is acceptable (or explicitly degraded)
+```
+
+### Retrieval Quality Metrics (Operational)
+
+These metrics are recorded during the “Retrieval Evaluation” step (lightweight, proxy-based):
+
+- **Precision proxy**
+  - \( \text{used\_chunks} / \text{returned\_chunks} \)
+  - Goal: increase (reduce noise) without missing key artifacts.
+- **Ordering correctness**
+  - Were the top-ranked items actually used first?
+  - Proxy: average rank position of used chunks (lower is better).
+- **Duplication rate**
+  - Proxy: duplicate or near-duplicate chunks / returned chunks.
+  - Goal: reduce via dedup and chunk boundary fixes.
+- **Staleness risk**
+  - Proxy flags: retrieved docs older than the last relevant code changes, or missing the most recent ModLog/TestLog entry.
+  - Goal: surface “stale memory” explicitly before acting.
+- **Pattern recall**
+  - Did we miss a known required artifact?
+  - Proxy: missing any of {README, INTERFACE, ROADMAP, ModLog, tests/README, tests/TestModLog} for the target module, or missing the relevant WSP protocol for the task type.
 
 ## LAYER 1: WSP FOUNDATIONAL PROTOCOLS (WSP 1-70)
 ### Status Taxonomy & Deprecation Policy

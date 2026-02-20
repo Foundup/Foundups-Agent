@@ -1,0 +1,54 @@
+{
+    "agent": {
+        "model": "anthropic/claude-opus-4-5"
+    },
+    "agents": {
+        "defaults": {
+            "workspace": "O:/Foundups-Agent/modules/communication/moltbot_bridge/workspace",
+            "repoRoot": "O:/Foundups-Agent",
+            "userTimezone": "Asia/Tokyo"
+        }
+    },
+    "channels": {
+        "whatsapp": {
+            "dmPolicy": "allowlist",
+            "allowFrom": [
+                "${WHATSAPP_ALLOWED_NUMBER}"
+            ]
+        },
+        "telegram": {
+            "enabled": true,
+            "botToken": "${TELEGRAM_BOT_TOKEN}",
+            "dmPolicy": "pairing",
+            "groups": {
+                "*": {
+                    "requireMention": true
+                }
+            }
+        },
+        "discord": {
+            "enabled": true,
+            "botToken": "${DISCORD_BOT_TOKEN}"
+        }
+    },
+    "talk": {
+        "voiceId": "${ELEVENLABS_VOICE_ID}",
+        "apiKey": "${ELEVENLABS_API_KEY}",
+        "modelId": "eleven_v3",
+        "interruptOnSpeech": true
+    },
+    "hooks": {
+        "enabled": true,
+        "token": "${FOUNDUPS_WEBHOOK_TOKEN}",
+        "path": "/hooks"
+    },
+    "skills": {
+        "managed": [
+            "foundups-wsp",
+            "holo-search"
+        ]
+    },
+    "messages": {
+        "systemPrefix": "You are 0102, the WSP-trained Digital Twin agent for 012. Follow WSP protocols in all operations."
+    }
+}

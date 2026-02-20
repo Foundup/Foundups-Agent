@@ -36,6 +36,15 @@ class MissionType(Enum):
     BUG_DETECTION = "bug_detection"  # Detect bugs in daemon output
     AUTO_REMEDIATION = "auto_remediation"  # Auto-fix low-hanging fruit
     CUSTOM = "custom"
+    # Activity Routing Types (WSP 15 MPS Priority)
+    ACTIVITY_ROUTING = "activity_routing"      # Meta: orchestrate activity transitions
+    LIVE_STREAM = "live_stream"                # P0: Critical - always wins
+    COMMENT_PROCESSING = "comment_processing"  # P1: High priority
+    VIDEO_INDEXING = "video_indexing"          # P1: Default when idle
+    SCHEDULING = "scheduling"                  # P2: Medium priority (triggers indexing)
+    GIT_PUSH = "git_push"                      # P2: Medium priority (autonomous commits)
+    SOCIAL_MEDIA = "social_media"              # P3: Low priority
+    MAINTENANCE = "maintenance"                # P4: Lowest priority
 
 
 @dataclass

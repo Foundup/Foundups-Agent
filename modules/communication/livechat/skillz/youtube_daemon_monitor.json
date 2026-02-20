@@ -119,6 +119,21 @@
       "recommended_fix": "Implement exponential backoff in livechat connection handler"
     }
   },
+  "signal_patterns": {
+    "edge_comments_cleared": {
+      "regex": "\"event\"\\s*:\\s*\"edge_comments_cleared\"",
+      "description": "Operational signal: FoundUps + RavingANTIFA comment inboxes cleared (all_processed=True). Qwen should decide next orchestration step (stream monitor / live chat / idle automation).",
+      "wsp_15_mps": {
+        "complexity": 1,
+        "importance": 4,
+        "deferability": 2,
+        "impact": 4,
+        "total_mps": 11,
+        "priority": "P1",
+        "rationale": "Not a bug; a state transition that enables next-step orchestration. Low complexity, high impact for autonomous flow."
+      }
+    }
+  },
   "qwen_decision_logic": {
     "auto_fix_threshold": {
       "max_complexity": 2,
@@ -170,5 +185,5 @@
       "changes": "Initial skill creation with 6 error patterns"
     }
   ],
-  "last_monitoring_run": 1766384852.4351773
+  "last_monitoring_run": 1769648824.5921936
 }

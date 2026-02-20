@@ -30,13 +30,15 @@ class CommenterType(Enum):
     MAGA_TROLL = 0       # ✊ Whacked user → Skill 0 (mockery)
     REGULAR = 1          # ✋ Default → Skill 1 (contextual)
     MODERATOR = 2        # 🖐️ Community leader → Skill 2 (appreciation)
+    ALLY = 3             # 🤝 Anti-MAGA ally → Skill 0 (agreement mode - join in trolling Trump)
 
     def to_012_code(self) -> str:
         """Convert to 012 emoji representation"""
         emoji_map = {
             CommenterType.MAGA_TROLL: "0✊",
             CommenterType.REGULAR: "1✋",
-            CommenterType.MODERATOR: "2🖐️"
+            CommenterType.MODERATOR: "2🖐️",
+            CommenterType.ALLY: "3🤝"
         }
         return emoji_map[self]
 
@@ -284,6 +286,53 @@ class CommenterClassifier:
                         'method': 'sentiment_positive',
                         'pattern_detected': pattern,
                         'moderator_candidate': True,  # Flag for Skill 1 elevation strategy
+                    }
+
+            # ANTI-TRUMP ALLY PATTERNS (2026-02-12): Detect allies who criticize Trump/MAGA
+            # Pattern categories:
+            #   - Direct Trump criticism: "isn't qualified", "worst president", "impeach"
+            #   - MAGA mockery: "cult", "kool-aid", "magats", "magatards"
+            #   - Fascism awareness: "fascist", "authoritarian", "nazi parallels", "1933"
+            #   - System criticism: "U.S.S.A", "failed democracy", "oligarchy"
+            #   - Epstein/scandal refs: "pedo", "epstein", "fake university", "fraud"
+            #
+            # Purpose: Identify ALLIES to join in trolling Trump, not give generic responses
+            ANTI_TRUMP_ALLY_PATTERNS = [
+                # Direct Trump criticism
+                "isn't qualified", "not qualified", "unqualified", "incompetent",
+                "worst president", "failed president", "disaster president",
+                "impeach", "convicted felon", "criminal president",
+                # MAGA mockery (ally mocking MAGA supporters)
+                "maga cult", "cult members", "kool-aid", "brainwashed",
+                "magats", "magatards", "trumpers", "trumpists",
+                # Fascism awareness (anti-fascist ally)
+                "fascist", "fascism", "authoritarian", "dictator",
+                "nazi", "hitler", "1933", "enabling act", "gestapo",
+                # System criticism (recognizes broken democracy)
+                "u.s.s.a", "ussa", "failed democracy", "oligarchy",
+                "banana republic", "failed state",
+                # Scandal references (Epstein, Trump University, etc.)
+                "pedo", "pedophile", "epstein", "fake university", "trump university",
+                "fraud", "grifter", "con man", "con artist",
+                # Anti-GOP/anti-Republican sentiment
+                "gop traitors", "republican traitors", "project 2025",
+                "heritage foundation", "christian nationalist",
+            ]
+
+            # Check for anti-Trump ally patterns
+            for pattern in ANTI_TRUMP_ALLY_PATTERNS:
+                if pattern in comment_lower:
+                    logger.info(f"[CLASSIFIER] 🤝 ANTI-TRUMP ALLY DETECTED: '{pattern}'")
+                    logger.info(f"[CLASSIFIER]   Comment: {comment_text[:50]}...")
+                    logger.info(f"[CLASSIFIER]   Classification: ALLY (agree & join trolling)")
+                    logger.info(f"[CLASSIFIER]   NOTE: Use #FFCPLN skill in AGREEMENT mode!")
+
+                    return {
+                        'classification': CommenterType.ALLY,
+                        'confidence': 0.85,  # High confidence (explicit anti-Trump)
+                        'method': 'sentiment_ally',
+                        'pattern_detected': pattern,
+                        'is_ally': True,  # Flag for agreement-mode responses
                     }
 
         # No sentiment patterns detected - return default Tier 1

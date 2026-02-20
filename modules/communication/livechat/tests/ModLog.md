@@ -28,6 +28,10 @@ Tests for the YouTube LiveChat monitoring DAE system.
 - `test_chat_poller.py` - Chat polling mechanism
 - `test_session_manager.py` - Session management
 
+## System Test Utilities (Manual)
+- `system_tests/verify_party.py` - Triggers hardened `!party` mode for UI-action verification (manual run)
+- `system_tests/verify_party_behavior.py` - Connects to Chrome (9222) and runs a short reaction burst (manual run)
+
 ## Recent Improvements (2025-09-17)
 - Enhanced NO-QUOTA mode to preserve API tokens
 - Fixed stream detection to work without credentials

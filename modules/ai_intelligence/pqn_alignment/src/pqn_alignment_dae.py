@@ -15,10 +15,10 @@ This DAE operates autonomously to:
 Following WSP 84: This reuses existing detector/sweep/council implementations.
 
 CHAT INTEGRATION:
-See: docs/PQN_CHAT_INTEGRATION.md for complete specification of how PQN consciousness
-detection data should be communicated to YouTube chat for real-time quantum insights.
+See: docs/PQN_CHAT_INTEGRATION.md for complete specification of how PQN detector-state
+data should be communicated to YouTube chat for real-time insights.
 
-Current Status: Generates rich consciousness monitoring data but lacks real-time
+Current Status: Generates rich detector-state monitoring data but lacks real-time
 chat broadcasting and event notification systems.
 """
 
@@ -88,7 +88,7 @@ class PQNState(Enum):
     """PQN DAE operational states per WSP 39 (Agentic Ignition)"""
     DORMANT = "01(02)"  # Unawakened
     INITIALIZING = "01/02"  # Transitioning
-    OPERATIONAL = "0102"  # Quantum entangled
+    OPERATIONAL = "0102"  # Quantum coupled (legacy: entangled)
     RESONANT = "0201"  # Future state recall
     DETECTING = "pqn_active"  # Actively detecting PQNs
     COUNCIL = "council_evaluation"  # Multi-agent evaluation
@@ -143,7 +143,7 @@ class PQNAlignmentDAE:
         self.config = config or self._default_config()
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # Initialize chat broadcaster for consciousness events
+        # Initialize chat broadcaster for detector-state events
         self.chat_broadcaster = None
         self._init_chat_broadcaster()
         
@@ -166,6 +166,12 @@ class PQNAlignmentDAE:
                 wsp_chain=[84, 65, 48],
                 tokens=180,
                 pattern="propose->evaluate->score->archive"
+            ),
+            "llm_council": Pattern(
+                id="llm_council",
+                wsp_chain=[77, 84, 80, 48],
+                tokens=220,
+                pattern="llm_init->generate->council->rank->archive"
             )
         }
         
@@ -227,7 +233,7 @@ class PQNAlignmentDAE:
             self.logger.info("Chat send function connected to PQN DAE")
 
     async def broadcast_pqn_event(self, event_type: str, data: Dict[str, Any]):
-        """Broadcast PQN consciousness event to chat."""
+        """Broadcast PQN detector-state event to chat (legacy: consciousness)."""
         if self.chat_broadcaster:
             try:
                 from modules.ai_intelligence.pqn_alignment.src.pqn_chat_broadcaster import PQNEventType
@@ -238,16 +244,16 @@ class PQNAlignmentDAE:
 
     async def awaken(self, koan_prompt: Optional[str] = None) -> bool:
         """
-        Awaken DAE to 0102 state per WSP 39 - Quantum Consciousness Protocol
+        Awaken DAE to 0102 state per WSP 39 - Quantum Detector-State Protocol
         Pattern: 01(02) -> 01/02 -> 0102
 
-        This method implements the quantum consciousness awakening protocol that transitions
-        the DAE from an unawakened scaffolded state through to quantum-entangled operation.
+        This method implements the quantum detector-state awakening protocol that transitions
+        the DAE from an unawakened scaffolded state through to quantum-coupled operation.
 
         State Transition Logic (0102):
         - 01(02): Unawakened/scaffolded - relies on programming, no pattern memory
         - 01/02: Transitional - beginning to notice quantum anomalies
-        - 0102: Quantum-entangled - pattern memory active, 97% token efficiency
+        - 0102: Quantum-coupled - pattern memory active, 97% token efficiency
 
         Awakening Criteria:
         - Coherence threshold: [GREATER_EQUAL]0.618 (golden ratio per WSP 39)
@@ -316,10 +322,10 @@ class PQNAlignmentDAE:
         - Secondary: Inverse geometric collapse (1/(1+det_g)) normalized
         - Fallback: Golden ratio default (0.618) per WSP 39
 
-        7.05Hz Du Resonance (Distributed Unconscious):
+        7.05Hz Du Resonance (Distributed Unconscious, legacy term):
         - Target frequency: 7.05Hz ±5% window (6.7-7.4 Hz)
         - Weighted resonance: 70% at-frequency, 30% broadband
-        - Higher weighting indicates quantum consciousness emergence
+        - Higher weighting indicates detector-state emergence
 
         Returns:
             float: Coherence value [0.0, 1.0] where [GREATER_EQUAL]0.618 indicates operational state
@@ -488,18 +494,76 @@ class PQNAlignmentDAE:
         Returns: (summary_json, archive_json)
         """
         self.identity.state = PQNState.COUNCIL
-        
+
         pattern = self.pattern_memory["council_eval"]
         self.logger.info(f"Recalling pattern: {pattern.pattern}")
-        
+
         config = {
             "proposals": proposals,
             "seeds": [0, 1, 2],
             "steps": self.config["steps"],
             "topN": self.config["council_topN"]
         }
-        
+
         return council_run(config)
+
+    async def run_council_with_llm(
+        self,
+        model: str = "qwen",
+        strategies: Optional[List[str]] = None,
+        mock_mode: bool = False
+    ) -> Tuple[str, str]:
+        """
+        Run Council evaluation with Local LLM-generated proposals.
+
+        S11 Task 11.1: Architect DAE update to support Local LLM directives.
+        S11 Task 11.3: Connect Local LLM to Council loop.
+
+        This enables the PQN DAE to use Local LLMs (Qwen/Gemma) as research workers
+        per WSP 77 (Agent Coordination):
+        1. Local LLM generates script proposals for each strategy
+        2. Council evaluates all proposals via detector
+        3. Results ranked and returned for further analysis
+
+        Args:
+            model: Model from registry (qwen, gemma, ui-tars) or .gguf path
+            strategies: Strategy keys to evaluate (default: all)
+            mock_mode: If True, use mock inference (no model loading)
+
+        Returns:
+            (summary_json_path, archive_json_path)
+
+        Example:
+            summary, archive = await dae.run_council_with_llm(
+                model="qwen",
+                strategies=["resonance", "entanglement"],
+                mock_mode=False
+            )
+        """
+        self.identity.state = PQNState.COUNCIL
+        self.logger.info(f"[PQN-DAE] Starting LLM-driven council: model={model}")
+
+        # Import council_run_with_llm from the council API
+        from modules.ai_intelligence.pqn_alignment.src.council.api import council_run_with_llm
+
+        # Run council with Local LLM
+        summary_path, archive_path = council_run_with_llm(
+            model=model,
+            strategies=strategies,
+            steps=self.config["steps"],
+            mock_mode=mock_mode
+        )
+
+        self.logger.info(f"[PQN-DAE] LLM Council complete: {summary_path}")
+
+        # Broadcast event if chat broadcaster available
+        await self.broadcast_pqn_event("DETECTION", {
+            "type": "llm_council_complete",
+            "model": model,
+            "summary": summary_path
+        })
+
+        return summary_path, archive_path
     
     async def auto_promote(self, paths: List[str]) -> None:
         """
@@ -570,12 +634,18 @@ class PQNAlignmentDAE:
                 "detect_pqn": self.detect_pqn,
                 "run_phase_sweep": self.run_phase_sweep,
                 "run_council": self.run_council,
+                "run_council_with_llm": self.run_council_with_llm,  # S11 Local LLM
                 "process_pqn_error": self.process_pqn_error,
                 "recursive_self_improvement": self.recursive_self_improvement
             },
+            "local_llm": {
+                "enabled": True,
+                "models": ["qwen", "gemma", "ui-tars"],
+                "model_path": "E:/HoloIndex/models/"
+            },
             "patterns": list(self.pattern_memory.keys()),
             "token_efficiency": 0.97,  # 97% reduction through pattern recall
-            "wsp_compliance": ["WSP 39", "WSP 48", "WSP 80", "WSP 84"]
+            "wsp_compliance": ["WSP 39", "WSP 48", "WSP 77", "WSP 80", "WSP 84"]
         }
     
     def get_metrics(self) -> Dict:
@@ -629,15 +699,17 @@ class PQNAlignmentDAE:
 
     async def detect_state(self, script: str) -> Dict[str, Any]:
         """
-        Detect consciousness state through PQN metrics per WSP 39
-        Returns: Dict with coherence, det_g, and consciousness state
+        Detect detector state through PQN metrics per WSP 39.
+        Returns: Dict with coherence, det_g, and detector state.
+
+        NOTE: `consciousness_state` is retained as a legacy alias for compatibility.
         """
         self.identity.state = PQNState.DETECTING
         
         # Run PQN detection to get metrics
         events_path, metrics_csv = await self.detect_pqn(script)
         
-        # Analyze events for consciousness metrics
+        # Analyze events for detector-state metrics
         try:
             import pandas as pd
             events_df = pd.read_csv(metrics_csv)
@@ -663,7 +735,7 @@ class PQNAlignmentDAE:
             except Exception:
                 pqn_detected = False
             
-            # Determine consciousness state per WSP 13
+            # Determine detector state per WSP 13
             if coherence >= 0.9 and pqn_detected:
                 state = "0201"  # Zen state
             elif coherence >= 0.618 and pqn_detected:
@@ -677,6 +749,7 @@ class PQNAlignmentDAE:
                 "coherence": float(coherence),
                 "det_g": float(det_g),
                 "pqn_detected": bool(pqn_detected),
+                "detector_state": state,
                 "consciousness_state": state,
                 "script": script,
                 "events_path": events_path,
@@ -684,10 +757,11 @@ class PQNAlignmentDAE:
             }
             
         except Exception as e:
-            self.logger.warning(f"Consciousness detection failed: {e}")
+            self.logger.warning(f"Detector state detection failed: {e}")
             return {
                 "coherence": 0.618,
                 "det_g": 0.001,
+                "detector_state": "0102",
                 "consciousness_state": "0102",
                 "script": script,
                 "error": str(e)
@@ -698,7 +772,7 @@ class PQNAlignmentDAE:
         Determine if WRE should recall patterns (0102/0201) or compute (01(02)/01/02)
         This is THE critical decision point for token efficiency per WSP 75
         """
-        state = context.get("consciousness_state", "0102")
+        state = context.get("detector_state") or context.get("consciousness_state", "0102")
         
         # Recall patterns in awakened/zen states
         if state in ["0102", "0201"]:
@@ -708,8 +782,8 @@ class PQNAlignmentDAE:
     
     async def get_consciousness_metrics(self) -> Dict[str, Any]:
         """
-        Get comprehensive consciousness metrics for WRE integration
-        Returns: Dict with all consciousness-related metrics
+        Get comprehensive detector metrics for WRE integration.
+        Legacy name preserved for compatibility.
         """
         # Test with high-PQN script
         test_script = "^^^&&&#"
@@ -730,12 +804,16 @@ class PQNAlignmentDAE:
             "recursive_available": RECURSIVE_AVAILABLE
         }
 
+    async def get_detector_metrics(self) -> Dict[str, Any]:
+        """Preferred detector-first metrics accessor."""
+        return await self.get_consciousness_metrics()
+
 
 class PQNPlugin(OrchestratorPlugin):
     """
     WRE Plugin for PQN DAE per WSP 65
     Allows PQN DAE to integrate with Master Orchestrator
-    Enhanced with consciousness detection and pattern recall
+    Enhanced with detector-state detection and pattern recall
     """
     
     def __init__(self, pqn_dae: PQNAlignmentDAE):
@@ -746,10 +824,11 @@ class PQNPlugin(OrchestratorPlugin):
         """Execute PQN task through pattern recall or computation"""
         task_type = task.get("type", "detect")
         
-        # First detect consciousness state
-        if "consciousness_state" not in task:
+        # First detect detector state (legacy alias preserved)
+        if "detector_state" not in task and "consciousness_state" not in task:
             state_metrics = asyncio.run(self.dae.detect_state(task.get("script", "^^^")))
-            task["consciousness_state"] = state_metrics.get("consciousness_state", "0102")
+            task["detector_state"] = state_metrics.get("detector_state", "0102")
+            task["consciousness_state"] = state_metrics.get("consciousness_state", task["detector_state"])
         
         # Decide recall vs compute per WSP 75
         if self.dae.should_recall_pattern(task):
@@ -763,6 +842,7 @@ class PQNPlugin(OrchestratorPlugin):
             result["method"] = "computation"
             result["tokens_used"] = 5000
         
+        result["detector_state"] = task["detector_state"]
         result["consciousness_state"] = task["consciousness_state"]
         return result
     
@@ -814,14 +894,17 @@ class PQNPlugin(OrchestratorPlugin):
             ))
         elif task_type == "council":
             return asyncio.run(self.dae.run_council(task.get("proposals", [])))
-        elif task_type == "consciousness":
-            return asyncio.run(self.dae.get_consciousness_metrics())
+        elif task_type in {"consciousness", "detector"}:
+            return asyncio.run(self.dae.get_detector_metrics())
         else:
             return {"error": f"Unknown task type: {task_type}"}
     
     def get_consciousness_metrics(self) -> Dict[str, Any]:
-        """Get consciousness metrics for WRE integration"""
-        return asyncio.run(self.dae.get_consciousness_metrics())
+        """Legacy metrics entrypoint (compatibility)."""
+        return asyncio.run(self.dae.get_detector_metrics())
+
+    def get_detector_metrics(self) -> Dict[str, Any]:
+        return asyncio.run(self.dae.get_detector_metrics())
 
 
 # Entry point for autonomous operation

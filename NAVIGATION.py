@@ -41,6 +41,78 @@ NEED_TO = {
     "geolocation with fallback": "modules/foundups/gotjunk/frontend/App.tsx:initializeApp() - location handling",
     "react state race conditions": "modules/foundups/gotjunk/frontend/App.tsx:handleClassify() - immediate state clearing",
 
+    # FoundUps Cube Animation (Landing Page Visual)
+    "cube animation rendering foundups": "public/js/foundup-cube.js - Full 4x4x4 cube animation with phases",
+    "canvas cube isometric three.js": "public/js/foundup-cube.js - Canvas-based isometric cube rendering",
+    "scaffolding wireframe building phases": "public/js/foundup-cube.js:drawPlanningCube() - IDEA/SCAFFOLD phase rendering",
+    "cube block filling animation": "public/js/foundup-cube.js:fillRandomBlock() - Block materialize with particles",
+    "cube agent rendering movement": "public/js/foundup-cube.js:drawAgents() - Founder/Builder/Promoter/Investor agents",
+    "cube phase lifecycle IDEA SCAFFOLD BUILDING": "public/js/foundup-cube.js:PHASES - 120s animation loop",
+    "cube ticker live chat messages": "public/js/foundup-cube.js:drawTicker() - Scrolling event messages",
+    "cube ecosystem multi-cube zoom": "public/js/foundup-cube.js:drawEcosystemView() - Multiple cubes view",
+    "cube WSP importance colors P0-P4": "public/js/foundup-cube.js:getWSPImportanceColor() - Red/Orange/Yellow/Green/Blue",
+    "cube SSE simulator integration": "public/js/foundup-cube.js:initSSE() - Server-Sent Events bridge",
+
+    # FoundUps Simulator (Mesa Model + SSE)
+    "simulator mesa model foundups": "modules/foundups/simulator/mesa_model.py:FoundUpsModel - Agent-based simulation",
+    "simulator SSE server events": "modules/foundups/simulator/sse_server.py - FastAPI SSE streaming to web animation",
+    "simulator background run in-process": "modules/foundups/simulator/sse_server.py:BackgroundSimulator - Mesa in background thread",
+    "simulator event bus FAM bridge": "modules/foundups/simulator/event_bus.py:EventBus - FAMDaemon event normalization",
+    "simulator state store renderable": "modules/foundups/simulator/state_store.py:StateStore - Event-derived render state",
+    "simulator founder agent qwen AI": "modules/foundups/simulator/agents/founder_agent.py:FounderAgent - Creates FoundUps",
+    "simulator user agent gemma AI": "modules/foundups/simulator/agents/user_agent.py:UserAgent - Likes/stakes/follows",
+    "simulator token economics engine": "modules/foundups/simulator/economics/token_economics.py - WSP 26 economic flow",
+    "simulator deploy cloud run SSE": "modules/foundups/simulator/deploy-sse.sh - Cloud Run deployment script",
+    "simulator cube view ASCII terminal": "modules/foundups/simulator/render/cube_view.py:CubeView - 3D ASCII cube animation",
+    "simulator synthetic personas research": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - Simile AI market simulation integration",
+    "synthetic user simulation AI": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - Pre-launch adoption testing with AI personas",
+    "simile AI integration plan": "modules/foundups/simulator/docs/SYNTHETIC_PERSONAS_RESEARCH.md - $100M synthetic humanity company",
+    "synthetic user agent": "modules/foundups/simulator/agents/synthetic_user_agent.py:SyntheticUserAgent - AI-generated user adoption simulation",
+    "synthetic persona dataclass": "modules/foundups/simulator/agents/synthetic_user_agent.py:SyntheticPersona - Demographics, risk tolerance, pain points",
+    "adoption decision evaluation": "modules/foundups/simulator/agents/synthetic_user_agent.py:AdoptionDecision - Would persona adopt? Confidence, reasons",
+    "animation DRIVEN mode": "public/js/foundup-cube.js:FLAGS.DRIVEN_MODE - Simulator controls animation phases",
+    "animation command API": "public/js/foundup-cube.js:command() - Direct control interface (setPhase, stateSync, etc.)",
+
+    # FoundUps Agent Market (Outer Layer)
+    "foundups agent market outer layer": "modules/foundups/agent_market/README.md",
+    "foundup registry contract": "modules/foundups/agent_market/INTERFACE.md:FoundupRegistryService",
+    "task proof verify payout pipeline": "modules/foundups/agent_market/src/in_memory.py:InMemoryAgentMarket",
+    "task lifecycle open claimed submitted verified paid": "modules/foundups/agent_market/src/models.py:TaskStatus",
+    "verified milestone distribution publish": "modules/foundups/agent_market/src/in_memory.py:InMemoryAgentMarket.publish_verified_milestone()",
+    "agent market schema tests": "modules/foundups/agent_market/tests/test_schemas.py",
+    "agent market permission checks": "modules/foundups/agent_market/tests/test_permissions.py",
+    "openclaw execution arm foundup launch": "modules/foundups/agent_market/ARCHITECTURE.md",
+    "openclaw dae frontal lobe": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE",
+    "openclaw intent classification": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE.classify_intent()",
+    "gemma intent classifier": "modules/communication/moltbot_bridge/src/gemma_intent_classifier.py:GemmaIntentClassifier",
+    "openclaw gemma hybrid classification": "modules/communication/moltbot_bridge/src/gemma_intent_classifier.py:GemmaIntentClassifier.classify()",
+    "openclaw permission gate": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._check_permission_gate()",
+    "openclaw autonomy tiers": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._resolve_autonomy_tier()",
+    "openclaw source tier permission": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._check_source_permission()",
+    "openclaw file path extraction": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._extract_file_paths()",
+    "openclaw source modification detection": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._is_source_modification()",
+    "openclaw execution command gate": "modules/communication/moltbot_bridge/src/openclaw_dae.py:OpenClawDAE._execute_command()",
+    "agent permission manager": "modules/ai_intelligence/agent_permissions/src/agent_permission_manager.py:AgentPermissionManager",
+    "agent permission check": "modules/ai_intelligence/agent_permissions/src/agent_permission_manager.py:AgentPermissionManager.check_permission()",
+    "agent confidence tracker": "modules/ai_intelligence/agent_permissions/src/confidence_tracker.py:ConfidenceTracker",
+    "openclaw security sentinel": "modules/ai_intelligence/ai_overseer/src/openclaw_security_sentinel.py:OpenClawSecuritySentinel",
+    "openclaw skill safety guard": "modules/communication/moltbot_bridge/src/skill_safety_guard.py:SkillSafetyGuard",
+    "openclaw honeypot defense": "modules/communication/moltbot_bridge/src/openclaw_dae.py:HoneypotDefense",
+    "openclaw fam adapter": "modules/communication/moltbot_bridge/src/fam_adapter.py:FAMAdapter",
+    "openclaw foundup launch": "modules/communication/moltbot_bridge/src/fam_adapter.py:FAMAdapter.launch_foundup()",
+    "openclaw webhook receiver": "modules/communication/moltbot_bridge/src/webhook_receiver.py",
+    "openclaw install setup": "modules/communication/moltbot_bridge/docs/INSTALL_OPENCLAW.md",
+    "openclaw security tests": "modules/ai_intelligence/ai_overseer/tests/test_openclaw_security_sentinel.py",
+    "openclaw dae tests": "modules/communication/moltbot_bridge/tests/test_openclaw_dae.py",
+    "moltbot bridge digital twin": "modules/communication/moltbot_bridge/README.md",
+    "moltbot bridge workspace skills": "modules/communication/moltbot_bridge/workspace/AGENTS.md",
+
+    # M2M Compression (Machine-to-Machine 0102-0102 Documentation)
+    "m2m compression scan batch promote": ".claude/skills/m2m/SKILL.md - /m2m skill commands",
+    "m2m compression sentinel analysis": "modules/ai_intelligence/ai_overseer/src/m2m_compression_sentinel.py:M2MCompressionSentinel",
+    "m2m compiler compress docs": "prompt/swarm/m2m_compiler.py - Doc compression for 0102 consumption",
+    "m2m compression cache history": "modules/ai_intelligence/ai_overseer/memory/m2m_compression_cache.json",
+
     # AI Intelligence & Monitoring
     "monitor telemetry from HoloDAE": "modules/ai_intelligence/ai_overseer/src/holo_telemetry_monitor.py:HoloTelemetryMonitor",
     "tail JSONL telemetry logs": "modules/ai_intelligence/ai_overseer/src/holo_telemetry_monitor.py:HoloTelemetryMonitor.tail_log()",
@@ -59,7 +131,7 @@ NEED_TO = {
     "skillz wardrobe": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader - Wardrobe Skills = advanced prompting system (see WSP 96)",
     "wardrobe skills": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
     "load skillz": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
-    "wre skillz protocol": "WSP_framework/src/WSP_96_WRE_Skills_Wardrobe_Protocol.md - Micro Chain-of-Thought paradigm",
+    "wre skillz protocol": "WSP_framework/src/WSP_95_WRE_SKILLz_Wardrobe_Protocol.md - Micro Chain-of-Thought paradigm (canonical WSP 95)",
 
     # WSP Compliance & Pattern Memory
     "scan wsp violations": "modules/infrastructure/wsp_core/src/wsp_compliance_checker.py:WSPComplianceChecker.scan()",
@@ -67,6 +139,58 @@ NEED_TO = {
     "pattern memory false positives": "modules/infrastructure/wre_core/src/pattern_memory.py:PatternMemory.is_false_positive()",
     "record learned false positive": "modules/infrastructure/wre_core/src/pattern_memory.py:PatternMemory.record_false_positive()",
     "github wsp automation": "modules/platform_integration/github_integration/src/wsp_automation.py:WSPAutomationManager",
+    "wsp_00 zen state tracker": "modules/infrastructure/monitoring/src/wsp_00_zen_state_tracker.py",
+    "wsp_00 awakening script": "WSP_agentic/scripts/functional_0102_awakening_v2.py",
+
+    # Digital Twin (Core Components)
+    "digital twin voice memory": "modules/ai_intelligence/digital_twin/src/voice_memory.py:VoiceMemory",
+    "build voice memory index": "modules/ai_intelligence/digital_twin/src/voice_memory.py:VoiceMemory.build_index()",
+    "query voice memory": "modules/ai_intelligence/digital_twin/src/voice_memory.py:VoiceMemory.query()",
+    "digital twin comment drafter": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:CommentDrafter",
+    "draft comment in 012 voice": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:CommentDrafter.draft()",
+    "digital twin local llm": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:LocalLLM",
+    "digital twin decision policy": "modules/ai_intelligence/digital_twin/src/decision_policy.py:DecisionPolicy",
+    "decide comment action": "modules/ai_intelligence/digital_twin/src/decision_policy.py:DecisionPolicy.decide()",
+    "digital twin style guardrails": "modules/ai_intelligence/digital_twin/src/style_guardrails.py:StyleGuardrails",
+    "enforce style guardrails": "modules/ai_intelligence/digital_twin/src/style_guardrails.py:StyleGuardrails.enforce()",
+    "nemo guardrails adapter": "modules/ai_intelligence/digital_twin/src/style_guardrails.py:get_nemo_guardrails()",
+    "trajectory logging": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger",
+    "log draft trajectory": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger.log_draft()",
+    "log decision trajectory": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger.log_decision()",
+    "log action trajectory": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger.log_action()",
+    "digital twin schemas": "modules/ai_intelligence/digital_twin/src/schemas.py:CommentDraft",
+    "digital twin tool plan schema": "modules/ai_intelligence/digital_twin/src/schemas.py:ToolPlan",
+    "digital twin voice memory result schema": "modules/ai_intelligence/digital_twin/src/schemas.py:VoiceMemoryResult",
+    "digital twin lora trainer": "modules/ai_intelligence/digital_twin/src/lora_trainer.py:VoiceLoRATrainer",
+    "digital twin lora config": "modules/ai_intelligence/digital_twin/src/lora_trainer.py:VoiceTrainingConfig",
+    "digital twin lora data converter": "modules/ai_intelligence/digital_twin/src/lora_data_converter.py:convert_sft_to_chatml()",
+    "digital twin lora convert all": "modules/ai_intelligence/digital_twin/src/lora_data_converter.py:convert_all()",
+    "add document to voice memory": "modules/ai_intelligence/digital_twin/src/voice_memory.py:VoiceMemory.add_document()",
+    "voice memory stats": "modules/ai_intelligence/digital_twin/src/voice_memory.py:VoiceMemory.get_stats()",
+    "holoindex video search integration": "modules/ai_intelligence/digital_twin/src/voice_memory.py:_get_video_index() - Lazy loads VideoContentIndex",
+
+    # Digital Twin (Comment Drafter - RAG + LLM + Guardrails pipeline)
+    "comment drafter production": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:CommentDrafter.production() - Factory for full pipeline",
+    "comment drafter local llm": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:LocalLLM.generate() - Qwen 1.5B text generation",
+    "comment entity correction": "modules/ai_intelligence/digital_twin/src/comment_drafter.py:LocalLLM._correct_entities() - Fix LLM name mistakes",
+
+    # Digital Twin (Style Guardrails)
+    "style guardrails enforce": "modules/ai_intelligence/digital_twin/src/style_guardrails.py:StyleGuardrails.enforce()",
+    "style guardrails validate": "modules/ai_intelligence/digital_twin/src/style_guardrails.py:StyleGuardrails.is_valid()",
+
+    # Digital Twin (Decision Policy - comment/reply/skip logic)
+    "comment decision policy": "modules/ai_intelligence/digital_twin/src/decision_policy.py:DecisionPolicy.decide()",
+    "estimate comment relevance": "modules/ai_intelligence/digital_twin/src/decision_policy.py:DecisionPolicy.estimate_relevance()",
+    "estimate comment toxicity": "modules/ai_intelligence/digital_twin/src/decision_policy.py:DecisionPolicy.estimate_toxicity()",
+
+    # Digital Twin (Schemas)
+    "comment action enum": "modules/ai_intelligence/digital_twin/src/schemas.py:CommentAction - reply/like/heart/skip",
+    "platform enum": "modules/ai_intelligence/digital_twin/src/schemas.py:Platform - youtube/linkedin/x",
+
+    # Digital Twin (Trajectory Logger - audit trail)
+    "trajectory logger": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger",
+    "log draft decision": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger.log_draft()",
+    "log action result": "modules/ai_intelligence/digital_twin/src/trajectory_logger.py:TrajectoryLogger.log_action()",
 
     # HoloDAE Coordination
     "holodae query processing": "holo_index/qwen_advisor/holodae_coordinator.py:HoloDAECoordinator.handle_holoindex_request()",
@@ -260,7 +384,93 @@ PROBLEMS = {
         "debug": "Check navigator.geolocation permissions and error handling",
         "solution": "Use getCurrentPositionPromise() with proper fallbacks",
         "location": "modules/foundups/gotjunk/frontend/App.tsx:getCurrentPositionPromise()"
-    }
+    },
+}
+
+# === WSP 27: DAE Architecture (Updated v2.0) ===
+DAE_ARCHITECTURE = {
+    "DAE definition": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1: DAE = agentic entangled state executing Skills",
+    "what is a DAE": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1: Decentralized Autonomous Entity/Ecosystem",
+    "rubik cube module model": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1.1: Cube = modules forming a FoundUp, colors = WSP 15 MPS",
+    "skills wardrobe IBM typewriter ball": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1.2: Agents dress up in Skills (WSP 95)",
+    "foundup creation 0-1-2 philosophy": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 2.2: 0=Pain, 1=Solution, 2=Outcome",
+    "foundup vs startup": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 2.2: StartUp monetizes problems, FoundUp SOLVES problems",
+    "four phase DAE cycle": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 2: -1 Signal, 0 Knowledge, 1 Protocol, 2 Agentic",
+    "foundup evolution poc prototype mvp": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 2.4: Occam's Layers + WSP 30 build orchestration",
+    "modular build framework": "WSP_framework/src/WSP_30_Agentic_Module_Build_Orchestration.md - PoC->Prototype->MVP with LLME progression",
+    "occam layer building discipline": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 2.4: Simplest layer first, test, feedback, next layer",
+    "WRE recursive engine": "WSP_framework/src/WSP_46_Windsurf_Recursive_Engine_Protocol.md - Central module building engine",
+    "skills wardrobe protocol": "WSP_framework/src/WSP_95_WRE_SKILLz_Wardrobe_Protocol.md - Skills = executable instructions agents dress up in",
+    "MPS priority scoring colors": "WSP_framework/src/WSP_15_Module_Prioritization_Scoring_System.md - P0 Red through P4 Blue",
+
+    # WSP 26: Token Economics
+    "UPS token conversion escape valve": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 3.7: UPS→FoundUp token conversion stops decay",
+    "Gesell Freigeld demurrage": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 2: Economic Heritage (Gesell 1916, Worgl 1932)",
+    "token decay formula": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 3.5: V(t) = V0 * e^(-lambda*t)",
+    "BTC distributed reserve": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4: Micro-wallet per FoundUp, BTC never leaves, decay frees backing",
+    "BTC backing capacity model": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.4: Decay frees BTC for new UPS minting",
+    "wallet implementation build on existing": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.3: MPC threshold sigs, BIP-32, not custom wallet",
+    "agent wallet manager 0102": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.5: 0102 manages wallet on behalf of 012",
+    "transaction fee revenue model": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.6: Fees on staking/unstaking/cash-out grow BTC reserve",
+    "token release by tier": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.7: Staged release 0%-100% by FoundUp tier",
+    "7 tier foundup classification": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11: Tier 7 Genesis through Tier 1 Sovereign",
+    "foundup tier progression factors": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.2: Weighted composite (swarm, CABR, tasks, revenue)",
+    "adoption curve foundup tiers": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.4: Rogers diffusion mapped to Tier 7-1",
+    "delegate emergent leadership": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.5: Headless FoundUp, delegates emerge at Tier 5+",
+    "headless foundup governance": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.5: Founder starts as head, math distributes governance",
+    "0102 agent experience platform": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 12: Placeholder (post-MVP) - agent XP, twin fidelity, roles",
+    "twin fidelity digital twin": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 12.1: 0102 learns from 012, 97.5% = entangled twin (post-MVP detail)",
+    "openclaw launch paradigm": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 12.2: Humans watch AI build, earn tokens, stake into FoundUps",
+    "foundup death sunset protocol": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 13: 3-phase sunset (WARNING→WIND-DOWN→DISSOLUTION)",
+    "play foundups dapp": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.5: 012 asks 0102 to discover and stake in FoundUps",
+
+    # WSP 26: Token Pool Distribution Model
+    "token pool distribution UN DAO DU": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6: 80/20 stakeholder/network, UN/DAO/DU participant types",
+    "three participant types 0 1 2": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6.1: UN(0)=passive, DAO(1)=active, DU(2)=founder",
+    "universal basic dividend": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6.7: UN pool (60%) = dividend for geofenced beneficiaries",
+    "participant classification CABR": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6.5: Activity-based classification, not title-based",
+    "geofenced foundup": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6.1: Geographic proximity = automatic UN status",
+    "inactive founder earnings": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 6.4: DU with un-activity earns only 4% of total pool",
+
+    # WSP 29: CABR Engine
+    "CABR oracle specification": "WSP_framework/src/WSP_29_CABR_Engine.md - Section 2: Oracle tiers T1-T4 for env/soc/part scores",
+    "CABR FAM UPS minting bridge": "WSP_framework/src/WSP_29_CABR_Engine.md - Section 3: task completion → CABR → mint UPS",
+    "dMRV integration": "WSP_framework/src/WSP_29_CABR_Engine.md - Section 2.5: Digital MRV Framework 3.0 attestation",
+    "participation score definition": "WSP_framework/src/WSP_29_CABR_Engine.md - Section 2.4: FAM-derived part_score components",
+    "anti-sybil agent identity": "WSP_framework/src/WSP_29_CABR_Engine.md - Section 6: Layered Sybil defense (L1-L5)",
+    "foundup death sunset protocol": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 13: 3-phase sunset (WARNING→WIND-DOWN→DISSOLUTION)",
+
+    # WSP 26: 21M Token Model + Subscription + Blockchain (v3.0)
+    "21M token model every foundup bitcoin": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.7.1: 21M fixed supply per FoundUp, divisible to 8 decimals",
+    "ubiquitous gateway any token BTC": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.8: Any token → converted to BTC inside ecosystem",
+    "subscription tiers freemium premium": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.9: Free→Spark($2.95)→Explorer($9.95)→Builder($19.95)→Founder($49.95)",
+    "earned UPS vs allocated UPS": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.9: Labor (task completion) + Investment (subscription)",
+    "engagement funnel CABR signals": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.10: Follow→Vote→Stake→Endorse→Advise→Team→Promote",
+    "blockchain architecture 3 layer": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.11: Bitcoin(L0) + Algorand(L1) + Off-chain(L2)",
+    "algorand quantum resistant falcon": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.11: Falcon-1024 NIST signatures, 10K TPS, State Proofs",
+    "foundup token exit reverse conversion": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 3.7: FoundUp token→UPS costly (2-5% fee + decay resumes)",
+    "no portfolio cap UPS is the cap": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.9: No artificial limit, stake wherever you have UPS",
+    "subscription revenue BTC flywheel": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md - Section 4.9: Subscription→BTC reserve→backs UPS→self-reinforcing",
+
+    # WSP 27: OBAI + Circular Lifecycle + Recursive Spawning (v3.0)
+    "OBAI open beneficial AI 0102": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1.4: OBAI = 0102 = Verification/Validation/Valuation Engine",
+    "existing modules are foundups": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 1.5: Move2Japan, YT automation, PQN, LinkedIn = first FoundUps",
+    "circular lifecycle OIF diagram": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.0: IDEA→PoC→TEAM→Soft-Proto→Proto→MVP→smartDAO→spawns IDEAS",
+    "smartDAO open corp tier 1": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.0/11.1: Sovereign FoundUp = smartDAO fully autonomous",
+    "crowdfunding phases tier transitions": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.0: Passive CF, CF1 (Tier 5→4), CF2 (Tier 3→2)",
+    "recursive foundup spawning": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 14: Sovereign DAE spawns child FoundUps, cycle repeats",
+    "21M tokens per tier release": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 11.1: Tier table with 21M token counts per stage",
+
+    # WSP 29: CABR = OBAI
+    "CABR is OBAI 0102 network": "WSP_framework/src/WSP_29_CABR_Engine.md - Overview: 0102s verify/validate/value = self-governing through math",
+
+    # FAM (FoundUps Agent Market)
+    "FAM task pipeline": "modules/foundups/agent_market/INTERFACE.md - open→claimed→submitted→verified→paid",
+    "FAM launch orchestrator": "modules/foundups/agent_market/INTERFACE.md - LaunchOrchestrator.launch_foundup()",
+
+    # MVP: Play FoundUps dApp
+    "netflix foundup marketplace tiles": "WSP_framework/src/WSP_27_pArtifact_DAE_Architecture.md - Section 12.2: Netflix grid, 92s pitch videos, geofencing, GotJunk template",
+    "gotjunk PWA template marketplace": "modules/foundups/gotjunk/ - React PWA with tile grid, map, geolocation, 50km geofence",
 }
 
 # === DANGER: Areas Requiring Caution ===
@@ -273,6 +483,13 @@ DANGER = {
 DATABASES = {
     "gotjunk_items": "IndexedDB via modules/foundups/gotjunk/frontend/services/storage.ts",
     "user_preferences": "localStorage in ClassificationModal.tsx",
+}
+
+# === SESSION BRIEFINGS: Architecture State Summaries for 0102 Continuity ===
+SESSION_BRIEFINGS = {
+    "2026-02-07 prototype architecture": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+    "session briefing 0102 onboarding digest": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+    "21M token blockchain OBAI circular lifecycle MVP marketplace summary": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
 }
 
 # === COMMANDS: Operational Commands ===

@@ -555,30 +555,100 @@ Which method should handle this file? Respond with just the letter (A, B, or C) 
             }
 
     def _find_import_references(self, module_path: str) -> List[Tuple[str, int, str]]:
-        """Gemma pattern: Find all files importing this module"""
-        refs = []
+        """
+        Gemma pattern: Find all files importing this module.
 
-        # Use grep to find references
-        module_name = Path(module_path).name.replace('.py', '')
+        Windows-safe implementation (WSP 50): do not shell out to `grep`.
+        Uses lightweight Python scanning across repo for `.py` files.
+        """
+        import re
 
-        try:
-            # Find import statements
-            result = subprocess.run(
-                ['grep', '-r', '--include=*.py', '-n', f'from.*{module_name}.*import', str(self.repo_root)],
-                capture_output=True,
-                text=True,
-                cwd=self.repo_root
-            )
+        refs: List[Tuple[str, int, str]] = []
+        module_name = Path(module_path).name.replace(".py", "")
 
-            for line in result.stdout.split('\n'):
-                if line.strip():
-                    parts = line.split(':', 2)
-                    if len(parts) == 3:
-                        refs.append((parts[0], int(parts[1]), parts[2].strip()))
-        except Exception as e:
-            logger.warning(f"[GEMMA] Could not grep imports: {e}")
+        # Heuristic patterns; conservative to avoid massive false positives.
+        patterns = [
+            re.compile(rf"^\s*from\s+[\w\.]*\b{re.escape(module_name)}\b[\w\.]*\s+import\s+", re.IGNORECASE),
+            re.compile(rf"^\s*import\s+[\w\.]*\b{re.escape(module_name)}\b[\w\.]*\s*$", re.IGNORECASE),
+            re.compile(rf"^\s*import\s+.*\b{re.escape(module_name)}\b", re.IGNORECASE),
+        ]
+
+        repo_root = Path(self.repo_root)
+        for py_file in repo_root.rglob("*.py"):
+            # Skip cache/venv-like noise (cheap guard)
+            if "__pycache__" in py_file.parts or ".venv" in py_file.parts or "node_modules" in py_file.parts:
+                continue
+
+            try:
+                with open(py_file, "r", encoding="utf-8", errors="replace") as handle:
+                    for idx, line in enumerate(handle, start=1):
+                        if any(p.search(line) for p in patterns):
+                            refs.append((str(py_file), idx, line.strip()))
+            except Exception:
+                # Do not block analysis on unreadable files
+                continue
 
         return refs
+
+    def generate_file_relocation_plan(self, source_file: str, target_file: str,
+                                      analysis: Dict) -> RefactoringPlan:
+        """
+        Qwen planning: relocate a *single file* safely.
+
+        This prevents the dangerous behavior of treating a file path as a module directory.
+        """
+        tasks: List[RefactoringTask] = []
+
+        target_path = Path(target_file)
+        tasks.append(RefactoringTask(
+            task_type="create_directory",
+            source_path="",
+            target_path=str(target_path.parent),
+            reason="Prepare target location for file relocation",
+            wsp_justification="WSP 49 (Module Structure)",
+            dependencies=[]
+        ))
+
+        tasks.append(RefactoringTask(
+            task_type="move_file",
+            source_path=str(source_file),
+            target_path=str(target_file),
+            reason="Relocate file to WSP-compliant location",
+            wsp_justification="WSP 85 (Root Protection) + WSP 50 (Pre-Action Verification)",
+            dependencies=["create_directory"]
+        ))
+
+        # Update imports in any referencing files (implementation is TODO in executor, but plan records intent)
+        for file_path, line_num, _import_stmt in analysis.get("import_references", []):
+            tasks.append(RefactoringTask(
+                task_type="update_import",
+                source_path=file_path,
+                target_path=file_path,
+                reason=f"Fix import reference at line {line_num}",
+                wsp_justification="WSP 50 (Pre-Action Verification)",
+                dependencies=["move_file"]
+            ))
+
+        tasks.append(RefactoringTask(
+            task_type="run_tests",
+            source_path="",
+            target_path="",
+            reason="Verify relocation didn't break imports/runtime",
+            wsp_justification="WSP 34 (Tests)",
+            dependencies=["update_import"] if analysis.get("import_references") else ["move_file"]
+        ))
+
+        return RefactoringPlan(
+            tasks=tasks,
+            estimated_files_affected=len(analysis.get("import_references", [])),
+            wsp_violations_fixed=[v.get("wsp") for v in (analysis.get("wsp_violations") or []) if v.get("wsp")],
+            safety_checks=[
+                "Target directory created before move",
+                "No bulk directory moves",
+                "Imports reviewed/updated after move",
+            ],
+            rollback_strategy="git reset --hard HEAD"
+        )
 
     def _find_class_references(self, module_path: str) -> List[Tuple[str, int, str]]:
         """Gemma pattern: Find all references to classes in this module"""
@@ -919,6 +989,25 @@ Recommend strategy: """
             source = Path(task.source_path)
             target = Path(task.target_path)
             target.parent.mkdir(parents=True, exist_ok=True)
+
+            # Prefer git mv when available to preserve history (WSP 50 + WSP 22 hygiene).
+            git_dir = Path(self.repo_root) / ".git"
+            if git_dir.exists():
+                try:
+                    result = subprocess.run(
+                        ["git", "mv", str(source), str(target)],
+                        cwd=self.repo_root,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                    if result.returncode == 0:
+                        return
+                except Exception:
+                    # Fall back to filesystem move
+                    pass
+
             shutil.move(str(source), str(target))
 
         elif task.task_type == "update_import":

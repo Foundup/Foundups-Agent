@@ -37,7 +37,8 @@ Apply git patch with safety validation.
 apply_patch(
     patch_content: str,
     patch_description: str = "Autonomous patch",
-    dry_run: bool = False
+    dry_run: bool = False,
+    memory_bundle: Optional[Dict] = None
 ) -> Dict
 ```
 
@@ -45,6 +46,7 @@ apply_patch(
 - `patch_content`: Unified diff patch content
 - `patch_description`: Human-readable description
 - `dry_run`: If True, only validate without applying
+- `memory_bundle`: Optional machine-readable memory bundle (recorded for audit; preflight still enforced per touched module)
 
 **Returns**:
 ```python
@@ -55,11 +57,19 @@ apply_patch(
     "files_modified": List[str],  # List of files in patch
     "violations": List[str],      # Allowlist violations (if any)
     "error": Optional[str],       # Error message (if failed)
-    "patch_description": str      # Description (echoed back)
+    "patch_description": str,     # Description (echoed back)
+    "memory_preflight": Dict      # Memory gate details (when enabled)
 }
 ```
 
 ## Safety Features
+
+### Memory Preflight Gate (WSP_CORE)
+
+When enabled, PatchExecutor enforces Tier-0 memory artifacts for each module touched by the patch via WRE MemoryPreflightGuard.
+
+- Enable/disable: `PATCH_EXECUTOR_MEMORY_GUARD` (default: true)
+- Override (dangerous): `PATCH_EXECUTOR_ALLOW_NO_MEMORY` (default: false)
 
 ### Forbidden Operations (Default)
 

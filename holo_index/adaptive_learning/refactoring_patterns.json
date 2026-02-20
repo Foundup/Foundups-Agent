@@ -1,0 +1,51 @@
+{
+  "successful_refactorings": [
+    {
+      "timestamp": "O:\\Foundups-Agent",
+      "module_path": "O:\\Foundups-Agent\\test_holiday.py",
+      "target_location": "holo_index/tests/test_holiday.py",
+      "tasks_executed": 3,
+      "wsp_violations_fixed": [
+        "Multiple WSPs (Deep Analysis)"
+      ],
+      "success": true,
+      "lessons_learned": {
+        "pattern_type": "module_relocation",
+        "coupling_score": "calculated_by_gemma",
+        "files_affected": 0
+      }
+    },
+    {
+      "timestamp": "O:\\Foundups-Agent",
+      "module_path": "O:\\Foundups-Agent\\test_write_simple.py",
+      "target_location": "holo_index/tests/test_write_simple.py",
+      "tasks_executed": 3,
+      "wsp_violations_fixed": [
+        "Multiple WSPs (Deep Analysis)"
+      ],
+      "success": true,
+      "lessons_learned": {
+        "pattern_type": "module_relocation",
+        "coupling_score": "calculated_by_gemma",
+        "files_affected": 0
+      }
+    },
+    {
+      "timestamp": "O:\\Foundups-Agent",
+      "module_path": "O:\\Foundups-Agent\\test_cardiovascular_fixes.py",
+      "target_location": "holo_index/tests/test_cardiovascular_fixes.py",
+      "tasks_executed": 3,
+      "wsp_violations_fixed": [
+        "Multiple WSPs (Deep Analysis)"
+      ],
+      "success": true,
+      "lessons_learned": {
+        "pattern_type": "module_relocation",
+        "coupling_score": "calculated_by_gemma",
+        "files_affected": 0
+      }
+    }
+  ],
+  "failed_attempts": [],
+  "learned_patterns": []
+}

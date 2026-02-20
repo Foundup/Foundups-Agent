@@ -13,6 +13,7 @@
     "**/__pycache__",
     ".cursor",
     ".claude",
+    ".agent",
     "archive",
     "campaign_results",
     "chroma",
@@ -21,6 +22,7 @@
     "holo_index",
     "logs",
     "memory",
+    "**/memory",
     "docs",
     "WSP_agentic",
     "WSP_framework",
@@ -28,6 +30,12 @@
     "**/*.md",
     "temp",
     "temp_utilities",
-    "telemetry"
+    "telemetry",
+    "external_research",
+    "training_data",
+    "undaodu",
+    "**/skillz",
+    "**/data",
+    "scripts"
   ]
 }

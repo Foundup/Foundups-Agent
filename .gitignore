@@ -8,6 +8,13 @@
 /firestore.rules
 /firebase.json
 
+# Firebase deployment artifacts (root level - not module-specific)
+/.firebase/
+/.firebaserc
+/firestore.indexes.json
+# /public/ - TRACKED: Contains animation source code (foundup-cube.js)
+/functions/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -68,6 +75,7 @@ env/
 logs/
 02_log/
 012.txt
+012.longlines.txt
 
 # Chrome profile data (browser automation)
 **/chrome_profile/
@@ -268,3 +276,74 @@ test_output.txt
 scripts/*.txt
 *.wal
 *.shm
+
+# Session analysis artifacts (temporary investigation outputs)
+COMMENT_ROTATION_ISSUE_ANALYSIS.json
+ORCHESTRATION_FLOW_ANALYSIS_SUMMARY.txt
+YOUTUBE_SHORTS_INVESTIGATION_FINDINGS.md
+
+# Session investigation and audit docs (per-session, not permanent)
+docs/investigations/
+docs/audits/
+docs/sessions/
+
+# WSP agentic awakening runtime state (changes every session)
+WSP_agentic/agentic_journals/*/awakening_log.txt
+
+# Generated video ID lists (channel audit data, auto-scraped)
+data/*_video_ids.txt
+
+# External cloned research repos (use submodules instead)
+external_research/
+
+# Training data and screenshots (binary/large files)
+training_data/
+**/data/training_screenshots/
+
+# Channel-specific data directories
+undaodu/
+
+# LinkedIn agent identity/account data (per-environment config)
+modules/platform_integration/linkedin_agent/data/linkedin_*.json
+
+# OAuth tokens and access tokens (NEVER commit live tokens)
+**/tokens/access_token*.json
+**/tokens/refresh_token*.json
+**/tokens/oauth_token*.json
+**/tokens/*.token
+
+# Generated reports and diagnostics (ephemeral per-session)
+holo_index/reports/
+**/reports/*.md
+**/reports/*.json
+
+# HoloIndex output history (runtime telemetry)
+holo_index/holo_index/output/holo_output_history.jsonl
+
+# Claude Code user-specific settings
+.claude/settings.json
+.claude/settings.local.json
+
+# One-off debug/fix scripts (prefixed _ = personal utility)
+scripts/_*.py
+scripts/fix_*.py
+scripts/check_*.py
+scripts/check_*.sh
+scripts/restart_*.sh
+scripts/verify_*.sh
+scripts/get_*.py
+scripts/close_*.py
+scripts/approve_*.py
+scripts/test_*.py
+scripts/wsl_*.sh
+
+# WSP agentic runtime state (changes every session)
+WSP_agentic/agentic_journals/awakening/0102_state_v2.json
+WSP_agentic/agentic_journals/awakening/awareness_log.md
+
+# Data directories (runtime scraped/generated data)
+data/
+
+# Temporary output files
+tmp_*.txt
+tmp_*.log

@@ -1,0 +1,23 @@
+{
+  "params": {
+    "num_founder_agents": 3,
+    "num_user_agents": 10,
+    "tick_rate_hz": 2.0,
+    "max_ticks": 1000,
+    "seed": 42,
+    "initial_agent_tokens": 1000,
+    "foundup_creation_cost": 100,
+    "founder_max_foundups": 3,
+    "like_cost": 1,
+    "follow_cost": 5,
+    "stake_min": 10,
+    "stake_max": 100,
+    "agent_action_probability": 0.3,
+    "agent_cooldown_ticks": 5,
+    "grid_width": 10,
+    "grid_height": 6,
+    "use_ai": 0,
+    "ai_risk_tolerance": 0.5,
+    "verbose": 0
+  }
+}

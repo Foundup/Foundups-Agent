@@ -7,6 +7,278 @@
 
 ## Change Log
 
+### 2026-02-12 - ALLY Detection: Anti-MAGA Agreement Mode (#FFCPLN)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 96 (WRE Skills)
+
+**Problem:** Comments criticizing Trump/MAGA (anti-fascist allies) received generic corporate responses instead of agreement and amplification. Example: "@StevenAustin-f5d: Our 'president' isn't qualified to run a fake University..." got "We value your privacy..." instead of joining in on Trump trolling.
+
+**Root Cause:** CommenterClassifier only had 3 tiers:
+- 0✊ MAGA_TROLL (previously whacked users)
+- 1✋ REGULAR (everyone else)
+- 2🖐️ MODERATOR (community leaders)
+
+No detection for anti-Trump ALLIES who deserve agreement, not neutral responses.
+
+**Solution:** Added ALLY classification (3🤝) for anti-Trump/anti-MAGA sentiment.
+
+**Changes (2 files):**
+
+**commenter_classifier.py:**
+- Added `CommenterType.ALLY = 3` enum value with 🤝 emoji
+- Added `ANTI_TRUMP_ALLY_PATTERNS` (40+ patterns):
+  - Direct Trump criticism: "isn't qualified", "worst president", "impeach"
+  - MAGA mockery: "maga cult", "magats", "brainwashed"
+  - Fascism awareness: "fascist", "authoritarian", "1933", "nazi"
+  - Scandal refs: "pedo", "epstein", "fake university", "fraud"
+- Returns `method: 'sentiment_ally'` with 0.85 confidence
+
+**intelligent_reply_generator.py:**
+- Added `CommenterType.ALLY = "ally"` enum
+- Updated `to_012_code()` to return 3 for ALLY
+- Added `TIER_EMOJI[3] = "🤝"`
+- Added `ALLY_RESPONSES` templates (10 agreement responses with #FFCPLN)
+- Added ALLY routing in skill router: generates LLM agreement or uses templates
+- Custom ally prompt: "AGREES with criticism, AMPLIFIES anti-Trump sentiment"
+
+**Expected Impact:** Anti-MAGA allies now get engaged responses that agree and join in Trump trolling instead of generic corporate text. #FFCPLN skill properly utilized for all anti-fascist content.
+
+**Example Flow:**
+- Comment: "Our 'president' isn't qualified to run a fake University..."
+- Classification: 3🤝 ALLY (pattern: "fake university")
+- Response: "EXACTLY! 🎯 The guy couldn't even run a fake university without fraud. #FFCPLN ✊✋🖐️"
+
+---
+
+### 2026-02-04 - VoiceMemory Integration for Reply Grounding (Anti-Fabrication)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
+
+**Problem:** Grok-3-fast fabricated identity claims ("Missouri is my home state") and produced spelling errors. Reply generator had zero grounding in 0102's actual memory/history.
+
+**Solution:** Integrated existing VoiceMemory (Digital Twin RAG) into reply generation pipeline. VoiceMemory queries FAISS/TF-IDF comment corpus + HoloIndex VideoContentIndex for relevant context, injected into LLM prompt as "VERIFIED MEMORY".
+
+**Changes (1 file: intelligent_reply_generator.py):**
+- Added lazy VoiceMemory init with `_get_voice_memory()` helper
+- Added `_load_voice_memory_context()` method: queries VoiceMemory, filters score>0.3, formats as grounding context
+- Injected voice memory context into Tier 1 user prompts (after personalization, before content analysis)
+- Updated REPLY_SYSTEM_PROMPT with verified memory instructions
+- Added `YT_012_VOICE_MEMORY_ENABLED` env var kill switch (default: true)
+
+**Modules Reused (zero new files):**
+- `modules/ai_intelligence/digital_twin/src/voice_memory.py` — VoiceMemory.query()
+- `holo_index/core/video_search.py` — VideoContentIndex (auto-queried by VoiceMemory)
+
+**Expected Impact:** Replies grounded in real 0102 history instead of LLM hallucinations. Identity fabrication eliminated by system prompt + memory grounding.
+
+---
+
+### 2026-02-04 - Comment Engagement Speed Optimization (~50% faster per comment)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 91 (DAEmon Observability)
+
+**Problem:** Comment engagement pipeline was ~35s per comment at 012 tempo. Heart/like working but replies felt slow. Double probabilistic skip gate caused 75% of Tier 1 comments to receive NO reply.
+
+**Root Cause Analysis:** Full timing audit of every `asyncio.sleep()`, API timeout, and I/O operation in the pipeline identified 9 bottlenecks.
+
+**Changes (4 files):**
+
+**comment_engagement_dae.py:**
+- Inter-comment pause: 5s base -> 2s base (1.2-2.8s range)
+- Page refresh delay: 5s base -> 2.5s base (1.5-3.5s range)
+- Navigate-to-inbox delay: 5s -> 3s
+
+**comment_processor.py:**
+- Like/Heart post-click delay: 0.8s min -> 0.4s min
+- Inter-action delay (disabled actions): 1.0s -> 0.3s
+- Layer 2 (LLM) timeout: 15s -> 10s
+- Pre-action screenshots: default ON -> default OFF (saves ~1-2s/comment from disk I/O + PNG capture)
+
+**reply_executor.py:**
+- Reply box open delay: 1.5s base -> 0.6s base
+- Thinking pause before typing: 2.0s base -> 0.8s base
+- Character delay: 0.096s -> 0.055s per char (~43% faster typing)
+- Hesitation rate: 5% -> 2%, shorter hesitations (0.3-1.2s vs 0.4-2.4s)
+- Micro-edit rate: 2% -> 1%
+- Pre-submit delay: 0.8s -> 0.4s
+
+**intelligent_reply_generator.py:**
+- Grok API timeout: 12s -> 8s
+- LM Studio timeout: 15s -> 8s
+- **FIX: Removed duplicate 50% reply skip gate for Tier 1** (was at line 2007). Comment_processor.py already applies `YT_012_REPLY_SKIP_PROB`. Having it in both places meant 75% skip rate (0.5 * 0.5 = 0.25 pass). Now controlled solely by comment_processor.
+
+**Estimated Impact:**
+- Before: ~35s per comment (012 tempo)
+- After: ~18s per comment (012 tempo)
+- Reply rate for Tier 1: 25% -> 50% (double probabilistic gate fixed)
+
+---
+
+### 2026-02-04 - OOPS channel_switcher ?next= Redirect Loop Fix + Selector Audit
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+**Problem:** Clicking "Switch account" on OOPS page navigates to `channel_switcher?next=<wrong_channel_URL>`. After selecting the correct account, the `?next=` redirect sends the browser back to the wrong channel URL, re-triggering the OOPS page in an infinite loop.
+
+**Solution:** In `_click_permission_switch()`, before clicking the link:
+1. Remove `target="_blank"` (prevents new tab — already fixed 2026-02-04)
+2. **NEW**: Rewrite `?next=` parameter to `https://studio.youtube.com/` so after account switch, the browser lands on Studio root instead of the wrong channel
+
+**Files:**
+- `skillz/tars_account_swapper/account_swapper_skill.py` — `_click_permission_switch()` rewrites `?next=` in all 3 click strategies
+
+---
+
+### 2026-02-03 - OOPS Page Intelligent Resolution + Switchboard Telemetry
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 87 (Navigation Protocol)
+
+**Problem:** Channel rotation stuck on OOPS permission error pages. `swap_to()` called `click_avatar()` which always fails on OOPS pages (no avatar present). No observability into OOPS events.
+
+**Solution:** Enhanced `account_swapper_skill.py` with:
+
+1. **OOPS pre-check in swap_to()**: Detects OOPS page before `click_avatar` and routes directly to `swap_from_oops_page()`
+2. **5-step resolution cascade in swap_from_oops_page()**:
+   - DOM click "Switch Account" -> select account
+   - UI-TARS vision click "Switch Account" -> select account
+   - DOM click "Return to Studio" -> navigate to target
+   - UI-TARS vision click "Return to Studio" -> navigate to target
+   - Direct URL navigation (last resort)
+3. **_ui_tars_click_oops_button()**: New method using vision model for OOPS button interaction
+4. **_click_return_to_studio()**: New DOM method for "Return to Studio" button
+5. **Hardened _click_permission_switch()**: Broader selectors, case-insensitive matching
+6. **Orchestration switchboard telemetry**: Emits `oops_page_detected` / `oops_page_recovered` signals
+7. **Infinite recursion prevention**: `swap_from_oops_page()` no longer calls `swap_to()` when not on OOPS page
+
+**Files Modified:**
+- `skillz/tars_account_swapper/account_swapper_skill.py`
+
+---
+
+### 2026-01-28 - Account Swapper DOM Precision + UI-TARS Verification
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 87 (Navigation Protocol), WSP 49 (DOM Resilience)
+
+**Problem:** Channel rotation not moving from Move2Japan to UnDaoDu after comments processed. Account switching unreliable.
+
+**Solution:** Updated `account_swapper_skill.py` with:
+
+1. **Precise DOM paths** from user inspection of YouTube Studio account picker:
+   - Avatar button: `button#avatar-btn`
+   - Switch Account: `ytd-compact-link-renderer` with "Switch account" text
+   - Account picker: `ytd-account-section-list-renderer` structure with `tp-yt-paper-icon-item`
+
+2. **Account picker index mapping**:
+   ```python
+   ACCOUNT_PICKER_MAP = {
+       "UnDaoDu": {"section": 0, "index": 0},
+       "Move2Japan": {"section": 0, "index": 1},
+       "FoundUps": {"section": 1, "index": 0},
+       "RavingANTIFA": {"section": 1, "index": 1},
+   }
+   ```
+
+3. **UI-TARS verification** after each step:
+   - Step 1: Verify account menu opened
+   - Step 2: Verify account picker visible
+   - Step 3: Verify account selected
+   - Step 4: Verify landed on target channel
+
+4. **Multi-strategy selection**:
+   - Strategy 1: Index-based (most reliable with known structure)
+   - Strategy 2: Text-based search on `tp-yt-paper-icon-item`
+   - Strategy 3: Fallback to `ytd-account-item-renderer`
+
+**Files Changed:**
+- `skillz/tars_account_swapper/account_swapper_skill.py`: Complete DOM path + UI-TARS update
+
+---
+
+### 2026-01-23 - Emoji Comment Detection Hardening
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 91 (Observability)
+
+**Problem:** Emoji-only comments like "👏🤟🤘" were not being detected as emoji comments. LLM received empty string `""` and generated confused responses like "If you're asking about ""...".
+
+**Investigation:**
+- Emoji regex pattern was tested and confirmed working
+- Added comprehensive logging to trace emoji detection flow
+- Identified that code path WAS reaching emoji check
+
+**Solution:**
+1. **Hardened emoji pattern** in `intelligent_reply_generator.py:_is_emoji_comment()`:
+   - Added `\U0001F400-\U0001F4FF` range (people, hands, gestures)
+   - Added `\U0001F910-\U0001F9FF` range (faces, hands extended)
+   - Added `\U0000FE00-\U0000FE0F` (variation selectors)
+   - Added `\U0001F3FB-\U0001F3FF` (skin tone modifiers)
+
+2. **Added comprehensive logging:**
+   - Log input text with repr() to see exact characters
+   - Log emoji count and text-only length
+   - Log final IS/NOT emoji decision
+
+3. **Added entry point logging** in `generate_reply()`:
+   - Logs comment_text with repr() at function entry
+   - Helps diagnose if emoji is being lost before reaching function
+
+**Files Changed:**
+- `src/intelligent_reply_generator.py`: Hardened `_is_emoji_comment()` + added logging
+
+---
+
+### 2026-01-21 - Digital Twin Response Alignment
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 73 (Digital Twin Architecture)
+
+**Change:** Documented Digital Twin as primary response engine for Studio comments, with BanterEngine as fallback and indexing-based routing (012 voice vs music).
+
+### 2026-01-18 - Reply Submit Button Selector Hardening
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 49 (DOM Resilience)
+
+**Problem:** Reply text was entered into the comment reply box but the "Reply" button was never clicked to submit. Screenshot showed reply text sitting in box with Cancel/Reply buttons visible but unclicked.
+
+**Root Cause:**
+- `reply_executor.py` submit button selector `#submit-button button` was not finding the current YouTube Studio DOM element
+- YouTube Studio's comment reply submit button may have different selectors depending on context
+
+**Solution (6-Strategy Selector Cascade):**
+
+1. **Strategy 1**: Direct ID selectors (legacy working paths)
+2. **Strategy 2**: Look in comment-creator section
+3. **Strategy 3**: iron-pages / slot buttons
+4. **Strategy 4**: Shadow DOM deep search
+5. **Strategy 5**: Text-based fallback (finds button with text "Reply")
+6. **Strategy 6**: Global search in ytcp-comment-creator
+
+**Files Changed:**
+- `src/reply_executor.py` - Completely rewrote submit button finder with multiple fallback strategies + forced mouse event dispatch for custom element compatibility
+
+**Key Code Pattern:**
+```javascript
+// Text-based fallback - find button with text "Reply"
+function findButtonByText(root, text) {
+    const buttons = root.querySelectorAll('button, ytcp-button');
+    for (const btn of buttons) {
+        if ((btn.textContent || '').trim().toLowerCase() === text.toLowerCase()) {
+            return btn.querySelector('button') || btn;
+        }
+    }
+    return null;
+}
+```
+
+---
+
 ### 2026-01-01 - ADR-012: Cross-Comment Loop Prevention
 
 **By:** 0102

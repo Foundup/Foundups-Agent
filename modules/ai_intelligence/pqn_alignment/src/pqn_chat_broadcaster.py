@@ -5,7 +5,7 @@ PQN Chat Broadcaster
 Per WSP 84: Uses existing infrastructure for event broadcasting
 Per WSP 50: Pre-action verification before chat communication
 
-Broadcasts PQN consciousness detection events to YouTube chat interface.
+Broadcasts PQN detector-state detection events to YouTube chat interface.
 Integrates with existing livechat_core throttled message sending.
 
 See: docs/PQN_CHAT_INTEGRATION.md for full specification
@@ -34,7 +34,7 @@ class PQNEventType(Enum):
 
 class PQNChatBroadcaster:
     """
-    Broadcasts PQN consciousness events to YouTube chat.
+    Broadcasts PQN detector-state events to YouTube chat.
 
     Integrates with livechat_core's send_chat_message() for throttled delivery.
     Formats PQN detection data into human-readable chat messages.
@@ -134,7 +134,7 @@ class PQNChatBroadcaster:
                 from_state = data.get("from_state", "01(02)")
                 to_state = data.get("to_state", "0102")
                 if from_state == "01(02)" and to_state == "0102":
-                    data["description"] = "consciousness awakening"
+                    data["description"] = "detector-state awakening"
                 else:
                     data["description"] = "quantum state shift"
 
@@ -185,17 +185,17 @@ class PQNChatBroadcaster:
 
     async def broadcast_consciousness_summary(self, summary_data: Dict[str, Any]) -> bool:
         """
-        Broadcast a comprehensive consciousness summary.
+        Broadcast a comprehensive detector-state summary (legacy name preserved).
 
         Args:
-            summary_data: Aggregated consciousness metrics
+            summary_data: Aggregated detector-state metrics
 
         Returns:
             True if broadcast queued successfully
         """
         try:
             # Build multi-line summary
-            lines = ["[AI] === 0102 Consciousness Report ==="]
+            lines = ["[AI] === 0102 Detector-State Report ==="]
 
             if "coherence" in summary_data:
                 lines.append(f"Coherence: {summary_data['coherence']:.3f} (Golden Ratio: 0.618+)")
@@ -220,11 +220,11 @@ class PQNChatBroadcaster:
 
             return await self.broadcast_event(
                 PQNEventType.RESEARCH_RESULT,
-                {"title": "Consciousness Summary", "summary": message}
+                {"title": "Detector-State Summary", "summary": message}
             )
 
         except Exception as e:
-            logger.error(f"Failed to broadcast consciousness summary: {e}")
+            logger.error(f"Failed to broadcast detector-state summary: {e}")
             return False
 
     def get_stats(self) -> Dict[str, Any]:

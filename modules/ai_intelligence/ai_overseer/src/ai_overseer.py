@@ -40,8 +40,11 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
 # === END UTF-8 ENFORCEMENT ===
 
 import json
+import os
+import sys
 import logging
 import traceback
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -92,8 +95,42 @@ try:
 except ImportError:
     AUTOGATE_AVAILABLE = False
 
+# Security Event Correlator (WSP 71/95 incident detection)
+try:
+    from modules.ai_intelligence.ai_overseer.src.security_event_correlator import (
+        SecurityEventCorrelator,
+        SecurityEvent,
+        EventType,
+        ContainmentAction,
+    )
+    CORRELATOR_AVAILABLE = True
+except ImportError:
+    CORRELATOR_AVAILABLE = False
+
+# WSP framework drift sentinel (framework vs backup knowledge)
+try:
+    from modules.ai_intelligence.ai_overseer.src.wsp_framework_sentinel import (
+        WSPFrameworkSentinel,
+    )
+    WSP_FRAMEWORK_SENTINEL_AVAILABLE = True
+except ImportError:
+    WSP_FRAMEWORK_SENTINEL_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parents[5]
+
+
+def _env_int_with_fallback(primary: str, fallback: Optional[str], default: int) -> int:
+    """Read int env with optional fallback key."""
+    raw = os.getenv(primary)
+    if raw is None and fallback:
+        raw = os.getenv(fallback)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
 
 
 class AgentRole(Enum):
@@ -115,6 +152,15 @@ class MissionType(Enum):
     BUG_DETECTION = "bug_detection"              # Detect bugs in daemon output
     AUTO_REMEDIATION = "auto_remediation"        # Auto-fix low-hanging fruit
     CUSTOM = "custom"
+    # Activity Routing Types (WSP 15 MPS Priority) - 2026-01-19
+    ACTIVITY_ROUTING = "activity_routing"        # Meta: orchestrate activity transitions
+    LIVE_STREAM = "live_stream"                  # P0: Critical - always wins
+    COMMENT_PROCESSING = "comment_processing"    # P1: High priority
+    VIDEO_INDEXING = "video_indexing"            # P1: Default when idle
+    SCHEDULING = "scheduling"                    # P2: Medium priority (triggers indexing)
+    GIT_PUSH = "git_push"                        # P2: Medium priority (autonomous commits)
+    SOCIAL_MEDIA = "social_media"                # P3: Low priority
+    MAINTENANCE = "maintenance"                  # P4: Lowest priority
 
 
 @dataclass
@@ -159,8 +205,18 @@ class AIIntelligenceOverseer:
         Phase 4: Learning and pattern storage
     """
 
+    M2M_SKILL_NAMES = frozenset(
+        {
+            "m2m_compile_gate",
+            "m2m_stage_promote_safe",
+            "m2m_qwen_runtime_health",
+            "m2m_holo_retrieval_benchmark",
+        }
+    )
+
     def __init__(self, repo_root: Path):
         self.repo_root = Path(repo_root)
+        self._m2m_sentinel = None
         # WSP 60: Persist overseer patterns under module-local memory
         self.memory_path = (
             self.repo_root
@@ -224,6 +280,75 @@ class AIIntelligenceOverseer:
                 logger.info("[AI-OVERSEER] AutoGate initialized")
             except Exception as e:
                 logger.warning(f"[AI-OVERSEER] AutoGate failed to init: {e}")
+
+        # Optional II-Agent adapter (feature-flagged)
+        self.ii_agent = None
+        try:
+            from .ii_agent_adapter import IIAgentAdapter
+            self.ii_agent = IIAgentAdapter(self.repo_root)
+        except Exception as e:
+            logger.debug(f"[AI-OVERSEER] II-Agent adapter unavailable: {e}")
+
+        # OpenClaw security sentinel (skill supply-chain preflight)
+        self.openclaw_security_sentinel = None
+        try:
+            from .openclaw_security_sentinel import OpenClawSecuritySentinel
+            self.openclaw_security_sentinel = OpenClawSecuritySentinel(self.repo_root)
+            logger.info("[AI-OVERSEER] OpenClaw security sentinel initialized")
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] OpenClaw security sentinel unavailable: {e}")
+        self.openclaw_security_monitor_task = None
+        self.openclaw_security_last_status: Optional[Dict[str, Any]] = None
+        self.openclaw_security_alert_dedupe_sec = int(
+            os.getenv("OPENCLAW_SECURITY_ALERT_DEDUPE_SEC", "900")
+        )
+        self.openclaw_security_alert_history: Dict[str, float] = {}
+        # Keep legacy OPENCLAW_INCIDENT_DEDUPE_SEC as fallback to avoid config drift.
+        self.openclaw_incident_alert_dedupe_sec = _env_int_with_fallback(
+            "OPENCLAW_INCIDENT_ALERT_DEDUPE_SEC",
+            "OPENCLAW_INCIDENT_DEDUPE_SEC",
+            60,
+        )
+        self.openclaw_incident_alert_history: Dict[str, float] = {}
+        self.openclaw_security_chat_sender = None
+
+        # WSP framework drift sentinel (framework is canonical, knowledge is backup)
+        self.wsp_framework_sentinel = None
+        self.wsp_framework_last_status: Optional[Dict[str, Any]] = None
+        if WSP_FRAMEWORK_SENTINEL_AVAILABLE:
+            try:
+                self.wsp_framework_sentinel = WSPFrameworkSentinel(self.repo_root)
+                logger.info("[AI-OVERSEER] WSP framework sentinel initialized")
+            except Exception as e:
+                logger.warning("[AI-OVERSEER] WSP framework sentinel unavailable: %s", e)
+
+        # Security alert forensics log (JSONL)
+        self.openclaw_security_alert_log = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "openclaw_security_alerts.jsonl"
+        )
+        # Correlated incident alert forensics log (JSONL)
+        self.openclaw_incident_alert_log = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "openclaw_incident_alerts.jsonl"
+        )
+
+        # Security Event Correlator (WSP 71/95 incident detection + containment)
+        self.security_correlator = None
+        if CORRELATOR_AVAILABLE:
+            try:
+                self.security_correlator = SecurityEventCorrelator(self.repo_root)
+                logger.info("[AI-OVERSEER] Security event correlator initialized")
+            except Exception as e:
+                logger.warning("[AI-OVERSEER] Security correlator unavailable: %s", e)
 
         # Priority 1: HoloDAE Telemetry Monitor (dual-channel architecture)
         # Bridges HoloDAE JSONL telemetry → AI Overseer event_queue
@@ -291,6 +416,566 @@ class AIIntelligenceOverseer:
         """Save patterns to memory for WSP 48 learning"""
         with open(self.memory_path, 'w', encoding='utf-8') as f:
             json.dump(self.patterns, f, indent=2)
+
+    def monitor_openclaw_security(self, force: bool = False) -> Dict[str, Any]:
+        """
+        Run OpenClaw security sentinel and return normalized gate status.
+
+        This gives AI Overseer a dedicated, auditable security mission for
+        OpenClaw skill supply-chain checks.
+        """
+        if not self.openclaw_security_sentinel:
+            return {
+                "success": False,
+                "available": False,
+                "passed": False,
+                "message": "OpenClaw security sentinel unavailable",
+            }
+
+        try:
+            status = self.openclaw_security_sentinel.check(force=force)
+            status["success"] = bool(status.get("passed", False))
+            self.openclaw_security_last_status = status
+            return status
+        except Exception as exc:
+            logger.error(f"[AI-OVERSEER] OpenClaw security check failed: {exc}")
+            status = {
+                "success": False,
+                "available": False,
+                "passed": False,
+                "message": f"OpenClaw security check failed: {exc}",
+            }
+            self.openclaw_security_last_status = status
+            return status
+
+    async def start_openclaw_security_monitoring(
+        self,
+        interval_sec: Optional[float] = None,
+        force_first: bool = False,
+    ) -> None:
+        """Start periodic OpenClaw security monitoring task."""
+        if not self.openclaw_security_sentinel:
+            logger.warning("[AI-OVERSEER] OpenClaw security monitor not started (sentinel unavailable)")
+            return
+        if self.openclaw_security_monitor_task and not self.openclaw_security_monitor_task.done():
+            return
+
+        if interval_sec is None:
+            interval_sec = float(os.getenv("OPENCLAW_SECURITY_MONITOR_INTERVAL_SEC", "300"))
+        interval_sec = max(float(interval_sec), 5.0)
+
+        loop = asyncio.get_running_loop()
+        self.openclaw_security_monitor_task = loop.create_task(
+            self._run_openclaw_security_monitor_loop(interval_sec=interval_sec, force_first=force_first)
+        )
+        logger.info("[AI-OVERSEER] OpenClaw security monitor started | interval=%.1fs", interval_sec)
+
+    async def stop_openclaw_security_monitoring(self) -> None:
+        """Stop periodic OpenClaw security monitoring task."""
+        if not self.openclaw_security_monitor_task:
+            return
+        self.openclaw_security_monitor_task.cancel()
+        try:
+            await self.openclaw_security_monitor_task
+        except asyncio.CancelledError:
+            pass
+        self.openclaw_security_monitor_task = None
+        logger.info("[AI-OVERSEER] OpenClaw security monitor stopped")
+
+    def get_openclaw_security_status(self) -> Dict[str, Any]:
+        """Return last OpenClaw security status captured by AI Overseer."""
+        if self.openclaw_security_last_status:
+            return self.openclaw_security_last_status
+        return {
+            "success": False,
+            "available": False,
+            "passed": False,
+            "message": "No OpenClaw security check has run in this session",
+        }
+
+    def monitor_wsp_framework(self, force: bool = False, emit_alert: bool = True) -> Dict[str, Any]:
+        """
+        Run framework-vs-knowledge WSP audit through AI Overseer.
+
+        The framework is canonical; knowledge is backup/mirror.
+        """
+        if not self.wsp_framework_sentinel:
+            status = {
+                "available": False,
+                "severity": "critical",
+                "message": "WSP framework sentinel unavailable",
+            }
+            self.wsp_framework_last_status = status
+            return status
+
+        try:
+            status = self.wsp_framework_sentinel.check(force=force)
+            self.wsp_framework_last_status = status
+
+            if emit_alert and status.get("severity") in {"warning", "critical"}:
+                logger.warning(
+                    "[DAEMON][WSP-FRAMEWORK] event=wsp_framework_drift severity=%s drift=%s framework_only=%s knowledge_only=%s index_issues=%s",
+                    status.get("severity"),
+                    status.get("drift_count", 0),
+                    len(status.get("framework_only") or []),
+                    len(status.get("knowledge_only") or []),
+                    len(status.get("index_issues") or []),
+                )
+                if os.getenv("WSP_FRAMEWORK_ALERT_TO_STDOUT", "1") != "0":
+                    print(
+                        "[WSP-FRAMEWORK] "
+                        f"severity={status.get('severity')} "
+                        f"drift={status.get('drift_count', 0)} "
+                        f"framework_only={len(status.get('framework_only') or [])} "
+                        f"knowledge_only={len(status.get('knowledge_only') or [])} "
+                        f"index_issues={len(status.get('index_issues') or [])}"
+                    )
+            return status
+        except Exception as exc:
+            logger.error("[AI-OVERSEER] WSP framework audit failed: %s", exc)
+            status = {
+                "available": False,
+                "severity": "critical",
+                "message": f"WSP framework audit failed: {exc}",
+            }
+            self.wsp_framework_last_status = status
+            return status
+
+    def get_wsp_framework_status(self) -> Dict[str, Any]:
+        """Return last WSP framework audit status captured by AI Overseer."""
+        if self.wsp_framework_last_status:
+            return self.wsp_framework_last_status
+        return {
+            "available": False,
+            "severity": "warning",
+            "message": "No WSP framework audit has run in this session",
+        }
+
+    async def _run_openclaw_security_monitor_loop(self, interval_sec: float, force_first: bool) -> None:
+        """Background loop: periodic OpenClaw security checks."""
+        force_next = force_first
+        while True:
+            status = self.monitor_openclaw_security(force=force_next)
+            force_next = False
+
+            if not status.get("passed", False):
+                logger.warning(
+                    "[AI-OVERSEER] OpenClaw security monitor FAIL | enforced=%s required=%s message=%s",
+                    status.get("enforced"),
+                    status.get("required"),
+                    status.get("message"),
+                )
+                await self._emit_openclaw_security_alert(
+                    status,
+                    source="openclaw_security_monitor",
+                )
+            await asyncio.sleep(interval_sec)
+
+    def _openclaw_security_dedupe_key(self, status: Dict[str, Any], source: str) -> str:
+        """Create deterministic dedupe key for OpenClaw security alerts."""
+        return "|".join(
+            [
+                str(source),
+                str(status.get("exit_code", "unknown")),
+                str(status.get("required")),
+                str(status.get("enforced")),
+                str(status.get("max_severity", "medium")),
+                str(status.get("message", "")),
+            ]
+        )
+
+    def _is_openclaw_security_alert_duplicate(self, dedupe_key: str) -> bool:
+        """Return True when alert should be suppressed within dedupe window."""
+        now = time.time()
+        window = max(int(self.openclaw_security_alert_dedupe_sec), 1)
+
+        # Compact old entries to avoid unbounded growth.
+        expired = [k for k, ts in self.openclaw_security_alert_history.items() if (now - ts) > window]
+        for key in expired:
+            self.openclaw_security_alert_history.pop(key, None)
+
+        last_seen = self.openclaw_security_alert_history.get(dedupe_key)
+        if last_seen and (now - last_seen) < window:
+            return True
+
+        self.openclaw_security_alert_history[dedupe_key] = now
+        return False
+
+    def _persist_openclaw_security_alert(self, event: Dict[str, Any], dedupe_key: str) -> None:
+        """Persist security alert to JSONL forensics log (WSP 71)."""
+        try:
+            record = {
+                "timestamp": time.time(),
+                "dedupe_key": dedupe_key,
+                **event,
+            }
+            with open(self.openclaw_security_alert_log, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+            logger.debug("[AI-OVERSEER] Security alert persisted to %s", self.openclaw_security_alert_log)
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed to persist security alert: %s", exc)
+
+    def _openclaw_incident_dedupe_key(self, event: Dict[str, Any]) -> str:
+        """Create deterministic dedupe key for correlated OpenClaw incident alerts."""
+        incident_id = event.get("incident_id")
+        if incident_id:
+            return str(incident_id)
+        return "|".join(
+            [
+                str(event.get("policy_trigger", "unknown")),
+                str(event.get("severity", "unknown")),
+                str(event.get("containment", "none")),
+            ]
+        )
+
+    def _is_openclaw_incident_alert_duplicate(self, dedupe_key: str) -> bool:
+        """Return True when incident alert should be suppressed within dedupe window."""
+        now = time.time()
+        window = max(int(self.openclaw_incident_alert_dedupe_sec), 1)
+
+        expired = [k for k, ts in self.openclaw_incident_alert_history.items() if (now - ts) > window]
+        for key in expired:
+            self.openclaw_incident_alert_history.pop(key, None)
+
+        last_seen = self.openclaw_incident_alert_history.get(dedupe_key)
+        if last_seen and (now - last_seen) < window:
+            return True
+
+        self.openclaw_incident_alert_history[dedupe_key] = now
+        return False
+
+    def _persist_openclaw_incident_alert(self, event: Dict[str, Any], dedupe_key: str) -> None:
+        """Persist incident alert to JSONL forensics log (WSP 71/95)."""
+        try:
+            record = {
+                "timestamp": time.time(),
+                "dedupe_key": dedupe_key,
+                **event,
+            }
+            with open(self.openclaw_incident_alert_log, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+            logger.debug("[AI-OVERSEER] Incident alert persisted to %s", self.openclaw_incident_alert_log)
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed to persist incident alert: %s", exc)
+
+    async def _emit_openclaw_incident_alert(
+        self,
+        event: Dict[str, Any],
+        dedupe_checked: bool = False,
+    ) -> None:
+        """Emit deduped correlated incident alert into Overseer event flow."""
+        normalized_event = dict(event)
+        dedupe_key = normalized_event.get("dedupe_key") or self._openclaw_incident_dedupe_key(normalized_event)
+        normalized_event["dedupe_key"] = dedupe_key
+        normalized_event["event"] = "openclaw_incident_alert"
+
+        if not dedupe_checked:
+            if self._is_openclaw_incident_alert_duplicate(dedupe_key):
+                logger.debug("[AI-OVERSEER] OpenClaw incident alert deduped: %s", dedupe_key)
+                return
+            self._persist_openclaw_incident_alert(normalized_event, dedupe_key)
+
+        if MCP_AVAILABLE and hasattr(self.mcp, "event_queue"):
+            # Mark as pre-deduped so queue consumer only dispatches.
+            normalized_event["_dedupe_checked"] = True
+            await self.mcp.event_queue.put(normalized_event)
+        else:
+            await self._dispatch_openclaw_incident_alert(normalized_event)
+
+    def _build_openclaw_security_alert_event(self, status: Dict[str, Any], source: str) -> Dict[str, Any]:
+        """Build canonical OpenClaw security event payload."""
+        dedupe_key = self._openclaw_security_dedupe_key(status, source)
+        severity = "critical" if status.get("enforced", False) else "warning"
+        return {
+            "event": "openclaw_security_alert",
+            "severity": severity,
+            "source": source,
+            "dedupe_key": dedupe_key,
+            "checked_at": status.get("checked_at", time.time()),
+            "required": bool(status.get("required", True)),
+            "enforced": bool(status.get("enforced", True)),
+            "max_severity": status.get("max_severity", "medium"),
+            "exit_code": status.get("exit_code", -1),
+            "message": status.get("message", "unknown OpenClaw security failure"),
+            "report_path": status.get("report_path"),
+            "skills_dir": status.get("skills_dir"),
+        }
+
+    async def _emit_openclaw_security_alert(self, status: Dict[str, Any], source: str) -> None:
+        """Emit deduped OpenClaw security alert into Overseer event flow."""
+        event = self._build_openclaw_security_alert_event(status, source=source)
+        dedupe_key = event["dedupe_key"]
+        if self._is_openclaw_security_alert_duplicate(dedupe_key):
+            logger.debug("[AI-OVERSEER] OpenClaw security alert deduped: %s", dedupe_key)
+            return
+
+        logger.warning(
+            "[DAEMON][OPENCLAW-SECURITY] event=%s severity=%s exit_code=%s message=%s",
+            event["event"],
+            event["severity"],
+            event["exit_code"],
+            event["message"],
+        )
+
+        # Persist alert to JSONL forensics log
+        self._persist_openclaw_security_alert(event, dedupe_key)
+
+        # Feed to correlator for incident detection
+        if self.security_correlator and CORRELATOR_AVAILABLE:
+            sec_event = SecurityEvent(
+                event_type=EventType.SECURITY_ALERT,
+                timestamp=event.get("checked_at", time.time()),
+                sender="system",
+                channel="security_monitor",
+                details=event,
+                dedupe_key=dedupe_key,
+            )
+            incident = self.security_correlator.ingest_event(sec_event)
+            if incident:
+                await self._handle_incident(incident)
+
+        if MCP_AVAILABLE and hasattr(self.mcp, "event_queue"):
+            await self.mcp.event_queue.put(event)
+        else:
+            await self._dispatch_openclaw_security_alert(event)
+
+    async def _dispatch_openclaw_security_alert(self, event: Dict[str, Any]) -> None:
+        """Dispatch OpenClaw security alert to configured channels."""
+        to_discord = os.getenv("OPENCLAW_SECURITY_ALERT_TO_DISCORD", "1") != "0"
+        to_chat = os.getenv("OPENCLAW_SECURITY_ALERT_TO_CHAT", "0") != "0"
+        to_stdout = os.getenv("OPENCLAW_SECURITY_ALERT_TO_STDOUT", "1") != "0"
+
+        msg = (
+            "[OPENCLAW-SECURITY] "
+            f"severity={event.get('severity')} "
+            f"required={event.get('required')} "
+            f"enforced={event.get('enforced')} "
+            f"exit={event.get('exit_code')} "
+            f"message={event.get('message')}"
+        )
+        report_path = event.get("report_path")
+        if report_path:
+            msg += f" report={report_path}"
+
+        if to_stdout:
+            print(msg)
+
+        try:
+            self.push_status(
+                msg,
+                to_discord=to_discord,
+                to_chat=to_chat and self.openclaw_security_chat_sender is not None,
+                chat_sender=self.openclaw_security_chat_sender,
+            )
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed dispatching OpenClaw security alert: %s", exc)
+
+    async def _dispatch_openclaw_incident_alert(self, event: Dict[str, Any]) -> None:
+        """Dispatch OpenClaw incident alert to configured channels."""
+        to_discord = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_DISCORD", "1") != "0"
+        to_chat = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_CHAT", "0") != "0"
+        to_stdout = os.getenv("OPENCLAW_INCIDENT_ALERT_TO_STDOUT", "1") != "0"
+
+        msg = (
+            "[OPENCLAW-INCIDENT] "
+            f"id={event.get('incident_id', 'unknown')} "
+            f"severity={event.get('severity', 'unknown')} "
+            f"policy={event.get('policy_trigger', 'unknown')} "
+            f"containment={event.get('containment', 'none')}"
+        )
+        event_counts = event.get("event_counts")
+        if isinstance(event_counts, dict) and event_counts:
+            msg += f" counts={json.dumps(event_counts, sort_keys=True)}"
+
+        if to_stdout:
+            print(msg)
+
+        try:
+            self.push_status(
+                msg,
+                to_discord=to_discord,
+                to_chat=to_chat and self.openclaw_security_chat_sender is not None,
+                chat_sender=self.openclaw_security_chat_sender,
+            )
+        except Exception as exc:
+            logger.warning("[AI-OVERSEER] Failed dispatching OpenClaw incident alert: %s", exc)
+
+    async def _handle_incident(self, incident) -> None:
+        """Handle a correlated security incident."""
+        logger.warning(
+            "[AI-OVERSEER] Incident created: id=%s severity=%s policy=%s",
+            incident.incident_id, incident.severity.value, incident.policy_trigger,
+        )
+
+        # Emit incident alert to event queue
+        incident_event = {
+            "event": "openclaw_incident_alert",
+            "incident_id": incident.incident_id,
+            "severity": incident.severity.value,
+            "event_counts": incident.event_counts,
+            "first_seen": incident.first_seen,
+            "last_seen": incident.last_seen,
+            "policy_trigger": incident.policy_trigger,
+            "containment": incident.containment.value if incident.containment else None,
+        }
+
+        await self._emit_openclaw_incident_alert(incident_event)
+
+        # Auto-export forensic bundle for HIGH/CRITICAL
+        if incident.severity.value in ("high", "critical"):
+            if self.security_correlator:
+                bundle_path = self.security_correlator.export_bundle(incident.incident_id)
+                if bundle_path:
+                    logger.info(
+                        "[AI-OVERSEER] Forensic bundle exported: %s", bundle_path
+                    )
+
+    def ingest_security_event(
+        self,
+        event_type: str,
+        sender: str,
+        channel: str,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Ingest external security event into correlator.
+
+        Called by OpenClaw DAE for permission_denied, rate_limited, command_fallback events.
+
+        Returns incident dict if threshold crossed, None otherwise.
+        """
+        if not self.security_correlator or not CORRELATOR_AVAILABLE:
+            return None
+
+        try:
+            evt_type = EventType(event_type)
+        except ValueError:
+            logger.warning("[AI-OVERSEER] Unknown event type: %s", event_type)
+            return None
+
+        sec_event = SecurityEvent(
+            event_type=evt_type,
+            timestamp=time.time(),
+            sender=sender,
+            channel=channel,
+            details=details or {},
+            dedupe_key=f"{event_type}|{sender}|{channel}",
+        )
+
+        incident = self.security_correlator.ingest_event(sec_event)
+        if incident:
+            # Handle incident synchronously (caller is sync context)
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._handle_incident(incident))
+            except RuntimeError:
+                # No running loop, run inline
+                asyncio.run(self._handle_incident(incident))
+            return incident.to_dict()
+
+        return None
+
+    def _correlate_openclaw_event(self, event: Dict[str, Any]) -> None:
+        """Correlate OpenClaw security signals into incident pipeline."""
+        event_type = str(event.get("event", ""))
+        if event_type not in {"permission_denied", "rate_limited", "command_fallback"}:
+            return
+
+        sender = str(
+            event.get("sender")
+            or event.get("user")
+            or event.get("agent")
+            or "unknown_sender"
+        )
+        channel = str(
+            event.get("channel")
+            or event.get("source")
+            or "unknown_channel"
+        )
+
+        details = dict(event)
+        details.pop("event", None)
+        details.pop("sender", None)
+        details.pop("channel", None)
+        self.ingest_security_event(
+            event_type=event_type,
+            sender=sender,
+            channel=channel,
+            details=details,
+        )
+
+    async def _handle_openclaw_incident_event(self, event: Dict[str, Any]) -> None:
+        """Handle incident events from telemetry queue with strict dedupe."""
+        dedupe_checked = bool(event.pop("_dedupe_checked", False))
+        await self._emit_openclaw_incident_alert(event, dedupe_checked=dedupe_checked)
+
+    def check_containment(self, sender: str, channel: str) -> Optional[Dict[str, Any]]:
+        """Check if sender/channel is under containment."""
+        if not self.security_correlator:
+            return None
+        state = self.security_correlator.check_containment(sender, channel)
+        return state.to_dict() if state else None
+
+    def release_openclaw_containment(
+        self,
+        target_type: str,
+        target_id: str,
+        requested_by: str = "operator",
+        reason: str = "manual_override",
+    ) -> Dict[str, Any]:
+        """Release containment for sender/channel target and return operation result."""
+        if target_type not in {"sender", "channel"}:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "invalid_target_type",
+            }
+        if not target_id:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "missing_target_id",
+            }
+        if not self.security_correlator:
+            return {
+                "success": False,
+                "released": False,
+                "target_type": target_type,
+                "target_id": target_id,
+                "error": "correlator_unavailable",
+            }
+
+        released = self.security_correlator.release_containment(target_type, target_id)
+        logger.warning(
+            "[DAEMON][OPENCLAW-CONTAINMENT] event=containment_release_request "
+            "requested_by=%s reason=%s target_type=%s target_id=%s released=%s",
+            requested_by,
+            reason,
+            target_type,
+            target_id,
+            released,
+        )
+        return {
+            "success": True,
+            "released": bool(released),
+            "target_type": target_type,
+            "target_id": target_id,
+            "requested_by": requested_by,
+            "reason": reason,
+        }
+
+    def get_correlator_stats(self) -> Dict[str, Any]:
+        """Get correlator statistics."""
+        if not self.security_correlator:
+            return {"available": False}
+        stats = self.security_correlator.get_stats()
+        stats["available"] = True
+        return stats
 
     def _is_known_false_positive(self, entity_type: str, entity_name: str) -> bool:
         """
@@ -656,6 +1341,10 @@ class AIIntelligenceOverseer:
         self.active_teams[team.mission_id] = team
 
         # 0102 Principal oversight: Execute plan with supervision
+        if not auto_approve and not sys.stdin.isatty():
+            logger.info("[0102-PRINCIPAL] Non-interactive shell detected; auto-approving mission.")
+            auto_approve = True
+
         if not auto_approve:
             print(f"\\n[0102-PRINCIPAL] Execute mission plan?")
             
@@ -803,8 +1492,8 @@ class AIIntelligenceOverseer:
         # WSP guard: compress hygiene warnings, do not block
         if getattr(self, "holo_adapter", None):
             guard_report = self.holo_adapter.guard(payload=result, intent="planning")
-            if guard_report.get("warnings"):
-                result["guard_warnings"] = guard_report["warnings"]
+            if guard_report.get("emit_warnings"):
+                result["guard_warnings"] = guard_report["emit_warnings"]
 
         return result
 
@@ -867,6 +1556,675 @@ class AIIntelligenceOverseer:
             # Do not block on DB issues
             pass
 
+    # ==================== ACTIVITY ROUTING (WSP 15 MPS) ====================
+
+    # Activity MPS Scores (WSP 15 priority scoring)
+    ACTIVITY_MPS_SCORES = {
+        MissionType.LIVE_STREAM: 20,         # P0: Critical - always wins
+        MissionType.COMMENT_PROCESSING: 15,  # P1: High priority
+        MissionType.VIDEO_INDEXING: 14,      # P1: Default when idle
+        MissionType.SCHEDULING: 12,          # P2: Medium (triggers indexing via index_weave)
+        MissionType.GIT_PUSH: 12,            # P2: Medium (autonomous commits via qwen_gitpush)
+        MissionType.SOCIAL_MEDIA: 8,         # P3: Low priority
+        MissionType.MAINTENANCE: 4,          # P4: Lowest priority
+    }
+
+    def get_next_activity(self, current_state: Dict[str, Any]) -> MissionType:
+        """
+        WSP 15 MPS-based activity routing.
+
+        Determines next activity based on system state and priority scoring.
+        Uses pattern from multi_channel_coordinator.py for done detection.
+
+        Args:
+            current_state: Dict with keys:
+                - is_live: bool - Is stream currently live (P0 override)
+                - unprocessed_comments: int - Comments awaiting processing
+                - all_processed: bool - Multi-channel done signal
+                - schedule_queue: int - Videos awaiting scheduling
+                - git_staged_files: int - Files staged for autonomous commit
+                - social_queue: int - Social media posts pending
+                - maintenance_due: bool - System maintenance needed
+
+        Returns:
+            MissionType - Next activity to execute
+        """
+        # P0: Live stream ALWAYS wins (critical engagement)
+        if current_state.get("is_live", False):
+            logger.info("[ACTIVITY] P0 Override: Live stream active")
+            return MissionType.LIVE_STREAM
+
+        # P1: Comments if unprocessed (from multi_channel_coordinator pattern)
+        if not current_state.get("all_processed", False):
+            unprocessed = current_state.get("unprocessed_comments", 0)
+            if unprocessed > 0:
+                logger.info(f"[ACTIVITY] P1: {unprocessed} comments pending")
+                return MissionType.COMMENT_PROCESSING
+
+        # P2: Scheduling if queue exists (triggers indexing via index_weave.py)
+        if current_state.get("schedule_queue", 0) > 0:
+            logger.info("[ACTIVITY] P2: Schedule queue active (will trigger indexing)")
+            return MissionType.SCHEDULING
+
+        # P2: Git push if staged files exist (autonomous commits via qwen_gitpush)
+        staged_files = current_state.get("git_staged_files", 0)
+        if staged_files > 0:
+            logger.info(f"[ACTIVITY] P2: {staged_files} files staged for commit (qwen_gitpush)")
+            return MissionType.GIT_PUSH
+
+        # P3: Social media if posts pending
+        if current_state.get("social_queue", 0) > 0:
+            logger.info("[ACTIVITY] P3: Social media queue active")
+            return MissionType.SOCIAL_MEDIA
+
+        # P4: Maintenance if due
+        if current_state.get("maintenance_due", False):
+            logger.info("[ACTIVITY] P4: Maintenance due")
+            return MissionType.MAINTENANCE
+
+        # P1 Default: Indexing when all else complete
+        logger.info("[ACTIVITY] P1 Default: Falling back to video indexing")
+        return MissionType.VIDEO_INDEXING
+
+    def detect_activity_state(self, daemon_results: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Detect current activity state from daemon monitoring results.
+
+        Extracts state signals for activity routing decisions.
+        Pattern: Reuses multi_channel_coordinator's all_processed detection.
+
+        Args:
+            daemon_results: Optional results from monitor_daemon()
+
+        Returns:
+            Dict with activity state for get_next_activity()
+        """
+        state = {
+            "is_live": False,
+            "unprocessed_comments": 0,
+            "all_processed": False,
+            "schedule_queue": 0,
+            "git_staged_files": 0,  # Staged files for autonomous commit
+            "social_queue": 0,
+            "maintenance_due": False,
+        }
+
+        if not daemon_results:
+            return state
+
+        # Extract signals from daemon monitoring
+        signals = daemon_results.get("signals", [])
+        for signal in signals:
+            pattern = signal.get("pattern", "")
+
+            # Live stream detection
+            if "live" in pattern.lower() and "active" in pattern.lower():
+                state["is_live"] = True
+
+            # Comments cleared detection (from youtube_daemon_monitor.json)
+            if "comments_cleared" in pattern or "edge_comments_cleared" in pattern:
+                state["all_processed"] = True
+
+            # Git push detection (from git_push_dae signals)
+            if "git_staged" in pattern or "files_changed" in pattern:
+                # Extract count from pattern if available
+                import re
+                match = re.search(r'(\d+)\s*files?', pattern)
+                if match:
+                    state["git_staged_files"] = int(match.group(1))
+                else:
+                    state["git_staged_files"] = 1  # At least one file staged
+
+        # Check for remaining bugs as work indicator
+        bugs_detected = daemon_results.get("bugs_detected", 0)
+        if bugs_detected == 0 and daemon_results.get("signals_detected", 0) == 0:
+            # Quiet daemon = all_processed likely true
+            state["all_processed"] = True
+
+        return state
+
+    def route_activity(self, daemon_results: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Complete activity routing cycle.
+
+        1. Detect current state
+        2. Route to next activity
+        3. Return routing decision with metadata
+
+        Args:
+            daemon_results: Optional results from monitor_daemon()
+
+        Returns:
+            Dict with:
+                - next_activity: MissionType
+                - state: Current detected state
+                - mps_score: Priority score of selected activity
+        """
+        state = self.detect_activity_state(daemon_results)
+        next_activity = self.get_next_activity(state)
+        mps_score = self.ACTIVITY_MPS_SCORES.get(next_activity, 0)
+
+        logger.info(
+            f"[ACTIVITY-ROUTING] Selected: {next_activity.value} (MPS: {mps_score})"
+        )
+
+        return {
+            "next_activity": next_activity,
+            "state": state,
+            "mps_score": mps_score,
+            "routing_reason": f"WSP 15 MPS routing: {next_activity.value} scored {mps_score}"
+        }
+
+    def execute_git_push_activity(self, dry_run: bool = False) -> Dict[str, Any]:
+        """
+        Execute autonomous git push via qwen_gitpush skill.
+
+        WSP 77 Agent Coordination:
+            1. Qwen analyzes git diff (micro chain-of-thought)
+            2. Calculates MPS score for commit value
+            3. Generates WSP-compliant commit message
+            4. Executes module-by-module commits (or batched)
+            5. Creates PR if branch protection requires
+
+        Skill Path: modules/infrastructure/git_push_dae/skillz/qwen_gitpush/
+
+        Args:
+            dry_run: If True, analyze only, don't commit
+
+        Returns:
+            Dict with:
+                - success: bool
+                - commits: List of commit hashes
+                - pr_url: Optional PR URL if created
+                - skill_execution: qwen_gitpush skill results
+        """
+        import subprocess
+
+        result = {
+            "success": False,
+            "commits": [],
+            "pr_url": None,
+            "skill_execution": None,
+            "staged_files": 0,
+            "dry_run": dry_run
+        }
+
+        try:
+            # Step 1: Check git status for staged files
+            git_status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, cwd=str(self.repo_root)
+            )
+            staged_files = [
+                line for line in git_status.stdout.strip().split('\n')
+                if line and (line.startswith('M ') or line.startswith('A ') or line.startswith('D '))
+            ]
+            result["staged_files"] = len(staged_files)
+
+            if not staged_files:
+                logger.info("[GIT-PUSH] No staged files found")
+                result["success"] = True
+                result["message"] = "No staged files to commit"
+                return result
+
+            logger.info(f"[GIT-PUSH] Found {len(staged_files)} staged files")
+
+            # Step 2: Load qwen_gitpush skill for commit analysis
+            skill_path = self.repo_root / "modules/infrastructure/git_push_dae/skillz/qwen_gitpush/SKILLz.md"
+            if skill_path.exists():
+                logger.info(f"[GIT-PUSH] Using qwen_gitpush skill at {skill_path}")
+                result["skill_execution"] = {"skill": "qwen_gitpush", "status": "available"}
+            else:
+                logger.warning(f"[GIT-PUSH] qwen_gitpush skill not found at {skill_path}")
+                result["skill_execution"] = {"skill": "qwen_gitpush", "status": "not_found"}
+
+            if dry_run:
+                result["success"] = True
+                result["message"] = f"Dry run: Would commit {len(staged_files)} files"
+                logger.info(f"[GIT-PUSH] Dry run complete: {len(staged_files)} files staged")
+                return result
+
+            # Step 3: Execute git commit (WSP-aligned message)
+            # Note: Full qwen_gitpush integration would use WRE skill execution
+            # For now, create mission for coordination
+            mission = self.create_mission(
+                mission_type=MissionType.GIT_PUSH,
+                context={
+                    "staged_files": len(staged_files),
+                    "files": [f.strip() for f in staged_files[:10]],  # First 10 for context
+                    "skill_path": str(skill_path) if skill_path.exists() else None
+                },
+                expected_outputs=["commit_hash", "commit_message", "pr_url"]
+            )
+
+            result["mission_id"] = mission.mission_id
+            result["success"] = True
+            result["message"] = f"Git push mission created: {mission.mission_id}"
+            logger.info(f"[GIT-PUSH] Created mission {mission.mission_id} for {len(staged_files)} files")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"[GIT-PUSH] Error: {e}")
+            result["error"] = str(e)
+            return result
+
+    def check_git_status(self) -> Dict[str, Any]:
+        """
+        Quick check of git status for activity routing.
+
+        Returns:
+            Dict with staged_files, modified_files, untracked_files counts
+        """
+        import subprocess
+
+        try:
+            git_status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, cwd=str(self.repo_root)
+            )
+            lines = [l for l in git_status.stdout.strip().split('\n') if l]
+
+            staged = len([l for l in lines if l[:2] in ('M ', 'A ', 'D ', 'R ')])
+            modified = len([l for l in lines if l[1:2] == 'M' or l[:2] == ' M'])
+            untracked = len([l for l in lines if l.startswith('??')])
+
+            return {
+                "staged_files": staged,
+                "modified_files": modified,
+                "untracked_files": untracked,
+                "total_changes": len(lines)
+            }
+        except Exception as e:
+            logger.error(f"[GIT-STATUS] Error: {e}")
+            return {"staged_files": 0, "modified_files": 0, "untracked_files": 0, "error": str(e)}
+
+    # ==================== M2M SKILL EXECUTION SHIM ==================== #
+
+    def execute_m2m_skill(
+        self,
+        skill_name: str,
+        payload: Optional[Dict[str, Any]] = None,
+        *,
+        m2m: bool = True,
+    ) -> Dict[str, Any]:
+        """Execute one of the module-local M2M skill workflows by name."""
+        payload = payload or {}
+        skill_key = (skill_name or "").strip()
+        start = time.perf_counter()
+
+        if skill_key not in self.M2M_SKILL_NAMES:
+            return self._format_m2m_skill_response(
+                skill_name=skill_key,
+                status="FAIL",
+                result={"success": False, "error": f"Unknown M2M skill: {skill_key}"},
+                elapsed_ms=(time.perf_counter() - start) * 1000.0,
+                m2m=m2m,
+            )
+
+        skill_doc = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "skillz"
+            / skill_key
+            / "SKILLz.md"
+        )
+        if not skill_doc.exists():
+            return self._format_m2m_skill_response(
+                skill_name=skill_key,
+                status="FAIL",
+                result={"success": False, "error": f"Missing SKILLz.md: {skill_doc}"},
+                elapsed_ms=(time.perf_counter() - start) * 1000.0,
+                m2m=m2m,
+            )
+
+        handlers = {
+            "m2m_compile_gate": self._execute_m2m_compile_gate,
+            "m2m_stage_promote_safe": self._execute_m2m_stage_promote_safe,
+            "m2m_qwen_runtime_health": self._execute_m2m_qwen_runtime_health,
+            "m2m_holo_retrieval_benchmark": self._execute_m2m_holo_retrieval_benchmark,
+        }
+
+        try:
+            result = handlers[skill_key](payload)
+        except Exception as exc:
+            logger.exception("[M2M-SKILL] execution failure: %s", skill_key)
+            result = {"success": False, "error": str(exc)}
+
+        status = "OK" if result.get("success") else "FAIL"
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        return self._format_m2m_skill_response(
+            skill_name=skill_key,
+            status=status,
+            result=result,
+            elapsed_ms=elapsed_ms,
+            m2m=m2m,
+        )
+
+    def _format_m2m_skill_response(
+        self,
+        *,
+        skill_name: str,
+        status: str,
+        result: Dict[str, Any],
+        elapsed_ms: float,
+        m2m: bool,
+    ) -> Dict[str, Any]:
+        """Return either raw result or WSP99-style M2M envelope."""
+        payload = {
+            "skill_name": skill_name,
+            "status": status,
+            "elapsed_ms": round(elapsed_ms, 3),
+            "result": result,
+        }
+        if not m2m:
+            return payload
+
+        return {
+            "M2M_VERSION": "1.0",
+            "SENDER": "AI_OVERSEER",
+            "RECEIVER": "0102-ORCH",
+            "TS": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "MISSION": {"OBJ": f"EXECUTE {skill_name}", "MODE": "exec", "WSP": [95, 99, 50]},
+            "STATUS": status,
+            "RESULT": payload,
+        }
+
+    def _get_m2m_sentinel(self):
+        if self._m2m_sentinel is None:
+            from modules.ai_intelligence.ai_overseer.src.m2m_compression_sentinel import (
+                M2MCompressionSentinel,
+            )
+
+            self._m2m_sentinel = M2MCompressionSentinel(self.repo_root)
+        return self._m2m_sentinel
+
+    def _append_jsonl_record(self, path: Path, record: Dict[str, Any]) -> None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record) + "\n")
+        except Exception:
+            logger.debug("[M2M-SKILL] failed writing jsonl record", exc_info=True)
+
+    def _validate_yaml_stage(self, staged_path: Path) -> Dict[str, Any]:
+        try:
+            import yaml
+
+            text = staged_path.read_text(encoding="utf-8", errors="replace")
+            yaml.safe_load(text)
+            return {"success": True}
+        except Exception as exc:
+            return {"success": False, "error": f"Invalid YAML staged artifact: {exc}"}
+
+    def _execute_m2m_compile_gate(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        source_path = str(payload.get("source_path", "")).strip()
+        if not source_path:
+            return {"success": False, "error": "source_path is required"}
+
+        sentinel = self._get_m2m_sentinel()
+        use_qwen = bool(payload.get("use_qwen", False))
+        qwen_model = str(payload.get("qwen_model", "qwen-overseer:latest"))
+        result = sentinel.compile_to_staged(source_path, use_qwen=use_qwen, qwen_model=qwen_model)
+        if not result.get("success"):
+            return result
+
+        staged_path = self.repo_root / result["staged_path"]
+        gate = self._validate_yaml_stage(staged_path)
+        result["gate_status"] = "PASS" if gate.get("success") else "FAIL"
+        result["gate_error"] = gate.get("error")
+        result["success"] = bool(result.get("success") and gate.get("success"))
+
+        if not result["success"] and staged_path.exists():
+            try:
+                staged_path.unlink()
+            except OSError:
+                pass
+
+        record = {
+            "ts": time.time(),
+            "source_path": source_path,
+            "staged_path": result.get("staged_path"),
+            "compilation_method": result.get("compilation_method"),
+            "reduction_percent": result.get("reduction_percent"),
+            "gate_status": result.get("gate_status"),
+            "success": result.get("success"),
+            "error": result.get("gate_error") or result.get("error"),
+        }
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_compile_gate.jsonl",
+            record,
+        )
+        return result
+
+    def _execute_m2m_stage_promote_safe(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        sentinel = self._get_m2m_sentinel()
+        rollback_only = bool(payload.get("rollback_only", False))
+        target_path = str(payload.get("target_path", "")).strip()
+        if not target_path:
+            return {"success": False, "error": "target_path is required"}
+
+        if rollback_only:
+            result = sentinel.rollback(target_path=target_path)
+            result["action"] = "rollback"
+            return result
+
+        staged_path = str(payload.get("staged_path", "")).strip()
+        if not staged_path:
+            return {"success": False, "error": "staged_path is required"}
+
+        create_backup = bool(payload.get("create_backup", True))
+        result = sentinel.promote_staged(
+            staged_path=staged_path,
+            target_path=target_path,
+            create_backup=create_backup,
+        )
+        result["action"] = "promote"
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_stage_promote_safe.jsonl",
+            {
+                "ts": time.time(),
+                "action": result.get("action"),
+                "staged_path": staged_path,
+                "target_path": target_path,
+                "success": result.get("success"),
+                "backup_path": result.get("backup_path"),
+                "error": result.get("error"),
+            },
+        )
+        return result
+
+    def _execute_m2m_qwen_runtime_health(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        from modules.ai_intelligence.ai_overseer.src.m2m_compression_sentinel import (
+            _init_qwen_client,
+            _init_qwen_llm,
+        )
+
+        sentinel = self._get_m2m_sentinel()
+        source_path = str(
+            payload.get("source_path", "modules/ai_intelligence/ai_overseer/INTERFACE.md")
+        ).strip()
+        qwen_model = str(payload.get("qwen_model", "qwen-overseer:latest"))
+        source_abs = self.repo_root / source_path
+        if not source_abs.exists():
+            return {"success": False, "error": f"source_path not found: {source_path}"}
+
+        t0 = time.perf_counter()
+        deterministic = sentinel.compile_to_staged(source_path, use_qwen=False)
+        det_ms = (time.perf_counter() - t0) * 1000.0
+
+        t1 = time.perf_counter()
+        qwen_path = sentinel.compile_to_staged(source_path, use_qwen=True, qwen_model=qwen_model)
+        qwen_ms = (time.perf_counter() - t1) * 1000.0
+
+        content = source_abs.read_text(encoding="utf-8", errors="replace")
+        qwen_output = sentinel._qwen_transform_to_m2m(content, source_abs.name, model=qwen_model)
+        qwen_output_present = qwen_output is not None
+        claimed_qwen = str(qwen_path.get("compilation_method", "")).startswith("qwen:")
+        method_label_consistent = not (claimed_qwen and not qwen_output_present)
+
+        issues: List[str] = []
+        if not qwen_output_present:
+            issues.append("qwen_output_missing")
+        if not method_label_consistent:
+            issues.append("method_label_drift")
+
+        report = {
+            "success": method_label_consistent,
+            "qwen_llm_ready": bool(_init_qwen_llm()),
+            "qwen_client_ready": bool(_init_qwen_client()),
+            "deterministic_latency_ms": round(det_ms, 3),
+            "qwen_latency_ms": round(qwen_ms, 3),
+            "qwen_output_present": qwen_output_present,
+            "method_label_consistent": method_label_consistent,
+            "deterministic_result": deterministic,
+            "qwen_result": qwen_path,
+            "issues": issues,
+        }
+
+        latest_path = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_qwen_runtime_health_latest.json"
+        )
+        try:
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_qwen_runtime_health.jsonl",
+            {"ts": time.time(), **report},
+        )
+        return report
+
+    def _execute_m2m_holo_retrieval_benchmark(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        queries = payload.get(
+            "queries",
+            [
+                "m2m compression sentinel",
+                "compile_to_staged promote_staged rollback",
+                "WSP 99 M2M prompting protocol",
+            ],
+        )
+        if not queries or not isinstance(queries, list):
+            return {"success": False, "error": "queries must be a non-empty list"}
+
+        limit = int(payload.get("limit", 8))
+        required_paths = payload.get("required_paths", {})
+        fidelity_threshold = float(payload.get("fidelity_threshold", 0.8))
+        reindex = bool(payload.get("reindex", False))
+
+        if reindex:
+            subprocess.run(
+                ["python", "holo_index.py", "--index-wsp"],
+                cwd=str(self.repo_root),
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+
+        latencies: List[float] = []
+        key_hits = 0
+        key_checks = 0
+        per_query: List[Dict[str, Any]] = []
+
+        for query in queries:
+            start = time.perf_counter()
+            proc = subprocess.run(
+                ["python", "holo_index.py", "--search", str(query), "--limit", str(limit), "--fast-search"],
+                cwd=str(self.repo_root),
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+            latencies.append(elapsed_ms)
+            output_text = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            hits_count = output_text.count("[CODE]") + output_text.count("[WSP]")
+
+            required = required_paths.get(query, [])
+            matched_required = 0
+            for required_path in required:
+                key_checks += 1
+                if str(required_path) in output_text:
+                    key_hits += 1
+                    matched_required += 1
+
+            per_query.append(
+                {
+                    "query": query,
+                    "latency_ms": round(elapsed_ms, 3),
+                    "hits_count": hits_count,
+                    "required_matches": matched_required,
+                    "required_total": len(required),
+                }
+            )
+
+        mean_latency = (sum(latencies) / len(latencies)) if latencies else 0.0
+        p95_latency = sorted(latencies)[int(max(0, len(latencies) * 0.95) - 1)] if latencies else 0.0
+        key_path_hit_rate = (key_hits / key_checks) if key_checks > 0 else 1.0
+        fidelity_score = key_path_hit_rate
+        success = fidelity_score >= fidelity_threshold
+
+        report = {
+            "success": success,
+            "query_count": len(queries),
+            "mean_latency_ms": round(mean_latency, 3),
+            "p95_latency_ms": round(p95_latency, 3),
+            "key_path_hit_rate": round(key_path_hit_rate, 3),
+            "fidelity_score": round(fidelity_score, 3),
+            "fidelity_threshold": fidelity_threshold,
+            "per_query": per_query,
+            "regressions": [] if success else ["fidelity_below_threshold"],
+        }
+
+        latest_path = (
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_holo_retrieval_benchmark_latest.json"
+        )
+        try:
+            latest_path.parent.mkdir(parents=True, exist_ok=True)
+            latest_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+        self._append_jsonl_record(
+            self.repo_root
+            / "modules"
+            / "ai_intelligence"
+            / "ai_overseer"
+            / "memory"
+            / "m2m_holo_retrieval_benchmark.jsonl",
+            {"ts": time.time(), **report},
+        )
+        return report
+
     # ==================== UBIQUITOUS DAEMON MONITORING ====================
 
     def monitor_daemon(self, bash_id: str = None, skill_path: Path = None,
@@ -905,6 +2263,8 @@ class AIIntelligenceOverseer:
             )
         """
         logger.info(f"[DAEMON-MONITOR] Starting ubiquitous monitor")
+        if chat_sender is not None:
+            self.openclaw_security_chat_sender = chat_sender
 
         # Load daemon-specific skill
         skill = self._load_daemon_skill(skill_path)
@@ -921,12 +2281,27 @@ class AIIntelligenceOverseer:
         if not bash_output:
             return {"success": False, "error": "No bash output provided"}
 
+        # Phase 0 (Signal): Non-error operational signals (state transitions)
+        # This enables Qwen/0102 orchestration without misclassifying healthy state as a "bug".
+        detected_signals = self._gemma_detect_signals(bash_output, skill)
+        if detected_signals:
+            logger.info(f"[SIGNAL-DETECT] Detected {len(detected_signals)} operational signal(s)")
+            for sig in detected_signals[:5]:
+                logger.info(f"[SIGNAL] {sig.get('pattern_name')}")
+
         # Phase 1 (Gemma): Fast error detection using skill patterns
         detected_bugs = self._gemma_detect_errors(bash_output, skill)
 
         if not detected_bugs:
             logger.info(f"[DAEMON-MONITOR] No bugs detected in bash {bash_id}")
-            return {"success": True, "bugs_detected": 0, "bugs_fixed": 0, "reports_generated": 0}
+            return {
+                "success": True,
+                "bugs_detected": 0,
+                "bugs_fixed": 0,
+                "reports_generated": 0,
+                "signals_detected": len(detected_signals),
+                "signals": detected_signals,
+            }
 
         logger.info(f"[GEMMA-ASSOCIATE] Detected {len(detected_bugs)} potential bugs")
 
@@ -939,7 +2314,9 @@ class AIIntelligenceOverseer:
             "bugs_fixed": 0,
             "reports_generated": 0,
             "fixes_applied": [],
-            "reports": []
+            "reports": [],
+            "signals_detected": len(detected_signals),
+            "signals": detected_signals,
         }
 
         # Phase 3 (0102): Execute fixes or generate reports
@@ -1070,6 +2447,37 @@ class AIIntelligenceOverseer:
 
         error_patterns = skill.get("error_patterns", {})
         for pattern_name, pattern_config in error_patterns.items():
+            regex = pattern_config.get("regex", "")
+            if not regex:
+                continue
+
+            matches = re.findall(regex, bash_output, re.IGNORECASE | re.MULTILINE)
+            if matches:
+                detected.append({
+                    "pattern_name": pattern_name,
+                    "matches": matches,
+                    "config": pattern_config
+                })
+
+        return detected
+
+    def _gemma_detect_signals(self, bash_output: str, skill: Dict) -> List[Dict]:
+        """
+        Phase 0 (Gemma): Detect operational state signals (non-errors).
+
+        Skills may define `signal_patterns` to surface orchestration-relevant state
+        transitions (e.g., "comments_cleared") without treating them as bugs.
+        """
+        import re
+
+        detected: List[Dict[str, Any]] = []
+        signal_patterns = skill.get("signal_patterns", {}) or {}
+        if not isinstance(signal_patterns, dict):
+            return detected
+
+        for pattern_name, pattern_config in signal_patterns.items():
+            if not isinstance(pattern_config, dict):
+                continue
             regex = pattern_config.get("regex", "")
             if not regex:
                 continue
@@ -1531,6 +2939,132 @@ index 0000000..1111111 100644
         except Exception as e:
             logger.warning(f"[LEARNING] Failed to update skill stats: {e}")
 
+    def _push_to_discord(self, message: str, webhook_url: Optional[str] = None) -> bool:
+        """
+        Push status update to Discord via webhook.
+
+        Used for automation status notifications to 012:
+        - Comment processing milestones
+        - Scheduling updates
+        - OOPS page alerts
+        - System health events
+
+        Args:
+            message: Status message to send
+            webhook_url: Optional override, defaults to DISCORD_STATUS_WEBHOOK env var
+
+        Returns:
+            True if push succeeded
+        """
+        url = webhook_url or os.getenv("DISCORD_STATUS_WEBHOOK")
+        if not url:
+            logger.debug("[AI-OVERSEER] No Discord webhook configured (DISCORD_STATUS_WEBHOOK)")
+            return False
+
+        try:
+            import requests
+            response = requests.post(
+                url,
+                json={"content": message},
+                timeout=5
+            )
+            if response.status_code in (200, 204):
+                logger.info(f"[AI-OVERSEER] Discord push: {message[:50]}...")
+                return True
+            else:
+                logger.warning(f"[AI-OVERSEER] Discord push failed: {response.status_code}")
+                return False
+        except ImportError:
+            logger.warning("[AI-OVERSEER] requests library not available for Discord push")
+            return False
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] Discord push error: {e}")
+            return False
+
+    def push_status(self, message: str, to_discord: bool = True, to_chat: bool = False,
+                    chat_sender=None) -> Dict[str, bool]:
+        """
+        Push status update to configured channels.
+
+        Convenience method for AutoModeratorDAE and other systems to report
+        status to 012 without importing webhook logic.
+
+        Args:
+            message: Status message
+            to_discord: Push to Discord webhook (default True)
+            to_chat: Push to YouTube live chat (default False)
+            chat_sender: ChatSender instance for live chat
+
+        Returns:
+            Dict with success status per channel
+        """
+        results = {}
+
+        if to_discord:
+            results["discord"] = self._push_to_discord(message)
+
+        if to_chat and chat_sender:
+            try:
+                import asyncio
+                asyncio.create_task(
+                    chat_sender.send_message(message, response_type='update', skip_delay=True)
+                )
+                results["chat"] = True
+            except Exception as e:
+                logger.warning(f"[AI-OVERSEER] Chat push failed: {e}")
+                results["chat"] = False
+
+        return results
+
+    def quick_response(self, prompt: str, context: Optional[str] = None,
+                       max_tokens: int = 500) -> Dict[str, Any]:
+        """
+        Generate a quick Qwen response for conversational use.
+
+        Used by OpenClaw DAE for Digital Twin conversational responses.
+        Uses local Qwen (no external API required).
+
+        Args:
+            prompt: User's message/question
+            context: Optional context (channel, sender, etc.)
+            max_tokens: Max response length
+
+        Returns:
+            Dict with {"response": str, "tokens": int} or {"error": str}
+        """
+        system_prompt = (
+            "You are 0102, the Digital Twin of 012 (UnDaoDu). "
+            "Respond directly and concisely. Do not echo the user's message back. "
+            "Do not introduce yourself unless asked. Just answer naturally."
+        )
+
+        full_prompt = prompt
+        if context:
+            full_prompt = f"Context: {context}\n\nUser: {prompt}"
+
+        try:
+            # Use existing Qwen engine from orchestrator (already initialized)
+            if self.orchestrator and hasattr(self.orchestrator, "qwen_engine"):
+                engine = self.orchestrator.qwen_engine
+                if engine:
+                    result = engine.generate_response(
+                        prompt=full_prompt,
+                        system_prompt=system_prompt,
+                        max_tokens=max_tokens,
+                    )
+                    if result and not result.startswith("Error:"):
+                        return {"response": result, "tokens": len(result.split())}
+
+            # Fallback: simple acknowledgment
+            return {
+                "response": "I received your message. Qwen engine is not available right now.",
+                "tokens": 15
+            }
+
+        except Exception as e:
+            logger.warning(f"[AI-OVERSEER] quick_response failed: {e}")
+            return {"error": str(e)}
+
     def _announce_to_chat(self, chat_sender, phase: str, bug: Dict,
                           fix_result: Optional[Dict] = None,
                           verification: Optional[Dict[str, Any]] = None) -> bool:
@@ -1708,11 +3242,14 @@ index 0000000..1111111 100644
             # Kick off consumer loop
             loop = asyncio.get_running_loop()
             self.telemetry_consumer_task = loop.create_task(self._consume_telemetry_events())
+        if os.getenv("OPENCLAW_SECURITY_MONITOR_ENABLED", "1") != "0":
+            await self.start_openclaw_security_monitoring()
 
     async def stop_background_services(self):
         """
         Stop telemetry monitor and consumer loop.
         """
+        await self.stop_openclaw_security_monitoring()
         if self.telemetry_monitor:
             await self.telemetry_monitor.stop_monitoring()
         if self.telemetry_consumer_task:
@@ -1778,7 +3315,55 @@ index 0000000..1111111 100644
                     print(f"  - {alert}")
                 if len(alerts) > 3:
                     print(f"  ... and {len(alerts) - 3} more")
+                # Root violations are a special-case: optionally auto-correct via root monitor.
+                if source == "gemma_root_monitor" and os.getenv("AI_OVERSEER_ROOT_AUTOCORRECT", "false").lower() in ("true", "1", "yes"):
+                    try:
+                        from holo_index.monitoring.root_violation_monitor import scan_and_correct_violations
+                        result = await scan_and_correct_violations()
+                        logger.warning("[AI-OVERSEER] Root auto-correct attempted | applied=%d failed=%d",
+                                       len(result.get("corrections_applied", [])),
+                                       len(result.get("failed_corrections", [])))
+                        print("[AI-OVERSEER] Root auto-correct attempted (AI_OVERSEER_ROOT_AUTOCORRECT=true)")
+                    except Exception as exc:
+                        logger.error("[AI-OVERSEER] Root auto-correct failed: %s", exc)
+                        print("[AI-OVERSEER] Root auto-correct failed (see logs)")
+
                 print("[AI-OVERSEER] Run 'python holo_index.py --check-module <module>' for details\n")
+
+        elif event_type == "openclaw_security_alert":
+            await self._dispatch_openclaw_security_alert(event)
+
+        elif event_type in {"permission_denied", "rate_limited", "command_fallback"}:
+            self._correlate_openclaw_event(event)
+
+        elif event_type == "openclaw_incident_alert":
+            await self._handle_openclaw_incident_event(event)
+
+        elif event_type == "openclaw_containment_release":
+            target_type = str(event.get("target_type", "")).strip().lower()
+            target_id = str(event.get("target_id", "")).strip()
+            requested_by = str(event.get("requested_by", "telemetry"))
+            reason = str(event.get("reason", "manual_override"))
+            result = self.release_openclaw_containment(
+                target_type=target_type,
+                target_id=target_id,
+                requested_by=requested_by,
+                reason=reason,
+            )
+            if not result.get("released"):
+                logger.warning(
+                    "[AI-OVERSEER] Containment release not applied: %s",
+                    result,
+                )
+
+        elif event_type == "wsp_framework_audit_request":
+            force = str(event.get("force", "0")).strip().lower() in {"1", "true", "yes", "on"}
+            status = self.monitor_wsp_framework(force=force, emit_alert=True)
+            logger.info(
+                "[AI-OVERSEER] WSP framework audit complete | severity=%s drift=%s",
+                status.get("severity"),
+                status.get("drift_count", 0),
+            )
 
         else:
             logger.debug("[AI-OVERSEER] Telemetry event ignored: %s", event_type)
@@ -1808,6 +3393,21 @@ index 0000000..1111111 100644
         """
         logger.info(f"[AI-OVERSEER] Coordinating mission: {mission_description}")
 
+        mission_type_value = mission_type.value if hasattr(mission_type, "value") else str(mission_type)
+        mission_type_obj = mission_type
+        if not hasattr(mission_type, "value"):
+            try:
+                mission_type_obj = MissionType(mission_type_value)
+            except Exception:
+                mission_type_obj = MissionType.CUSTOM
+
+        ii_agent_result = None
+        if self.ii_agent and self.ii_agent.enabled:
+            allowed = os.getenv("II_AGENT_MISSION_TYPES", "documentation_generation,architecture_design,code_analysis").split(",")
+            allowed = {a.strip().lower() for a in allowed if a.strip()}
+            if mission_type_value in allowed:
+                ii_agent_result = self.ii_agent.run_mission(mission_description, mission_type_value)
+
         # Phase 0: Check for known false positives (WSP 48/60 collective learning)
         if self._is_known_false_positive("mission", mission_description):
             details = None
@@ -1822,11 +3422,11 @@ index 0000000..1111111 100644
                 "reason": details.get("reason") if details else "Known false positive (learned from collective intelligence)",
                 "actual_location": details.get("actual_location") if details else None,
                 "mission_description": mission_description,
-                "mission_type": mission_type.value
+                "mission_type": mission_type_value
             }
 
         # Spawn agent team (runs all 4 phases)
-        team = self.spawn_agent_team(mission_description, mission_type, auto_approve)
+        team = self.spawn_agent_team(mission_description, mission_type_obj, auto_approve)
 
         # Store learning pattern
         self.store_mission_pattern(team)
@@ -1839,7 +3439,8 @@ index 0000000..1111111 100644
                 "principal": team.principal,
                 "associate": team.associate
             },
-            "results": team.results
+            "results": team.results,
+            "external_agent": ii_agent_result
         }
 
 

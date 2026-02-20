@@ -25,3 +25,8 @@
   - Location: `WSP_agentic/agentic_journals/mainpy_live_recall_v3.json`
   - Impact: Provides non-posting runbook and config-driven extension map without touching YouTube cube
   - WSP References: WSP 21 (Recursion Prompt), WSP 22 (ModLog), WSP 32 (Three-state), WSP 49 (Module structure)
+
+- Relocated session briefing to canonical docs path
+  - Why: `SESSION_BRIEFING_2026_02_07.md` is a cross-module session onboarding artifact, not an awakening-state journal
+  - Impact: Moved to `docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md`; journal references updated
+  - WSP References: WSP 22 (traceability), WSP 83 (tree attachment), WSP 60 (operational memory)

@@ -1,7 +1,7 @@
 {
   "version": "2.0",
-  "last_updated": "2025-10-25T19:38:23.224007",
-  "total_skills": 16,
+  "last_updated": "2026-02-17T07:47:21.814533+00:00",
+  "total_skills": 23,
   "skills": {
     "gemma_pqn_data_processor": {
       "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_data_processor",
@@ -225,6 +225,126 @@
         "WSP 87",
         "WSP 96",
         "WSP 50"
+      ]
+    },
+    "openclaw_intent_router": {
+      "location": "O:\\Foundups-Agent\\modules\\communication\\moltbot_bridge\\skillz\\openclaw_intent_router",
+      "agents": [
+        "gemma"
+      ],
+      "intent_type": "CLASSIFICATION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 46",
+        "WSP 50",
+        "WSP 73",
+        "WSP 96"
+      ]
+    },
+    "openclaw_executor": {
+      "location": "O:\\Foundups-Agent\\modules\\communication\\moltbot_bridge\\skillz\\openclaw_executor",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 46",
+        "WSP 50",
+        "WSP 73",
+        "WSP 77",
+        "WSP 91",
+        "WSP 96"
+      ]
+    },
+    "m2m_compile_gate": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\m2m_compile_gate",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 95",
+        "WSP 99",
+        "WSP 50",
+        "WSP 11",
+        "WSP 22",
+        "WSP 87"
+      ]
+    },
+    "m2m_stage_promote_safe": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\m2m_stage_promote_safe",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 95",
+        "WSP 99",
+        "WSP 50",
+        "WSP 11",
+        "WSP 22"
+      ]
+    },
+    "m2m_qwen_runtime_health": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\m2m_qwen_runtime_health",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "TELEMETRY",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 95",
+        "WSP 99",
+        "WSP 50",
+        "WSP 60",
+        "WSP 22"
+      ]
+    },
+    "m2m_holo_retrieval_benchmark": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\m2m_holo_retrieval_benchmark",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "TELEMETRY",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 95",
+        "WSP 99",
+        "WSP 87",
+        "WSP 50",
+        "WSP 22"
+      ]
+    },
+    "strategic_diligence_gate": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\strategic_diligence_gate",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 15",
+        "WSP 50",
+        "WSP 64",
+        "WSP 77",
+        "WSP 91",
+        "WSP 95"
       ]
     }
   }

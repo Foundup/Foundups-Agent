@@ -20,6 +20,7 @@ from modules.gamification.whack_a_magat import (
 from modules.gamification.whack_a_magat.src.spree_tracker import get_active_sprees
 from modules.gamification.whack_a_magat.src.self_improvement import observe_command
 from modules.gamification.whack_a_magat.src.historical_facts import get_random_fact, get_parallel, get_warning
+from modules.gamification.whack_a_magat.src.magats_economy import MAGAtsEconomy
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class CommandFloodDetector:
             "😵 MY CIRCUITS ARE OVERLOADING! Too many commands. Cooldown mode for {mins}m ⏳",
             "🙄 Seriously? This isn't a speedrun. Going AFK for {mins} minutes. Try meditation 🧘",
             "[ALERT] FLOOD ALERT! Bot needs a break from y'all's thirst. Back in {mins}m 💤",
-            "[BOT] ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
+            "ERROR 418: I'M A TEAPOT! Cooldown engaged for {mins} minutes ☕",
             "😤 TOO. MANY. COMMANDS. Activating self-care mode for {mins}m. Go outside! 🌞"
         ]
 
@@ -326,9 +327,14 @@ class CommandHandler:
             logger.debug(f"[DATA] Profile for {username}: Score={profile.score}, Rank={profile.rank}, Level={profile.level}")
             
             if text_lower.startswith('/score') or text_lower.startswith('/stats'):
-                # Score shows XP, level name/title, level number, and frag count
+                # Score shows XP, level name/title, level number, and frag count + MAGAts
                 observe_command('/score', 0.0)  # Track for self-improvement
-                return f"{mention} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS! RIP AND TEAR! 🔥"
+                # Calculate MAGAts (10 whacks = 1 MAGAt)
+                magats = profile.frag_count // 10
+                if magats > 0:
+                    return f"{mention} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS | 💎 {magats} MAGAts → Redeem @ foundups.com 🔥"
+                else:
+                    return f"{mention} 💀 MAGADOOM | {profile.score} XP | {profile.rank} | LVL {profile.level} | {profile.frag_count} WHACKS → foundups.com 🔥"
             
             # REMOVED: /level - redundant with /score
             
@@ -348,7 +354,10 @@ class CommandHandler:
                     elif position == 3:
                         position_str = "🥉 #3"
                     
-                    return f"{mention} 🏆 MAGADOOM Ranking: {position_str} of {total_players} players | {profile.score} XP"
+                    # Include MAGAts in rank display
+                    magats = profile.frag_count // 10
+                    magat_str = f" | 💎 {magats} MAGAts" if magats > 0 else ""
+                    return f"{mention} 🏆 MAGADOOM Ranking: {position_str} of {total_players}{magat_str} → foundups.com"
 
             elif text_lower.startswith('/frags') or text_lower.startswith('/whacks'):
                 # Show total frags/whacks (same as score but focused on whacks)
@@ -504,30 +513,199 @@ class CommandHandler:
                     # Import here to avoid circular dependencies
                     from modules.gamification.whack_a_magat.src.whack import get_session_leaderboard
                     session_leaders = get_session_leaderboard(limit=5)
-                    
+
                     if not session_leaders:
                         return f"{mention} [DATA] No session activity yet. Start whacking!"
-                    
+
                     response = f"{mention} 🔥 SESSION LEADERS:\n"
                     for entry in session_leaders:
                         response += f"#{entry['position']} {entry['username']} - {entry['session_score']} XP ({entry['session_whacks']} whacks)\n"
-                    
+
                     # Add personal session stats
                     if profile.session_whacks > 0:
                         response += f"\nYour session: {profile.session_score} XP ({profile.session_whacks} whacks)"
-                    
+
                     return response
                 else:
                     return f"{mention} [FORBIDDEN] /session is for moderators only"
+
+            elif text_lower.startswith('/fuc'):
+                # FFCPLN Mining - MAGAts token economy
+                # OWNER + Managing Directors (elevated MODs) can use
+                # Managing Directors = trusted MODs with owner-level command access
+                MANAGING_DIRECTORS = {
+                    # JS (Al-sq5ti) - Move2Japan Managing Director
+                    'UCcnCiZV5ZPJ_cjF7RsWIZ0w',
+                    # Add more Managing Director user IDs here
+                }
+
+                is_managing_director = user_id in MANAGING_DIRECTORS
+                if role != 'OWNER' and not is_managing_director:
+                    return f"{mention} 💀 /fuc is OWNER/Director only! ✊✋🖐️"
+
+                observe_command('/fuc', 0.0)
+                economy = MAGAtsEconomy()
+
+                # Parse subcommand
+                parts = text_lower.split()
+                subcommand = parts[1] if len(parts) > 1 else "status"
+
+                if subcommand in ['status', 'balance', '']:
+                    # Show MAGAt balance
+                    balance = economy.get_balance(user_id, username)
+                    consciousness = economy._get_consciousness_level(balance.total_magats)
+
+                    if balance.total_whacks == 0:
+                        return f"{mention} 💀 FFCPLN MINING: No whacks yet! Start timing out MAGAts to mine tokens! ✊✋🖐️"
+
+                    return (f"{mention} 💰 FFCPLN MINING STATUS:\n"
+                           f"🔨 Whacks: {balance.total_whacks} | 💎 MAGAts: {balance.total_magats}\n"
+                           f"✅ Claimed: {balance.claimed_magats} | ⏳ Pending: {balance.pending_magats}\n"
+                           f"📊 {balance.whacks_to_next} whacks to next MAGAt | {consciousness}")
+
+                elif subcommand == 'claim':
+                    # Generate claim link
+                    balance = economy.get_balance(user_id, username)
+
+                    if balance.pending_magats <= 0:
+                        return f"{mention} 💰 No pending MAGAts to claim! Keep whacking FFCPLNs! (Need {balance.whacks_to_next} more whacks) ✊✋🖐️"
+
+                    claim_url, amount = economy.generate_claim_link(user_id, username)
+                    if claim_url:
+                        return (f"{mention} 🎁 CLAIM YOUR MAGAts!\n"
+                               f"💎 {amount} MAGAts ready to claim\n"
+                               f"🔗 {claim_url}\n"
+                               f"⚠️ Link tied to YOUR YouTube account only! ✊✋🖐️")
+                    else:
+                        return f"{mention} ❌ Could not generate claim link. Try again later."
+
+                elif subcommand == 'top':
+                    # MAGAts leaderboard
+                    leaderboard = economy.get_leaderboard(limit=5)
+
+                    if not leaderboard:
+                        return f"{mention} 💎 FFCPLN MINING: No miners yet! Be the first to earn MAGAts! ✊✋🖐️"
+
+                    lines = [f"{mention} 💎 TOP FFCPLN MINERS:"]
+                    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+
+                    for entry in leaderboard:
+                        pos = entry['position'] - 1
+                        medal = medals[pos] if pos < len(medals) else f"#{entry['position']}"
+                        lines.append(f"{medal} {entry['username']}: {entry['total_magats']} MAGAts ({entry['total_whacks']} whacks)")
+
+                    return "\n".join(lines)
+
+                elif subcommand == 'mine':
+                    # Mining progress
+                    status = economy.get_mining_status(user_id)
+
+                    progress_pct = ((10 - status['whacks_to_next']) / 10) * 100
+                    progress_bar = "█" * int(progress_pct / 10) + "░" * (10 - int(progress_pct / 10))
+
+                    return (f"{mention} ⛏️ FFCPLN MINING PROGRESS:\n"
+                           f"[{progress_bar}] {progress_pct:.0f}%\n"
+                           f"🔨 {status['whacks_to_next']} whacks to next MAGAt\n"
+                           f"💎 Total: {status['total_magats']} MAGAts | {status['consciousness_level']}")
+
+                elif subcommand == 'invite':
+                    # Share invite code - can target a specific user with @username
+                    # Already OWNER-gated at top of /fuc block - no additional check needed
+
+                    # Check for @mention target (e.g., "/fuc invite @SomeUser")
+                    target_username = None
+                    target_mention = mention  # Default to command issuer
+
+                    # Look for @username in the command
+                    import re
+                    at_match = re.search(r'@(\S+)', text)
+                    if at_match:
+                        target_username = at_match.group(1)
+                        target_mention = f"@{target_username}"
+
+                    # Check population threshold and stream duration (30+ min)
+                    try:
+                        from modules.gamification.whack_a_magat.src.invite_distributor import get_invite_code
+                        # Get stream start time from message processor for duration check
+                        stream_start = getattr(self.message_processor, 'stream_start_time', None) if self.message_processor else None
+                        invite_result = get_invite_code(user_id, username, stream_start_time=stream_start)
+
+                        if invite_result['success']:
+                            if target_username:
+                                # Sending invite to specific user
+                                return (f"{target_mention} 🎟️ YOU'VE BEEN GIFTED AN INVITE!\n"
+                                       f"💎 Code: {invite_result['code']}\n"
+                                       f"🌐 Use at: foundups.com\n"
+                                       f"⚠️ One-time use - join FoundUP$ now! ✊✋🖐️\n"
+                                       f"🎁 Get 5 invite codes to invite your friends!\n"
+                                       f"(Sent by {username})")
+                            else:
+                                return (f"{mention} 🎟️ EXCLUSIVE INVITE CODE!\n"
+                                       f"💎 Code: {invite_result['code']}\n"
+                                       f"🌐 Use at: foundups.com\n"
+                                       f"⚠️ One-time use only! Share wisely! ✊✋🖐️\n"
+                                       f"🎁 New members get 5 invite codes!")
+                        else:
+                            return f"{mention} 🎟️ {invite_result['message']} ✊✋🖐️"
+                    except ImportError:
+                        return f"{mention} 🎟️ Invite system initializing... Try again later! ✊✋🖐️"
+                    except Exception as e:
+                        logger.error(f"[FUC] Invite error: {e}")
+                        return f"{mention} 🎟️ Invite system error. Try again later! ✊✋🖐️"
+
+                elif subcommand == 'distribute':
+                    # Auto-distribute invites to TOP 10 whackers (OWNER only)
+                    try:
+                        from modules.gamification.whack_a_magat.src.invite_distributor import auto_distribute_top10_invites, get_invite_stats
+
+                        # Get stats first
+                        stats = get_invite_stats()
+
+                        # Run auto-distribution
+                        new_invites = auto_distribute_top10_invites()
+
+                        if new_invites:
+                            # Return multiple messages - one announcement + one per new invite
+                            messages = [f"{mention} 🎯 AUTO-DISTRIBUTING TOP 10 INVITES!"]
+                            for inv in new_invites:
+                                messages.append(inv['message'])
+                            messages.append(f"✅ Distributed {len(new_invites)} new invites! Total: {stats['total_distributed'] + len(new_invites)} ✊✋🖐️")
+                            return messages
+                        else:
+                            return f"{mention} ✅ All TOP 10 whackers already have invites! (Total distributed: {stats['total_distributed']}) ✊✋🖐️"
+
+                    except Exception as e:
+                        logger.error(f"[FUC] Distribute error: {e}")
+                        return f"{mention} 🎟️ Distribute error: {str(e)[:50]} ✊✋🖐️"
+
+                elif subcommand == 'stats':
+                    # Show invite distribution stats (OWNER only)
+                    try:
+                        from modules.gamification.whack_a_magat.src.invite_distributor import get_invite_stats
+                        stats = get_invite_stats()
+
+                        return (f"{mention} 📊 INVITE DISTRIBUTION STATS:\n"
+                               f"📨 Total distributed: {stats['total_distributed']}\n"
+                               f"👥 Unique recipients: {stats['unique_recipients']}\n"
+                               f"🏆 By type: {stats['by_type']} ✊✋🖐️")
+
+                    except Exception as e:
+                        logger.error(f"[FUC] Stats error: {e}")
+                        return f"{mention} 📊 Stats error: {str(e)[:50]} ✊✋🖐️"
+
+                else:
+                    return f"{mention} 💀 /fuc commands: status | claim | top | mine | invite | distribute | stats ✊✋🖐️"
             
             elif text_lower == '/help' or text_lower.startswith('/help'):
                 # Return list of messages - message_processor sends each one
                 # Message 1: Player commands (everyone)
-                help_msgs = [f"{mention} 💀 /score /rank /whacks /leaderboard /sprees /quiz /quizboard /facts | !about !short"]
+                help_msgs = [f"{mention} 💀 /score /rank /whacks /leaderboard /sprees /quiz | !about !short"]
 
-                # Message 2: Role-specific commands (auto-sent for MOD/OWNER/TOP10)
+                # Message 2: Role-specific commands
                 if role == 'OWNER':
-                    help_msgs.append(f"👑 OWNER: /fc /toggle /session !party !createshort !shortsora !shortveo !short @user /troll")
+                    # OWNER gets all commands including /fuc economy
+                    help_msgs.append(f"👑 OWNER: /fc /toggle /session !party !createshort /troll")
+                    help_msgs.append(f"💎 /fuc status|claim|top|mine|invite|distribute|stats → FFCPLN Economy")
                 elif role == 'MOD':
                     help_msgs.append(f"🛡️ MOD: /fc /session !party /troll")
                 else:
@@ -535,7 +713,7 @@ class CommandHandler:
                     try:
                         position, _ = get_user_position(user_id)
                         if position > 0 and position <= 10:
-                            help_msgs.append(f"🏆 TOP {position}: !party !createshort !shortsora !shortveo /troll")
+                            help_msgs.append(f"🏆 TOP {position}: !party !createshort /troll")
                     except Exception:
                         pass
 

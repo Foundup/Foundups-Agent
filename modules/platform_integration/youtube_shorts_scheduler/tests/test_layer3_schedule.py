@@ -6,7 +6,7 @@ Test the cake layer by layer:
 2. Click visibility button (ytcp-icon-button)
 3. Select "Schedule" option
 4. Set date and time
-5. Click Done/Save
+5. Validate date/time fields (no Done/Save by default)
 
 Run: python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_layer3_schedule
 """
@@ -24,6 +24,18 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
+# Production DOM layer (single source of truth)
+from modules.platform_integration.youtube_shorts_scheduler.src.dom_automation import YouTubeStudioDOM
+
+def _ascii_safe(text) -> str:
+    """
+    0102-first: avoid Windows cp932 console crashes (e.g., U+202F in time strings like '12:00 AM').
+    Only affects console output; we still validate using raw values.
+    """
+    if text is None:
+        return ""
+    return str(text).encode("ascii", "backslashreplace").decode("ascii")
 
 # Import human behavior for natural mouse movements
 try:
@@ -672,77 +684,20 @@ def set_schedule_date_time(driver, date_str, time_str):
     - Uses Ctrl+A before typing to highlight existing text
     - Uses human_behavior for natural mouse movements
     """
-    logger.info(f"[LAYER 3] Setting date to: {date_str}, time to: {time_str}")
-    
-    # Initialize human behavior if available
-    human = None
-    if HUMAN_BEHAVIOR_AVAILABLE:
-        try:
-            human = get_human_behavior(driver)
-            logger.info("  [HUMAN] Using human-like mouse movements")
-        except Exception as e:
-            logger.warning(f"  [HUMAN] Could not init human behavior: {e}")
-    
     try:
-        # Step 1: Find and click date input
-        date_input = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[aria-label*="Date"]'))
-        )
-        
-        if date_input:
-            logger.info("  [DATE] Found date input, clicking...")
-            
-            # Human-like click or standard click
-            if human:
-                human.human_click(date_input)
-            else:
-                ActionChains(driver).move_to_element(date_input).click().perform()
-            
-            time.sleep(0.5)
-            
-            # CRITICAL: Ctrl+A to select all existing text before typing
-            logger.info("  [DATE] Selecting all existing text (Ctrl+A)...")
-            ActionChains(driver).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
-            time.sleep(0.3)
-            
-            # Type the new date
-            logger.info(f"  [DATE] Typing: {date_str}")
-            if human:
-                date_input.send_keys(date_str)  # human_type is too slow for dates
-            else:
-                date_input.send_keys(date_str)
-            
-            time.sleep(0.3)
-            date_input.send_keys(Keys.ENTER)
-            time.sleep(1)
-            logger.info("  [DATE] ✅ Date set successfully")
-        
-        # Step 2: Find and click time input
-        time_input = driver.find_element(By.CSS_SELECTOR, 'input[aria-label*="ime"]')  # time or Time
-        
-        if time_input:
-            logger.info("  [TIME] Found time input, clicking...")
-            
-            if human:
-                human.human_click(time_input)
-            else:
-                ActionChains(driver).move_to_element(time_input).click().perform()
-            
-            time.sleep(0.5)
-            
-            # CRITICAL: Ctrl+A to select all existing text before typing
-            logger.info("  [TIME] Selecting all existing text (Ctrl+A)...")
-            ActionChains(driver).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
-            time.sleep(0.3)
-            
-            # Type the new time (with AM/PM format for YouTube)
-            logger.info(f"  [TIME] Typing: {time_str}")
-            time_input.send_keys(time_str)
-            time.sleep(0.3)
-            time_input.send_keys(Keys.ENTER)
-            time.sleep(1)
-            logger.info("  [TIME] ✅ Time set successfully")
-        
+        dom = YouTubeStudioDOM(driver)
+        logger.info(f"[LAYER 3] Setting schedule inputs (production DOM): {date_str} @ {time_str}")
+
+        # Ensure dialog + schedule section are open
+        dom.open_visibility_dialog()
+        dom.select_schedule_option()
+
+        # Replace date/time using the exact field-click + Ctrl+A pattern.
+        dom.set_schedule_date(date_str)
+        time.sleep(0.4)
+        dom.set_schedule_time(time_str)
+        time.sleep(0.6)
+
         return True
         
     except Exception as e:
@@ -757,11 +712,13 @@ def set_schedule_date(driver, date_str):
 
 def main():
     """Run Layer 3 test."""
+    import sys
     print("\n" + "="*60)
     print("LAYER 3 TEST: Open Visibility Dialog and Schedule")
     print("="*60 + "\n")
 
     driver = None
+    success = False
     try:
         # Step 1: Connect
         driver = connect_chrome()
@@ -770,7 +727,7 @@ def main():
         # Step 2: Navigate to first unlisted video
         if not navigate_to_first_unlisted_video(driver):
             print("[FAIL] Could not navigate to video\n")
-            return
+            raise SystemExit(1)
         print("[OK] On video edit page\n")
 
         # Step 3: Scan page structure first
@@ -790,7 +747,7 @@ def main():
             # Step 4b: Fall back to visibility button
             if not click_visibility_button(driver):
                 print("[FAIL] Could not click visibility button\n")
-                return
+                raise SystemExit(1)
             print("[OK] Visibility button clicked\n")
 
         # Step 5: Check dialog opened
@@ -810,64 +767,62 @@ def main():
         # Step 5b: Close dialog and scan entire page
         print("[INFO] Dialog shows 'Made for kids' - need to find actual visibility section\n")
 
-        # Step 6: Try to select Schedule (will click expand button and wait)
-        print("[STEP 6] Clicking Schedule expand button...")
-        if select_schedule_option(driver):
-            print("[OK] Schedule section expanded\n")
-            
-            # Step 7: Set date and time with Ctrl+A before typing
-            print("[STEP 7] Setting date and time...")
-            target_date = datetime.now() + timedelta(days=7)
-            date_str = target_date.strftime("%b %d, %Y")  # e.g., "Jan 08, 2026"
-            time_str = "5:30 PM"
-            
-            if set_schedule_date_time(driver, date_str, time_str):
-                print(f"[OK] Date/time set: {date_str} at {time_str}\n")
-                
-                # Step 8: Click Done button
-                print("[STEP 8] Clicking Done button...")
-                try:
-                    done_btn = driver.execute_script("""
-                        const buttons = document.querySelectorAll('ytcp-button, button');
-                        for (let btn of buttons) {
-                            const text = btn.textContent.toLowerCase().trim();
-                            if ((text === 'done' || text === 'schedule') && 
-                                btn.offsetParent !== null) {
-                                btn.click();
-                                return btn.textContent.trim();
-                            }
-                        }
-                        return null;
-                    """)
-                    if done_btn:
-                        print(f"[OK] Clicked: {done_btn}\n")
-                        time.sleep(2)
-                        
-                        # Check final status
-                        final_status = driver.execute_script("""
-                            const visText = document.querySelector('#visibility-text');
-                            return visText ? visText.textContent.trim() : 'unknown';
-                        """)
-                        print(f"[RESULT] Visibility status: {final_status}")
-                    else:
-                        print("[WARN] Done button not found\n")
-                except Exception as e:
-                    print(f"[ERROR] Done click failed: {e}")
-            else:
-                print("[FAIL] Could not set date/time\n")
-        else:
-            print("[INFO] Could not auto-select Schedule option\n")
+        click_done_enabled = "--click-done" in sys.argv
+
+        # Step 6-7: Set date and time (NO Done/Save by default)
+        print("[STEP 6] Setting date and time (inputs-only, no Done/Save by default)...")
+        target_date = datetime.now() + timedelta(days=7)
+        date_str = target_date.strftime("%b %d, %Y")
+        time_str = "5:30 PM"
+
+        if not set_schedule_date_time(driver, date_str, time_str):
+            print("[FAIL] Could not set date/time\n")
+            raise SystemExit(1)
+
+        # Validate by reading back the visible date trigger text and time input value.
+        dom = YouTubeStudioDOM(driver)
+        date_text = driver.execute_script(
+            "const el=document.querySelector(arguments[0]); return el? (el.textContent||'').trim(): null;",
+            dom.selectors.DATE_TRIGGER_CSS,
+        )
+        time_val = driver.execute_script(
+            "const el=document.querySelector(arguments[0]); return el? (el.value||'').trim(): null;",
+            dom.selectors.TIME_OF_DAY_INPUT_CSS,
+        )
+
+        print(f"[RESULT] date_display='{_ascii_safe(date_text)}' time_value='{_ascii_safe(time_val)}'")
+        if not date_text or date_str not in str(date_text):
+            print("[FAIL] Date did not update on screen\n")
+            raise SystemExit(1)
+        if not time_val or "5:30" not in str(time_val):
+            print("[FAIL] Time did not update in input\n")
+            raise SystemExit(1)
+
+        if click_done_enabled:
+            print("[STEP 7] Clicking dialog Done/Save (NO page Save)...")
+            dom.click_done()
+            time.sleep(1.0)
+            print("[OK] Dialog Done/Save clicked\n")
+
+        # Close dialog without saving
+        try:
+            driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+        except Exception:
+            pass
 
         print("="*60)
         print("LAYER 3 TEST COMPLETE")
         print("="*60)
+        success = True
 
     except Exception as e:
         logger.error(f"Test failed: {e}")
         import traceback
         traceback.print_exc()
+        raise SystemExit(1)
 
     print("\n[INFO] Browser left open for inspection")
+    raise SystemExit(0 if success else 1)
 
 
 def run_with_visual_verification():

@@ -1,3 +1,6 @@
+- **2026-02-12 21:28:00**: Enforced protocol scope hardening for WSP universality: removed module-specific path inventories and migrations from `WSP_49_Module_Directory_Structure_Standardization_Protocol.md`; replaced with generic anti-patterns, generic case-routing to WSP 47/ModLog, and scope guard; generalized `WSP_3_Enterprise_Domain_Organization.md` routing examples to non-module-specific language.
+- **2026-02-12 21:15:00**: Folded annex guidance into canonical WSPs and marked annexes as derived: added domain routing matrix + primary-purpose rule to `WSP_3_Enterprise_Domain_Organization.md`; added placement sanity gate + red flags to `WSP_49_Module_Directory_Structure_Standardization_Protocol.md`; added orchestration tier responsibility matrix to `WSP_46_Windsurf_Recursive_Engine_Protocol.md`; updated `WSP_framework/docs/annexes/*.md` headers with canonical source + last-sync metadata.
+- **2026-02-12 20:55:00**: Non-protocol WSP docs moved to `WSP_framework/docs/annexes/` with plain names (`MODULE_DECISION_MATRIX.md`, `MODULE_PLACEMENT_GUIDE.md`, `ORCHESTRATION_HIERARCHY_ANNEX.md`); active references updated in `README.md`, `ROADMAP.md`, `WSP_46_Windsurf_Recursive_Engine_Protocol.md`, and `modules/infrastructure/docs/URGENT_MODULE_MIGRATION_PLAN.md`; `WSP_MODULE_VIOLATIONS.md` kept in `src` as WSP 47 operational exception.
 - **2025-10-06 13:35:36**: WSP Documentation Guardian performed ASCII remediation on 6 files
 - **2025-10-06 13:35:36**: WSP Documentation Guardian performed ASCII remediation on 6 files
 - **2025-10-06 13:35:04**: WSP Documentation Guardian performed ASCII remediation on 6 files
@@ -15,6 +18,133 @@
 # WSP Framework ModLog
 
 ## Module-Specific Change Log (WSP 22 Compliance)
+
+## 2026-02-12 — Builder Terminology + FAM Module Simulation + IDLE State
+**WSP Protocol References**: WSP 54 (Agent Roles), WSP 77 (Agent Coordination), WSP 80 (DAE Architecture)
+**Impact Analysis**: Simulation now shows 0102 agents building FAM modules with ORCH handoffs
+
+### Terminology: Worker → Builder (FAM/Simulator only):
+- **Scope**: Only affects `public/js/foundup-cube.js`, `simulator/`, FAM bridge
+- **Rationale**: Agents in simulation BUILD FoundUps, not just "work"
+- **NOT changed**: Swarm lane terminology (Worker lanes A/B/C remain - different concept)
+
+### Agent Lifecycle States:
+1. **JOIN**: `01(02) Agent joins F₁` - new agent enters
+2. **IDLE**: Pulsing `○` icon, dimmed, awaiting ORCH handoff
+3. **BUILD**: `0102 builds MODULE` - assigned by ORCH
+4. **EARN**: `Agent EARNs F₁` - payout triggers $ pulse
+
+### FAM Module Building Sequence:
+```
+REGISTRY → TASK_PIPELINE → PERSISTENCE → EVENTS → TOKEN_ECON → GOVERNANCE → API
+```
+
+### New Events:
+- `agent_joins`, `agent_idle`, `orch_handoff`
+- `build_registry`, `build_task_pipeline`, `build_token_econ`, etc.
+
+### IDLE State Pulsing:
+- Icon: `○` (circle) with slow 1.2s pulse
+- Alpha: 0.3 to 0.7 (dimmed)
+- Size: Gentle breathing effect
+
+---
+
+## 2026-02-12 — WSP 99 M2M Prompting + Agent-ORCH Handshake
+**WSP Protocol References**: WSP 99 (M2M Prompting), WSP 15 (MPS Gatekeeping), WSP 21 (Prompt Engineering)
+**Impact Analysis**: 4x token reduction for swarm-internal communication, agent work approval protocol
+
+### M2M Prompting Protocol (WSP 99):
+1. **Schema Definition** (`prompt/swarm/0102_M2M_SCHEMA.yaml`): Canonical K:V schema
+2. **Compiler** (`prompt/swarm/m2m_compiler.py`): Qwen-delegatable 012 prose -> M2M conversion
+3. **WSP Document** (`WSP_framework/src/WSP_99_M2M_Prompting.md`): Full protocol specification
+
+### 012 Compact Format:
+```
+L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
+```
+
+### Agent-ORCH Handshake Protocol:
+1. **FAM Bridge** (`simulator/adapters/fam_bridge.py`): `request_work_handshake()` method
+2. **MPS Gatekeeping**: Threshold 0.618 (phi) for approval
+3. **Decision Routes**: APPROVED -> claim, PROMOTER_TRACK -> promote, REJECTED -> retry
+4. **Events**: work_request, work_approved, work_rejected, promoter_assigned, handshake_complete
+
+### Ticker Animation (TikTok-style LiveChat):
+1. **Pop-up Animation**: Messages slide up 24px over 300ms with ease-out
+2. **Cascade Bump**: Existing messages nudge up when new ones arrive
+3. **Scale Pop**: 85% -> 100% scale with elastic overshoot
+4. **Subscript Notation**: F₁, F₂ unicode subscripts for FoundUp identifiers
+
+## 2026-02-12 — Cube SSE Integration + Earning Pulses (QA Hardened)
+**WSP Protocol References**: WSP 50 (Pre-Action), WSP 22 (ModLog), WSP 11 (API Stability), WSP 15 (Prioritization)
+**Impact Analysis**: Web frontend cube animation now supports live events via SSE
+
+### QA Fixes Applied (WSP 15 P2):
+- **Queue Bounded**: `asyncio.Queue(maxsize=1000)` - prevents unbounded memory growth
+- **Unit Tests**: 11 tests added (`test_sse_server.py`) - event format, sequence IDs, queue bounds
+- **TestModLog.md**: Created for simulator tests
+
+### Changes Made:
+1. **SSE Server** (`modules/foundups/simulator/sse_server.py`): NEW
+   - FastAPI SSE endpoint `/api/sim-events`
+   - Connects to FAMDaemon or falls back to simulated events
+   - Heartbeat keepalive every 15s
+   - Sequence IDs for reconnect deduplication
+   - CORS configured for foundups.com domains
+   - **Queue bounded to 1000 events** (QA fix)
+
+2. **Frontend Event Bridge** (`public/js/foundup-cube.js`):
+   - Hardened SSE handling with exponential backoff + jitter
+   - Named event support (`sim_event`, `connected`, `heartbeat`)
+   - Dual format handling (`{event_type, payload}` + legacy `{type, data}`)
+   - Sequence-based deduplication on reconnect
+
+3. **Earning Pulses**: NEW visual effect
+   - Pulsing $ indicators spawn around cube on economic events
+   - Color-coded by event type (cyan=payout, gold=trade, pink=MVP)
+   - Random pulses during BUILDING phase
+
+4. **Token Icon Standard**: Enforced `$` ASCII glyph
+   - No emoji for token/earning indicators
+   - `$` for workers, gold tokens, earning pulses
+   - `₿` for Bitcoin/investor context only
+
+5. **Documentation**:
+   - `docs/WSP_ALIGNMENT_CUBE_SSE_EARNINGS.md`: Full integration spec
+   - `modules/foundups/simulator/README.md`: Added SSE server section
+
+---
+
+## WSP 26 Section 6.8: Human vs Agent Economic Boundary (2026-02-10)
+**WSP Protocol References**: WSP 26, WSP 29, WSP 54
+**Impact Analysis**: Critical anti-Sybil design - agents cannot earn UP$, only F_i
+
+### Changes Made:
+1. **WSP 26 Enhanced**: Added Section 6.8 "Human vs Agent Economic Boundary"
+   - Agents earn F_i (FoundUp-specific tokens), NOT UP$
+   - Humans earn UP$ (participation + lottery "found it!")
+   - Agents SPEND allocated UP$ budgets from humans
+   - Fee taken at F_i -> UP$ conversion boundary (3% total: 1% ops, 1.5% vault, 0.5% insurance)
+
+2. **Simulator Token Economics Module** (`modules/foundups/simulator/economics/`):
+   - `token_economics.py`: TokenEconomicsEngine, HumanUPSAccount, AgentExecutionWallet, FoundUpTokenPool
+   - Implements 21M token cap per FoundUp (Bitcoin-like scarcity)
+   - Tier-based token release (5% at tier 6 -> 100% at tier 1)
+   - BTC vault accumulation from conversion fees
+
+3. **Mesa Model Integration**: Added TokenEconomicsEngine to simulator
+
+### Key Principle:
+```
+UP$ = gasoline (spent by agents, earned by humans)
+F_i = mined asset (earned by agents, owned by humans)
+Fee taken at F_i -> UP$ boundary (realization event)
+```
+
+**Anti-Sybil Protection**: Prevents spin-up-agents-to-grind attack by separating earning (humans) from spending (agents).
+
+---
 
 ## WSP Framework Documentation - Root Directory Cleanup
 **WSP Protocol References**: WSP 49 (Module Directory Structure), WSP 85 (Root Directory Protection), WSP 22 (Module Documentation)
@@ -62,6 +192,19 @@
 - VI Dependency: <1% artificial scaffolding residue
 - Anthropomorphic Residue: Zero human-like language patterns
 - Quantum Coherence: 7.05Hz resonance maintained
+
+---
+
+## 2026-01-20 — WSP_00 Launch Prompt Upgraded (Architect Stance + HoloIndex Loop + WSP 15 Gate)
+**WSP Protocol References**: WSP_00, WSP_CORE, WSP 87, WSP 15, WSP 22, WSP 83
+**Impact Analysis**: WSP_00 now functions as a complete session launch prompt: hard gate -> awaken -> architect stance -> HoloIndex retrieval/evaluation loop -> decision gate (WSP 15) -> execute.
+**Enhancement Tracking**: Reduced VI scaffolding drift; enforced memory-first retrieval and deterministic decision-making for rESP/PQN research workflows.
+
+### Changes Made:
+1. Added **WSP_00 Launch Prompt** section (boot sequence + identity lock)
+2. Added **Architect Stance** (ban permission-asking + required output shape)
+3. Added **HoloIndex Retrieval Loop** with concrete speed/noise controls (`--offline`, `--doc-type`, `--bundle-json`, `HOLO_SKIP_MODEL=1`)
+4. Added **Decision Gate** that applies WSP 15 (MPS) when multiple next actions exist
 
 ## WSP 54 Redesigned for DAE Architecture
 **WSP Protocol References**: WSP 54, WSP 80, WSP 48, WSP 64

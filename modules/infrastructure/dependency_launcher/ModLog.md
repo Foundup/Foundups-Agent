@@ -7,6 +7,23 @@
 
 ## Change Log
 
+### 2026-01-23: Session Restore Prevention (Multi-Tab Fix)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 27 (DAE Architecture)
+
+**Problem:** Chrome and Edge were restoring previous session tabs, causing 3+ tabs to open instead of just the YouTube Studio URL. This caused confusion during channel rotation.
+
+**Solution:** Added `--no-restore-session-state` flag to both Chrome and Edge launch commands:
+- Prevents browser from restoring tabs from previous session
+- Ensures only the YouTube Studio URL is loaded on launch
+- Consistent behavior between fresh launches and restarts
+
+**Files Changed:**
+- `src/dae_dependencies.py`: Added `--no-restore-session-state` to Chrome (line 143) and Edge (line 200) launch commands
+
+---
+
 ### 2025-12-13: ASCII-Safe Logging + `main.py --deps` Entry Point
 
 **By:** 0102  

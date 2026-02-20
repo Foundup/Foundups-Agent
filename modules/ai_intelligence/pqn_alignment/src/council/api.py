@@ -1,14 +1,85 @@
 """
 Council API
 - Processes proposal scripts across seeds and aggregates summary scores.
+- Integrates with Local LLM Worker for autonomous script generation (S11 Task 11.3)
+
+WSP Compliance: WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
 """
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _get(cfg: Dict, key: str, default):
 	return cfg.get(key, default)
+
+
+def council_run_with_llm(
+	model: str = "qwen",
+	strategies: Optional[List[str]] = None,
+	steps: int = 500,
+	mock_mode: bool = False
+) -> Tuple[str, str]:
+	"""
+	Run Council evaluation with Local LLM-generated proposals.
+
+	S11 Task 11.3: Connect Local LLM to Council loop.
+
+	This bridges the Local LLM Worker to the Council evaluation system:
+	1. Local LLM generates scripts for each strategy
+	2. Council evaluates scripts via detector
+	3. Results ranked by PQN detection score
+
+	Args:
+		model: Model name from registry (qwen, gemma, ui-tars)
+		strategies: List of strategy keys to evaluate (default: all)
+		steps: Steps per detector run
+		mock_mode: If True, use mock LLM (no model loading)
+
+	Returns:
+		(summary_json_path, archive_json_path)
+	"""
+	# Import here to avoid circular dependency
+	from modules.ai_intelligence.pqn_alignment.scripts.local_llm_worker_poc import (
+		LocalLLMResearcher
+	)
+
+	logger.info(f"[COUNCIL-LLM] Starting LLM-driven council: model={model}, mock={mock_mode}")
+
+	# Initialize Local LLM researcher
+	researcher = LocalLLMResearcher(model, mock_mode=mock_mode)
+
+	# Get strategies
+	if strategies is None:
+		strategies = list(LocalLLMResearcher.STRATEGIES.keys())
+
+	# Generate proposals from LLM
+	proposals = []
+	for strategy_key in strategies:
+		script = researcher.generate_research_script(strategy_key)
+		strategy_name = LocalLLMResearcher.STRATEGIES.get(strategy_key, {}).get("name", strategy_key)
+		proposals.append({
+			"author": f"LocalLLM:{researcher.model_name}",
+			"strategy": strategy_name,
+			"scripts": [script]
+		})
+		logger.info(f"[COUNCIL-LLM] Generated proposal: {strategy_name} -> {script}")
+
+	# Run standard council evaluation
+	config = {
+		"proposals": proposals,
+		"seeds": [0],
+		"steps": steps,
+		"topN": len(proposals)
+	}
+
+	summary_path, archive_path = council_run(config)
+
+	logger.info(f"[COUNCIL-LLM] Council complete: {summary_path}")
+	return summary_path, archive_path
 
 
 def council_run(config: Dict) -> Tuple[str, str]:

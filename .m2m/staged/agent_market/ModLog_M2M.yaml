@@ -1,0 +1,153 @@
+# M2M v1.0 | ModLog.md | 20260213
+
+MODLOG___FOUNDUPS_AGENT_MARKET:
+2026_02_13___SSE_SIMULATOR_INTEGRATION_VIA_FAMDAEMON_SINGLETON:
+CROSS_MODULE_REFERENCE:
+  FILES: ['modules/foundups/simulator/sse_server.py']
+  FILES: ['modules/foundups/simulator/ModLog.md']
+2026_02_12___F_2_INVITE_DISTRIBUTION_SYSTEM__FFCPLN_MINING_REWARDS:
+WSP_REFERENCES:
+  WSP: [11]
+FOUNDUP_HIERARCHY:
+F_2_INVITE_SYSTEM_COMPONENTS:
+  CHARACTERS: `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no I/O/0/1)
+CROSS_MODULE_INTEGRATION:
+  DISTRIBUTION: `modules/gamification/whack_a_magat/src/invite_distributor.py`
+  COMMANDS: `modules/communication/livechat/src/command_handler.py`
+  REDEMPTION: `public/index.html` → Firebase `invites` collection
+MANAGING_DIRECTORS_ACCESS:
+2026_02_11___V0_1_2___F_0_ONLY_MVP_OFFERING_CONTRACT:
+WSP_REFERENCES:
+  WSP: [11]
+CHANGES:
+  FILES: ['src/in_memory.py']
+  FILES: ['src/interfaces.py']
+  FILES: ['INTERFACE.md']
+  ADD: MVP service contract section
+  ADD: event contract entries for `mvp_subscription_accru
+TEST_CHANGES:
+  FILES: ['tests/test_mvp_offering.py']
+NOTES:
+2026_02_08___V0_1_1___PROTOTYPE_TRANCHE_2__PERSISTENCE_LAYER:
+WSP_REFERENCES:
+  WSP: [11]
+CHANGES:
+  FILES: ['src/persistence/migrations.py']
+  FILES: ['src/persistence/repository_factory.py']
+  FILES: ['src/persistence/postgres_adapter.py']
+  FILES: ['src/persistence/sqlite_adapter.py']
+  FILES: ['src/persistence/__init__.py']
+TEST_CHANGES:
+  FILES: ['tests/test_migrations.py']
+  FILES: ['tests/test_repository_factory.py']
+  FILES: ['tests/test_sqlite_adapter.py']
+VERIFICATION:
+  PASS: `test_sqlite_adapter.py` (9)
+  PASS: `test_migrations.py` (4)
+  PASS: `test_repository_factory.py` (3)
+  PASS: `test_persistence.py` (12)
+NOTES:
+2026_02_08___V0_1_0___PROTOTYPE_TRANCHE_1__OBSERVABILITY_BACKBONE:
+WSP_REFERENCES:
+  WSP: [5]
+CHANGES:
+  FILES: ['src/fam_daemon.py']
+  FAMEVENTSTORE: Dual-write persistence (JSONL append-only + SQLite indexed)
+  FAMDAEMON: Heartbeat loop, health/status API, event listeners
+  FAMDAEMONHEALTH: Uptime, heartbeat count, parity status, errors
+  FILES: ['tests/test_fam_daemon.py']
+  FILES: ['INTERFACE.md']
+  FILES: ['ROADMAP.md']
+KEY_DESIGN_DECISIONS:
+IMPACT:
+TEST_COVERAGE:
+  TOTAL: 52 tests passing
+2026_02_08___V0_0_6___CORE_DOMAIN_HARDENING__0102_A:
+WSP_REFERENCES:
+  WSP: [5]
+CHANGES:
+  FILES: ['exceptions.py']
+  ADD: `StateTransitionError` alias for backwards compati
+  ADD: `IdempotencyError` for duplicate operation detecti
+  ADD: `RewardConstraintError` for reward validation fail
+  FILES: ['cabr_hooks.py']
+  FILES: ['observability.py']
+  FILES: ['in_memory.py']
+  ADD: `DeterministicIdGenerator` class for repeatable te
+  ADD: `reset()` method for test isolation (clears all st
+  ADD: `get_tasks_by_foundup()` helper for CABR hooks int
+IMPACT:
+  TEST: can now assert on specific generated IDs when dete
+NOTES:
+2026_02_08___V0_0_5___CHAIN_AGNOSTIC_ADAPTERS___BOUNDARY_HARDENING__0102_B:
+WSP_REFERENCES:
+  WSP: [11]
+CHANGES:
+  FILES: ['token_factory.py']
+  NO_CHAIN_LOCK-IN: chain selected via `terms.chain_hint`
+  FILES: ['treasury_governance.py']
+  SAFE_DEFAULTS: max single transfer limit, balance checks
+  FILES: ['moltbook_distribution_adapter.py']
+  FILES: ['fam_adapter.py']
+  ERROR_CODES: `VALIDATION_ERROR`, `ADAPTER_INIT_ERROR`, `ORCHESTRATION_ERROR`, `PARSE_ERROR`
+  FILES: ['webhook_receiver.py']
+IMPACT:
+  ADD: governance layer for treasury transfers with audit
+NOTES:
+  WSP: [72]
+2026_02_07___V0_0_4___OPENCLAW_FAM_WIRING___MOLTBOOK_DISTRIBUTION_ADAPTER:
+  FILES: ['moltbot_bridge/src/moltbook_distribution_adapter.py']
+  FILES: ['openclaw_dae.py']
+  ADD: `IntentCategory.FOUNDUP` for FoundUp-related inten
+  ADD: FOUNDUP keywords to intent classification
+  ADD: `fam_adapter` domain route
+  ADD: `_execute_foundup()` method
+  FILES: ['in_memory.py']
+  FILES: ['test_e2e_integration.py']
+  FULL_FLOW: launch -> task -> proof -> verify -> CABR gate -> distribution
+  UPDATE: test runner and verified 29 tests passing.
+IMPACT:
+  ADD: Moltbook distribution channel for verified milesto
+NOTES:
+2026_02_07___V0_0_3___CABR_GATE___LAUNCH_ORCHESTRATION___REPO_BOUNDARY:
+WSP_REFERENCES:
+  WSP: [00]
+CHANGES:
+  ADD: `CABRGateError` and CABR-threshold distribution ga
+  ADD: `RepoProvisioningAdapter` interface and in-memory 
+  FILES: ['src/orchestrator.py']
+  UPDATE: launch flow so step 4 creates the initial task whe
+  FILES: ['src/__init__.py']
+  ADD: tests:
+  FILES: ['tests/test_cabr_gate.py']
+  FILES: ['tests/test_orchestrator.py']
+  UPDATE: test logs to reflect full suite status (`23 passed
+IMPACT:
+  ADD: quality-gated distribution (CABR).
+  ADD: deterministic orchestration path for Foundup launc
+  ADD: explicit repo provisioning boundary needed for per
+NOTES:
+2026_02_07___V0_0_2___VERIFIED_MILESTONE_DISTRIBUTION_CONTRACT:
+WSP_REFERENCES:
+  WSP: [00]
+CHANGES:
+  ADD: `DistributionPost` schema to module models.
+  ADD: `DistributionService` contract for milestone paylo
+  IMPLEMENT: in-memory distribution flow:
+  ADD: tests for distribution lifecycle and role gating.
+  UPDATE: module docs (`README`, `INTERFACE`, `ARCHITECTURE`
+IMPACT:
+NOTES:
+2026_02_07___V0_0_1___POC_SCAFFOLD_CREATION:
+WSP_REFERENCES:
+  WSP: [00]
+CHANGES:
+  CREATE: new module `modules/foundups/agent_market/`.
+  ADDED_FULL_SPEC_PACK: README, ROADMAP, INTERFACE, ARCHITECTURE, DATA_MODEL, SECURITY, violations, T...
+  ADD: Python schema/contracts skeleton and in-memory ada
+  ADD: tests for schema validation, lifecycle transitions
+  ADD: Holo discoverability integration for this module (
+IMPACT:
+  ADD: a safe PoC execution surface OpenClaw/WRE can call
+NOTES:
+  CURRENT_PHASE: PoC (`0.0.x`).

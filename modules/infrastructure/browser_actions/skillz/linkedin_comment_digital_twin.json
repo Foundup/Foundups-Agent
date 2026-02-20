@@ -1,0 +1,114 @@
+{
+  "skill_id": "linkedin_comment_digital_twin",
+  "name": "LinkedIn Digital Twin Comment + Schedule Flow",
+  "description": "UI-TARS validated comment, identity-like loop, and scheduled repost with thoughts (original posts only)",
+  "platform": "linkedin",
+  "wsp_references": ["WSP 73", "WSP 77", "WSP 84", "WSP 91"],
+  "version": "1.0.0",
+  "parameters": {
+    "comment_text": {
+      "type": "string",
+      "required": true,
+      "description": "012 Digital Twin comment text"
+    },
+    "repost_text": {
+      "type": "string",
+      "required": true,
+      "description": "Repost-with-thoughts text"
+    },
+    "mentions": {
+      "type": "array",
+      "required": false,
+      "default": ["@foundups"],
+      "description": "Mentions to insert and validate"
+    },
+    "identity_cycle": {
+      "type": "array",
+      "required": false,
+      "default": ["FOUNDUPS", "Move2Japan", "UnDaoDu", "EDUIT, Inc"],
+      "description": "Identities to like the 012 comment"
+    },
+    "schedule_time": {
+      "type": "string",
+      "required": true,
+      "description": "Scheduled time (15-minute increments, local time)"
+    },
+    "schedule_date": {
+      "type": "string",
+      "required": true,
+      "description": "Scheduled date (calendar selection, UI-TARS)"
+    }
+  },
+  "workflow": [
+    {
+      "step": 1,
+      "action": "open_comment_box",
+      "params": {
+        "ui_tars_verify": "comment box visible"
+      }
+    },
+    {
+      "step": 2,
+      "action": "type_comment_text",
+      "params": {
+        "text": "{{comment_text}}",
+        "ui_tars_verify": "comment text visible"
+      }
+    },
+    {
+      "step": 3,
+      "action": "insert_mentions",
+      "params": {
+        "mentions": "{{mentions}}",
+        "ui_tars_verify": "mention dropdown appears and top item selected (bolded)"
+      }
+    },
+    {
+      "step": 4,
+      "action": "submit_comment",
+      "params": {
+        "ui_tars_verify": "comment appears in thread"
+      }
+    },
+    {
+      "step": 5,
+      "action": "ensure_most_recent",
+      "params": {
+        "ui_tars_verify": "Most recent selected if comment not visible"
+      }
+    },
+    {
+      "step": 6,
+      "action": "switch_identity_and_like",
+      "params": {
+        "identity_cycle": "{{identity_cycle}}",
+        "ui_tars_verify": "identity changed and like applied"
+      }
+    },
+    {
+      "step": 7,
+      "action": "repost_with_thoughts",
+      "params": {
+        "text": "{{repost_text}}",
+        "ui_tars_verify": "repost with thoughts modal visible"
+      }
+    },
+    {
+      "step": 8,
+      "action": "schedule_repost",
+      "params": {
+        "schedule_date": "{{schedule_date}}",
+        "schedule_time": "{{schedule_time}}",
+        "ui_tars_verify": "schedule confirmation completed"
+      }
+    }
+  ],
+  "validation_rules": [
+    "Mentions must be bolded or DOM-annotated",
+    "Only live action is comment; all reposts scheduled",
+    "Never comment or repost reposts; only original posts",
+    "Spacing 4-6 hours; 1-3 posts/day"
+  ],
+  "created_by": "0102",
+  "sprint": "LN-DT-POC"
+}

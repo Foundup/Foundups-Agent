@@ -27,6 +27,13 @@ from dataclasses import dataclass
 import requests
 import json
 
+# Import model registry for centralized model management
+from .model_registry import (
+    RECOMMENDED_MODELS,
+    get_current_models,
+    check_model_status,
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -134,12 +141,12 @@ class AIGateway:
                 api_key=os.getenv('OPENAI_API_KEY'),
                 base_url='https://api.openai.com/v1',
                 models={
-                    'code_review': 'gpt-4',
-                    'analysis': 'gpt-4',
-                    'creative': 'gpt-3.5-turbo',
-                    'quick': 'gpt-3.5-turbo'
+                    'code_review': 'gpt-4o',          # Best for code (2026 current)
+                    'analysis': 'gpt-4o',              # Best for analysis
+                    'creative': 'gpt-4o-mini',         # Fast creative
+                    'quick': 'gpt-4o-mini'             # Fast responses
                 },
-                cost_per_token=0.002,
+                cost_per_token=0.0025,  # gpt-4o pricing
                 rate_limit=60
             ),
 
@@ -148,10 +155,10 @@ class AIGateway:
                 api_key=os.getenv('ANTHROPIC_API_KEY'),
                 base_url='https://api.anthropic.com/v1',
                 models={
-                    'code_review': 'claude-3-opus-20240229',
-                    'creative': 'claude-3-haiku-20240307',
-                    'analysis': 'claude-3-sonnet-20240229',
-                    'quick': 'claude-3-haiku-20240307'
+                    'code_review': 'claude-opus-4-6',           # Best for code
+                    'creative': 'claude-haiku-4-5-20251001',    # Fast creative
+                    'analysis': 'claude-sonnet-4-5-20250929',   # Balanced analysis
+                    'quick': 'claude-haiku-4-5-20251001'        # Fast responses
                 },
                 cost_per_token=0.015,
                 rate_limit=50
@@ -176,10 +183,10 @@ class AIGateway:
                 api_key=os.getenv('GEMINI_API_KEY'),
                 base_url='https://generativelanguage.googleapis.com/v1',
                 models={
-                    'code_review': 'gemini-pro',
-                    'analysis': 'gemini-pro',
-                    'creative': 'gemini-pro',
-                    'quick': 'gemini-pro-vision'  # Cheaper option
+                    'code_review': 'gemini-2.5-pro',     # Best for code (thinking)
+                    'analysis': 'gemini-2.5-pro',        # Deep analysis
+                    'creative': 'gemini-2.5-flash',      # Fast creative
+                    'quick': 'gemini-2.5-flash'          # Fast responses
                 },
                 cost_per_token=0.0005,
                 rate_limit=60

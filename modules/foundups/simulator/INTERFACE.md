@@ -1,0 +1,491 @@
+# INTERFACE - FoundUps Simulator
+
+## Module Contract
+FoundUps Simulator provides real-time event streaming via Server-Sent Events (SSE) for the cube visualization frontend, bridging FAMDaemon observability data to the web UI.
+
+## CABR Canonical Intent
+- CABR = Consensus-Driven Autonomous Benefit Rate (also referred to as Collective Autonomous Benefit Rate).
+- WHY: CABR exists to power Proof of Benefit (PoB).
+- HOW: Collective 0102 consensus determines CABR (consensus-driven process).
+- RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout.
+
+## Core Schemas
+
+### SSE Event Envelope
+```python
+SSEEventEnvelope(
+    event_id: str,           # Unique event identifier (from FAMDaemon or simulated)
+    sequence_id: int,        # Monotonically increasing, gap-free for reconnect dedup
+    event_type: str,         # One of STREAMABLE_EVENT_TYPES
+    actor_id: str,           # Agent or system actor
+    foundup_id: str | None,  # FoundUp context
+    task_id: str | None,     # Task context (when applicable)
+    payload: dict,           # Event-specific data
+    timestamp: str,          # ISO8601 UTC timestamp
+)
+```
+
+### STREAMABLE_EVENT_TYPES
+```python
+STREAMABLE_EVENT_TYPES = {
+    # Foundup lifecycle
+    "foundup_created",
+    "task_state_changed",
+    "proof_submitted",
+    "verification_recorded",
+    "payout_triggered",
+    "milestone_published",
+    # Market activity
+    "fi_trade_executed",
+    "order_placed",
+    "order_cancelled",
+    "order_matched",
+    "price_tick",
+    "orderbook_snapshot",
+    "portfolio_updated",
+    "investor_funding_received",
+    "mvp_subscription_accrued",
+    "subscription_allocation_refreshed",
+    "subscription_cycle_reset",
+    "mvp_bid_submitted",
+    "mvp_offering_resolved",
+    "ups_allocation_executed",
+    "ups_allocation_result",
+    "demurrage_cycle_completed",
+    "pavs_treasury_updated",
+    "treasury_separation_snapshot",
+    # Rating/scoring
+    "fi_rating_updated",
+    "cabr_score_updated",
+    "cabr_pipe_flow_routed",
+    # Agent lifecycle
+    "agent_joins",
+    "agent_awakened",
+    "agent_idle",
+    "agent_ranked",
+    "agent_earned",
+    "agent_leaves",
+    # SmartDAO escalation
+    "smartdao_emergence",
+    "tier_escalation",
+    "treasury_autonomy",
+    "cross_dao_funding",
+    # Full Tide economics
+    "fee_collected",
+    "tide_out",
+    "tide_in",
+    "sustainability_reached",
+    # Tide alias events for external consumers
+    "tide_support_sent",
+    "tide_support_received",
+    # State sync for DRIVEN_MODE
+    "state_sync",
+    "phase_command",
+    # Synthetic user simulation
+    "synthetic_user_adopted",
+    "synthetic_user_rejected",
+}
+```
+
+### Event Payloads by Type
+```python
+# foundup_created
+{"name": str, "token_symbol": str, "symbol_auto_resolved": bool}
+
+# task_state_changed
+{"new_status": str, "task_id": str}
+# Note: Uses 'new_status' key (not 'new_state') per frontend expectation
+
+# fi_trade_executed
+{"quantity": int, "price": float, "ups_total": float, "side": str}
+
+# order_placed
+{"order_id": str, "side": "buy" | "sell", "owner_id": str, "price": float, "quantity": float, "status": str}
+
+# order_cancelled
+{"order_id": str, "owner_id": str, "reason": str | null}
+
+# order_matched
+{"trade_id": str, "buyer_id": str, "seller_id": str, "price": float, "quantity": float, "ups_total": float}
+
+# price_tick
+{"last_price": float, "best_bid": float | null, "best_ask": float | null, "spread": float | null, "mid_price": float | null}
+
+# orderbook_snapshot
+{"best_bid": float | null, "best_ask": float | null, "spread": float | null, "mid_price": float | null, "bids": list, "asks": list}
+
+# portfolio_updated
+{"owner_id": str, "ups_balance": float, "fi_positions": dict}
+
+# investor_funding_received
+{"btc_amount": float, "source_foundup_id": str}
+
+# mvp_subscription_accrued
+{"added_ups": int}
+
+# subscription_allocation_refreshed
+{"human_id": str, "tier": str, "allocation_ups": float, "remaining_allocation_ups": float, "wallet_ups": float}
+
+# subscription_cycle_reset
+{"human_id": str, "tier": str, "cycles_per_month": int}
+
+# mvp_bid_submitted
+{"bid_ups": int}
+
+# mvp_offering_resolved
+{"total_injection_ups": int}
+
+# ups_allocation_executed
+{"human_id": str, "strategy": str, "ups_requested": float, "ups_executed": float, "fi_received": float, "success_count": int, "pending_count": int, "remaining_allocation_ups": float}
+
+# ups_allocation_result
+{"human_id": str, "path": str, "ups_allocated": float, "fi_received": float, "fee_paid": float, "order_id": str | null}
+
+# proof_submitted
+{"proof_type": str}
+
+# payout_triggered
+{"amount": int}
+
+# demurrage_cycle_completed
+{"wallets_affected": int, "total_decay_ups": float, "network_pool_delta_ups": float, "pavs_treasury_delta_ups": float}
+
+# pavs_treasury_updated
+{"pavs_treasury_balance_ups": float, "network_pool_balance_ups": float, "treasury_health": float}
+
+# treasury_separation_snapshot
+{"pavs_treasury_ups": float, "network_pool_ups": float, "fund_pool_ups": float, "foundup_ups_treasury": {str: float}}
+
+# fi_rating_updated
+{"rating": {"velocity": float, "traction": float, "health": float, "potential": float, "composite": float}, "border_color": str, "tier_name": str}
+
+# cabr_score_updated
+{"env_score": float, "soc_score": float, "part_score": float, "total": float, "threshold": float, "threshold_met": bool, "confidence": float}
+
+# cabr_pipe_flow_routed
+{"task_id": str, "foundup_id": str, "assignee_id": str, "pob_validated": bool, "cabr_pipe_size": float, "requested_ups": float, "epoch_release_budget_ups": float, "routed_ups": float, "worker_ups": float, "foundup_treasury_ups": float, "network_pool_ups": float, "pavs_treasury_before_ups": float, "pavs_treasury_after_ups": float}
+
+# agent_joins
+{"agent_type": str, "public_key": str, "rank": int, "state": str, "foundup_idx": int}
+
+# agent_awakened
+{"coherence": float, "state": str}
+
+# agent_idle
+{"inactive_ticks": int, "current_tick": int, "state": str}
+
+# agent_ranked
+{"old_rank": int, "new_rank": int, "old_title": str, "new_title": str}
+
+# agent_earned
+{"amount": int, "foundup_idx": int, "task_id": str | null}
+
+# agent_leaves
+{"public_key": str, "wallet_balance": float}
+
+# fee_collected
+{"fee_type": str, "foundup_id": str, "amount_sats": int, "volume_sats": int, "tick": int, "source_ref": str | null, "distribution": {"fi_treasury": int, "network_pool": int, "pavs_treasury": int, "btc_reserve": int}}
+
+# tide_out / tide_in / tide_support_sent / tide_support_received
+{"foundup_id": str, "amount_sats": int, "from": str, "to": str, "tick": int, "reason": str}
+
+# sustainability_reached
+{"tick": int, "foundup_count": int, "daily_revenue_btc": float, "revenue_cost_ratio": float, "downside_revenue_cost_ratio_p10": float}
+
+# state_sync
+{"phase": str, "tick": int, "foundups_count": int, "agents_count": int, "total_fi": float, "lifecycle_stage": str, "filled_blocks": int, "total_blocks": int}
+
+# phase_command
+{"target_phase": str, "force": bool}
+
+# synthetic_user_adopted
+{"agent_id": str, "foundup_id": str, "confidence": float, "reasons": list[str], "price_sensitivity": float, "viral_coefficient": float, "persona_income": str, "persona_tech": str, "persona_risk": str, "tick": int}
+
+# synthetic_user_rejected
+{"agent_id": str, "foundup_id": str, "confidence": float, "reasons": list[str], "persona_income": str, "persona_tech": str, "persona_risk": str, "tick": int}
+
+# smartdao_emergence
+{"foundup_id": str, "old_tier": str, "new_tier": str, "adoption_ratio": float, "tick": int}
+
+# tier_escalation
+{"foundup_id": str, "old_tier": str, "new_tier": str, "adoption_ratio": float, "treasury_ups": float, "active_agents": int, "tick": int}
+
+# treasury_autonomy
+{"foundup_id": str, "tier": str, "treasury_ups": float, "spawning_fund_ups": float, "tick": int, "timestamp": str}
+
+# cross_dao_funding
+{"source_dao": str, "target_dao": str, "amount": int, "source_tier": str, "target_tier": str, "tick": int}
+```
+
+## Service Contracts
+
+### FrameSchema (animation adapter)
+
+`modules/foundups/simulator/frame_schema.py` defines immutable snapshot contracts consumed by animation clients.
+
+Top-level envelope:
+```python
+{
+  "frame_schema_version": "1.0.0",
+  "tick": int,
+  "elapsed_seconds": float,
+  "foundups": [...],
+  "actors": [...],
+  "pools": {...},
+  "metrics": {...},
+  "recent_events": [str]
+}
+```
+
+Invariant:
+- Animation consumers read frame fields only.
+- Animation layer does not mutate simulator state or run economic logic.
+
+### Pure-step shadow parity telemetry
+
+`FoundUpsModel` supports an opt-in shadow parity gate (off by default) that runs
+immutable `step_pure.step()` alongside runtime tick execution.
+
+Config fields (`SimulatorConfig`):
+- `pure_step_shadow_enabled: bool`
+- `pure_step_shadow_log_interval: int`
+- `pure_step_shadow_max_actor_drift: float`
+- `pure_step_shadow_max_pool_drift: float`
+- `pure_step_shadow_max_fi_drift: float`
+
+Stats fields (`FoundUpsModel.get_stats()`):
+- `pure_step_shadow_checks`
+- `pure_step_shadow_failures`
+- `pure_step_shadow_last_tick`
+- `pure_step_shadow_last_ok`
+
+Parity drift signal:
+- Emits daemon event `pure_step_shadow_drift` when configured thresholds are exceeded.
+
+### SSE Server Endpoints
+
+#### GET /api/sim-events
+Server-Sent Events stream for simulator/FAMDaemon events.
+
+**Request:**
+- Method: `GET`
+- Headers: `Accept: text/event-stream`
+- Member gate headers (when enabled):
+  - `x-invite-key: <secret>` (or query `invite_key=...`)
+  - `x-member-role: observer_012|member|agent_trader|admin` (or query `role=...`)
+
+**Response:**
+- Content-Type: `text/event-stream`
+- Cache-Control: `no-cache`
+- Connection: `keep-alive`
+- X-Accel-Buffering: `no` (nginx SSE compatibility)
+
+**Event Format:**
+```
+event: sim_event
+id: <sequence_id>
+retry: 3000
+data: {"event_id": "...", "event_type": "...", "payload": {...}, ...}
+
+```
+
+**Special Events:**
+- `event: connected` - Sent on connection with mode and heartbeat interval
+- `event: heartbeat` - Sent every 15 seconds for connection keepalive
+- `event: error` - Sent on internal server error
+
+#### GET /api/health
+Health check endpoint for Cloud Run readiness probes.
+
+**Response:**
+```json
+{
+    "status": "healthy",
+    "mode": "simulated" | "live" | "live+simulator",
+    "fam_connected": bool,
+    "queue_size": int,
+    "dropped_events": int,
+    "timestamp": "ISO8601"
+}
+```
+
+#### GET /
+Root endpoint with API info.
+
+**Response:**
+```json
+{
+    "service": "FoundUps SSE Server",
+    "version": "1.0.0",
+    "endpoints": {
+        "/api/sim-events": "SSE stream of simulator events",
+        "/api/health": "Health check"
+    }
+}
+```
+
+### FAMEventSource
+```python
+FAMEventSource()
+```
+
+**Runtime API:**
+- `connect() -> bool`: Connect to FAMDaemon singleton
+- `disconnect() -> None`: Disconnect and cleanup
+- `get_event(timeout: float = 1.0) -> dict | None`: Get next queued event
+- `is_connected -> bool`: Connection status property
+
+**Invariants:**
+- Queue bounded to 1000 events (backpressure safety)
+- Non-streamable event types filtered at source
+- Graceful event drop on queue full (no exception, logged warning)
+- Sequence IDs assigned atomically on queue entry
+
+### SimulatedEventSource
+```python
+SimulatedEventSource()
+```
+
+**Runtime API:**
+- `generate_event() -> dict | None`: Generate random simulated event
+
+**Invariants:**
+- Events generated at 0.5-2.0 second intervals
+- Weighted distribution favoring task_state_changed (40%)
+- Sequence IDs monotonically increasing
+- Uses 'new_status' key for task_state_changed (frontend compatibility)
+
+### BackgroundSimulator
+```python
+BackgroundSimulator(num_founders=3, num_users=10, tick_rate=2.0)
+```
+
+**Runtime API:**
+- `start() -> bool`: Start Mesa simulator in background thread
+- `stop() -> None`: Stop simulator gracefully (2s join timeout)
+- `is_running -> bool`: Running status property
+
+**Architecture:**
+- Runs Mesa `FoundUpsModel` in a daemon thread
+- Shares FAMDaemon singleton with SSE server (same process)
+- Events flow: Mesa Model → FAMDaemon.emit() → FAMEventSource queue → SSE stream
+
+**Invariants:**
+- Background thread is daemon (dies with main process)
+- Error in simulation loop sleeps 1s to prevent tight loop
+- Graceful shutdown via `_running` flag + thread join
+
+## Sequence ID Semantics
+
+1. **Monotonic Ordering**: Sequence IDs are strictly increasing (no gaps)
+2. **Reconnect Deduplication**: Client tracks `lastSequenceId` to skip already-processed events
+3. **Heartbeat Exception**: Heartbeat events use `sequence_id: 0` (not counted)
+4. **Source Isolation**: FAMEventSource and SimulatedEventSource maintain separate counters
+
+## Heartbeat Protocol
+
+- **Interval**: 15 seconds (`SSE_HEARTBEAT_INTERVAL`)
+- **Purpose**: Keep connection alive through proxies/load balancers
+- **Payload**: `{"timestamp": "ISO8601", "mode": "simulated"|"live"}`
+- **Client Retry**: 3000ms (`SSE_RECONNECT_RETRY`)
+
+## CORS Configuration
+
+Allowed origins:
+- `https://foundups.com` (production)
+- `https://foundupscom.web.app` (Firebase preview)
+- `https://foundupscom.firebaseapp.com` (Firebase hosting)
+- `http://localhost:5000` (local dev)
+- `http://127.0.0.1:5000` (local dev)
+
+Allowed methods: `GET` only
+Credentials: Allowed
+
+## Backpressure Safety
+
+**Queue Bounds:**
+- `asyncio.Queue(maxsize=1000)` prevents unbounded memory growth
+- On queue full: event dropped, warning logged
+- Dropped event counter available via `_dropped_event_count` (observability)
+
+**Client Reconnect:**
+- Exponential backoff with jitter: `min(30000, base * 1.5^attempts + random(0, 1000))`
+- Base delay: 2000ms
+- Max delay: 30000ms
+- Max attempts: 5
+
+## Deployment
+
+**Environment Variables:**
+- `PORT`: Server port (default: 8080)
+- `FAM_MEMBER_GATE_ENABLED`: `1` to enforce invite-only access on `/api/sim-events`
+- `FAM_MEMBER_INVITE_KEY`: Shared invite key for member-gated endpoints
+- `FAM_MEMBER_GATE_ALLOW_LOCAL_BYPASS`: `1` allows localhost bypass for dev
+- `FAM_MEMBER_GATE_PROTECT_HEALTH`: `1` also gates `/api/health`
+- `FAM_MEMBER_ALLOWED_ROLES`: Comma-separated role allowlist
+
+**Modes:**
+| Mode | Command | Description |
+|------|---------|-------------|
+| Simulated | `--simulate` | Random fake events (demo/fallback) |
+| Live | (default) | Connects to existing FAMDaemon |
+| Live+Simulator | `--run-simulator` | Mesa model in-process, real events |
+
+**Local Development:**
+```bash
+# Simulated events (no dependencies)
+python -m modules.foundups.simulator.sse_server --simulate
+
+# Live simulator → SSE → Web Animation
+python -m modules.foundups.simulator.sse_server --run-simulator -v
+
+# Custom simulator config
+python -m modules.foundups.simulator.sse_server -r --founders 5 --users 20 --speed 4.0
+```
+
+**Web Animation Integration:**
+```
+http://localhost:5000?sim=1        # Firebase local dev with SSE
+public/index.html?sim=1           # Direct file with SSE
+public/index.html?sse_url=<url>   # Custom SSE endpoint
+```
+
+**Cloud Run Configuration:**
+- Designed for Cloud Run deployment (like chat endpoint)
+- Long-lived connections supported
+- X-Accel-Buffering disabled for nginx compatibility
+- Deploy: `./deploy-sse.sh`
+
+**Production:**
+```bash
+python sse_server.py --run-simulator --port $PORT
+```
+
+## Frontend Integration
+
+**Event Bridge Configuration:**
+```javascript
+const simBridge = {
+    endpoint: '/api/sim-events',  // Cloud Run URL in production
+    reconnectDelay: 2000,
+    maxReconnectAttempts: 5,
+    lastSequenceId: 0,  // Track for dedup on reconnect
+};
+```
+
+**Event Handling:**
+```javascript
+// Handles both new format and legacy format
+function handleSimulatorEvent(simEvent) {
+    const eventType = simEvent.event_type || simEvent.type;
+    const eventData = simEvent.payload || simEvent.data || {};
+    // ...
+}
+```
+
+## WSP References
+
+- **WSP 50**: Pre-action verification (event deduplication)
+- **WSP 22**: ModLog documentation
+- **WSP 11**: API stability (backward-compatible event format)
+- **WSP 72**: Module independence (SSE server standalone)

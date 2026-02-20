@@ -631,7 +631,7 @@ class RefactoredPostingOrchestrator:
                 video_id=video_id,
                 title=stream_title,
                 url=stream_url,
-                channel_name=channel_id,  # Pass channel ID for config lookup
+                channel_name=channel_name,  # Pass channel name for config lookup (NOT channel_id which is None for cached streams)
                 skip_live_verification=True  # Skip redundant verification for streams already verified by detection system
             )
 

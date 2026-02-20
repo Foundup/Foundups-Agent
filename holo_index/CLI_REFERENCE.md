@@ -112,6 +112,7 @@ Other training verbs: `utf8_scan`, `utf8_summary`, and `batch` (IdleAutomation t
 ## Additional Skills & Utilities Worth Surfacing
 - `[DOC-LINK]` `--link-modules`, `--list-modules`, `--wsp` — managed by `holo_index/qwen_advisor/module_doc_linker.py` for doc ↔ module cohesion.
 - `[INDEX]` `--dae-cubes`, `--code-index`, `--function-index`, `--code-index-report` — deep code index flows from `holo_index/reports/codeindex_reporter.py`.
+- `[INDEX]` `--index-symbols`, `--symbol-roots` — symbol indexing for function/class discovery (semantic memory refresh).
 - `[SKILLz]` `--index-skillz` (aliases: `--index-skills`, `--reindex-skills`) — rebuilds the SKILLz wardrobe index for agent discovery.
 - `[DOC-GUARD]` `--docs-file`, `--audit-docs`, `--check-wsp-docs`, `--fix-ascii`, `--rollback-ascii` — documentation guardians driven by `holo_index/qwen_advisor/telemetry.py` and helpers under `holo_index/utils`.
 - `[SUPPORT]` `--support`, `--diagnose`, `--troubleshoot` — quick recipes that bundle multiple skills for recurring incidents.

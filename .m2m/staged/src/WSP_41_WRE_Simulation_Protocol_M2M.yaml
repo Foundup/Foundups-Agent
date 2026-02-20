@@ -1,0 +1,15 @@
+# M2M v1.0 | WSP_41_WRE_Simulation_Protocol.md | 20260213
+
+WSP_41__WRE_SIMULATION_PROTOCOL:
+  FILES: ['goal.yaml']
+WINDSURF_STANDARD_PROCEDURE:
+1__OVERVIEW:
+2__TESTBED_ARCHITECTURE:
+  FILES: ['harness.py']
+  FILES: ['validation_suite.py']
+  FILES: ['goals/*.yaml']
+3__SIMULATION_LIFECYCLE:
+  FILES: ['harness.py']
+  FILES: ['goal.yaml']
+  FILES: ['validation_suite.py', 'ModLog.md']
+4__GOAL_DEFINITION_SCHEMA:

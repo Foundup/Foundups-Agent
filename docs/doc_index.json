@@ -917,7 +917,54 @@
         "WSP 3",
         "WSP 47"
       ]
+    },
+    {
+      "doc_type": "summary",
+      "hash_sha256": "599b02c63776ae7d863f0a954e9147947f19c285c44556b70e777c61dc8a638a",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "CLAUDE.md",
+          "NAVIGATION.py",
+          "docs/README.md",
+          "docs/foundups_vision.md",
+          "WSP_agentic/agentic_journals/awakening/awareness_log.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/0102_session_briefings/SESSION_BRIEFING_2026_02_07.md",
+      "size_bytes": 6960,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 50",
+        "WSP 60",
+        "WSP 83"
+      ]
+    },
+    {
+      "doc_type": "readme",
+      "hash_sha256": "e3d80e6a2a3893574fe282afd0cc4da01f4c9f27cb9dddf13d49fcd341ce9067",
+      "links": {
+        "automation": [
+          "doc_dae"
+        ],
+        "entry_points": [
+          "CLAUDE.md",
+          "docs/README.md"
+        ]
+      },
+      "module_hint": "docs_root",
+      "path": "docs/0102_session_briefings/README.md",
+      "size_bytes": 627,
+      "status": "active",
+      "wsp_refs": [
+        "WSP 22",
+        "WSP 83"
+      ]
     }
   ],
-  "generated_at": "2025-10-23T22:09:45.185526Z"
+  "generated_at": "2026-02-08T17:06:01+09:00"
 }

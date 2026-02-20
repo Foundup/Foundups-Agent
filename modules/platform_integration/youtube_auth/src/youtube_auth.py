@@ -182,14 +182,48 @@ def get_authenticated_service(token_index=None):
                     logger.info(f"🆕 No valid credentials found for set {index}, initiating OAuth flow...")
 
                 try:
+                    import webbrowser
+                    import subprocess
+
+                    # Browser selection based on credential set
+                    # Set 1 = UnDaoDu/Move2Japan = Chrome
+                    # Set 10 = FoundUps/RavingANTIFA = Edge
+                    if index == 1:
+                        browser_name = "Chrome"
+                        browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+                    else:  # Set 10
+                        browser_name = "Edge"
+                        browser_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+                    logger.info(f"[BROWSER] Set {index} will use {browser_name.upper()} for OAuth")
+                    print(f"\n[IMPORTANT] Opening {browser_name.upper()} for Set {index} authentication")
+                    print(f"  - Set 1: Chrome (UnDaoDu/Move2Japan account)")
+                    print(f"  - Set 10: Edge (FoundUps/RavingANTIFA account)\n")
+
+                    # Override webbrowser.open to use the correct browser
+                    original_open = webbrowser.open
+                    def custom_open(url, new=0, autoraise=True):
+                        subprocess.Popen([browser_path, url])
+                        return True
+                    webbrowser.open = custom_open
+
                     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
                         client_secrets_file, scopes)
                     creds = flow.run_local_server(port=0)
+
+                    # Restore original webbrowser.open
+                    webbrowser.open = original_open
+
                     logger.info(f"[OK] OAuth flow completed successfully for set {index}")
                     if creds.expiry:
                         logger.info(f"[U+1F4C5] Token expires at: {creds.expiry}")
                 except Exception as e:
                     logger.error(f"[FAIL] OAuth flow failed for set {index}: {e}")
+                    # Restore original webbrowser.open on error
+                    try:
+                        webbrowser.open = original_open
+                    except:
+                        pass
                     continue
 
             # Save the credentials with improved error handling
@@ -386,3 +420,147 @@ if __name__ == '__main__':
         logger.error(f"Configuration error: {ve}")
     except Exception as e:
         logger.exception(f"An unexpected error occurred: {e}")
+
+
+def preflight_oauth_check(auto_reauth: bool = False) -> dict:
+    """
+    Preflight check for OAuth token health. Call at startup to detect invalid_grant errors.
+
+    Args:
+        auto_reauth: If True, automatically launch re-auth flow for failed tokens
+
+    Returns:
+        dict with keys:
+            - healthy: List of working credential set indices
+            - expired: List of credential sets with invalid_grant errors
+            - missing: List of credential sets with missing files
+            - reauth_needed: True if any tokens need re-authentication
+    """
+    from modules.platform_integration.youtube_auth.src.quota_monitor import get_available_credential_sets
+
+    result = {
+        'healthy': [],
+        'expired': [],
+        'missing': [],
+        'reauth_needed': False
+    }
+
+    scopes_str = os.getenv('YOUTUBE_SCOPES', '').strip()
+    if not scopes_str:
+        logger.error("[PREFLIGHT] YOUTUBE_SCOPES not defined")
+        return result
+    scopes = scopes_str.split()
+
+    all_sets = get_available_credential_sets()
+    logger.info(f"[PREFLIGHT] Checking {len(all_sets)} credential sets: {all_sets}")
+
+    for index in all_sets:
+        creds_data = get_credentials_for_index(index)
+        if not creds_data:
+            result['missing'].append(index)
+            continue
+
+        client_secrets_file, token_file = creds_data
+
+        if not os.path.exists(token_file):
+            logger.warning(f"[PREFLIGHT] Token file missing for set {index}")
+            result['missing'].append(index)
+            continue
+
+        try:
+            creds = google.oauth2.credentials.Credentials.from_authorized_user_file(token_file, scopes)
+
+            # Try to refresh if expired
+            if creds.expired and creds.refresh_token:
+                logger.info(f"[PREFLIGHT] Attempting refresh for set {index}...")
+                creds.refresh(Request())
+
+                # Save refreshed token
+                with open(token_file, 'w', encoding='utf-8') as f:
+                    f.write(creds.to_json())
+                logger.info(f"[PREFLIGHT] Set {index} refreshed successfully")
+                result['healthy'].append(index)
+
+            elif creds.valid:
+                logger.info(f"[PREFLIGHT] Set {index} is valid")
+                result['healthy'].append(index)
+            else:
+                logger.warning(f"[PREFLIGHT] Set {index} invalid (no refresh token)")
+                result['expired'].append(index)
+
+        except Exception as e:
+            error_msg = str(e)
+            if 'invalid_grant' in error_msg:
+                logger.error(f"[PREFLIGHT] Set {index} has INVALID_GRANT - token expired/revoked")
+                result['expired'].append(index)
+                result['reauth_needed'] = True
+
+                if auto_reauth:
+                    # Determine correct browser based on credential set
+                    # Set 1 = UnDaoDu/Move2Japan = Chrome
+                    # Set 10 = FoundUps/RavingANTIFA = Edge
+                    if index == 1:
+                        browser_name = "Chrome"
+                        browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+                    else:  # Set 10
+                        browser_name = "Edge"
+                        browser_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+                    logger.info(f"[PREFLIGHT] Auto-reauth for set {index} - USE {browser_name.upper()}!")
+                    print(f"\n{'='*60}")
+                    print(f"[IMPORTANT] Set {index} requires {browser_name.upper()} browser!")
+                    print(f"  - Set 1: Chrome (UnDaoDu/Move2Japan account)")
+                    print(f"  - Set 10: Edge (FoundUps/RavingANTIFA account)")
+                    print(f"{'='*60}\n")
+
+                    try:
+                        import webbrowser
+                        import subprocess
+
+                        # Override webbrowser.open to use the correct browser
+                        original_open = webbrowser.open
+                        def custom_open(url, new=0, autoraise=True):
+                            subprocess.Popen([browser_path, url])
+                            return True
+                        webbrowser.open = custom_open
+
+                        print(f"[INFO] Will open {browser_name} for authentication...")
+
+                        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+                            client_secrets_file, scopes)
+
+                        # run_local_server will now use our custom browser opener
+                        creds = flow.run_local_server(port=0)
+
+                        # Restore original webbrowser.open
+                        webbrowser.open = original_open
+
+                        # Save new credentials
+                        with open(token_file, 'w', encoding='utf-8') as f:
+                            f.write(creds.to_json())
+                        logger.info(f"[PREFLIGHT] Set {index} re-authenticated successfully!")
+                        result['expired'].remove(index)
+                        result['healthy'].append(index)
+                        result['reauth_needed'] = len(result['expired']) > 0
+                    except Exception as auth_e:
+                        logger.error(f"[PREFLIGHT] Auto-reauth failed for set {index}: {auth_e}")
+                        # Restore original webbrowser.open on error too
+                        try:
+                            webbrowser.open = original_open
+                        except:
+                            pass
+            else:
+                logger.error(f"[PREFLIGHT] Set {index} error: {error_msg}")
+                result['expired'].append(index)
+
+    # Summary
+    if result['healthy']:
+        logger.info(f"[PREFLIGHT] Healthy sets: {result['healthy']}")
+    if result['expired']:
+        logger.warning(f"[PREFLIGHT] Expired/invalid sets: {result['expired']}")
+        for idx in result['expired']:
+            logger.warning(f"  -> Fix set {idx}: python -m modules.platform_integration.youtube_auth.src.youtube_auth --reauth --set {idx}")
+    if result['missing']:
+        logger.warning(f"[PREFLIGHT] Missing sets: {result['missing']}")
+
+    return result

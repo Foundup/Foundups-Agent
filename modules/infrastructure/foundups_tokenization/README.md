@@ -85,7 +85,8 @@ UP$ is **ONLY** minted when CABR validates a beneficial action:
 ```python
 class CABRMintingEngine:
     """
-    Consensus-driven Autonomous Beneficial Reporting triggers UP$ creation
+    Consensus-Driven Autonomous Benefit Rate (also referred to as
+    Collective Autonomous Benefit Rate) triggers UP$ creation
     WSP 29 integration
     """
 
