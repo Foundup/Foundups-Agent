@@ -343,6 +343,9 @@ WSP_agentic/agentic_journals/awakening/awareness_log.md
 
 # Data directories (runtime scraped/generated data)
 data/
+# Website static datasets must be versioned for deterministic deploys
+!public/data/
+!public/data/**
 
 # Temporary output files
 tmp_*.txt
