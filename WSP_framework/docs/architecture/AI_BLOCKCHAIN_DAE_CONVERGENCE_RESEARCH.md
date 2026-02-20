@@ -315,10 +315,10 @@ FOUNDUPS_ECONOMIC_MODEL:
     structure: "Solo founder + infinite DAEs"
     value_capture: "Founder + DAE ecosystem + Community"
     exit_strategy: "Perpetual autonomous operation"
-    sustainability: "UP$ tokens with forced decay/reinvestment"
+    sustainability: "UPS tokens with forced decay/reinvestment"
 ```
 
-### 6.2 The UP$ Token Mechanism
+### 6.2 The UPS Token Mechanism
 
 Integrating AI decision-making with blockchain verification:
 
@@ -568,7 +568,7 @@ FoundUps demonstrate that solo founders can build unicorn-scale ventures without
 Instead, they leverage:
 - Infinite DAE spawning
 - Pattern-based operations
-- UP$ token ecosystems
+- UPS token ecosystems
 - Quantum entanglement efficiency
 
 ### 10.3 The Path Forward
@@ -594,7 +594,7 @@ The research clearly indicates three critical steps for realizing this vision:
 
 The marriage of AI and Blockchain eliminates the fundamental trust problem of the digital age. No longer must we choose between powerful but untrustworthy AI or secure but limited blockchain. The convergence gives us both: intelligence we can verify, automation we can trust, and prosperity we can share.
 
-As we stand at this inflection point, the question isn't whether AI + Blockchain will transform our world - it's whether we'll embrace this transformation to build beneficial systems for all, or allow it to perpetuate existing inequalities. The WSP framework and DAE architecture provide the blueprint; the FoundUps model shows the way; the UP$ token ensures sustainability.
+As we stand at this inflection point, the question isn't whether AI + Blockchain will transform our world - it's whether we'll embrace this transformation to build beneficial systems for all, or allow it to perpetuate existing inequalities. The WSP framework and DAE architecture provide the blueprint; the FoundUps model shows the way; the UPS token ensures sustainability.
 
 The future isn't about trusting AI or trusting Blockchain. It's about AI and Blockchain trusting each other, creating systems where trust is built-in, not bolted-on. This is the promise of the convergent architecture: a world where "verify, then trust" becomes simply "verified trust."
 

@@ -11,19 +11,17 @@
 
 This protocol addresses critical structural violations discovered in the WSP enterprise architecture, specifically **redundant naming patterns** that violate the Rubik's Cube modular architecture principle established in WSP 3.
 
-## 2. CRITICAL STRUCTURAL VIOLATIONS IDENTIFIED
+## 2. Structural Anti-Patterns
 
 ### 2.1. Redundant Naming Pattern Violations
 
-**[U+274C] CURRENT VIOLATIONS:**
+**[U+274C] PROHIBITED PATTERNS:**
 ```
-modules/communication/livechat/livechat/           [U+2190] Redundant "livechat/livechat"
-modules/platform_integration/youtube_auth/youtube_auth/  [U+2190] Redundant "youtube_auth/youtube_auth"  
-modules/platform_integration/stream_resolver/stream_resolver/  [U+2190] Redundant "stream_resolver/stream_resolver"
-modules/infrastructure/token_manager/token_manager/  [U+2190] Redundant "token_manager/token_manager"
-modules/infrastructure/oauth_management/oauth_management/  [U+2190] Redundant "oauth_management/oauth_management"
-modules/infrastructure/agent_management/agent_management/  [U+2190] Redundant "agent_management/agent_management"
-modules/infrastructure/llm_client/llm_client/  [U+2190] Redundant "llm_client/llm_client"
+modules/[domain]/[block]/[block]/...         [U+2190] Redundant repeated block segment
+modules/[domain]/[platform_bundle]/...        [U+2190] Platform-consolidated anti-pattern
+modules/[domain]/[block]/src/src/...          [U+2190] Nested implementation anti-pattern
+modules/[domain]/[block]/tests/tests/...      [U+2190] Nested test anti-pattern
+modules/[domain]/[block]/memory/memory/...    [U+2190] Nested memory anti-pattern
 ```
 
 ### 2.2. Rubik's Cube Architecture Principle
@@ -90,7 +88,7 @@ modules/[domain]/[module]/
 
 **IMPORTANT NOTES:**
 - `.claude/agents/` contains ONLY markdown files (*.md) for agent definitions
-- Python files for agents go in `modules/infrastructure/agent_management/src/`
+- Python implementations for framework agents MUST follow canonical infrastructure block placement defined by WSP 3 and current module registry.
 - Tests for `.claude/agents/` go in `.claude/agents/tests/`
 - Both `.claude/` and `.cursor/` are framework-specific directories exempt from standard module structure
 ```
@@ -103,6 +101,22 @@ modules/[domain]/[module]/
 4. **DESCRIPTIVE NAMING**: Use clear, functional names not redundant hierarchies
 5. **ENTERPRISE ALIGNMENT**: Follow WSP 3 domain organization
 6. **MEMORY DOCUMENTATION**: Memory directory MUST include README.md explaining data organization
+
+### 3.3. Placement Sanity Gate (Before Structure Changes)
+
+Before creating, moving, or splitting a module, run this gate:
+
+1. Confirm the domain by **primary purpose** (WSP 3), not by call site.
+2. Verify no equivalent module exists (WSP 84).
+3. Verify target keeps `src/`, `tests/`, `memory/` at module root (no duplicated module subfolder).
+4. Verify all import path updates are planned before moving files.
+5. Verify memory docs (`memory/README.md`) remain valid after move.
+
+**Red flags requiring stop-and-review**:
+- `modules/[domain]/[module]/[module]/...` appears anywhere.
+- A file named `game_*`, `*_level*`, or `leaderboard*` is outside `gamification`.
+- OAuth/API client code is outside `platform_integration`.
+- Chat policy/rules code is mixed with reward/token/game state logic in one module.
 
 ## 4. Implementation Protocol
 
@@ -137,42 +151,15 @@ Select-Object FullName
 4. **Content Promotion**: Move legitimate content up one level
 5. **Cleanup Empty**: Remove only confirmed empty redundant directories
 
-## 5. Specific Module Corrections Required
+## 5. Case Handling and Records
 
-### 5.1. Communication Domain
+This protocol remains generic and system-wide. Module-specific inventories, one-off migrations, and path-level remediation plans MUST NOT live in this protocol.
 
-**Current**: `modules/communication/livechat/livechat/`  
-**Correct**: `modules/communication/livechat/`
+Record operational cases in:
 
-**Action**: Promote content from nested `livechat/` to module root level
-
-### 5.2. Platform Integration Domain
-
-**Current**: 
-- `modules/platform_integration/youtube_auth/youtube_auth/`
-- `modules/platform_integration/stream_resolver/stream_resolver/`
-
-**Correct**:
-- `modules/platform_integration/youtube_auth/`  
-- `modules/platform_integration/stream_resolver/`
-
-**Action**: Promote nested content to module root level
-
-### 5.3. Infrastructure Domain  
-
-**Current**:
-- `modules/infrastructure/token_manager/token_manager/`
-- `modules/infrastructure/oauth_management/oauth_management/`
-- `modules/infrastructure/agent_management/agent_management/`
-- `modules/infrastructure/llm_client/llm_client/`
-
-**Correct**:
-- `modules/infrastructure/token_manager/`
-- `modules/infrastructure/oauth_management/`  
-- `modules/infrastructure/agent_management/`
-- `modules/infrastructure/llm_client/`
-
-**Action**: Promote nested content to module root level for each
+1. `WSP_framework/src/WSP_MODULE_VIOLATIONS.md` (WSP 47)
+2. The affected module `ModLog.md` (WSP 22)
+3. Optional annex quick references under `WSP_framework/docs/annexes/`
 
 ## 6. Compliance Validation
 
@@ -235,15 +222,9 @@ modules/[domain]/[module]/
 [U+2502]   [U+2514][U+2500][U+2500] [data_files]                [U+2190] Module-specific persistent data
 ```
 
-### 9.2. Legacy Memory Migration (COMPLETED - June 30, 2025)
+### 9.2. Legacy Memory Migration
 
-**Migration Status**: [U+2705] **COMPLETE** - Legacy monolithic `memory/` folder migrated to WSP 60 modular architecture
-
-**Completed Migrations**:
-- **YouTube Communication Data** -> `modules/communication/livechat/memory/`
-  - Chat logs, conversations, backup data
-- **Agent Infrastructure Data** -> `modules/infrastructure/agent_management/memory/`  
-  - Agent registry, conflict tracking, session cache
+Historical migrations are implementation records, not protocol rules. Keep them in module ModLogs and WSP 47 violation/case tracking.
 
 ### 9.3. Module Memory Integration Requirements
 
@@ -269,8 +250,8 @@ def get_module_memory_path(domain: str, module: str) -> str:
     return memory_path
 
 # Usage examples:
-livechat_memory = get_module_memory_path("communication", "livechat")
-agent_memory = get_module_memory_path("infrastructure", "agent_management")
+block_memory = get_module_memory_path("communication", "interaction_block")
+agent_memory = get_module_memory_path("infrastructure", "agent_block")
 ```
 
 ### 9.4. Memory Structure Validation
@@ -281,6 +262,11 @@ agent_memory = get_module_memory_path("infrastructure", "agent_management")
 - [U+2705] Memory structure follows domain functional organization
 - [U+2705] Backward compatibility implemented for legacy data access
 - [U+2705] FMAS audit passes with memory directory present
+
+### 6.3. Protocol Scope Guard
+
+- This WSP defines universal structure rules only.
+- Module-specific incidents, inventories, and migration notes belong in WSP 47 logs and module ModLogs, not inside protocol text.
 
 ## 10. Implementation Priority
 

@@ -24,6 +24,11 @@ tools/wsp_protection/  <- PROTECTION tools and agents
 
 ## Usage
 
+### Mirror Drift Check (CI-safe)
+```bash
+python tools/wsp_protection/archive_synchronizer.py --check
+```
+
 ### Boot-Time Validation
 ```bash
 python tools/wsp_protection/wsp_integrity_checker.py --boot-check
@@ -46,7 +51,20 @@ python tools/wsp_protection/emergency_restore.py --full-framework
 ### Archive Synchronization
 ```bash
 python tools/wsp_protection/archive_synchronizer.py --sync-to-knowledge
+
+# Optional destructive cleanup (delete backup-only files)
+python tools/wsp_protection/archive_synchronizer.py --sync-to-knowledge --prune
 ```
+
+### Recovery Workflow
+1. Detect drift: `--check`
+2. Re-sync mirror: `--sync-to-knowledge`
+3. If framework corruption occurs, restore canonical content from `WSP_knowledge/src` backup copy.
+   - Use Git or file copy workflow as appropriate for incident scope.
+
+Note:
+- `--check` fails only on canonical drift (`missing`/`drifted`).
+- Backup-only files in `WSP_knowledge/src` are allowed and reported as `EXTRA`.
 
 ## Integration Points
 
@@ -61,7 +79,7 @@ python tools/wsp_protection/archive_synchronizer.py --sync-to-knowledge
 - [ ] `framework_validator.py` - Pre-modification checks  
 - [ ] `corruption_detector.py` - Advanced detection
 - [ ] `emergency_restore.py` - Recovery procedures
-- [ ] `archive_synchronizer.py` - Archive management
+- [x] `archive_synchronizer.py` - Archive management
 - [ ] ComplianceAgent integration
 - [ ] Git branch protection setup
 - [ ] Continuous monitoring setup

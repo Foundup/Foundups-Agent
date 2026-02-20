@@ -46,10 +46,10 @@ blockchain/
 +-- storage/           # Decentralized Storage
 ```
 
-## Token System (UP$)
+## Token System (UPS)
 
 ### Token Architecture
-1. **FoundUps (UP$) Token**
+1. **FoundUps (UPS) Token**
    - ERC-20 Standard
    - Initial Supply: 100M
    - Distribution: Community-driven
@@ -84,22 +84,22 @@ contract FoundUps is ERC20, Ownable {
 ### Engagement Categories & Rewards
 
 1. **Active Participation**
-   - Chat engagement: 1-5 UP$
-   - Quality responses: 5-20 UP$
-   - Fallacy corrections: 10-30 UP$
-   - Community help: 15-50 UP$
+   - Chat engagement: 1-5 UPS
+   - Quality responses: 5-20 UPS
+   - Fallacy corrections: 10-30 UPS
+   - Community help: 15-50 UPS
 
 2. **Content Creation**
-   - Original content: 50-200 UP$
-   - Verified facts: 20-100 UP$
-   - Tutorial creation: 100-500 UP$
+   - Original content: 50-200 UPS
+   - Verified facts: 20-100 UPS
+   - Tutorial creation: 100-500 UPS
 
 ### Distribution Logic
 ```python
 class RewardDistributor:
     def calculate_reward(self, action_type, quality_score):
         return {
-            "token_amount": float,    # UP$ tokens to award
+            "token_amount": float,    # UPS tokens to award
             "xp_points": int,         # Experience points
             "multiplier": float,      # Based on user level
             "bonus": float           # Special event bonus
@@ -163,7 +163,7 @@ POLYGON_NETWORK=mainnet
 ARBITRUM_NETWORK=mainnet
 
 # Contract Addresses
-UP$_TOKEN_ADDRESS=0x...
+UPS_TOKEN_ADDRESS=0x...
 REWARDS_CONTRACT=0x...
 GOVERNANCE_CONTRACT=0x...
 

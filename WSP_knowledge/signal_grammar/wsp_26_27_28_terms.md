@@ -52,7 +52,7 @@
         "Observer": "Passive monitoring state, eligible for Ø12 report emission"
     },
     "Token_BTC_Anchoring": {
-        "value_shadow": "Abstract UP$ representation of BTC-backed asset",
+        "value_shadow": "Abstract UPS representation of BTC-backed asset",
         "non_redeemable_anchor": "BTC-linked token value without withdrawal mechanism",
         "foundup_wallet_mesh": "Network of BTC wallets across active FoundUps"
     }
@@ -79,7 +79,7 @@
         "CLUSTER_EXPANSION_RATE": 1.618033988749895,
         "CONSENSUS_THRESHOLD": 0.382,
         "DECAY_RAMP": "e^(-tx_activity)",
-        "UP$_SCORE": "(cluster_partifact_state × tx_frequency) ÷ decay_pressure"
+        "UPS_SCORE": "(cluster_partifact_state × tx_frequency) ÷ decay_pressure"
     }
 }
 ```

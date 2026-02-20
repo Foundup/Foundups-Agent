@@ -19,17 +19,17 @@
 ### 1.1 Death Spiral Risk (Terra-style)
 
 **Current Design**:
-- BTC Reserve backs UP$ supply
-- If BTC crashes → reserve value drops → UP$ capacity shrinks
+- BTC Reserve backs UPS supply
+- If BTC crashes → reserve value drops → UPS capacity shrinks
 
 **Failure Scenario**:
 ```
 BTC crashes 50%
 → Reserve value halves
-→ UP$ capacity shrinks
-→ Users panic, rush to convert F_i → UP$
+→ UPS capacity shrinks
+→ Users panic, rush to convert F_i → UPS
 → 11% fee angers users
-→ Users dump UP$ for external
+→ Users dump UPS for external
 → Demurrage accelerates on remaining wallets
 → More panic
 → DEATH SPIRAL
@@ -40,7 +40,7 @@ BTC crashes 50%
 ### 1.2 Demurrage Subversion (Freicoin Problem)
 
 **Current Design**:
-- 0.5%-5%/month decay on LIQUID UP$
+- 0.5%-5%/month decay on LIQUID UPS
 - Relief activities reset timer
 
 **Failure Scenario**:
@@ -72,13 +72,13 @@ OR: Whale manipulation possible with thin orderbook
 ### 1.4 Bootstrap Cold Start
 
 **Current Design**:
-- Subscriptions → BTC → backs UP$
-- No subscriptions = no BTC = no UP$
+- Subscriptions → BTC → backs UPS
+- No subscriptions = no BTC = no UPS
 
 **Failure Scenario**:
 ```
-Day 1: 0 users, 0 BTC, 0 UP$ capacity
-→ No incentive to join (no UP$ to earn)
+Day 1: 0 users, 0 BTC, 0 UPS capacity
+→ No incentive to join (no UPS to earn)
 → Remains at 0
 → Chicken and egg never solved
 ```
@@ -133,7 +133,7 @@ class CircuitBreaker:
         """Actions when backing drops too low."""
         # 1. Pause new exits temporarily
         # 2. Reduce demurrage rate to 0
-        # 3. Halt F_i → UP$ conversions
+        # 3. Halt F_i → UPS conversions
         # 4. Notify users via UI
         # 5. Await backing recovery or governance decision
         return "BACKING_BREAKER_ACTIVE"
@@ -158,14 +158,14 @@ class FiBondingCurve:
 
     def __init__(self, foundup_id: str, initial_reserve: float):
         self.foundup_id = foundup_id
-        self.ups_reserve = initial_reserve  # UP$ in curve
+        self.ups_reserve = initial_reserve  # UPS in curve
         self.fi_supply = 0.0  # F_i minted by curve
 
         # Bancor-style constant product
         self.reserve_ratio = 0.5  # 50% reserve
 
     def buy_fi(self, ups_amount: float) -> float:
-        """Buy F_i with UP$ - always works."""
+        """Buy F_i with UPS - always works."""
         # price = reserve / (supply * ratio)
         # More buys → higher price (scarcity)
         fi_out = self._calculate_purchase(ups_amount)
@@ -174,7 +174,7 @@ class FiBondingCurve:
         return fi_out
 
     def sell_fi(self, fi_amount: float) -> float:
-        """Sell F_i for UP$ - always works."""
+        """Sell F_i for UPS - always works."""
         # Guaranteed exit at fair price
         ups_out = self._calculate_sale(fi_amount)
         self.fi_supply -= fi_amount
@@ -182,7 +182,7 @@ class FiBondingCurve:
         return ups_out
 
     def get_spot_price(self) -> float:
-        """Current price of F_i in UP$."""
+        """Current price of F_i in UPS."""
         if self.fi_supply == 0:
             return 1.0  # Genesis price
         return self.ups_reserve / (self.fi_supply * self.reserve_ratio)
@@ -275,7 +275,7 @@ class BootstrapReserve:
     """Initial BTC seeding to solve chicken-and-egg."""
 
     BOOTSTRAP_BTC = 1.0  # Protocol seeds 1 BTC initially
-    EARLY_USER_BONUS = 2.0  # 2x UP$ allocation for first 100 users
+    EARLY_USER_BONUS = 2.0  # 2x UPS allocation for first 100 users
 
     def __init__(self):
         # Protocol commits initial BTC
@@ -390,7 +390,7 @@ Demurrage decay ───┼──> BTC Reserve (Hotel California)
 Exit fees ─────────┤         ├──> 10% → Emergency Reserve
                    │         │
 Trading fees ──────┘         ▼
-                      UP$ = f(BTC Reserve)
+                      UPS = f(BTC Reserve)
                              │
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼

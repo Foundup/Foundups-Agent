@@ -7,13 +7,19 @@ NAVIGATION: Persists chat memory for processors and analytics.
 -> Delegates to: module memory files under modules/communication/livechat/memory
 -> Related: NAVIGATION.py -> NEED_TO["manage chat memory"]
 -> Quick ref: NAVIGATION.py -> DATABASES["memory_files"]
+
+CRITICAL FIX (2026-02-19): Added SQLite persistence for ALL messages.
+Previously logs were only written on end_session() which never gets called
+when stream ends abruptly. Now every message is persisted immediately.
 """
 
 import logging
 import os
 import time
+import sqlite3
 from typing import Dict, Any, List, Optional
 from collections import defaultdict, deque
+from pathlib import Path
 
 from modules.communication.livechat.src.chat_telemetry_store import (
     ChatTelemetryStore,
@@ -52,6 +58,10 @@ class ChatMemoryManager:
             'youtube_name': None  # Store YouTube display name
         })
 
+        # SQLite persistence for ALL messages (survives crashes/stream endings)
+        self.db_path = Path(memory_dir) / "chat_logs.db"
+        self._init_db()
+
         # Persistent storage criteria
         self.important_roles = {'MOD', 'OWNER'}
         self.importance_threshold = 5  # Store users with 5+ messages or special triggers
@@ -67,7 +77,54 @@ class ChatMemoryManager:
         os.makedirs(memory_dir, exist_ok=True)
         os.makedirs(self.conversation_dir, exist_ok=True)
         logger.info(f"[U+1F4BE] ChatMemoryManager initialized: buffer={buffer_size}, dir={memory_dir}")
-    
+
+    def _init_db(self) -> None:
+        """Initialize SQLite database for real-time message persistence."""
+        try:
+            os.makedirs(self.db_path.parent, exist_ok=True)
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            # All chat messages (for troll training and history)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT,
+                    user_id TEXT,
+                    username TEXT NOT NULL,
+                    message_text TEXT NOT NULL,
+                    role TEXT DEFAULT 'USER',
+                    timestamp REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Indexes for fast lookups
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_messages(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_messages(session_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_timestamp ON chat_messages(timestamp)")
+
+            conn.commit()
+            conn.close()
+            logger.info(f"[DB] Chat logs database initialized: {self.db_path}")
+        except Exception as e:
+            logger.error(f"[DB] Failed to initialize chat_logs.db: {e}")
+
+    def _persist_message_to_db(self, author_name: str, message_text: str, role: str,
+                                author_id: str = None) -> None:
+        """Persist message to SQLite immediately (survives crashes)."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO chat_messages (session_id, user_id, username, message_text, role, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (self.current_session, author_id, author_name, message_text, role, time.time()))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.debug(f"[DB] Failed to persist message: {e}")
+
     def start_session(self, session_id: str, stream_title: str = None) -> None:
         """
         Start a new chat session for automatic logging.
@@ -152,6 +209,10 @@ class ChatMemoryManager:
                 'role': role
             })
 
+            # CRITICAL: Persist to SQLite immediately (survives crashes/stream endings)
+            # This captures ALL messages for troll training and history
+            self._persist_message_to_db(author_name, message_text, role, author_id)
+
             # Update user statistics
             stats = self.user_stats[author_name]
             stats['message_count'] += 1
@@ -194,17 +255,17 @@ class ChatMemoryManager:
     def get_history(self, author_name: str, limit: int = 10) -> List[str]:
         """
         Get user's message history from buffer + disk.
-        
+
         Args:
             author_name: User's display name
             limit: Maximum messages to return
-            
+
         Returns:
             List of recent messages as formatted strings
         """
         try:
             messages = []
-            
+
             # Get from in-memory buffer (recent messages only)
             # NOTE: Disk storage methods were never implemented - using memory only
             buffer_messages = list(self.message_buffers.get(author_name, []))
@@ -212,9 +273,81 @@ class ChatMemoryManager:
                 messages.append(f"{author_name}: {msg['text']}")
 
             return messages[-limit:]  # Return latest N messages
-            
+
         except Exception as e:
             logger.error(f"[FAIL] Error getting history for {author_name}: {e}")
+            return []
+
+    def get_messages_by_user_id(self, youtube_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Get user's messages by YouTube channel ID (for troll training).
+
+        Used when a mod whacks someone - lookup their messages for ML training.
+        Checks both in-memory buffer AND SQLite for historical messages.
+
+        Args:
+            youtube_id: YouTube channel ID (e.g., "UC_2AskvFe9uqp9maCS6bohg")
+            limit: Maximum messages to return
+
+        Returns:
+            List of message dicts with 'text', 'timestamp', 'author_name'
+        """
+        result = []
+
+        try:
+            # First try in-memory buffer (current session)
+            author_name = None
+            for name, stats in self.user_stats.items():
+                if stats.get('youtube_id') == youtube_id:
+                    author_name = name
+                    break
+
+            if author_name:
+                buffer_messages = list(self.message_buffers.get(author_name, []))
+                for msg in buffer_messages[-limit:]:
+                    result.append({
+                        'text': msg['text'],
+                        'timestamp': msg['timestamp'],
+                        'author_name': author_name,
+                        'youtube_id': youtube_id
+                    })
+
+            # Also query SQLite for historical messages (previous sessions)
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT username, message_text, timestamp
+                    FROM chat_messages
+                    WHERE user_id = ?
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                """, (youtube_id, limit))
+
+                for row in cursor.fetchall():
+                    # Avoid duplicates (check if message already in result)
+                    msg_text = row[1]
+                    if not any(r['text'] == msg_text for r in result):
+                        result.append({
+                            'text': msg_text,
+                            'timestamp': row[2] or 0,
+                            'author_name': row[0] or author_name or 'Unknown',
+                            'youtube_id': youtube_id
+                        })
+
+                conn.close()
+            except Exception as db_err:
+                logger.debug(f"[TROLL-TRAIN] SQLite lookup failed: {db_err}")
+
+            if result:
+                logger.info(f"[TROLL-TRAIN] Found {len(result)} messages for whacked user (id: {youtube_id[:20]}...)")
+            else:
+                logger.debug(f"[TROLL-TRAIN] No messages found for user_id: {youtube_id}")
+
+            return result[:limit]
+
+        except Exception as e:
+            logger.error(f"[FAIL] Error getting messages by user_id {youtube_id}: {e}")
             return []
 
     def classify_user(self, author_name: str, limit: int = 20) -> Dict[str, Any]:
@@ -497,3 +630,27 @@ class ChatMemoryManager:
             'session_active': self.current_session is not None,
             'session_messages': len(self.session_messages) if self.current_session else 0
         }
+
+
+# Singleton instance for shared access across modules
+_chat_memory_manager_instance = None
+
+def get_chat_memory_manager(memory_dir: str = "modules/communication/livechat/memory") -> ChatMemoryManager:
+    """
+    Get singleton ChatMemoryManager instance.
+    
+    This ensures all modules share the same in-memory buffers,
+    which is critical for troll training (timeout_announcer needs
+    access to the same messages that livechat_core stored).
+    
+    Args:
+        memory_dir: Directory for persistent storage (only used on first call)
+    
+    Returns:
+        Shared ChatMemoryManager instance
+    """
+    global _chat_memory_manager_instance
+    if _chat_memory_manager_instance is None:
+        _chat_memory_manager_instance = ChatMemoryManager(memory_dir=memory_dir)
+    return _chat_memory_manager_instance
+

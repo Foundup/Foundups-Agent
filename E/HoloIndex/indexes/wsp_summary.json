@@ -107,7 +107,7 @@
   "WSP 26": {
     "title": "WSP 26: FoundUPS DAE Tokenization Framework",
     "path": "WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md",
-    "summary": "- **Status:** Active - **Purpose:** To define the architecture and protocols for the Found UP$ token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment. - **Trigger:** When a Partifact (as defined in WSP 27) performs a verifiable action within the FoundUps ecosystem. - **Input:** Partifact action data and DAE cluster consensus signals. - *"
+    "summary": "- **Status:** Active - **Purpose:** To define the architecture and protocols for the Found UPS token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment. - **Trigger:** When a Partifact (as defined in WSP 27) performs a verifiable action within the FoundUps ecosystem. - **Input:** Partifact action data and DAE cluster consensus signals. - *"
   },
   "WSP 27": {
     "title": "WSP 27: Partifact DAE Architecture",
@@ -1655,9 +1655,9 @@
     "summary": "## WSP 72 CUBE MANAGEMENT PROTOCOL IMPLEMENTED [OK] **Revolutionary Enhancement**: Complete cube-level management system enabling 0102 pArtifact assessment of FoundUps blocks with comprehensive documentation integration. **WSP 72 Implementation Complete**: - **Cube Definitions**: All 5 FoundUps cubes defined (YouTube, LinkedIn, X/Twitter, AMO, Remote Builder) - **Cube Assessment**: Interactive ass"
   },
   "CABR": {
-    "title": "CABR Integration: UP$ Minting Trigger",
+    "title": "CABR Integration: UPS Minting Trigger",
     "path": "modules/infrastructure/foundups_tokenization/docs/CABR_INTEGRATION.md",
-    "summary": "**Critical Insight**: UP$ is **ONLY** minted when CABR (Consensus-driven Autonomous Beneficial Reporting) validates a beneficial action. This prevents arbitrary token creation and ensures all value is tied to real benefit. ## The Problem We're Solving **Without CABR validation**: - Users could game the system (spam actions for tokens) - No quality control on what earns rewards"
+    "summary": "**Critical Insight**: UPS is **ONLY** minted when CABR (Consensus-driven Autonomous Beneficial Reporting) validates a beneficial action. This prevents arbitrary token creation and ensures all value is tied to real benefit. ## The Problem We're Solving **Without CABR validation**: - Users could game the system (spam actions for tokens) - No quality control on what earns rewards"
   },
   "Idle": {
     "title": "Idle Automation Test Module Log",

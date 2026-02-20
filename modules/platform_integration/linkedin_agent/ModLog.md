@@ -2,6 +2,36 @@
 
 ## Latest Changes
 
+### V061 - Social Media DAE CLI Integration (Full Action Logging)
+**Date**: 2026-02-20
+**Changes**:
+- Created `modules/infrastructure/cli/src/social_media_menu.py` for Social Media DAE submenu
+- Added ActionLogger class for full DAEmon action logging (copy/paste to Claude for troubleshooting)
+- LinkedIn commenting menu option (Digital Twin integration)
+- LinkedIn group posting menu option (OpenClaw News)
+- Test submenu with: news rating, rate limiting, database, full flow, pytest suite
+- Updated `main_menu.py` to import and route to social_media_menu
+- Session logs saved to `logs/social_media_dae/session_*.log`
+**Impact**: 012 can now run LinkedIn automation tests from CLI with full action logging for troubleshooting.
+**WSP**: WSP 22 (ModLog), WSP 62 (File Size), WSP 78 (Database), WSP 90 (UTF-8), WSP 91 (Observability)
+
+### V060 - OpenClaw Group News Skillz (Pre-Engagement Content Seeding)
+**Date**: 2026-02-19
+**Changes**:
+- Created `skillz/openclaw_group_news/` directory
+- Added `SKILLz.md` - Skill specification with DOM selectors and rate limiting
+- Added `executor.py` - NewsRelevanceRater (4-dimension scoring) + OpenClawGroupPoster
+- Added `__init__.py` - Public exports
+- Updated ROADMAP.md to show skill position BEFORE comment engagement
+- LinkedIn Group target: https://www.linkedin.com/groups/6729915/
+- Rate limiting: 3 posts/day max, 4-hour minimum interval
+- News relevance threshold: 0.6 (60%)
+- Database: agents_social_posts (WSP 78 compliance)
+**Impact**: Adds content seeding step before comment engagement. Posts OpenClaw news 1-3x daily.
+**WSP**: WSP 22 (ModLog), WSP 78 (Database), WSP 96 (WRE Skills), WSP 42 (Platform Integration)
+
+---
+
 ### V059 - Lazy Package Exports + OAuth Import Path Fallbacks
 **Date**: 2026-02-17
 **Changes**:

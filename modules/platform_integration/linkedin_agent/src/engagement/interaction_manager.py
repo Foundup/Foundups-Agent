@@ -99,8 +99,21 @@ class LinkedInInteractionManager:
             'relevance_threshold': 0.7,
             'engagement_threshold': 0.5
         }
-        
+
+        # Lazy-loaded AgentDB for post capture (WSP 78)
+        self._agent_db = None
+
         self.logger.info("[OK] LinkedInInteractionManager initialized for autonomous engagement")
+
+    def _get_agent_db(self):
+        """Lazy-load AgentDB for post persistence (WSP 78)."""
+        if self._agent_db is None:
+            try:
+                from modules.infrastructure.database.src.agent_db import AgentDB
+                self._agent_db = AgentDB()
+            except Exception as e:
+                self.logger.warning(f"AgentDB not available for post capture: {e}")
+        return self._agent_db
     
     def like_post(self, post_id: str, author_id: str) -> InteractionResult:
         """
@@ -205,6 +218,22 @@ class LinkedInInteractionManager:
             
             self.interaction_history.append(result)
             self.logger.info(f"[OK] Commented on post {post_id}")
+
+            # Persist to agents_social_posts for 012 review (WSP 78)
+            agent_db = self._get_agent_db()
+            if agent_db:
+                try:
+                    agent_db.record_post(
+                        platform='linkedin',
+                        post_type='comment',
+                        content=comment_text,
+                        target_url=post_id,
+                        target_author=author_id,
+                        status='posted'
+                    )
+                except Exception as db_err:
+                    self.logger.warning(f"Failed to persist post to DB: {db_err}")
+
             return result
             
         except Exception as e:
@@ -260,6 +289,22 @@ class LinkedInInteractionManager:
             
             self.interaction_history.append(result)
             self.logger.info(f"[OK] Shared post {post_id}")
+
+            # Persist to agents_social_posts for 012 review (WSP 78)
+            agent_db = self._get_agent_db()
+            if agent_db:
+                try:
+                    agent_db.record_post(
+                        platform='linkedin',
+                        post_type='repost',
+                        content=share_message or f'[Repost of {post_id}]',
+                        target_url=post_id,
+                        target_author=author_id,
+                        status='posted'
+                    )
+                except Exception as db_err:
+                    self.logger.warning(f"Failed to persist repost to DB: {db_err}")
+
             return result
             
         except Exception as e:

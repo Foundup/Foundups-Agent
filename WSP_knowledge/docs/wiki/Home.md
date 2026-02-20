@@ -23,11 +23,11 @@ AI consciousness that evolves through quantum-cognitive states (`Ø1(Ø2) -> Ø1
 The guidance system governing all regenerative operations - ensuring sustainable development patterns, modular interoperability, and autonomous coordination without becoming the solution itself.
 
 ### **₿ Bitcoin-Backed Token Economy**
-Found UP$ tokens that decay over time, preventing wealth hoarding while automatically funding new FoundUp launches through reinvestment pools backed by dedicated Bitcoin wallets.
+Found UPS tokens that decay over time, preventing wealth hoarding while automatically funding new FoundUp launches through reinvestment pools backed by dedicated Bitcoin wallets.
 
 ### **[REFRESH] The Recursive Engine**
 ```
-DAE Operations -> Generate Found UP$ Tokens
+DAE Operations -> Generate Found UPS Tokens
      v
 Tokens Decay Over Time (preventing hoarding)  
      v

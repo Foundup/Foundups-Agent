@@ -35,7 +35,7 @@ class OptimizationObjective(Enum):
 
     STAKER_DISTRIBUTION = "staker_distribution"  # Maximize Du pool distribution ratio
     ECOSYSTEM_GROWTH = "ecosystem_growth"  # Maximize FoundUp creation rate
-    TOKEN_VELOCITY = "token_velocity"  # Optimize UP$ circulation
+    TOKEN_VELOCITY = "token_velocity"  # Optimize UPS circulation
     BALANCED = "balanced"  # Multi-objective balance
 
 
@@ -116,7 +116,7 @@ class OptimizerConfig:
     max_iterations: int = 10
     convergence_threshold: float = 0.01  # Stop if improvement < threshold
     ticks_per_evaluation: int = 500  # Simulation ticks per evaluation
-    gpt_model: str = "gpt-4o"  # Model to use for analysis (2026 current)
+    gpt_model: str = "gpt-5.2"  # Model to use for analysis (Feb 2026 current)
     verbose: bool = True
 
 
@@ -325,7 +325,7 @@ class AIParameterOptimizer:
                 "Maximize FoundUp creation and ecosystem growth"
             ),
             OptimizationObjective.TOKEN_VELOCITY: (
-                "Optimize UP$ circulation and demurrage efficiency"
+                "Optimize UPS circulation and demurrage efficiency"
             ),
             OptimizationObjective.BALANCED: (
                 "Balance staker returns, ecosystem growth, and token velocity"

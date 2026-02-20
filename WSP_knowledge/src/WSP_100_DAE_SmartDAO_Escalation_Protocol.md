@@ -69,7 +69,7 @@ FIAT ENTRY
 └─────────────────────────────────────┘
     │
     ├── 80% ──► SYSTEM-LOCKED RESERVE
-    │           (backs UP$ capacity)
+    │           (backs UPS capacity)
     │
     └── 20% ──► TREASURY OPERATIONS
                 (ecosystem development)
@@ -96,7 +96,7 @@ FIAT ENTRY
 │   ┌─────────────────────────────────────────────────┐   │
 │   │ INTERNAL ROUTING (seamless UX)                  │   │
 │   │ - UPS ↔ F_i swaps                               │   │
-│   │ - F_i ↔ UP$ conversion                          │   │
+│   │ - F_i ↔ UPS conversion                          │   │
 │   │ - Cross-FoundUp allocation                      │   │
 │   └─────────────────────────────────────────────────┘   │
 │                                                         │
@@ -124,7 +124,7 @@ FIAT ENTRY
 - System accumulates BTC over time (net inflow > outflow)
 - Scarcity pressure increases BTC reserve value
 - All BTC-backed FoundUps benefit proportionally
-- UP$ capacity strengthens with reserve growth
+- UPS capacity strengthens with reserve growth
 
 ## 3. DAE → SmartDAO Escalation Model
 
@@ -428,11 +428,45 @@ FAMEventType.CROSS_DAO_FUNDING = "cross_dao_funding"    # Higher tier funds lowe
 
 ### 8.3 Simulator Integration
 
-SmartDAO escalation should be modeled in `modules/foundups/simulator/`:
-- Track adoption curve position per FoundUp
-- Trigger SmartDAO emergence at thresholds
-- Model treasury growth and cross-tier funding
-- Visualize tier distribution in animation
+SmartDAO escalation is modeled in `modules/foundups/simulator/economics/smartdao_spawning.py`:
+
+**Implementation** (012-confirmed 2026-02-17):
+```python
+# Tier escalation thresholds
+TIER_THRESHOLDS = {
+    F0_DAE:      {"adoption": 0.0,  "treasury": 0,         "agents": 0},
+    F1_EARLY:    {"adoption": 0.16, "treasury": 100_000,   "agents": 10},
+    F2_GROWTH:   {"adoption": 0.34, "treasury": 1_000_000, "agents": 50},
+    F3_INFRA:    {"adoption": 0.50, "treasury": 10_000_000, "agents": 200},
+    F4_MEGA:     {"adoption": 0.84, "treasury": 100_000_000, "agents": 1000},
+    F5_SYSTEMIC: {"adoption": 0.95, "treasury": 1_000_000_000, "agents": 10000},
+}
+
+# SmartDAO reserve split
+SMARTDAO_RESERVE_SPLIT = {
+    "operations": 0.80,     # 80% for own operations
+    "spawning_fund": 0.20,  # 20% for spawning new F_0s
+}
+
+# Spawning thresholds (UPS required to spawn new F_0)
+SPAWN_THRESHOLDS = {
+    F1_EARLY: 10_000,
+    F2_GROWTH: 50_000,
+    F3_INFRA: 200_000,
+    F4_MEGA: 1_000_000,
+    F5_SYSTEMIC: 5_000_000,
+}
+```
+
+**Classes**:
+- `SmartDAOState`: Tracks tier, treasury, spawning fund, children
+- `SmartDAOSpawningEngine`: Manages escalation and spawning across ecosystem
+- `SpawnEvent`: Records parent→child spawning events
+
+**Integration with dynamic_fee_taper.py**:
+- Overflow from F_i (>100% reserve) goes to Network Pool OR spawning fund
+- SmartDAOs split overflow: 80% operations, 20% spawning
+- Spawning fund accumulates until threshold → spawns new F_0
 
 ## 9. Governance Notes
 
@@ -456,6 +490,7 @@ SmartDAO escalation should be modeled in `modules/foundups/simulator/`:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02-15 | Initial specification from 012 vision document |
+| 1.1 | 2026-02-17 | Added math implementation (smartdao_spawning.py), tier thresholds, spawning fund mechanics |
 
 **WSP Compliance:**
 - WSP 22: ModLog documentation required

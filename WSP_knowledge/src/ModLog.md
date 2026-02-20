@@ -11,158 +11,43 @@
 
 ---
 
-## 2026-02-16 - Litepaper v0.2: Compute Marketplace Paradigm
+## 2026-02-17 - WSP 26/77 Terminology Drift Cleanup (CABR Flow Routing)
 
-**URL:** https://foundupscom.web.app/litepaper.html
+**WSP References**: WSP 22, WSP 26, WSP 29, WSP 77
 
-**Paradigm Shift: Capital → Compute**
-- Framing changed from "AI builds businesses" to "compute marketplace"
-- Abstract tightened to Bitcoin whitepaper style (single paragraph)
-- Added Musk citation: `(Musk, Moonshots, Feb 2026)`
-- Changed from question to statement: "Where you aim your compute."
+**Changes Made**:
+- Updated `WSP_26_FoundUPS_DAE_Tokenization.md`:
+  - Added explicit canonical override: CABR controls routing rate, PoB controls valve.
+  - Renamed legacy CABR/UPS lifecycle wording from mint loop to routing/release loop.
+  - Updated protocol headings and examples to use treasury flow routing semantics.
+- Updated `WSP_77_Intelligent_Internet_Orchestration_Vision.md`:
+  - Replaced `UPS mint` language with `UPS treasury flow routing`.
+  - Updated minimal flow from `Mint/Stake` to `Route/Stake`.
 
-**Section Changes:**
-- NEW Section 3: "The Compute Marketplace" (Perplexity-like model)
-- Section 8 renamed: "OpenClaw" → "0102: Autonomous Code That Works"
-- Section 11 renamed: "Subscriptions" → "Buy Compute: The On-Ramp"
-- Section 12 renamed: "Conclusion" → "Conclusion: From the Ashes"
-- Section 9.1 ADDED: Universal Basic Dividend (UBD) mechanics
-
-**Regulatory Terminology (8 fixes):**
-- "Earn UPS" → "Receive UPS" (abstract, Section 1, Section 3)
-- "You Earn UPS" → "You Receive Distributions" (hero equation)
-- "Earn Value" → "Receive Value" (Layer 3 card)
-- "subscribe → assign → earn" → "subscribe → assign → receive"
-- "earns without human management" → "receives distributions..."
-
-**Compute-Native Language:**
-- "businesses" → "autonomous code entities", "SmartDAOs", "0102 agents"
-- "customers" → "participants" / "stakeholders"
-- Meta description updated: "compute marketplace" + "0102 agents"
-
-**New Content:**
-- Section 9.1: UBD explained (Network 16% drip = universal basic dividend)
-- Genesis CTA: Patreon/Discord links, "closes at launch" FOMO
-- 0102 co-authors: `Opus 4.6 · Sonnet 4.5 · Codex 5.3 · Grok 4 · Gemini 3 Pro`
-
-**Simulator Fix:**
-- Agent growth formula: LINEAR → EXPONENTIAL
-- `agents = startingAgents × e^(9 × adoption)`
-- Result: 50 agents → 367,000 at 99% adoption (was 50 → 74)
-
-**WSP References:** WSP 26 (Tokenization), WSP 29 (CABR), WSP 101 (UPS Utility)
+**Rationale**:
+- Prevent future retrieval drift where CABR is misread as a mint trigger.
+- Keep framework vocabulary aligned with live simulator/runtime behavior.
 
 ---
 
-## 2026-02-15 - WSP 26 Section 17: F_i Decentralized Exchange
+## 2026-02-17 - WSP 26/29 CABR Flow Semantics Alignment (Pipe + Valve Model)
 
-**Added Section 17 to WSP 26 (FoundUPS DAE Tokenization):**
-- F_i DEX architecture documented (0102-managed, F_i exclusive)
-- Order book structure (per-FoundUp, UP$/F_i pricing)
-- Trading flow (swap-if-available, buy-order-if-scarce)
-- 0102 market maker roles (liquidity, price oracle, arbitrage)
-- Fee routing (2% → BTC Reserve)
-- Integration points (Allocation Engine, CABR, FAM DAEmon)
+**WSP References**: WSP 22, WSP 26, WSP 29
 
-**Design Decision:** DEX concatenated with WSP 26 (not separate WSP)
-- DEX is liquidity mechanism for F_i tokens
-- Tightly coupled to token economics domain
-- ~400 lines of code, not major subsystem
-- Follows Occam's Razor
+**Changes Made**:
+- Updated `WSP_29_CABR_Engine.md`:
+  - Replaced CABR->FAM bridge wording from UPS minting to UPS flow routing.
+  - Canonicalized: CABR = pipe size, PoB validation = valve.
+  - Replaced token hook example `trigger_mint()` with `route_flow()`.
+  - Anti-gaming phrasing now targets fraudulent flow-routing, not mint-triggering.
+- Updated `WSP_26_FoundUPS_DAE_Tokenization.md`:
+  - Cross-protocol references now describe CABR as routing/sizing engine.
+  - Lifecycle linkage now uses CABR-sized UPS flow semantics.
+  - Added explicit distinction: BTC backs UPS value, CABR controls flow rate.
 
-**Implementation Reference:** `modules/foundups/simulator/economics/fi_orderbook.py`
-
----
-
-## 2026-02-15 - UP$ → UPS Migration (Public-Facing Files)
-
-**Litepaper Migration Complete (public/litepaper.html):**
-- Replaced all `FoundUP$` → `FoundUPS` (~30 occurrences)
-- Replaced all `UP$` → `UPS` (~25 occurrences)
-- Enhanced Section 5.1: F_i properly defined as "venture-specific contribution credits"
-- Enhanced Section 5.2: UPS properly defined as "internal utility energy"
-- Added two-token utility model documentation per WSP 101
-- Added 0102/012 distinction for token earning
-- Updated regulatory language (no "currency", "investment")
-
-**Other Public Files Migrated:**
-- `public/index.html` - All FoundUP$ → FoundUPS
-- `public/404.html` - All FoundUP$ → FoundUPS
-- `public/logo-foundups.svg` - Redesigned FOUNDUPS wordmark (no $ sign)
-
-**Pending Migration (485 occurrences across 54 files):**
-- Python simulator economics code
-- Internal documentation (WSP 26, etc.)
-- ModLog files throughout codebase
-
-**WSP Reference:** WSP 101 (UPS Utility Classification Protocol)
-
----
-
-## 2026-02-15 - WSP 101: UPS Utility Classification Protocol
-
-**New Protocol Created (WSP_knowledge/src/WSP_101_UPS_Utility_Classification_Protocol.md):**
-- Regulatory positioning for UPS as internal utility energy token (not security)
-- Human-only UPS earning (0102 agents earn F_i only, not UPS)
-- BTC reserve model (80% locked / 20% treasury)
-- Exit friction design (15-30% dynamic penalty)
-- Howey test defense criteria
-- Naming enforcement: `UPS` not `UP$` (dollar sign implies currency)
-
-**Critical Architecture:**
-```
-UPS = Utility Energy (not money/currency)
-- Humans (012) earn UPS via "Found UPS" events
-- Agents (0102) earn F_i via work (NOT UPS)
-- Exit penalties discourage speculation
-- Demurrage prevents passive accumulation
-```
-
-**Regulatory Defense:**
-- Non-equity, non-dividend, non-profit expectation
-- Functional necessity (required for participation)
-- Transparent on-chain allocation logic
-- Howey test defense documentation
-
-**Migration Required:** `UP$` → `UPS` across codebase (deferred)
-
-**WSP Relationships:** WSP 26, WSP 29, WSP 100
-**WSP_MASTER_INDEX.md**: Updated (WSP 101 entry, next = WSP 102)
-
----
-
-## 2026-02-15 - WSP 100: DAE → SmartDAO Escalation Protocol
-
-**New Protocol Created (WSP_knowledge/src/WSP_100_DAE_SmartDAO_Escalation_Protocol.md):**
-- F₀-F₅ tiered escalation from DAE (0102 agents) to SmartDAO (autonomous governance)
-- Closed-loop BTC reserve model (80% locked / 20% treasury)
-- Exponential venture fabric scaling pattern
-- Treasury autonomy activation thresholds
-- Large-scale project enablement (desalination example)
-
-**Key Architecture:**
-```
-F₀ = DAE Layer (0102 agents building)
-F₁ = Early SmartDAO (treasury autonomy)
-F₂ = Growth SmartDAO (domain specialization)
-F₃ = Infrastructure SmartDAO (large-scale)
-F₄ = Mega SmartDAO (unicorn-scale)
-F₅ = Systemic SmartDAO (global impact)
-```
-
-**FAM Events Added:**
-- `smartdao_emergence` - F₀ → F₁ transition
-- `tier_escalation` - F_n → F_n+1 progression
-- `treasury_autonomy` - Autonomy activated
-- `cross_dao_funding` - Higher tier funds lower
-
-**Integration:**
-- FAMDaemon: 4 new event types + dedupe keys
-- SSE Server: 4 events streamable
-- Animation: Ticker messages for SmartDAO events
-
-**WSP Relationships:** WSP 26, WSP 27, WSP 29, WSP 54, WSP 80, WSP 98
-**WSP_MASTER_INDEX.md**: Updated (WSP 100 entry, next = WSP 101, new "Scaling" layer)
+**Rationale**:
+- Prevent CABR terminology drift into legacy mint-multiplier semantics.
+- Keep framework canon aligned with simulator/runtime implementation and PoB-first economics.
 
 ---
 
@@ -303,7 +188,7 @@ L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
 
 **Changes (WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md)**:
 - **Added Section 2: Economic Heritage** — Gesell's Freigeld theory (1916), Worgl Experiment (1932-1933) as theoretical foundation for demurrage-based UPS tokens. Documents how Worgl's demurrage scrip reduced unemployment 25% and increased money velocity 14x.
-- **Added Section 2.2**: Comparison table — Found UP$ vs traditional crypto (non-transferable, guaranteed decay, activity-driven supply, BTC backing)
+- **Added Section 2.2**: Comparison table — Found UPS vs traditional crypto (non-transferable, guaranteed decay, activity-driven supply, BTC backing)
 - **Added Section 3.7: UPS→FoundUp Token Conversion (The Escape Valve)** — The critical missing mechanism: participants stop UPS decay by committing to a specific FoundUp. Includes:
   - `UPSConversionEngine` with CABR-modulated conversion rates (0.382x–1.618x)
   - Post-conversion token behavior table (no decay, governance rights, FoundUp-specific)

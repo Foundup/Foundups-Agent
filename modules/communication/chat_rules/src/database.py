@@ -183,10 +183,19 @@ class ChatRulesDB:
             return [dict(row) for row in cursor.fetchall()]
     
     # Timeout tracking
-    
-    def record_timeout(self, mod_id: str, target_id: str, target_name: str, 
+    # DEPRECATED (2026-02-19, ADR-004): This method is DEAD CODE.
+    # All timeout writes go through gamification/whack_a_magat/src/whack.py → magadoom_scores.db
+    # Preserved for archaeological purposes only.
+
+    def record_timeout(self, mod_id: str, target_id: str, target_name: str,
                       duration_seconds: int, points_earned: int, reason: str):
-        """Record a timeout action"""
+        """
+        Record a timeout action.
+
+        DEPRECATED: This method is never called in production.
+        Use modules.gamification.whack_a_magat.src.whack.apply_whack() instead.
+        See ADR-004 for details.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             
@@ -263,14 +272,15 @@ class ChatRulesDB:
         """
         Get total whack count for a target (across all moderators).
 
-        Simple Occam's Razor: More whacks = higher confidence they're a troll.
-        Used by CommenterClassifier to boost Tier 0 confidence based on history.
+        DEPRECATED (2026-02-19, ADR-004): This method queries EMPTY table.
+        Use modules.gamification.whack_a_magat.src.whack.get_profile_store().get_whack_count_for_user()
+        which queries magadoom_scores.db (actual whack data).
 
         Args:
             target_id: Channel ID of the commenter
 
         Returns:
-            Total number of times this target has been whacked
+            Total number of times this target has been whacked (ALWAYS 0 - table is empty)
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -281,6 +291,38 @@ class ChatRulesDB:
             ''', (target_id,))
 
             return cursor.fetchone()['count']
+
+    def get_whacked_leaderboard(self, limit: int = 10) -> List[Dict]:
+        """
+        Get top whacked trolls leaderboard.
+
+        Returns the most frequently whacked targets - these are the trolls
+        that moderators have collectively identified and timed out.
+
+        Used by /whacked command to show troll leaderboard.
+        Also used by CommenterClassifier for Tier 0 confidence boosting.
+
+        Args:
+            limit: Number of top trolls to return (default 10)
+
+        Returns:
+            List of dicts with target_name, target_id, whack_count
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT
+                    target_name,
+                    target_id,
+                    COUNT(*) as whack_count,
+                    MAX(timestamp) as last_whacked
+                FROM timeout_history
+                GROUP BY target_id
+                ORDER BY whack_count DESC
+                LIMIT ?
+            ''', (limit,))
+
+            return [dict(row) for row in cursor.fetchall()]
 
     # Cooldown management
     

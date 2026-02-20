@@ -78,6 +78,20 @@ class FAMEventType(str, Enum):
     TREASURY_AUTONOMY = "treasury_autonomy"      # Treasury autonomy activated
     CROSS_DAO_FUNDING = "cross_dao_funding"      # Higher tier funds lower tier
 
+    # YouTube Comment Engagement (Training Mode)
+    COMMENT_ENGAGED = "comment_engaged"          # Bot processed a comment (like/heart)
+    COMMENT_REPLIED = "comment_replied"          # Bot posted a reply
+    COMMENT_012_MANUAL = "comment_012_manual"    # 012 replied manually (training data)
+    COMMENT_IGNORED = "comment_ignored"          # Bot chose not to reply (training data)
+
+    # Fee Revenue (Full Tide Integration - 012-approved 2026-02-17)
+    FEE_COLLECTED = "fee_collected"           # DEX/exit/creation fee collected
+    TIDE_OUT = "tide_out"                      # OVERFLOW F_i drips to Network Pool
+    TIDE_IN = "tide_in"                        # Network Pool supports CRITICAL F_i
+    TIDE_SUPPORT_SENT = "tide_support_sent"    # Alias: support sent to network pool
+    TIDE_SUPPORT_RECEIVED = "tide_support_received"  # Alias: support received from network
+    SUSTAINABILITY_REACHED = "sustainability_reached"  # Fee revenue > operational costs
+
     # System
     HEARTBEAT = "heartbeat"
     DAEMON_STARTED = "daemon_started"
@@ -152,6 +166,42 @@ def _generate_dedupe_key(event_type: str, payload: Dict[str, Any]) -> str:
         return f"treasury_autonomy:{payload.get('foundup_id')}:{payload.get('timestamp', '')[:19]}"
     elif event_type == FAMEventType.CROSS_DAO_FUNDING.value:
         return f"cross_dao_funding:{payload.get('source_dao')}:{payload.get('target_dao')}:{payload.get('amount', 0)}"
+    # YouTube Comment dedupe keys (Training Mode)
+    elif event_type == FAMEventType.COMMENT_ENGAGED.value:
+        return f"comment_engaged:{payload.get('session_id')}:{payload.get('comment_idx')}"
+    elif event_type == FAMEventType.COMMENT_REPLIED.value:
+        return f"comment_replied:{payload.get('session_id')}:{payload.get('comment_idx')}"
+    elif event_type == FAMEventType.COMMENT_012_MANUAL.value:
+        ts = payload.get("timestamp", "")[:19]
+        return f"comment_012_manual:{payload.get('session_id')}:{payload.get('commenter_handle')}:{ts}"
+    elif event_type == FAMEventType.COMMENT_IGNORED.value:
+        return f"comment_ignored:{payload.get('session_id')}:{payload.get('comment_idx')}"
+    # Fee Revenue dedupe keys (Full Tide Integration)
+    elif event_type == FAMEventType.FEE_COLLECTED.value:
+        # Use source_ref when available so multiple fee events in the same tick do
+        # not collapse into one dedupe bucket.
+        source_ref = payload.get("source_ref")
+        if source_ref:
+            return (
+                f"fee_collected:{payload.get('fee_type')}:{payload.get('foundup_id')}:"
+                f"{payload.get('tick')}:{source_ref}"
+            )
+        payload_str = json.dumps(payload, sort_keys=True)
+        payload_hash = hashlib.sha256(payload_str.encode()).hexdigest()[:8]
+        return (
+            f"fee_collected:{payload.get('fee_type')}:{payload.get('foundup_id')}:"
+            f"{payload.get('tick')}:{payload_hash}"
+        )
+    elif event_type == FAMEventType.TIDE_OUT.value:
+        return f"tide_out:{payload.get('foundup_id')}:{payload.get('tick')}"
+    elif event_type == FAMEventType.TIDE_IN.value:
+        return f"tide_in:{payload.get('foundup_id')}:{payload.get('tick')}"
+    elif event_type == FAMEventType.TIDE_SUPPORT_SENT.value:
+        return f"tide_support_sent:{payload.get('foundup_id')}:{payload.get('tick')}"
+    elif event_type == FAMEventType.TIDE_SUPPORT_RECEIVED.value:
+        return f"tide_support_received:{payload.get('foundup_id')}:{payload.get('tick')}"
+    elif event_type == FAMEventType.SUSTAINABILITY_REACHED.value:
+        return f"sustainability_reached:{payload.get('tick')}"
     else:
         # Default: hash the payload
         payload_str = json.dumps(payload, sort_keys=True)
@@ -575,6 +625,21 @@ class FAMDaemon:
         # Event listeners
         self._listeners: List[Callable[[FAMEvent], None]] = []
 
+        # Central daemon adapter (cardiovascular registration)
+        self._central_adapter = None
+        try:
+            from modules.infrastructure.dae_daemon.src.dae_adapter import CentralDAEAdapter
+            self._central_adapter = CentralDAEAdapter(
+                dae_id="fam_daemon",
+                dae_name="FAM DAEmon",
+                domain="foundups",
+                module_path="modules.foundups.agent_market.src.fam_daemon",
+                heartbeat_interval=self._heartbeat_interval,
+            )
+            self._central_adapter.register()
+        except Exception:
+            pass  # Central daemon not available — standalone operation
+
         if auto_start:
             self.start()
 
@@ -599,6 +664,13 @@ class FAMDaemon:
         )
         self._heartbeat_thread.start()
 
+        # Report to central daemon
+        if self._central_adapter:
+            self._central_adapter.report_started()
+            self._central_adapter.start_heartbeat(
+                health_fn=lambda: self.get_health().to_dict()
+            )
+
         logger.info("[FAM-DAEMON] Started | interval=%.1fs", self._heartbeat_interval)
 
     def stop(self) -> None:
@@ -617,6 +689,10 @@ class FAMDaemon:
 
         if self._heartbeat_thread:
             self._heartbeat_thread.join(timeout=2.0)
+
+        # Report to central daemon
+        if self._central_adapter:
+            self._central_adapter.stop()
 
         logger.info("[FAM-DAEMON] Stopped")
 
@@ -711,6 +787,10 @@ class FAMDaemon:
                     logger.warning("[FAM-DAEMON] Listener error: %s", e)
 
         return (success, message)
+
+    # Alias for emit() - used by comment_engagement_dae.py and other modules
+    # FIX (2026-02-20): Added to fix silent AttributeError in event publishing
+    publish = emit
 
     def add_listener(self, listener: Callable[[FAMEvent], None]) -> None:
         """Add event listener."""

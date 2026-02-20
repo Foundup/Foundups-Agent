@@ -982,6 +982,8 @@ class CommentProcessor:
         results['author_name'] = comment_data.get('author_name', 'Unknown')
         results["commenter_handle"] = comment_data.get("author_handle") or comment_data.get("author_name") or "Unknown"
         results["commenter_channel_id"] = comment_data.get("channel_id")
+        # Training Mode: Capture comment text for transcript (Task 3)
+        results["comment_text"] = comment_data.get('text', '')[:500]  # Truncate for storage
         try:
             context_flags = self._get_context_flags(comment_data)
         except Exception as e:
@@ -1450,8 +1452,12 @@ class CommentProcessor:
 
                 logger.info(f"  [REPLY] Executing reply via execute_reply()...")
                 reply_ok = await self.reply_executor.execute_reply(comment_idx, reply_text_to_post)
-                
+
                 results['reply'] = bool(reply_ok)
+                # Training Mode: Capture reply text for transcript (Task 3)
+                if reply_ok:
+                    results['reply_text_posted'] = reply_text_to_post
+                    results['reply_source'] = 'bot'  # vs '012_manual' for training
                 self.stats['replies'] += 1 if results['reply'] else 0
                 logger.info(f"  [REPLY] {'OK' if results['reply'] else 'FAIL'}")
             elif do_reply:
@@ -1460,6 +1466,23 @@ class CommentProcessor:
                  logger.info("  [REPLY] DISABLED (do_reply=False)")
 
         action_plan["reply"]["success"] = bool(results.get("reply"))
+
+        # ============================================================
+        # DAEmon VISIBILITY: Clear interaction summary for 012 monitoring
+        # Shows: Comment → Classification (0/1/2) → Reply
+        # ============================================================
+        tier_emoji = {0: "✊", 1: "✋", 2: "🖐️"}.get(comment_data.get('tier'), "❓")
+        tier_num = comment_data.get('tier', '?')
+        comment_preview = (comment_data.get('text', '') or '')[:80].replace('\n', ' ')
+        reply_preview = (results.get('reply_text_posted', '') or '')[:80].replace('\n', ' ')
+
+        logger.info(f"[DAEMON] ═══════════════════════════════════════════════════════")
+        logger.info(f"[DAEMON] 💬 COMMENT: \"{comment_preview}{'...' if len(comment_data.get('text', '')) > 80 else ''}\"")
+        logger.info(f"[DAEMON]    Author: @{results.get('author_name', 'Unknown')} | Type: {tier_emoji} ({tier_num})")
+        logger.info(f"[DAEMON]    Actions: Like={results.get('like')} | Heart={results.get('heart')} | Reply={results.get('reply')}")
+        if results.get('reply') and reply_preview:
+            logger.info(f"[DAEMON] 🤖 REPLY: \"{reply_preview}{'...' if len(results.get('reply_text_posted', '')) > 80 else ''}\"")
+        logger.info(f"[DAEMON] ═══════════════════════════════════════════════════════")
 
         # Final Log of the action plan state
         if self.action_debug:

@@ -2,6 +2,39 @@
 
 ## Chronological Change Log
 
+### [2026-02-19] - WRE Runtime/API Hardening + Docs Alignment
+**WSP Protocol References**: WSP 46, WSP 95, WSP 96, WSP 50, WSP 22
+**Impact Analysis**: Closed critical drift between claimed WRE behavior and executable behavior; restored reliability for skills discovery/execution and test isolation.
+
+#### Changes Made
+- `wre_master_orchestrator/src/wre_master_orchestrator.py`:
+  - Added backward-compatible plugin registration signatures:
+    - `register_plugin(plugin_instance)`
+    - `register_plugin("name", plugin_instance)`
+  - Added `get_plugin(...)` and `validate_module_path(...)`.
+  - Added deterministic fallback skill content path when loader/registry assets are missing.
+  - Added runtime DB override handling via `WRE_PATTERN_MEMORY_DB`.
+  - Added pytest-safe in-memory pattern DB selection for isolated test runs.
+- `skillz/wre_skills_discovery.py`:
+  - Normalized path handling across Windows/Unix separators.
+  - Production inference accepts both `/skills/` and `/skillz/`.
+  - Registry export handles non-repo-relative test paths without failure.
+- `src/pattern_memory.py`:
+  - Shared singleton reuse now limited to default production DB only.
+  - Explicit `db_path` instances are isolated.
+  - Shared singleton state resets cleanly on close.
+- `src/libido_monitor.py`:
+  - Cooldown gating adjusted to avoid throttling steady-state runtime loops after warmup.
+
+#### Validation
+- `67 passed` across:
+  - `test_wre_skills_discovery.py`
+  - `test_pattern_memory.py`
+  - `test_libido_monitor.py`
+  - `test_wre_master_orchestrator.py`
+
+---
+
 ### [2026-01-17] - Memory Preflight uses HoloIndex Bundle JSON (Canonical Retrieval)
 **WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)  
 **Impact Analysis**: Makes HoloIndex the canonical, machine-readable retrieval emitter (`--bundle-json`) for WRE memory preflight; Tier-0 enforcement now executes from bundle output rather than ad-hoc stdout parsing.

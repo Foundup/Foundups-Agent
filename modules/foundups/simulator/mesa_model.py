@@ -3,7 +3,7 @@
 Coordinates agent stepping and integrates with FAM modules.
 
 Token Economics (WSP 26 Section 6.8):
-- UP$: Universal fuel (humans EARN, agents SPEND allocated budgets)
+- UPS: Universal fuel (humans EARN, agents SPEND allocated budgets)
 - F_i: FoundUp-specific tokens (agents EARN through PoUW, humans OWN)
 """
 
@@ -38,6 +38,22 @@ from .economics.pool_distribution import (
 )
 from .economics.fi_rating import FiRatingEngine, get_rating_engine
 from .economics.allocation_engine import AllocationEngine
+from .economics.fee_revenue_tracker import (
+    FeeRevenueTracker, FeeType, FeeEvent, FeeDistribution,
+    get_fee_tracker, reset_fee_tracker,
+)
+from .economics.tide_economics import (
+    TideEconomicsEngine, TreasuryHealth, NetworkHealth,
+    TideEvent, TideEpochResult,
+    get_tide_engine, reset_tide_engine,
+)
+from .economics.smartdao_spawning import (
+    SmartDAOSpawningEngine,
+    DAOTier,
+    TIER_THRESHOLDS,
+    SMARTDAO_RESERVE_SPLIT,
+)
+from .economics.cabr_flow_router import CABRFlowInputs, route_cabr_ups_flow
 from .ai.cabr_estimator import CABREstimator, CABRScore, FoundUpIdea, CABR_THRESHOLD
 from .step_pipeline import run_step
 
@@ -108,7 +124,7 @@ class FoundUpsModel:
         )
 
         # WSP 26 Section 6.8: Human vs Agent token economics
-        # UP$ (humans earn), F_i (agents earn for human owners)
+        # UPS (humans earn), F_i (agents earn for human owners)
         self._token_econ_engine = TokenEconomicsEngine(fee_config=FeeConfig())
         self._orderbook = OrderBookManager(trading_fee_rate=0.02)
         self._investor_pool = InvestorPool()
@@ -143,6 +159,36 @@ class FoundUpsModel:
         # CABR Score Estimator (3V engine: Validation -> Verification -> Valuation)
         self._cabr_estimator = CABREstimator(use_ai=False)  # Heuristic for simulation
         self._cabr_scores: Dict[str, CABRScore] = {}  # Cache per foundup
+        self._cabr_release_rate: float = 0.02  # At most 2% of pAVS treasury per PoB event.
+        self._cabr_worker_share: float = 0.70
+        self._cabr_foundup_treasury_share: float = 0.20
+        self._cabr_network_share: float = 0.10
+        self._cabr_routed_ups_total: float = 0.0
+
+        # Fee Revenue + Tide Economics (Full Tide - 012-approved 2026-02-17)
+        # pump.fun validated: $3.5M/day at 1.25% → pAVS projects 1.8x at 2%+exit+creation
+        reset_fee_tracker()
+        reset_tide_engine()
+        self._fee_tracker = FeeRevenueTracker(
+            on_fee_collected=self._on_fee_collected,
+        )
+        self._tide_engine = TideEconomicsEngine(
+            initial_network_pool_sats=500_000_000,  # 5 BTC initial
+            on_tide_event=self._on_tide_event,
+        )
+        self._tide_epoch_interval = 100  # Process tide every 100 ticks
+        self._sustainability_reached = False
+        self._network_pool_fees_synced_sats = 0
+        self._creation_fee_notional_sats = 0  # Conservative: no synthetic creation volume by default.
+        self._creation_fee_recorded_foundups: set[str] = set()
+
+        # SmartDAO escalation runtime (WSP 100 event wiring)
+        self._smartdao_engine = SmartDAOSpawningEngine()
+        self._smartdao_epoch_interval = 50
+        self._smartdao_threshold_scale = 5e-5  # Time-compressed simulator thresholds.
+        self._smartdao_min_funding_transfer_ups = 100.0
+        self._smartdao_autonomy_announced: set[str] = set()
+        self._smartdao_last_phase_command: Optional[str] = None
 
         self._f0_seed_btc = 10.0
         self._f0_seeded = False
@@ -190,6 +236,7 @@ class FoundUpsModel:
                 social_actions=self._social_actions,
                 state_store=self._state_store,
                 creation_cost=self._config.foundup_creation_cost,
+                max_foundups=self._config.founder_max_foundups,
                 action_probability=self._config.agent_action_probability,
                 cooldown_ticks=self._config.agent_cooldown_ticks,
                 use_ai=use_ai,
@@ -481,6 +528,8 @@ class FoundUpsModel:
             task = random.choice(verified_tasks)
             ok, msg, _ = self._fam_bridge.trigger_payout(task.task_id, treasury_actor_id="treasury_0")
             if ok:
+                # PoB valve opened by verified payout -> CABR sizes the UPS flow pipe.
+                self._route_cabr_ups_for_task(task)
                 # Emit agent earning event for ticker
                 agent_id = task.assignee_id or "agent_000"
                 self._fam_bridge.emit_agent_earning(
@@ -497,6 +546,92 @@ class FoundUpsModel:
             ok, msg, _ = self._fam_bridge.publish_milestone(task.task_id, distributor_id="distribution_0")
             if not ok and self._config.verbose:
                 logger.debug("[MODEL] publish_milestone failed for %s: %s", task.task_id, msg)
+
+    def _route_cabr_ups_for_task(self, task: object) -> None:
+        """Route existing UPS from treasury via CABR pipe-size semantics.
+
+        CABR/PoB model:
+        - Treasury holds UPS (sats-backed)
+        - PoB-validated payout opens valve
+        - CABR score controls pipe size (flow rate)
+        - No UPS minting occurs in this path
+        """
+        foundup_id = getattr(task, "foundup_id", None)
+        if not foundup_id:
+            return
+
+        requested_ups = float(getattr(task, "reward_amount", 0.0) or 0.0)
+        if requested_ups <= 0:
+            return
+
+        cabr_score = float(self._cabr_scores.get(foundup_id).total) if foundup_id in self._cabr_scores else CABR_THRESHOLD
+        flow = route_cabr_ups_flow(
+            CABRFlowInputs(
+                treasury_ups_available=float(self._demurrage.pavs_treasury_balance),
+                cabr_pipe_size=cabr_score,
+                pob_validated=True,
+                requested_ups=requested_ups,
+                release_rate=self._cabr_release_rate,
+            )
+        )
+        if flow.routed_ups <= 0:
+            return
+
+        worker_ups = flow.routed_ups * self._cabr_worker_share
+        foundup_treasury_ups = flow.routed_ups * self._cabr_foundup_treasury_share
+        network_ups = flow.routed_ups - worker_ups - foundup_treasury_ups
+
+        assignee_id = getattr(task, "assignee_id", None) or "user_000"
+        if assignee_id not in self._token_econ_engine.human_accounts:
+            self._token_econ_engine.register_human(assignee_id, initial_ups=0.0)
+        self._token_econ_engine.human_earns_ups(
+            assignee_id,
+            worker_ups,
+            source="cabr_pipe_flow",
+        )
+
+        foundup_pool = self._token_econ_engine.foundup_pools.get(foundup_id)
+        if foundup_pool is None:
+            foundup_pool = self._token_econ_engine.register_foundup(foundup_id)
+        foundup_pool.ups_treasury += foundup_treasury_ups
+
+        self._demurrage.total_to_network_pool += network_ups
+        self._demurrage.update_pavs_treasury_balance(flow.treasury_ups_after)
+        self._cabr_routed_ups_total += flow.routed_ups
+
+        daemon = self._fam_bridge.get_daemon()
+        if daemon:
+            daemon.emit(
+                event_type="cabr_pipe_flow_routed",
+                payload={
+                    "task_id": getattr(task, "task_id", ""),
+                    "foundup_id": foundup_id,
+                    "assignee_id": assignee_id,
+                    "pob_validated": flow.valve_open,
+                    "cabr_pipe_size": round(flow.cabr_pipe_size, 6),
+                    "requested_ups": round(flow.requested_ups, 6),
+                    "epoch_release_budget_ups": round(flow.epoch_release_budget_ups, 6),
+                    "routed_ups": round(flow.routed_ups, 6),
+                    "worker_ups": round(worker_ups, 6),
+                    "foundup_treasury_ups": round(foundup_treasury_ups, 6),
+                    "network_pool_ups": round(network_ups, 6),
+                    "pavs_treasury_before_ups": round(flow.treasury_ups_before, 6),
+                    "pavs_treasury_after_ups": round(flow.treasury_ups_after, 6),
+                },
+                actor_id="cabr_flow_router",
+                foundup_id=foundup_id,
+                task_id=getattr(task, "task_id", None),
+            )
+            daemon.emit(
+                event_type="pavs_treasury_updated",
+                payload={
+                    "pavs_treasury_balance_ups": round(self._demurrage.pavs_treasury_balance, 6),
+                    "network_pool_balance_ups": round(self._demurrage.total_to_network_pool, 6),
+                    "treasury_health": round(self._demurrage.get_stats()["treasury_health"], 6),
+                },
+                actor_id="cabr_flow_router",
+                foundup_id=foundup_id,
+            )
 
     def _simulate_market_activity(self) -> None:
         """Simulate decentralized F_i exchange activity for active FoundUps."""
@@ -590,6 +725,18 @@ class FoundUpsModel:
         for trade in trades:
             self._total_dex_trades += 1
             self._total_dex_volume_ups += trade.ups_total
+
+            # Record fee for Full Tide economics (2% DEX fee)
+            self._record_fee_from_trade(
+                trade.foundup_id,
+                trade.ups_total,
+                source_ref=trade.trade_id,
+                metadata={
+                    "buyer_id": trade.buyer_id,
+                    "seller_id": trade.seller_id,
+                },
+            )
+
             if daemon:
                 daemon.emit(
                     event_type="order_matched",
@@ -678,7 +825,7 @@ class FoundUpsModel:
         )
 
     def _simulate_f0_investor_program(self) -> None:
-        """F_0-only investor flow: subscriptions hoard UP$, then bid on Proto FoundUps."""
+        """F_0-only investor flow: subscriptions hoard UPS, then bid on Proto FoundUps."""
         self._seed_f0_investor_pool_once()
         foundup_ids = self._state_store.get_foundup_ids()
         if not foundup_ids:
@@ -693,7 +840,7 @@ class FoundUpsModel:
         if not proto_targets:
             return
 
-        # Subscription accrual (UP$ hoarding) happens from the F_0 investor program.
+        # Subscription accrual (UPS hoarding) happens from the F_0 investor program.
         for investor_id in self._f0_investor_ids:
             if random.random() < 0.08:
                 self._fam_bridge.accrue_investor_terms(
@@ -744,7 +891,7 @@ class FoundUpsModel:
     def _apply_demurrage_cycle(self) -> None:
         """Apply bio-decay to all registered wallets.
 
-        Decayed UP$ is redistributed across network and pAVS treasury lanes.
+        Decayed UPS is redistributed across network and pAVS treasury lanes.
         Active participants get decay relief via pool rewards.
         """
         daemon = self._fam_bridge.get_daemon()
@@ -770,7 +917,7 @@ class FoundUpsModel:
             )
             logger.debug(
                 f"[MODEL] Demurrage tick {self._tick}: "
-                f"{total_decay:.2f} UP$ decayed from {len(decay_results)} wallets"
+                f"{total_decay:.2f} UPS decayed from {len(decay_results)} wallets"
             )
             if daemon:
                 daemon.emit(
@@ -950,7 +1097,8 @@ class FoundUpsModel:
             "btc_per_fi": round(btc_per_fi, 8),
             "adoption_score": round(adoption_score, 4),
             "s_curve_release": round(s_curve_release, 4),
-            "ups_minted": round(self._btc_reserve.total_ups_minted, 2),
+            "ups_minted": round(self._btc_reserve.total_ups_circulating, 2),  # legacy key
+            "ups_circulating": round(self._btc_reserve.total_ups_circulating, 2),
             "ups_value_btc": round(self._btc_reserve.ups_value_btc, 8),
             "total_decayed": round(self._demurrage.total_decayed, 2),
         }
@@ -963,6 +1111,430 @@ class FoundUpsModel:
                 f"(reserve={btc_total:.4f}, fi={fi_outstanding:.0f}, "
                 f"adoption={adoption_score:.2%})"
             )
+
+    # =========================================================================
+    # Fee Revenue + Tide Economics (Full Tide Integration)
+    # =========================================================================
+
+    def _on_fee_collected(self, event: FeeEvent, dist: FeeDistribution) -> None:
+        """Callback when fee is collected - emit FAM event."""
+        daemon = self._fam_bridge.get_daemon()
+        if not daemon:
+            return
+        daemon.emit(
+            event_type="fee_collected",
+            payload={
+                "fee_type": event.fee_type.value,
+                "foundup_id": event.foundup_id,
+                "amount_sats": event.amount_sats,
+                "volume_sats": event.volume_sats,
+                "tick": event.tick,
+                "source_ref": event.metadata.get("source_ref"),
+                "distribution": {
+                    "fi_treasury": dist.fi_treasury_sats,
+                    "network_pool": dist.network_pool_sats,
+                    "pavs_treasury": dist.pavs_treasury_sats,
+                    "btc_reserve": dist.btc_reserve_sats,
+                },
+            },
+            actor_id="fee_tracker",
+            foundup_id=event.foundup_id,
+        )
+
+    def _on_tide_event(self, event: TideEvent) -> None:
+        """Callback when tide flows - emit FAM event."""
+        daemon = self._fam_bridge.get_daemon()
+        if not daemon:
+            return
+        payload = {
+            "foundup_id": event.foundup_id,
+            "amount_sats": event.amount_sats,
+            "from": event.from_source,
+            "to": event.to_destination,
+            "tick": event.tick,
+            "reason": event.reason,
+        }
+        daemon.emit(
+            event_type=event.event_type,  # "tide_in" or "tide_out"
+            payload=payload,
+            actor_id="tide_engine",
+            foundup_id=event.foundup_id,
+        )
+
+        # Emit explicit support aliases for downstream consumers.
+        if event.event_type == "tide_out":
+            daemon.emit(
+                event_type="tide_support_sent",
+                payload=payload,
+                actor_id="tide_engine",
+                foundup_id=event.foundup_id,
+            )
+        elif event.event_type == "tide_in":
+            daemon.emit(
+                event_type="tide_support_received",
+                payload=payload,
+                actor_id="tide_engine",
+                foundup_id=event.foundup_id,
+            )
+
+    def _process_tide_epoch(self) -> None:
+        """Process tide economics (IMF-like ecosystem balancing).
+
+        Called every tide_epoch_interval ticks (default: 100).
+        - Syncs FoundUp states to tide engine
+        - Processes TIDE OUT (overflow drips to Network Pool)
+        - Processes TIDE IN (Network Pool supports CRITICAL F_i)
+        - Checks for sustainability milestone
+        """
+        state = self._state_store.get_state()
+
+        # Sync foundup states to tide engine
+        for foundup_id, tile in state.foundups.items():
+            # Conservative treasury signal:
+            # - explicit MVP treasury injection (UPS)
+            # - actually tracked fee treasury from FeeRevenueTracker (sats)
+            fee_state_for_foundup = self._fee_tracker.get_foundup_state(foundup_id)
+            fee_treasury_sats = fee_state_for_foundup.treasury_sats if fee_state_for_foundup else 0
+            mvp_treasury_sats = int(max(0.0, tile.mvp_treasury_injection_ups))
+            treasury_sats = max(0, fee_treasury_sats + mvp_treasury_sats)
+
+            # Optional creation fee hook (kept conservative by default via zero notional).
+            if foundup_id not in self._creation_fee_recorded_foundups:
+                if self._creation_fee_notional_sats > 0:
+                    self._fee_tracker.record_creation(
+                        tick=self._tick,
+                        foundup_id=foundup_id,
+                        amount_sats=self._creation_fee_notional_sats,
+                        is_mined=True,
+                        metadata={"source_ref": f"foundup:{foundup_id}:creation"},
+                    )
+                self._creation_fee_recorded_foundups.add(foundup_id)
+
+            # Derive tier from treasury size with a conservative non-zero floor for FoundUps.
+            if foundup_id == self._f0_source_foundup_id:
+                tier = "F2_GROWTH"
+            else:
+                tier = "F1_OPO"
+            if treasury_sats >= 1_000_000_000_000:
+                tier = "F5_SYSTEMIC"
+            elif treasury_sats >= 100_000_000_000:
+                tier = "F4_MEGA"
+            elif treasury_sats >= 10_000_000_000:
+                tier = "F3_INFRA"
+            elif treasury_sats >= 1_000_000_000:
+                tier = "F2_GROWTH"
+            elif treasury_sats >= 100_000_000:
+                tier = "F1_OPO"
+
+            # Update existing state instead of recreating each epoch.
+            current = self._tide_engine.get_foundup_state(foundup_id)
+            if current is None:
+                self._tide_engine.register_foundup(
+                    foundup_id=foundup_id,
+                    tier=tier,
+                    treasury_sats=treasury_sats,
+                )
+            else:
+                self._tide_engine.update_tier(foundup_id, tier)
+                self._tide_engine.update_treasury(foundup_id, treasury_sats)
+
+        # Add only NEW network fee inflows from fee tracker (delta sync).
+        fee_state = self._fee_tracker.get_ecosystem_state()
+        new_fees = fee_state.network_pool_sats - self._network_pool_fees_synced_sats
+        if new_fees > 0:
+            self._tide_engine.add_to_network_pool(new_fees)
+            self._network_pool_fees_synced_sats += new_fees
+        elif new_fees < 0:
+            # Fee tracker reset or rewind: realign sync cursor safely.
+            self._network_pool_fees_synced_sats = fee_state.network_pool_sats
+
+        # Process tide
+        result = self._tide_engine.process_epoch(tick=self._tick)
+
+        # Log tide activity
+        if result.tide_in_total_sats > 0 or result.tide_out_total_sats > 0:
+            logger.info(
+                f"[TIDE] Epoch {self._tick}: "
+                f"OUT={result.tide_out_total_sats/100_000_000:.4f} BTC from {result.overflow_foundups} F_i, "
+                f"IN={result.tide_in_total_sats/100_000_000:.4f} BTC to {result.critical_foundups} F_i"
+            )
+
+        # Check sustainability milestone
+        metrics = self._fee_tracker.get_sustainability_metrics()
+        if metrics["is_self_sustaining_claim"] and not self._sustainability_reached:
+            self._sustainability_reached = True
+            daemon = self._fam_bridge.get_daemon()
+            if daemon:
+                daemon.emit(
+                    event_type="sustainability_reached",
+                    payload={
+                        "tick": self._tick,
+                        "foundup_count": metrics["foundup_count"],
+                        "daily_revenue_btc": metrics["daily_revenue_btc"],
+                        "revenue_cost_ratio": metrics["revenue_cost_ratio"],
+                        "downside_revenue_cost_ratio_p10": metrics["downside_revenue_cost_ratio_p10"],
+                    },
+                    actor_id="fee_tracker",
+                    foundup_id="F_0",
+                )
+            logger.info(
+                f"[MILESTONE] Ecosystem SELF-SUSTAINING at tick {self._tick}! "
+                f"Revenue: {metrics['daily_revenue_btc']:.4f} BTC/day "
+                f"(downside p10 ratio={metrics['downside_revenue_cost_ratio_p10']:.2f}x)"
+            )
+
+    def _sync_smartdao_registry(self) -> None:
+        """Register newly created FoundUps with SmartDAO runtime state."""
+        for foundup_id in self._state_store.get_foundup_ids():
+            if foundup_id not in self._smartdao_engine.daos:
+                self._smartdao_engine.register_foundup(foundup_id)
+
+    def _estimate_foundup_treasury_ups(self, foundup_id: str) -> float:
+        """Estimate total treasury balance using canonical UPS==sat accounting."""
+        state = self._state_store.get_state()
+        tile = state.foundups.get(foundup_id)
+        mvp_treasury_ups = float(tile.mvp_treasury_injection_ups) if tile else 0.0
+
+        fee_state = self._fee_tracker.get_foundup_state(foundup_id)
+        fee_treasury_ups = float(fee_state.treasury_sats) if fee_state else 0.0
+
+        pool = self._token_econ_engine.foundup_pools.get(foundup_id)
+        pool_treasury_ups = float(pool.ups_treasury) if pool else 0.0
+
+        return max(0.0, fee_treasury_ups + mvp_treasury_ups + pool_treasury_ups)
+
+    def _estimate_foundup_active_agents(self, foundup_id: str) -> int:
+        """Estimate active operator load from customer + task throughput."""
+        state = self._state_store.get_state()
+        tile = state.foundups.get(foundup_id)
+        if tile is None:
+            return 0
+        customer_load = int(round(max(0, tile.customer_count)))
+        task_load = int(max(0, tile.tasks_completed))
+        founder_floor = 1
+        return max(founder_floor, founder_floor + customer_load + task_load)
+
+    def _emit_phase_command(self, target_phase: str, force: bool = False) -> None:
+        """Emit phase command only when phase changes (or force is requested)."""
+        if not force and self._smartdao_last_phase_command == target_phase:
+            return
+        daemon = self._fam_bridge.get_daemon()
+        if not daemon:
+            return
+        daemon.emit(
+            event_type="phase_command",
+            payload={
+                "target_phase": target_phase,
+                "force": force,
+            },
+            actor_id="smartdao_engine",
+            foundup_id="F_0",
+        )
+        self._smartdao_last_phase_command = target_phase
+
+    def _attempt_scaled_tier_escalation(self, foundup_id: str) -> Optional[DAOTier]:
+        """Attempt tier promotion with simulator-timescale threshold compression."""
+        dao = self._smartdao_engine.daos.get(foundup_id)
+        if dao is None:
+            return None
+
+        next_tier_value = dao.tier.value + 1
+        if next_tier_value > DAOTier.F5_SYSTEMIC.value:
+            return None
+
+        next_tier = DAOTier(next_tier_value)
+        thresholds = TIER_THRESHOLDS[next_tier]
+        scaled_treasury_threshold = float(thresholds["treasury_ups"]) * self._smartdao_threshold_scale
+
+        if (
+            dao.adoption_ratio >= float(thresholds["adoption_ratio"])
+            and dao.treasury_ups >= scaled_treasury_threshold
+            and dao.active_agents >= int(thresholds["active_agents"])
+        ):
+            dao.tier = next_tier
+            return next_tier
+
+        return None
+
+    def _process_smartdao_epoch(self) -> None:
+        """Process SmartDAO tier progression + inter-DAO funding events."""
+        state = self._state_store.get_state()
+        if not state.foundups:
+            return
+
+        self._sync_smartdao_registry()
+
+        # Refresh measurable signals before escalation checks.
+        user_denom = max(1, self._config.num_user_agents)
+        for foundup_id in state.foundups.keys():
+            dao = self._smartdao_engine.daos.get(foundup_id)
+            if dao is None:
+                continue
+            tile = state.foundups[foundup_id]
+            dao.adoption_ratio = max(0.0, min(1.0, float(tile.customer_count) / float(user_denom)))
+            dao.active_agents = self._estimate_foundup_active_agents(foundup_id)
+            dao.treasury_ups = self._estimate_foundup_treasury_ups(foundup_id)
+
+            # Feed spawning fund from sustained surplus, not principal treasury.
+            tier_floor = float(TIER_THRESHOLDS[dao.tier]["treasury_ups"]) * self._smartdao_threshold_scale
+            if dao.tier != DAOTier.F0_DAE and dao.treasury_ups > tier_floor:
+                overflow = dao.treasury_ups - tier_floor
+                dao.spawning_fund_ups += overflow * SMARTDAO_RESERVE_SPLIT["spawning_fund"] * 0.05
+
+        daemon = self._fam_bridge.get_daemon()
+        if not daemon:
+            return
+
+        escalations = 0
+        emerged = 0
+
+        for foundup_id in state.foundups.keys():
+            dao = self._smartdao_engine.daos.get(foundup_id)
+            if dao is None:
+                continue
+            old_tier = dao.tier
+            new_tier = self._attempt_scaled_tier_escalation(foundup_id)
+            if new_tier is None:
+                continue
+
+            escalations += 1
+            payload = {
+                "foundup_id": foundup_id,
+                "old_tier": old_tier.name,
+                "new_tier": new_tier.name,
+                "adoption_ratio": round(dao.adoption_ratio, 4),
+                "treasury_ups": round(dao.treasury_ups, 2),
+                "active_agents": dao.active_agents,
+                "tick": self._tick,
+            }
+            daemon.emit(
+                event_type="tier_escalation",
+                payload=payload,
+                actor_id="smartdao_engine",
+                foundup_id=foundup_id,
+            )
+
+            if old_tier == DAOTier.F0_DAE and new_tier.value >= DAOTier.F1_OPO.value:
+                emerged += 1
+                daemon.emit(
+                    event_type="smartdao_emergence",
+                    payload={
+                        "foundup_id": foundup_id,
+                        "old_tier": old_tier.name,
+                        "new_tier": new_tier.name,
+                        "adoption_ratio": round(dao.adoption_ratio, 4),
+                        "tick": self._tick,
+                    },
+                    actor_id="smartdao_engine",
+                    foundup_id=foundup_id,
+                )
+
+            if new_tier.value >= DAOTier.F2_GROWTH.value and foundup_id not in self._smartdao_autonomy_announced:
+                self._smartdao_autonomy_announced.add(foundup_id)
+                daemon.emit(
+                    event_type="treasury_autonomy",
+                    payload={
+                        "foundup_id": foundup_id,
+                        "tier": new_tier.name,
+                        "treasury_ups": round(dao.treasury_ups, 2),
+                        "spawning_fund_ups": round(dao.spawning_fund_ups, 2),
+                        "tick": self._tick,
+                        "timestamp": f"tick-{self._tick:010d}",
+                    },
+                    actor_id="smartdao_engine",
+                    foundup_id=foundup_id,
+                )
+
+        # Funding flows: higher-tier DAOs seed lower-tier DAOs from spawning fund.
+        donors = sorted(
+            [
+                dao for dao in self._smartdao_engine.daos.values()
+                if dao.tier.value >= DAOTier.F2_GROWTH.value
+                and dao.spawning_fund_ups >= self._smartdao_min_funding_transfer_ups
+            ],
+            key=lambda dao: (-dao.tier.value, -dao.spawning_fund_ups, dao.foundup_id),
+        )
+        receivers = sorted(
+            [
+                dao for dao in self._smartdao_engine.daos.values()
+                if dao.tier.value <= DAOTier.F1_OPO.value
+            ],
+            key=lambda dao: (dao.treasury_ups, dao.foundup_id),
+        )
+        for donor in donors:
+            if not receivers:
+                break
+            receiver = next(
+                (candidate for candidate in receivers if candidate.foundup_id != donor.foundup_id),
+                None,
+            )
+            if receiver is None:
+                break
+
+            transfer_ups = min(
+                donor.spawning_fund_ups * 0.10,
+                self._smartdao_min_funding_transfer_ups * 2.0,
+            )
+            if transfer_ups < self._smartdao_min_funding_transfer_ups:
+                continue
+
+            donor.spawning_fund_ups -= transfer_ups
+            receiver.treasury_ups += transfer_ups
+
+            daemon.emit(
+                event_type="cross_dao_funding",
+                payload={
+                    "source_dao": donor.foundup_id,
+                    "target_dao": receiver.foundup_id,
+                    "amount": int(round(transfer_ups)),
+                    "source_tier": donor.tier.name,
+                    "target_tier": receiver.tier.name,
+                    "tick": self._tick,
+                },
+                actor_id="smartdao_engine",
+                foundup_id=receiver.foundup_id,
+            )
+            receivers.sort(key=lambda dao: (dao.treasury_ups, dao.foundup_id))
+
+        if emerged > 0:
+            # Keep DRIVEN_MODE phase transitions deterministic and sparse.
+            self._emit_phase_command("CELEBRATE", force=True)
+
+        if escalations > 0 and self._config.verbose:
+            logger.info(
+                "[SMARTDAO] tick=%s escalations=%s emergences=%s",
+                self._tick,
+                escalations,
+                emerged,
+            )
+
+    def _record_fee_from_trade(
+        self,
+        foundup_id: str,
+        volume_ups: float,
+        source_ref: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Record DEX trade fee from market activity."""
+        # Convert UPS volume to sats (1 UPS == 1 sat accounting unit).
+        # Keep float precision so sub-sat fee carry can accumulate correctly.
+        volume_sats = max(0.0, float(volume_ups))
+        if volume_sats > 0:
+            self._fee_tracker.record_dex_trade(
+                tick=self._tick,
+                foundup_id=foundup_id,
+                volume_sats=volume_sats,
+                source_ref=source_ref,
+                metadata=metadata,
+            )
+
+    def get_fee_metrics(self) -> Dict:
+        """Get current fee revenue metrics."""
+        return self._fee_tracker.get_sustainability_metrics()
+
+    def get_tide_metrics(self) -> Dict:
+        """Get current tide economics metrics."""
+        return self._tide_engine.get_ecosystem_metrics()
 
     def _emit_rating_updates(self) -> None:
         """Emit F_i rating updates for animation (color temperature gradient).
@@ -1154,7 +1726,7 @@ class FoundUpsModel:
 
     @property
     def demurrage(self) -> DemurrageEngine:
-        """Get demurrage engine (bio-decay for LIQUID UP$)."""
+        """Get demurrage engine (bio-decay for LIQUID UPS)."""
         return self._demurrage
 
     @property
@@ -1184,6 +1756,20 @@ class FoundUpsModel:
         """Get simulation statistics."""
         state = self._state_store.get_state()
         econ_stats = self._token_econ_engine.get_system_stats()
+        fee_metrics = self._fee_tracker.get_sustainability_metrics()
+        tide_metrics = self._tide_engine.get_ecosystem_metrics()
+        scenario_pack = fee_metrics.get("scenario_pack", {})
+        downside = scenario_pack.get("downside", {})
+        base = scenario_pack.get("base", {})
+        upside = scenario_pack.get("upside", {})
+        smartdao_tier_distribution: Dict[str, int] = {tier.name: 0 for tier in DAOTier}
+        smartdao_autonomous_foundups = 0
+        smartdao_spawning_fund_ups = 0.0
+        for dao in self._smartdao_engine.daos.values():
+            smartdao_tier_distribution[dao.tier.name] += 1
+            smartdao_spawning_fund_ups += float(dao.spawning_fund_ups)
+            if dao.tier.value >= DAOTier.F2_GROWTH.value:
+                smartdao_autonomous_foundups += 1
 
         return {
             "tick": self._tick,
@@ -1221,6 +1807,7 @@ class FoundUpsModel:
             "foundup_treasury_ups_total": sum(
                 pool.ups_treasury for pool in self._token_econ_engine.foundup_pools.values()
             ),
+            "cabr_routed_ups_total": self._cabr_routed_ups_total,
             "allocation_batches": self._allocation_engine.allocation_count,
             "allocation_ups_total": self._allocation_engine.total_allocated_ups,
             "allocation_fi_total": self._allocation_engine.total_fi_acquired,
@@ -1229,6 +1816,33 @@ class FoundUpsModel:
             "pure_step_shadow_failures": self._pure_step_shadow_failures,
             "pure_step_shadow_last_tick": int(self._pure_step_shadow_last.get("tick", 0)),
             "pure_step_shadow_last_ok": bool(self._pure_step_shadow_last.get("ok", True)),
+            # Full Tide economics (conservative, defendable metrics)
+            "fee_gross_daily_btc": fee_metrics["gross_daily_revenue_btc"],
+            "fee_pavs_daily_btc": fee_metrics["daily_revenue_btc"],
+            "fee_protocol_capture_daily_btc": fee_metrics["protocol_capture_daily_btc"],
+            "fee_daily_burn_btc": fee_metrics["daily_burn_btc"],
+            "fee_revenue_cost_ratio": fee_metrics["revenue_cost_ratio"],
+            "fee_protocol_capture_ratio": fee_metrics["protocol_capture_ratio"],
+            "fee_has_min_sample_window": fee_metrics["has_min_sample_window"],
+            "fee_observation_days": fee_metrics["observation_days"],
+            "fee_self_sustaining": fee_metrics["is_self_sustaining"],
+            "fee_self_sustaining_raw": fee_metrics["is_self_sustaining_raw"],
+            "fee_self_sustaining_base_gate": fee_metrics["is_self_sustaining_base_gate"],
+            "fee_self_sustaining_downside": fee_metrics["is_self_sustaining_downside"],
+            "fee_downside_revenue_cost_ratio_p10": fee_metrics["downside_revenue_cost_ratio_p10"],
+            "fee_self_sustaining_protocol_capture": fee_metrics["is_self_sustaining_protocol_capture"],
+            "fee_self_sustaining_protocol_capture_raw": fee_metrics["is_self_sustaining_protocol_capture_raw"],
+            "fee_estimated_break_even_fi": fee_metrics["estimated_break_even_fi"],
+            "fee_scenario_downside_ratio_p10": float(downside.get("revenue_cost_ratio_p10", 0.0)),
+            "fee_scenario_base_ratio_p50": float(base.get("revenue_cost_ratio_p50", 0.0)),
+            "fee_scenario_upside_ratio_p90": float(upside.get("revenue_cost_ratio_p90", 0.0)),
+            "tide_network_pool_btc": tide_metrics["network_pool_btc"],
+            "tide_network_health": tide_metrics["network_health"],
+            "tide_epochs_processed": tide_metrics["tide_epochs_processed"],
+            "smartdao_registered_foundups": len(self._smartdao_engine.daos),
+            "smartdao_autonomous_foundups": smartdao_autonomous_foundups,
+            "smartdao_spawning_fund_ups": smartdao_spawning_fund_ups,
+            "smartdao_tier_distribution": smartdao_tier_distribution,
             # BTC-F_i mirror ratio (key metric)
             "btc_per_fi_latest": (
                 self._btc_fi_ratio_history[-1]["btc_per_fi"]

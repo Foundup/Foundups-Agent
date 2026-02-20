@@ -1,6 +1,7 @@
 """FAM Bridge - thin calls into existing FAM modules.
 
-NO LOGIC INVENTION - only wraps existing FAM interfaces.
+Primary goal is contract-preserving wrappers over FAM interfaces.
+Small deterministic hardening logic is allowed for simulation stability.
 """
 
 from __future__ import annotations
@@ -136,17 +137,34 @@ class FAMBridge:
 
             # Generate ID (InMemoryAgentMarket expects pre-filled ID)
             foundup_id = self._id_gen.next_id("fup")
+            requested_symbol = (token_symbol or "").upper().strip()
+            if not requested_symbol:
+                requested_symbol = "FUP"
+            symbol_attempt = requested_symbol
+            result = None
+            max_symbol_attempts = 25
 
-            foundup = Foundup(
-                foundup_id=foundup_id,
-                name=name,
-                owner_id=owner_id,
-                token_symbol=token_symbol.upper(),
-                immutable_metadata=metadata or {},
-                mutable_metadata={},
-            )
-
-            result = self._market.create_foundup(foundup)
+            # Simulation hardening: auto-resolve symbol collisions deterministically so
+            # founder throughput is not artificially capped by a tiny static symbol list.
+            for attempt in range(max_symbol_attempts):
+                foundup = Foundup(
+                    foundup_id=foundup_id,
+                    name=name,
+                    owner_id=owner_id,
+                    token_symbol=symbol_attempt,
+                    immutable_metadata=metadata or {},
+                    mutable_metadata={},
+                )
+                try:
+                    result = self._market.create_foundup(foundup)
+                    break
+                except Exception as exc:
+                    msg = str(exc).lower()
+                    is_collision = "token_symbol" in msg and "already exists" in msg
+                    if not is_collision or attempt == max_symbol_attempts - 1:
+                        raise
+                    symbol_attempt = f"{requested_symbol}{attempt + 1:02d}"
+            assert result is not None
 
             # Emit event via daemon
             self._daemon.emit(
@@ -154,6 +172,7 @@ class FAMBridge:
                 payload={
                     "name": result.name,
                     "token_symbol": result.token_symbol,
+                    "symbol_auto_resolved": result.token_symbol != requested_symbol,
                 },
                 actor_id=owner_id,
                 foundup_id=result.foundup_id,
@@ -915,7 +934,7 @@ class FAMBridge:
         fi_amount: int,
         ups_amount: int,
     ) -> None:
-        """Emit F_i ↔ UP$ token exchange event."""
+        """Emit F_i ↔ UPS token exchange event."""
         self._daemon.emit(
             event_type="fi_ups_exchange",
             payload={

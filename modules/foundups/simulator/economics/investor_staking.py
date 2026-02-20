@@ -32,7 +32,7 @@ KEY CONCEPTS (from Bitclout/DeSo research):
 
 3. BTC BACKING:
    - Capital → BTC Reserve (Hotel California - never exits)
-   - BTC backs UP$ supply
+   - BTC backs UPS supply
    - Creates real asset backing (unlike pure Bitclout speculation)
 
 4. S-CURVE RELEASE:
@@ -201,7 +201,7 @@ class InvestorPosition:
     - They share the global investor allocation of FoundUp F_i tokens
       (proportional to vested I_i held)
     - Their I_i tokens vest via S-curve tied to network adoption
-    - Their BTC investment backs the UP$ system forever (Hotel California)
+    - Their BTC investment backs the UPS system forever (Hotel California)
     """
 
     investor_id: str
@@ -284,7 +284,7 @@ class InvestorPool:
     # === NETWORK ADOPTION (drives vesting) ===
     network_adoption_score: float = 0.0  # 0.0 to 1.0
     total_foundups: int = 0
-    total_network_revenue: float = 0.0  # UP$ revenue across all FoundUps
+    total_network_revenue: float = 0.0  # UPS revenue across all FoundUps
 
     # === INVESTOR REGISTRY ===
     investors: Dict[str, InvestorPosition] = field(default_factory=dict)

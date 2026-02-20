@@ -436,18 +436,21 @@ class ThreadRunner(EngagementRunner):
                 "stats": {"comments_processed": 0, "likes": 0, "hearts": 0, "replies": 0, "errors": 0},
             }
 
+        # FIX 2026-02-18: Extract browser_port from kwargs (9223=Edge, 9222=Chrome)
+        browser_port = kwargs.get("browser_port", 9222)
+
         # Calculate timeout (unified default: 3600s = 1 hour)
         if max_comments == 0:
             timeout = int(os.getenv("COMMUNITY_UNLIMITED_TIMEOUT", "3600"))
         else:
             timeout = (max_comments * 240) + 60
 
-        logger.info(f"[THREAD] Starting engagement (timeout: {timeout}s)")
+        logger.info(f"[THREAD] Starting engagement (timeout: {timeout}s, port: {browser_port})")
 
         try:
             # Run in thread to prevent Selenium from blocking event loop
             result = await asyncio.wait_for(
-                asyncio.to_thread(self._execute_sync, channel_id, max_comments, switches),
+                asyncio.to_thread(self._execute_sync, channel_id, max_comments, switches, browser_port),
                 timeout=timeout
             )
             logger.info(f"[THREAD] Complete: {result.get('stats', {})}")
@@ -469,16 +472,21 @@ class ThreadRunner(EngagementRunner):
                 'stats': {'comments_processed': 0, 'errors': 1}
             }
 
-    def _execute_sync(self, channel_id: str, max_comments: int, switches: _CommentEngagementSwitches) -> Dict[str, Any]:
+    def _execute_sync(self, channel_id: str, max_comments: int, switches: _CommentEngagementSwitches, browser_port: int = 9222) -> Dict[str, Any]:
         """
         Synchronous execution in dedicated thread.
         Selenium blocking happens HERE, not in main event loop.
         """
         try:
             # Import here to avoid loading in main thread
-            from modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae import (
-                CommentEngagementDAE
-            )
+            import modules.communication.video_comments.skillz.tars_like_heart_reply.comment_engagement_dae as dae_module
+
+            # FIX 2026-02-18: Override module-level CHROME_PORT for correct browser connection
+            # Edge=9223, Chrome=9222 - must set BEFORE connect() is called
+            dae_module.CHROME_PORT = browser_port
+            logger.info(f"[THREAD] Browser port set to {browser_port} (Edge=9223, Chrome=9222)")
+
+            CommentEngagementDAE = dae_module.CommentEngagementDAE
 
             # Check LM Studio availability
             dom_only = os.getenv("COMMUNITY_DOM_ONLY", "false").lower() in ("1", "true", "yes")

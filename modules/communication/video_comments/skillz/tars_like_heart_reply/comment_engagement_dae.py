@@ -103,6 +103,18 @@ except ImportError as e:
     COMMENTER_HISTORY_AVAILABLE = False
     logger.warning(f"[DAE] Commenter history store not available: {e}")
 
+# FAM DAEmon integration (Training Mode observability)
+try:
+    from modules.foundups.agent_market.src.fam_daemon import (
+        get_fam_daemon,
+        FAMEventType,
+    )
+    FAM_DAEMON_AVAILABLE = True
+    logger.info("[DAE] FAM DAEmon integration loaded")
+except ImportError as e:
+    FAM_DAEMON_AVAILABLE = False
+    logger.debug(f"[DAE] FAM DAEmon not available (optional): {e}")
+
 # Configuration
 CHROME_PORT = int(os.getenv("FOUNDUPS_CHROME_PORT", "9222"))
 TARS_API_URL = os.getenv("TARS_API_URL", "http://127.0.0.1:1234")
@@ -438,6 +450,113 @@ class CommentEngagementDAE:
             logger.debug(f"[ANTI-DETECTION] Break state saved (break_until={self._on_break_until})")
         except Exception as e:
             logger.warning(f"[ANTI-DETECTION] Failed to save break state: {e}")
+
+    async def _detect_012_manual_replies(self, bot_posted_replies: set = None) -> List[Dict[str, Any]]:
+        """
+        Detect 012 manual replies during automated mode (Training Mode).
+
+        Scans for creator-badge replies that were NOT posted by the bot.
+        These represent 012's manual intervention - valuable training data.
+
+        Args:
+            bot_posted_replies: Set of comment indices where bot already replied
+
+        Returns:
+            List of detected 012 manual reply dicts for FAM publishing
+        """
+        if not self.comment_processor or not self.comment_processor.driver:
+            return []
+
+        bot_posted_replies = bot_posted_replies or set()
+        detected_manual = []
+
+        try:
+            # JavaScript to find all creator-badge replies across visible threads
+            creator_replies = self.comment_processor.driver.execute_script("""
+                const results = [];
+                const threads = document.querySelectorAll('ytcp-comment-thread');
+
+                threads.forEach((thread, threadIdx) => {
+                    // Check for creator badge in any reply within this thread
+                    const repliesContainer = thread.querySelector('[class*="replies-renderer"]');
+                    if (!repliesContainer) return;
+
+                    // Look for creator badges
+                    const creatorBadges = repliesContainer.querySelectorAll(
+                        '[class*="creator-badge"], [aria-label*="owner"], ' +
+                        'ytcp-comment-author[aria-label*="Move2Japan"], ' +
+                        'ytcp-comment-author[aria-label*="UnDaoDu"], ' +
+                        'ytcp-comment-author[aria-label*="FoundUps"]'
+                    );
+
+                    creatorBadges.forEach(badge => {
+                        // Get the parent comment element
+                        const replyEl = badge.closest('ytcp-comment-replies, ytcp-comment');
+                        if (!replyEl) return;
+
+                        // Extract comment data
+                        const contentEl = replyEl.querySelector('[id*="content-text"]');
+                        const timestampEl = replyEl.querySelector('yt-formatted-string[class*="time"]');
+
+                        // Get the parent comment text (what we're replying to)
+                        const parentComment = thread.querySelector('ytcp-comment:first-child');
+                        const parentTextEl = parentComment ? parentComment.querySelector('[id*="content-text"]') : null;
+                        const parentAuthorEl = parentComment ? parentComment.querySelector('ytcp-comment-author') : null;
+
+                        results.push({
+                            thread_idx: threadIdx + 1,
+                            creator_name: badge.textContent.trim(),
+                            reply_text: contentEl ? contentEl.textContent.trim() : '',
+                            timestamp_text: timestampEl ? timestampEl.textContent.trim() : '',
+                            parent_comment_text: parentTextEl ? parentTextEl.textContent.trim() : '',
+                            parent_author: parentAuthorEl ? parentAuthorEl.textContent.trim() : ''
+                        });
+                    });
+                });
+
+                return results;
+            """)
+
+            if not creator_replies:
+                return []
+
+            # Filter out replies that were posted by the bot
+            for reply_data in creator_replies:
+                thread_idx = reply_data.get('thread_idx')
+
+                # Skip if bot posted in this thread (we track by index)
+                if thread_idx in bot_posted_replies:
+                    continue
+
+                # This is a 012 manual reply - capture for training
+                manual_reply = {
+                    'session_id': self.session_id,
+                    'comment_idx': thread_idx,
+                    'commenter_handle': reply_data.get('parent_author', 'Unknown'),
+                    'comment_text': reply_data.get('parent_comment_text', '')[:500],
+                    'reply_text_posted': reply_data.get('reply_text', ''),
+                    'reply_source': '012_manual',  # Key marker for training data
+                    'creator_name': reply_data.get('creator_name', ''),
+                    'timestamp_text': reply_data.get('timestamp_text', ''),
+                    'video_id': self.video_id,
+                    'channel_id': self.channel_id,
+                    'timestamp': datetime.now().isoformat(),
+                }
+                detected_manual.append(manual_reply)
+
+            if detected_manual and FAM_DAEMON_AVAILABLE:
+                try:
+                    fam = get_fam_daemon()
+                    for manual_data in detected_manual:
+                        fam.publish(FAMEventType.COMMENT_012_MANUAL, manual_data)
+                    logger.info(f"[DAE][FAM] Detected {len(detected_manual)} 012 manual replies (training data)")
+                except Exception as e:
+                    logger.warning(f"[DAE][FAM] Failed to publish 012 manual events: {e}")
+
+        except Exception as e:
+            logger.debug(f"[DAE] 012 manual detection scan failed: {e}")
+
+        return detected_manual
 
     def _compute_semantic_state(
         self,
@@ -798,6 +917,7 @@ class CommentEngagementDAE:
         all_results = []
         total_processed = 0
         first_iteration = True  # FIX (2025-12-30): Track first iteration for proper wait
+        bot_replied_threads = set()  # Training Mode: Track threads where bot posted replies
 
         while total_processed < effective_max:
             logger.debug(f"[DAEMON][CARDIOVASCULAR] 💗 Loop iteration {total_processed + 1}/{effective_max}")
@@ -877,6 +997,39 @@ class CommentEngagementDAE:
             )
             all_results.append(result)
 
+            # FAM DAEmon: Publish comment engagement event (Training Mode observability)
+            if FAM_DAEMON_AVAILABLE and not result.get('no_comment_exists'):
+                try:
+                    fam = get_fam_daemon()
+                    # Determine event type based on engagement result
+                    if result.get('reply'):
+                        event_type = FAMEventType.COMMENT_REPLIED
+                    elif result.get('like') or result.get('heart'):
+                        event_type = FAMEventType.COMMENT_ENGAGED
+                    else:
+                        event_type = FAMEventType.COMMENT_IGNORED
+
+                    fam_payload = {
+                        'session_id': self.session_id,
+                        'comment_idx': total_processed + 1,
+                        'commenter_handle': result.get('commenter_handle') or result.get('author_name', 'Unknown'),
+                        'commenter_channel_id': result.get('commenter_channel_id'),
+                        'classification': result.get('commenter_type', 'unknown'),
+                        'comment_text': result.get('comment_text', '')[:500],  # Truncate for storage
+                        'like': result.get('like', False),
+                        'heart': result.get('heart', False),
+                        'reply': result.get('reply', False),
+                        'reply_text_posted': result.get('reply_text_posted', ''),
+                        'reply_source': result.get('reply_source', 'bot'),
+                        'video_id': self.video_id,
+                        'channel_id': self.channel_id,
+                        'timestamp': datetime.now().isoformat(),
+                    }
+                    fam.publish(event_type, fam_payload)
+                    logger.debug(f"[DAE][FAM] Published {event_type.value}: {result.get('commenter_handle')}")
+                except Exception as e:
+                    logger.warning(f"[DAE][FAM] Failed to publish event: {e}")
+
             # OCCAM'S RAZOR: Check if no comment exists (first principles detection)
             if result.get('no_comment_exists'):
                 logger.info(f"[DAEMON][PHASE-2] ✅ NO MORE COMMENTS - DOM detection (Occam's Razor)")
@@ -911,6 +1064,11 @@ class CommentEngagementDAE:
                 logger.info(f"[DAEMON][PHASE-2]   Reply length: {len(result.get('reply_text') or '')} chars")
                 logger.info(f"[DAE]    Reply posted (len={len(result.get('reply_text') or '')})")
 
+            # Training Mode: Track threads where bot posted replies
+            if result.get('reply'):
+                bot_replied_threads.add(total_processed)
+                logger.debug(f"[DAE][TRAINING] Bot replied in thread {total_processed} (tracking)")
+
             # Process nested replies (BEFORE refresh!)
             # This engages with ongoing conversations in the thread
             nested_results = await self.reply_executor.process_nested_replies(
@@ -924,6 +1082,41 @@ class CommentEngagementDAE:
             all_results.extend(nested_results)
             if nested_results:
                 logger.info(f"[NESTED] Engaged with {len(nested_results)} nested replies in this thread")
+
+                # FAM DAEmon: Publish nested reply events (Training Mode observability)
+                if FAM_DAEMON_AVAILABLE:
+                    try:
+                        fam = get_fam_daemon()
+                        for nested_idx, nested_result in enumerate(nested_results, 1):
+                            if nested_result.get('reply'):
+                                event_type = FAMEventType.COMMENT_REPLIED
+                            elif nested_result.get('like') or nested_result.get('heart'):
+                                event_type = FAMEventType.COMMENT_ENGAGED
+                            else:
+                                event_type = FAMEventType.COMMENT_IGNORED
+
+                            fam_payload = {
+                                'session_id': self.session_id,
+                                'comment_idx': f"{total_processed}.{nested_idx}",  # Parent.Nested format
+                                'commenter_handle': nested_result.get('commenter_handle') or nested_result.get('author_name', 'Unknown'),
+                                'commenter_channel_id': nested_result.get('commenter_channel_id'),
+                                'classification': nested_result.get('commenter_type', 'unknown'),
+                                'comment_text': nested_result.get('comment_text', '')[:500],
+                                'like': nested_result.get('like', False),
+                                'heart': nested_result.get('heart', False),
+                                'reply': nested_result.get('reply', False),
+                                'reply_text_posted': nested_result.get('reply_text_posted', ''),
+                                'reply_source': nested_result.get('reply_source', 'bot'),
+                                'is_nested': True,
+                                'parent_comment_idx': total_processed,
+                                'video_id': self.video_id,
+                                'channel_id': self.channel_id,
+                                'timestamp': datetime.now().isoformat(),
+                            }
+                            fam.publish(event_type, fam_payload)
+                        logger.debug(f"[DAE][FAM] Published {len(nested_results)} nested reply events")
+                    except Exception as e:
+                        logger.warning(f"[DAE][FAM] Failed to publish nested events: {e}")
 
             # ANTI-DETECTION: Inter-comment "thinking" pause
             # 2026-02-04: Reduced from 5s→2s base (was too slow for clearing inbox)
@@ -950,6 +1143,11 @@ class CommentEngagementDAE:
                 fast_pause = random.uniform(0.3, 0.8)
                 logger.debug(f"[ANTI-DETECTION] Quick pause: {fast_pause:.1f}s (fast mode)")
                 await asyncio.sleep(fast_pause)
+
+            # Training Mode: Detect 012 manual replies BEFORE refresh
+            # This captures any replies 012 posted while bot was pausing
+            if FAM_DAEMON_AVAILABLE:
+                await self._detect_012_manual_replies(bot_replied_threads)
 
             # PROBABILISTIC REFRESH - Anti-detection pattern (70% refresh, 30% batch)
             # Vulnerability fix: Fixed refresh after EVERY comment = bot signature

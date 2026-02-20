@@ -106,7 +106,7 @@ class TaskCompletion:
     quality_score: float = 0.0  # 0-1 scale
 
     # Token economics
-    ups_cost: float = 0.0  # UP$ spent on execution
+    ups_cost: float = 0.0  # UPS spent on execution
     fi_reward: float = 0.0  # FoundUp Tokens earned for human owner
 
 
@@ -183,7 +183,7 @@ class SwarmFoundUp:
             human_id: Unique identifier
             participant_type: Du(2)=Founder, Dao(1)=Partner, Un(0)=Customer
             initial_activity: Starting activity level (updates based on engagement)
-            initial_ups: Starting UP$ balance
+            initial_ups: Starting UPS balance
         """
         account = HumanUPSAccount(human_id=human_id, ups_balance=initial_ups)
         self.human_participants[human_id] = account
@@ -222,7 +222,7 @@ class SwarmFoundUp:
         self.agent_wallets[agent_id] = wallet
         self.agent_specializations[agent_id] = specialization
 
-        # Human allocates UP$ to agent
+        # Human allocates UPS to agent
         owner = self.human_participants[owner_id]
         if owner.ups_balance >= initial_budget:
             owner.ups_balance -= initial_budget
@@ -256,10 +256,10 @@ class SwarmFoundUp:
         if not wallet:
             return (False, 0.0)
 
-        # Agent spends UP$ on task execution
+        # Agent spends UPS on task execution
         success, fee = wallet.spend(task.ups_cost, f"task:{task.task_type}")
         if not success:
-            logger.warning(f"[{self.foundup_id}] Agent {agent_id} failed to spend UP$")
+            logger.warning(f"[{self.foundup_id}] Agent {agent_id} failed to spend UPS")
             return (False, 0.0)
 
         owner_id = wallet.allocator_id
@@ -419,7 +419,7 @@ class SwarmFoundUp:
 
         logger.info(
             f"[{self.foundup_id}] Epoch {self.current_epoch}: "
-            f"distributed {total_rewards:.2f} UP$ to {len(result.participant_rewards)} participants"
+            f"distributed {total_rewards:.2f} UPS to {len(result.participant_rewards)} participants"
         )
 
         return {

@@ -47,7 +47,7 @@ import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .btc_reserve import BTCReserve, BTCSourceType, get_btc_reserve
 
@@ -255,12 +255,14 @@ class WalletState:
     notifications_sent: int = 0       # Count of notifications sent
     last_notification: Optional[datetime] = None
     recycled_to_pool: float = 0.0    # Amount recycled to participation pool
+    # Simulation-time clocks (deterministic, tick-driven)
+    days_inactive_sim: float = 0.0
+    days_since_last_notification_sim: float = 9999.0
 
     @property
     def days_inactive(self) -> float:
-        """Days since last activity."""
-        delta = datetime.now() - self.last_activity
-        return delta.total_seconds() / (24 * 3600)
+        """Simulation days since last activity (tick-driven)."""
+        return self.days_inactive_sim
 
     @property
     def total_ups(self) -> float:
@@ -289,6 +291,7 @@ class WalletState:
     def reset_activity(self) -> None:
         """Reset activity timer (e.g., after transaction)."""
         self.last_activity = datetime.now()
+        self.days_inactive_sim = 0.0
         # Boost activity score on action
         self.activity_score = min(1.0, self.activity_score + 0.1)
 
@@ -570,6 +573,10 @@ class DemurrageEngine:
         if not wallet or wallet.ups_balance <= 0:
             return (0.0, 0.0)
 
+        # Advance deterministic simulation clocks.
+        wallet.days_inactive_sim += max(0.0, float(time_elapsed_days))
+        wallet.days_since_last_notification_sim += max(0.0, float(time_elapsed_days))
+
         # Get activity tier multiplier
         tier_multiplier = wallet.tier_multiplier
 
@@ -631,11 +638,9 @@ class DemurrageEngine:
         """Generate decay notification if threshold met."""
         days = wallet.days_inactive
 
-        # Rate limit notifications (max 1 per day per wallet)
-        if wallet.last_notification:
-            hours_since_last = (datetime.now() - wallet.last_notification).total_seconds() / 3600
-            if hours_since_last < 24:
-                return
+        # Rate limit notifications by simulation-time (max 1/day per wallet)
+        if wallet.days_since_last_notification_sim < 1.0:
+            return
 
         # Determine notification type
         if days >= self.config.critical_threshold_days:
@@ -670,6 +675,7 @@ class DemurrageEngine:
 
         self.pending_notifications.append(notification)
         wallet.last_notification = datetime.now()
+        wallet.days_since_last_notification_sim = 0.0
         wallet.notifications_sent += 1
 
         logger.info(f"[Demurrage] Notification sent to {wallet.human_id}: {notif_type.value}")

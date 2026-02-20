@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pAVS Ecosystem Growth | 10-Year Vision</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #08080f;
+            color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 12px 20px;
+            background: rgba(124, 92, 252, 0.1);
+            border-bottom: 1px solid rgba(124, 92, 252, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #7c5cfc;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #ecosystemCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(124, 92, 252, 0.2);
+        }
+
+        .timeline-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .year-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #7c5cfc;
+            min-width: 60px;
+        }
+
+        .timeline-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: linear-gradient(to right, #7c5cfc 0%, #00e5d0 50%, #22c55e 100%);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 3px solid #7c5cfc;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(124, 92, 252, 0.4);
+        }
+
+        .timeline-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 3px solid #7c5cfc;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .scenario-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .scenario-btn {
+            padding: 8px 20px;
+            border: 1px solid rgba(124, 92, 252, 0.4);
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .scenario-btn:hover {
+            border-color: #7c5cfc;
+            color: #fff;
+        }
+
+        .scenario-btn.active {
+            background: #7c5cfc;
+            border-color: #7c5cfc;
+            color: #fff;
+        }
+
+        .auto-play-btn {
+            padding: 8px 16px;
+            background: rgba(0, 229, 208, 0.2);
+            border: 1px solid #00e5d0;
+            color: #00e5d0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 12px;
+        }
+
+        .auto-play-btn:hover {
+            background: rgba(0, 229, 208, 0.3);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 12px;
+            left: 16px;
+            color: rgba(124, 92, 252, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            z-index: 100;
+        }
+
+        .back-link:hover {
+            color: #7c5cfc;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">&larr; FoundUP Cube</a>
+
+    <div class="header">
+        <h1>pAVS Ecosystem Growth</h1>
+        <p>10-Year Vision: Watch the ecosystem expand</p>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="ecosystemCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="timeline-container">
+            <span class="year-label">Y<span id="yearDisplay">0</span></span>
+            <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="10" step="0.1" value="0">
+            <button class="auto-play-btn" id="autoPlayBtn">Play</button>
+        </div>
+        <div class="scenario-buttons">
+            <button class="scenario-btn" data-scenario="conservative">Conservative</button>
+            <button class="scenario-btn active" data-scenario="baseline">Baseline</button>
+            <button class="scenario-btn" data-scenario="openclaw">OpenClaw</button>
+        </div>
+    </div>
+
+    <script src="js/ecosystem-growth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            EcosystemGrowth.init('ecosystemCanvas');
+        });
+    </script>
+</body>
+</html>

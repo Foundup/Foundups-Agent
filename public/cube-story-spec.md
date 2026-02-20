@@ -202,7 +202,7 @@ spawnAgent('tester', 'joining...', 'P4');
 ```
 
 **Ticker**:
-- `"🚀 FoundUP$ launches as DAO!"`
+- `"🚀 FoundUPS launches as DAO!"`
 - `"🗳️ Governance token: $META"`
 - `"👥 12 founding stakeholders"`
 - `"💎 Total F_i distributed: 18,200"`
@@ -279,7 +279,7 @@ function drawTicker() {
 | 🎨 | Design | "UI components complete" |
 | 📣 | Promotion | "Promoting on X..." |
 | 💰 | Investment | "BTC committed to treasury" |
-| 🚀 | Launch | "FoundUP$ launches as DAO!" |
+| 🚀 | Launch | "FoundUPS launches as DAO!" |
 | 🎉 | Celebration | "From idea to DAO!" |
 
 ---

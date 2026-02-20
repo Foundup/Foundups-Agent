@@ -28,14 +28,14 @@
         fill="url(#foundGradient)"
         letter-spacing="-1">FOUND</text>
 
-  <!-- UP$ - Red/coral gradient with dollar sign -->
+  <!-- UPS - Red/coral gradient with dollar sign -->
   <text x="168" y="56"
         font-family="'Inter', 'Segoe UI', system-ui, sans-serif"
         font-size="48"
         font-weight="700"
         fill="url(#upsGradient)"
         filter="url(#shadow)"
-        letter-spacing="-1">UP$</text>
+        letter-spacing="-1">UPS</text>
 
   <!-- (R) registered trademark -->
   <text x="280" y="28"

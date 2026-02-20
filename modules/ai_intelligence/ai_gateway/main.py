@@ -37,19 +37,19 @@ from modules.ai_intelligence.ai_gateway.src.model_registry import (
 PROVIDER_MODEL_SOURCES = {
     "openai": {
         "url": "https://platform.openai.com/docs/models",
-        "search_terms": ["gpt-4o", "o1", "o3", "latest model"],
+        "search_terms": ["gpt-5", "gpt-5.2", "o3", "o4-mini", "latest model"],
     },
     "anthropic": {
         "url": "https://docs.anthropic.com/en/docs/about-claude/models",
-        "search_terms": ["claude-4", "claude-5", "latest model"],
+        "search_terms": ["claude-opus-4", "claude-sonnet-4", "claude-5", "latest model"],
     },
     "google": {
         "url": "https://ai.google.dev/gemini-api/docs/models/gemini",
-        "search_terms": ["gemini-2", "gemini-3", "latest model"],
+        "search_terms": ["gemini-3", "gemini-2.5", "latest model"],
     },
     "xai": {
         "url": "https://docs.x.ai/docs/models",
-        "search_terms": ["grok-3", "grok-4", "latest model"],
+        "search_terms": ["grok-4", "grok-code", "latest model"],
     },
 }
 
@@ -128,12 +128,12 @@ def extract_model_ids(text: str, provider: str) -> List[str]:
     """Extract model IDs from text response."""
     model_ids = []
 
-    # Provider-specific patterns
+    # Provider-specific patterns (Feb 2026 current)
     patterns = {
-        "openai": r"(gpt-4o(?:-mini)?|o[13](?:-mini)?|gpt-\d+)",
+        "openai": r"(gpt-5(?:\.\d+)?(?:-codex)?|o[34](?:-mini|-pro)?|gpt-\d+(?:\.\d+)?)",
         "anthropic": r"(claude-(?:opus|sonnet|haiku)-[\d\.-]+)",
-        "google": r"(gemini-[\d\.]+-(?:pro|flash|ultra))",
-        "xai": r"(grok-\d+)",
+        "google": r"(gemini-[\d\.]+-(?:pro|flash|ultra)(?:-preview|-lite)?)",
+        "xai": r"(grok-(?:\d+|code-fast-\d+)(?:-fast|-mini)?)",
     }
 
     pattern = patterns.get(provider, r"[\w\-\.]+")

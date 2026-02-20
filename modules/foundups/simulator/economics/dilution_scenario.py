@@ -3,8 +3,8 @@
 Models the core economic question: "Do founding members get diluted out?"
 
 PARADIGM: CABR/PoB (not CAGR/ROI)
-- Stakers provide LIQUIDITY (energy for UP$ capacity)
-- BTC → Reserve → Backs UP$ → Protocol runs
+- Stakers provide LIQUIDITY (energy for UPS capacity)
+- BTC → Reserve → Backs UPS → Protocol runs
 - Stakers receive F_i DISTRIBUTIONS (protocol mechanics)
 - This is PROTOCOL PARTICIPATION, not investment
 

@@ -12,6 +12,21 @@ This log tracks changes specific to the **chat_rules** module in the **communica
 
 ## MODLOG ENTRIES
 
+### [2026-02-18] - Whacked Leaderboard Query Method
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 78 (Database Architecture)
+
+**database.py**:
+- Added `get_whacked_leaderboard(limit=10)` method
+- Queries `timeout_history` grouped by `target_id`
+- Returns top trolls sorted by whack_count DESC
+- Includes `target_name`, `target_id`, `whack_count`, `last_whacked`
+
+This enables the `/whacked` command in livechat to show moderators which trolls have been whacked the most. More whacks = higher confidence they're a troll = auto-flagged as Tier 0 by CommenterClassifier.
+
+---
+
 ### [2025-08-12] - Enhanced Timeout System & Database Implementation
 **WSP Protocol**: WSP 78 (Database Architecture), WSP 49 (Module Structure)
 **Phase**: POC - Database & Point System Enhancement

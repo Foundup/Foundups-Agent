@@ -598,7 +598,7 @@ Execution rules (apply before acting):
 ```
 
 ### WSP_26 Democratic Token Economics
-- **Found UP$ Tokens**: Participation-based, anti-hoarding mechanisms
+- **Found UPS Tokens**: Participation-based, anti-hoarding mechanisms
 - **BTC Backing**: Each FoundUp builds sovereign Bitcoin treasury
 - **Non-Extractable**: Once BTC enters ecosystem, it stays to fund innovation
 - **Merit-Based Scaling**: Good ideas automatically get resources based on performance

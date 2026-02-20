@@ -11,6 +11,77 @@
 
 ---
 
+## 2026-02-19 - WSP 46/95/96 Runtime Alignment (WRE Control Plane + Governance Boundary)
+
+**WSP References**: WSP 22, WSP 46, WSP 95, WSP 96
+
+**Changes Made**:
+- Updated `WSP_46_Windsurf_Recursive_Engine_Protocol.md`:
+  - Corrected canonical WRE location to `modules/infrastructure/wre_core`.
+  - Replaced stale two-file state model with actual runtime surfaces:
+    - root ingress `main.py`
+    - execution runtime `run_wre.py`
+    - master orchestrator runtime.
+  - Added explicit control-plane boundary (main ingress vs WRE execution vs AI Overseer governance).
+  - Updated runtime invocation guidance to current entrypoints.
+- Updated `WSP_95_WRE_SKILLz_Wardrobe_Protocol.md`:
+  - Added implementation alignment addendum:
+    - `SKILLz.md` preferred, `SKILL.md` fallback.
+    - discovery must handle both `skills/` and `skillz/`.
+    - loader must degrade deterministically on missing skill assets.
+    - pattern-memory isolation rule for explicit DB paths.
+- Updated `WSP_96_MCP_Governance_and_Consensus_Protocol.md`:
+  - Added runtime governance injection points section:
+    - ingress preflight in `main.py`,
+    - AI Overseer governance ownership,
+    - WRE as execution plane consuming governance status.
+
+**Rationale**:
+- Remove protocol/implementation drift that was causing contradictory architecture guidance.
+- Keep WSP canon aligned with current executable control-plane behavior and hardening gates.
+
+---
+
+## 2026-02-17 - WSP 26/77 Terminology Drift Cleanup (CABR Flow Routing)
+
+**WSP References**: WSP 22, WSP 26, WSP 29, WSP 77
+
+**Changes Made**:
+- Updated `WSP_26_FoundUPS_DAE_Tokenization.md`:
+  - Added explicit canonical override: CABR controls routing rate, PoB controls valve.
+  - Renamed legacy CABR/UPS lifecycle wording from mint loop to routing/release loop.
+  - Updated protocol headings and examples to use treasury flow routing semantics.
+- Updated `WSP_77_Intelligent_Internet_Orchestration_Vision.md`:
+  - Replaced `UPS mint` language with `UPS treasury flow routing`.
+  - Updated minimal flow from `Mint/Stake` to `Route/Stake`.
+
+**Rationale**:
+- Prevent future retrieval drift where CABR is misread as a mint trigger.
+- Keep framework vocabulary aligned with live simulator/runtime behavior.
+
+---
+
+## 2026-02-17 - WSP 26/29 CABR Flow Semantics Alignment (Pipe + Valve Model)
+
+**WSP References**: WSP 22, WSP 26, WSP 29
+
+**Changes Made**:
+- Updated `WSP_29_CABR_Engine.md`:
+  - Replaced CABR->FAM bridge wording from UPS minting to UPS flow routing.
+  - Canonicalized: CABR = pipe size, PoB validation = valve.
+  - Replaced token hook example `trigger_mint()` with `route_flow()`.
+  - Anti-gaming phrasing now targets fraudulent flow-routing, not mint-triggering.
+- Updated `WSP_26_FoundUPS_DAE_Tokenization.md`:
+  - Cross-protocol references now describe CABR as routing/sizing engine.
+  - Lifecycle linkage now uses CABR-sized UPS flow semantics.
+  - Added explicit distinction: BTC backs UPS value, CABR controls flow rate.
+
+**Rationale**:
+- Prevent CABR terminology drift into legacy mint-multiplier semantics.
+- Keep framework canon aligned with simulator/runtime implementation and PoB-first economics.
+
+---
+
 ## 2026-02-12 - WSP 99: Machine-to-Machine (M2M) Prompting Protocol
 
 **New Protocol Created (WSP_framework/src/WSP_99_M2M_Prompting.md):**
@@ -148,7 +219,7 @@ L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
 
 **Changes (WSP_framework/src/WSP_26_FoundUPS_DAE_Tokenization.md)**:
 - **Added Section 2: Economic Heritage** — Gesell's Freigeld theory (1916), Worgl Experiment (1932-1933) as theoretical foundation for demurrage-based UPS tokens. Documents how Worgl's demurrage scrip reduced unemployment 25% and increased money velocity 14x.
-- **Added Section 2.2**: Comparison table — Found UP$ vs traditional crypto (non-transferable, guaranteed decay, activity-driven supply, BTC backing)
+- **Added Section 2.2**: Comparison table — Found UPS vs traditional crypto (non-transferable, guaranteed decay, activity-driven supply, BTC backing)
 - **Added Section 3.7: UPS→FoundUp Token Conversion (The Escape Valve)** — The critical missing mechanism: participants stop UPS decay by committing to a specific FoundUp. Includes:
   - `UPSConversionEngine` with CABR-modulated conversion rates (0.382x–1.618x)
   - Post-conversion token behavior table (no decay, governance rights, FoundUp-specific)

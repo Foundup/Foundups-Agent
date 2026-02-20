@@ -79,10 +79,12 @@ class PatternMemory:
         Args:
             db_path: Path to SQLite database file
         """
-        # Guard against repeated expensive init in a single process
-        if getattr(PatternMemory, "_initialized", False):
+        # Reuse shared singleton only for default production path.
+        # Tests and explicit db paths must get isolated storage.
+        self._uses_shared_singleton = db_path is None
+        if self._uses_shared_singleton and getattr(PatternMemory, "_initialized", False):
             self.__dict__.update(getattr(PatternMemory, "_shared_state", {}))
-            logger.debug("[PATTERN-MEMORY] Reusing existing instance (singleton guard)")
+            logger.debug("[PATTERN-MEMORY] Reusing existing singleton instance")
             return
 
         if db_path is None:
@@ -100,12 +102,14 @@ class PatternMemory:
         self._initialize_schema()
         self._seed_false_positive_memory()
 
-        # Log init once per process to reduce telemetry spam
-        if not getattr(PatternMemory, "_initialized", False):
-            logger.info(f"[PATTERN-MEMORY] Initialized - db={self.db_path}")
-        # Cache shared state for fast reuse
-        PatternMemory._shared_state = dict(self.__dict__)
-        PatternMemory._initialized = True
+        # Log init once per process to reduce telemetry spam for shared instance.
+        if self._uses_shared_singleton:
+            if not getattr(PatternMemory, "_initialized", False):
+                logger.info(f"[PATTERN-MEMORY] Initialized - db={self.db_path}")
+            PatternMemory._shared_state = dict(self.__dict__)
+            PatternMemory._initialized = True
+        else:
+            logger.info(f"[PATTERN-MEMORY] Initialized (isolated) - db={self.db_path}")
 
     def _initialize_schema(self) -> None:
         """
@@ -649,6 +653,9 @@ class PatternMemory:
     def close(self) -> None:
         """Close database connection"""
         self.conn.close()
+        if getattr(self, "_uses_shared_singleton", False):
+            PatternMemory._initialized = False
+            PatternMemory._shared_state = {}
         logger.debug("[PATTERN-MEMORY] Connection closed")
 
 

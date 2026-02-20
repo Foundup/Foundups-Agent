@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- FOUNDUP$ Logo - 2026-02-13 -->
+<!-- FOUNDUPS Logo - 2026-02-18 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60">
   <defs>
-    <!-- UP$ gradient (red to coral) -->
+    <!-- UPS gradient (red to coral) -->
     <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#ff2d2d"/>
       <stop offset="100%" stop-color="#ff5252"/>
-    </linearGradient>
-
-    <!-- $ gradient (gold to red - wealth/value symbol) -->
-    <linearGradient id="dollarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffd700"/>
-      <stop offset="60%" stop-color="#ff8c00"/>
-      <stop offset="100%" stop-color="#ff2d2d"/>
     </linearGradient>
   </defs>
 
@@ -24,23 +17,16 @@
         fill="#1e3a5f"
         letter-spacing="-0.5">FOUND</text>
 
-  <!-- UP - Red gradient -->
+  <!-- UPS - Red gradient -->
   <text x="138" y="44"
         font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
         font-size="42"
         font-weight="700"
         fill="url(#redGrad)"
-        letter-spacing="-0.5">UP</text>
-
-  <!-- $ - Gold gradient, slightly larger for emphasis -->
-  <text x="206" y="44"
-        font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
-        font-size="46"
-        font-weight="800"
-        fill="url(#dollarGrad)">$</text>
+        letter-spacing="-0.5">UPS</text>
 
   <!-- (R) registered trademark -->
-  <text x="242" y="22"
+  <text x="230" y="22"
         font-family="Arial, sans-serif"
         font-size="11"
         fill="#666">(R)</text>

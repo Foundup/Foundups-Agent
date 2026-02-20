@@ -16,4 +16,5 @@ def test_convert_to_simulator_config() -> None:
     bundle = load_bundle("high_adoption")
     config = to_simulator_config(bundle)
     assert config.num_founder_agents == bundle.params["num_founder_agents"]
+    assert config.founder_max_foundups == bundle.params["founder_max_foundups"]
     assert config.tick_rate_hz == bundle.params["tick_rate_hz"]

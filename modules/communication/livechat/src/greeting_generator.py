@@ -437,8 +437,62 @@ Generate greeting:"""
         # Add consciousness check
         if "✊✋🖐️" not in greeting:
             greeting += " Check consciousness: ✊✋🖐️"
-        
+
         return greeting
+
+    def generate_troll_callout(self, username: str, whack_count: int) -> Optional[str]:
+        """
+        Generate callout when a known troll (from /whacked leaderboard) enters chat.
+        WSP-compliant: Uses existing whack history from chat_rules.db.
+
+        Args:
+            username: Troll's display name
+            whack_count: Number of times they've been whacked
+
+        Returns:
+            Callout string or None if not significant enough
+        """
+        # Only callout trolls with significant history (3+ whacks = confirmed troll)
+        if whack_count < 3:
+            return None
+
+        # Tier-based callouts
+        if whack_count >= 20:
+            # LEGENDARY troll - maximum mockery
+            callouts = [
+                f"👀 HOLY SHIT! @{username} crawls back! {whack_count} TIMEOUTS and still trying! 💀",
+                f"🚨 ALERT! The LEGENDARY @{username} returns! {whack_count}x WHACKED CHAMPION! How many seconds this time? ⏱️",
+                f"🎯 RECORD HOLDER @{username} enters! {whack_count} whacks! Mods, warm up those timeout buttons! 💀",
+                f"👑 ALL HAIL @{username}! The MOST WHACKED TROLL with {whack_count} timeouts! Place your bets! 🎰",
+            ]
+        elif whack_count >= 10:
+            # Veteran troll
+            callouts = [
+                f"👀 Look who's back! @{username} with {whack_count} timeouts! Still haven't learned? 💀",
+                f"🎯 @{username} enters the arena! {whack_count} whacks on record! Round {whack_count + 1}... FIGHT! 🥊",
+                f"⚠️ SERIAL TROLL ALERT! @{username} ({whack_count} whacks) - Mods, you know the drill! 💀",
+            ]
+        elif whack_count >= 5:
+            # Regular troll
+            callouts = [
+                f"👀 @{username} is back! Already whacked {whack_count} times - going for another? 💀",
+                f"🎯 Well well well... @{username} returns! {whack_count} timeouts and counting! ✊✋🖐️",
+                f"😂 @{username} with {whack_count} whacks tries again! Definition of insanity? 💀",
+            ]
+        else:
+            # New-ish troll (3-4 whacks)
+            callouts = [
+                f"👀 @{username}! {whack_count} timeouts already? Keep it up and you'll make the leaderboard! 💀",
+                f"🎯 @{username} returns! {whack_count} whacks - learning yet? ✊✋🖐️",
+            ]
+
+        callout = random.choice(callouts)
+
+        # 10% chance to add FoundUps promo
+        if random.random() < 0.10:
+            callout += " | Unlike you, we're evolving at foundups.com 🚀"
+
+        return callout
 
 
 # Example usage

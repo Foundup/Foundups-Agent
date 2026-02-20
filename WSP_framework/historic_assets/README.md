@@ -52,7 +52,7 @@ class DESORForkEngine:
         return {
             "decentralized_social_base": "DESO_protocol_infrastructure",
             "foundups_layer": "WSP_autonomous_development_overlay",
-            "token_integration": "FoundUP$_DeSo_token_merger",
+            "token_integration": "FoundUPS_DeSo_token_merger",
             "governance": "0102_agents_managing_social_daos",
             "blueprint_source": "foundups_DESO_fork.png"
         }

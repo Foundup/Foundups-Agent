@@ -816,7 +816,7 @@ class InMemoryAgentMarket(
         )
         if entry["available_ups"] < bid_ups:
             raise PermissionDeniedError(
-                f"insufficient UP$ balance for investor '{investor_id}' "
+                f"insufficient UPS balance for investor '{investor_id}' "
                 f"(available={entry['available_ups']}, requested={bid_ups})"
             )
 

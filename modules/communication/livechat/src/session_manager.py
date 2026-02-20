@@ -70,6 +70,7 @@ class SessionManager:
         self.greeting_message = None  # Will be generated dynamically
         self.greeting_sent = False  # Track if greeting already sent for this session
         self.update_broadcast_sent = False  # Track if update broadcast already sent for this session
+        self.actual_start_time = None  # YouTube's actualStartTime (Unix timestamp)
         self._greeting_state_path = (
             Path(__file__).resolve().parents[1] / "memory" / "greeting_state.json"
         )
@@ -151,6 +152,24 @@ class SessionManager:
             
             # Get viewer count if available
             self.viewer_count = streaming_details.get("concurrentViewers", 0)
+
+            # Get actual stream start time (for accurate duration calculations)
+            actual_start_str = streaming_details.get("actualStartTime")
+            if actual_start_str:
+                from datetime import datetime
+                try:
+                    # Parse ISO 8601 format: 2026-02-20T09:00:00Z
+                    actual_start_dt = datetime.fromisoformat(actual_start_str.replace('Z', '+00:00'))
+                    self.actual_start_time = actual_start_dt.timestamp()
+                    stream_duration = (time.time() - self.actual_start_time) / 60
+                    logger.info(f"[STREAM] Actual start time: {actual_start_str} (running {stream_duration:.1f} min)")
+                except Exception as e:
+                    logger.warning(f"[STREAM] Could not parse actualStartTime: {e}")
+                    self.actual_start_time = time.time()  # Fallback to now
+            else:
+                self.actual_start_time = time.time()  # Fallback if not available
+                logger.info("[STREAM] No actualStartTime from API - using current time")
+
             logger.info(f"Found live chat ID: {self.live_chat_id}, Viewers: {self.viewer_count}")
             
             self.is_active = True

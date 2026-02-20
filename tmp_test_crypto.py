@@ -29,20 +29,20 @@ print(f"Dave paid 0.01 BTC = {btc3:.8f} BTC")
 print(f"\nTotal BTC in reserve: {r.total_btc:.8f} BTC")
 print(f"Reserve USD value: ${r.reserve_usd_value:,.2f}")
 
-# Now test UP$ burn
+# Now test UPS burn
 print("\n" + "=" * 50)
-print("Testing UP$ burn subscription...")
+print("Testing UPS burn subscription...")
 
-# Mint some UP$ first
+# Mint some UPS first
 r.total_ups_minted = 10000.0
-print(f"UP$ supply: {r.total_ups_minted:.2f}")
-print(f"UP$ value before burn: ${r.ups_value_usd:.6f}")
+print(f"UPS supply: {r.total_ups_minted:.2f}")
+print(f"UPS value before burn: ${r.ups_value_usd:.6f}")
 
-# Charlie pays with UP$ (gets burned)
+# Charlie pays with UPS (gets burned)
 btc4, burned4 = r.receive_crypto_subscription(PaymentCrypto.UPS, 1000.0, 'charlie')
-print(f"Charlie paid 1000 UP$ (BURNED={burned4})")
-print(f"UP$ supply after burn: {r.total_ups_minted:.2f}")
-print(f"UP$ value after burn: ${r.ups_value_usd:.6f}")
+print(f"Charlie paid 1000 UPS (BURNED={burned4})")
+print(f"UPS supply after burn: {r.total_ups_minted:.2f}")
+print(f"UPS value after burn: ${r.ups_value_usd:.6f}")
 print(f"Total burned: {r.total_ups_burned:.2f}")
 
 print("\n" + "=" * 50)

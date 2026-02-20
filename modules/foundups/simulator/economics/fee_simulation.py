@@ -37,9 +37,9 @@ class FeeScenario:
     """A fee configuration scenario to test."""
 
     name: str
-    mined_exit_fee: float  # MINED F_i -> UP$ extraction fee
-    staked_entry_fee: float  # UP$ -> STAKED F_i entry fee
-    staked_exit_fee: float  # STAKED F_i -> UP$ exit fee
+    mined_exit_fee: float  # MINED F_i -> UPS extraction fee
+    staked_entry_fee: float  # UPS -> STAKED F_i entry fee
+    staked_exit_fee: float  # STAKED F_i -> UPS exit fee
 
     @property
     def staked_roundtrip(self) -> float:
@@ -102,9 +102,9 @@ def run_scenario(
     """Run a simulation scenario and return results.
 
     Simulates:
-    1. Humans earning UP$ through subscriptions
+    1. Humans earning UPS through subscriptions
     2. Agents mining F_i for humans
-    3. Humans staking UP$ for value preservation
+    3. Humans staking UPS for value preservation
     4. Some humans extracting MINED F_i
     5. Some humans unstaking after N epochs
     """
@@ -112,7 +112,7 @@ def run_scenario(
     fee_config = create_fee_config(scenario)
     engine = TokenEconomicsEngine(fee_config=fee_config)
 
-    # Create pool distributor for UP$ distribution
+    # Create pool distributor for UPS distribution
     pool_distributor = PoolDistributor()
 
     result = SimulationResult(scenario=scenario, epochs_run=num_epochs)
@@ -153,7 +153,7 @@ def run_scenario(
 
     # Run epochs
     for epoch in range(num_epochs):
-        # 1. Distribute UP$ rewards
+        # 1. Distribute UPS rewards
         epoch_dist = pool_distributor.distribute_epoch(epoch, ups_per_epoch)
 
         # 2. Agents mine F_i for their humans
@@ -167,7 +167,7 @@ def run_scenario(
             if success and fi_earned > 0:
                 result.total_mined_fi += fi_earned
 
-        # 3. Some humans stake UP$ (value preservation behavior)
+        # 3. Some humans stake UPS (value preservation behavior)
         for i, hid in enumerate(humans):
             account = engine.human_accounts[hid]
             fid = foundups[i % num_foundups]

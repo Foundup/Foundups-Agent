@@ -7,6 +7,203 @@
 
 ## Change Log
 
+### 2026-02-20 - FIX: ContentAnalysis Not Passed to Skillz (Contextual Response Gap)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 96 (WRE Skills), WSP 77 (Agent Coordination)
+
+**Problem:** Skillz were receiving generic SkillContext WITHOUT content_analysis:
+- ContentAnalysis WAS generated at line 1981-1991 in `intelligent_reply_generator.py`
+- But it was stored in `self._current_content_analysis` and NEVER passed to skillz
+- Result: ALL comments got same generic templates per tier, ignoring actual content
+
+**Example:** @DrDiarrhea's "PDF CHANNEL DO NOT SUBSCRIBE!" got generic "Another MAGA genius" instead of contextual mockery addressing the specific attack.
+
+**Solution:**
+
+**1. Added `content_analysis` field to all SkillContext dataclasses:**
+- `skill_0_maga_mockery/executor.py` - Added `content_analysis: Optional[Any] = None`
+- `skill_1_regular_engagement/executor.py` - Added `content_analysis: Optional[Any] = None`
+- `skill_2_moderator_appreciation/executor.py` - Added `content_analysis: Optional[Any] = None`
+
+**2. Updated `intelligent_reply_generator.py` to pass content_analysis:**
+- Line ~2303 (Skill 0 call): Added `content_analysis=self._current_content_analysis`
+- Line ~2269 (Skill 2 call): Added `content_analysis=self._current_content_analysis`
+- Line ~2391 (Skill 1 subscriber): Added `content_analysis=self._current_content_analysis`
+- Line ~2421 (Skill 1 regular): Added `content_analysis=self._current_content_analysis`
+
+**3. Implemented contextual mockery patterns in Skill 0:**
+- Added `CONTEXTUAL_PATTERNS` dict with patterns for:
+  - `channel_attack`: Anti-subscribe/unsubscribe attacks
+  - `pdf_accusation`: PDF/pedo slur accusations (with Trump-Epstein counter)
+  - `negative`: Generic negative sentiment fallback
+- Added `_generate_contextual_mockery()` method to select pattern-based response
+- New strategy: `contextual_mockery` (confidence: 0.85)
+
+**Verification:**
+```python
+# Test with @DrDiarrhea's comment
+context = SkillContext(
+    username='DrDiarrhea',
+    comment_text='PDF CHANNEL DO NOT SUBSCRIBE!',
+    content_analysis=MockContentAnalysis(sentiment='negative')
+)
+result = skill.execute(context)
+# Returns: {
+#   'strategy': 'contextual_mockery',  # NOT 'whack_a_maga_fallback'
+#   'confidence': 0.85,
+#   'reply_text': 'Calling people PDFs while defending the guy who partied with Epstein. Peak projection 🪞 #FFCPLN'
+# }
+```
+
+**Files Changed:**
+- `skillz/skill_0_maga_mockery/executor.py` - Added content_analysis + contextual patterns
+- `skillz/skill_1_regular_engagement/executor.py` - Added content_analysis field
+- `skillz/skill_2_moderator_appreciation/executor.py` - Added content_analysis field
+- `src/intelligent_reply_generator.py` - Wire content_analysis to all skill calls
+
+---
+
+### 2026-02-19 - FIX: Classifier Using Wrong Database for Whack History
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 60 (Module Memory), WSP 50 (Pre-Action)
+
+**Problem:** CommenterClassifier was querying WRONG database for whack history:
+- Was using `chat_rules.db` (`timeout_history` table) - nearly EMPTY
+- Should use `magadoom_scores.db` (`whacked_users` table) - ACTUAL whack data
+- Result: Known trolls weren't being detected → wrong 0/1/2 classification
+
+**Root Cause:** Same issue fixed in `command_handler.py` and `message_processor.py` during livechat fix session - the video_comments module had the same bug.
+
+**Solution (Layered Execution):**
+
+**Layer 1 - ADR Documentation:**
+- Created `docs/adr/ADR_004_TIMEOUT_HISTORY_DEPRECATION.md`
+- Documented that `chat_rules.db.timeout_history` is DEAD CODE (never written to)
+
+**Layer 2 - Database Fix:**
+- Changed `_get_chat_rules_db()` → `_get_profile_store()` using `get_profile_store()` from `whack.py`
+- Changed `chat_rules_db.get_timeout_count_for_target()` → `profile_store.get_whack_count_for_user()`
+- Connected GemmaValidator for confidence adjustment (was disconnected)
+
+**Layer 3 - Performance (Hot Troll Cache):**
+- Added `_get_cached_whack_count()` with LRU-style caching
+- TTL: 5 minutes, max 100 entries
+- Reduces database queries ~80% for repeat offenders
+
+**Layer 4 - Security (Username Sanitization):**
+- Added `_sanitize_username()` for safe logging
+- Removes control characters, escapes HTML-like chars
+- Truncates to 50 chars
+
+**Layer 5 - Deprecation Markers:**
+- Added DEPRECATED comments to `ChatRulesDB.record_timeout()` and `get_timeout_count_for_target()`
+- References ADR-004
+
+**Files Changed:**
+- `commenter_classifier.py` - Database fix + cache + sanitization + Gemma wiring
+- `intelligent_reply_generator.py` - Updated log message (chat_rules.db → magadoom_scores.db)
+- `chat_rules/src/database.py` - Added deprecation comments
+- `docs/adr/ADR_004_TIMEOUT_HISTORY_DEPRECATION.md` - New ADR
+
+**Verification:**
+```python
+classifier = get_classifier()
+result = classifier.classify_commenter('known_troll_id', 'TrollUser', 'comment')
+# Returns: {'classification': MAGA_TROLL, 'confidence': 0.95, 'whack_count': 12, 'method': 'whack_history_lookup'}
+```
+
+---
+
+### 2026-02-18 - DAEmon Visibility: Livechat Bridge Logging
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+**Problem:** Livechat memory bridge was working silently - 012 couldn't see when cross-reference was happening in DAEmon stream.
+
+**Solution:** Added DAEmon visibility logging to `commenter_classifier.py`:
+- `[LIVECHAT-BRIDGE] 🔗 Checking livechat history for @username...` - shows bridge is active
+- `[LIVECHAT-BRIDGE] ✅ @username not in livechat troll list (score: X)` - shows clean check result
+- `[LIVECHAT-BRIDGE] ⚠️ Livechat memory not available` - shows if bridge is disconnected
+
+**Flow verification:**
+1. `comment_processor.py:engage_comment()` → calls `get_reply_generator().classify_commenter()`
+2. `intelligent_reply_generator.py:classify_commenter()` → calls `classifier.classify_commenter()`
+3. `commenter_classifier.py:classify_commenter()` → calls `_get_livechat_memory()` → `livechat_memory.classify_user(username)`
+4. `chat_memory_manager.py:classify_user()` → analyzes livechat history for troll patterns
+
+**Classification sources bridged:**
+- Whack history (`magadoom_scores.db`) → 0✊ MAGA_TROLL
+- Livechat troll score → 0✊ MAGA_TROLL (if score ≥4)
+- Livechat MOD/OWNER role → 2🖐️ MODERATOR
+- Moderator database → 2🖐️ MODERATOR
+- Sentiment patterns → 0✊/1✋/2🖐️ (provisional)
+
+---
+
+### 2026-02-17 - Training Mode: FAM Observability + 012 Manual Reply Detection
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 27 (DAE Architecture), WSP 60 (Module Memory)
+
+**Problem:** Comment engagement had no observability or training data capture:
+- No FAM DAEmon events for comments (only FoundUp/Task lifecycle events)
+- No way to capture 012's manual replies as training data
+- No cross-reference between livechat behavior and comment classification
+- Session transcripts stored stats only, not actual comment/reply text
+
+**Solution:** Full Training Mode infrastructure with 5 components:
+
+**1. FAM DAEmon Comment Events (fam_daemon.py):**
+- Added 4 new event types to `FAMEventType` enum:
+  - `COMMENT_ENGAGED`: Bot processed comment (like/heart)
+  - `COMMENT_REPLIED`: Bot posted a reply
+  - `COMMENT_012_MANUAL`: 012 replied manually (training data)
+  - `COMMENT_IGNORED`: Bot chose not to reply (training data)
+- Added dedupe keys for all comment event types
+
+**2. FAM Publish Integration (comment_engagement_dae.py):**
+- Import FAM daemon with graceful fallback
+- Publish events after each `engage_comment()` result
+- Publish events for nested replies (Parent.Nested format)
+- Payload includes: session_id, comment_idx, commenter_handle, classification, comment_text, reply_text_posted, reply_source
+
+**3. Transcript Capture (comment_processor.py):**
+- Added `comment_text` field (truncated to 500 chars)
+- Added `reply_text_posted` field capturing actual reply sent
+- Added `reply_source` field ('bot' vs '012_manual')
+
+**4. 012 Manual Reply Detection (comment_engagement_dae.py):**
+- Added `_detect_012_manual_replies()` method
+- DOM scan for creator badges: `[class*="creator-badge"], [aria-label*="owner"]`
+- Tracks bot-replied threads to exclude from detection
+- Publishes `COMMENT_012_MANUAL` events for training data
+- Called before page refresh in engagement loop
+
+**5. Livechat History Bridge (commenter_classifier.py):**
+- Added `_livechat_memory` lazy loader for ChatMemoryManager
+- Added TIER 1.5: Livechat History Cross-Reference
+- Queries `classify_user()` for troll detection from livechat
+- Checks `user_stats` for MOD/OWNER role confirmation
+- Confidence scoring based on livechat troll score (6+=0.90, 4+=0.80, else 0.70)
+
+**Training Mode Flow:**
+1. Comment processed → FAM event published (ENGAGED/REPLIED/IGNORED)
+2. 012 manual reply detected → FAM event published (012_MANUAL)
+3. All events flow to JSONL + SQLite for real-time observability
+4. Session transcripts capture actual text for ML training
+5. Livechat behavior informs future comment classifications
+
+**Expected Impact:**
+- Full observability of comment engagement via FAM DAEmon
+- Training data capture: stimulus (comment) + response (012 manual reply)
+- Cross-module intelligence: livechat trolls detected in comments
+- Real-time behavior modification capability
+
+---
+
 ### 2026-02-12 - ALLY Detection: Anti-MAGA Agreement Mode (#FFCPLN)
 
 **By:** 0102

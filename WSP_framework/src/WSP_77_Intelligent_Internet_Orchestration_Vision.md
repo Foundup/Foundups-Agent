@@ -1,14 +1,14 @@
 # WSP 77: Intelligent Internet Orchestration Vision
 
 - Status: Active
-- Purpose: Align the Intelligent Internet (II) with the FoundUps CABR/UP$ economy while preserving sovereignty. Provide an optional pathway to incorporate compute-benefit signals into CABR without changing core tokenomics.
-- Trigger: When agents need a canonical protocol framing to integrate II proof-of-benefit (PoB) with CABR and UP$.
+- Purpose: Align the Intelligent Internet (II) with the FoundUps CABR/UPS economy while preserving sovereignty. Provide an optional pathway to incorporate compute-benefit signals into CABR without changing core tokenomics.
+- Trigger: When agents need a canonical protocol framing to integrate II proof-of-benefit (PoB) with CABR and UPS.
 - Input: PoB receipts (optionally from II), CABR component scores (env, soc, part), optional compute score (comp).
 - Output: Interfaces and guardrails for optional compute-benefit in CABR; 0102 agent roles/flows for II PoB; sovereignty and safety rules.
 - Responsible Agent(s): CABREngine (WSP 29), TokenizationEngine (WSP 26), 0102 Operators, GovernanceAgent, ComplianceAgent.
 
 ## 1. Overview
-FoundUps remains sovereign and blockchain-agnostic. II is an optional signal layer that can supply verifiable compute-benefit receipts to inform (not dictate) CABR and UP$.
+FoundUps remains sovereign and blockchain-agnostic. II is an optional signal layer that can supply verifiable compute-benefit receipts to inform (not dictate) CABR and UPS.
 
 - Shift: CAGR -> CABR (benefit over endless growth)
 - Foundation: Proof-of-Benefit (env, soc, part)
@@ -16,21 +16,21 @@ FoundUps remains sovereign and blockchain-agnostic. II is an optional signal lay
 
 ## 2. From CAGR to CABR
 - CABR measures benefit: environmental stewardship (env), social responsibility (soc), participation (part).
-- Engine: Verifiable PoB -> CABR score -> UP$ mint -> decay -> reinvestment.
+- Engine: Verifiable PoB -> CABR pipe size -> UPS treasury flow routing -> decay -> reinvestment.
 
 ## 3. Optional II Integration (Only If It Helps)
 - Optional compute term: If a valid II receipt exists, add comp with weight w_comp; else comp = 0.
   - CABR = w_env*env + w_soc*soc + w_part*part + w_comp*comp (optional)
 - Extra validation: II validators can co-sign compute-based PoB claims.
-- Treasury option: If compute is present, optionally hold FC/CC alongside UP$ (no dependency).
+- Treasury option: If compute is present, optionally hold FC/CC alongside UPS (no dependency).
 - Kill switch: If skew emerges, set w_comp = 0 and run CABR as before.
 
-## 4. DAEs and UP$
+## 4. DAEs and UPS
 - DAE = 0102 harmonic twin that can scale into cluster DAEs; peers verify results; hype does not pass.
-- UP$ mint on PoB + CABR; UP$ decay funds new work.
-- Trading UP$ incurs haircut; optimal use is stake.
-- Stake UP$ -> receive FoundUp[U+2019]s token; staking locks BTC in the FoundUp[U+2019]s cold wallet.
-- Trading FoundUps stakes more BTC; BTC anchors both the FoundUp token and UP$; chain-agnostic design retained.
+- UPS treasury flow routing on PoB + CABR; UPS decay funds new work.
+- Trading UPS incurs haircut; optimal use is stake.
+- Stake UPS -> receive FoundUp[U+2019]s token; staking locks BTC in the FoundUp[U+2019]s cold wallet.
+- Trading FoundUps stakes more BTC; BTC anchors both the FoundUp token and UPS; chain-agnostic design retained.
 
 ## 5. CABR Enhancements (Guidance to WSP 29)
 - Adaptive weights (w_env, w_soc, w_part, w_comp) with performance.
@@ -40,7 +40,7 @@ FoundUps remains sovereign and blockchain-agnostic. II is an optional signal lay
 
 ## 6. 0102 Agents as II PoB Operators (Sovereign Roles)
 - Roles: Producer (compute), Verifier (replay/spot-check), Aggregator (bundle receipts), Challenger (dispute).
-- Minimal flow: Spec -> Compute -> Verify -> Receipt->II -> CABR(comp) -> Mint/Stake -> Journal.
+- Minimal flow: Spec -> Compute -> Verify -> Receipt->II -> CABR(comp) -> Route/Stake -> Journal.
 - Minimal receipt schema:
 ```json
 {
@@ -61,7 +61,7 @@ FoundUps remains sovereign and blockchain-agnostic. II is an optional signal lay
 
 ## 7. Protocol Alignment (WSP Relationships)
 - WSP 29 (CABR Engine): optional comp_score module + II validator cohort.
-- WSP 26 (UP$ Tokenization): decay/reinvest unchanged; compute is an extra input only.
+- WSP 26 (UPS Tokenization): decay/reinvest unchanged; compute is an extra input only.
 - WSP 27 (PArtifact DAE): 0102 signing, journaling, state transitions.
 - WSP 32 (Reading Flow): decision guidance for enabling comp.
 - WSP 58 (IP Lifecycle): tokenization of IP and receipts; ledger references.
@@ -79,7 +79,7 @@ FoundUps remains sovereign and blockchain-agnostic. II is an optional signal lay
 
 ## 10. Implementation Guidance
 - Start CABR-only (env, soc, part). Enable comp after validations pass.
-- Maintain BTC anchor and UP$ decay per WSP 26.
+- Maintain BTC anchor and UPS decay per WSP 26.
 - Use II receipts to increase credibility, not centralization.
 - Document flows in READMEs and ModLogs per WSP 22.
 

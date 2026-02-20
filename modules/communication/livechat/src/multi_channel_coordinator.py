@@ -625,6 +625,49 @@ class MultiChannelCoordinator:
                     except Exception as dom_err:
                         logger.debug(f"[ROTATE] [Edge] DOM comment check failed: {dom_err}")
 
+                # ============================================
+                # PER-CHANNEL SHORTS: Check unlisted shorts for THIS channel
+                # Occam model: Comments → Shorts → Next Channel (not batch)
+                # ============================================
+                shorts_per_channel = _env_truthy("YT_SHORTS_PER_CHANNEL_ENABLED", "true")
+                shorts_enabled = _env_truthy("YT_SHORTS_SCHEDULING_ENABLED", "true")
+
+                if shorts_per_channel and shorts_enabled:
+                    # Only run shorts if comments are done for this channel
+                    # FIX 2026-02-18: Use local stats instead of non-existent attribute
+                    all_comments_done = stats.get("all_processed", False)
+                    if all_comments_done:
+                        logger.info(f"[ROTATE] [Edge] {account_name} comments done → checking unlisted shorts...")
+                        try:
+                            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import YouTubeShortsScheduler
+
+                            # Map account name to channel key
+                            channel_key = account_name.lower().replace(" ", "")  # "FoundUps" -> "foundups"
+
+                            shorts_scheduler = YouTubeShortsScheduler(channel_key)
+                            if shorts_scheduler.connect_browser():
+                                max_shorts = int(os.getenv("YT_SHORTS_PER_CYCLE", "10"))
+                                logger.info(f"[ROTATE] [Edge] Running shorts scheduler for {account_name} (max {max_shorts})...")
+
+                                # Run scheduling cycle (sync, so wrap in thread)
+                                shorts_result = await asyncio.to_thread(
+                                    lambda: asyncio.run(shorts_scheduler.run_scheduling_cycle(max_videos=max_shorts))
+                                )
+
+                                scheduled = shorts_result.get("scheduled", 0) if shorts_result else 0
+                                logger.info(f"[ROTATE] [Edge] {account_name} shorts: {scheduled} scheduled")
+
+                                shorts_scheduler.close()
+                            else:
+                                logger.warning(f"[ROTATE] [Edge] Could not connect to browser for {account_name} shorts")
+
+                        except ImportError as ie:
+                            logger.debug(f"[ROTATE] [Edge] Shorts scheduler not available: {ie}")
+                        except Exception as shorts_err:
+                            logger.warning(f"[ROTATE] [Edge] {account_name} shorts failed: {shorts_err}")
+                    else:
+                        logger.debug(f"[ROTATE] [Edge] {account_name} comments not done, skipping shorts")
+
             except Exception as e:
                 error_str = str(e)
                 logger.error(f"[ROTATE] {account_name} exception: {e}", exc_info=True)
@@ -885,8 +928,8 @@ class MultiChannelCoordinator:
                 # User requirement: "stay on commenting till they're all commented"
                 stay_on_channel = _env_truthy("YT_STAY_UNTIL_COMMENTS_CLEAR", "true")
                 if stay_on_channel:
-                    engagement_status = self.update_engagement_status.__self__._comment_engagement_status.get(channel_id, {}) if hasattr(self.update_engagement_status, '__self__') else {}
-                    all_done = engagement_status.get("all_processed", True)
+                    # FIX 2026-02-18: Use local stats instead of fragile callback access
+                    all_done = stats.get("all_processed", True)
                     if not all_done:
                         # Check DOM directly for comment count
                         try:

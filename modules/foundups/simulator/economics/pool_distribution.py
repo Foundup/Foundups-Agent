@@ -8,7 +8,7 @@ Pool Structure (100% total):
   - Dao (1-Pool): 16% - 0102 agents (3V work-based, ACTIVE)
   - Du (2-Pool):   4% - BTC STAKERS ONLY (investor economics, PASSIVE)
 - Network: 20%
-  - Network:      16% - Drip rewards (F_i → exchange → BTC → UP$)
+  - Network:      16% - Drip rewards (F_i → exchange → BTC → UPS)
   - Fund:          4% - Treasury fund (pAVS operations)
 
 CRITICAL SEPARATION (012-confirmed 2026-02-14):
@@ -47,13 +47,13 @@ Staker Pool Economics (dilution_scenario.py analysis):
 - RECOMMENDATION: Cap genesis cohort at 100 stakers
 
 PARADIGM NOTE (CABR/PoB, not CAGR/ROI):
-- Stakers provide LIQUIDITY (energy for UP$ capacity)
-- BTC → Reserve → Backs UP$ → Protocol runs
+- Stakers provide LIQUIDITY (energy for UPS capacity)
+- BTC → Reserve → Backs UPS → Protocol runs
 - Stakers receive F_i DISTRIBUTIONS (protocol mechanics)
 - This is PROTOCOL PARTICIPATION, not investment
 
 Token Naming (STANDARDIZED):
-- UP$ = Universal participation token (bio-decaying)
+- UPS = Universal participation token (bio-decaying)
 - F_i = FoundUp Token (21M cap, Bitcoin-like, non-decaying)
 """
 
@@ -86,7 +86,7 @@ POOL_PERCENTAGES = {
     "stakeholder_un": 0.60,   # 60% - 012 stakeholders (ACTIVE, engagement)
     "stakeholder_dao": 0.16,  # 16% - 0102 agents (ACTIVE, 3V work)
     "stakeholder_du": 0.04,   # 4%  - Founding Members + Stakers (PASSIVE)
-    "network": 0.16,          # 16% - Drip (F_i → BTC → UP$)
+    "network": 0.16,          # 16% - Drip (F_i → BTC → UPS)
     "fund": 0.04,             # 4%  - Treasury (pAVS operations)
 }
 
@@ -325,11 +325,11 @@ class PoolDistributor:
         total_ups_rewards: float,
         foundup_id: Optional[str] = None,
     ) -> EpochDistribution:
-        """Distribute an epoch's UP$ rewards according to pool structure.
+        """Distribute an epoch's UPS rewards according to pool structure.
 
         Args:
             epoch: Epoch number
-            total_ups_rewards: Total UP$ to distribute this epoch
+            total_ups_rewards: Total UPS to distribute this epoch
             foundup_id: Optional FoundUp context (for FoundUp Token distribution)
 
         Returns:
@@ -355,7 +355,7 @@ class PoolDistributor:
         self._distribute_network_drip(result)
 
         logger.info(
-            f"[Pool] Epoch {epoch}: {total_ups_rewards:.2f} UP$ distributed, "
+            f"[Pool] Epoch {epoch}: {total_ups_rewards:.2f} UPS distributed, "
             f"drip={result.drip_distributed:.2f}, fund_total={self.accumulated_fund:.2f}"
         )
 
@@ -418,7 +418,7 @@ class PoolDistributor:
         - dao (1): 16% of network pool = 2.56% of total
         - un (0): 4% of network pool = 0.64% of total
 
-        This is the "drip" mechanism that keeps UP$ flowing.
+        This is the "drip" mechanism that keeps UPS flowing.
         """
         network_amount = result.network_pool
 
@@ -492,9 +492,9 @@ class FoundUpTokenDistributor:
     Agents earn FoundUp Tokens through verified work (PoUW).
     Humans own the tokens earned by their agents.
 
-    This is SEPARATE from UP$ distribution - FoundUp Tokens are:
+    This is SEPARATE from UPS distribution - FoundUp Tokens are:
     - Scarce (21M cap per FoundUp)
-    - Non-decaying (unlike UP$)
+    - Non-decaying (unlike UPS)
     - Earned through work (not participation)
     """
 

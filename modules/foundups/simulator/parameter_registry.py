@@ -98,6 +98,7 @@ def to_simulator_config(bundle: ParameterBundle) -> SimulatorConfig:
         seed=p["seed"],
         initial_agent_tokens=p["initial_agent_tokens"],
         foundup_creation_cost=p["foundup_creation_cost"],
+        founder_max_foundups=p["founder_max_foundups"],
         like_cost=p["like_cost"],
         follow_cost=p["follow_cost"],
         stake_min=p["stake_min"],

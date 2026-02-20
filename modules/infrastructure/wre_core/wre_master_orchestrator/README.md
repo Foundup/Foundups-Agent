@@ -12,6 +12,17 @@ This module operates under:
 - **WSP 48**: Recursive Self-Improvement (learning from operations)
 - **WSP 75**: Token-Based Development (50-200 vs 5000+ tokens)
 
+## 2026-02-19 Runtime Alignment
+
+Current canonical runtime guarantees:
+- Plugin registration API is backward-compatible:
+  - `register_plugin(plugin_instance)`
+  - `register_plugin("plugin_name", plugin_instance)`
+- Explicit plugin lookup is available via `get_plugin(plugin_name)`.
+- Module-path guard is available via `validate_module_path(path)`.
+- Skills loader failures are non-fatal to orchestration loops; deterministic fallback instructions are generated and executed.
+- Pattern memory storage can be targeted with `WRE_PATTERN_MEMORY_DB` for deterministic runtime isolation.
+
 ## Problem Solved
 
 ### Before (Current State)

@@ -35,9 +35,9 @@ Events streamed via `GET /api/sim-events`:
 | `task_state_changed` | `agent_spawned`, `block_filled`, `phase_changed` | Varies by status |
 | `fi_trade_executed` | `sim_dex_trade` + $ pulse | "DEX: N F_i traded" |
 | `investor_funding_received` | `sim_investor_funding` + $ pulse burst | "investor seed: X BTC" |
-| `mvp_subscription_accrued` | `sim_mvp_subscription` | "subscription accrued: +N UP$" |
-| `mvp_bid_submitted` | `sim_mvp_bid` + $ pulse | "MVP bid submitted: N UP$" |
-| `mvp_offering_resolved` | `sim_mvp_resolved` + $ pulse burst | "MVP offering resolved: +N UP$ treasury" |
+| `mvp_subscription_accrued` | `sim_mvp_subscription` | "subscription accrued: +N UPS" |
+| `mvp_bid_submitted` | `sim_mvp_bid` + $ pulse | "MVP bid submitted: N UPS" |
+| `mvp_offering_resolved` | `sim_mvp_resolved` + $ pulse burst | "MVP offering resolved: +N UPS treasury" |
 | `milestone_published` | `dao_launched` | "Foundup_i MVP is Live!" |
 | `payout_triggered` | $ pulse | (via block_filled) |
 
@@ -64,7 +64,7 @@ Frontend handles both:
 | Worker agent icon | `$` | Worker role indicator |
 | Gold tokens | `$` | Floating earnings |
 | Earning pulses | `$` | Economic event indicators |
-| Ticker messages | `UP$` | Token denomination |
+| Ticker messages | `UPS` | Token denomination |
 | Investor icon | `₿` | Bitcoin (investors only) |
 
 **DO NOT USE**: 💰 🪙 💵 💲 or other emoji for token representation.

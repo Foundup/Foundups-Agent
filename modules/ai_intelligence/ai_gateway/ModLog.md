@@ -1,5 +1,46 @@
 # AI Gateway Module Change Log
 
+## [2026-02-17] - Full Model Registry Refresh (Feb 2026 Current)
+
+**Who:** 0102
+**Type:** Configuration Update + Enhancement
+**What:** Refreshed entire model registry to Feb 2026 current + activity routing matrix
+
+**Model Registry Updates:**
+| Provider | Changes |
+|----------|---------|
+| OpenAI | GPT-5.2 (flagship), GPT-5.2-Codex (coding), GPT-5, o3, o3-pro, o4-mini now CURRENT; GPT-4o/GPT-4o-mini SUNSET (retired Feb 13); o1/o1-mini/o3-mini DEPRECATED |
+| Grok/X.AI | Grok-4 (flagship $3/$15), grok-4-fast ($0.20/$0.50), grok-code-fast-1 (coding), grok-3-mini now CURRENT; grok-3 LEGACY; grok-2 DEPRECATED |
+| Gemini | gemini-3-pro-preview, gemini-3-flash-preview, gemini-2.5-flash-lite added; gemini-2.0-flash DEPRECATED (shutdown March 31 2026) |
+| Anthropic | No changes (claude-opus-4-6, claude-sonnet-4-5, claude-haiku-4-5 remain current) |
+
+**Codebase Migration (8 files updated):**
+- `ai_gateway.py`: OpenAI models gpt-4o→gpt-5.2-codex/gpt-5, o3-mini→o4-mini, o1→o3; Grok models grok-3→grok-4/grok-code-fast-1/grok-4-fast
+- `main.py`: Updated extract_model_ids regex patterns + PROVIDER_MODEL_SOURCES search terms
+- `ai_parameter_optimizer.py`: gpt-4o → gpt-5.2
+- `pqn_research_dae_orchestrator.py`: gpt-4o → gpt-5.2, claude-3-5-sonnet → claude-sonnet-4-5
+- `theorist_dae_poc.py`: grok-2 → grok-4
+- `fam_adapter.py`: gpt-4o-mini → gpt-5, grok-3-mini-fast → grok-4-fast
+- `fix_openclaw_auth.py`: openai/gpt-4o → openai/gpt-5
+- `api_preflight_check.py`: gpt-4o-mini → gpt-5, openai/gpt-4o → openai/gpt-5
+- `cmst_pqn_detector_v3.py`: gpt-4o → gpt-5
+
+**Activity Routing Matrix (updated):**
+| Task | Primary Provider | Model |
+|------|-----------------|-------|
+| coding | anthropic | claude-opus-4-6 |
+| math | openai | o4-mini |
+| reasoning | openai | o3 |
+| social/edgy | grok | grok-4 |
+| research | gemini | gemini-2.5-pro |
+| quick | grok | grok-4-fast |
+
+**MIGRATION_MAP updated:** gpt-4o→gpt-5, gpt-4o-mini→gpt-5, o1→o3, o1-mini→o4-mini, o3-mini→o4-mini, grok-2→grok-4
+
+**WSP References:** WSP 50 (web search for current models), WSP 84 (extended model_registry), WSP 22 (ModLog)
+
+---
+
 ## [2026-02-15] - Model Version Update (Obsolete → Current)
 
 **Who:** 0102 Claude

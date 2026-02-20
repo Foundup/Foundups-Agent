@@ -68,3 +68,12 @@ def test_wsp29_states_cabr_intent_triplet() -> None:
             "RESULT: PoB drives protocol allocation/distribution; ROI is a downstream financial readout."
             in text
         )
+
+
+def test_tokenomics_and_cabr_integration_use_flow_routing_language() -> None:
+    tokenomics = _read_text("modules/infrastructure/foundups_tokenization/docs/TOKENOMICS.md")
+    integration = _read_text("modules/infrastructure/foundups_tokenization/docs/CABR_INTEGRATION.md")
+
+    assert "routeUPSFromTreasury" in tokenomics
+    assert "total_ups_minted" not in tokenomics
+    assert "CABR does **not** mint UPS." in integration

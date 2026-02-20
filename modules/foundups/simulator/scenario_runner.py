@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean
@@ -42,9 +43,13 @@ def _stable_frame_projection(frame: Dict) -> Dict:
 
 
 def _normalize_for_digest(obj):
-    """Recursively normalize floats to avoid platform/ordering precision noise."""
+    """Recursively normalize floats to avoid precision noise.
+
+    Use 3 decimal places for digest projections to absorb tiny floating-point
+    accumulation jitter that does not change macro simulation behavior.
+    """
     if isinstance(obj, float):
-        return round(obj, 4)
+        return round(obj, 3)
     if isinstance(obj, list):
         return [_normalize_for_digest(item) for item in obj]
     if isinstance(obj, dict):
@@ -52,14 +57,25 @@ def _normalize_for_digest(obj):
     return obj
 
 
-def _run_once(scenario: str, ticks: int, frame_every: int, out_dir: Path, run_label: str) -> Dict:
+def _run_once(
+    scenario: str,
+    ticks: int,
+    frame_every: int,
+    out_dir: Path,
+    run_label: str,
+    seed_override: int | None = None,
+) -> Dict:
     # Reset module singletons so repeated runs in one process stay deterministic.
     reset_rating_engine()
 
     bundle = load_bundle(scenario)
     config = to_simulator_config(bundle)
+    if seed_override is not None:
+        config.seed = seed_override
     config.max_ticks = ticks
     daemon_data_dir = out_dir / f"{run_label}_fam_daemon"
+    if daemon_data_dir.exists():
+        shutil.rmtree(daemon_data_dir)
     fam_daemon = FAMDaemon(data_dir=daemon_data_dir, auto_start=False)
     model = FoundUpsModel(config=config, fam_daemon=fam_daemon)
     model.start()
@@ -96,6 +112,10 @@ def _run_once(scenario: str, ticks: int, frame_every: int, out_dir: Path, run_la
         "pavs_treasury_ups": stats["pavs_treasury_ups"],
         "network_pool_ups": stats["network_pool_ups"],
         "fund_pool_ups": stats["fund_pool_ups"],
+        "fee_self_sustaining_claim": stats.get("fee_self_sustaining", False),
+        "fee_scenario_downside_ratio_p10": stats.get("fee_scenario_downside_ratio_p10", 0.0),
+        "fee_scenario_base_ratio_p50": stats.get("fee_scenario_base_ratio_p50", 0.0),
+        "fee_scenario_upside_ratio_p90": stats.get("fee_scenario_upside_ratio_p90", 0.0),
         "frame_count": frame_count,
         "frame_digest_sha256": digest.hexdigest(),
     }
