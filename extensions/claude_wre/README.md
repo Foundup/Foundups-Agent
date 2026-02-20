@@ -163,7 +163,7 @@ MIT License - See LICENSE file for details
 
 ## Links
 
-- [Foundups-Agent Repository](https://github.com/Foundups/Foundups-Agent)
+- [Foundups-Agent Repository](https://github.com/FOUNDUPS/Foundups-Agent)
 - [WRE Documentation](../modules/wre_core/README.md)
 - [WSP Framework](../WSP_framework/)
 

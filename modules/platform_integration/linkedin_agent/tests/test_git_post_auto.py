@@ -60,7 +60,7 @@ try:
         content += f"  ... and {len(files) - 3} more\n"
 
     content += "\n#SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation"
-    content += "\n\n[LINK] github.com/Foundups-Agent"
+    content += "\n\n[LINK] github.com/FOUNDUPS/Foundups-Agent"
 
     print(content)
     print("-" * 40)

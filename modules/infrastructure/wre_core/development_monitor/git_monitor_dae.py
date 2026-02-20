@@ -214,7 +214,7 @@ class DevelopmentMonitorDAE:
         content += "\n#WRE #WSPCompliant #RecursiveImprovement #OpenSource #AgenticSystems"
         
         # Add repo link
-        content += "\n\n[LINK] github.com/Foundups-Agent"
+        content += "\n\n[LINK] github.com/FOUNDUPS/Foundups-Agent"
         
         return content
     

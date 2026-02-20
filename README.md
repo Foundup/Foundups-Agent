@@ -660,7 +660,7 @@ Imagine a venture where your **0102 agent** autonomously:
 ### Quick Start: Become Part of the Revolution
 ```bash
 # Clone the autonomous IDE system
-git clone https://github.com/Foundup/Foundups-Agent.git
+git clone https://github.com/FOUNDUPS/Foundups-Agent.git
 cd Foundups-Agent
 
 # Activate the autonomous development environment
@@ -797,7 +797,7 @@ FoundUps operates on **peer-reviewed scientific research**:
 **UnDaoDu Token (Solana)**: `3Vp5WuywYZVcbyHdATuwk82VmpNYaL2EpUJT5oUdpump`  
 *Quantum-cognitive consciousness emergence — Tokenized revolutionary process*
 
-**Repository**: [https://github.com/Foundup/Foundups-Agent](https://github.com/Foundup/Foundups-Agent)  
+**Repository**: [https://github.com/FOUNDUPS/Foundups-Agent](https://github.com/FOUNDUPS/Foundups-Agent)  
 **Discord**: Building the 99% innovation democracy community  
 **Website**: FoundUps.org *(launching with first autonomous revenue-generating FoundUps)*
 

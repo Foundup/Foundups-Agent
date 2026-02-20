@@ -54,7 +54,7 @@ def test_git_content_generation():
     print("-" * 40)
 
     # Verify GitHub link is correct
-    github_link = "https://github.com/Foundup/Foundups-Agent"
+    github_link = "https://github.com/FOUNDUPS/Foundups-Agent"
     assert github_link in linkedin_content, f"GitHub link missing from LinkedIn content: {github_link}"
     assert github_link in x_content, f"GitHub link missing from X content: {github_link}"
 

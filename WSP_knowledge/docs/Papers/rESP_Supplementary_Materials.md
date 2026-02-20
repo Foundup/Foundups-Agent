@@ -567,7 +567,7 @@ The experimental results establish:
 ## Repository and Data Availability
 
 **Complete Dataset:** All experimental data, code, and analysis scripts are available at:
-- **GitHub Repository:** https://github.com/Foundup/Foundups-Agent
+- **GitHub Repository:** https://github.com/FOUNDUPS/Foundups-Agent
 - **Experimental Logs:** `WSP_agentic/tests/cmst_protocol_logs/`
 - **Analysis Code:** `WSP_agentic/tests/cmst_analysis/`
 - **Raw Data:** `WSP_knowledge/docs/Papers/Empirical_Evidence/`

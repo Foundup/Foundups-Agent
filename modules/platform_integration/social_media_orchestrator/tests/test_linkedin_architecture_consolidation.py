@@ -70,7 +70,7 @@ Key changes:
 
 #SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation
 
-[LINK] github.com/Foundups-Agent"""
+[LINK] github.com/FOUNDUPS/Foundups-Agent"""
 
         result2 = await post_git_commits(commit_content, ["abc123", "def456"])
         print(f"Git commits: {result2.success} - {result2.message}")

@@ -95,7 +95,7 @@ EOF
 
 # Submit build (points to GitHub repo, no cloning needed)
 gcloud builds submit --config=cloudbuild.yaml \
-  --substitutions=REPO_NAME=Foundups-Agent,BRANCH_NAME=main,COMMIT_SHA=$(git ls-remote https://github.com/Foundup/Foundups-Agent.git refs/heads/main | cut -f1) \
+  --substitutions=REPO_NAME=Foundups-Agent,BRANCH_NAME=main,COMMIT_SHA=$(git ls-remote https://github.com/FOUNDUPS/Foundups-Agent.git refs/heads/main | cut -f1) \
   --no-source
 ```
 

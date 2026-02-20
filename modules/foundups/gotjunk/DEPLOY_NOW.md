@@ -1,7 +1,7 @@
 # GotJunk Deployment - Quick Start
 
 ## ✅ PR #13 Merged Successfully!
-https://github.com/Foundup/Foundups-Agent/pull/13
+https://github.com/FOUNDUPS/Foundups-Agent/pull/13
 
 All code is now in main branch and ready to deploy to Google Cloud Run.
 
@@ -74,7 +74,7 @@ https://console.cloud.google.com/cloudshell/editor
 ### Step 2: Clone Repo
 
 ```bash
-git clone https://github.com/Foundup/Foundups-Agent.git
+git clone https://github.com/FOUNDUPS/Foundups-Agent.git
 cd Foundups-Agent
 git checkout main
 ```

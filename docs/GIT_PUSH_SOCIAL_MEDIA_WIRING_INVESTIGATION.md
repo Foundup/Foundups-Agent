@@ -271,7 +271,7 @@ chmod +x .git/hooks/post-commit
 
 Files updated: {file_count}
 
-GitHub: https://github.com/Foundup/Foundups-Agent
+GitHub: https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102 #WSP #AutonomousDevelopment
 ```
@@ -282,7 +282,7 @@ GitHub: https://github.com/Foundup/Foundups-Agent
 
 Files updated: 12
 
-GitHub: https://github.com/Foundup/Foundups-Agent
+GitHub: https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102 #WSP #AutonomousDevelopment
 ```
@@ -295,7 +295,7 @@ GitHub: https://github.com/Foundup/Foundups-Agent
 
 {file_count} files updated
 
-https://github.com/Foundup/Foundups-Agent
+https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102
 ```
@@ -308,7 +308,7 @@ https://github.com/Foundup/Foundups-Agent
 
 12 files updated
 
-https://github.com/Foundup/Foundups-Agent
+https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102
 ```

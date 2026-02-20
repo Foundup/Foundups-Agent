@@ -38,7 +38,7 @@ class AIIntelligenceCubeAdapter(BaseCubeAdapter):
     including compliance, documentation, testing, and deployment.
     """
     
-    def __init__(self, repository: str = "Foundup/Foundups-Agent"):
+    def __init__(self, repository: str = "FOUNDUPS/Foundups-Agent"):
         super().__init__(CubeType.AI_INTELLIGENCE, repository)
         
         # AI Intelligence specific configuration
