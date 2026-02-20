@@ -152,7 +152,7 @@ bash deployment/deploy.sh
 
 **Trigger Name**: `gotjunk-main-trigger` (inferred from build history)
 
-**Trigger Source**: GitHub repository `Foundup/Foundups-Agent`
+**Trigger Source**: GitHub repository `FOUNDUPS/Foundups-Agent`
 
 **Trigger Event**: Push to `main` branch
 

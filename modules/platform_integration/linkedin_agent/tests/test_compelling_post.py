@@ -75,7 +75,7 @@ for i, commit_msg in enumerate(test_commits):
 
     # Hashtags with vision
     content += "\n\n#FoundUps #DAE #AutonomousRevolution #SoloUnicorn #NoVCsNeeded #FutureOfWork #Web3 #0102Agents #StartupKiller #ProgrammableBlockchain #UnDaoDu"
-    content += "\n\n[LINK] https://github.com/Foundup/Foundups[EMDASH]Agent/blob/main/README.md"
+    content += "\n\n[LINK] https://github.com/FOUNDUPS/Foundups[EMDASH]Agent/blob/main/README.md"
 
     print(content)
 

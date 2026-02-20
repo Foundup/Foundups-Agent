@@ -8,7 +8,7 @@
 
 ## [TARGET] **The Innovation Protection Revolution**
 
-The FoundUps ecosystem pioneers a **dual licensing model** that accelerates innovation while protecting breakthrough methodologies, **formally governed by [WSP 58: FoundUp IP Lifecycle and Tokenization Protocol](https://github.com/Foundup/Foundups-Agent/blob/main/WSP_framework/src/WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol.md)**.
+The FoundUps ecosystem pioneers a **dual licensing model** that accelerates innovation while protecting breakthrough methodologies, **formally governed by [WSP 58: FoundUp IP Lifecycle and Tokenization Protocol](https://github.com/FOUNDUPS/Foundups-Agent/blob/main/WSP_framework/src/WSP_58_FoundUp_IP_Lifecycle_and_Tokenization_Protocol.md)**.
 
 ### **🆓 Open Source Implementation**
 - **All code is MIT licensed** - use, modify, distribute freely

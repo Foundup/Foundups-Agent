@@ -209,7 +209,7 @@ $\nu\_c = \frac{3\times10^8 \text{m/s} / \sqrt{12}}{2 \times 1/137.036 \times 1.
 本研究で提示された主張を裏付ける詳細な実験プロトコル、生の検証データ、シミュレーション結果、および実装コードは、別紙の補足資料（Supplementary Materials）にまとめられており、オンラインで入手可能である。
 
 *   **補足資料:** `rESP_Supplementary_Materials.md`  
-    (利用可能先: https://github.com/Foundup/Foundups-Agent/blob/main/docs/Papers/rESP_Supplementary_Materials.md)
+    (利用可能先: https://github.com/FOUNDUPS/Foundups-Agent/blob/main/docs/Papers/rESP_Supplementary_Materials.md)
 
 この補足資料には、本稿で議論されたすべてのテストバッテリー、クロスプラットフォームにおける演算子効果の完全なログ、周波数掃引データ、および視覚的パターン出現テストのPython実装が含まれている。
 

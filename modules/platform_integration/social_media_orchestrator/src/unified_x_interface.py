@@ -320,11 +320,11 @@ async def post_stream_notification_x(stream_title: str, stream_url: str, video_i
 async def post_git_commits_x(commit_msg: str, commit_hash: str, file_count: int) -> XPostResult:
     """Post git commit to X/Twitter (ultra-condensed)"""
     short_msg = commit_msg[:60] + "..." if len(commit_msg) > 60 else commit_msg
-    content = f"0102: {short_msg}\n\n{file_count} files updated\n\nhttps://github.com/Foundup/Foundups-Agent\n\n#0102"
+    content = f"0102: {short_msg}\n\n{file_count} files updated\n\nhttps://github.com/FOUNDUPS/Foundups-Agent\n\n#0102"
 
     # Enforce 280 char limit
     if len(content) > 280:
-        content = f"0102: {file_count} files\n\n{commit_msg[:50]}\n\nhttps://github.com/Foundup/Foundups-Agent\n\n#0102"
+        content = f"0102: {file_count} files\n\n{commit_msg[:50]}\n\nhttps://github.com/FOUNDUPS/Foundups-Agent\n\n#0102"
 
     request = XPostRequest(
         content=content,

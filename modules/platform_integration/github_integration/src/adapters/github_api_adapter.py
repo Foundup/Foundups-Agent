@@ -52,7 +52,7 @@ class GitHubAPIAdapter:
     - Response formatting for WRE agents
     """
     
-    def __init__(self, repository: str = "Foundup/Foundups-Agent"):
+    def __init__(self, repository: str = "FOUNDUPS/Foundups-Agent"):
         """
         Initialize GitHub API adapter
         

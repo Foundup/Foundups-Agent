@@ -61,7 +61,7 @@ poster = AntiDetectionX(use_foundups=True)
 poster.setup_driver(use_existing_session=True)
 
 # Collect post content for training
-post_content = "0102: Quick update\n\nhttps://github.com/Foundup/Foundups-Agent\n\n#0102"
+post_content = "0102: Quick update\n\nhttps://github.com/FOUNDUPS/Foundups-Agent\n\n#0102"
 poster.post_to_x(post_content)
 
 # Save as training pattern:

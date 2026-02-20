@@ -75,7 +75,7 @@ class BaseCubeAdapter(ABC):
     4. Pluggable architecture - new cubes just need new adapters
     """
     
-    def __init__(self, cube_type: CubeType, repository: str = "Foundup/Foundups-Agent"):
+    def __init__(self, cube_type: CubeType, repository: str = "FOUNDUPS/Foundups-Agent"):
         """
         Initialize cube adapter
         

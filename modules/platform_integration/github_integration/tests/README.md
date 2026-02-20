@@ -45,7 +45,7 @@ def mock_github_api():
     with aioresponses() as m:
         # Mock repository info
         m.get(
-            'https://api.github.com/repos/Foundup/Foundups-Agent',
+            'https://api.github.com/repos/FOUNDUPS/Foundups-Agent',
             payload={
                 'name': 'Foundups-Agent',
                 'owner': {'login': 'Foundup'},
@@ -133,11 +133,11 @@ def sample_repository():
     return GitHubRepository(
         owner="Foundup",
         name="Foundups-Agent",
-        full_name="Foundup/Foundups-Agent",
+        full_name="FOUNDUPS/Foundups-Agent",
         description="FoundUps Agent Repository",
         private=False,
         default_branch="main",
-        url="https://github.com/Foundup/Foundups-Agent"
+        url="https://github.com/FOUNDUPS/Foundups-Agent"
     )
 ```
 
@@ -153,7 +153,7 @@ def sample_pull_request():
         head_branch="feature/test",
         base_branch="main",
         author="testuser",
-        url="https://github.com/Foundup/Foundups-Agent/pull/123",
+        url="https://github.com/FOUNDUPS/Foundups-Agent/pull/123",
         created_at=datetime.now(),
         updated_at=datetime.now()
     )

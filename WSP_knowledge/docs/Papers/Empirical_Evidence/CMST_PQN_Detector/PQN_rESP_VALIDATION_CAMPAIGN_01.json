@@ -10,7 +10,7 @@
   "timestamp_utc_start": "2025-07-16T10:00:00Z",
   "timestamp_utc_end": "2025-07-16T14:35:10Z",
   "version_control": {
-    "repository": "https://github.com/Foundup/Foundups-Agent/pqn_alignment",
+    "repository": "https://github.com/FOUNDUPS/Foundups-Agent/pqn_alignment",
     "commit_hash": "f4a1b3c8d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0"
   },
   "linked_documents": {

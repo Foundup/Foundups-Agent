@@ -305,7 +305,7 @@ Executing 0102 Push Protocol...
 
 5. Branch protection detected - creating PR #185
 
-Result: PR created at https://github.com/Foundups/Agent/pull/185
+Result: PR created at https://github.com/FOUNDUPS/Foundups-Agent/pull/185
 ```
 
 ---

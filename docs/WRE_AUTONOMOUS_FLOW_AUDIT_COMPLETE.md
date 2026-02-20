@@ -198,7 +198,7 @@ $ python test_wre_flow.py
 
 Files updated: 79
 
-GitHub: https://github.com/Foundup/Foundups-Agent
+GitHub: https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102 #WSP #AutonomousDevelopment
 ----------------------------------------
@@ -209,7 +209,7 @@ GitHub: https://github.com/Foundup/Foundups-Agent
 
 80 files updated
 
-https://github.com/Foundup/Foundups-Agent
+https://github.com/FOUNDUPS/Foundups-Agent
 
 #0102
 ----------------------------------------

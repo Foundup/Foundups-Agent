@@ -31,7 +31,7 @@ class ComplianceGitHubExtension:
     It takes the output of ComplianceAgent and creates GitHub actions.
     """
     
-    def __init__(self, compliance_agent, repository: str = "Foundup/Foundups-Agent"):
+    def __init__(self, compliance_agent, repository: str = "FOUNDUPS/Foundups-Agent"):
         """
         Initialize GitHub extension for ComplianceAgent
         

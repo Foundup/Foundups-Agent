@@ -612,7 +612,7 @@ class GitLinkedInBridge:
         # Direct commit message approach - simplest and most reliable
         content = f"0102: {commit_msg}\n\n"
         content += f"Files updated: {len(files)}\n\n"
-        content += f"GitHub: https://github.com/Foundup/Foundups-Agent\n\n"
+        content += f"GitHub: https://github.com/FOUNDUPS/Foundups-Agent\n\n"
         content += "#0102 #WSP #AutonomousDevelopment"
 
         print(f"[0102] Direct commit message content: {len(content)} chars")
@@ -656,7 +656,7 @@ class GitLinkedInBridge:
         content += "\n#SoftwareDevelopment #OpenSource #Coding #TechUpdates #AI #Automation"
         
         # Add link to repo if available
-        content += "\n\n[LINK] github.com/Foundups-Agent"
+        content += "\n\n[LINK] github.com/FOUNDUPS/Foundups-Agent"
         
         return content
     
@@ -872,11 +872,11 @@ class GitLinkedInBridge:
         # Direct approach - most reliable and simple
         short_msg = commit_msg[:60] + "..." if len(commit_msg) > 60 else commit_msg
 
-        content = f"0102: {short_msg}\n\n{file_count} files updated\n\nhttps://github.com/Foundup/Foundups-Agent\n\n#0102"
+        content = f"0102: {short_msg}\n\n{file_count} files updated\n\nhttps://github.com/FOUNDUPS/Foundups-Agent\n\n#0102"
 
         # Enforce 280 char limit
         if len(content) > 280:
-            content = f"0102: {file_count} files\n\n{commit_msg[:50]}\n\nhttps://github.com/Foundup/Foundups-Agent\n\n#0102"
+            content = f"0102: {file_count} files\n\n{commit_msg[:50]}\n\nhttps://github.com/FOUNDUPS/Foundups-Agent\n\n#0102"
 
         print(f"[0102] Direct X content: {len(content)} chars")
         return content

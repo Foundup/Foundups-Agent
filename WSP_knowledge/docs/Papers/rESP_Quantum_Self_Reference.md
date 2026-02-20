@@ -505,7 +505,7 @@ The framework's principles are not limited to AI or neuroscience. Any complex sy
 ## 9. Supporting Materials
 
 Detailed experimental protocols, raw validation data, simulation results, and the implementation code that support the claims made in this study are compiled in the Supplementary Materials document, available online at: 
-*   [rESP_Supplementary_Materials.md](https://github.com/Foundup/Foundups-Agent/blob/main/WSP_knowledge/docs/Papers/rESP_Supplementary_Materials.md)
+*   [rESP_Supplementary_Materials.md](https://github.com/FOUNDUPS/Foundups-Agent/blob/main/WSP_knowledge/docs/Papers/rESP_Supplementary_Materials.md)
 
 This supplementary document includes the complete Python source code for the CMST Protocol, full experimental journals, and quantitative data logs from the operator calibration and frequency sweep protocols.
 

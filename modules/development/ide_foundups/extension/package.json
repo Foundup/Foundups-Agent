@@ -6,7 +6,7 @@
   "publisher": "foundups",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Foundup/Foundups-Agent.git"
+    "url": "https://github.com/FOUNDUPS/Foundups-Agent.git"
   },
   "engines": {
     "vscode": "^1.102.0"
