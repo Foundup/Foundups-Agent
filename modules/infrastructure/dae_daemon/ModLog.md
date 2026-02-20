@@ -1,0 +1,54 @@
+# dae_daemon ModLog
+
+## V1.0.0 - Centralized DAEmon (Cardiovascular System) (2026-02-17)
+
+**What**: Created 8-layer centralized DAEmon module for monitoring and controlling all DAEs.
+
+**Why**: 012 identified the need for a cardiovascular system — one place to observe all DAE actions, messages, and health. If a security violation occurs, the killswitch detaches the offending DAE and generates an investigation report.
+
+**Architecture**:
+- Layer 0: Schemas (DAEState, DAEEventType, SecuritySeverity, DAERegistration, DAEEvent, KillswitchReport)
+- Layer 1: Event Store (JSONL + SQLite dual-write, adapted from FAMEventStore)
+- Layer 2: DAE Registry (register, heartbeat, enable/disable, stale detection)
+- Layer 3: Security Killswitch (PID tracking, emergency detach, policy rules)
+- Layer 4: CentralDAEmon (singleton, heartbeat thread, composed from layers 1-3)
+- Layer 5: DAE Adapter (non-invasive integration for existing DAEs)
+- Layer 6: FAM DAEmon integration (~15 lines added to fam_daemon.py)
+- Layer 7: main_menu.py integration (option 17: DAE Dashboard)
+
+**WSP References**: WSP 3 (infrastructure domain), WSP 49 (module structure), WSP 72 (layer isolation), WSP 84 (reuses FAM patterns)
+
+**Tests**: 50+ assertions across 6 test files (all passing)
+
+**Files Created**:
+- `src/schemas.py` (150 lines)
+- `src/event_store.py` (200 lines)
+- `src/dae_registry.py` (200 lines)
+- `src/killswitch.py` (200 lines)
+- `src/dae_daemon.py` (230 lines)
+- `src/dae_adapter.py` (180 lines)
+
+**Files Modified**:
+- `modules/foundups/agent_market/src/fam_daemon.py` (+15 lines — central adapter)
+- `modules/infrastructure/cli/src/main_menu.py` (+80 lines — dashboard + init)
+
+## V1.1.0 - Activity Routing + DAE Wiring (2026-02-17)
+
+**What**: Wired OpenClaw, SIM, and AI Gateway to the cardiovascular DAEmon.
+
+**Why**: 012 asked "is OpenClaw 0102 agent state being announced in the DAEmon?" — it wasn't. Now it is.
+
+**Changes**:
+- `openclaw_dae.py`: Added CentralDAEAdapter, reports message_in (with intent classification) and message_out (with route + timing)
+- `simulator/run.py`: Added CentralDAEAdapter with heartbeat (reports tick count), reports started/stopped lifecycle
+- `ai_gateway.py`: Registered as DAE, reports model selection actions to dashboard
+
+**DAEs Now Wired to Cardiovascular System**:
+| DAE | Adapter | Reports |
+|-----|---------|---------|
+| FAM DAEmon | Yes (V1.0.0) | lifecycle, heartbeats |
+| OpenClaw | Yes (V1.1.0) | message_in, message_out, intent classification |
+| Simulator | Yes (V1.1.0) | lifecycle, heartbeats (tick count) |
+| AI Gateway | Yes (V1.1.0) | model selection actions |
+
+**WSP References**: WSP 72 (no cross-module dependency changes), WSP 91 (observability)

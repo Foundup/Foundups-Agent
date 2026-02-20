@@ -79,7 +79,7 @@ Goal: make FoundUps a one-stop paid build surface where execution compute is met
 
 **P1 (second)**
 - Plan/tier lifecycle (scout, builder, swarm, sovereign)
-- UP$ to compute-credit conversion rails and constraints
+- UPS to compute-credit conversion rails and constraints
 - pAVS fee routing + credit rebate settlement
 - Simulator scenario pack for PoB yield and paywall stress tests
 

@@ -62,7 +62,7 @@ Counter: "Agents: 8" → "Agents: 12"
 ### Phase 7: DAO LAUNCH (28-32s)
 ```
 Visual: Cube transforms - rainbow shimmer effect
-Text Overlay: "FoundUP$ launches as DAO!"
+Text Overlay: "FoundUPS launches as DAO!"
 Effect: Particle explosion, confetti-style
 All agents: Orbit celebratory pattern
 Cube: Glows intensely, then fades

@@ -27,10 +27,11 @@ POPULATION_THRESHOLD = 20
 # Minimum stream duration before invites unlock (prevents drive-by requests)
 MIN_STREAM_DURATION_MINUTES = 30
 
-# Cooldown per user (prevent spam)
-INVITE_COOLDOWN_HOURS = 24
+# Cooldown per user - SCARCITY: 5 days between invites (makes them precious!)
+INVITE_COOLDOWN_DAYS = 5
+INVITE_COOLDOWN_HOURS = INVITE_COOLDOWN_DAYS * 24  # 120 hours
 
-# Track invite distributions
+# In-memory cache (backed by SQLite for persistence across restarts)
 _invite_cooldowns: Dict[str, float] = {}
 
 # =============================================================================
@@ -39,15 +40,38 @@ _invite_cooldowns: Dict[str, float] = {}
 # These are trusted community members who can "present" invites
 # Makes distribution feel community-driven rather than bot-automated
 
-COMMUNITY_PRESENTERS = [
-    # Managing Directors (elevated MODs with owner-level trust)
-    {"username": "Al-sq5ti", "title": "Managing Director", "user_id": "UCcnCiZV5ZPJ_cjF7RsWIZ0w"},
-    # Core team
-    {"username": "Mike", "title": "Founder", "user_id": None},  # Placeholder until we have Mike's ID
-    {"username": "Move2Japan", "title": "Host", "user_id": None},
-    # Add more MODs/Directors here as they join
-    # {"username": "NewMod", "title": "MOD", "user_id": "UC..."},
-]
+def _load_community_presenters() -> list:
+    """
+    Load presenters from managing_directors.json + static core team.
+    Allows live updates without code changes.
+    """
+    presenters = [
+        # Core team (always available)
+        {"username": "Mike", "title": "Founder", "user_id": None},
+        {"username": "Move2Japan", "title": "Host", "user_id": "UC-LSSlOZwpGIRIYihaz8zCw"},
+    ]
+
+    # Load Managing Directors from JSON
+    try:
+        import json
+        md_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+            "modules", "communication", "livechat", "data", "managing_directors.json"
+        )
+        with open(md_path, 'r') as f:
+            mds = json.load(f)
+        for md in mds:
+            presenters.append({
+                "username": md.get('username'),
+                "title": md.get('title', 'Managing Director'),
+                "user_id": md.get('user_id')
+            })
+        logger.debug(f"[INVITE] Loaded {len(mds)} Managing Directors as presenters")
+    except Exception as e:
+        logger.warning(f"[INVITE] Could not load managing_directors.json: {e}")
+
+    return presenters
+
 
 def get_random_presenter() -> Dict:
     """
@@ -57,7 +81,8 @@ def get_random_presenter() -> Dict:
         Dict with username and title of selected presenter
     """
     import random
-    presenter = random.choice(COMMUNITY_PRESENTERS)
+    presenters = _load_community_presenters()
+    presenter = random.choice(presenters)
     return presenter
 
 
@@ -186,12 +211,12 @@ def check_firebase_invite() -> Optional[Dict]:
         return None
 
 
-def get_invite_code(user_id: str, username: str, stream_start_time: Optional[float] = None) -> Dict:
+def get_invite_code(user_id: str, username: str, stream_start_time: Optional[float] = None, role: str = None) -> Dict:
     """
     Get an invite code for distribution.
 
     Rules:
-    1. Stream must be running for 30+ minutes (prevents drive-by requests)
+    1. Stream must be running for 30+ minutes (prevents drive-by requests) - OWNER bypasses
     2. User must wait 24h between invite requests
     3. Population must be below threshold OR user is top whacker
     4. Returns Firebase code if available, else local code
@@ -200,6 +225,7 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
         user_id: User requesting the invite
         username: Display name
         stream_start_time: Unix timestamp when stream started (for duration check)
+        role: User role (OWNER bypasses stream duration check)
 
     Returns:
         Dict with success, code, message
@@ -208,8 +234,10 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
 
     current_time = time.time()
 
-    # Check stream duration (must be 30+ minutes)
-    if stream_start_time:
+    # Check stream duration (must be 30+ minutes) - OWNER bypasses this check
+    # stream_start_time now uses YouTube's actualStartTime when available (see session_manager.py)
+    # OWNER bypass is safe because /fuc invite is already OWNER/Director-only
+    if stream_start_time and role != 'OWNER':
         stream_minutes = (current_time - stream_start_time) / 60
         if stream_minutes < MIN_STREAM_DURATION_MINUTES:
             remaining = MIN_STREAM_DURATION_MINUTES - stream_minutes
@@ -219,17 +247,22 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
                 'message': f"Stream too short! Invites unlock after {MIN_STREAM_DURATION_MINUTES} min ({remaining:.0f} min left)."
             }
 
-    # Check cooldown
-    if user_id in _invite_cooldowns:
-        elapsed = current_time - _invite_cooldowns[user_id]
-        cooldown_seconds = INVITE_COOLDOWN_HOURS * 3600
-
-        if elapsed < cooldown_seconds:
-            remaining_hours = (cooldown_seconds - elapsed) / 3600
+    # Check PERSISTENT cooldown (SQLite - survives restarts)
+    remaining_hours = check_persistent_cooldown(user_id)
+    if remaining_hours:
+        # Format nicely: show days if > 24h
+        if remaining_hours >= 24:
+            remaining_days = remaining_hours / 24
             return {
                 'success': False,
                 'code': None,
-                'message': f"Cooldown active! Try again in {remaining_hours:.1f} hours."
+                'message': f"🔒 SCARCITY COOLDOWN! {remaining_days:.1f} days remaining. Invites are RARE! 💎"
+            }
+        else:
+            return {
+                'success': False,
+                'code': None,
+                'message': f"🔒 Cooldown active! {remaining_hours:.1f} hours remaining."
             }
 
     # Check population threshold
@@ -270,14 +303,15 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
             code = generate_invite_code()
             logger.info(f"[INVITE] Local code {code} generated for {username} (Firebase unavailable)")
 
-    # Set cooldown
-    _invite_cooldowns[user_id] = current_time
+    # Set PERSISTENT cooldown (5 days - scarcity!)
+    set_persistent_cooldown(user_id, username)
 
     return {
         'success': True,
         'code': code,
         'message': f"Code distributed to {username}",
-        'population': population
+        'population': population,
+        'next_invite_days': INVITE_COOLDOWN_DAYS
     }
 
 
@@ -303,7 +337,7 @@ def _get_invite_db_path() -> str:
 
 
 def _ensure_invite_table() -> None:
-    """Ensure invite_distributions table exists."""
+    """Ensure invite_distributions and invite_cooldowns tables exist."""
     db_path = _get_invite_db_path()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -320,9 +354,78 @@ def _ensure_invite_table() -> None:
         )
     """)
 
+    # Cooldown persistence - survives bot restarts (5-day scarcity)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS invite_cooldowns (
+            user_id TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            last_invite_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            cooldown_expires_at TIMESTAMP NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
-    logger.debug("[INVITE-DB] Invite tracking table ensured")
+    logger.debug("[INVITE-DB] Invite tracking tables ensured")
+
+
+def check_persistent_cooldown(user_id: str) -> Optional[float]:
+    """
+    Check SQLite for persistent cooldown (survives bot restarts).
+
+    Args:
+        user_id: YouTube channel ID
+
+    Returns:
+        Hours remaining on cooldown, or None if no active cooldown
+    """
+    _ensure_invite_table()
+    db_path = _get_invite_db_path()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT cooldown_expires_at
+        FROM invite_cooldowns
+        WHERE user_id = ?
+        AND cooldown_expires_at > datetime('now')
+    """, (user_id,))
+
+    result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        # Calculate hours remaining
+        from datetime import datetime
+        expires_at = datetime.fromisoformat(result[0])
+        now = datetime.now()
+        remaining = (expires_at - now).total_seconds() / 3600
+        return remaining if remaining > 0 else None
+
+    return None
+
+
+def set_persistent_cooldown(user_id: str, username: str) -> None:
+    """
+    Set persistent cooldown in SQLite (5 days).
+
+    Args:
+        user_id: YouTube channel ID
+        username: Display name for logging
+    """
+    _ensure_invite_table()
+    db_path = _get_invite_db_path()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT OR REPLACE INTO invite_cooldowns (user_id, username, last_invite_at, cooldown_expires_at)
+        VALUES (?, ?, datetime('now'), datetime('now', '+' || ? || ' hours'))
+    """, (user_id, username, INVITE_COOLDOWN_HOURS))
+
+    conn.commit()
+    conn.close()
+    logger.info(f"[INVITE-DB] Set {INVITE_COOLDOWN_DAYS}-day cooldown for {username}")
 
 
 def has_received_invite(user_id: str, invite_type: str = 'auto_top10') -> bool:

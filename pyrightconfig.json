@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/master/packages/pyright-internal/schemas/pyrightconfig.schema.json",
   "venvPath": ".",
   "venv": ".venv",
   "exclude": [

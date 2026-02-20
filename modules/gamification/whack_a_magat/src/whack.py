@@ -109,6 +109,20 @@ class ProfilesRepo:
             )
         """)
 
+        # Troll messages for ML training (captured when whacked)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS troll_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                username TEXT,
+                message_text TEXT NOT NULL,
+                whacked_by_mod TEXT,
+                timestamp REAL,
+                captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_troll_messages_user ON troll_messages(user_id)")
+
         conn.commit()
         conn.close()
 
@@ -391,6 +405,144 @@ class ProfilesRepo:
                 'whacked_by': json.loads(row[2])
             }
         return None
+
+    def get_whacked_leaderboard(self, limit: int = 10) -> List[Dict]:
+        """
+        Get top whacked trolls leaderboard.
+
+        Returns the most frequently whacked targets - these are the trolls
+        that moderators have collectively identified and timed out.
+
+        Used by /whacked command to show troll leaderboard.
+
+        Args:
+            limit: Number of top trolls to return (default 10)
+
+        Returns:
+            List of dicts with target_name, target_id, whack_count
+        """
+        if not self.persist:
+            return []
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT user_id, username, whack_count
+            FROM whacked_users
+            ORDER BY whack_count DESC
+            LIMIT ?
+        ''', (limit,))
+
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                'target_id': row[0],
+                'target_name': row[1],
+                'whack_count': row[2]
+            })
+
+        conn.close()
+        return results
+
+    def get_whack_count_for_user(self, user_id: str) -> int:
+        """
+        Get total whack count for a user (for troll callout).
+
+        Args:
+            user_id: Channel ID of the user
+
+        Returns:
+            Number of times this user has been whacked
+        """
+        if not self.persist:
+            return 0
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT whack_count FROM whacked_users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        return row[0] if row else 0
+
+    def store_troll_messages(self, user_id: str, username: str, messages: List[Dict], mod_id: str) -> int:
+        """
+        Store troll messages for ML training when someone gets whacked.
+
+        Called after a whack to capture the troll's recent messages.
+        This creates labeled training data: (message, label=TROLL)
+
+        Args:
+            user_id: Troll's YouTube channel ID
+            username: Troll's display name
+            messages: List of message dicts with 'text', 'timestamp'
+            mod_id: Moderator who whacked them
+
+        Returns:
+            Number of messages stored
+        """
+        if not self.persist or not messages:
+            return 0
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        stored = 0
+        for msg in messages:
+            try:
+                cursor.execute("""
+                    INSERT INTO troll_messages (user_id, username, message_text, whacked_by_mod, timestamp)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (user_id, username, msg.get('text', ''), mod_id, msg.get('timestamp', 0)))
+                stored += 1
+            except Exception as e:
+                logger.debug(f"[TROLL-TRAIN] Skip duplicate message: {e}")
+
+        conn.commit()
+        conn.close()
+
+        if stored > 0:
+            logger.info(f"[TROLL-TRAIN] Stored {stored} messages from @{username} for ML training")
+
+        return stored
+
+    def get_troll_training_data(self, limit: int = 1000) -> List[Dict]:
+        """
+        Get troll messages for ML training/export.
+
+        Returns labeled data for training troll classifiers.
+
+        Args:
+            limit: Maximum messages to return
+
+        Returns:
+            List of dicts with 'user_id', 'username', 'message_text', 'label'
+        """
+        if not self.persist:
+            return []
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT user_id, username, message_text, whacked_by_mod, timestamp
+            FROM troll_messages
+            ORDER BY captured_at DESC
+            LIMIT ?
+        """, (limit,))
+
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                'user_id': row[0],
+                'username': row[1],
+                'message_text': row[2],
+                'whacked_by_mod': row[3],
+                'timestamp': row[4],
+                'label': 'TROLL'  # All messages in this table are from whacked users
+            })
+
+        conn.close()
+        return results
 
     # Testing utility
     def _reset(self) -> None:

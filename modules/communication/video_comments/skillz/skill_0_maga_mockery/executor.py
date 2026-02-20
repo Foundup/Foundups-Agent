@@ -48,6 +48,10 @@ class SkillContext:
     maga_response: Optional[str] = None
     troll_score: Optional[float] = None  # For logging
 
+    # NEW (2026-02-20): ContentAnalysis for contextual responses
+    # Gap fix: ContentAnalysis was generated but NOT passed to skillz
+    content_analysis: Optional[Any] = None  # ContentAnalysis from comment_content_analyzer
+
     # Shared services (for future expansion)
     history_store: Optional[Any] = None  # CommenterHistoryStore
     llm_client: Optional[Any] = None  # UITarsClient
@@ -97,6 +101,29 @@ class MagaMockerySkill:
         """Initialize MAGA mockery skill"""
         logger.info("[SKILL-0] MAGA Mockery skill initialized")
 
+    # Contextual mockery patterns based on ContentAnalysis
+    # FIX (2026-02-20): Use content_analysis for contextual responses instead of random templates
+    CONTEXTUAL_PATTERNS = {
+        # Anti-channel attacks (like "DO NOT SUBSCRIBE")
+        'channel_attack': [
+            "Telling people not to subscribe? Thanks for the algorithm boost! 📈 #FFCPLN",
+            "Nothing says 'I have no argument' like 'DO NOT SUBSCRIBE' 🤡 #FFCPLN",
+            "Anti-subscribe crusade going well? Meanwhile, the sub count keeps climbing 📊 #FFCPLN",
+        ],
+        # "PDF" accusations (common troll slur)
+        'pdf_accusation': [
+            "PDF? That's your best material? Even Epstein had better comebacks (and better friends - like Trump) 🎯 #FFCPLN",
+            "Calling people PDFs while defending the guy who partied with Epstein. Peak projection 🪞 #FFCPLN",
+            "PDF accusation speedrun any%? Trump-Epstein friendship lasted 15 years btw 📸 #FFCPLN",
+        ],
+        # Generic negative sentiment
+        'negative': [
+            "Imagine being this triggered by a YouTube channel 😂 #FFCPLN",
+            "Your comment history must be a masterpiece of intellectual discourse 🎨 #FFCPLN",
+            "Tell us you have TDS (Trump Devotion Syndrome) without telling us 🧠 #FFCPLN",
+        ],
+    }
+
     def execute(self, context: SkillContext) -> Dict:
         """
         Execute MAGA mockery skill.
@@ -107,11 +134,17 @@ class MagaMockerySkill:
         Returns:
             Dict with:
                 - reply_text: str (unsignified - caller adds 0102 signature)
-                - strategy: 'grok_greeting' | 'whack_a_maga_fallback'
+                - strategy: 'grok_greeting' | 'contextual_mockery' | 'whack_a_maga_fallback'
                 - confidence: float (skill execution confidence)
         """
         logger.info(f"[SKILL-0] Executing for @{context.username} "
                    f"(whacks: {context.whack_count}, confidence: {context.confidence:.2f})")
+
+        # Log content analysis if available
+        if context.content_analysis:
+            logger.info(f"[SKILL-0] Content Analysis: topic={getattr(context.content_analysis, 'topic', 'unknown')}, "
+                       f"sentiment={getattr(context.content_analysis, 'sentiment', 'unknown')}, "
+                       f"key_point={getattr(context.content_analysis, 'key_point', 'none')[:50]}")
 
         # STRATEGY 1: GrokGreetingGenerator response (if available)
         # Pattern from: intelligent_reply_generator.py lines 1023-1025
@@ -128,7 +161,18 @@ class MagaMockerySkill:
                 'confidence': 0.9  # High confidence (LLM-generated)
             }
 
-        # STRATEGY 2: Whack-a-MAGA fallback (random selection)
+        # STRATEGY 2: Contextual mockery based on ContentAnalysis (NEW 2026-02-20)
+        # FIX: Use content_analysis to generate responses that address the specific troll comment
+        if context.content_analysis:
+            contextual_reply = self._generate_contextual_mockery(context)
+            if contextual_reply:
+                return {
+                    'reply_text': contextual_reply,
+                    'strategy': 'contextual_mockery',
+                    'confidence': 0.85  # High confidence (content-aware)
+                }
+
+        # STRATEGY 3: Whack-a-MAGA fallback (random selection)
         # Pattern from: intelligent_reply_generator.py lines 1027-1030
         reply = random.choice(self.TROLL_RESPONSES)
         troll_score = context.troll_score if context.troll_score else context.confidence
@@ -140,6 +184,47 @@ class MagaMockerySkill:
             'strategy': 'whack_a_maga_fallback',
             'confidence': 0.7  # Medium confidence (template-based)
         }
+
+    def _generate_contextual_mockery(self, context: SkillContext) -> Optional[str]:
+        """
+        Generate contextual mockery based on ContentAnalysis.
+
+        FIX (2026-02-20): Address specific troll content instead of generic templates.
+
+        Args:
+            context: Skill context with content_analysis
+
+        Returns:
+            Contextual mockery string or None if no pattern matches
+        """
+        analysis = context.content_analysis
+        comment_lower = context.comment_text.lower()
+
+        # Detect specific attack patterns
+        pattern_key = None
+
+        # PDF accusation (common troll slur)
+        if 'pdf' in comment_lower or 'pedo' in comment_lower:
+            pattern_key = 'pdf_accusation'
+            logger.info("[SKILL-0] Detected PDF/pedo accusation pattern")
+
+        # Anti-subscribe/channel attack
+        elif any(x in comment_lower for x in ['do not subscribe', 'dont subscribe', "don't subscribe", 'unsubscribe']):
+            pattern_key = 'channel_attack'
+            logger.info("[SKILL-0] Detected anti-subscribe/channel attack pattern")
+
+        # Fall back to sentiment-based if topic is politics/negative
+        elif getattr(analysis, 'sentiment', '') == 'negative':
+            pattern_key = 'negative'
+            logger.info("[SKILL-0] Using negative sentiment pattern")
+
+        # Select from contextual patterns
+        if pattern_key and pattern_key in self.CONTEXTUAL_PATTERNS:
+            reply = random.choice(self.CONTEXTUAL_PATTERNS[pattern_key])
+            logger.info(f"[SKILL-0] Contextual mockery: pattern={pattern_key}")
+            return reply
+
+        return None
 
     def _check_duplicate_pattern(self, context: SkillContext) -> bool:
         """

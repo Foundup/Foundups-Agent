@@ -29,6 +29,7 @@ from modules.infrastructure.cli.src.youtube_menu import handle_youtube_menu
 from modules.infrastructure.cli.src.holodae_menu import handle_holodae_menu
 from modules.infrastructure.cli.src.fam_menu import handle_fam_menu
 from modules.infrastructure.cli.src.openclaw_menu import handle_openclaw_menu
+from modules.infrastructure.cli.src.social_media_menu import handle_social_media_menu
 
 logger = logging.getLogger(__name__)
 
@@ -356,6 +357,35 @@ def _run_interactive_menu(
     enable_key_hygiene: bool,
 ) -> None:
     """Run interactive menu loop."""
+    # Initialize centralized DAEmon (cardiovascular system)
+    _central_daemon = None
+    try:
+        from modules.infrastructure.dae_daemon.src.dae_daemon import get_central_daemon
+        from modules.infrastructure.dae_daemon.src.schemas import DAERegistration
+        _central_daemon = get_central_daemon()
+        _central_daemon.start()
+
+        # Pre-register known DAEs
+        _default_daes = [
+            ("yt_livechat", "YouTube LiveChat", "communication"),
+            ("fam_daemon", "FAM DAEmon", "foundups"),
+            ("openclaw", "OpenClaw DAE", "communication"),
+            ("git_push_dae", "GitPush DAE", "infrastructure"),
+            ("sim", "Simulator", "foundups"),
+            ("pqn_portal", "PQN Portal", "ai_intelligence"),
+            ("social_media", "Social Media DAE", "communication"),
+            ("liberty_alert", "Liberty Alert", "communication"),
+            ("holodae", "HoloDAE", "ai_intelligence"),
+            ("vision_dae", "Vision DAE", "infrastructure"),
+        ]
+        for dae_id, dae_name, domain in _default_daes:
+            _central_daemon.register_dae(
+                DAERegistration(dae_id=dae_id, dae_name=dae_name, domain=domain)
+            )
+        logger.info("[CENTRAL-DAEMON] Cardiovascular system active (%d DAEs registered)", len(_default_daes))
+    except Exception as exc:
+        logger.debug("[CENTRAL-DAEMON] Not available: %s", exc)
+
     maybe_auto_index_holo(args.verbose, logger)
     print("\n" + "=" * 60)
     print("0102 FoundUps Agent - DAE Test Menu")
@@ -396,6 +426,7 @@ def _run_interactive_menu(
         print("14. FoundUps Ecosystem (FAM + Simulator + Demo)  | --fam")
         print("15. Follow WSP (WSP_00 gated orchestration)      | --follow-wsp")
         print("16. OpenClaw (Chat / Voice / Server / Portal)    | --chat --voice")
+        print("17. DAE Dashboard (Cardiovascular Monitor)        | Central switch")
         print("=" * 60)
         print("CLI: --youtube --no-lock (bypass menu + instance lock)")
         print("=" * 60)
@@ -440,14 +471,10 @@ def _run_interactive_menu(
                 print("\n[STOP] AMO DAE stopped by user")
 
         elif choice == "4":
-            # Social Media DAE (012 Digital Twin)
-            print("[SMD] Starting Social Media DAE (012 Digital Twin)...")
-            try:
-                from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
-                orchestrator = SocialMediaOrchestrator()
-                print("Digital Twin mode coming soon...")
-            except KeyboardInterrupt:
-                print("\n[STOP] Social Media DAE stopped by user")
+            # Social Media DAE (012 Digital Twin) - LinkedIn Automation
+            while True:
+                if handle_social_media_menu():
+                    break
 
         elif choice == "5":
             # Liberty Alert DAE
@@ -524,6 +551,9 @@ def _run_interactive_menu(
                 if handle_openclaw_menu():
                     break
 
+        elif choice == "17":
+            _run_dae_dashboard(_central_daemon)
+
         else:
             print("Invalid choice. Please try again.")
 
@@ -569,6 +599,82 @@ def _run_follow_wsp(task: str) -> None:
         f"[WSP] Complete: tasks_completed={results.get('tasks_completed', 0)} "
         f"tasks_failed={results.get('tasks_failed', 0)}"
     )
+
+
+def _run_dae_dashboard(central_daemon) -> None:
+    """DAE Dashboard — cardiovascular monitor with centralized switch."""
+    if central_daemon is None:
+        print("\n  [WARN] Central DAEmon not available.")
+        print("  The cardiovascular system failed to initialize.")
+        input("\n  Enter to continue...")
+        return
+
+    _STATE_ICONS = {
+        "registered": "[--]",
+        "starting": "[..]",
+        "running": "[OK]",
+        "degraded": "[!!]",
+        "stopping": "[..]",
+        "stopped": "[--]",
+        "detached": "[XX]",
+        "crashed": "[XX]",
+    }
+
+    while True:
+        dashboard = central_daemon.get_dashboard()
+        daes = dashboard.get("daes", {})
+        reports = dashboard.get("killswitch_reports", [])
+        store = dashboard.get("event_store", {})
+
+        print("\n" + "=" * 60)
+        print("  DAE Dashboard (Cardiovascular Monitor)")
+        print("  " + "-" * 56)
+
+        # DAE status table
+        for dae_id, info in sorted(daes.items()):
+            icon = _STATE_ICONS.get(info["state"], "[??]")
+            enabled = "ON " if info["enabled"] else "OFF"
+            name = info.get("name", dae_id)[:25]
+            domain = info.get("domain", "?")[:12]
+            print(f"  {icon} {enabled} {dae_id:<18} {name:<26} [{domain}]")
+
+        # Stats
+        print("  " + "-" * 56)
+        print(f"  Events: {store.get('total_events', 0)} | Daemon: {dashboard['daemon_state']}")
+
+        # Killswitch reports
+        if reports:
+            print(f"\n  KILLSWITCH REPORTS ({len(reports)}):")
+            for r in reports[-3:]:  # Show last 3
+                print(f"    [XX] {r['dae_id']}: {r['reason'][:50]}")
+
+        # Commands
+        print("\n  Commands: enable <id> | disable <id> | status | back")
+        print("=" * 60)
+
+        try:
+            cmd = input("  > ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            break
+
+        if cmd in ("back", "0", "q", "quit", "exit"):
+            break
+        elif cmd == "status":
+            continue  # Refresh
+        elif cmd.startswith("enable "):
+            dae_id = cmd.split(" ", 1)[1].strip()
+            if central_daemon.enable_dae(dae_id):
+                print(f"  [OK] Enabled: {dae_id}")
+            else:
+                print(f"  [WARN] Unknown DAE: {dae_id}")
+        elif cmd.startswith("disable "):
+            dae_id = cmd.split(" ", 1)[1].strip()
+            if central_daemon.disable_dae(dae_id):
+                print(f"  [OK] Disabled: {dae_id}")
+            else:
+                print(f"  [WARN] Unknown DAE: {dae_id}")
+        elif cmd:
+            print(f"  Unknown command: {cmd}")
 
 
 def _check_instances_with_timeout() -> list:

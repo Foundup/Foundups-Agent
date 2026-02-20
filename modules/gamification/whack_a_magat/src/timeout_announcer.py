@@ -330,6 +330,19 @@ class TimeoutManager:
                 from modules.gamification.whack_a_magat.src.whack import get_profile_store
                 profile_store = get_profile_store()
                 profile_store.record_whacked_user(target_id, target_name, mod_id)
+
+                # TROLL TRAINING: Capture troll's messages for ML training
+                # When mods whack trolls, we save their messages as labeled training data
+                try:
+                    from modules.communication.livechat.src.chat_memory_manager import get_chat_memory_manager
+                    # Use singleton to access the SAME buffers as livechat_core
+                    memory_manager = get_chat_memory_manager()
+                    troll_messages = memory_manager.get_messages_by_user_id(target_id, limit=20)
+                    if troll_messages:
+                        profile_store.store_troll_messages(target_id, target_name, troll_messages, mod_id)
+                except Exception as train_err:
+                    logger.debug(f"[TROLL-TRAIN] Could not capture messages: {train_err}")
+
             except Exception as e:
                 logger.error(f"[WHACK-DB] Failed to record whacked user: {e}")
 

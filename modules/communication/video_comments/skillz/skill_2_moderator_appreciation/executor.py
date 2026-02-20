@@ -52,6 +52,10 @@ class SkillContext:
     mod_rank: Optional[str] = None  # Rank/level
     recent_activity: Optional[str] = None  # Recent moderation actions
 
+    # NEW (2026-02-20): ContentAnalysis for contextual responses
+    # Gap fix: ContentAnalysis was generated but NOT passed to skillz
+    content_analysis: Optional[Any] = None  # ContentAnalysis from comment_content_analyzer
+
     # Shared services (for future expansion)
     history_store: Optional[Any] = None  # CommenterHistoryStore
     llm_client: Optional[Any] = None  # UITarsClient

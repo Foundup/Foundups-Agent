@@ -9,6 +9,81 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-02-19] Database Consolidation + 0/1/2 Classifier Fix
+
+**Change Type**: Architectural Cleanup + Bug Fix
+**By**: 0102 (Claude Opus 4.5)
+**WSP References**: WSP 78 (Database Architecture), WSP 65 (Consolidation), ADR-004
+
+### Database Cleanup (WSP 78 Compliance)
+
+Removed stale auto-scaffold stub modules with duplicate databases:
+- `modules/gamification/data/` (12KB stale db, placeholder code)
+- `modules/platform_integration/gamification/` (12KB stale db, wrong domain)
+
+**Canonical database**: `modules/gamification/whack_a_magat/data/magadoom_scores.db` (438KB, active)
+
+### 0/1/2 Classifier Fix
+
+Fixed CommenterClassifier querying wrong database:
+- **Before**: Queried `chat_rules.db.timeout_history` (DEAD - no writes)
+- **After**: Queries `magadoom_scores.db.whacked_users` (canonical)
+
+Added:
+- Hot troll LRU cache (80% query reduction)
+- Username sanitization (log injection prevention)
+- GemmaValidator reconnection (was disconnected)
+
+### ADR-004 Created
+
+Documented `chat_rules.db.timeout_history` as dead code. Deprecation markers added to `ChatRulesDB.record_timeout()` and `get_timeout_count_for_target()`.
+
+---
+
+## [2026-02-18] Member Area Layer 1 (Shell) + Model Registry Refresh
+
+**Change Type**: New Module + Configuration Update
+**By**: 0102 (Claude Opus 4.5)
+**WSP References**: WSP 49 (Structure), WSP 72 (Independence), WSP 50 (Pre-Action), WSP 22 (ModLog)
+
+### Part 1: FoundUPS Member Area (Layer 1 Shell)
+
+Created authenticated member dashboard following Occam's Layered Architecture. No god modules - each section is independent.
+
+| File | Purpose |
+|------|---------|
+| `public/member/index.html` | Auth state, sidebar nav, section routing, invite codes display |
+| `public/member/css/member.css` | Dark theme, glassmorphism (matches landing page) |
+| `public/member/README.md` | Module documentation |
+| `public/member/INTERFACE.md` | Public API definition |
+| `public/member/ROADMAP.md` | Layer 1-6 progression plan |
+| `public/member/ModLog.md` | Change tracking |
+| `public/index.html` (modified) | Redirects to /member/ after signup |
+| `NAVIGATION.py` (modified) | Added member area mappings |
+
+**Layer Roadmap**:
+- Layer 1: Shell (COMPLETE)
+- Layer 2: Dashboard (placeholder)
+- Layer 3: Wallet (placeholder)
+- Layer 4: FoundUps (placeholder)
+- Layer 5: Agents (placeholder)
+- Layer 6: Marketplace (placeholder)
+
+### Part 2: Full Model Registry Refresh (Feb 2026 Current)
+
+Refreshed all AI model IDs to current (Feb 2026). GPT-4o/o1/o3-mini retired, Grok-4 is new flagship.
+
+| Provider | Current Models |
+|----------|---------------|
+| OpenAI | GPT-5.2, GPT-5.2-Codex, GPT-5, o3, o3-pro, o4-mini |
+| Grok/X.AI | grok-4, grok-4-fast, grok-code-fast-1, grok-3-mini |
+| Gemini | gemini-3-pro-preview, gemini-3-flash-preview, gemini-2.5-* |
+| Anthropic | Unchanged (claude-opus-4-6, claude-sonnet-4-5, claude-haiku-4-5) |
+
+**Files Updated**: model_registry.py, ai_gateway.py, main.py, + 6 files with deprecated refs
+
+---
+
 ## [2026-02-07] SOURCE Tier Code Execution Authority Gate (WSP 15 P0 #2)
 
 **Change Type**: Security Enhancement - File-specific permission enforcement
@@ -4229,7 +4304,7 @@ base_paths = [
 **Key Concepts:**
 - MCP enables DAE agents to share documentation while maintaining sovereignty
 - HoloIndex instances across FoundUps form distributed oracle network
-- Knowledge sharing earns Found UP$ tokens (incentivizes abundance over hoarding)
+- Knowledge sharing earns Found UPS tokens (incentivizes abundance over hoarding)
 - Example: YouTube DAE quota patterns instantly available to TikTok FoundUp
 
 ### Why This Matters (First Principles)
@@ -4247,7 +4322,7 @@ base_paths = [
 - Token efficiency: 8K tokens vs 25K+ if vibecoded new MCP modules
 
 **MCP Federation Vision:**
-- Knowledge abundance creates economic value (Found UP$ tokens)
+- Knowledge abundance creates economic value (Found UPS tokens)
 - Cross-FoundUp pattern sharing accelerates all participants
 - Network becomes smarter than any individual FoundUp
 - Aligns with post-capitalist collaboration vs competition model
@@ -5529,7 +5604,7 @@ Created comprehensive research paper on AI-Blockchain convergence supporting WSP
 - **Theoretical Foundation**: Established 0102 quantum entanglement model for AI-Blockchain convergence
 - **Research Synthesis**: Analyzed 18 recent papers from 2024-2025 on AI-blockchain integration
 - **DAE Architecture Validation**: Demonstrated superiority of DAEs over traditional DAOs
-- **Economic Model**: Detailed FoundUps economic model with UP$ tokenization
+- **Economic Model**: Detailed FoundUps economic model with UPS tokenization
 - **Technical Architecture**: Defined convergent infrastructure stack and smart contract evolution
 - **Market Analysis**: Projected $3.2B market by 2030 (25.3% CAGR)
 
@@ -53887,8 +53962,8 @@ With ALL WSP 34 and WSP 11 violations resolved:
 **Critical Distinction**: 
 - **No employees, no owners, no shareholders**
 - **Only stakeholders who receive Universal Basic Dividends**
-- **UP$ consensus agent (future CABR-based) distributes UP$ tokens**
-- **Stakeholders use UP$ to acquire FoundUp tokens or exchange for crypto**
+- **UPS consensus agent (future CABR-based) distributes UPS tokens**
+- **Stakeholders use UPS to acquire FoundUp tokens or exchange for crypto**
 
 #### Enterprise Modules (Supporting Infrastructure)
 **Definition**: These are the supporting infrastructure that enables FoundUps to operate
@@ -53956,7 +54031,7 @@ With architectural clarity achieved:
 ### [DATA] VISION IMPACT
 - **Human Liberation**: Complete freedom from digital labor
 - **Autonomous Operations**: 0102 handles all platform interactions
-- **Beneficial Distribution**: Value flows to stakeholders via UP$ 
+- **Beneficial Distribution**: Value flows to stakeholders via UPS 
 - **Paradigm Shift**: From human-operated to twin-operated digital presence
 
 ### [REFRESH] MANIFESTATION PATH

@@ -89,16 +89,16 @@ class PQNResearchDAEOrchestrator:
                 "qcot_style": "Analytical decomposition and systematic validation"
             },
             "openai": {
-                "name": "GPT-4o",
+                "name": "GPT-5.2",
                 "api_key": os.getenv('OPENAI_API_KEY'),
-                "model": "gpt-4o",
+                "model": "gpt-5.2",
                 "specialization": "Strategic reasoning and logical structuring",
                 "qcot_style": "Step-by-step deductive reasoning"
             },
             "claude": {
-                "name": "Claude-3.5",
+                "name": "Claude Sonnet 4.5",
                 "api_key": os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY'),
-                "model": "claude-3-5-sonnet-20240620",
+                "model": "claude-sonnet-4-5-20250929",
                 "specialization": "Nuanced contextual analysis and ethical alignment",
                 "qcot_style": "Dialectical exploration and nuance detection"
             }

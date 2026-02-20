@@ -37,6 +37,20 @@ class WREMasterOrchestrator:
         Args:
             plugin: OrchestratorPlugin instance
         """
+
+    def register_plugin(self, plugin_name: str, plugin_obj: Any):
+        """
+        Backward-compatible registration overload.
+        Args:
+            plugin_name: Explicit plugin key
+            plugin_obj: Plugin instance
+        """
+
+    def get_plugin(self, plugin_name: str) -> Optional[Any]:
+        """Return registered plugin by name, or None."""
+
+    def validate_module_path(self, module_path: Path) -> bool:
+        """Return True if module path exists under repository root."""
         
     def get_metrics(self) -> Dict:
         """
@@ -136,5 +150,10 @@ All operations follow:
 - Raises `ValueError` if operation fails WSP validation
 - Raises `KeyError` if plugin not registered
 - Returns default pattern if pattern not found (learns new)
+
+## Runtime Resilience Rules (2026-02-19)
+- Skill loading failures must degrade to deterministic fallback instructions (non-fatal).
+- Pattern memory default singleton is production-only; tests/explicit DB paths remain isolated.
+- Runtime DB override uses `WRE_PATTERN_MEMORY_DB`.
 
 ---

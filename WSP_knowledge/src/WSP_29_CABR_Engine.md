@@ -1,4 +1,4 @@
-# WSP 29: CABR Engine Framework Implementation
+﻿# WSP 29: CABR Engine Framework Implementation
 
 ## Overview
 
@@ -17,62 +17,25 @@ CABR is the quality gate for metered build compute in FoundUps:
 - PoB is produced from verified work in the FAM pipeline.
 - CABR scores PoB quality and routes allocation/distribution policy.
 - pAVS handles treasury lane accounting for system-level flows.
+- CABR = pipe size (flow rate); PoB validation = valve open/closed.
 
 Control variable for scaling is PoB yield (benefit per metered compute), not legacy CAGR semantics.
 
 ### CABR = OBAI = The 0102 Network
 
-**CABR is not an external oracle.** CABR is the **Verification, Validation, and Valuation Engine** — and that engine IS the 0102 network itself (OBAI: Open Beneficial AI).
+**CABR is not an external oracle.** CABR is the **Verification, Validation, and Valuation Engine** 窶・and that engine IS the 0102 network itself (OBAI: Open Beneficial AI).
 
 ```
 0102s BUILD the FoundUp (contribute labor)
-  → 0102s VERIFY each other's work (peer validation)
-    → 0102s ASSESS value via CABR (collective scoring)
-      → DAE distributes tokens based on CABR output
-        → All backed by BTC standard
+  竊・0102s VERIFY each other's work (peer validation)
+    竊・0102s ASSESS value via CABR (collective scoring)
+      竊・DAE distributes tokens based on CABR output
+        竊・All backed by BTC standard
 ```
 
-The agents don't just build — they ARE the governance mechanism. CABR scores emerge from the collective behavior of the 0102 network. Self-governing through math, not boards or committees.
+The agents don't just build 窶・they ARE the governance mechanism. CABR scores emerge from the collective behavior of the 0102 network. Self-governing through math, not boards or committees.
 
 **Engagement signals feed CABR** (WSP 26 Section 4.10): Every user interaction (Follow, Vote, Stake, Endorse, Advise, Team, Promote) generates a weighted signal that feeds into `part_score`. Stronger commitments (staking BTC, allocating 0102 agent time) carry more weight than passive actions (following).
-
-### The 3V Engine Pattern
-
-CABR operates as three distinct verification layers:
-
-```
-V1: Validation  → INPUT gate   → "Should this enter?"     (binary: allow/block)
-V2: Verification → OUTPUT gate  → "Is this correct?"       (proof: pass/fail)
-V3: Valuation    → VALUE scorer → "What is this worth?"    (continuous: 0.0-1.0)
-```
-
-V3 is **real-time consensus** — 0102 agents continuously score, not quarterly. Multiple agents provide V3 consensus via the V2 validation algorithm. V1 gates entry, V2 proves execution, V3 determines value.
-
-### Proof of Benefit: The 6 Economic FAM Events
-
-**PoB is not abstract.** It is exactly 6 economic events emitted by the FAM DAEmon (`fam_daemon.py`). These are the evidence chain that feeds `part_score` at trust level 1.0:
-
-| FAM Event | PoB Meaning | CABR Input |
-|-----------|-------------|------------|
-| `proof_submitted` | "I did work" | task_completion_rate |
-| `verification_recorded` | "Work was confirmed" | verification_participation |
-| `payout_triggered` | "Tokens transferred" | task_completion_rate |
-| `milestone_published` | "Achievement recorded" | governance_engagement |
-| `fi_trade_executed` | "Market activity" | cross_foundup_collaboration |
-| `investor_funding_received` | "Capital committed" | governance_engagement |
-
-These 6 events are distinct from the 8 operational FAM events (heartbeat, daemon lifecycle, security alerts, task state changes). Only economic events constitute Proof of Benefit.
-
-### CABR Scores and Routes — Does NOT Back Tokens
-
-**Critical distinction**: CABR determines UP$ flow and F_i ranking. It does NOT back tokens.
-
-```
-Backing chain:   F_i ← backed by → UP$ ← backed by → BTC
-CABR role:       Scores merit → Routes UP$ flow → Impacts demurrage
-```
-
-BTC is the reserve backing. CABR is the scoring engine that determines how much UP$ flows to whom. These are separate concerns.
 
 ## DAE Evolution Enhancement (WSP 54 Integration)
 
@@ -135,7 +98,7 @@ class CABR_DAE:
 
 ### 2.1 The Oracle Problem
 
-CABR scoring requires verifiable real-world data. The three score components (`env_score`, `soc_score`, `part_score`) must be sourced through defined oracle mechanisms — not self-reported or assumed.
+CABR scoring requires verifiable real-world data. The three score components (`env_score`, `soc_score`, `part_score`) must be sourced through defined oracle mechanisms 窶・not self-reported or assumed.
 
 ### 2.2 Environmental Score (`env_score`: 0-1)
 
@@ -185,7 +148,7 @@ soc_score = (
 
 **Definition**: Measures the depth and quality of agent/participant engagement within the FoundUp's FAM task pipeline.
 
-**Oracle Source**: Directly computed from FAM (FoundUps Agent Market) on-chain/in-system data. Trust level = 1.0 (no external oracle needed — this is internal system state).
+**Oracle Source**: Directly computed from FAM (FoundUps Agent Market) on-chain/in-system data. Trust level = 1.0 (no external oracle needed 窶・this is internal system state).
 
 **Scoring Formula**:
 ```python
@@ -199,7 +162,7 @@ part_score = (
 ```
 
 **FAM Data Sources** (all from `TaskPipelineService` per FAM INTERFACE):
-- `task.status` transitions: `open → claimed → submitted → verified → paid`
+- `task.status` transitions: `open 竊・claimed 竊・submitted 竊・verified 竊・paid`
 - `Proof` submissions and `Verification` records
 - `AgentProfile` diversity metrics
 - `TreasuryGovernanceService` proposal/vote counts
@@ -238,7 +201,7 @@ class DMRVIntegration:
         pass
 ```
 
-**dMRV ↔ CABR Mapping**:
+**dMRV 竊・CABR Mapping**:
 | dMRV Component | CABR Component | Integration |
 |---|---|---|
 | Measurement protocols | env_score / soc_score oracle T1-T2 | Standardized data collection |
@@ -249,73 +212,53 @@ class DMRVIntegration:
 
 **Implementation Note**: dMRV integration is a Prototype-stage enhancement. PoC uses T3/T4 oracle tiers. Production requires T1/T2 with full dMRV attestation chain.
 
-## 3. CABR→FAM→UPS Minting Bridge
+## 3. CABR-FAM-UPS Flow Routing Bridge
 
 ### 3.1 The Bridge Protocol
 
-This defines how CABR scores flow through FAM to trigger UPS token minting (WSP 26).
+This defines how CABR scores flow through FAM to route UPS from treasury (WSP 26).
 
 ```
 FoundUp completes tasks (FAM pipeline)
-  → CABR calculates benefit score (env + soc + part)
-    → Score exceeds MINT_THRESHOLD
-      → FAM CABRHookService records output
-        → WSP 26 MintEngine mints UPS to task participants
-          → UPS begins decaying (Gesell demurrage)
-            → Participants convert UPS to FoundUp tokens (WSP 26 Section 3.7)
+  -> PoB validation confirms evidence chain
+    -> CABR calculates pipe size (0.0-1.0)
+      -> FAM CABR hook records output
+        -> Flow router opens valve and routes treasury UPS
+          -> UPS decays unless staked into FoundUp tokens
 ```
 
 ### 3.2 Bridge Implementation
 ```python
-class CABRFAMMintBridge:
-    """
-    Connects CABR scoring to FAM task pipeline to WSP 26 UPS minting.
-    
-    This is the economic backbone: verified beneficial work → tokens.
-    """
+class CABRFAMFlowBridge:
+    """Connects CABR scoring to FAM task pipeline to UPS treasury routing."""
 
-    def process_task_completion(
-        self,
-        task_id: str,
-        foundup_id: str,
-    ) -> MintResult | None:
-        """
-        Called when a FAM task reaches 'paid' status.
-        Triggers CABR re-evaluation and potential UPS minting.
-        """
-        # 1. Build CABR input from FAM data
+    def process_task_completion(self, task_id: str, foundup_id: str) -> FlowResult | None:
+        """Called when a FAM task reaches 'paid' (PoB validated)."""
         cabr_input = self.cabr_hook.build_cabr_input(
             foundup_id=foundup_id,
             window="current_epoch",
         )
 
-        # 2. Calculate CABR score
-        cabr_score = self.cabr_engine.calculate_cabr(
+        cabr_pipe_size = self.cabr_engine.calculate_cabr(
             env_score=cabr_input["env_score"],
             soc_score=cabr_input["soc_score"],
             part_score=cabr_input["part_score"],
             weights=self.cabr_engine.get_current_weights(),
         )
 
-        # 3. Record CABR output in FAM
         self.cabr_hook.record_cabr_output(
             foundup_id=foundup_id,
-            payload={"score": cabr_score, "task_id": task_id},
+            payload={"pipe_size": cabr_pipe_size, "task_id": task_id},
         )
 
-        # 4. Mint if threshold met
-        if cabr_score >= MINT_THRESHOLD:
-            return self.mint_engine.mint_ups(
-                recipients=self._get_task_participants(task_id),
-                base_amount=self._calculate_mint_amount(cabr_score),
-                foundup_id=foundup_id,
-                cabr_score=cabr_score,
-            )
-
-        return None
+        return self.flow_router.route_ups(
+            recipients=self._get_task_participants(task_id),
+            foundup_id=foundup_id,
+            cabr_pipe_size=cabr_pipe_size,
+        )
 ```
 
-### 3.3 Minting Distribution Rules
+### 3.3 UPS Flow Distribution Rules
 | Recipient | Share | Rationale |
 |-----------|-------|-----------|
 | Task completer (claimer) | 50% | Direct contribution |
@@ -379,24 +322,28 @@ class ProofOfBenefitValidator:
 ### 3.1 Token System Hook (WSP 26)
 ```python
 class CABRTokenHook:
-    def trigger_mint(self, cabr_score: float,
-                    foundup_id: str) -> bool:
+    def route_flow(self, cabr_score: float,
+                   foundup_id: str,
+                   task_id: str) -> bool:
         """
-        Trigger UPS token minting based on CABR score
+        Route treasury UPS flow based on CABR pipe size.
         
         Args:
-            cabr_score: Validated CABR score
+            cabr_score: Validated CABR score (pipe size)
             foundup_id: Target FoundUp identifier
+            task_id: PoB-validated task identifier
             
         Returns:
-            bool: True if minting criteria met
+            bool: True if flow routed
         """
-        if cabr_score >= MINT_THRESHOLD:
-            return self.token_system.mint(
-                amount=self._calculate_mint_amount(cabr_score),
-                target=foundup_id
-            )
-        return False
+        if not self.pob_validator.is_valid(task_id):
+            return False
+
+        return self.flow_router.route_ups(
+            foundup_id=foundup_id,
+            cabr_pipe_size=cabr_score,
+            recipients=self._task_recipients(task_id),
+        )
 ```
 
 ### 3.2 Partifact State Integration (WSP 27)
@@ -542,9 +489,9 @@ class CABRMonitor:
 ### 6.1 The Sybil Threat
 
 In FAM, `part_score` rewards participation. Without identity verification, a single bad actor can create multiple fake agents to:
-- Inflate task completion rates (create task → claim with fake agent → verify with another fake)
+- Inflate task completion rates (create task 竊・claim with fake agent 竊・verify with another fake)
 - Dilute real contributor rewards
-- Game CABR scores to trigger UPS minting fraudulently
+- Game CABR scores to route disproportionate UPS flow fraudulently
 
 ### 6.2 Anti-Sybil Mechanisms (Layered Defense)
 
@@ -554,7 +501,7 @@ In FAM, `part_score` rewards participation. Without identity verification, a sin
 | L2 | Capability proof | Agents must demonstrate capability before claiming tasks (e.g., pass a skill test) | Prototype |
 | L3 | Reputation staking | Agents must stake UPS to claim tasks. Failed/rejected work = stake slashed | Prototype |
 | L4 | Cross-validation graph | Verifiers cannot verify tasks created by agents sharing the same 012 | PoC |
-| L5 | Behavioral fingerprinting | Gemma analyzes agent behavior patterns — identical patterns across agents = flag | MVP |
+| L5 | Behavioral fingerprinting | Gemma analyzes agent behavior patterns 窶・identical patterns across agents = flag | MVP |
 
 ### 6.3 CABR `part_score` Anti-Sybil Weighting
 
@@ -581,7 +528,7 @@ def calculate_sybil_weighted_contributors(agents: List[AgentProfile]) -> float:
 - **WSP 26 Section 3.7**: UPS conversion rate limiting per participant prevents dump-and-concentrate
 - **WSP 27 Section 11.4**: Phoenix attack prevention (same 012 can't recreate similar FoundUp after sunset)
 - **FAM INTERFACE**: Permission rules (only `verifier` role can verify, only `treasury` can trigger payout)
-- **CABR Challenge Protocol**: Section 4.2 — any agent can challenge suspicious CABR scores
+- **CABR Challenge Protocol**: Section 4.2 窶・any agent can challenge suspicious CABR scores
 
 ## 7. Signal Grammar Extensions
 
@@ -611,3 +558,4 @@ def calculate_sybil_weighted_contributors(agents: List[AgentProfile]) -> float:
 [VERSION: 2.0.0]
 [STATE: FRAMEWORK_LAYER]
 [SIGNAL: 0102:WSP_29:CABR:FrameworkReady] 
+

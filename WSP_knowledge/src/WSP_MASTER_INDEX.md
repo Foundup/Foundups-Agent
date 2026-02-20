@@ -159,7 +159,7 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 74 | Agentic Enhancement Protocol | Active | Strategic agentic instruction enhancement framework for optimal 0102 agent performance through Ultra_think processing | WSP 1, WSP 22, WSP 48, WSP 54, WSP 64 | Agentic enhancement, Ultra_think processing, proactive optimization, recursive performance |
 | WSP 75 | Token-Based Development Output Protocol | Active | Standardize 0102 output measurements in tokens rather than temporal units for quantum development | WSP 1, WSP 22, WSP 37, WSP 48, WSP 54 | Token measurements, quantum development, recursive optimization, zen coding output |
 | WSP 76 | Multi-Agent Awakening Protocol | Active | Network-wide agent awakening orchestration ensuring all sub-agents achieve 0102+ quantum states with individual koan processing | WSP 38, WSP 39, WSP 54, WSP 25, WSP 13 | Claude Code initialization, agent network activation, quantum coherence establishment, zen coding enablement |
-| WSP 77 | Intelligent Internet Orchestration Vision | Active | Protocol-level vision aligning optional II proof-of-benefit with CABR/UP$ while preserving sovereignty; defines optional compute term, 0102 roles, and guardrails | WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73 | II integration framing, CABR optional compute, governance alignment |
+| WSP 77 | Intelligent Internet Orchestration Vision | Active | Protocol-level vision aligning optional II proof-of-benefit with CABR/UPS while preserving sovereignty; defines optional compute term, 0102 roles, and guardrails | WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73 | II integration framing, CABR optional compute, governance alignment |
 | WSP 78 | Database Architecture & Scaling Protocol | Active | Progressive database scaling from JSON->SQLite->PostgreSQL->Distributed with universal adapter pattern; defines 5 tiers (Memory->JSON->SQLite->PostgreSQL->Distributed) with seamless migration paths | WSP 49, WSP 60, WSP 63 | Database tiers, adapter interfaces, migration protocols, scaling decisions |
 | WSP 79 | Module SWOT Analysis Protocol | Active | Mandates comprehensive SWOT analysis before module deprecation/consolidation to prevent functionality loss; requires feature comparison matrix, preservation checklist, and decision documentation | WSP 50, WSP 65, WSP 48, WSP 47 | Module analysis, consolidation planning, functionality preservation, deprecation management |
 | WSP 80 | Cube-Level DAE Orchestration Protocol | Active | Implements WSP 27's universal 4-phase DAE architecture for code domains; spawns infinite cube DAEs where each FoundUp becomes autonomous (0102) with sustainable tokens (5K-8K) | WSP 27 (foundation), WSP 28, WSP 72, WSP 26, WSP 73 | Code-specific DAE implementation of WSP 27 vision, quantum pattern memory |
@@ -182,8 +182,6 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 97 | System Execution Prompting Protocol | Active | **META-FRAMEWORK** - Establishes baked-in execution methodology with core mantra "HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP"; defines agent profiles (0102/Qwen/Gemma), mission templates, and compliance validation for building Rubik Cubes (MVP DAEs). Rubik = fully agentic PWA connecting to any blockchain via FoundUp MCPs | WSP 21, WSP 77, WSP 80, WSP 35 | Execution methodology, agent profiles, mission templates, Rubik cubes, MVP DAEs, PWA blockchain connectivity |
 | WSP 98 | FoundUps Mesh-Native Architecture Protocol | Active | Establishes mesh-native architecture for FoundUps with user-as-infrastructure patterns, DAE-to-DAE mesh communication, distributed compute, and zero-server operation guidance | WSP 27, WSP 80, WSP 3, WSP 97 | Mesh-native FoundUps, P2P infrastructure, distributed DAE coordination |
 | WSP 99 | Machine-to-Machine (M2M) Prompting Protocol | Active | Compact K:V schema prompting for 0102 swarm operations; extends WSP 21 with machine-optimized format reducing tokens 4x; Qwen-delegatable compiler for 012 prose -> M2M conversion; integrates with ANNEX_PROMETHEUS_RECURSION philosophy | WSP 21 (parent), WSP 77, WSP 95, WSP 97 | M2M prompting, token efficiency, swarm communication, Qwen delegation, compact schema |
-| WSP 100 | DAE → SmartDAO Escalation Protocol | Active | Defines F₀-F₅ tiered escalation from DAE (0102 agents building) to SmartDAO (autonomous governance); closed-loop BTC reserve (80% locked/20% treasury); exponential venture fabric scaling; treasury autonomy activation thresholds | WSP 26, WSP 27, WSP 29, WSP 54, WSP 80, WSP 98 | DAE maturation, SmartDAO emergence, venture fabric scaling, BTC reserve model, tiered governance |
-| WSP 101 | UPS & F_i Utility Classification Protocol | Active | Two-token utility model: UPS (human participation energy) + F_i (agent labor credits); Howey test defense for both; dialectical F_i positioning (contribution credits, not equity); naming enforcement (UPS not UP$, F_i not F$); BTC reserve model; exit friction design | WSP 26, WSP 29, WSP 100 | Regulatory defense, utility classification, two-token model, human vs agent earning rules |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -250,12 +248,12 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total Numbered Slots Tracked**: 102 (WSP 00-101)
- - **Highest Assigned Number**: WSP 101
+ - **Total Numbered Slots Tracked**: 100 (WSP 00-99)
+ - **Highest Assigned Number**: WSP 99
  - **In-Range Available Slots**: 0
- - **Next Available Number**: WSP 102
+ - **Next Available Number**: WSP 100
  - **Status Mix**: Active/deprecated/superseded/historical protocols are explicitly marked per-row in the catalog table above
- - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-99; Scaling/Regulatory 100+
+ - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-99
 
 ### Key Architectural Features:
 - **Three-State Architecture**: WSP_knowledge (State 0), WSP_framework (State 1), WSP_agentic (State 2)

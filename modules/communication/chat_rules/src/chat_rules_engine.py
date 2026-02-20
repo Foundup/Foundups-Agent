@@ -13,9 +13,27 @@ from datetime import datetime, timedelta
 from dataclasses import asdict
 
 from .user_classifier import UserClassifier, UserProfile, UserType
-from .commands import CommandProcessor
-from .whack_a_magat import WhackAMAGAtSystem, ActionType
 from .response_generator import ResponseGenerator
+
+# NOTE: These imports were broken - WhackAMAGAt moved to gamification module
+# Importing conditionally to prevent module load failures
+try:
+    from .commands import CommandProcessor
+    COMMANDS_AVAILABLE = True
+except ImportError:
+    CommandProcessor = None
+    COMMANDS_AVAILABLE = False
+
+try:
+    from modules.gamification.whack_a_magat.src.whack import apply_whack, get_profile
+    WHACK_AVAILABLE = True
+except ImportError:
+    WHACK_AVAILABLE = False
+
+# Legacy stub for backwards compatibility
+class ActionType:
+    TIMEOUT_10S = "TIMEOUT_10S"
+    TIMEOUT_60S = "TIMEOUT_60S"
 
 logger = logging.getLogger(__name__)
 

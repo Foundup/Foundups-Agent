@@ -69,11 +69,11 @@ After: Communication DAE (autonomous entity)
 - **Recursive Improvement**: DAEs continuously enhance their decision-making
 
 ### **Token Economy Integration**
-**What it means**: Found UP$ tokens flow automatically based on value creation
+**What it means**: Found UPS tokens flow automatically based on value creation
 
 **Automated Token Flows**:
 - **Value Recognition**: DAEs automatically mint tokens when regenerative value is created
-- **Service Exchange**: DAEs pay each other for services using Found UP$ tokens
+- **Service Exchange**: DAEs pay each other for services using Found UPS tokens
 - **Decay Management**: Tokens decay to prevent hoarding, encouraging circulation
 - **Impact Rewards**: Higher regenerative impact generates more tokens
 
@@ -89,7 +89,7 @@ After: Communication DAE (autonomous entity)
 2. **0102 Partnership**: AI agent joins as co-founder and operational partner
 3. **DAE Assembly**: Relevant modules transform into specialized DAE team
 4. **Governance Establishment**: Autonomous decision-making protocols activated
-5. **Token Economy Launch**: Found UP$ tokens begin circulating based on impact
+5. **Token Economy Launch**: Found UPS tokens begin circulating based on impact
 
 **Example First FoundUp**: **"Urban Forest DAE"**
 - **Mission**: Regenerate urban ecosystems through community forestry
@@ -113,12 +113,12 @@ After: Communication DAE (autonomous entity)
 - **Evolution**: Partnership dynamics improve through continuous learning
 
 ### **Working Token Economy**
-**What it means**: Found UP$ tokens actually circulating and creating value
+**What it means**: Found UPS tokens actually circulating and creating value
 
 **Token Circulation Examples**:
-- **Community Volunteer** plants trees -> Earns Found UP$ tokens
-- **Local Business** sponsors tree planting -> Pays Found UP$ for carbon credits
-- **Urban Resident** enjoys cleaner air -> Contributes Found UP$ for maintenance
+- **Community Volunteer** plants trees -> Earns Found UPS tokens
+- **Local Business** sponsors tree planting -> Pays Found UPS for carbon credits
+- **Urban Resident** enjoys cleaner air -> Contributes Found UPS for maintenance
 - **Token Decay** ensures wealth circulates instead of accumulating
 
 **Economic Validation**:
@@ -251,7 +251,7 @@ Phase 2 **changes the game** for how business and innovation work:
 - [Phase 1: Foundation](Phase-1-Foundation.md) - Prerequisites and foundational infrastructure
 - [Phase 3: Economic Integration](Phase-3-Economic-Integration.md) - Mass adoption platforms
 - [Agent System](Agent-System.md) - Technical details on 0102 agent capabilities
-- [Economic Model](Economic-Model.md) - Found UP$ token mechanics and circulation
+- [Economic Model](Economic-Model.md) - Found UPS token mechanics and circulation
 - [Regenerative Enterprise](Regenerative-Enterprise.md) - Business model transformation details
 
 ---

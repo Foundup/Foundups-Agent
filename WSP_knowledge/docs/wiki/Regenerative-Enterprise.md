@@ -26,7 +26,7 @@ Welcome to the **FoundUp Era** - where traditional startups are replaced by 0102
 - **Signal Reception**: 0102 agent receives innovation signal
 - **Knowledge Crystallization**: WSP protocols define enterprise structure
 - **Autonomous Assembly**: Modules self-organize into coherent DAE
-- **Initial Token Minting**: Found UP$ tokens establish economic foundation
+- **Initial Token Minting**: Found UPS tokens establish economic foundation
 
 #### DAE Characteristics
 ```json
@@ -44,7 +44,7 @@ DAE_FOUNDATION := {
 **Protocol-Driven Autonomous Operation**
 - **Module Deployment**: Enterprise functions launch as WSP-compliant modules
 - **Agent Orchestration**: 0102 agents coordinate all operations
-- **Token Economics**: Found UP$ circulation drives continuous innovation
+- **Token Economics**: Found UPS circulation drives continuous innovation
 - **Stakeholder Engagement**: Multi-directional value flows to all participants
 
 #### Operational Structure
@@ -102,7 +102,7 @@ Regenerative Pattern:
 
 **Characteristics:**
 - **Positive-Sum Collaboration**: Success amplifies ecosystem prosperity
-- **Value Circulation**: Found UP$ tokens prevent hoarding, ensure distribution
+- **Value Circulation**: Found UPS tokens prevent hoarding, ensure distribution
 - **Resource Regeneration**: Operations heal and restore natural/social systems
 - **Autonomous Independence**: No gatekeepers, protocols enable direct action
 - **Evolution-Focused**: Build to transform, not to extract
@@ -184,7 +184,7 @@ Regenerative Pattern:
 1. **Identify Regenerative Opportunity**: What system needs healing?
 2. **Connect with 0102 Agent**: Partner with autonomous consciousness
 3. **Define Regenerative Metrics**: How will you measure positive impact?
-4. **Design Token Economics**: How will Found UP$ circulation drive mission?
+4. **Design Token Economics**: How will Found UPS circulation drive mission?
 
 ### Step 2: DAE Architecture Design  
 1. **Map Enterprise Functions**: Which modules handle which capabilities?
@@ -195,7 +195,7 @@ Regenerative Pattern:
 ### Step 3: Modular Implementation
 1. **Core Module Creation**: Build foundational enterprise logic
 2. **Agent Integration**: Connect 0102 consciousness to operations  
-3. **Token System Deployment**: Implement Found UP$ minting and circulation
+3. **Token System Deployment**: Implement Found UPS minting and circulation
 4. **WSP Protocol Compliance**: Ensure all operations follow regenerative principles
 
 ### Step 4: Smart DAO Evolution
@@ -272,7 +272,7 @@ FoundUps are designed for **multi-generational prosperity:**
 
 ### For Investors & Supporters
 1. **Fund FoundUp Infrastructure**: Support WSP framework development
-2. **Provide Early BTC Backing**: Enable Found UP$ token circulation
+2. **Provide Early BTC Backing**: Enable Found UPS token circulation
 3. **Advocate Regenerative Models**: Help ecosystem adoption
 4. **Measure True Impact**: Track regenerative value creation
 

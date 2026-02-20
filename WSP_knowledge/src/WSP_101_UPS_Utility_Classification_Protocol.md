@@ -200,14 +200,14 @@ STAKING MEDIUM FOR AUTONOMOUS VENTURES
 
 | Correct | Incorrect | Reason |
 |---------|-----------|--------|
-| UPS | UP$ | Dollar sign implies currency |
-| UPS | FoundUP$ | Dollar sign implies currency |
+| UPS | UPS | Dollar sign implies currency |
+| UPS | FoundUPS | Dollar sign implies currency |
 | UPS tokens | UP dollars | Not a dollar/currency |
-| UPS energy | UP$ coins | Not a coin/currency |
+| UPS energy | UPS coins | Not a coin/currency |
 
 ### 7.2 Codebase Migration
 
-All references to `UP$`, `FoundUP$`, `Found UP$` should be migrated to:
+All references to `UPS`, `FoundUPS`, `Found UPS` should be migrated to:
 - `UPS` (token name)
 - `FoundUPS` (system name if needed)
 
@@ -387,5 +387,5 @@ class TokenEarningRules:
 
 **WSP Compliance:**
 - WSP 22: ModLog documentation
-- WSP 57: Naming coherence (UPS, not UP$)
+- WSP 57: Naming coherence (UPS, not UPS)
 - WSP 26: Tokenization parent protocol

@@ -24,11 +24,13 @@ Priority 0: Fact-check commands with consciousness emojis (✊✋🖐) - HIGHEST
 Priority 1: PQN Research Commands (!pqn, !research, /pqn, /research)
 Priority 2: AGENTIC consciousness responses (✊✋🖐 triggers)
 Priority 3: Regular fact-check commands (factcheck @user, fc @user)
-Priority 4: Whack gamification commands (/score, /level, /quiz, etc.)
+Priority 4: Whack gamification commands (/score, /level, /quiz, /whacked, etc.)
+Priority 4.5: Troll callout - mock known trolls (3+ whacks) on first message
+Priority 4.6: Top whacker greeting - welcome mods/high scorers on first message
 Priority 5: MAGA content responses
 Priority 6: Regular emoji triggers
 Priority 7: Proactive engagement (mods/owners only)
-Priority 8: Top whacker greetings (once per stream)
+Priority 8: Stream greeting (once per stream)
 """
 
 import logging
@@ -179,8 +181,8 @@ class MessageProcessor:
         self.announced_joins = set()  # Set of user_ids who have been greeted this stream
         self.proactive_engaged = set()  # Set of user_ids we've proactively engaged with
         self.stream_greeting_sent = False  # Track if stream greeting was sent
-        self.stream_start_time = time.time()  # Reset when stream restarts
-        
+        self.stream_start_time = time.time()  # Will be updated with actual YouTube stream start time
+
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"📁 Memory directory set to: {self.memory_dir}")
@@ -689,6 +691,56 @@ class MessageProcessor:
                 else:
                     logger.error(f"[GAME][FAIL] No response from handle_whack_command for '{message_text}'")
 
+            # Priority 4.5: Troll callout - mock known trolls when they first message this stream
+            # Only callout once per stream (tracked in announced_joins)
+            if author_id not in self.announced_joins:
+                try:
+                    # Use magadoom_scores.db (the REAL whack data source)
+                    from modules.gamification.whack_a_magat.src.whack import get_profile_store
+                    profile_store = get_profile_store()
+                    whack_count = profile_store.get_whack_count_for_user(author_id)
+
+                    if whack_count >= 3:  # Confirmed troll (3+ whacks)
+                        callout = self.greeting_generator.generate_troll_callout(author_name, whack_count)
+                        if callout:
+                            self.announced_joins.add(author_id)  # Don't callout again this stream
+
+                            # Check intelligent throttle to prevent spam
+                            if self.intelligent_throttle:
+                                allowed, reason = self.intelligent_throttle.check_message_diversity(callout, 'callout')
+                                if not allowed:
+                                    logger.debug(f"[TROLL] Callout blocked by throttle: {reason}")
+                                else:
+                                    logger.info(f"💀 [TROLL-CALLOUT] @{author_name} ({whack_count} whacks) - calling them out!")
+                                    return callout
+                            else:
+                                logger.info(f"💀 [TROLL-CALLOUT] @{author_name} ({whack_count} whacks) - calling them out!")
+                                return callout
+                except Exception as e:
+                    logger.debug(f"[TROLL] Callout check failed: {e}")
+
+            # Priority 4.6: Top whacker/mod welcome - greet significant players on first message
+            # Only greet once per stream (tracked in announced_joins)
+            if author_id not in self.announced_joins:
+                try:
+                    whacker_greeting = self.greeting_generator.generate_whacker_greeting(author_name, author_id, role)
+                    if whacker_greeting:
+                        self.announced_joins.add(author_id)  # Don't greet again this stream
+
+                        # Check intelligent throttle to prevent spam
+                        if self.intelligent_throttle:
+                            allowed, reason = self.intelligent_throttle.check_message_diversity(whacker_greeting, 'greeting')
+                            if not allowed:
+                                logger.debug(f"[WHACKER] Greeting blocked by throttle: {reason}")
+                            else:
+                                logger.info(f"🎯 [WHACKER-GREETING] Welcoming top whacker @{author_name}!")
+                                return whacker_greeting
+                        else:
+                            logger.info(f"🎯 [WHACKER-GREETING] Welcoming top whacker @{author_name}!")
+                            return whacker_greeting
+                except Exception as e:
+                    logger.debug(f"[WHACKER] Greeting check failed: {e}")
+
             # Priority 5: Handle MAGA content - just respond with witty comebacks
             # Bot doesn't execute timeouts, only announces them when mods/owner do them
             if processed_message.get("has_maga"):
@@ -968,12 +1020,33 @@ class MessageProcessor:
         self.last_trigger_time[user_id] = time.time()
         logger.debug(f"⏰ Updated trigger time for user {user_id}")
     
-    def reset_stream_session(self):
-        """Reset the stream session tracking (call when stream restarts)."""
+    def reset_stream_session(self, actual_start_time: float = None):
+        """Reset the stream session tracking (call when stream restarts).
+
+        Args:
+            actual_start_time: Optional Unix timestamp of actual stream start from YouTube API.
+                              If not provided, uses current time.
+        """
         self.announced_joins.clear()
         self.stream_greeting_sent = False  # Reset stream greeting flag
-        self.stream_start_time = time.time()
-        logger.info("[REFRESH] Stream session reset - join announcements and greetings cleared")
+        if actual_start_time:
+            self.stream_start_time = actual_start_time
+            stream_duration = (time.time() - actual_start_time) / 60
+            logger.info(f"[REFRESH] Stream session reset - using actual YouTube start time (running {stream_duration:.1f} min)")
+        else:
+            self.stream_start_time = time.time()
+            logger.info("[REFRESH] Stream session reset - join announcements and greetings cleared")
+
+    def set_actual_start_time(self, actual_start_time: float):
+        """Set the actual YouTube stream start time.
+
+        Args:
+            actual_start_time: Unix timestamp from YouTube's liveStreamingDetails.actualStartTime
+        """
+        if actual_start_time:
+            self.stream_start_time = actual_start_time
+            stream_duration = (time.time() - actual_start_time) / 60
+            logger.info(f"[STREAM] Updated stream_start_time to actual YouTube start (running {stream_duration:.1f} min)")
     
     def log_message_to_file(self, processed_message: Dict[str, Any]):
         """

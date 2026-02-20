@@ -1,0 +1,4 @@
+# dae_daemon - Centralized DAEmon (Cardiovascular System)
+# All dependencies are stdlib except psutil (optional, for PID termination)
+
+psutil>=5.9.0  # Optional: PID termination in killswitch (falls back to os.kill)

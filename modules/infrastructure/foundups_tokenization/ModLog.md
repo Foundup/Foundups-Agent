@@ -1,25 +1,47 @@
 # ModLog: FoundUps Tokenization System
 
+## 2026-02-17: CABR/UPS Semantics Canonicalization (Flow Routing, Not Mint Trigger)
+
+### Changes
+- Updated `docs/CABR_INTEGRATION.md` to canonical semantics:
+  - CABR = pipe size (flow rate),
+  - PoB = valve,
+  - UPS routed from treasury,
+  - explicit rule: CABR does not mint UPS.
+- Updated `docs/TOKENOMICS.md` terminology:
+  - `total_ups_minted` -> `total_ups_circulating` (formula language),
+  - `mintUPS(...)` example -> `routeUPSFromTreasury(...)`,
+  - CABR section already aligned to routing semantics.
+
+### Rationale
+- Remove lingering documentation drift from legacy CABR-mint language.
+- Keep tokenization docs consistent with simulator runtime routing model.
+
+### WSP References
+- WSP 22 (ModLog)
+- WSP 26 (Tokenization)
+- WSP 29 (CABR Engine)
+
 ## 2025-11-03: Module Creation + Bio-Decay Architecture
 
 ### Changes
 **Created**: FoundUps Tokenization System module
 - **Domain**: `modules/infrastructure/` (WSP 3 compliance)
-- **Purpose**: Bio-decay economic model for UP$ and FoundUp tokens
+- **Purpose**: Bio-decay economic model for UPS and FoundUp tokens
 - **WSP Compliance**: WSP 26 (Tokenization), WSP 29 (CABR), WSP 58 (IP Lifecycle)
 
 ### Architecture Designed
 
 **Two-Token System**:
-1. **UP$ (Universal Participation)**:
-   - Supply mathematically tied to BTC reserves: `UP$ = (BTC_Satoshis) / Num_FoundUps`
+1. **UPS (Universal Participation)**:
+   - Supply mathematically tied to BTC reserves: `UPS = (BTC_Satoshis) / Num_FoundUps`
    - Minted ONLY through CABR validation (WSP 29 integration)
    - Bio-decay states: ICE/LIQUID/VAPOR (water analogy)
    - Adaptive decay using Michaelis-Menten kinetics
 
 2. **FoundUp Tokens** (e.g., JUNK$ for GotJunk):
    - Fixed supply: 21,000,000 per FoundUp (Bitcoin parity)
-   - Acquired via UP$ swap (one-way, burns UP$)
+   - Acquired via UPS swap (one-way, burns UPS)
    - Stage-based release (Rogers Diffusion Curve)
    - Decay varies by stage (early believers = slower decay)
 
@@ -39,7 +61,7 @@ VAPOR: Exited to crypto → 15% TAX (80% → BTC, 20% → Reservoir)
 - Activity reset: Any beneficial action → D=0
 
 **CABR Integration** (Critical):
-- UP$ minting requires multi-agent consensus (Gemma + Qwen + Vision DAE)
+- UPS minting requires multi-agent consensus (Gemma + Qwen + Vision DAE)
 - Quality multiplier: Better actions = more rewards
 - Anti-gaming: Pattern detection, spam prevention
 - BTC correlation: Max mint limited by reserve capacity
@@ -48,7 +70,7 @@ VAPOR: Exited to crypto → 15% TAX (80% → BTC, 20% → Reservoir)
 
 **Documentation**:
 - `README.md` - Module overview and quick start
-- `docs/CABR_INTEGRATION.md` - Complete CABR → UP$ minting flow
+- `docs/CABR_INTEGRATION.md` - Complete CABR → UPS minting flow
 - `docs/BIO_DECAY_MODEL.md` - Mathematical specification (pending)
 - `docs/TOKENOMICS.md` - Economic model documentation (pending)
 
@@ -123,7 +145,7 @@ VAPOR: Exited to crypto → 15% TAX (80% → BTC, 20% → Reservoir)
 1. **Anti-Hoarding**: Adaptive decay punishes inactivity
 2. **Quality Control**: CABR validation ensures beneficial actions only
 3. **Sustainable Value**: BTC backing grows with real ecosystem activity
-4. **Network Effects**: Cross-FoundUp UP$ creates interconnected economy
+4. **Network Effects**: Cross-FoundUp UPS creates interconnected economy
 
 **Metrics**:
 - Token minting: 100% tied to CABR-validated benefit

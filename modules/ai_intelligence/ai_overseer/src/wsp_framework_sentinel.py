@@ -145,16 +145,25 @@ class WSPFrameworkSentinel:
         framework_only = sorted(framework_ids - knowledge_ids)
         knowledge_only = sorted(knowledge_ids - framework_ids)
         index_issues = self._check_master_index(framework_ids)
+        allow_knowledge_only = os.getenv("WSP_FRAMEWORK_ALLOW_KNOWLEDGE_ONLY", "1") != "0"
 
         severity = "ok"
         if not knowledge_exists:
             severity = "warning"
             index_issues = [*index_issues, "WSP_knowledge/src missing"]
-        elif drift_files or framework_only or knowledge_only or index_issues:
+        elif drift_files or framework_only or index_issues:
+            severity = "warning"
+        elif knowledge_only and not allow_knowledge_only:
             severity = "warning"
 
         if severity == "ok":
-            message = "WSP framework and knowledge backup are in sync"
+            if knowledge_only:
+                message = (
+                    "WSP framework and knowledge backup are in sync "
+                    f"(backup_only={len(knowledge_only)})"
+                )
+            else:
+                message = "WSP framework and knowledge backup are in sync"
         else:
             message = (
                 f"drift={len(drift_files)} framework_only={len(framework_only)} "

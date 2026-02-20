@@ -1,5 +1,87 @@
 # ModLog — MAGADOOM Whack-a-Magat Autonomous DAE
 
+## Database Consolidation - Stale Duplicates Removed (2026-02-19)
+**WSP References**: WSP 78 (Database Architecture), WSP 65 (Component Consolidation)
+
+**Surgical Cleanup**:
+- Removed `modules/gamification/data/` (auto-scaffold stub, 12KB stale db)
+- Removed `modules/platform_integration/gamification/` (wrong domain, 12KB stale db)
+
+**Canonical Database**: `modules/gamification/whack_a_magat/data/magadoom_scores.db` (438KB, active)
+
+**Verification**:
+- No code imports from removed stubs
+- All whack.py, invite_distributor.py, magats_economy.py correctly reference canonical path
+- WSP 78 compliance: single source of truth
+
+---
+
+## Managing Directors JSON + Fixed Wrong ID (2026-02-19)
+**WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog)
+
+**Root Cause Found**
+- MANAGING_DIRECTORS had wrong ID: `UCcnCiZV5ZPJ_cjF7RsWIZ0w` (Al-sq5ti)
+- But JS's actual ID in moderators_list.json: `UC_2AskvFe9uqp9maCS6bohg`
+- These are DIFFERENT people - that's why /fuc invite wasn't working!
+
+**Solution: managing_directors.json**
+Created `modules/communication/livechat/data/managing_directors.json`:
+```json
+[
+  {
+    "user_id": "UC_2AskvFe9uqp9maCS6bohg",
+    "username": "JS",
+    "title": "Managing Director",
+    "channel": "Move2Japan"
+  }
+]
+```
+
+**Benefits**:
+- **Live updates**: Edit JSON while bot is running (no code changes!)
+- **Multiple MDs**: Just add more entries to the array
+- **Single source**: Both command_handler.py and invite_distributor.py load from same JSON
+
+**Files Modified**:
+- `command_handler.py`: `_load_managing_directors()` function loads from JSON
+- `invite_distributor.py`: `_load_community_presenters()` loads MDs + core team
+- Created `livechat/data/managing_directors.json`
+
+---
+
+## 5-Day Invite Scarcity + Persistent Cooldowns (2026-02-18)
+**WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog)
+
+**Problem**
+- Invites had 24-hour cooldown (too common, not scarce)
+- Cooldowns were in-memory (reset on bot restart)
+- Managing Directors couldn't use /fuc invite
+
+**Fixes**
+
+**Scarcity Upgrade** (invite_distributor.py):
+- `INVITE_COOLDOWN_DAYS = 5` (was 24 hours, now 5 days = 120 hours)
+- New `invite_cooldowns` SQLite table for persistence across restarts
+- `check_persistent_cooldown()` / `set_persistent_cooldown()` functions
+- Scarcity messaging: "🔒 SCARCITY COOLDOWN! X.X days remaining. Invites are RARE! 💎"
+
+**Managing Director Fix** (command_handler.py):
+- Added debug logging for MD checks
+- MD requires both: user_id in MANAGING_DIRECTORS AND role == 'MOD'
+- Shows `[FUC] Managing Director check:` in logs
+
+**Success Message**:
+```
+🎟️ EXCLUSIVE INVITE CODE!
+💎 Code: FUP-XXXX-XXXX
+🌐 Use at: foundups.com
+⚠️ One-time use only! Share wisely! ✊✋🖐️
+🎁 New members get 5 invite codes!
+🔒 Next invite available in 5 days (SCARCITY!)
+```
+
+---
+
 ## Random Presenter Selection for Invite Distribution (2026-02-12)
 **WSP References**: WSP 77 (Agent Coordination), WSP 22 (ModLog)
 

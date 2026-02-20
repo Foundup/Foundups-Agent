@@ -118,14 +118,14 @@ L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
 
 ## WSP 26 Section 6.8: Human vs Agent Economic Boundary (2026-02-10)
 **WSP Protocol References**: WSP 26, WSP 29, WSP 54
-**Impact Analysis**: Critical anti-Sybil design - agents cannot earn UP$, only F_i
+**Impact Analysis**: Critical anti-Sybil design - agents cannot earn UPS, only F_i
 
 ### Changes Made:
 1. **WSP 26 Enhanced**: Added Section 6.8 "Human vs Agent Economic Boundary"
-   - Agents earn F_i (FoundUp-specific tokens), NOT UP$
-   - Humans earn UP$ (participation + lottery "found it!")
-   - Agents SPEND allocated UP$ budgets from humans
-   - Fee taken at F_i -> UP$ conversion boundary (3% total: 1% ops, 1.5% vault, 0.5% insurance)
+   - Agents earn F_i (FoundUp-specific tokens), NOT UPS
+   - Humans earn UPS (participation + lottery "found it!")
+   - Agents SPEND allocated UPS budgets from humans
+   - Fee taken at F_i -> UPS conversion boundary (3% total: 1% ops, 1.5% vault, 0.5% insurance)
 
 2. **Simulator Token Economics Module** (`modules/foundups/simulator/economics/`):
    - `token_economics.py`: TokenEconomicsEngine, HumanUPSAccount, AgentExecutionWallet, FoundUpTokenPool
@@ -137,9 +137,9 @@ L:<lane> S:<scope> M:<mode> T:<task> R:[wsps] I:{inv} O:[out] F:[fail]
 
 ### Key Principle:
 ```
-UP$ = gasoline (spent by agents, earned by humans)
+UPS = gasoline (spent by agents, earned by humans)
 F_i = mined asset (earned by agents, owned by humans)
-Fee taken at F_i -> UP$ boundary (realization event)
+Fee taken at F_i -> UPS boundary (realization event)
 ```
 
 **Anti-Sybil Protection**: Prevents spin-up-agents-to-grind attack by separating earning (humans) from spending (agents).
@@ -273,7 +273,7 @@ Fee taken at F_i -> UP$ boundary (realization event)
 ## Module-Specific Change Log (WSP 22 Compliance)
 ## WSP 77 Created: Intelligent Internet Orchestration Vision
 **WSP Protocol References**: WSP 77 (new), WSP 26, WSP 27, WSP 29, WSP 32, WSP 58, WSP 73, WSP 22, WSP 64
-**Impact Analysis**: Establishes canonical, sovereignty-preserving protocol framing for optional II proof-of-benefit integration with CABR/UP$.
+**Impact Analysis**: Establishes canonical, sovereignty-preserving protocol framing for optional II proof-of-benefit integration with CABR/UPS.
 **Enhancement Tracking**: Adds optional compute term guidance, 0102 II-roles, receipt schema, safety guardrails; no changes to core tokenomics.
 
 ### Changes Made:
@@ -286,7 +286,7 @@ Fee taken at F_i -> UP$ boundary (realization event)
 ---
 ## Tokenomics Cross-References Added (WSP 26 -> WSP 29, WSP 58)
 **WSP Protocol References**: WSP 26 (FoundUPS Tokenization), WSP 29 (CABR Engine), WSP 25 (Semantic Score), WSP 58 (IP Lifecycle)
-**Impact Analysis**: Ensures UP$ tokenomics are coherently linked to CABR mint validation and IP tokenization lifecycle.
+**Impact Analysis**: Ensures UPS tokenomics are coherently linked to CABR mint validation and IP tokenization lifecycle.
 **Enhancement Tracking**: Added explicit cross-references in `WSP_26` to WSP 29 and WSP 58; clarified WSP 25 title.
 
 ### Changes Made:
@@ -330,7 +330,7 @@ Fee taken at F_i -> UP$ boundary (realization event)
 
 ## Cross-Protocol Summary Added to WSP 26
 **WSP Protocol References**: WSP 26, WSP 25, WSP 29, WSP 58, WSP 22
-**Impact Analysis**: Improves immediate discoverability of tokenomics relationships for 0102 pArtifacts; clarifies lifecycle from CABR -> UP$ -> BTC -> decay/reinvestment -> IP tokens.
+**Impact Analysis**: Improves immediate discoverability of tokenomics relationships for 0102 pArtifacts; clarifies lifecycle from CABR -> UPS -> BTC -> decay/reinvestment -> IP tokens.
 **Enhancement Tracking**: Added Section 1.1 [U+201C]Cross-Protocol Summary[U+201D] to `WSP_26`.
 
 ### Changes Made:

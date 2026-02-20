@@ -35,7 +35,7 @@ Design intent:
 - CABR integration hooks as interfaces.
 - Event audit trail linking payout to proof to task to foundup.
 - Verified milestone distribution contract with idempotent publish semantics.
-- F_0 investor program for MVP pre-launch bidding (200 UP$/term, max 5-term hoard).
+- F_0 investor program for MVP pre-launch bidding (200 UPS/term, max 5-term hoard).
 - In-memory adapter for deterministic tests.
 - SQLite persistence adapter with schema migrations and query indexes.
 - Postgres adapter boundary and backend factory selection.

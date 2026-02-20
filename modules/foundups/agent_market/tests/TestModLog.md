@@ -60,8 +60,8 @@
 - Status: PASS
 - Result: 4 passed
 - Notes:
-  - Validates 5-term cap at 200 UP$/term.
-  - Validates bid UP$ gating and treasury-only resolve.
+  - Validates 5-term cap at 200 UPS/term.
+  - Validates bid UPS gating and treasury-only resolve.
   - Validates highest-bid allocation + loser refund + treasury injection accounting.
 
 ## 2026-02-08 (Prototype Tranche 2: Persistence Layer)

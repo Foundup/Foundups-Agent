@@ -244,8 +244,9 @@ except Exception as e:
     ModeratorAppreciationSkill = None
     SKILLS_AVAILABLE = False
 
-# Phase 3R+: CommenterClassifier integration (whack history from chat_rules.db)
+# Phase 3R+: CommenterClassifier integration (whack history from magadoom_scores.db)
 # WSP 96 compliant: Extracted classifier with sentiment analysis
+# FIX (2026-02-19): Uses magadoom_scores.db (not chat_rules.db which was nearly empty)
 try:
     from modules.communication.video_comments.src.commenter_classifier import (
         get_classifier,
@@ -293,32 +294,27 @@ class CommenterType(Enum):
     0102 Consciousness Mapping:
         ✊ (0) = MAGA_TROLL - UN/Conscious (needs awakening via mockery)
         ✋ (1) = REGULAR - DAO/Unconscious (learning, engaging)
-        🖐️ (2) = MODERATOR - DU/Entanglement (fully aligned, community leaders)
-        🤝 (3) = ALLY - Anti-MAGA ally (join in trolling Trump together!)
+        🖐️ (2) = MODERATOR - DU/Entanglement (fully aligned, community leaders + allies)
     """
     MODERATOR = "moderator"
     SUBSCRIBER = "subscriber"
     MAGA_TROLL = "maga_troll"
     REGULAR = "regular"
     UNKNOWN = "unknown"
-    ALLY = "ally"  # Anti-Trump/anti-MAGA ally - agree and join in trolling!
 
     def to_012_code(self) -> int:
         """
-        Convert commenter type to 0/1/2/3 classification code.
+        Convert commenter type to 0/1/2 classification code.
 
         Returns:
             0 = MAGA troll (✊)
             1 = Regular/Subscriber (✋)
-            2 = Moderator (🖐️)
-            3 = Anti-MAGA Ally (🤝)
+            2 = Moderator/Ally (🖐️)
         """
         if self == CommenterType.MAGA_TROLL:
             return 0  # ✊ UN/Conscious
         elif self == CommenterType.MODERATOR:
-            return 2  # 🖐️ DU/Entanglement
-        elif self == CommenterType.ALLY:
-            return 3  # 🤝 Anti-MAGA ally
+            return 2  # 🖐️ DU/Entanglement (includes allies)
         else:  # REGULAR, SUBSCRIBER, UNKNOWN
             return 1  # ✋ DAO/Unconscious
 
@@ -331,6 +327,7 @@ class CommenterProfile:
     is_moderator: bool = False
     is_subscriber: bool = False
     is_troll: bool = False
+    is_ally: bool = False  # Anti-MAGA ally (triggers agreement mode within MODERATOR tier)
     troll_score: float = 0.0
     engagement_count: int = 0
     commenter_type: CommenterType = CommenterType.UNKNOWN
@@ -1591,8 +1588,8 @@ Reply (address their specific point, no generic phrases):"""
             logger.info(f"[CLASSIFY]   Reason: Verified in database or DOM badge")
             return profile
 
-        # Step 1.5: Check whack history from chat_rules.db (strongest troll signal)
-        # WSP 96: Uses extracted CommenterClassifier for whack tracking
+        # Step 1.5: Check whack history from magadoom_scores.db (strongest troll signal)
+        # WSP 96: Uses extracted CommenterClassifier for whack tracking (FIX 2026-02-19)
         if CLASSIFIER_AVAILABLE:
             try:
                 classifier = get_classifier()
@@ -1611,16 +1608,18 @@ Reply (address their specific point, no generic phrases):"""
                     profile.troll_score = confidence
                     logger.info(f"[CLASSIFY] [DECISION] Result: 0✊ (MAGA_TROLL)")
                     logger.info(f"[CLASSIFY]   Reason: WHACK HISTORY - {whack_count}x prior whacks (confidence: {confidence:.2f})")
-                    logger.info(f"[CLASSIFY]   Source: chat_rules.db timeout_history")
+                    logger.info(f"[CLASSIFY]   Source: magadoom_scores.db whacked_users")
                     return profile
 
                 # ALLY DETECTION (2026-02-12): Check for anti-Trump/anti-MAGA ally
                 # If they're criticizing Trump, AGREE with them - don't give generic response!
+                # 2026-02-17: ALLY collapsed into MODERATOR (2) - use is_ally flag for agreement mode
                 if classifier_result.get('method') == 'sentiment_ally':
                     pattern = classifier_result.get('pattern_detected', '')
                     confidence = classifier_result.get('confidence', 0.85)
-                    profile.commenter_type = CommenterType.ALLY
-                    logger.info(f"[CLASSIFY] [DECISION] Result: 3🤝 (ALLY)")
+                    profile.commenter_type = CommenterType.MODERATOR  # 2 = MODERATOR (includes allies)
+                    profile.is_ally = True  # Flag for agreement-mode responses
+                    logger.info(f"[CLASSIFY] [DECISION] Result: 2🖐️ (MODERATOR/ALLY)")
                     logger.info(f"[CLASSIFY]   Reason: ANTI-TRUMP ALLY - pattern: '{pattern}' (confidence: {confidence:.2f})")
                     logger.info(f"[CLASSIFY]   Strategy: AGREE and join in trolling Trump! #FFCPLN")
                     return profile
@@ -2266,7 +2265,8 @@ Reply (address their specific point, no generic phrases):"""
                         comment_text=comment_text,
                         classification="MODERATOR",
                         confidence=1.0,
-                        llm_reply=llm_reply  # Pass pre-generated LLM reply
+                        llm_reply=llm_reply,  # Pass pre-generated LLM reply
+                        content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-2] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
                     reply_text = result.get('reply_text', '')
@@ -2301,6 +2301,7 @@ Reply (address their specific point, no generic phrases):"""
                     # Move2Japan: Full aggressive MAGA mockery (default)
                     try:
                         logger.info(f"[CHANNEL-AWARE] Aggressive MAGA mockery for {channel_personality['name']}")
+                        # FIX (2026-02-20): Pass content_analysis for contextual mockery
                         result = self.skill_0.execute(Skill0Context(
                             user_id=author_channel_id or "unknown",
                             username=author_name,
@@ -2309,7 +2310,8 @@ Reply (address their specific point, no generic phrases):"""
                             confidence=profile.troll_score if hasattr(profile, 'troll_score') else 0.7,
                             whack_count=getattr(profile, 'whack_count', 0),
                             maga_response=getattr(profile, 'maga_response', None),
-                            troll_score=getattr(profile, 'troll_score', 0.7)
+                            troll_score=getattr(profile, 'troll_score', 0.7),
+                            content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                         ))
                         logger.info(f"[SKILL-0] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
                         reply_text = result.get('reply_text', '')
@@ -2326,8 +2328,9 @@ Reply (address their specific point, no generic phrases):"""
                         logger.error(f"[SKILL-0] ❌ Execution failed: {e}", exc_info=True)
                         return self._add_0102_signature("Thanks for the comment! 🙏", tier=original_tier, comment_age_days=self._current_comment_age_days)
 
-            elif profile.commenter_type == CommenterType.ALLY:
+            elif profile.is_ally:
                 # ALLY MODE (2026-02-12): Anti-MAGA ally detected - AGREE and join trolling!
+                # 2026-02-17: ALLY collapsed into MODERATOR (2) - triggered by is_ally flag
                 # These are friends who criticize Trump/MAGA - we join in, not give generic responses
                 logger.info(f"[ALLY-MODE] 🤝 Anti-MAGA ally detected: @{author_name}")
                 logger.info(f"[ALLY-MODE]   Comment: {comment_text[:60]}...")
@@ -2394,7 +2397,8 @@ Generate your agreement response (1-2 sentences):"""
                         confidence=0.5,
                         llm_reply=llm_reply,
                         theme=theme,
-                        is_subscriber=True
+                        is_subscriber=True,
+                        content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}, Subscriber: True")
                     reply_text = result.get('reply_text', '')
@@ -2424,7 +2428,8 @@ Generate your agreement response (1-2 sentences):"""
                         confidence=0.5,
                         llm_reply=llm_reply,
                         theme=theme,
-                        is_subscriber=False
+                        is_subscriber=False,
+                        content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
                     reply_text = result.get('reply_text', '')

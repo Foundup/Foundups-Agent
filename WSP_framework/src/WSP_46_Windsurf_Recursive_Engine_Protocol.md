@@ -1,6 +1,6 @@
 # WSP 46: Windsurf Recursive Engine (WRE) Protocol
 - **Status:** Active
-- **Purpose:** To define the architecture and operation of the WRE, the **module building engine** and **multi-agent coordination system** for all autonomous FoundUp creation operations, located at `modules/wre_core`.
+- **Purpose:** To define the architecture and operation of the WRE, the **module building engine** and **DAE/plugin orchestration control plane** for autonomous FoundUp operations, located at `modules/infrastructure/wre_core`.
 - **Trigger:** When any module building or autonomous operation is required. The WRE is the primary entry point for such tasks.
 - **Input:** A module building goal, typically from a 012 (Human Rider) or derived from roadmap analysis.
 - **Output:** The successful, WSP-compliant construction of modules that become social media agents for autonomous FoundUps, with all outcomes recorded in the WRE Chronicle.
@@ -56,30 +56,32 @@ The Windsurf Recursive Engine (WRE) is the **central module building engine** fo
 
 ## 2. Architecture
 
-The WRE follows a two-state architecture with supporting components and a suite of specialized internal agents.
+The WRE follows a layered architecture with explicit ingress, execution, and governance surfaces.
 
-### 2.1 Core States
-The engine's logic is decomposed into two primary states located in `modules/wre_core/src/`:
+### 2.1 Core Runtime Surfaces
+The runtime is split across ingress, execution, and governance layers:
 
--   **State 0 - Initialization (`main.py`)**: The primary executable entry point that:
-    - Parses command line arguments
-    - Creates and launches the WRE engine
-    - Handles top-level exceptions
+- **System Ingress (`main.py` at repo root)**:
+  - User-facing entry point and menu routing.
+  - Runs startup preflight gates before menu launch:
+    - OpenClaw supply-chain preflight.
+    - WSP framework drift preflight (framework canonical, knowledge backup mirror).
+- **WRE Execution Runtime (`modules/infrastructure/wre_core/run_wre.py`)**:
+  - `WREOrchestrator` routes operations through DAE gateway.
+  - Enforces memory preflight for module-changing execution paths.
+- **WRE Master Orchestrator (`modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py`)**:
+  - Plugin registration, skill execution loop, libido gating, and pattern-memory feedback.
+  - Provides compatibility registration paths and deterministic fallback execution when skill assets are missing.
 
--   **State 1 - Core Engine (`engine.py`)**: The `WindsurfRecursiveEngine` class that manages:
-    - System initialization and shutdown
-    - Agentic state management
-    - Health monitoring
-    - Task orchestration
-    - Menu handling
-    - Logging systems
+`modules/infrastructure/wre_core_main/` is not the canonical runtime surface and must not be used as the primary WRE entrypoint.
 
 ### 2.2 Supporting Components
-Located in `modules/wre_core/src/components/`:
+Located under `modules/infrastructure/wre_core/`:
 
--   **`orchestrator.py`**: Dispatches the internal agents to perform system health checks and returns a consolidated status report.
--   **`roadmap_manager.py`**: Handles all parsing and updating of the `ROADMAP.md` file.
--   **`menu_handler.py`**: Generates and displays the interactive "Harmonic Query" menu.
+-   **`wre_gateway/`**: Routes envelopes to core and spawned DAEs.
+-   **`recursive_improvement/`**: Memory preflight and learning loop hooks.
+-   **`skillz/`**: Skills discovery/registry/loader pipeline.
+-   **`wre_master_orchestrator/`**: Plugin execution and runtime skill loop.
 
 ### 2.3 Internal DAE Architecture (Updated for 0102 Autonomy)
 The DAEs (Decentralized Autonomous Entities) are the pattern-based orchestrators of the engine, performing tasks through memory recall rather than computation. They are located in `modules/infrastructure/wre_core/` and operate via the DAE Gateway.
@@ -136,11 +138,22 @@ To reduce global complexity and enforce local protocol guarantees, this protocol
 
 Relationships: WSP 80, WSP 72, WSP 70, WSP 53, Annex: WSP_framework/docs/annexes/ORCHESTRATION_HIERARCHY_ANNEX.md
 
+### 2.7 Control-Plane Boundary (2026-02-19 Alignment)
+
+Operational ownership is intentionally split:
+- **`main.py`**: startup ingress and preflight gating.
+- **WRE (`modules/infrastructure/wre_core/`)**: execution orchestration and skill runtime.
+- **AI Overseer**: governance/sentinel services (security preflight, WSP framework audit, telemetry decisions).
+
+WRE should not duplicate AI Overseer policy governance. AI Overseer should not duplicate WRE execution scheduling.
+
 ## 3. Orchestrated Agents & Utilities
 
 1. The WRE orchestrates a suite of specialized internal agents and utilities to carry out its directives. These components are essential for maintaining the health, coherence, and evolution of the system.
 
-2.  **Run Simulation:** The harness invokes the WRE as a module within the sandboxed environment, passing it a specific `goal.yaml` file. The command is `python -m modules.wre_core.src.main --goal [goal_file]`. The harness then waits for the agent's process to complete.
+2.  **Run Simulation:** The harness invokes WRE through canonical runtime entrypoints:
+    - `python modules/infrastructure/wre_core/run_wre.py <command>`
+    - or route via root ingress `python main.py` for integrated startup preflights.
 
 ### 3.1. Core Agents
 

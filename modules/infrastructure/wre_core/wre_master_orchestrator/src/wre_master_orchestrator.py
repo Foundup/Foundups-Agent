@@ -32,6 +32,7 @@ NAVIGATION: Central WRE plugin router and pattern-memory gate.
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import uuid
 from datetime import datetime
@@ -188,6 +189,7 @@ class WREMasterOrchestrator:
         """
         Initialize per WSP 1 (Foundation) and WSP 13 (Agentic System)
         """
+        self.repo_root = Path(__file__).resolve().parents[5]
         # Core components per WSP architecture
         self.pattern_memory = PatternMemory()  # WSP 60 (original in-memory patterns)
         self.wsp_validator = WSPValidator()    # WSP 64
@@ -196,8 +198,21 @@ class WREMasterOrchestrator:
         # WSP 96 v1.3: Micro Chain-of-Thought infrastructure
         if WRE_SKILLS_AVAILABLE:
             self.libido_monitor = GemmaLibidoMonitor()  # Pattern frequency sensor
-            self.sqlite_memory = SQLitePatternMemory()  # Persistent outcome storage
+            db_override = os.getenv("WRE_PATTERN_MEMORY_DB")
+            if db_override:
+                self.sqlite_memory = SQLitePatternMemory(db_path=Path(db_override))
+            elif os.getenv("PYTEST_CURRENT_TEST"):
+                self.sqlite_memory = SQLitePatternMemory(db_path=Path(":memory:"))
+            else:
+                self.sqlite_memory = SQLitePatternMemory()  # Persistent outcome storage
             self.skills_loader = WRESkillsLoader()      # Skill discovery and loading
+            # WRE execution loop needs burst allowance; cap by max_frequency.
+            self.libido_monitor.set_thresholds(
+                "qwen_gitpush",
+                min_frequency=1,
+                max_frequency=5,
+                cooldown_seconds=0,
+            )
         else:
             self.libido_monitor = None
             self.sqlite_memory = None
@@ -245,14 +260,41 @@ class WREMasterOrchestrator:
             pattern="discover->apply->learn"
         )
     
-    def register_plugin(self, plugin: OrchestratorPlugin):
+    def register_plugin(self, plugin: Any, plugin_obj: Optional[Any] = None):
         """
         Register orchestrator plugin per WSP 65 (Consolidation)
         Converts existing orchestrators to plugins
         """
-        plugin.register(self)
-        self.plugins[plugin.name] = plugin
-        print(f"Registered {plugin.name} as plugin per WSP 65")
+        # Backward compatible API:
+        # - register_plugin(plugin_instance_with_name)
+        # - register_plugin("name", plugin_instance)
+        if isinstance(plugin, str):
+            if plugin_obj is None:
+                raise ValueError("plugin_obj is required when plugin name is provided")
+            plugin_name = plugin
+            plugin_instance = plugin_obj
+        else:
+            plugin_instance = plugin
+            plugin_name = getattr(plugin_instance, "name", plugin_instance.__class__.__name__.lower())
+
+        if hasattr(plugin_instance, "register"):
+            plugin_instance.register(self)
+        elif hasattr(plugin_instance, "master"):
+            plugin_instance.master = self
+
+        self.plugins[plugin_name] = plugin_instance
+        print(f"Registered {plugin_name} as plugin per WSP 65")
+
+    def get_plugin(self, plugin_name: str) -> Optional[Any]:
+        """Return plugin by name if registered."""
+        return self.plugins.get(plugin_name)
+
+    def validate_module_path(self, module_path: Path) -> bool:
+        """Validate that module path exists under repo root."""
+        candidate = Path(module_path)
+        if not candidate.is_absolute():
+            candidate = (self.repo_root / candidate).resolve()
+        return candidate.exists() and candidate.is_dir()
     
     def execute(self, task: Dict) -> Any:
         """
@@ -278,6 +320,18 @@ class WREMasterOrchestrator:
         """Log operation per WSP 22 (Module ModLog and Roadmap)"""
         # In real implementation, would update ModLog
         print(f"Logged: {task} -> {result} (per WSP 22)")
+
+    @staticmethod
+    def _fallback_skill_content(skill_name: str, agent: str, error: Exception) -> str:
+        """Generate deterministic fallback skill instructions."""
+        return (
+            f"# Fallback skill for {skill_name}\n"
+            f"- Agent: {agent}\n"
+            "- Step 1: validate input context\n"
+            "- Step 2: apply deterministic execution path\n"
+            "- Step 3: return structured output\n"
+            f"- Note: loader degraded due to: {error}\n"
+        )
 
     def _execute_skill_with_qwen(
         self,
@@ -438,7 +492,10 @@ Final Output: [summary]
             }
 
         # Step 2: Load skill instructions
-        skill_content = self.skills_loader.load_skill(skill_name, agent)
+        try:
+            skill_content = self.skills_loader.load_skill(skill_name, agent)
+        except Exception as exc:
+            skill_content = self._fallback_skill_content(skill_name, agent, exc)
 
         # Step 3: Execute skill with local Qwen inference (WSP 96 v1.3)
         execution_result = self._execute_skill_with_qwen(

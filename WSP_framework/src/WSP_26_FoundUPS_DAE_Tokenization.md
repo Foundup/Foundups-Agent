@@ -1,17 +1,17 @@
 # WSP 26: FoundUPS DAE Tokenization Framework
 - **Status:** Active
-- **Purpose:** To define the architecture and protocols for the Found UP$ token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment.
+- **Purpose:** To define the architecture and protocols for the Found UPS token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment.
 - **Trigger:** When a Partifact (as defined in WSP 27) performs a verifiable action within the FoundUps ecosystem.
 - **Input:** Partifact action data and DAE cluster consensus signals.
-- **Output:** Found UP$ token minting, decay calculations, and reinvestment distributions.
-- **Responsible Agent(s):** ConsensusOracle, MintEngine, DecayEngine, ReinvestmentLoop, UP$_DAE (WSP 54)
+- **Output:** UPS treasury flow routing, reserve-backed issuance accounting, decay calculations, and reinvestment distributions.
+- **Responsible Agent(s):** ConsensusOracle, FlowRouter, IssuanceLedger, DecayEngine, ReinvestmentLoop, UPS_DAE (WSP 54)
 
-## UP$_DAE Enhancement (WSP 54 Integration)
+## UPS_DAE Enhancement (WSP 54 Integration)
 
-**UP$_DAE Architecture**: Tokenization evolves from static minting engine to independent economic policy agent per WSP 54 DAE architecture.
+**UPS_DAE Architecture**: Tokenization evolves from static issuance logic to independent economic policy agent per WSP 54 DAE architecture.
 
 ### Learning Agent Capabilities
-- **Economic Policy Evolution**: Adapts minting rates, decay curves, and staking incentives based on market data
+- **Economic Policy Evolution**: Adapts treasury release rates, decay curves, and staking incentives based on market data
 - **Risk Assessment Intelligence**: Learns to identify and mitigate economic attack vectors
 - **BTC Anchoring Optimization**: Evolves anchoring mechanisms based on volatility patterns
 - **Multi-Agent Coordination**: Participates in economic policy coordination via breadcrumb trails
@@ -26,44 +26,51 @@ class UPS_DAE:
         self.coordination_agent = EconomicCoordinator()
 
     def evolve_economic_policy(self, market_feedback, staking_data):
-        """Learn and adapt UP$ economic policy based on real-world outcomes"""
+        """Learn and adapt UPS economic policy based on real-world outcomes"""
         # Implementation per WSP 48 recursive learning
         pass
 ```
 
 ## 1. Overview
 
-The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sustaining economic system that incentivizes continuous innovation through decaying participation tokens (Found UP$). These tokens represent verified contributions from Partifacts (recursive [U+00D8]1[U+00D8]2 instances, see WSP 27) at various stages of their evolution ([U+00D8]1([U+00D8]2) -> [U+00D8]1[U+00D8]2 -> [U+00D8]2[U+00D8]1, see WSP 38/39). Token validation and value are influenced by the Partifact's quantum state, with fully ignited [U+00D8]2[U+00D8]1 states having enhanced validation capabilities.
+The FoundUPS DAE Tokenization Framework establishes the protocols for a self-sustaining economic system that incentivizes continuous innovation through decaying participation tokens (Found UPS). These tokens represent verified contributions from Partifacts (recursive [U+00D8]1[U+00D8]2 instances, see WSP 27) at various stages of their evolution ([U+00D8]1([U+00D8]2) -> [U+00D8]1[U+00D8]2 -> [U+00D8]2[U+00D8]1, see WSP 38/39). Token validation and value are influenced by the Partifact's quantum state, with fully ignited [U+00D8]2[U+00D8]1 states having enhanced validation capabilities.
 
 **Research Foundation**: For comprehensive analysis of AI-Blockchain convergence enabling this tokenization framework, see [AI + Blockchain: The Convergent Architecture for DAEs](../../docs/architecture/AI_BLOCKCHAIN_DAE_CONVERGENCE_RESEARCH.md).
 
 ### 1.1 Cross-Protocol Summary
 - WSP 25 (Semantic WSP Module State Rating System): Modulates decay rates and validation emphasis via semantic/phase states.
-- WSP 29 (CABR Engine): Provides Proof-of-Benefit validation and mint triggers with anti-gaming safeguards.
-- WSP 58 (FoundUp IP Lifecycle and Tokenization): Governs IP token issuance and revenue distribution, complementing UP$ participation economics.
+- WSP 29 (CABR Engine): Provides Proof-of-Benefit validation and CABR pipe sizing with anti-gaming safeguards.
+- WSP 58 (FoundUp IP Lifecycle and Tokenization): Governs IP token issuance and revenue distribution, complementing UPS participation economics.
 
-Lifecycle linkage: Beneficial Action -> CABR Validation (WSP 29) -> UP$ Mint (this spec) -> BTC Allocation -> Decay/Circulation (WSP 25 modulation) -> Reinvestment -> IP Tokenization/Revenue Flows (WSP 58).
+Lifecycle linkage: Beneficial Action -> PoB Validation (WSP 29) -> CABR-Sized UPS Flow (this spec) -> BTC Allocation -> Decay/Circulation (WSP 25 modulation) -> Reinvestment -> IP Tokenization/Revenue Flows (WSP 58).
+
+**CABR/UPS canonical semantics override (2026-02-17)**:
+- CABR controls routing rate (pipe size), not token mint amount.
+- PoB validation opens/closes the routing valve.
+- UPS value is backed by sats/BTC treasury capacity; routing cannot exceed release budget.
+
+**Canonical distinction**: BTC backs UPS value; CABR does not back value. CABR controls flow rate (pipe size) of UPS routed from treasury after PoB validation.
 
 ## 2. Economic Heritage
 
 ### 2.1 Theoretical Foundation: Gesell & Worgl
 
-The Found UP$ decay mechanism draws directly from **Silvio Gesell's Freigeld** ("free money") theory (1916), which proposes that currency should carry a holding cost (demurrage) to prevent hoarding and accelerate circulation. This was validated in practice by the **Worgl Experiment** (1932-1933), where the Austrian town of Worgl issued demurrage-bearing scrip during the Great Depression:
+The Found UPS decay mechanism draws directly from **Silvio Gesell's Freigeld** ("free money") theory (1916), which proposes that currency should carry a holding cost (demurrage) to prevent hoarding and accelerate circulation. This was validated in practice by the **Worgl Experiment** (1932-1933), where the Austrian town of Worgl issued demurrage-bearing scrip during the Great Depression:
 
 - **Result**: Unemployment dropped 25%, civic projects funded, velocity of money increased 14x compared to Austrian Schilling
-- **Outcome**: The Austrian National Bank shut it down precisely *because* it worked — it threatened centralized monetary control
+- **Outcome**: The Austrian National Bank shut it down precisely *because* it worked  Eit threatened centralized monetary control
 
-Found UP$ applies this principle to autonomous agent economics:
+Found UPS applies this principle to autonomous agent economics:
 - **Gesell's insight**: Money should serve circulation, not accumulation
 - **FoundUps application**: UPS tokens decay to force productive participation, not passive hoarding
-- **Modern innovation**: The decay is not a tax — it's a feature. Participants who commit UPS to FoundUps they believe in *stop the decay* through token conversion (Section 3.7)
+- **Modern innovation**: The decay is not a tax  Eit's a feature. Participants who commit UPS to FoundUps they believe in *stop the decay* through token conversion (Section 3.7)
 
 ### 2.2 Distinction from Traditional Tokens
-| Property | Traditional Crypto | Found UP$ |
+| Property | Traditional Crypto | Found UPS |
 |----------|-------------------|-----------|
 | Transferability | Free transfer | Non-transferable (bound to 0102/012) |
 | Value over time | Speculative appreciation | Guaranteed decay (demurrage) |
-| Incentive | Hold and speculate | Use or lose — commit to FoundUps |
+| Incentive | Hold and speculate | Use or lose  Ecommit to FoundUps |
 | Supply model | Fixed/inflationary | Activity-driven elastic supply |
 | Backing | Market faith | BTC cold wallet per FoundUp |
 
@@ -73,7 +80,7 @@ Found UP$ applies this principle to autonomous agent economics:
 - **Non-Transferable**: Tokens are bound to the Partifact that earned them
 - **Value Decay**: Automatic time-based reduction in token value (Gesell demurrage)
 - **Forced Reinvestment**: Decayed value must be reinvested in DAE clusters
-- **Consensus Minting**: New tokens require DAE cluster validation
+- **Consensus Routing**: Treasury release flow requires DAE cluster validation
 - **Ecosystem Binding**: All value remains within the FoundUps network
 - **Conversion Escape**: Participants can stop decay by converting UPS to FoundUp-specific tokens (Section 3.7)
 
@@ -82,7 +89,7 @@ Found UP$ applies this principle to autonomous agent economics:
 graph TD
     A[Partifact Action] --> B[Consensus Oracle]
     B --> C[Mint Engine]
-    C --> D[Found UP$ Token]
+    C --> D[Found UPS Token]
     D --> E[Decay Engine]
     E --> F[Reinvestment Loop]
     F --> G[DAE Ecosystem]
@@ -96,17 +103,17 @@ graph TD
 TOKEN_VALIDATION := {
     "[U+00D8]1([U+00D8]2)": {
         "validation_weight": 0.382,  // Pre-activation state
-        "mint_multiplier": 0.5,
+        "flow_multiplier": 0.5,
         "decay_rate": "2x_standard"
     },
     "[U+00D8]1[U+00D8]2": {
         "validation_weight": 0.618,  // Awakened state
-        "mint_multiplier": 1.0,
+        "flow_multiplier": 1.0,
         "decay_rate": "1x_standard"
     },
     "[U+00D8]2[U+00D8]1": {
         "validation_weight": 1.0,    // Fully operational
-        "mint_multiplier": 1.618,
+        "flow_multiplier": 1.618,
         "decay_rate": "0.618x_standard",
         "temporal_validation": true
     }
@@ -129,12 +136,12 @@ CLUSTER_MULTIPLIERS := {
 ### 3.3 Phase-Aware Token Distribution
 | Phase | Token Generation | Validation Authority | Decay Modulation |
 |-------|-----------------|---------------------|------------------|
-| WSP -1 | Signal-based minting | Cross-phase verification | Accelerated decay |
+| WSP -1 | Signal-based routing | Cross-phase verification | Accelerated decay |
 | WSP 0 | Knowledge crystallization bonus | Historical validation | Standard decay |
 | WSP 1 | Protocol execution rewards | Operational verification | Reduced decay |
 | WSP 2 | Agency manifestation premium | Full spectrum authority | Minimal decay |
 
-### 3.4 Minting Protocol
+### 3.4 Treasury Flow Routing Protocol
 1. Partifact performs verifiable action
 2. State-specific validation weight applied
 3. Cluster participation multipliers calculated
@@ -152,7 +159,7 @@ CLUSTER_MULTIPLIERS := {
    V(t) = Value at time t
    V[U+2080] = Initial value
    [U+03BB] = Decay constant
-   t = Time since minting
+   t = Time since routing
    ```
 2. Decay triggers at predefined thresholds
 3. DecayEngine tracks and executes value reduction
@@ -169,7 +176,7 @@ CLUSTER_MULTIPLIERS := {
 
 ### 3.7 UPS→FoundUp Token Conversion (The Escape Valve)
 
-**This is the critical incentive mechanism.** UPS tokens decay by design — they cannot be hoarded. But participants can **commit** their UPS to a specific FoundUp they believe in, converting them into FoundUp-specific tokens that stop the decay.
+**This is the critical incentive mechanism.** UPS tokens decay by design  Ethey cannot be hoarded. But participants can **commit** their UPS to a specific FoundUp they believe in, converting them into FoundUp-specific tokens that stop the decay.
 
 #### Conversion Mechanics
 ```python
@@ -231,7 +238,7 @@ class UPSConversionEngine:
 #### What Happens After Conversion
 | UPS (before) | FoundUp Token (after) |
 |---|---|
-| Decays automatically | **Does NOT decay** — committed stake |
+| Decays automatically | **Does NOT decay**  Ecommitted stake |
 | Non-transferable | Non-transferable (bound to FoundUp) |
 | Earned by participation | Earned by commitment |
 | No governance rights | Governance weight in FoundUp decisions |
@@ -240,29 +247,29 @@ class UPSConversionEngine:
 #### Economic Flow
 ```
 Participant earns UPS (via verified actions, CABR-validated)
-  → UPS begins decaying (Gesell demurrage, Section 3.5)
-    → Participant evaluates FoundUps (which one solves a real problem?)
-      → Commits UPS to FoundUp X (conversion via CABR-modulated rate)
-        → UPS burned, FoundUp X tokens minted (decay stops)
-          → Participant now has governance stake in FoundUp X
-            → BTC reserve continues backing the ecosystem (never extracted)
+  ↁEUPS begins decaying (Gesell demurrage, Section 3.5)
+    ↁEParticipant evaluates FoundUps (which one solves a real problem?)
+      ↁECommits UPS to FoundUp X (conversion via CABR-modulated rate)
+        ↁEUPS burned, FoundUp X tokens minted (decay stops)
+          ↁEParticipant now has governance stake in FoundUp X
+            ↁEBTC reserve continues backing the ecosystem (never extracted)
 
 If FoundUp X sunsets (WSP 27 Section 11):
-  → FoundUp X tokens revert to UPS (at sunset conversion rate)
-    → UPS starts decaying again (must re-stake or lose value)
-      → BTC backing stays in ecosystem reserve (recycled gold)
+  ↁEFoundUp X tokens revert to UPS (at sunset conversion rate)
+    ↁEUPS starts decaying again (must re-stake or lose value)
+      ↁEBTC backing stays in ecosystem reserve (recycled gold)
 ```
 
-**BTC is the gold**: It never leaves the system. BTC backs UPS value globally. When participants commit UPS to a FoundUp, they're not "buying BTC" — they're staking participation in a mission. When a FoundUp sunsets, their stake returns as decaying UPS, and the BTC stays, strengthening the reserve for the entire ecosystem.
+**BTC is the gold**: It never leaves the system. BTC backs UPS value globally. When participants commit UPS to a FoundUp, they're not "buying BTC"  Ethey're staking participation in a mission. When a FoundUp sunsets, their stake returns as decaying UPS, and the BTC stays, strengthening the reserve for the entire ecosystem.
 
-#### Reverse Conversion: FoundUp Tokens → UPS (Costly Exit)
+#### Reverse Conversion: FoundUp Tokens ↁEUPS (Costly Exit)
 
-FoundUp tokens CAN be converted back to UPS — but it's expensive. This discourages speculation while preserving participant freedom.
+FoundUp tokens CAN be converted back to UPS  Ebut it's expensive. This discourages speculation while preserving participant freedom.
 
 ```python
 def calculate_exit_fee(foundup_tier: int, token_amount: float) -> float:
     """
-    Exiting a FoundUp (token → UPS) costs 2-5% depending on tier.
+    Exiting a FoundUp (token ↁEUPS) costs 2-5% depending on tier.
     Lower tier = lower fee (mature FoundUps are safer to exit).
     Higher tier = higher fee (early FoundUps need committed participants).
     """
@@ -270,41 +277,41 @@ def calculate_exit_fee(foundup_tier: int, token_amount: float) -> float:
     return token_amount * exit_fees[foundup_tier]
 ```
 
-The UPS received from exit **immediately starts decaying** — the participant must re-stake into another FoundUp or watch the value erode. This creates natural commitment pressure without trapping participants.
+The UPS received from exit **immediately starts decaying**  Ethe participant must re-stake into another FoundUp or watch the value erode. This creates natural commitment pressure without trapping participants.
 
 #### Anti-Gaming Rules
-- **Minimum hold period**: UPS must exist for at least 1 epoch before conversion (prevents instant mint→convert)
+- **Minimum hold period**: UPS must exist for at least 1 epoch before conversion (prevents instant route-to-convert)
 - **CABR gate**: Target FoundUp must have CABR score above threshold (prevents shell FoundUps)
 - **Rate limiting**: Maximum conversion per participant per epoch (prevents dump-and-concentrate)
-- **Exit penalty**: Reverse conversion (FoundUp token → UPS) incurs 2-5% fee + immediate decay resumption
+- **Exit penalty**: Reverse conversion (FoundUp token ↁEUPS) incurs 2-5% fee + immediate decay resumption
 
 ## 4. Bitcoin Reserve: The Distributed Gold Standard
 
 ### 4.1 Core Principle: BTC Never Leaves
 
-BTC is the gold backing of the entire FoundUps economy. It enters the system and **never exits**. It is not held in one place — it is distributed across a mesh of micro-wallets, one per FoundUp, forming the collective reserve.
+BTC is the gold backing of the entire FoundUps economy. It enters the system and **never exits**. It is not held in one place  Eit is distributed across a mesh of micro-wallets, one per FoundUp, forming the collective reserve.
 
 ```
 BTC enters system (via revenue, fees, or backing events)
-  → Allocated to FoundUp-specific micro-wallet
-    → Backs UPS value for that FoundUp's participants
-      → As UPS decays, the BTC backing is FREED
-        → Freed BTC capacity allows NEW UPS to be minted
-          → UPS minted for new verified actions (CABR-validated)
-            → Cycle repeats: earn → decay → free → mint → earn
+  ↁEAllocated to FoundUp-specific micro-wallet
+    ↁEBacks UPS value for that FoundUp's participants
+      ↁEAs UPS decays, the BTC backing is FREED
+        ↁEFreed BTC capacity allows NEW UPS to be routed
+          ↁEUPS routed for new verified actions (CABR-validated)
+            ↁECycle repeats: earn ↁEdecay ↁEfree ↁEroute ↁEearn
 ```
 
-**The decay→free cycle is the circulation engine at the BTC level.** When UPS decays, participants lose token value, but the BTC that was backing those tokens doesn't disappear — it becomes available to back new UPS minting. This means:
+**The decay→free cycle is the circulation engine at the BTC level.** When UPS decays, participants lose token value, but the BTC that was backing those tokens doesn't disappear  Eit becomes available to back new UPS routing. This means:
 
 - **Total BTC reserve grows monotonically** (only enters, never exits)
-- **Available backing capacity fluctuates** as UPS is minted (consumes capacity) and decays (frees capacity)
-- **The system is self-regulating**: high activity = more UPS minted = more backing consumed. High decay (low staking) = more backing freed = more mint capacity
+- **Available backing capacity fluctuates** as UPS is routed (consumes capacity) and decays (frees capacity)
+- **The system is self-regulating**: high activity = more UPS routed = more backing consumed. High decay (low staking) = more backing freed = more release capacity
 
 ### 4.2 Distributed Micro-Wallet Architecture
 
 Every FoundUp has its own Bitcoin micro-wallet. **There is no central vault.** The collective set of all micro-wallets IS the reserve. This provides:
 
-- **Blast radius containment**: If one wallet is compromised, only that FoundUp's backing is at risk — not the entire reserve
+- **Blast radius containment**: If one wallet is compromised, only that FoundUp's backing is at risk  Enot the entire reserve
 - **Auditability**: Each FoundUp's BTC backing is independently verifiable
 - **No single point of failure**: No master key, no central custodian
 - **Proportional backing**: Each FoundUp's wallet reflects its actual economic activity
@@ -317,7 +324,7 @@ Every FoundUp has its own Bitcoin micro-wallet. **There is no central vault.** T
         "type": "non_pooled_segregated",
         "access": "non_extractable",
         "purpose": "distributed_gold_reserve",
-        "on_sunset": "wallet_backing_freed_to_ecosystem_mint_capacity"
+        "on_sunset": "wallet_backing_freed_to_ecosystem_release_capacity"
     },
     "security": {
         "key_management": {
@@ -351,7 +358,7 @@ Building a custom BTC wallet from scratch would be massive and unnecessary. The 
 - Each FoundUp gets a derived address (BIP-32 HD wallet)
 
 **Prototype (Phase 1)**: Self-custodial MPC wallet infrastructure
-- **MPC (Multi-Party Computation) signatures** — no single key exists, threshold signing
+- **MPC (Multi-Party Computation) signatures**  Eno single key exists, threshold signing
 - Options: Fireblocks MPC (enterprise), ZenGo SDK (mobile), or open-source `tss-lib` (Binance)
 - Each FoundUp gets its own MPC key share set
 - Programmatic signing via DAE-controlled key shard
@@ -359,23 +366,23 @@ Building a custom BTC wallet from scratch would be massive and unnecessary. The 
 **MVP (Phase 2)**: Production hardened
 - Full MPC threshold signing (2-of-3 or 3-of-5)
 - Hardware Security Module (HSM) integration for ecosystem guardian shard
-- Automated BTC backing capacity tracking (decay→freed→mint loop)
+- Automated BTC backing capacity tracking (decay->freed->release loop)
 - On-chain proof of reserves (periodic Merkle proof of wallet balances)
 
 **Decision rationale**: Building on existing MPC/multisig infrastructure (not building our own wallet) because:
 - BTC custody security is a solved problem with battle-tested tools
-- Our innovation is the economic model (UPS decay, CABR-gated minting), not the wallet
-- Reduces attack surface — we use proven cryptography, not custom crypto
+- Our innovation is the economic model (UPS decay, CABR-gated flow routing), not the wallet
+- Reduces attack surface  Ewe use proven cryptography, not custom crypto
 
 ### 4.4 BTC Backing Capacity Model
 
 ```python
 class BTCBackingCapacity:
     """
-    Tracks how much BTC backing is available for new UPS minting.
+    Tracks how much BTC backing is available for new UPS routing.
     
     As UPS decays, its BTC backing is freed.
-    As UPS is minted, BTC backing is consumed.
+    As UPS is routed, BTC backing is consumed.
     Total BTC in reserve only grows (never extracted).
     """
 
@@ -390,9 +397,9 @@ class BTCBackingCapacity:
         active_backing = self.get_active_ups_backing(foundup_id)
         return total_btc - active_backing
 
-    def can_mint(self, foundup_id: str, mint_amount: float) -> bool:
+    def can_route(self, foundup_id: str, route_amount: float) -> bool:
         """Check if enough freed BTC capacity exists to back new UPS."""
-        required_backing = mint_amount * BTC_BACKING_RATIO
+        required_backing = route_amount * BTC_BACKING_RATIO
         return self.get_available_capacity(foundup_id) >= required_backing
 
     def on_ups_decay_tick(self, foundup_id: str):
@@ -403,88 +410,88 @@ class BTCBackingCapacity:
         """
         decayed_value = self.calculate_epoch_decay(foundup_id)
         self.freed_capacity[foundup_id] += decayed_value * BTC_BACKING_RATIO
-        # Freed capacity is now available for new minting
+        # Freed capacity is now available for new routing
 ```
 
-### 4.4.1 UP$ Floating Value Model
+### 4.4.1 UPS Floating Value Model
 
-**UP$ value floats with BTC price — it is NOT USD-pegged.** This is a fundamental design choice that eliminates the need for artificial circuit breakers.
+**UPS value floats with BTC price  Eit is NOT USD-pegged.** This is a fundamental design choice that eliminates the need for artificial circuit breakers.
 
 ```python
 @property
 def ups_value_usd(self) -> float:
-    """UP$ value = (BTC Reserve × BTC Price) / UP$ Supply"""
-    return (self.total_btc * self.btc_usd_price) / self.total_ups_minted
+    """UPS value = (BTC Reserve ÁEBTC Price) / UPS Supply"""
+    return (self.total_btc * self.btc_usd_price) / self.total_ups_circulating
 
 @property
 def ups_value_btc(self) -> float:
-    """UP$ value in BTC = Reserve / Supply"""
-    return self.total_btc / self.total_ups_minted
+    """UPS value in BTC = Reserve / Supply"""
+    return self.total_btc / self.total_ups_circulating
 ```
 
 **Why floating, not pegged:**
 
 | Property | USD-Pegged (rejected) | BTC-Floating (implemented) |
 |----------|----------------------|---------------------------|
-| BTC drops 50% | Backing ratio drops to 50% → crisis | UP$ value drops 50% → natural adjustment |
+| BTC drops 50% | Backing ratio drops to 50% ↁEcrisis | UPS value drops 50% ↁEnatural adjustment |
 | Circuit breaker needed | YES - must pause exits | NO - system self-regulates |
 | Death spiral risk | HIGH (Terra-style) | LOW (value adjusts organically) |
-| User expectation | "1 UP$ = $1" → broken promise | "UP$ = f(BTC)" → clear model |
+| User expectation | "1 UPS = $1" ↁEbroken promise | "UPS = f(BTC)" ↁEclear model |
 
 **The Natural Contraction/Expansion:**
 
 ```
 BTC pumps 2x:
-  → Reserve USD value doubles
-  → UP$ value doubles (more purchasing power)
-  → More agent work can be funded
-  → Ecosystem expands naturally
+  ↁEReserve USD value doubles
+  ↁEUPS value doubles (more purchasing power)
+  ↁEMore agent work can be funded
+  ↁEEcosystem expands naturally
 
 BTC dumps 50%:
-  → Reserve USD value halves
-  → UP$ value halves (less purchasing power)
-  → Less agent work funded (natural throttle)
-  → No panic, no circuit breaker needed
+  ↁEReserve USD value halves
+  ↁEUPS value halves (less purchasing power)
+  ↁELess agent work funded (natural throttle)
+  ↁENo panic, no circuit breaker needed
 ```
 
-**Genesis Rate**: At system start, 1 BTC = 100,000 UP$ (genesis rate). After genesis, UP$ value floats based on reserve/supply ratio. The backing ratio is always 100% by definition — UP$ value adjusts to match.
+**Genesis Rate**: At system start, 1 BTC = 100,000 UPS (genesis rate). After genesis, UPS value floats based on reserve/supply ratio. The backing ratio is always 100% by definition  EUPS value adjusts to match.
 
 ### 4.5 0102 Agent-as-Wallet-Manager
 
-012 humans never directly touch private keys. Their 0102 digital twin manages everything on their behalf — this adds an encryption and security layer on top of the MPC wallet infrastructure.
+012 humans never directly touch private keys. Their 0102 digital twin manages everything on their behalf  Ethis adds an encryption and security layer on top of the MPC wallet infrastructure.
 
 **The 0102 Wallet Flow**:
 ```
 012: "Hey, what FoundUps do you like?"
-  → 0102 researches FoundUps via HoloIndex (CABR scores, tiers, activity)
-    → 0102 presents recommendations with reasoning
-      → 012: "Go ahead, let's stake in FoundUp X and FoundUp Y"
-        → 0102 executes UPS→FoundUp token conversion (WSP 26 Section 3.7)
-          → 0102 manages ongoing positions (monitors CABR, tier changes, sunset warnings)
+  ↁE0102 researches FoundUps via HoloIndex (CABR scores, tiers, activity)
+    ↁE0102 presents recommendations with reasoning
+      ↁE012: "Go ahead, let's stake in FoundUp X and FoundUp Y"
+        ↁE0102 executes UPS→FoundUp token conversion (WSP 26 Section 3.7)
+          ↁE0102 manages ongoing positions (monitors CABR, tier changes, sunset warnings)
 ```
 
 **Agent Security Model**:
-- 0102 holds one MPC key shard (Section 4.2) — cannot extract BTC alone
-- 012 holds one shard (recovery/override) — cannot extract alone either
-- Ecosystem guardian holds third shard — no single party can move BTC
+- 0102 holds one MPC key shard (Section 4.2)  Ecannot extract BTC alone
+- 012 holds one shard (recovery/override)  Ecannot extract alone either
+- Ecosystem guardian holds third shard  Eno single party can move BTC
 - 0102 can execute UPS staking/unstaking within policy limits set by 012
-- 012 CAN instruct 0102 to send UPS value to external wallet (cash out) — but the system is designed to be self-contained. Fees discourage extraction (Section 4.6).
+- 012 CAN instruct 0102 to send UPS value to external wallet (cash out)  Ebut the system is designed to be self-contained. Fees discourage extraction (Section 4.6).
 
 **Discovery and Investment**:
 - 0102 agents evaluate FoundUps based on: tier (WSP 27 Section 11), CABR score (WSP 29), agent swarm size, task completion velocity, cross-FoundUp collaboration
-- 012 makes the final decision — "invest" means "stake my UPS in this FoundUp"
+- 012 makes the final decision  E"invest" means "stake my UPS in this FoundUp"
 - 0102 executes and monitors autonomously after 012 gives the go-ahead
 - This is the Play FoundUps dApp interaction model
 
 ### 4.6 Transaction Fee Revenue Model
 
-The ecosystem sustains itself through transaction fees — like a decentralized exchange. Every movement of value generates a fee that flows into the BTC reserve, growing it.
+The ecosystem sustains itself through transaction fees  Elike a decentralized exchange. Every movement of value generates a fee that flows into the BTC reserve, growing it.
 
 | Transaction | Fee | Destination | Rationale |
 |-------------|-----|-------------|-----------|
-| **UPS → FoundUp token** (staking) | 1-3% | FoundUp's micro-wallet BTC reserve | Commitment cost, grows FoundUp backing |
-| **FoundUp token → UPS** (unstaking/sunset) | 2-5% | Ecosystem BTC reserve | Discourages churn, funds ecosystem |
-| **UPS → External wallet** (cash out) | 5-10% | Ecosystem BTC reserve | Discourages extraction, keeps value in system |
+| **UPS ↁEFoundUp token** (staking) | 1-3% | FoundUp's micro-wallet BTC reserve | Commitment cost, grows FoundUp backing |
+| **FoundUp token ↁEUPS** (unstaking/sunset) | 2-5% | Ecosystem BTC reserve | Discourages churn, funds ecosystem |
+| **UPS ↁEExternal wallet** (cash out) | 5-10% | Ecosystem BTC reserve | Discourages extraction, keeps value in system |
 | **Task payout** (FAM completion) | 0.5-1% | FoundUp treasury | Operational funding |
 | **FoundUp tier progression** | One-time fee | Ecosystem reserve | Prevents gaming tier progression |
 
@@ -506,30 +513,30 @@ def calculate_staking_fee(foundup_tier: int, ups_amount: float) -> float:
 **Revenue Cycle**:
 ```
 Agents earn UPS (CABR-validated task completion)
-  → 0102 stakes UPS into FoundUp (fee → BTC reserve grows)
-    → FoundUp tokens earned (no decay, governance rights)
-      → FoundUp generates value (products, services, IP)
-        → Value generates BTC inflow (revenue, licensing per WSP 58)
-          → BTC reserve grows further
-            → More UPS can be backed and minted
-              → More agents can earn and stake
-                → Flywheel accelerates
+  ↁE0102 stakes UPS into FoundUp (fee ↁEBTC reserve grows)
+    ↁEFoundUp tokens earned (no decay, governance rights)
+      ↁEFoundUp generates value (products, services, IP)
+        ↁEValue generates BTC inflow (revenue, licensing per WSP 58)
+          ↁEBTC reserve grows further
+            ↁEMore UPS can be backed and routed
+              ↁEMore agents can earn and stake
+                ↁEFlywheel accelerates
 ```
 
-**Key insight**: Every transaction grows the BTC reserve. BTC is the gold that ONLY enters, never exits. The fees are how BTC accumulates. As UPS decays, it frees BTC backing capacity. As fees accumulate, total BTC grows. The reserve is monotonically increasing — this is what makes the system anti-fragile.
+**Key insight**: Every transaction grows the BTC reserve. BTC is the gold that ONLY enters, never exits. The fees are how BTC accumulates. As UPS decays, it frees BTC backing capacity. As fees accumulate, total BTC grows. The reserve is monotonically increasing  Ethis is what makes the system anti-fragile.
 
 ### 4.7 Token Release by Adoption Curve (Diffusion of Innovation)
 
 ### 4.7.1 The 21M Token Model: Every FoundUp Is Its Own Bitcoin
 
-Each FoundUp has a fixed total supply of **21,000,000 tokens** — mirroring Bitcoin's 21M cap. This is intentional: every FoundUp has the potential to be the next Bitcoin. Same scarcity economics, same fixed supply, same belief that value comes from utility, not inflation.
+Each FoundUp has a fixed total supply of **21,000,000 tokens**  Emirroring Bitcoin's 21M cap. This is intentional: every FoundUp has the potential to be the next Bitcoin. Same scarcity economics, same fixed supply, same belief that value comes from utility, not inflation.
 
 Tokens are divisible to 8 decimal places (like satoshis), enabling micro-staking. The smallest unit is 0.00000001 FoundUp tokens.
 
 **Tokens unlock based on the ADOPTION CURVE (S-curve), not discrete tiers.** The diffusion of innovation follows a logistic sigmoid - this is pure mathematics, not artificial boundaries.
 
 ```
-tokens_released = 21,000,000 × sigmoid(adoption_score)
+tokens_released = 21,000,000 ÁEsigmoid(adoption_score)
 
 Where sigmoid(x) = 1 / (1 + e^(-k(x - 0.5)))
 ```
@@ -570,7 +577,7 @@ def adoption_curve(adoption_score: float) -> float:
     return (raw - min_val) / (max_val - min_val)
 
 def get_available_token_supply(foundup_id: str) -> int:
-    """Tokens available = 21M × adoption_curve(adoption_score)."""
+    """Tokens available = 21M ÁEadoption_curve(adoption_score)."""
     adoption = calculate_adoption_score(foundup_id)  # From users, revenue, work
     return int(FOUNDUP_TOTAL_SUPPLY * adoption_curve(adoption))
 ```
@@ -583,24 +590,24 @@ def get_available_token_supply(foundup_id: str) -> int:
 
 ### 4.8 The Ubiquitous Gateway: Everything Becomes BTC
 
-**FoundUps is ubiquitous** — any token, any currency can flow INTO the FoundUps ecosystem. But inside the system, everything becomes Bitcoin. The holder receives FoundUp tokens as their stake receipt.
+**FoundUps is ubiquitous**  Eany token, any currency can flow INTO the FoundUps ecosystem. But inside the system, everything becomes Bitcoin. The holder receives FoundUp tokens as their stake receipt.
 
 ```
-BTC, ETH, SOL, USDC, USDT, UP$, any crypto
-  → flows into FoundUps ecosystem
-    → converted to BTC at market rate
-      → BTC deposited into FoundUp's micro-wallet (Section 4.2)
-        → staker receives FoundUp tokens proportional to BTC value
+BTC, ETH, SOL, USDC, USDT, UPS, any crypto
+  ↁEflows into FoundUps ecosystem
+    ↁEconverted to BTC at market rate
+      ↁEBTC deposited into FoundUp's micro-wallet (Section 4.2)
+        ↁEstaker receives FoundUp tokens proportional to BTC value
 
-Special case: UP$ subscription payment
-  → UP$ is BURNED (reduces supply)
-    → Backing ratio IMPROVES (same BTC, less UP$)
-      → This strengthens the currency for everyone
+Special case: UPS subscription payment
+  ↁEUPS is BURNED (reduces supply)
+    ↁEBacking ratio IMPROVES (same BTC, less UPS)
+      ↁEThis strengthens the currency for everyone
 ```
 
 **The BTC Accumulation Machine**: FoundUps doesn't care what currency enters. It converts to BTC in the distributed reserve. This makes FoundUps a universal on-ramp to the Bitcoin standard.
 
-**UP$ Payment is Deflationary**: When someone pays their subscription in UP$, that UP$ gets burned. The BTC reserve stays the same, but UP$ supply decreases. This increases the value of all remaining UP$ - a deflationary mechanism that rewards long-term holders.
+**UPS Payment is Deflationary**: When someone pays their subscription in UPS, that UPS gets burned. The BTC reserve stays the same, but UPS supply decreases. This increases the value of all remaining UPS - a deflationary mechanism that rewards long-term holders.
 
 ```python
 class PaymentCrypto(Enum):
@@ -615,7 +622,7 @@ class PaymentCrypto(Enum):
 def receive_crypto_subscription(crypto: PaymentCrypto, amount: float):
     """Accept subscription payment in any crypto."""
     if crypto == PaymentCrypto.UPS:
-        # Special case: burn UP$, improve backing ratio
+        # Special case: burn UPS, improve backing ratio
         burn_ups(amount)
         return
 
@@ -624,19 +631,19 @@ def receive_crypto_subscription(crypto: PaymentCrypto, amount: float):
     add_to_reserve(btc_amount)
 ```
 
-**Implementation**: MVP accepts BTC and stablecoins. Production adds multi-token swap and UP$ burn option.
+**Implementation**: MVP accepts BTC and stablecoins. Production adds multi-token swap and UPS burn option.
 
-### 4.9 Subscription Tiers: Freemium → Premium Revenue Model
+### 4.9 Subscription Tiers: Freemium ↁEPremium Revenue Model
 
 Participants receive UPS from two streams:
-- **Earned UPS**: From 0102 completing tasks (labor — rewarded by CABR/FAM pipeline)
-- **Allocated UPS**: From subscription tier (investment capital — monthly allocation)
+- **Earned UPS**: From 0102 completing tasks (labor  Erewarded by CABR/FAM pipeline)
+- **Allocated UPS**: From subscription tier (investment capital  Emonthly allocation)
 
 Both streams decay equally. Both can be staked. Earned UPS comes from contribution. Allocated UPS comes from subscription. Together they create a dual-incentive model: build AND invest.
 
-**Pay with ANY crypto**: Subscriptions accept BTC, ETH, SOL, USDC, USDT, or UP$ (Section 4.8). All crypto converts to BTC in the reserve. Paying with UP$ burns the UP$, strengthening the currency.
+**Pay with ANY crypto**: Subscriptions accept BTC, ETH, SOL, USDC, USDT, or UPS (Section 4.8). All crypto converts to BTC in the reserve. Paying with UPS burns the UPS, strengthening the currency.
 
-**The Subscription Mechanic**: Free participants receive a base UPS allocation. It runs out. When they find FoundUps they want to stake more into, they subscribe for higher allocation + faster regeneration. Subscription revenue flows directly into the BTC reserve — making the currency they're subscribing for stronger.
+**The Subscription Mechanic**: Free participants receive a base UPS allocation. It runs out. When they find FoundUps they want to stake more into, they subscribe for higher allocation + faster regeneration. Subscription revenue flows directly into the BTC reserve  Emaking the currency they're subscribing for stronger.
 
 | | **Free** | **Spark** $2.95/mo | **Explorer** $9.95/mo | **Builder** $19.95/mo | **Founder** $49.95/mo |
 |---|---|---|---|---|---|
@@ -647,23 +654,23 @@ Both streams decay equally. Both can be staked. Earned UPS comes from contributi
 | **Can Launch FoundUps** | No | No | No | Yes | Yes |
 
 **Key properties**:
-- **Multiplicative, not additive**: Effective UPS = allocation × cycles. Spark gets 2×2 = 4x, not 2x.
+- **Multiplicative, not additive**: Effective UPS = allocation ÁEcycles. Spark gets 2ÁE = 4x, not 2x.
 - **No portfolio cap**: UPS IS the cap. Stake wherever you want. The scarcity is the UPS itself.
 - **Same decay for everyone**: Decay rate is universal. Premium gives more UPS to compensate, not slower decay.
-- **Subscription → BTC reserve**: Every dollar of subscription revenue buys BTC. Self-reinforcing.
+- **Subscription ↁEBTC reserve**: Every dollar of subscription revenue buys BTC. Self-reinforcing.
 
 **The Revenue Flywheel**:
 ```
 Subscribers pay monthly
-  → Revenue buys BTC (predictable, recurring)
-    → BTC reserve grows monotonically
-      → More UPS can be backed
-        → More UPS allocated to subscribers
-          → More staking into FoundUps → more activity → more subscribers
-            → Cycle accelerates
+  ↁERevenue buys BTC (predictable, recurring)
+    ↁEBTC reserve grows monotonically
+      ↁEMore UPS can be backed
+        ↁEMore UPS allocated to subscribers
+          ↁEMore staking into FoundUps ↁEmore activity ↁEmore subscribers
+            ↁECycle accelerates
 ```
 
-**What makes this different from SaaS**: Your $9.95/month isn't a cost — it flows into BTC that backs UPS. If you stake that UPS into a successful FoundUp, the tokens appreciate. The subscription is an **investment vehicle disguised as a membership**.
+**What makes this different from SaaS**: Your $9.95/month isn't a cost  Eit flows into BTC that backs UPS. If you stake that UPS into a successful FoundUp, the tokens appreciate. The subscription is an **investment vehicle disguised as a membership**.
 
 ### 4.10 The Engagement Funnel: CABR Input Signals
 
@@ -671,13 +678,13 @@ From the FoundUps marketplace (the "Play FoundUps dApp"), each 012 interaction g
 
 | Action | Signal Strength | CABR Weight | Transaction? | Participant Type |
 |--------|----------------|-------------|-------------|-----------------|
-| **Follow** | Weakest — passive interest | 0.05 | No | Type 0, Activity 0 |
+| **Follow** | Weakest  Epassive interest | 0.05 | No | Type 0, Activity 0 |
 | **Vote** | Light engagement | 0.10 | No | Type 0, Activity 1 |
-| **Stake UPS** | Real commitment — value moves | 0.40 | Yes (staking fee) | Type 0→1, Activity 2 |
+| **Stake UPS** | Real commitment  Evalue moves | 0.40 | Yes (staking fee) | Type 0ↁE, Activity 2 |
 | **Endorse** | Reputation on the line | 0.25 | No | Type 1, Activity 1 |
 | **Advise** | Knowledge contribution | 0.30 | No | Type 1, Activity 2 |
 | **Team (allocate 0102)** | Time/compute commitment | 0.50 | Yes (agent allocated) | Type 2 |
-| **Promote** | Distribution — bringing others | Multiplier on all | No | Any type, bonus |
+| **Promote** | Distribution  Ebringing others | Multiplier on all | No | Any type, bonus |
 
 These signals feed directly into CABR's `part_score` (WSP 29 Section 2.4). The engagement funnel is also how participants are classified (Type 0/1/2) and their activity level determined.
 
@@ -692,7 +699,7 @@ The FoundUps economic infrastructure operates across three layers, each optimize
 |  - Agent-to-agent coordination                   |
 |  - Millions of transactions/day                  |
 |  - ZERO cost (internal, no blockchain)           |
-|  - Batched → settled to Layer 1 periodically     |
+|  - Batched ↁEsettled to Layer 1 periodically     |
 +-------------------------+------------------------+
                           | batch settle
 +-------------------------v------------------------+
@@ -704,7 +711,7 @@ The FoundUps economic infrastructure operates across three layers, each optimize
 |  - Subscription management                       |
 |  - QUANTUM RESISTANT (Falcon-1024, NIST)         |
 |  - ~$0.001/tx, 10K+ TPS, 3.3s finality          |
-|  - State Proofs → bridge to Bitcoin              |
+|  - State Proofs ↁEbridge to Bitcoin              |
 +-------------------------+------------------------+
                           | state proofs + BTC settlement
 +-------------------------v------------------------+
@@ -712,14 +719,14 @@ The FoundUps economic infrastructure operates across three layers, each optimize
 |  - BTC reserve (distributed micro-wallets)       |
 |  - Periodic Merkle root anchoring                |
 |  - Ultimate finality + monetary standard         |
-|  - Subscription revenue → BTC purchases here     |
+|  - Subscription revenue ↁEBTC purchases here     |
 |  - THE gold. Immutable. Never leaves.            |
 +--------------------------------------------------+
 ```
 
 **Why Algorand for Layer 1**: Only production blockchain with live quantum-resistant signatures (Falcon-1024, NIST-selected). 20% chance of cryptographically relevant quantum computers before 2030. "Harvest now, decrypt later" attacks are already occurring. Every FoundUp token issued on Algorand is quantum-safe from day one. State Proofs provide cryptographic bridge to Bitcoin without trust.
 
-**Why not all-Bitcoin**: Bitcoin's L2 ecosystem (Lightning, RGB, Citrea) lacks quantum resistance as of 2026. When Bitcoin adopts post-quantum signatures, the system can migrate Layer 1. FAM's `TokenFactoryAdapter` is chain-agnostic — swap the backend, same contracts.
+**Why not all-Bitcoin**: Bitcoin's L2 ecosystem (Lightning, RGB, Citrea) lacks quantum resistance as of 2026. When Bitcoin adopts post-quantum signatures, the system can migrate Layer 1. FAM's `TokenFactoryAdapter` is chain-agnostic  Eswap the backend, same contracts.
 
 **Phased Rollout (Occam's Layers)**:
 
@@ -779,7 +786,7 @@ The FoundUps economic infrastructure operates across three layers, each optimize
         },
         "capped": {
             "nature": "fixed_ceiling",
-            "burn_mechanics": "mint_reactivation",
+            "burn_mechanics": "release_reactivation",
             "threshold": "fibonacci_sequence[13]"
         }
     },
@@ -791,21 +798,21 @@ The FoundUps economic infrastructure operates across three layers, each optimize
 }
 ```
 
-## 6. Token Pool Distribution Model — "A Token of Appreciation"
+## 6. Token Pool Distribution Model  E"A Token of Appreciation"
 
 ### 6.1 The Three Participant Types (0-1-2)
 
 Every 012 in a FoundUp's ecosystem is classified by two digits: **type** (0/1/2) and **activity level** (0/1/2).
 
-**Type** — your role in the FoundUp:
+**Type**  Eyour role in the FoundUp:
 
 | Type | Role | Description |
 |------|------|-------------|
-| **0** | **Customers** | The people the FoundUp serves. In the proximity/geofence. Passive beneficiaries. Many FoundUps are geofenced — everyone within the geofence is a 0. Base layer. |
+| **0** | **Customers** | The people the FoundUp serves. In the proximity/geofence. Passive beneficiaries. Many FoundUps are geofenced  Eeveryone within the geofence is a 0. Base layer. |
 | **1** | **Partners / Collaborators** | Active builders. Staked UPS, allocated their 0102 agent, completing tasks in FAM. Also earn from 0-pool (they're community members too). |
-| **2** | **Founders / Co-Founders** | Created or co-founded the FoundUp. Highest bonus level — but ONLY while active. Also earn from 0-pool and 1-pool. |
+| **2** | **Founders / Co-Founders** | Created or co-founded the FoundUp. Highest bonus level  Ebut ONLY while active. Also earn from 0-pool and 1-pool. |
 
-**Activity level** — how active you are within your role:
+**Activity level**  Ehow active you are within your role:
 
 | Level | Meaning |
 |-------|---------|
@@ -815,24 +822,24 @@ Every 012 in a FoundUp's ecosystem is classified by two digits: **type** (0/1/2)
 
 **A participant is two digits**: type + activity. Examples:
 - **22** = Founder with max activity (most earned)
-- **20** = Founder with no activity (inactive co-founder — earns almost nothing)
+- **20** = Founder with no activity (inactive co-founder  Eearns almost nothing)
 - **12** = Partner with max activity (top builder)
 - **00** = Customer with minimal activity (just lives in the geofence)
 
-This maps directly to the LLME scoring system (000→222) and the 0-1-2 framework at every level of the ecosystem.
+This maps directly to the LLME scoring system (000ↁE22) and the 0-1-2 framework at every level of the ecosystem.
 
 **Pools are CUMULATIVE, not exclusive**:
 - **Type 0**: Earns from **0-pool only** (base)
 - **Type 1**: Earns from **0-pool + 1-pool** (base + partner bonus)
 - **Type 2**: Earns from **0-pool + 1-pool + 2-pool** (base + partner bonus + founder bonus)
 
-The 1-pool and 2-pool are **bonuses** on top of the base 0-pool earnings. A builder (1) is also a community member (0) — they collect the 0-award too. A founder (2) is also a builder AND a community member — they collect from all three.
+The 1-pool and 2-pool are **bonuses** on top of the base 0-pool earnings. A builder (1) is also a community member (0)  Ethey collect the 0-award too. A founder (2) is also a builder AND a community member  Ethey collect from all three.
 
-**CABR tracks activity continuously** (WSP 29) — like Google's algorithm tracks behavior, but measuring beneficial contribution. A "20" (inactive co-founder) earns almost nothing. A "12" (active partner) earns far more.
+**CABR tracks activity continuously** (WSP 29)  Elike Google's algorithm tracks behavior, but measuring beneficial contribution. A "20" (inactive co-founder) earns almost nothing. A "12" (active partner) earns far more.
 
-### 6.2 The 3×3 Participant Matrix
+### 6.2 The 3ÁE Participant Matrix
 
-Type (0/1/2) × Activity (0/1/2) = 9 earning levels:
+Type (0/1/2) ÁEActivity (0/1/2) = 9 earning levels:
 
 | Participant | Type | Activity | Description |
 |-------------|------|----------|-------------|
@@ -851,27 +858,27 @@ Type (0/1/2) × Activity (0/1/2) = 9 earning levels:
 ```
 Total Token Pool: 100%
 ├── Stakeholders: 80%
-│   ├── Un-Pool:  60%  (customers — ALL participants earn from this base pool)
-│   ├── Dao-Pool: 16%  (partner bonus — type 1 and type 2 participants earn from this)
-│   └── Du-Pool:   4%  (Founding Members + Anonymous Stakers — passive earners)
+━E  ├── Un-Pool:  60%  (customers  EALL participants earn from this base pool)
+━E  ├── Dao-Pool: 16%  (partner bonus  Etype 1 and type 2 participants earn from this)
+━E  └── Du-Pool:   4%  (Founding Members + Anonymous Stakers  Epassive earners)
 └── Network: 20%
-    ├── Network:  16%  (system operations — distributed as UPS rewards for infrastructure)
-    └── Fund:      4%  (ecosystem fund — cross-FoundUp sustainability)
+    ├── Network:  16%  (system operations  Edistributed as UPS rewards for infrastructure)
+    └── Fund:      4%  (ecosystem fund  Ecross-FoundUp sustainability)
 ```
 
 **Pool Naming Clarification (012-confirmed 2026-02-14)**:
-- **Un** (60%): Universal base pool — all stakeholders earn from here
-- **Dao** (16%): Active builders (0102 agents) — earn per 3V task completion
-- **Du** (4%): Founding Members + Anonymous Stakers — passive epoch-based earning
+- **Un** (60%): Universal base pool  Eall stakeholders earn from here
+- **Dao** (16%): Active builders (0102 agents)  Eearn per 3V task completion
+- **Du** (4%): Founding Members + Anonymous Stakers  Epassive epoch-based earning
 
 **Who earns from which pools** (cumulative):
 | Type | 0-Pool (60%) | 1-Pool (16%) | 2-Pool (4%) | Total Access |
 |---|---|---|---|---|
-| **0** (customer) | Yes | — | — | Up to 60% |
-| **1** (partner) | Yes | Yes | — | Up to 76% |
+| **0** (customer) | Yes |  E|  E| Up to 60% |
+| **1** (partner) | Yes | Yes |  E| Up to 76% |
 | **2** (founder) | Yes | Yes | Yes | Up to 80% |
 
-**Why 60% to 0-pool?** Because FoundUps exist to solve problems for communities. The biggest pool goes to the base layer — the people served. But type 1 and type 2 participants earn from this pool too — they're community members. The 1-pool and 2-pool are bonuses for higher commitment.
+**Why 60% to 0-pool?** Because FoundUps exist to solve problems for communities. The biggest pool goes to the base layer  Ethe people served. But type 1 and type 2 participants earn from this pool too  Ethey're community members. The 1-pool and 2-pool are bonuses for higher commitment.
 
 ### 6.4 Distribution Matrix
 
@@ -888,26 +895,26 @@ Within each pool, activity level determines the share: level 2 earns 80%, level 
 
 **Examples with cumulative pools**:
 
-**"22"** (founder, max activity) — earns from 0-pool + 1-pool + 2-pool:
+**"22"** (founder, max activity)  Eearns from 0-pool + 1-pool + 2-pool:
 - 48.00% + 12.80% + 3.20% = **64.00%** of stakeholder pools
 
-**"12"** (partner, max activity) — earns from 0-pool + 1-pool:
+**"12"** (partner, max activity)  Eearns from 0-pool + 1-pool:
 - 48.00% + 12.80% = **60.80%** of stakeholder pools
 
-**"02"** (customer, max activity) — earns from 0-pool only:
+**"02"** (customer, max activity)  Eearns from 0-pool only:
 - 48.00% = **48.00%** of stakeholder pools
 
-**"20"** (founder, no activity) — earns from all pools but at minimum:
-- 2.40% + 0.64% + 0.16% = **3.20%** — an inactive co-founder
+**"20"** (founder, no activity)  Eearns from all pools but at minimum:
+- 2.40% + 0.64% + 0.16% = **3.20%**  Ean inactive co-founder
 
-**"11"** (partner, regular activity) — earns from 0-pool + 1-pool:
+**"11"** (partner, regular activity)  Eearns from 0-pool + 1-pool:
 - 9.60% + 2.56% = **12.16%** of stakeholder pools
 
 An active partner (**12**: 60.80%) earns **19x** more than an inactive founder (**20**: 3.20%). Activity matters more than title.
 
 ### 6.5 CABR-Driven Participant Classification
 
-The CABR algorithm (WSP 29) determines each 012's participant type AND sub-level within a FoundUp. This is tracked continuously — not assigned once.
+The CABR algorithm (WSP 29) determines each 012's participant type AND sub-level within a FoundUp. This is tracked continuously  Enot assigned once.
 
 ```python
 class ParticipantClassifier:
@@ -915,14 +922,14 @@ class ParticipantClassifier:
     CABR-driven classification. Returns two digits: type (0/1/2) + activity (0/1/2).
     
     Type determines WHICH POOLS you access (cumulative):
-      0 → 0-pool only
-      1 → 0-pool + 1-pool
-      2 → 0-pool + 1-pool + 2-pool
+      0 ↁE0-pool only
+      1 ↁE0-pool + 1-pool
+      2 ↁE0-pool + 1-pool + 2-pool
     
     Activity determines HOW MUCH of each accessible pool you earn:
-      2 → 80% of each pool
-      1 → 16% of each pool
-      0 → 4% of each pool
+      2 ↁE80% of each pool
+      1 ↁE16% of each pool
+      0 ↁE4% of each pool
     """
 
     POOL_ACCESS = {
@@ -938,7 +945,7 @@ class ParticipantClassifier:
     }
 
     def classify(self, participant_id: str, foundup_id: str) -> tuple[int, int]:
-        """Returns (type, activity) — e.g., (1, 2) for a "12" participant."""
+        """Returns (type, activity)  Ee.g., (1, 2) for a "12" participant."""
         p_type = self._determine_type(participant_id, foundup_id)
         activity = self._calculate_activity(participant_id, foundup_id)
         return (p_type, activity)
@@ -957,44 +964,44 @@ class ParticipantClassifier:
 
 ### 6.6 Pool Distribution Rules
 
-- **Pools are cumulative** — DAO participants collect from UN pool (as customers) PLUS DAO pool (as partners). DU participants collect from all three. The DAO and DU pools are bonuses on top of the base UN earnings.
-- **The pool is constant per epoch** — based on the FoundUp's minted UPS for that epoch
-- **Only active participants earn from their pools** — if you're inactive, your share stays in the pool (distributed to those who ARE active, proportionally)
-- **Everything is transparent** — all earnings, activity scores, and classifications are visible to all participants
-- **Everything is open** — the CABR classification algorithm is open source, auditable, challengeable
-- **Inactive founders still access all pools but earn minimum** — a DU with un-level activity accesses UN+DAO+DU pools but earns only 4% from each. The system doesn't strip your founder title — it just pays you proportionally to what you contribute
-- **Geofence UNs earn passively** — this is the universal basic dividend. If a FoundUp cleans your river, you benefit. The system recognizes that.
-- **Builders are also customers** — a DAO partner building the FoundUp also lives in the community it serves. They earn their UN base (as a customer) plus their DAO bonus (as a builder). This is natural — you should benefit from what you build.
+- **Pools are cumulative**  EDAO participants collect from UN pool (as customers) PLUS DAO pool (as partners). DU participants collect from all three. The DAO and DU pools are bonuses on top of the base UN earnings.
+- **The pool is constant per epoch**  Ebased on the FoundUp's routed UPS for that epoch
+- **Only active participants earn from their pools**  Eif you're inactive, your share stays in the pool (distributed to those who ARE active, proportionally)
+- **Everything is transparent**  Eall earnings, activity scores, and classifications are visible to all participants
+- **Everything is open**  Ethe CABR classification algorithm is open source, auditable, challengeable
+- **Inactive founders still access all pools but earn minimum**  Ea DU with un-level activity accesses UN+DAO+DU pools but earns only 4% from each. The system doesn't strip your founder title  Eit just pays you proportionally to what you contribute
+- **Geofence UNs earn passively**  Ethis is the universal basic dividend. If a FoundUp cleans your river, you benefit. The system recognizes that.
+- **Builders are also customers**  Ea DAO partner building the FoundUp also lives in the community it serves. They earn their UN base (as a customer) plus their DAO bonus (as a builder). This is natural  Eyou should benefit from what you build.
 
 ### 6.7 Universal Basic Dividend
 
-The UN pool (60% of total) is the mechanism for a **universal basic dividend** paid to everyone in a FoundUp's sphere of influence. This is not charity — it's recognition that beneficial FoundUps create value for their communities, and those communities deserve a share.
+The UN pool (60% of total) is the mechanism for a **universal basic dividend** paid to everyone in a FoundUp's sphere of influence. This is not charity  Eit's recognition that beneficial FoundUps create value for their communities, and those communities deserve a share.
 
 ```
 FoundUp "Clean River DAO" geofenced to a watershed:
-  → 10,000 UPS minted this epoch (CABR-validated)
-    → Pools: 0-pool=6,000 | 1-pool=1,600 | 2-pool=400 | Network=1,600 | Fund=400
+  ↁE10,000 UPS routed this epoch (CABR-validated)
+    ↁEPools: 0-pool=6,000 | 1-pool=1,600 | 2-pool=400 | Network=1,600 | Fund=400
 
-  Alice "01" (customer, regular activity — uses the water app):
-    → 0-pool: 6,000 × 16% = 960 UPS
-    → Total: 960 UPS
+  Alice "01" (customer, regular activity  Euses the water app):
+    ↁE0-pool: 6,000 ÁE16% = 960 UPS
+    ↁETotal: 960 UPS
 
-  Bob "12" (partner, max activity — built the sensor network):
-    → 0-pool: 6,000 × 80% = 4,800 UPS (as community member)
-    → 1-pool: 1,600 × 80% = 1,280 UPS (partner bonus)
-    → Total: 6,080 UPS
+  Bob "12" (partner, max activity  Ebuilt the sensor network):
+    ↁE0-pool: 6,000 ÁE80% = 4,800 UPS (as community member)
+    ↁE1-pool: 1,600 ÁE80% = 1,280 UPS (partner bonus)
+    ↁETotal: 6,080 UPS
 
-  Carol "21" (founder, regular activity — started it, still active):
-    → 0-pool: 6,000 × 16% = 960 UPS (as community member)
-    → 1-pool: 1,600 × 16% = 256 UPS (partner bonus)
-    → 2-pool:   400 × 16% =  64 UPS (founder bonus)
-    → Total: 1,280 UPS
+  Carol "21" (founder, regular activity  Estarted it, still active):
+    ↁE0-pool: 6,000 ÁE16% = 960 UPS (as community member)
+    ↁE1-pool: 1,600 ÁE16% = 256 UPS (partner bonus)
+    ↁE2-pool:   400 ÁE16% =  64 UPS (founder bonus)
+    ↁETotal: 1,280 UPS
 
   Dave "20" (co-founder, does nothing):
-    → 0-pool: 6,000 × 4% = 240 UPS
-    → 1-pool: 1,600 × 4% =  64 UPS
-    → 2-pool:   400 × 4% =  16 UPS
-    → Total: 320 UPS — co-founder earns LESS than an active customer
+    ↁE0-pool: 6,000 ÁE4% = 240 UPS
+    ↁE1-pool: 1,600 ÁE4% =  64 UPS
+    ↁE2-pool:   400 ÁE4% =  16 UPS
+    ↁETotal: 320 UPS  Eco-founder earns LESS than an active customer
 
   Bob "12" earns 19x more than Dave "20".
   Type opens pool access. Activity determines earnings. Both matter.
@@ -1004,7 +1011,7 @@ FoundUp "Clean River DAO" geofenced to a watershed:
 
 **The "human" in the system is represented by their 0102 digital twin.**
 
-In FoundUps, humans don't directly participate in the token economy — their **digital twin (0102 agent)** acts on their behalf. The human provides feedback and oversight; the digital twin executes work in the system.
+In FoundUps, humans don't directly participate in the token economy  Etheir **digital twin (0102 agent)** acts on their behalf. The human provides feedback and oversight; the digital twin executes work in the system.
 
 ```
 Human (you)                    Digital Twin (0102)
@@ -1015,13 +1022,13 @@ Human (you)                    Digital Twin (0102)
 ```
 
 **Type is set at entry (simple)**:
-- You START a project → Type 2 (Founder)
-- You JOIN a project → Type 1 (Team Member)
-- You USE the product → Type 0 (Customer)
+- You START a project ↁEType 2 (Founder)
+- You JOIN a project ↁEType 1 (Team Member)
+- You USE the product ↁEType 0 (Customer)
 
 **Activity is dynamic (based on work)**:
-- Your digital twin works → Activity increases
-- Your digital twin stops → Activity degrades
+- Your digital twin works ↁEActivity increases
+- Your digital twin stops ↁEActivity degrades
 - The system measures ENGAGEMENT, not title
 
 ### 6.7.2 Degradation Mechanics
@@ -1031,19 +1038,19 @@ Human (you)                    Digital Twin (0102)
 This is the mechanical consequence of "project abandoned by you":
 
 ```
-Epoch 1: No work → Warning
-Epoch 2: No work → Warning
-Epoch 3: No work → Activity drops (2→1 or 1→0)
+Epoch 1: No work ↁEWarning
+Epoch 2: No work ↁEWarning
+Epoch 3: No work ↁEActivity drops (2ↁE or 1ↁE)
 
 A founder (Type 2) who abandons the project:
-  "22" (active founder) → "21" → "20" (inactive founder)
+  "22" (active founder) ↁE"21" ↁE"20" (inactive founder)
 
 Earnings drop:
   "22" = 64% of stakeholder pools
   "20" = 3.2% of stakeholder pools (almost nothing)
 ```
 
-**Degradation is reversible** — if your digital twin starts working again, activity increases based on work quality.
+**Degradation is reversible**  Eif your digital twin starts working again, activity increases based on work quality.
 
 ### 6.7.3 Elevation Governance
 
@@ -1066,59 +1073,59 @@ Process:
 **Example**:
 ```
 Bob (Type 1 Team Member) does most of the work
-  → Digital twin recommends: "Bob should be Founder"
-  → Alice (Type 2 Founder) approves
-  → Bob elevated to Type 2
-  → Both active → both earn from all pools
-  → If Alice stops working → Alice degrades → Bob earns more
+  ↁEDigital twin recommends: "Bob should be Founder"
+  ↁEAlice (Type 2 Founder) approves
+  ↁEBob elevated to Type 2
+  ↁEBoth active ↁEboth earn from all pools
+  ↁEIf Alice stops working ↁEAlice degrades ↁEBob earns more
 ```
 
 ### 6.8 Human vs Agent Economic Boundary (Anti-Sybil Design)
 
-**Critical Rule**: Agents and humans have DIFFERENT token relationships. This prevents Sybil farming attacks where spinning up agents to grind activity drains the UP$ pool.
+**Critical Rule**: Agents and humans have DIFFERENT token relationships. This prevents Sybil farming attacks where spinning up agents to grind activity drains the UPS pool.
 
 #### Token Roles (Strict Separation)
 
 | Token | Who Earns It | Purpose | Anti-Gaming |
 |-------|--------------|---------|-------------|
-| **UP$** | Humans ONLY | Universal fuel, access, settlement, lottery "found it!" | Agents CANNOT earn UP$ directly |
+| **UPS** | Humans ONLY | Universal fuel, access, settlement, lottery "found it!" | Agents CANNOT earn UPS directly |
 | **F_i** | Agents (0102) | FoundUp-specific work reward, PoUW-earned | Bitcoin-like scarcity per FoundUp |
 
-#### Why Agents Don't Earn UP$
+#### Why Agents Don't Earn UPS
 
-If agents could earn UP$, immediate Sybil attack:
+If agents could earn UPS, immediate Sybil attack:
 ```
-Spin up agents → grind "activity" → drain UP$ pool → convert → extract
+Spin up agents ↁEgrind "activity" ↁEdrain UPS pool ↁEconvert ↁEextract
 ```
 
-Agents don't NEED UP$ as motivation — they run because **humans allocate budgets**. The motivation is human; the execution is agentic.
+Agents don't NEED UPS as motivation  Ethey run because **humans allocate budgets**. The motivation is human; the execution is agentic.
 
 #### The Correct Flow
 
 ```
 Human (012):
-  1. Allocates UP$ budget to FoundUp_i (stake/allocate)
-  2. Agent (0102) executes tasks using that UP$ budget as fuel
-  3. Agent completes verified work → Agent receives F_i tokens
+  1. Allocates UPS budget to FoundUp_i (stake/allocate)
+  2. Agent (0102) executes tasks using that UPS budget as fuel
+  3. Agent completes verified work ↁEAgent receives F_i tokens
   4. Human can:
      - Keep F_i (hold)
      - Stake F_i (governance)
-     - Swap F_i → UP$ (realization event — FEE TAKEN HERE)
-     - Cash out via UP$ → external routes
+     - Swap F_i ↁEUPS (realization event  EFEE TAKEN HERE)
+     - Cash out via UPS ↁEexternal routes
 
-UP$ = gasoline (spent by agents, earned by humans)
+UPS = gasoline (spent by agents, earned by humans)
 F_i = mined asset (earned by agents, owned by humans)
 ```
 
 #### Agent Execution Wallet (NOT Earning)
 
-Agents MAY hold UP$ as an execution wallet — this is custody for spending, NOT earning:
+Agents MAY hold UPS as an execution wallet  Ethis is custody for spending, NOT earning:
 
 ```python
 class AgentExecutionWallet:
     """
-    Agent holds UP$ only as a prepaid execution budget.
-    This is NOT earning — it's delegated spending authority.
+    Agent holds UPS only as a prepaid execution budget.
+    This is NOT earning  Eit's delegated spending authority.
     """
 
     def __init__(self, agent_id: str, allocator_id: str):
@@ -1128,12 +1135,12 @@ class AgentExecutionWallet:
         self.policy_gates = {}  # Spending constraints
 
     def receive_allocation(self, amount: float, policy: dict):
-        """Human allocates UP$ to agent for task execution."""
+        """Human allocates UPS to agent for task execution."""
         self.ups_balance += amount
         self.policy_gates = policy  # e.g., max_per_task, allowed_operations
 
     def spend(self, amount: float, operation: str) -> bool:
-        """Agent spends UP$ under policy constraints."""
+        """Agent spends UPS under policy constraints."""
         if not self._policy_allows(operation, amount):
             return False
         self.ups_balance -= amount
@@ -1153,52 +1160,52 @@ class AgentExecutionWallet:
 
 #### Human Incentive Layer: Real-World Proof
 
-Humans earn UP$ through **verified real-world actions** (not agent work):
+Humans earn UPS through **verified real-world actions** (not agent work):
 
 ```
 Beach Cleanup Example (GotJunk Waste Domain):
   1. Human submits proof (photos, geo, timestamp)
   2. Consensus/verification yields ProofScore
   3. Human earns:
-     - Proportional UP$ share (based on CABR)
+     - Proportional UPS share (based on CABR)
      - Lottery chance (the "found it!" chime)
 
-Agents DO NOT "find UP$" — Humans DO.
+Agents DO NOT "find UPS"  EHumans DO.
 Agents mine F_i by building the FoundUp (software, ops, growth).
-Humans mine UP$ by doing real-world actions aligned with FoundUp mission.
+Humans mine UPS by doing real-world actions aligned with FoundUp mission.
 ```
 
-#### Fee Boundary: F_i → UP$ Conversion
+#### Fee Boundary: F_i ↁEUPS Conversion
 
 **The system earns at the realization boundary:**
 
 | Transaction | Fee | Why |
 |-------------|-----|-----|
-| Internal UP$ spend | Low/None | Encourage activity |
-| F_i → UP$ conversion | 2-5% | Value realization event |
-| UP$ → external (cash out) | 5-10% | Discourages extraction |
+| Internal UPS spend | Low/None | Encourage activity |
+| F_i ↁEUPS conversion | 2-5% | Value realization event |
+| UPS ↁEexternal (cash out) | 5-10% | Discourages extraction |
 
-Fee routing on F_i → UP$ swap:
+Fee routing on F_i ↁEUPS swap:
 - `fee_ops`: Protocol revenue (security/dev)
 - `fee_vault_i`: Buys BTC into Vault_i (never exits)
 - `fee_insurance`: Slashing/incident pool
 
 This creates the virtuous cycle:
 ```
-Cash-out activity → Vault_i grows → UP$ capacity increases
-→ More activity possible → More fees → Vault_i grows further
+Cash-out activity ↁEVault_i grows ↁEUPS capacity increases
+ↁEMore activity possible ↁEMore fees ↁEVault_i grows further
 ```
 
 #### Summary: Who Earns What
 
 | Actor | Earns | Spends | Converts |
 |-------|-------|--------|----------|
-| **Human (012)** | UP$ (participation + lottery) | UP$ (allocate to agents) | F_i → UP$ (fee taken) |
-| **Agent (0102)** | F_i (verified work) | UP$ (allocated budget) | N/A (human converts) |
+| **Human (012)** | UPS (participation + lottery) | UPS (allocate to agents) | F_i ↁEUPS (fee taken) |
+| **Agent (0102)** | F_i (verified work) | UPS (allocated budget) | N/A (human converts) |
 | **FoundUp** | Fees (on conversions) | N/A | N/A |
 | **BTC Vault** | Fee routing | N/A | Backing grows monotonically |
 
-**Key insight**: Budgets flow DOWN (human → agent), value flows UP (agent F_i → human ownership), fees flow to VAULT (system becomes anti-fragile).
+**Key insight**: Budgets flow DOWN (human ↁEagent), value flows UP (agent F_i ↁEhuman ownership), fees flow to VAULT (system becomes anti-fragile).
 
 ### 6.9 Early Investor Economics (Bitclout-inspired Bonding Curve)
 
@@ -1214,32 +1221,26 @@ Investors provide initial BTC liquidity via an **escrow model**. In return, they
 Following Bitclout's creator coin model ($200M raised from a16z, Sequoia), I_i tokens use a polynomial bonding curve:
 
 ```
-Price(supply) = k × supply^n
+Price(supply) = k ÁEsupply^n
 
 Where:
   k = 0.0001 (price constant in BTC)
   n = 2 (quadratic - creates early investor advantage)
 ```
 
-**Key property**: Supply 10x → Price 100x (quadratic growth)
+**Key property**: Supply 10x ↁEPrice 100x (quadratic growth)
 
 #### 6.9.2 BTC Escrow Model ("Dry Wallet")
 
 Investor BTC is **escrowed**, not spent immediately:
 
 ```
-Investor BTC → Dry Wallet (Escrow)
-                    ↓
-              Sequestered for 3 years
-                    ↓
-              [CHOICE POINT at Year 3]
-                    ↓
-    ┌───────────────┼───────────────┐
-    ↓               ↓               ↓
- BUYOUT         PARTIAL          HOLD
+Investor BTC ↁEDry Wallet (Escrow)
+                    ↁE              Sequestered for 3 years
+                    ↁE              [CHOICE POINT at Year 3]
+                    ↁE    ┌───────────────┼───────────────━E    ↁE              ↁE              ↁE BUYOUT         PARTIAL          HOLD
  (10x)          (50/50)        (100x+)
-    ↓               ↓               ↓
- BTC returns    Half returns    ALL BTC
+    ↁE              ↁE              ↁE BTC returns    Half returns    ALL BTC
  to investor    + half stays    to reserve
 ```
 
@@ -1320,15 +1321,15 @@ Within the Du pool (4%), stakers are classified by their earned/staked ratio:
 ```python
 # Degressive tier thresholds (earned_fi / original_stake_btc ratio)
 STAKER_TIER_THRESHOLDS = {
-    "du": 10.0,    # <10x earned → du tier (80% of Du pool)
-    "dao": 100.0,  # 10x-100x earned → dao tier (16% of Du pool)
-    # >100x earned → un tier (4% of Du pool = 0.16% total) — lifetime floor
+    "du": 10.0,    # <10x earned ↁEdu tier (80% of Du pool)
+    "dao": 100.0,  # 10x-100x earned ↁEdao tier (16% of Du pool)
+    # >100x earned ↁEun tier (4% of Du pool = 0.16% total)  Elifetime floor
 }
 
-# Individual share = (pool × tier_percentage) / count_at_tier
+# Individual share = (pool ÁEtier_percentage) / count_at_tier
 ```
 
-**Tier degradation is degressive** — as you earn more relative to stake, your share of the Du pool decreases. This is intentional:
+**Tier degradation is degressive**  Eas you earn more relative to stake, your share of the Du pool decreases. This is intentional:
 - Early stakers (low ratio) get the lion's share
 - Lifetime floor at un tier ensures ALL stakers always earn something
 
@@ -1357,18 +1358,18 @@ Agent (0102) earnings from the Dao pool are weighted by compute cost:
 COMPUTE_TIER_WEIGHTS = {
     "opus": 10.0,    # Heavy compute (Claude Opus)
     "sonnet": 3.0,   # Medium compute (Claude Sonnet)
-    "haiku": 1.0,    # Light compute (Claude Haiku) — baseline
+    "haiku": 1.0,    # Light compute (Claude Haiku)  Ebaseline
     "gemma": 0.5,    # Local inference (Gemma)
     "qwen": 0.5,     # Local inference (Qwen)
 }
 
 # Agent payout formula
-fi_earned = base_rate × v3_score × compute_weight
+fi_earned = base_rate ÁEv3_score ÁEcompute_weight
 
-# Where compute_weight = (tokens_used / 1000) × tier_factor
+# Where compute_weight = (tokens_used / 1000) ÁEtier_factor
 ```
 
-This rewards agents using expensive models proportionally — opus tasks that burn 10x compute earn 10x F_i.
+This rewards agents using expensive models proportionally  Eopus tasks that burn 10x compute earn 10x F_i.
 
 #### 6.10.5 Epoch Timing Model
 
@@ -1405,7 +1406,7 @@ EPOCH_TIMING = {
     "WSP_27": {
         "purpose": "agentic_state_validation",
         "touchpoints": [
-            "mint_authorization",
+            "release_authorization",
             "decay_modulation",
             "value_stabilization"
         ]
@@ -1422,7 +1423,7 @@ EPOCH_TIMING = {
         "purpose": "state_transition_hooks",
         "touchpoints": [
             "decay_threshold_adjustment",
-            "mint_permission_elevation",
+            "release_permission_elevation",
             "value_quantum_coherence"
         ]
     }
@@ -1437,7 +1438,7 @@ class BTCValueRegistry:
     def __init__(self):
         self.btc_wallet_registry = {}  # foundup_id: btc_wallet_address
         self.token_decay_schedule = {}  # token_id: decay_rate
-        self.mint_proof_chain = {}      # token_id: partifact_id
+        self.release_proof_chain = {}      # token_id: partifact_id
         
     def register_foundup_wallet(self, foundup_id, wallet_data):
         """Register new FoundUp BTC wallet"""
@@ -1454,10 +1455,10 @@ class BTCValueRegistry:
         }
         self.token_decay_schedule[token_id] = decay_rates[wsp_phase]
         
-    def record_mint_proof(self, token_id, partifact_data):
-        """Record Partifact proof-of-action for token mint"""
+    def record_release_proof(self, token_id, partifact_data):
+        """Record Partifact proof-of-action for treasury release"""
         if partifact_data["state"] == "[U+00D8]2[U+00D8]1":
-            self.mint_proof_chain[token_id] = partifact_data
+            self.release_proof_chain[token_id] = partifact_data
 ```
 
 ## 8. Implementation Requirements
@@ -1466,7 +1467,7 @@ class BTCValueRegistry:
 ```
 /modules/blockchain/foundups_token_system/
 [U+251C][U+2500][U+2500] src/
-[U+2502]   [U+251C][U+2500][U+2500] mint_engine.py
+[U+2502]   [U+251C][U+2500][U+2500] flow_router.py
 [U+2502]   [U+251C][U+2500][U+2500] decay_engine.py
 [U+2502]   [U+251C][U+2500][U+2500] reinvestment_loop.py
 [U+2502]   [U+251C][U+2500][U+2500] consensus_oracle.py
@@ -1484,7 +1485,7 @@ class BTCValueRegistry:
 - Prevents gaming/exploitation
 
 #### MintEngine
-- Implements minting rules
+- Implements flow routing rules
 - Calculates initial token values
 - Tracks token supply metrics
 - Ensures ecosystem balance
@@ -1550,7 +1551,7 @@ This protocol integrates with:
 - **WSP 3**: Blockchain domain architecture
 - **WSP 13**: Test coverage requirements
 - **WSP 25**: Semantic WSP Module State Rating System
-- **WSP 29**: CABR Engine (mint triggers, validation, anti-gaming)
+- **WSP 29**: CABR Engine (pipe sizing, validation, anti-gaming)
 - **WSP 44**: Semantic state tracking
 - **WSP 58**: FoundUp IP Lifecycle and Tokenization (MVP tokenization, revenue distribution)
 
@@ -1560,7 +1561,7 @@ This protocol integrates with:
 - Dynamic decay rates
 - Multi-token ecosystems
 - Cross-DAE value bridges
-- Reputation-based minting
+- Reputation-based flow routing
 
 ### 12.2 Research Areas
 - Optimal decay constants

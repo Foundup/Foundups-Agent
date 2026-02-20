@@ -6,7 +6,7 @@ This file maps problems to existing solutions to prevent vibecoding.
 0102 agents MUST consult this file BEFORE creating any new code.
 
 Status: ACTIVE - Fully functional with HoloIndex integration
-Last Updated: 2025-11-30 - Expanded to include AI intelligence, infrastructure, and HoloDAE modules
+Last Updated: 2026-02-18 - Added Member Area (auth, dashboard shell, navigation)
 WSP Compliance: WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification)
 
 COVERAGE:
@@ -14,6 +14,7 @@ COVERAGE:
 - ✅ AI Intelligence (telemetry monitoring, event processing)
 - ✅ Infrastructure (WSP orchestration, MCP management, WRE skills)
 - ✅ HoloDAE Coordination (Qwen/Gemma agents, autonomous refactoring)
+- ✅ Member Area (auth state, dashboard shell, navigation)
 
 ACHIEVEMENTS:
 - ✅ Surgical debugging: 93% token reduction, 80% time savings vs grep
@@ -52,6 +53,16 @@ NEED_TO = {
     "cube ecosystem multi-cube zoom": "public/js/foundup-cube.js:drawEcosystemView() - Multiple cubes view",
     "cube WSP importance colors P0-P4": "public/js/foundup-cube.js:getWSPImportanceColor() - Red/Orange/Yellow/Green/Blue",
     "cube SSE simulator integration": "public/js/foundup-cube.js:initSSE() - Server-Sent Events bridge",
+
+    # FoundUps Website - Member Area (Layer 1 Shell)
+    "member area dashboard": "public/member/index.html - Authenticated member dashboard shell",
+    "member area auth state": "public/member/index.html - Firebase onAuthStateChanged listener",
+    "member area navigation": "public/member/index.html - Hash-based section routing (#dashboard, #wallet, etc.)",
+    "member area styles": "public/member/css/member.css - Dark theme, glassmorphism, responsive",
+    "invite code display member": "public/member/index.html - renderInviteCodes() with copy functionality",
+    "member logout signout": "public/member/index.html - Firebase signOut() with redirect",
+    "landing page signup redirect": "public/index.html - Redirects to /member/ after successful signup",
+    "member area roadmap layers": "public/member/ROADMAP.md - Layer 1-6 module progression",
 
     # FoundUps Simulator (Mesa Model + SSE)
     "simulator mesa model foundups": "modules/foundups/simulator/mesa_model.py:FoundUpsModel - Agent-based simulation",
@@ -132,6 +143,15 @@ NEED_TO = {
     "wardrobe skills": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader - Like clothing outfits the agent wears for specific tasks",
     "load skillz": "modules/infrastructure/wre_core/skillz/wre_skills_loader.py:WRESkillsLoader.load_skill_on_demand()",
     "wre skillz protocol": "WSP_framework/src/WSP_95_WRE_SKILLz_Wardrobe_Protocol.md - Micro Chain-of-Thought paradigm (canonical WSP 95)",
+
+    # Centralized DAEmon (Cardiovascular System)
+    "centralized daemon monitoring": "modules/infrastructure/dae_daemon/src/dae_daemon.py:CentralDAEmon",
+    "dae registration heartbeat": "modules/infrastructure/dae_daemon/src/dae_registry.py:DAERegistry",
+    "security killswitch detach": "modules/infrastructure/dae_daemon/src/killswitch.py:Killswitch",
+    "dae event store dual-write": "modules/infrastructure/dae_daemon/src/event_store.py:DAEEventStore",
+    "dae adapter non-invasive": "modules/infrastructure/dae_daemon/src/dae_adapter.py:CentralDAEAdapter",
+    "dae dashboard centralized switch": "modules/infrastructure/cli/src/main_menu.py:_run_dae_dashboard()",
+    "enable disable dae": "modules/infrastructure/dae_daemon/src/dae_daemon.py:CentralDAEmon.enable_dae()",
 
     # WSP Compliance & Pattern Memory
     "scan wsp violations": "modules/infrastructure/wsp_core/src/wsp_compliance_checker.py:WSPComplianceChecker.scan()",

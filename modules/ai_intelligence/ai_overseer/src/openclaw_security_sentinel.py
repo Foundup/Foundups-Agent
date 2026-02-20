@@ -13,7 +13,13 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+
+from typing import Any, Dict, List, Optional
+import subprocess
+import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,6 +36,8 @@ class OpenClawSecurityStatus:
     skills_dir: str
     report_path: Optional[str]
     exit_code: int
+    open_ports: Optional[List[int]] = None
+    risky_bindings: Optional[List[str]] = None
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -44,7 +52,10 @@ class OpenClawSecurityStatus:
             "message": self.message,
             "skills_dir": self.skills_dir,
             "report_path": self.report_path,
+
             "exit_code": self.exit_code,
+            "open_ports": self.open_ports or [],
+            "risky_bindings": self.risky_bindings or [],
         }
 
 
@@ -145,6 +156,23 @@ class OpenClawSecuritySentinel:
             ).as_dict()
             self._save_cache(status)
             return status
+
+
+        # --- Phase 11: Runtime Port Scan ---
+        try:
+            open_ports, risky_bindings = self._scan_ports()
+        except Exception as exc:
+            logger.warning(f"Port scan failed: {exc}")
+            open_ports, risky_bindings = [], []
+
+        # Fail if risky bindings found
+        if risky_bindings and enforced:
+            result.available = True  # We ran the check
+            result.passed = False
+            result.message = f"CRITICAL: Risky network bindings detected: {', '.join(risky_bindings)}"
+            result.exit_code = 1  # Security failure
+        # -----------------------------------
+
         if not result.available:
             passed = not required
         else:
@@ -163,9 +191,58 @@ class OpenClawSecuritySentinel:
             skills_dir=result.skills_dir,
             report_path=result.report_path,
             exit_code=result.exit_code,
+            open_ports=open_ports,
+            risky_bindings=risky_bindings,
         ).as_dict()
         self._save_cache(status)
         return status
+
+    def _scan_ports(self) -> tuple[List[int], List[str]]:
+        """Scan active listening ports for 0.0.0.0 bindings."""
+        open_ports = []
+        risky_bindings = []
+        
+        try:
+            # Cross-platform netstat (mostly Windows/Linux compatible for this flag verify)
+            # -a: all, -n: numeric
+            cmd = ["netstat", "-an"]
+            # Windows specific: -o for PID but we just need IP:Port
+            if os.name == 'nt':
+                cmd = ["netstat", "-ano"]
+                
+            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf-8', errors='ignore')
+            
+            for line in output.splitlines():
+                line = line.strip()
+                if "LISTEN" not in line and "LISTENING" not in line:
+                    continue
+                    
+                # Parse "TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING"
+                parts = re.split(r'\s+', line)
+                if len(parts) >= 2:
+                    proto = parts[0]
+                    local_addr = parts[1]
+                    
+                    if ':' in local_addr:
+                        # IPv4 (0.0.0.0:8000) or IPv6 ([::]:8000)
+                        ip_part = local_addr.rsplit(':', 1)[0]
+                        port_part = local_addr.rsplit(':', 1)[1]
+                        
+                        try:
+                            port = int(port_part)
+                            open_ports.append(port)
+                            
+                            # Check for risky binding
+                            # 0.0.0.0 or [::] (all interfaces)
+                            if ip_part == '0.0.0.0' or ip_part == '[::]' or ip_part == '*':
+                                risky_bindings.append(f"{ip_part}:{port}")
+                        except ValueError:
+                            continue
+                            
+        except Exception as e:
+            logger.error(f"Failed to scan ports: {e}")
+            
+        return sorted(list(set(open_ports))), sorted(list(set(risky_bindings)))
 
     def _load_cache(self) -> Optional[Dict[str, Any]]:
         if not self.cache_path.exists():

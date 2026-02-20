@@ -516,6 +516,19 @@ class OpenClawDAE:
         self._skill_scan_enforced = os.getenv("OPENCLAW_SKILL_SCAN_ENFORCED", "1") != "0"
         self._skill_scan_max_severity = os.getenv("OPENCLAW_SKILL_SCAN_MAX_SEVERITY", "medium")
 
+        # Central DAEmon adapter (cardiovascular observation)
+        self._central_adapter = None
+        try:
+            from modules.infrastructure.dae_daemon.src.dae_adapter import CentralDAEAdapter
+            self._central_adapter = CentralDAEAdapter(
+                dae_id="openclaw", dae_name="OpenClaw DAE",
+                domain="communication",
+                module_path="modules.communication.moltbot_bridge.src.openclaw_dae",
+            )
+            self._central_adapter.register()
+        except Exception:
+            pass  # Graceful if central daemon not available
+
         logger.info("[OPENCLAW-DAE] Frontal lobe initialized | state=%s", self.state)
 
     # ------------------------------------------------------------------
@@ -1919,6 +1932,16 @@ class OpenClawDAE:
             metadata=metadata,
         )
 
+        # Cardiovascular: report message_in to central daemon
+        if self._central_adapter:
+            try:
+                self._central_adapter.report_message_in(
+                    source=f"{sender}@{channel}",
+                    summary=f"intent={intent.category.value} conf={intent.confidence:.2f}",
+                )
+            except Exception:
+                pass
+
         # Skill safety gate for skill-driven/mutating routes.
         if intent.category in (
             IntentCategory.COMMAND,
@@ -1967,5 +1990,15 @@ class OpenClawDAE:
         # Phase 6+7: Validate and remember
         elapsed_ms = int((time.time() - start_time) * 1000)
         result = self._validate_and_remember(plan, response_text, elapsed_ms)
+
+        # Cardiovascular: report message_out to central daemon
+        if self._central_adapter:
+            try:
+                self._central_adapter.report_message_out(
+                    dest=f"{sender}@{channel}",
+                    summary=f"route={plan.route} time={elapsed_ms}ms",
+                )
+            except Exception:
+                pass
 
         return result.response_text

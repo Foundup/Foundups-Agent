@@ -35,7 +35,7 @@ import asyncio
 import io
 import atexit
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 # Load environment variables for DAEs (API keys, ports, feature flags).
 # Keep override=False so shell-provided env vars win.
@@ -290,7 +290,18 @@ def search_with_holoindex(query: str):
         print(f"[ERROR] HoloIndex search failed: {e}")
 
 
-def run_openclaw_security_preflight(repo_root: Path) -> bool:
+def _create_ai_overseer_for_preflight(repo_root: Path) -> Any:
+    """Create AI Overseer with quieter logs during startup preflight."""
+    _prev_level = logging.root.level
+    try:
+        logging.root.setLevel(logging.WARNING)
+        from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
+        return AIIntelligenceOverseer(repo_root)
+    finally:
+        logging.root.setLevel(_prev_level)
+
+
+def run_openclaw_security_preflight(repo_root: Path, overseer: Any | None = None) -> bool:
     """
     Run OpenClaw security preflight via AI Overseer sentinel.
 
@@ -311,12 +322,8 @@ def run_openclaw_security_preflight(repo_root: Path) -> bool:
     force = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_FORCE", "0") == "1"
 
     try:
-        # Suppress noisy INFO logs during preflight (Qwen/Gemma init messages)
-        _prev_level = logging.root.level
-        logging.root.setLevel(logging.WARNING)
-        from modules.ai_intelligence.ai_overseer.src.ai_overseer import AIIntelligenceOverseer
-        overseer = AIIntelligenceOverseer(repo_root)
-        logging.root.setLevel(_prev_level)
+        if overseer is None:
+            overseer = _create_ai_overseer_for_preflight(repo_root)
         status = overseer.monitor_openclaw_security(force=force)
     except Exception as exc:
         logger.error(f"[SECURITY] OpenClaw preflight execution failed: {exc}")
@@ -340,10 +347,82 @@ def run_openclaw_security_preflight(repo_root: Path) -> bool:
     return True
 
 
+def run_wsp_framework_preflight(repo_root: Path, overseer: Any | None = None) -> bool:
+    """
+    Run WSP framework drift preflight via AI Overseer sentinel.
+
+    Env controls:
+      WSP_FRAMEWORK_PREFLIGHT=1                  Enable preflight at startup (default on)
+      WSP_FRAMEWORK_PREFLIGHT_ENFORCED=0         Block startup on canonical drift (default warn)
+      WSP_FRAMEWORK_PREFLIGHT_FORCE=0            Bypass TTL cache and force re-scan
+      WSP_FRAMEWORK_PREFLIGHT_ALLOW_BACKUP_ONLY=1  Allow backup-only knowledge files
+    """
+    enabled = os.getenv("WSP_FRAMEWORK_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[WSP-FRAMEWORK] Startup preflight disabled")
+        return True
+
+    enforced = os.getenv("WSP_FRAMEWORK_PREFLIGHT_ENFORCED", "0") != "0"
+    force = os.getenv("WSP_FRAMEWORK_PREFLIGHT_FORCE", "0") == "1"
+    allow_backup_only = os.getenv("WSP_FRAMEWORK_PREFLIGHT_ALLOW_BACKUP_ONLY", "1") != "0"
+
+    try:
+        if overseer is None:
+            overseer = _create_ai_overseer_for_preflight(repo_root)
+        status = overseer.monitor_wsp_framework(force=force, emit_alert=False)
+    except Exception as exc:
+        logger.error(f"[WSP-FRAMEWORK] Startup preflight execution failed: {exc}")
+        if enforced:
+            print(f"[WSP-FRAMEWORK] Preflight FAILED: {exc}")
+            return False
+        print(f"[WSP-FRAMEWORK] Preflight warning: {exc}")
+        return True
+
+    available = bool(status.get("available", False))
+    drift_count = int(status.get("drift_count", 0) or 0)
+    framework_only_count = len(status.get("framework_only") or [])
+    knowledge_only_count = len(status.get("knowledge_only") or [])
+    index_issue_count = len(status.get("index_issues") or [])
+    canonical_fail = (
+        (not available)
+        or drift_count > 0
+        or framework_only_count > 0
+        or index_issue_count > 0
+        or (knowledge_only_count > 0 and not allow_backup_only)
+    )
+    cache_state = "cached" if status.get("cached") else "fresh"
+
+    print(
+        "[WSP-FRAMEWORK] preflight="
+        f"{'PASS' if not canonical_fail else 'FAIL'} ({cache_state}) "
+        f"drift={drift_count} framework_only={framework_only_count} "
+        f"knowledge_only={knowledge_only_count} index_issues={index_issue_count}"
+    )
+
+    if canonical_fail and enforced:
+        print("[WSP-FRAMEWORK] Startup blocked by WSP_FRAMEWORK_PREFLIGHT_ENFORCED=1")
+        return False
+    return True
+
+
 def main():
     """Main entry point - thin router to CLI module."""
     repo_root = Path(__file__).resolve().parent
-    if not run_openclaw_security_preflight(repo_root):
+    preflights_requested = (
+        os.getenv("OPENCLAW_SECURITY_PREFLIGHT", "1") != "0"
+        or os.getenv("WSP_FRAMEWORK_PREFLIGHT", "1") != "0"
+    )
+
+    overseer = None
+    if preflights_requested:
+        try:
+            overseer = _create_ai_overseer_for_preflight(repo_root)
+        except Exception as exc:
+            logger.error(f"[PREFLIGHT] Failed to initialize AI Overseer: {exc}")
+
+    if not run_openclaw_security_preflight(repo_root, overseer=overseer):
+        return
+    if not run_wsp_framework_preflight(repo_root, overseer=overseer):
         return
 
     # Import MCP services for CLI access
