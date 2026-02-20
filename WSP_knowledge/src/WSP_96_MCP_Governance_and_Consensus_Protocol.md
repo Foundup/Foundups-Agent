@@ -93,6 +93,21 @@ graph TD
 - Emergency intervention protocols
 - Audit trail maintenance
 
+### Runtime Governance Injection Points (2026-02-19 Alignment)
+
+Governance checks are injected at distinct layers:
+- **Ingress preflight (`main.py`)**:
+  - OpenClaw security preflight.
+  - WSP framework drift preflight (framework canonical vs knowledge backup mirror).
+- **AI Overseer governance**:
+  - Sentinel ownership for framework audits and security policy decisions.
+  - Telemetry-triggered audits remain available at runtime.
+- **WRE execution plane**:
+  - Executes orchestration and skill loops.
+  - Must consume governance status, not re-implement governance policy engines.
+
+This split prevents control-plane duplication and keeps policy authority centralized.
+
 ### Skill Supply-Chain Security Gate
 
 MCP-connected agents that execute skills must satisfy a supply-chain gate before activation.
@@ -246,4 +261,3 @@ MCP-connected agents that execute skills must satisfy a supply-chain gate before
 3. Establish emergency governance procedures
 4. Create telemetry and monitoring framework
 5. Standardize scanner evidence ingestion for MCP activation decisions
-

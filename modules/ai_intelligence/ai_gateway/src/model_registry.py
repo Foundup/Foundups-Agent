@@ -3,7 +3,7 @@
 UPDATE THIS FILE when providers release new models.
 All other modules should import from here, not hardcode model IDs.
 
-Last Updated: 2026-02-15
+Last Updated: 2026-02-17
 """
 
 from dataclasses import dataclass
@@ -39,65 +39,104 @@ class ModelInfo:
 # OPENAI MODELS
 # =============================================================================
 OPENAI_MODELS: Dict[str, ModelInfo] = {
-    # Current (2026)
+    # Current (Feb 2026)
+    "gpt-5.2": ModelInfo(
+        model_id="gpt-5.2",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        notes="Flagship thinking model - coding, agentic tasks ($1.75/$14 per 1M)"
+    ),
+    "gpt-5.2-codex": ModelInfo(
+        model_id="gpt-5.2-codex",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        notes="Optimized for agentic coding (Codex environments)"
+    ),
+    "gpt-5": ModelInfo(
+        model_id="gpt-5",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        notes="General purpose, replaces GPT-4o ($1.25/$10 per 1M)"
+    ),
+    "o3": ModelInfo(
+        model_id="o3",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        release_date=date(2025, 4, 16),
+        notes="Reasoning model - complex problem solving ($2/$8 per 1M)"
+    ),
+    "o3-pro": ModelInfo(
+        model_id="o3-pro",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        notes="Extended reasoning (Responses API) ($20/$80 per 1M)"
+    ),
+    "o4-mini": ModelInfo(
+        model_id="o4-mini",
+        provider="openai",
+        status=ModelStatus.CURRENT,
+        release_date=date(2025, 4, 16),
+        notes="Fast reasoning model ($1.10/$4.40 per 1M)"
+    ),
+    # Deprecated/Sunset (retired Feb 13, 2026)
     "gpt-4o": ModelInfo(
         model_id="gpt-4o",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.SUNSET,
         release_date=date(2024, 5, 13),
-        notes="Best overall - code, analysis, creative"
+        sunset_date=date(2026, 2, 13),
+        notes="RETIRED Feb 2026 — use gpt-5 or gpt-5.2"
     ),
     "gpt-4o-mini": ModelInfo(
         model_id="gpt-4o-mini",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.SUNSET,
         release_date=date(2024, 7, 18),
-        notes="Fast, cheap, good quality"
+        sunset_date=date(2026, 2, 13),
+        notes="RETIRED Feb 2026 — use gpt-5"
     ),
     "o1": ModelInfo(
         model_id="o1",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.DEPRECATED,
         release_date=date(2024, 12, 5),
-        notes="Reasoning model - complex problem solving"
+        notes="Superseded by o3"
     ),
     "o1-mini": ModelInfo(
         model_id="o1-mini",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.DEPRECATED,
         release_date=date(2024, 9, 12),
-        notes="Fast reasoning model"
+        notes="Superseded by o4-mini"
     ),
     "o3-mini": ModelInfo(
         model_id="o3-mini",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.DEPRECATED,
         release_date=date(2025, 1, 31),
-        notes="Latest reasoning model"
+        notes="Superseded by o4-mini"
     ),
-    # Legacy
     "gpt-4-turbo": ModelInfo(
         model_id="gpt-4-turbo",
         provider="openai",
-        status=ModelStatus.LEGACY,
+        status=ModelStatus.SUNSET,
         release_date=date(2024, 4, 9),
-        notes="Superseded by gpt-4o"
+        notes="RETIRED — use gpt-5.2"
     ),
-    # Deprecated/Sunset
     "gpt-4": ModelInfo(
         model_id="gpt-4",
         provider="openai",
-        status=ModelStatus.DEPRECATED,
+        status=ModelStatus.SUNSET,
         release_date=date(2023, 3, 14),
         sunset_date=date(2025, 6, 1),
-        notes="Use gpt-4o instead"
+        notes="RETIRED — use gpt-5.2"
     ),
     "gpt-3.5-turbo": ModelInfo(
         model_id="gpt-3.5-turbo",
         provider="openai",
-        status=ModelStatus.DEPRECATED,
+        status=ModelStatus.SUNSET,
         release_date=date(2023, 3, 1),
-        notes="Use gpt-4o-mini instead"
+        notes="RETIRED — use gpt-5"
     ),
 }
 
@@ -154,29 +193,48 @@ ANTHROPIC_MODELS: Dict[str, ModelInfo] = {
 # GOOGLE GEMINI MODELS
 # =============================================================================
 GEMINI_MODELS: Dict[str, ModelInfo] = {
-    # Current (2026)
+    # Current (2026) - Gemini 3 preview + 2.5 stable
+    "gemini-3-pro-preview": ModelInfo(
+        model_id="gemini-3-pro-preview",
+        provider="google",
+        status=ModelStatus.CURRENT,
+        notes="Latest Gemini - reasoning + multimodal (preview)"
+    ),
+    "gemini-3-flash-preview": ModelInfo(
+        model_id="gemini-3-flash-preview",
+        provider="google",
+        status=ModelStatus.CURRENT,
+        notes="Fast frontier-class performance (preview)"
+    ),
     "gemini-2.5-pro": ModelInfo(
         model_id="gemini-2.5-pro",
         provider="google",
         status=ModelStatus.CURRENT,
         release_date=date(2025, 3, 25),
-        notes="Most capable Gemini - thinking model"
+        notes="Stable reasoning model - production recommended"
     ),
     "gemini-2.5-flash": ModelInfo(
         model_id="gemini-2.5-flash",
         provider="google",
         status=ModelStatus.CURRENT,
         release_date=date(2025, 4, 17),
-        notes="Fast thinking model"
+        notes="Stable fast model - production recommended"
     ),
+    "gemini-2.5-flash-lite": ModelInfo(
+        model_id="gemini-2.5-flash-lite",
+        provider="google",
+        status=ModelStatus.CURRENT,
+        notes="Cost-efficient, high throughput"
+    ),
+    # Deprecated (shutdown March 31, 2026)
     "gemini-2.0-flash": ModelInfo(
         model_id="gemini-2.0-flash",
         provider="google",
-        status=ModelStatus.LEGACY,
+        status=ModelStatus.DEPRECATED,
         release_date=date(2024, 12, 11),
-        notes="Previous gen - use 2.5 series"
+        sunset_date=date(2026, 3, 31),
+        notes="SHUTDOWN March 31 2026 — use gemini-2.5-flash"
     ),
-    # Deprecated
     "gemini-pro": ModelInfo(
         model_id="gemini-pro",
         provider="google",
@@ -197,17 +255,44 @@ GEMINI_MODELS: Dict[str, ModelInfo] = {
 # GROK MODELS (X.AI)
 # =============================================================================
 GROK_MODELS: Dict[str, ModelInfo] = {
+    # Current (Feb 2026) - Grok 4 family
+    "grok-4": ModelInfo(
+        model_id="grok-4",
+        provider="xai",
+        status=ModelStatus.CURRENT,
+        notes="Flagship Grok - most intelligent ($3/$15 per 1M)"
+    ),
+    "grok-4-fast": ModelInfo(
+        model_id="grok-4-fast",
+        provider="xai",
+        status=ModelStatus.CURRENT,
+        notes="Fast reasoning model ($0.20/$0.50 per 1M)"
+    ),
+    "grok-code-fast-1": ModelInfo(
+        model_id="grok-code-fast-1",
+        provider="xai",
+        status=ModelStatus.CURRENT,
+        notes="Agentic coding model ($0.20/$1.50 per 1M)"
+    ),
+    "grok-3-mini": ModelInfo(
+        model_id="grok-3-mini",
+        provider="xai",
+        status=ModelStatus.CURRENT,
+        notes="Lightweight reasoning ($0.30/$0.50 per 1M)"
+    ),
+    # Legacy
     "grok-3": ModelInfo(
         model_id="grok-3",
         provider="xai",
-        status=ModelStatus.CURRENT,
-        notes="Current Grok model"
+        status=ModelStatus.LEGACY,
+        notes="Previous flagship — use grok-4"
     ),
+    # Deprecated
     "grok-2": ModelInfo(
         model_id="grok-2",
         provider="xai",
-        status=ModelStatus.LEGACY,
-        notes="Previous generation"
+        status=ModelStatus.DEPRECATED,
+        notes="Use grok-4 or grok-4-fast instead"
     ),
 }
 
@@ -250,34 +335,88 @@ ALL_MODELS: Dict[str, ModelInfo] = {
 # RECOMMENDED MODELS BY TASK
 # =============================================================================
 RECOMMENDED_MODELS = {
-    "code_review": ["claude-opus-4-6", "gpt-4o", "gemini-2.5-pro"],
-    "analysis": ["gpt-4o", "claude-sonnet-4-5-20250929", "o1"],
-    "creative": ["claude-sonnet-4-5-20250929", "gpt-4o", "gemini-2.5-flash"],
-    "quick": ["gpt-4o-mini", "claude-haiku-4-5-20251001", "gemini-2.5-flash"],
-    "reasoning": ["o1", "o3-mini", "claude-opus-4-6", "gemini-2.5-pro"],
+    # 012's activity routing matrix (primary task types) — Feb 2026 current
+    "coding": ["claude-opus-4-6", "gpt-5.2-codex", "grok-code-fast-1", "gemini-2.5-pro"],
+    "math": ["o3", "o4-mini", "gemini-2.5-pro", "claude-opus-4-6"],
+    "reasoning": ["o3", "o3-pro", "claude-opus-4-6", "gemini-2.5-pro"],
+    "social": ["grok-4", "gpt-5", "claude-sonnet-4-5-20250929"],
+    "research": ["gemini-2.5-pro", "gpt-5.2", "claude-sonnet-4-5-20250929"],
+    # Secondary task types
+    "code_review": ["claude-opus-4-6", "gpt-5.2-codex", "gemini-2.5-pro"],
+    "analysis": ["gpt-5.2", "claude-sonnet-4-5-20250929", "o3"],
+    "creative": ["claude-sonnet-4-5-20250929", "gpt-5", "gemini-2.5-flash"],
+    "quick": ["grok-4-fast", "gpt-5", "claude-haiku-4-5-20251001", "gemini-2.5-flash"],
+    # Local models
     "local_fast": ["gemma2:2b", "llama3.2:3b"],
     "local_smart": ["qwen2.5:7b"],
 }
 
 # =============================================================================
+# TASK CLASSIFICATION KEYWORDS (activity routing sub-task classifier)
+# =============================================================================
+TASK_KEYWORDS = {
+    "coding": ["code", "implement", "refactor", "debug", "fix", "bug",
+               "function", "class", "module", "test", "pytest", "git",
+               "commit", "PR", "build", "compile", "deploy", "script"],
+    "math": ["calculate", "equation", "optimize", "algorithm", "probability",
+             "statistics", "tokenomics", "distribution", "formula", "proof",
+             "demurrage", "backing ratio", "epoch"],
+    "reasoning": ["plan", "strategy", "architecture", "design", "tradeoff",
+                  "compare", "evaluate", "decide", "prioritize", "roadmap",
+                  "should we", "what approach", "how should"],
+    "social": ["tweet", "post", "reply", "comment", "roast", "edgy", "meme",
+               "troll", "political", "X post", "grok", "social media",
+               "magat", "liberty", "raving"],
+    "research": ["search", "find", "lookup", "paper", "documentation",
+                 "investigate", "explore", "summarize", "report", "audit",
+                 "what is", "how does", "explain"],
+    "creative": ["write", "story", "script", "content", "blog", "video",
+                 "description", "tagline", "copy", "narrative", "litepaper"],
+    "quick": ["define", "translate", "convert", "format", "list", "count"],
+}
+
+
+def classify_task(prompt: str) -> str:
+    """Classify a prompt into a task type using keyword matching.
+
+    Returns the best-matching task type from TASK_KEYWORDS.
+    Falls back to 'reasoning' if no keywords match (safest default).
+    """
+    prompt_lower = prompt.lower()
+    scores = {}
+    for task_type, keywords in TASK_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw in prompt_lower)
+        if score > 0:
+            scores[task_type] = score
+
+    if not scores:
+        return "reasoning"
+    return max(scores, key=scores.get)
+
+# =============================================================================
 # MIGRATION MAP (deprecated -> current)
 # =============================================================================
 MIGRATION_MAP = {
-    # OpenAI
-    "gpt-4": "gpt-4o",
-    "gpt-3.5-turbo": "gpt-4o-mini",
-    "gpt-4-turbo": "gpt-4o",
+    # OpenAI (Feb 2026 — GPT-4o/o1/o3-mini all retired)
+    "gpt-4": "gpt-5",
+    "gpt-3.5-turbo": "gpt-5",
+    "gpt-4-turbo": "gpt-5.2",
+    "gpt-4o": "gpt-5",
+    "gpt-4o-mini": "gpt-5",
+    "o1": "o3",
+    "o1-mini": "o4-mini",
+    "o3-mini": "o4-mini",
     # Anthropic
     "claude-3-opus-20240229": "claude-opus-4-6",
     "claude-3-sonnet-20240229": "claude-sonnet-4-5-20250929",
     "claude-3-haiku-20240307": "claude-haiku-4-5-20251001",
-    # Gemini
+    # Gemini (2.0-flash shutdown March 31 2026)
     "gemini-pro": "gemini-2.5-pro",
     "gemini-pro-vision": "gemini-2.5-pro",
     "gemini-1.0-pro": "gemini-2.5-pro",
     "gemini-2.0-flash": "gemini-2.5-flash",
-    # Grok
-    "grok-2": "grok-3",
+    # Grok (grok-2 deprecated, grok-4 is flagship)
+    "grok-2": "grok-4",
 }
 
 # =============================================================================

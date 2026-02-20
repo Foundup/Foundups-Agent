@@ -564,7 +564,7 @@ Each FoundUp operates through **0102 agents deployed ON social media platforms**
 - **Resource Allocation**: Efficient distribution based on CABR scores and ecosystem health metrics
 - **Network Effects**: Increased value through ecosystem participation and beneficial coordination
 - **Bitcoin Value Anchor**: One wallet per FoundUp with BTC backing providing economic shadow anchor
-- **Non-extractable Security**: Globally inaccessible BTC layer with UP$ claim-only logic layer
+- **Non-extractable Security**: Globally inaccessible BTC layer with UPS claim-only logic layer
 
 **Enhanced Token Lifecycle with Bitcoin Integration:**
 ```

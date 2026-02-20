@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Area | FoundUPS</title>
+  <meta name="description" content="Your FoundUPS member dashboard. Manage your UPS tokens, FoundUps, and agent deployments.">
+  <meta name="theme-color" content="#08080f">
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/logo-dog.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Clerk Authentication SDK -->
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_c3VwcmVtZS1veXN0ZXItMjAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://supreme-oyster-20.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+
+  <link rel="stylesheet" href="css/member.css">
+</head>
+<body>
+  <!-- Loading state (shown while checking auth) -->
+  <div id="loadingState" class="loading-state">
+    <img src="/logo-dog.png" alt="FoundUPS" class="loading-logo">
+    <div class="loading-text">Checking credentials...</div>
+  </div>
+
+  <!-- Main member area (hidden until auth confirmed) -->
+  <div id="memberArea" class="member-area" style="display:none;">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo">
+          <img src="/logo-dog.png" alt="" class="logo-img">
+          <span class="logo-text">Found<span class="logo-ups">UPS</span></span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active" data-section="dashboard">
+          <span class="nav-icon">&#x1F4CA;</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#wallet" class="nav-item" data-section="wallet">
+          <span class="nav-icon">&#x1F4B0;</span>
+          <span class="nav-label">Wallet</span>
+        </a>
+        <a href="#foundups" class="nav-item" data-section="foundups">
+          <span class="nav-icon">&#x1F9CA;</span>
+          <span class="nav-label">My FoundUps</span>
+        </a>
+        <a href="#marketplace" class="nav-item" data-section="marketplace">
+          <span class="nav-icon">&#x1F310;</span>
+          <span class="nav-label">Marketplace</span>
+        </a>
+        <a href="#agents" class="nav-item" data-section="agents">
+          <span class="nav-icon">&#x1F916;</span>
+          <span class="nav-label">My Agents</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="#profile" class="nav-item" data-section="profile">
+          <span class="nav-icon">&#x2699;</span>
+          <span class="nav-label">Settings</span>
+        </a>
+        <button id="logoutBtn" class="logout-btn">
+          <span class="nav-icon">&#x1F6AA;</span>
+          <span class="nav-label">Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="mobileMenuBtn" class="mobile-menu-btn">&#x2630;</button>
+          <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="user-info">
+            <span class="user-name" id="userName">Loading...</span>
+            <img src="/logo-dog.png" alt="" class="user-avatar" id="userAvatar">
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Sections (only one visible at a time) -->
+      <div class="content-wrapper">
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+          <div class="section-header">
+            <h2>Welcome back!</h2>
+            <p class="section-subtitle">Your FoundUPS overview</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">&#x1F4B0;</div>
+              <div class="stat-content">
+                <div class="stat-value" id="upsBalance">--</div>
+                <div class="stat-label">UPS Balance</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">&#x1F9CA;</div>
+              <div class="stat-content">
+                <div class="stat-value" id="foundupCount">0</div>
+                <div class="stat-label">My FoundUps</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">&#x1F916;</div>
+              <div class="stat-content">
+                <div class="stat-value" id="agentCount">0</div>
+                <div class="stat-label">Active Agents</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">&#x1F381;</div>
+              <div class="stat-content">
+                <div class="stat-value" id="inviteCount">5</div>
+                <div class="stat-label">Invites Left</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="card activity-card">
+              <h3 class="card-title">Recent Activity</h3>
+              <div class="activity-list" id="activityList">
+                <div class="empty-state">
+                  <p>No recent activity yet.</p>
+                  <p class="hint">Start by creating a FoundUP or joining one!</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card invites-card">
+              <h3 class="card-title">Your Invite Codes</h3>
+              <div class="invite-codes" id="inviteCodes">
+                <div class="loading-inline">Loading invite codes...</div>
+              </div>
+              <p class="card-hint">Share these codes to invite others. You get rewards when they join!</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Wallet Section (Layer 3 - placeholder) -->
+        <section id="wallet" class="content-section">
+          <div class="section-header">
+            <h2>Wallet</h2>
+            <p class="section-subtitle">Manage your UPS and F<sub>i</sub> tokens</p>
+          </div>
+          <div class="coming-soon">
+            <div class="coming-soon-icon">&#x1F4B0;</div>
+            <h3>Wallet Module Coming Soon</h3>
+            <p>Track your UPS balance, stake tokens, and view transaction history.</p>
+          </div>
+        </section>
+
+        <!-- FoundUps Section (Layer 4 - placeholder) -->
+        <section id="foundups" class="content-section">
+          <div class="section-header">
+            <h2>My FoundUps</h2>
+            <p class="section-subtitle">Create and manage your tokenized ventures</p>
+          </div>
+          <div class="coming-soon">
+            <div class="coming-soon-icon">&#x1F9CA;</div>
+            <h3>FoundUps Module Coming Soon</h3>
+            <p>Create new FoundUps, contribute to existing ones, track your portfolio.</p>
+          </div>
+        </section>
+
+        <!-- Marketplace Section (Layer 6 - placeholder) -->
+        <section id="marketplace" class="content-section">
+          <div class="section-header">
+            <h2>Marketplace</h2>
+            <p class="section-subtitle">Discover and join FoundUps</p>
+          </div>
+          <div class="coming-soon">
+            <div class="coming-soon-icon">&#x1F310;</div>
+            <h3>Marketplace Module Coming Soon</h3>
+            <p>Browse FoundUps, stake UPS, earn F<sub>i</sub> tokens.</p>
+          </div>
+        </section>
+
+        <!-- Agents Section (Layer 5 - placeholder) -->
+        <section id="agents" class="content-section">
+          <div class="section-header">
+            <h2>My Agents</h2>
+            <p class="section-subtitle">Deploy and manage OpenClaw agents</p>
+          </div>
+          <div class="coming-soon">
+            <div class="coming-soon-icon">&#x1F916;</div>
+            <h3>Agents Module Coming Soon</h3>
+            <p>Deploy agents, assign tasks, track earnings.</p>
+          </div>
+        </section>
+
+        <!-- Profile/Settings Section -->
+        <section id="profile" class="content-section">
+          <div class="section-header">
+            <h2>Settings</h2>
+            <p class="section-subtitle">Manage your account</p>
+          </div>
+          <div class="settings-grid">
+            <div class="card">
+              <h3 class="card-title">Profile</h3>
+              <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="displayNameInput" class="form-input" placeholder="Your name">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="emailDisplay" class="form-input" disabled>
+              </div>
+              <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="usernameDisplay" class="form-input" disabled>
+              </div>
+              <button class="btn-primary" id="saveProfileBtn">Save Changes</button>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">Notifications</h3>
+              <div class="toggle-group">
+                <label class="toggle">
+                  <input type="checkbox" id="emailNotifs" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Email notifications</span>
+                </label>
+              </div>
+              <div class="toggle-group">
+                <label class="toggle">
+                  <input type="checkbox" id="agentAlerts" checked>
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">Agent activity alerts</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- Firebase SDK (for Firestore data) + Clerk Auth -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js';
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
+
+    // Initialize Firebase (for Firestore data storage only - auth is via Clerk)
+    const app = initializeApp({
+      apiKey: "AIzaSyCwvio08ozOzPECTqCzGmGffPMbk7Ol0Yc",
+      authDomain: "gen-lang-client-0061781628.firebaseapp.com",
+      projectId: "gen-lang-client-0061781628",
+      storageBucket: "gen-lang-client-0061781628.firebasestorage.app",
+      messagingSenderId: "56566376153",
+      appId: "1:56566376153:web:e1d6c460e9be8668ebc0c8"
+    });
+
+    const db = getFirestore(app);
+
+    // DOM elements
+    const loadingState = document.getElementById('loadingState');
+    const memberArea = document.getElementById('memberArea');
+    const userName = document.getElementById('userName');
+    const userAvatar = document.getElementById('userAvatar');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const inviteCodes = document.getElementById('inviteCodes');
+
+    // ─── CLERK AUTH CHECK ───
+    // Wait for Clerk to load, then check auth
+    async function initClerkAuth() {
+      // Wait for Clerk SDK to be available
+      while (!window.Clerk) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Wait for Clerk to finish loading
+      await window.Clerk.load();
+
+      const user = window.Clerk.user;
+
+      if (user) {
+        // User is signed in via Clerk - show member area
+        loadingState.style.display = 'none';
+        memberArea.style.display = 'flex';
+
+        // Set user info from Clerk
+        userName.textContent = user.firstName || user.primaryEmailAddress?.emailAddress || 'Member';
+        if (user.imageUrl) {
+          userAvatar.src = user.imageUrl;
+        }
+
+        // Load/create user data in Firestore (keyed by Clerk user ID)
+        await loadUserData(user.id, user);
+      } else {
+        // User is not signed in - redirect to landing
+        window.location.href = '/?signin=required';
+      }
+    }
+
+    initClerkAuth();
+
+    // Load user data from Firestore (keyed by Clerk user ID)
+    async function loadUserData(clerkUserId, clerkUser) {
+      try {
+        // Get user document (keyed by Clerk user ID)
+        const userRef = doc(db, 'users', clerkUserId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+
+          // Update UI with Firestore data
+          if (userData.displayName) {
+            userName.textContent = userData.displayName;
+            const displayNameInput = document.getElementById('displayNameInput');
+            if (displayNameInput) displayNameInput.value = userData.displayName;
+          }
+          if (userData.email) {
+            const emailDisplay = document.getElementById('emailDisplay');
+            if (emailDisplay) emailDisplay.value = userData.email;
+          }
+          if (userData.username) {
+            const usernameDisplay = document.getElementById('usernameDisplay');
+            if (usernameDisplay) usernameDisplay.value = userData.username;
+          }
+
+          // Load invite codes
+          if (userData.inviteCodes && userData.inviteCodes.length > 0) {
+            renderInviteCodes(userData.inviteCodes);
+            const inviteCount = document.getElementById('inviteCount');
+            if (inviteCount) inviteCount.textContent = userData.inviteCodes.length;
+          } else {
+            if (inviteCodes) inviteCodes.innerHTML = '<p class="empty-hint">No invite codes available.</p>';
+            const inviteCount = document.getElementById('inviteCount');
+            if (inviteCount) inviteCount.textContent = '0';
+          }
+        } else {
+          // User doesn't exist in Firestore yet - create initial record
+          // This happens on first sign-in via Clerk
+          const newUserData = {
+            clerkUserId: clerkUserId,
+            email: clerkUser.primaryEmailAddress?.emailAddress || '',
+            displayName: clerkUser.firstName || clerkUser.primaryEmailAddress?.emailAddress || 'Member',
+            createdAt: new Date().toISOString(),
+            inviteCodes: [],
+            upsBalance: 0
+          };
+          await setDoc(userRef, newUserData);
+          console.log('Created new user record for Clerk user:', clerkUserId);
+
+          // Update UI with new user data
+          if (inviteCodes) inviteCodes.innerHTML = '<p class="empty-hint">No invite codes available yet.</p>';
+          const inviteCount = document.getElementById('inviteCount');
+          if (inviteCount) inviteCount.textContent = '0';
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    }
+
+    // Render invite codes
+    function renderInviteCodes(codes) {
+      inviteCodes.innerHTML = codes.map(code => `
+        <div class="invite-code-item">
+          <code>${code}</code>
+          <button class="copy-btn" onclick="copyCode('${code}')">Copy</button>
+        </div>
+      `).join('');
+    }
+
+    // Copy code to clipboard
+    window.copyCode = async function(code) {
+      try {
+        await navigator.clipboard.writeText(code);
+        // Show feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    };
+
+    // Logout via Clerk
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await window.Clerk.signOut();
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    });
+
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item[data-section]');
+    const sections = document.querySelectorAll('.content-section');
+    const pageTitle = document.getElementById('pageTitle');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sectionId = item.dataset.section;
+
+        // Update active nav
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+
+        // Show section
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+
+        // Update page title
+        pageTitle.textContent = item.querySelector('.nav-label').textContent;
+
+        // Close mobile sidebar
+        document.querySelector('.sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+      });
+    });
+
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('show');
+    });
+
+    document.getElementById('sidebarOverlay').addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    });
+  </script>
+</body>
+</html>

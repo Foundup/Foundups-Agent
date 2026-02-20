@@ -309,9 +309,9 @@ daemon = get_fam_daemon(auto_start=True)
 - `place_mvp_bid(foundup_id: str, investor_id: str, bid_ups: int) -> str`
 - `get_mvp_bids(foundup_id: str) -> list[dict[str, object]]`
 - `resolve_mvp_offering(foundup_id: str, actor_id: str, token_amount: int, top_n: int = 1) -> list[dict[str, object]]`
-- Invariant: investors subscribe only into `F_0` (global program), then bid for upcoming FoundUp MVP access with hoarded UP$.
-- Invariant: term accrual caps at 5 terms by default (1000 UP$ hoard at 200 UP$/term).
-- Invariant: offering resolution requires `treasury` role and injects winning UP$ bids into target FoundUp treasury.
+- Invariant: investors subscribe only into `F_0` (global program), then bid for upcoming FoundUp MVP access with hoarded UPS.
+- Invariant: term accrual caps at 5 terms by default (1000 UPS hoard at 200 UPS/term).
+- Invariant: offering resolution requires `treasury` role and injects winning UPS bids into target FoundUp treasury.
 
 ### ComputeAccessService (Prototype Tranche 5 - P0 in-memory)
 - `ensure_access(actor_id: str, capability: str, foundup_id: str | None = None) -> dict[str, object]`

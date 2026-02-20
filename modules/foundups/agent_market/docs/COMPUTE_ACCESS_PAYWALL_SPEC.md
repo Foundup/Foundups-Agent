@@ -24,7 +24,7 @@ Use one normalized internal meter for all chargeable execution:
 - Unit: `compute_credits` (CC)
 - Funding rails:
   - plan subscription (monthly CC allotment)
-  - UP$ conversion to CC
+  - UPS conversion to CC
   - earned CC rebates from verified PoB contribution
 
 No secondary hidden meters in prototype.
@@ -50,7 +50,7 @@ All tier numbers are config-managed and can change without interface changes.
    - No autonomous orchestration actions
 2. `builder` (paid)
    - Single FoundUp active workspace
-   - Monthly CC allocation and UP$ top-up
+   - Monthly CC allocation and UPS top-up
 3. `swarm` (paid)
    - Multi-FoundUp orchestration
    - Higher CC cap and priority queueing
@@ -59,7 +59,7 @@ All tier numbers are config-managed and can change without interface changes.
    - pAVS treasury controls and incident tooling
 
 ## Core Economic Loop (Paywall -> PoB)
-1. User funds CC (plan or UP$ conversion).
+1. User funds CC (plan or UPS conversion).
 2. User runs build actions; CC debited per metered action.
 3. Completed work enters FAM task->proof->verify->payout pipeline.
 4. CABR evaluates benefit quality; PoB confirmed.
@@ -106,7 +106,7 @@ Scores use MPS = Complexity + Importance + Deferability + Impact.
 | Access gate + debit ledger enforcement | 3 | 5 | 5 | 5 | 18 | P0 |
 | Metering hooks in orchestrator/task pipeline | 3 | 5 | 4 | 4 | 16 | P0 |
 | Tier/plan management API + storage | 3 | 4 | 4 | 4 | 15 | P1 |
-| UP$ <-> CC conversion policy + limits | 4 | 4 | 3 | 4 | 15 | P1 |
+| UPS <-> CC conversion policy + limits | 4 | 4 | 3 | 4 | 15 | P1 |
 | pAVS fee routing + rebate settlement | 4 | 4 | 3 | 4 | 15 | P1 |
 | Simulator scenario pack for PoB yield stress tests | 3 | 4 | 3 | 4 | 14 | P1 |
 | Dynamic pricing/queue optimization | 4 | 3 | 2 | 3 | 12 | P2 |

@@ -26,7 +26,7 @@ WSP Protocols:
 - WSP 77: Intelligent Internet Orchestration Vision
 - WSP 80: Cube-level DAE orchestration  
 - WSP 29: CABR Engine integration
-- WSP 26: UP$ Tokenization with compute-benefit
+- WSP 26: UPS Tokenization with compute-benefit
 - WSP 54: DAE operations specification
 """
 

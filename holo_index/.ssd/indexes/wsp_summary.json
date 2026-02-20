@@ -107,7 +107,7 @@
   "WSP 26": {
     "title": "WSP 26: FoundUPS DAE Tokenization Framework",
     "path": "WSP_framework\\src\\WSP_26_FoundUPS_DAE_Tokenization.md",
-    "summary": "- **Status:** Active - **Purpose:** To define the architecture and protocols for the Found UP$ token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment. - **Trigger:** When a Partifact (as defined in WSP 27) performs a verifiable action within the FoundUps ecosystem. - **Input:** Partifact action data and DAE cluster consensus signals. - *"
+    "summary": "- **Status:** Active - **Purpose:** To define the architecture and protocols for the Found UPS token system, enabling decaying participation tokens that incentivize recursive innovation through DAE reinvestment. - **Trigger:** When a Partifact (as defined in WSP 27) performs a verifiable action within the FoundUps ecosystem. - **Input:** Partifact action data and DAE cluster consensus signals. - *"
   },
   "WSP 27": {
     "title": "WSP 27: Partifact DAE Architecture",
@@ -387,7 +387,7 @@
   "WSP 77": {
     "title": "WSP 77: Intelligent Internet Orchestration Vision",
     "path": "WSP_framework\\src\\WSP_77_Intelligent_Internet_Orchestration_Vision.md",
-    "summary": "- Status: Active - Purpose: Align the Intelligent Internet (II) with the FoundUps CABR/UP$ economy while preserving sovereignty. Provide an optional pathway to incorporate compute-benefit signals into CABR without changing core tokenomics. - Trigger: When agents need a canonical protocol framing to integrate II proof-of-benefit (PoB) with CABR and UP$. - Input: PoB receipts (optionally from II), C"
+    "summary": "- Status: Active - Purpose: Align the Intelligent Internet (II) with the FoundUps CABR/UPS economy while preserving sovereignty. Provide an optional pathway to incorporate compute-benefit signals into CABR without changing core tokenomics. - Trigger: When agents need a canonical protocol framing to integrate II proof-of-benefit (PoB) with CABR and UPS. - Input: PoB receipts (optionally from II), C"
   },
   "WSP 78": {
     "title": "WSP 78: Distributed Module Database Protocol",

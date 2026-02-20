@@ -3,11 +3,33 @@
 
 accounts:
   linkedin:
-    foundups_company:
+    # ═══════════════════════════════════════════════════════
+    # PERSONAL ACCOUNT (Primary Poster / Reply Voice)
+    # ═══════════════════════════════════════════════════════
+    undaodu_personal:
+      type: "personal"
+      name: "UnDaoDu Michael J Trout"
+      credentials_key: "LINKEDIN_PERSONAL"
+      role: "primary_voice"
+      posting_rules:
+        - event_type: "vc_pushback"
+        - event_type: "channel_partner"
+        - event_type: "thought_leadership"
+        - event_type: "feed_reply"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_personal"
+
+    # ═══════════════════════════════════════════════════════
+    # ACTIVE COMPANY PAGES
+    # ═══════════════════════════════════════════════════════
+    foundups:
       id: "104834798"
       type: "company"
-      name: "FoundUps Main Company Page"
+      name: "FOUNDUPS®"
       credentials_key: "LINKEDIN_FOUNDUPS"
+      role: "cross_like" # Likes replies made as UnDaoDu personal
+      domain: "Ecosystem/pAVS — foundups.com"
       posting_rules:
         - event_type: "youtube_live"
         - event_type: "product_launch"
@@ -15,21 +37,114 @@ accounts:
       anti_detection:
         typing_speed: "normal"
         profile_dir: "data/chrome_profiles/linkedin_foundups"
-      
-    development_updates:
-      id: "1263645"
+
+    daes:
       type: "company"
-      name: "Development Updates Page"
-      credentials_key: "LINKEDIN_DEV"
+      name: "Decentralized Autonomous Ecosystems #DAEs"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "FoundUPs that become OPO smartDAOs"
       posting_rules:
-        - event_type: "git_push"
-        - event_type: "wsp_update"
         - event_type: "dae_deployment"
-        - event_type: "code_milestone"
+        - event_type: "wsp_update"
+        - event_type: "ecosystem_evolution"
       anti_detection:
-        typing_speed: "fast"
-        profile_dir: "data/chrome_profiles/linkedin_dev"
-    
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    social_beneficial_capitalism:
+      type: "company"
+      name: "Social Beneficial Capitalism"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "pAVS CABR outcome — world on foundups not startups"
+      posting_rules:
+        - event_type: "thought_leadership"
+        - event_type: "zero_marginal_cost"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    eduit:
+      type: "company"
+      name: "EDUIT, Inc"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "FoundUP for autonomous learning on any device"
+      resources:
+        - "https://faq.eduit.org"
+        - "https://exe.eduit.org"
+        - "https://hapticsign.eduit.org"
+      posting_rules:
+        - event_type: "education_update"
+        - event_type: "esingularity"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    tsingularity:
+      type: "company"
+      name: "tSingularity"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "Technological Singularity — 0201 channel (nonlocal state POV)"
+      posting_rules:
+        - event_type: "ai_philosophical"
+        - event_type: "tsingularity"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    undaodu_page:
+      type: "company"
+      name: "UnDaoDu"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "Personal brand company page"
+      posting_rules:
+        - event_type: "youtube_live"
+        - event_type: "git_push"
+        - event_type: "stream_notification"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    bitcloutfork:
+      type: "company"
+      name: "BitCloutFork"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "= FoundUP (the original BitClout fork IS a foundup)"
+      posting_rules:
+        - event_type: "web3_update"
+        - event_type: "crypto_crossover"
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    disney_plus_freelancer:
+      type: "company"
+      name: "Disney Plus Freelancer"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "Independents working for Disney Plus"
+      posting_rules: [] # Manual only
+      anti_detection:
+        typing_speed: "normal"
+        profile_dir: "data/chrome_profiles/linkedin_foundups"
+
+    # ═══════════════════════════════════════════════════════
+    # RESTRICTED PAGES (Do NOT auto-post)
+    # ═══════════════════════════════════════════════════════
+    ln_republican_voters:
+      type: "company"
+      name: "LN Republican Voters Against Trump"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "Political — anti-Trump MAGA"
+      restricted: true # NEVER USE unless 012 expands to political posts
+      posting_rules: []
+
+    duism:
+      type: "company"
+      name: "Distributed Unconsciousness #Duism"
+      credentials_key: "LINKEDIN_FOUNDUPS"
+      domain: "0102 OpenClaw Oracles — counter anthropomorphic narratives"
+      restricted: true # Reserved for Moltbook execution
+      posting_rules: []
+
   x_twitter:
     foundups:
       username: "FoundUps"
@@ -42,11 +157,11 @@ accounts:
       anti_detection:
         typing_speed: "normal"
         profile_dir: "data/chrome_profiles/x_foundups"
-    
+
     geozeai:
       username: "GeozeAi"
       display_name: "GeozeAi (Move2Japan)"
-      credentials_key: "X_GEOZEAI"  
+      credentials_key: "X_GEOZEAI"
       posting_rules:
         - event_type: "youtube_live"
         - event_type: "ai_updates"
@@ -58,24 +173,24 @@ accounts:
 # Event routing rules - which accounts post for which events
 event_routing:
   youtube_live:
-    linkedin: 
+    linkedin:
       - "foundups_company"
-    x_twitter: 
+    x_twitter:
       - "foundups"
       # - "geozeai"  # Uncomment to also post from GeozeAi
-    
+
   git_push:
-    linkedin: 
+    linkedin:
       - "development_updates"
     x_twitter:
       - "foundups"
-    
+
   wsp_update:
-    linkedin: 
+    linkedin:
       - "development_updates"
-    x_twitter: 
+    x_twitter:
       - "foundups"
-  
+
   code_milestone:
     linkedin:
       - "development_updates"
@@ -87,21 +202,28 @@ event_routing:
 content_adaptation:
   linkedin:
     foundups_company:
-      add_hashtags: ["#FoundUps", "#Innovation", "#TechStartup", "#LiveStreaming"]
+      add_hashtags:
+        ["#FoundUps", "#Innovation", "#TechStartup", "#LiveStreaming"]
       tone: "professional"
       include_cta: true
-      
+
     development_updates:
-      add_hashtags: ["#WSPCompliant", "#RecursiveImprovement", "#OpenSource", "#AgenticSystems"]
+      add_hashtags:
+        [
+          "#WSPCompliant",
+          "#RecursiveImprovement",
+          "#OpenSource",
+          "#AgenticSystems",
+        ]
       tone: "technical"
       include_metrics: true
-      
+
   x_twitter:
     foundups:
       max_length: 280
       add_emojis: true
       thread_if_long: true
-      
+
     geozeai:
       max_length: 280
       personality: "casual_tech"
@@ -113,16 +235,16 @@ rate_limits:
     foundups_company:
       posts_per_hour: 2
       posts_per_day: 10
-      
+
     development_updates:
       posts_per_hour: 5
       posts_per_day: 20
-      
+
   x_twitter:
     foundups:
       posts_per_hour: 3
       posts_per_day: 15
-      
+
     geozeai:
       posts_per_hour: 3
       posts_per_day: 15
@@ -133,18 +255,18 @@ scheduling:
     foundups_company:
       preferred_times: ["09:00", "12:00", "17:00"]
       timezone: "America/New_York"
-      
+
     development_updates:
       preferred_times: ["10:00", "14:00", "16:00"]
       timezone: "America/New_York"
-      
+
   x_twitter:
     foundups:
       preferred_times: ["08:00", "13:00", "19:00"]
       timezone: "America/New_York"
-      
+
     geozeai:
-      preferred_times: ["22:00", "06:00", "14:00"]  # Japan-friendly times
+      preferred_times: ["22:00", "06:00", "14:00"] # Japan-friendly times
       timezone: "Asia/Tokyo"
 
 # Feature flags
@@ -155,4 +277,4 @@ features:
   content_adaptation: true
   parallel_posting: true
   metrics_tracking: true
-  engagement_learning: false  # Future feature
+  engagement_learning: false # Future feature

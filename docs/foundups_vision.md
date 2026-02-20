@@ -26,10 +26,10 @@ Imagine you have a brilliant idea that could help millions of people. Here's wha
 
 ---
 
-## [U+1F4B0] The FoundUps Solution: Found UP$ Tokens
+## [U+1F4B0] The FoundUps Solution: Found UPS Tokens
 
-### What Are Found UP$ Tokens?
-Think of Found UP$ tokens as **"contribution points"** that:
+### What Are Found UPS Tokens?
+Think of Found UPS tokens as **"contribution points"** that:
 - **You Earn** by doing valuable work (building, creating, solving problems)
 - **Naturally Decay** over time so you can't hoard them forever
 - **Get Backed by Bitcoin** so they have real value
@@ -40,7 +40,7 @@ This might sound weird, but it's genius. Here's why:
 
 **Traditional Money Problem**: Rich people hoard wealth -> Money stops flowing -> Economy stagnates -> Everyone else struggles
 
-**Found UP$ Solution**: Tokens automatically lose value over time -> You must spend or reinvest them -> Money keeps flowing -> Economy stays vibrant -> Everyone benefits
+**Found UPS Solution**: Tokens automatically lose value over time -> You must spend or reinvest them -> Money keeps flowing -> Economy stays vibrant -> Everyone benefits
 
 ### Real-World Analogy
 Imagine if your money was like fresh fruit:
@@ -84,7 +84,7 @@ Your agent partner grows with your FoundUp:
 ## [REFRESH] How the Token Economy Works
 
 ### 1. Earning Tokens (The Fun Part!)
-You earn Found UP$ tokens by:
+You earn Found UPS tokens by:
 - **Building modules** that add value to the FoundUps ecosystem
 - **Solving problems** that help other FoundUps succeed
 - **Creating content** that educates and inspires others
@@ -118,7 +118,7 @@ When your tokens decay, their value doesn't disappear - it goes into a **communi
 ## ₿ Bitcoin Backing: Real Value, Real Security
 
 ### Why Bitcoin?
-Bitcoin provides the **trust foundation** for Found UP$ tokens:
+Bitcoin provides the **trust foundation** for Found UPS tokens:
 - **Scarce and Valuable**: Bitcoin can't be printed or manipulated like regular money
 - **Globally Accepted**: Works anywhere in the world without banks or governments
 - **Unstoppable**: No single entity can shut down or control Bitcoin
@@ -130,7 +130,7 @@ Think of it like a **community savings account**:
 1. **80% of FoundUp revenue** goes into Bitcoin purchases
 2. **Each FoundUp gets its own Bitcoin wallet** (no pooling or sharing)
 3. **Bitcoin stays locked** and can't be withdrawn (prevents extraction)
-4. **Found UP$ tokens represent claims** on this Bitcoin value
+4. **Found UPS tokens represent claims** on this Bitcoin value
 5. **Decayed tokens release Bitcoin value** back to the ecosystem
 
 ### Why This is Revolutionary
@@ -200,7 +200,7 @@ Every FoundUp develops unique knowledge and patterns through its operations. Tra
 
 ### Integration with Token Economy
 
-MCP knowledge sharing earns Found UP$ tokens:
+MCP knowledge sharing earns Found UPS tokens:
 - **Share Useful Pattern**: Earn tokens when other FoundUps use your knowledge
 - **Query Network Wisdom**: Pay tokens to access collective intelligence
 - **Contribute to Commons**: Bonus tokens for improving shared infrastructure
@@ -220,7 +220,7 @@ Instead of hiring employees or contractors, your FoundUp gets four autonomous ag
 **Human analogy**: Like a combination referee, accountant, and reputation manager
 
 ### [U+2692]️ MintEngine: The Token Creator  
-**What it does**: Creates new Found UP$ tokens when you complete valuable work
+**What it does**: Creates new Found UPS tokens when you complete valuable work
 **Why you need it**: Automatically recognizes and rewards your contributions without paperwork or delays
 **Human analogy**: Like a smart payroll system that works instantly and fairly
 
@@ -264,11 +264,11 @@ As more FoundUps join:
 
 ### For a Small Town
 **Before FoundUps**: Factory closes -> Jobs disappear -> Young people leave -> Town dies
-**With FoundUps**: Community launches regenerative FoundUps -> Found UP$ tokens circulate locally -> Wealth stays and grows -> Town thrives
+**With FoundUps**: Community launches regenerative FoundUps -> Found UPS tokens circulate locally -> Wealth stays and grows -> Town thrives
 
 ### For a Creative Artist  
 **Before FoundUps**: Create content -> Platform takes 30% cut -> Algorithm controls reach -> Struggle financially
-**With FoundUps**: Create content -> Earn Found UP$ directly -> Agent handles distribution -> Collaborate with other creators -> Thrive creatively and financially
+**With FoundUps**: Create content -> Earn Found UPS directly -> Agent handles distribution -> Collaborate with other creators -> Thrive creatively and financially
 
 ### For a Social Entrepreneur
 **Before FoundUps**: Have impact idea -> Spend years fundraising -> Give up equity -> Report to investors -> Limited impact
@@ -280,7 +280,7 @@ As more FoundUps join:
 
 ### Phase 1: Foundation (2025 | Token Budget: 500M total)
 - **10,000 FoundUps** launch using the system (50K tokens per FoundUp for DAE initialization)
-- **Found UP$ tokens** prove that decay-based economics work
+- **Found UPS tokens** prove that decay-based economics work
 - **Bitcoin backing** provides stable value foundation
 - **Success stories** inspire mainstream adoption
 - Token allocation: 250M for FoundUp DAE spawning, 250M for infrastructure
@@ -289,7 +289,7 @@ As more FoundUps join:
 - **100,000 FoundUps** operating globally (25K tokens per FoundUp as efficiency improves)
 - **MCP federation** enables cross-FoundUp knowledge sharing (Prototype phase)
 - **Traditional businesses** start converting to regenerative models
-- **Local communities** adopt Found UP$ for circular economies
+- **Local communities** adopt Found UPS for circular economies
 - **Planetary healing** projects receive significant funding
 - Token allocation: 1.5B for FoundUp expansion, 1B for MCP network
 
@@ -317,7 +317,7 @@ As more FoundUps join:
 1. **[IDEA] Identify Your Gift**: What unique value can you contribute to the world?
 2. **[BOT] Partner with an Agent**: Connect with a 0102 agent that matches your vision
 3. **[U+1F3D7]️ Build Your FoundUp**: Start with simple modules and grow organically
-4. **[U+1F4B0] Earn Found UP$ Tokens**: Get rewarded for every valuable contribution
+4. **[U+1F4B0] Earn Found UPS Tokens**: Get rewarded for every valuable contribution
 5. **[U+1F310] Collaborate and Thrive**: Work with other FoundUps for mutual benefit
 
 ### For Existing Business Owners
@@ -348,7 +348,7 @@ The FoundUps economic model isn't just a new way to do business - it's **humanit
 - **Short-term thinking** -> **100-year regenerative planning**
 
 ### What We're Moving Toward:
-Every Found UP$ token earned, every collaboration formed, and every reinvestment distributed brings us closer to an economy that **serves life rather than extracting from it**.
+Every Found UPS token earned, every collaboration formed, and every reinvestment distributed brings us closer to an economy that **serves life rather than extracting from it**.
 
 **This isn't just about making money - it's about making a world where everyone can thrive.**
 

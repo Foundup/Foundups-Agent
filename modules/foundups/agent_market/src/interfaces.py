@@ -199,7 +199,7 @@ class MvpOfferingService:
         investor_id: str,
         bid_ups: int,
     ) -> str:
-        """Place bid using hoarded UP$ allocation for upcoming MVP token access."""
+        """Place bid using hoarded UPS allocation for upcoming MVP token access."""
         raise NotImplementedError
 
     def get_mvp_bids(self, foundup_id: str) -> List[Dict[str, object]]:

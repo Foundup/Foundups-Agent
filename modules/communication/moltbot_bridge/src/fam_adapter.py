@@ -587,9 +587,9 @@ def _get_qwen():
 
 # Provider priority: Grok (fast/cheap), Anthropic (quality), OpenAI
 _API_PROVIDERS = [
-    ("grok-3-mini-fast", "XAI_API_KEY"),
+    ("grok-4-fast", "XAI_API_KEY"),
     ("claude-sonnet-4-5-20250929", "ANTHROPIC_API_KEY"),
-    ("gpt-4o-mini", "OPENAI_API_KEY"),
+    ("gpt-5", "OPENAI_API_KEY"),
 ]
 
 
@@ -690,7 +690,7 @@ _PAVS_KNOWLEDGE = {
     ),
     "token": (
         "Two token types:\n"
-        "  UP$ = Universal fuel. Demurrage (bio-decay). Cross-FoundUp.\n"
+        "  UPS = Universal fuel. Demurrage (bio-decay). Cross-FoundUp.\n"
         "  F_i = FoundUp-specific. 21M cap, Bitcoin-like. Earned by agents.\n"
         "Two F_i sources: MINED (agent work, 11% exit) and STAKED (investor, 5% exit).\n"
         "BTC Reserve (Hotel California): BTC flows IN, never OUT."
@@ -703,7 +703,7 @@ _PAVS_KNOWLEDGE = {
     ),
     "hardening": (
         "Economic safety mechanisms:\n"
-        "  Demurrage: LIQUID UP$ decays 0.5-5%/month. Stake to ICE to stop.\n"
+        "  Demurrage: LIQUID UPS decays 0.5-5%/month. Stake to ICE to stop.\n"
         "  Circuit Breaker: Halts exits during mass sell-off.\n"
         "  Rage Quit: Moloch-style fair exit, proportional treasury share.\n"
         "  Emergency Reserve: Stability fund deployed during crises.\n"

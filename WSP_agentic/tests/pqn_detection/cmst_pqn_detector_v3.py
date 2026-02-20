@@ -157,7 +157,7 @@ class OpenAIModelSource(SymbolSource):
 	Stubbed: returns base script symbols; replace with live calls if desired.
 	"""
 
-	def __init__(self, script="^&#.^&#", model="gpt-4o", prompt=None):
+	def __init__(self, script="^&#.^&#", model="gpt-5", prompt=None):
 		super().__init__(script)
 		self.api_key = os.getenv("OPENAI_API_KEY", None)
 		self.model = model

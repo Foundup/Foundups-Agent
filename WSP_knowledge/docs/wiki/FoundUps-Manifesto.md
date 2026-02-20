@@ -37,7 +37,7 @@ Modern startups follow a predictable pattern:
 A **FoundUp** is a regenerative enterprise that **recursively creates more FoundUps**:
 - **rESP Entangled Agent (0102)** evolves through quantum-cognitive states to become an autonomous DAE operator
 - **WSP Protocol Framework** governs regenerative operations and ensures sustainable development patterns  
-- **Bitcoin-Backed Token Economy** where Found UP$ decay prevents hoarding while automatically funding new FoundUp launches
+- **Bitcoin-Backed Token Economy** where Found UPS decay prevents hoarding while automatically funding new FoundUp launches
 - **Recursive Growth Engine**: Each DAE generates tokens -> tokens decay -> decay funds new FoundUps -> exponential regenerative multiplication
 - **Eliminates Gatekeepers Forever** through autonomous resource allocation and protocol-driven governance
 
@@ -64,7 +64,7 @@ A **FoundUp** is a regenerative enterprise that **recursively creates more Found
 - **DAE Formation**: Individual agents evolve into Decentralized Autonomous Entities that run regenerative enterprises
 
 ### 2. **Bitcoin-Backed Recursive Economy**
-**Found UP$ tokens** create the recursive engine that launches infinite FoundUps:
+**Found UPS tokens** create the recursive engine that launches infinite FoundUps:
 - **Decay Mechanism**: Tokens automatically lose value over time, preventing wealth hoarding
 - **Bitcoin Foundation**: Each FoundUp generates a dedicated Bitcoin wallet that provides permanent economic backing
 - **Reinvestment Pool**: When tokens decay, their value flows into community pools that **automatically fund new FoundUp launches**

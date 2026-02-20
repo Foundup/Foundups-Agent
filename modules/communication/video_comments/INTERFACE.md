@@ -278,8 +278,7 @@ Classifies commenters into 4 tiers for skill routing. Used by intelligent_reply_
 class CommenterType(Enum):
     MAGA_TROLL = 0    # ✊ Previously whacked → Skill 0 (mockery)
     REGULAR = 1       # ✋ Default → Skill 1 (contextual)
-    MODERATOR = 2     # 🖐️ Community leader → Skill 2 (appreciation)
-    ALLY = 3          # 🤝 Anti-MAGA ally → Agreement mode + #FFCPLN
+    MODERATOR = 2     # 🖐️ Community leader OR anti-MAGA ally → Skill 2 (appreciation + agreement)
 ```
 
 ### Function: get_classifier()
@@ -296,21 +295,25 @@ def classify(self, user_id: str, comment_text: str, ...) -> Dict
 **Returns:**
 ```python
 {
-    'classification': CommenterType,   # Tier enum
+    'classification': CommenterType,   # 0/1/2 tier enum
     'confidence': float,               # 0.0-1.0
     'method': str,                     # 'whack_history', 'sentiment_ally', etc.
     'pattern_detected': str | None,    # Pattern that triggered classification
-    'is_ally': bool | None,            # True if anti-Trump ally detected
+    'is_ally': bool | None,            # True if anti-Trump ally (agreement mode)
 }
 ```
 
 ### Classification Priority
-1. **MAGA_TROLL (0✊)**: User in whack history → mockery response
-2. **ALLY (3🤝)**: Anti-Trump patterns detected → agreement + #FFCPLN
-3. **MODERATOR (2🖐️)**: Verified MOD badge → appreciation
-4. **REGULAR (1✋)**: Default → contextual response
+1. **MAGA_TROLL (0✊)**: User in whack history (`magadoom_scores.db`) → mockery response
+2. **MODERATOR (2🖐️)**: Verified MOD badge OR anti-Trump ally → appreciation/agreement
+3. **REGULAR (1✋)**: Default → contextual response
 
-### ALLY Detection Patterns (40+)
+### Database Source
+- **Whack History**: `modules/gamification/whack_a_magat/data/magadoom_scores.db` (`whacked_users` table)
+- **Moderator Stats**: `modules/communication/chat_rules/data/chat_rules.db` (`moderators` table)
+
+### Ally Detection (within MODERATOR tier)
+Anti-Trump patterns trigger `is_ally=True` flag with MODERATOR classification:
 - Direct Trump criticism: "isn't qualified", "worst president", "impeach"
 - MAGA mockery: "maga cult", "magats", "brainwashed"
 - Fascism awareness: "fascist", "authoritarian", "nazi", "1933"
@@ -326,12 +329,15 @@ result = classifier.classify(
     comment_text="Trump isn't qualified to run anything"
 )
 
-if result['classification'] == CommenterType.ALLY:
+if result.get('is_ally'):
     # Use agreement mode: agree + amplify + #FFCPLN
+    pass
+elif result['classification'] == CommenterType.MODERATOR:
+    # Standard moderator appreciation
     pass
 ```
 
 ---
 
 **WSP 11 Compliance:** Complete
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-02-19

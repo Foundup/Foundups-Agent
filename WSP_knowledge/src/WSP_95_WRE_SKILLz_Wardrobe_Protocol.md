@@ -8,6 +8,27 @@
 
 ---
 
+## 2026-02-19 Implementation Alignment Addendum
+
+This addendum is normative for current WRE runtime behavior:
+
+- **File preference and compatibility**:
+  - Canonical skill filename is `SKILLz.md`.
+  - Runtime loader must support fallback to legacy `SKILL.md` when `SKILLz.md` is absent.
+- **Discovery path normalization**:
+  - Discovery treats both `.../skills/...` and `.../skillz/...` as production wardrobes.
+  - Path normalization must be cross-platform (`/` and `\` separators).
+- **Loader resilience requirement**:
+  - Missing skill registry/file in production must not hard-crash orchestration loops.
+  - Runtime must degrade to deterministic fallback instructions and continue with explicit telemetry.
+- **Pattern-memory isolation requirement**:
+  - Shared singleton memory is permitted for default production DB.
+  - Explicit DB paths (especially test runs) must be isolated to prevent cross-run contamination.
+
+These rules align wardrobe protocol text with deployed WRE behavior and test gates.
+
+---
+
 ## First Principles
 
 ### What Is a Skill?

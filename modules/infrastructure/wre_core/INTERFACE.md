@@ -10,6 +10,18 @@
 
 **Phase 3 Status**: HoloDAE integration + autonomous skill execution COMPLETE
 
+## 2026-02-19 API Alignment Delta
+
+- Discovery implementations MUST support both `SKILLz.md` (preferred) and `SKILL.md` (legacy fallback).
+- Discovery path inference MUST treat both `.../skills/...` and `.../skillz/...` as production wardrobes.
+- `PatternMemory(db_path=...)` MUST create isolated storage (no shared singleton reuse).
+- `WREMasterOrchestrator` compatibility API:
+  - `register_plugin(plugin_instance)` and `register_plugin("name", plugin_instance)` are both supported.
+  - `get_plugin(plugin_name)` returns registered plugin or `None`.
+  - `validate_module_path(path)` validates module existence under repo root.
+- Runtime storage override:
+  - `WRE_PATTERN_MEMORY_DB=<path>` binds orchestrator runtime storage to explicit DB path.
+
 ## Public API
 
 ### Data Structures

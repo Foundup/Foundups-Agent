@@ -86,9 +86,9 @@ PROVIDERS = {
         "env_var": "OPENAI_API_KEY",
         "prefix": "sk-",
         "test_url": "https://api.openai.com/v1/chat/completions",
-        "test_model": "gpt-4o-mini",
+        "test_model": "gpt-5",
         "auth_header": lambda key: ("Authorization", f"Bearer {key}"),
-        "openclaw_model": "openai/gpt-4o",
+        "openclaw_model": "openai/gpt-5",
     },
     "anthropic": {
         "env_var": "ANTHROPIC_API_KEY",
@@ -367,7 +367,7 @@ def update_openclaw_model_if_needed(results: list[ProviderResult]):
     # Find a healthy alternative
     fallback_models = {
         "anthropic": "anthropic/claude-sonnet-4-20250514",
-        "openai": "openai/gpt-4o",
+        "openai": "openai/gpt-5",
     }
 
     for alt_provider, alt_model in fallback_models.items():

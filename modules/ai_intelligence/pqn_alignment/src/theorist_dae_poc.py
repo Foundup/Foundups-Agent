@@ -372,7 +372,7 @@ def integrate_external_models(api_keys: Dict[str, str]) -> Dict:
         integration["models"]["grok"] = {
             "api_key": api_keys["grok"],
             "endpoint": "https://api.x.ai/v1/chat/completions",
-            "model": "grok-2",
+            "model": "grok-4",
             "purpose": "Emergent pattern synthesis",
             "perspective": "Holistic integration"
         }

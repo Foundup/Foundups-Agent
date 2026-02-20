@@ -160,7 +160,10 @@ class GemmaLibidoMonitor:
             last_execution = recent_executions[-1]
             time_since_last = (now - last_execution.timestamp).total_seconds()
 
-            if time_since_last < cooldown_secs:
+            # Apply cooldown primarily during warmup to avoid immediate repeat loops.
+            # Once we are operating above minimum frequency, let cadence be governed
+            # by max frequency instead of hard cooldown.
+            if time_since_last < cooldown_secs and execution_count <= min_freq:
                 logger.debug(f"[LIBIDO] THROTTLE - cooldown active "
                            f"(last={time_since_last:.0f}s < {cooldown_secs}s) - "
                            f"skill={skill_name}")

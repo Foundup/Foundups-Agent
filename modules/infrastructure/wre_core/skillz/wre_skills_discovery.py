@@ -284,16 +284,15 @@ class WRESkillsDiscovery:
         Returns:
             Promotion state (prototype, staged, production)
         """
-        path_str = str(skill_path)
+        path_str = str(skill_path).replace("\\", "/").lower()
 
+        if '_staged' in path_str:
+            return "staged"
         if '_prototype' in path_str or '.claude/skills' in path_str:
             return "prototype"
-        elif '_staged' in path_str:
-            return "staged"
-        elif 'modules/' in path_str and '/skills/' in path_str:
+        if 'modules/' in path_str and ('/skills/' in path_str or '/skillz/' in path_str):
             return "production"
-        else:
-            return "unknown"
+        return "unknown"
 
     def _parse_agents(self, agents_input) -> List[str]:
         """
@@ -377,10 +376,16 @@ class WRESkillsDiscovery:
         }
 
         for skill in discovered_skills:
+            try:
+                location = str(skill.skill_path.parent.relative_to(self.repo_root))
+            except ValueError:
+                # Keep export robust for unit tests that use synthetic relative paths.
+                location = str(skill.skill_path.parent).replace("\\", "/")
+
             registry["skills"][skill.skill_name] = {
                 "skill_name": skill.skill_name,
                 "promotion_state": skill.promotion_state,
-                "location": str(skill.skill_path.parent.relative_to(self.repo_root)),
+                "location": location,
                 "primary_agent": skill.agents[0] if skill.agents else "qwen",
                 "fallback_agent": skill.agents[1] if len(skill.agents) > 1 else None,
                 "intent_type": skill.intent_type,

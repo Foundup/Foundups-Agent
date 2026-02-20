@@ -30,7 +30,7 @@ The **FoundUp Factory** is the "pump.fun for regenerative enterprises" - a user-
 
 **Cross-Chain Operations**:
 - **Universal FoundUp Identity**: Same FoundUp operates across all chains
-- **Token Bridging**: Found UP$ tokens flow seamlessly between networks
+- **Token Bridging**: Found UPS tokens flow seamlessly between networks
 - **Unified Governance**: Decisions made once, executed everywhere
 - **Interoperable DAEs**: Collaboration across blockchain boundaries
 
@@ -80,7 +80,7 @@ The **FoundUp Factory** is the "pump.fun for regenerative enterprises" - a user-
 2. **Template Selection**: Choose from proven FoundUp patterns
 3. **0102 Matching**: AI agent partnership recommendation
 4. **Blockchain Choice**: Select networks for deployment
-5. **Token Configuration**: Set Found UP$ parameters and distribution
+5. **Token Configuration**: Set Found UPS parameters and distribution
 6. **Community Setup**: Initial stakeholder invitation and governance
 7. **Launch Validation**: Final checks and quality assurance
 8. **Go Live**: FoundUp becomes operational with first token minting
@@ -97,7 +97,7 @@ The **Regenerative Exchange** transforms the extractive nature of traditional tr
 **Stable Value Foundation**: Bitcoin provides reliable store of value
 
 **Trading Mechanics**:
-- **Found UP$ Pairs**: All FoundUp tokens trade against Bitcoin
+- **Found UPS Pairs**: All FoundUp tokens trade against Bitcoin
 - **Stable Value**: Bitcoin backing prevents speculation and volatility
 - **Global Access**: Bitcoin's universal acceptance enables worldwide participation
 - **Security**: Bitcoin's proven network security protects all transactions
@@ -193,7 +193,7 @@ Idea -> Launch on Platform -> Partner with 0102 Agent -> Create regenerative imp
 - **Regenerative Mandate**: Financial decisions prioritize ecological and social health
 
 ### **Local Currency Integration**
-**Found UP$ as Community Currency**: Regional economic circulation
+**Found UPS as Community Currency**: Regional economic circulation
 
 **Local Economy Benefits**:
 - **Wealth Retention**: Money stays in community instead of flowing to distant shareholders
@@ -202,7 +202,7 @@ Idea -> Launch on Platform -> Partner with 0102 Agent -> Create regenerative imp
 - **Environmental Focus**: Local currencies support local production and consumption
 
 **Implementation Examples**:
-- **Burlington, Vermont**: Found UP$ used for local businesses and services
+- **Burlington, Vermont**: Found UPS used for local businesses and services
 - **Ithaca, New York**: Community currency for regional food system
 - **Portland, Oregon**: Urban agriculture and renewable energy networks
 - **Austin, Texas**: Creative economy and technology cooperatives
@@ -233,7 +233,7 @@ Idea -> Launch on Platform -> Partner with 0102 Agent -> Create regenerative imp
 - [ ] **Traditional businesses converting** to regenerative models using platform tools
 
 ### **Economic Impact**
-- [ ] **10+ local currencies** using Found UP$ as foundation
+- [ ] **10+ local currencies** using Found UPS as foundation
 - [ ] **100+ circular economy loops** connecting FoundUps in supply chains
 - [ ] **Community-controlled finance** serving 10,000+ participants
 - [ ] **Measurable wealth retention** in local communities vs extraction
@@ -256,7 +256,7 @@ Idea -> Launch on Platform -> Partner with 0102 Agent -> Create regenerative imp
 
 - [Phase 2: Agent Ecosystem](Phase-2-Agent-Ecosystem.md) - Prerequisites and DAE foundation
 - [Phase 4: Planetary Scale](Phase-4-Planetary-Scale.md) - Mass adoption and global impact
-- [Economic Model](Economic-Model.md) - Found UP$ token mechanics and circulation details
+- [Economic Model](Economic-Model.md) - Found UPS token mechanics and circulation details
 - [Regenerative Enterprise](Regenerative-Enterprise.md) - Business model transformation
 - [Implementation Roadmap](Implementation-Roadmap.md) - Complete four-phase overview
 

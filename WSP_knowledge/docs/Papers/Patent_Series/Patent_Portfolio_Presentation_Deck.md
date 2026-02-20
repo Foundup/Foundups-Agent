@@ -114,7 +114,7 @@ graph TD
     Opportunity[Business Opportunity] -->|Detected by| AI[0102 Agent]
     AI -->|Creates| Foundup[Autonomous Foundup]
     Foundup -->|Generates| Wallet[Bitcoin Wallet]
-    Wallet -->|Backs| Tokens[Found UP$ Tokens]
+    Wallet -->|Backs| Tokens[Found UPS Tokens]
     Tokens -->|Decay| Pool[Reinvestment Pool]
     Pool -->|Funds| NewFoundups[New Foundups]
 ```

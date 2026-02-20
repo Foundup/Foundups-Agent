@@ -2,7 +2,7 @@
  * FoundUP Cube Animation Module
  *
  * Tells the FoundUP lifecycle story:
- * IDEA → SCAFFOLD → BUILD → PROMOTE → INVEST → CUSTOMERS → LAUNCH (MVP) → CELEBRATE → RESET
+ * IDEA → SCAFFOLD → BUILD → PROMOTE → STAKING → CUSTOMERS → LAUNCH (MVP) → CELEBRATE → RESET
  *
  * Location: public/js/foundup-cube.js
  * Spec: public/cube-story-spec.md
@@ -90,7 +90,7 @@ const FoundupCube = (function () {
         fonts: Object.freeze({
             status: '11px monospace',
             label: '10px monospace',
-            announcement: 'bold 18px sans-serif',
+            announcement: 'bold 18px monospace',
             agentSymbol: 'bold 6px sans-serif',
         }),
     });
@@ -324,6 +324,17 @@ const FoundupCube = (function () {
                 threshold_met: d.threshold_met || false,
                 confidence: d.confidence || 0,
             },
+        }),
+        'cabr_pipe_flow_routed': (d) => ({
+            type: 'cabr_pipe_flow_routed',
+            data: {
+                foundupId: d.foundup_id,
+                cabr_pipe_size: d.cabr_pipe_size || 0,
+                routed_ups: d.routed_ups || 0,
+                worker_ups: d.worker_ups || 0,
+                assignee_id: d.assignee_id || null,
+            },
+            triggerEarningPulse: true,
         }),
 
         // Agent Lifecycle Events (01(02) → 0102 → 01/02 state machine)
@@ -690,8 +701,10 @@ const FoundupCube = (function () {
         const eventType = simEvent.event_type || simEvent.type;
         const eventData = simEvent.payload || simEvent.data || {};
 
-        const mapper = SIM_EVENT_MAP[eventType];
-        if (!mapper) return;
+        const mapper = SIM_EVENT_MAP[eventType] || ((d) => ({
+            type: eventType,
+            data: d || {},
+        }));
 
         const mapped = mapper(eventData);
         if (!mapped) return;
@@ -759,6 +772,7 @@ const FoundupCube = (function () {
             'mvp_bid_submitted',
             'mvp_subscription_accrued',
             'agent_earned',  // Explicit earning event
+            'cabr_pipe_flow_routed',
         ];
         return economicEvents.includes(eventType);
     }
@@ -794,7 +808,7 @@ const FoundupCube = (function () {
     // ═══════════════════════════════════════════════════════════════════════
     // PHASE DEFINITIONS (~120s deterministic loop — deliberate pacing)
     // ═══════════════════════════════════════════════════════════════════════
-    // Story Arc: IDEA → SCAFFOLD → BUILD → PROMOTE → INVEST → STAKEHOLDERS → LAUNCH
+    // Story Arc: IDEA → SCAFFOLD → BUILD → PROMOTE → STAKING → CUSTOMERS → LAUNCH
     // Slower IDEA phase (spark of inspiration takes time)
     // Total: 15+12+48+0+12+12+10+6+5+0 = 120s
     const PHASES = {
@@ -809,6 +823,27 @@ const FoundupCube = (function () {
         CELEBRATE: { duration: 5000, next: 'RESET' },      // 5s - celebration
         RESET: { duration: 0, next: 'IDEA' },
     };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRE-OPO / POST-OPO LIFECYCLE (pAVS invite gate model)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Pre-OPO (60%): Invite-only, Angels stake for OPO access
+    // Post-OPO (40%): Public access, full fee revenue enabled
+    const PRE_OPO_PHASES = Object.freeze(new Set([
+        'IDEA', 'SCAFFOLD', 'BUILDING', 'COMPLETE', 'PROMOTING', 'STAKING'
+    ]));
+    const POST_OPO_PHASES = Object.freeze(new Set([
+        'CUSTOMERS', 'LAUNCH', 'CELEBRATE'
+    ]));
+
+    // Check if current phase is Pre-OPO (behind invite gate)
+    function isPreOPO() {
+        return PRE_OPO_PHASES.has(currentPhase);
+    }
+
+    // OPO event triggers when transitioning from STAKING → CUSTOMERS
+    let opoTriggered = false;
+    let opoTransitionTime = 0;
 
     // ═══════════════════════════════════════════════════════════════════════
     // VISION STATEMENTS (rotate per loop - each FoundUp starts with a dream)
@@ -920,7 +955,12 @@ const FoundupCube = (function () {
         startX: 0,
         startY: 0,
         isOverCanvas: false,
+        hoveredAgent: null,     // Agent currently under cursor
     };
+
+    // Selected agent tooltip state
+    let selectedAgent = null;
+    let selectedAgentTime = 0;
 
     // Cube rotation from mouse drag
     const cubeRotation = {
@@ -992,6 +1032,7 @@ const FoundupCube = (function () {
         promoter_recruited: (d) => `promoter brought ${d.count} agents!`,
         staker_arrived: () => `BTC staker enters with liquidity`,
         customers_arrived: (d) => `${d.count} customers arrived!`,
+        opo_gate_opens: (d) => `OPO GATE OPENS - F${toSubscript(d.foundupIndex || 1)} is PUBLIC!`,
         dao_launched: () => `Foundup_i MVP is Live!`,
         cube_complete: () => `cube complete - all 64 blocks built`,
         loop_started: (d) => `new foundup #${d.loopCount} starting...`,
@@ -1009,14 +1050,14 @@ const FoundupCube = (function () {
         agent_idle: (d) => `01/02 ${d.actor_id || 'agent'} IDLE (${d.inactive_ticks || 0} ticks)`,
         agent_ranked: (d) => `${d.actor_id || 'agent'} rank UP: ${d.old_rank || 1}→${d.new_rank || 2} (${d.new_title || 'Builder'})`,
         agent_earned: (d) => `${d.actor_id || 'agent'} earned ${d.amount || 0} F${toSubscript(d.foundup_idx || 1)}`,
-        agent_leaves: (d) => `${(d.public_key || '').slice(0, 10)}... logs off (${d.wallet_balance || 0} F_i)`,
+        agent_leaves: (d) => `${(d.public_key || '').slice(0, 10)}... logs off (${d.wallet_balance || 0} Fᵢ)`,
         orch_handoff: (d) => `ORCH → ${d.actor_id || '0102'}: build ${d.module || 'module'}`,
 
         // SmartDAO escalation events (WSP 100: F₀ DAE → F₁+ SmartDAO)
         smartdao_emergence: (d) => `F${toSubscript(d.foundup_idx || 0)} → SmartDAO F${toSubscript(d.new_tier || 1)} EMERGENCE`,
         tier_escalation: (d) => `F${toSubscript(d.old_tier || 0)} → F${toSubscript(d.new_tier || 1)} TIER UP`,
         treasury_autonomy: (d) => `F${toSubscript(d.foundup_idx || 1)} TREASURY AUTONOMOUS`,
-        cross_dao_funding: (d) => `F${toSubscript(d.source_tier || 2)} funds F${toSubscript(d.target_tier || 0)}: ${d.amount || 0} UP$`,
+        cross_dao_funding: (d) => `F${toSubscript(d.source_tier || 2)} funds F${toSubscript(d.target_tier || 0)}: ${d.amount || 0} UPS`,
 
         // FAM module building events (what agents build)
         build_registry: (d) => `0102 builds REGISTRY module`,
@@ -1034,18 +1075,18 @@ const FoundupCube = (function () {
         sim_creating_collaterals: () => `0102 creating collaterals...`,
         sim_security_audit: () => `0102 performing security audit...`,
         sim_promoting: () => `0102 promoting foundup...`,
-        sim_dex_trade: (d) => `DEX: ${d.quantity || '100'} F${toSubscript(d.foundupIndex || 1)} traded (UP$: ${d.ups_total || 0})`,
+        sim_dex_trade: (d) => `DEX: ${d.quantity || '100'} F${toSubscript(d.foundupIndex || 1)} traded (UPS: ${d.ups_total || 0})`,
         sim_staker_funding: (d) => `BTC stake (F${toSubscript(d.sourceIndex || 0)}): ${d.btcAmount || 0} BTC`,
-        sim_mvp_subscription: (d) => `subscription accrued: +${d.addedUps || 0} UP$`,
-        sim_mvp_bid: (d) => `MVP bid submitted: ${d.bidUps || 0} UP$`,
-        sim_mvp_resolved: (d) => `MVP offering resolved: +${d.injectedUps || 0} UP$ treasury`,
-        fi_ups_exchange: (d) => `Stake ${d.upsAmount || 50} UP$ @ ${d.bondingPrice || '0.01'} → ${d.fiAmount || 100} F${toSubscript(d.foundupIndex || 1)}`,
+        sim_mvp_subscription: (d) => `subscription accrued: +${d.addedUps || 0} UPS`,
+        sim_mvp_bid: (d) => `MVP bid submitted: ${d.bidUps || 0} UPS`,
+        sim_mvp_resolved: (d) => `MVP offering resolved: +${d.injectedUps || 0} UPS treasury`,
+        fi_ups_exchange: (d) => `Stake ${d.upsAmount || 50} UPS @ ${d.bondingPrice || '0.01'} → ${d.fiAmount || 100} F${toSubscript(d.foundupIndex || 1)}`,
         sim_connected: () => `simulator connected - live events active`,
 
         // FAM DAEmon event mappings (from SSE stream)
         task_state_changed: (d) => `task ${d.task_id || '?'}: ${d.new_status || 'updated'}`,
         proof_submitted: (d) => `proof submitted: ${d.proof_type || 'work'}`,
-        payout_triggered: (d) => `payout: ${d.amount || 0} UP$`,
+        payout_triggered: (d) => `payout: ${d.amount || 0} UPS`,
         foundup_created: (d) => `F${toSubscript(d.foundupIndex || 1)} created: ${d.name || 'new foundup'}`,
     };
 
@@ -1205,8 +1246,8 @@ const FoundupCube = (function () {
             // Bonding curve: price = k × supply² (Bitclout model, k=0.0001)
             // More tokens released = higher price per F_i
             const supplyReleased = Math.floor(progress * 21000);  // 21K token pool proxy
-            const bondingPrice = 0.0001 * Math.pow(supplyReleased / 1000, 2) + 0.001;  // UP$/F_i
-            const upsStaked = Math.floor(Math.random() * 200) + 50;  // Staker provides 50-250 UP$
+            const bondingPrice = 0.0001 * Math.pow(supplyReleased / 1000, 2) + 0.001;  // UPS/F_i
+            const upsStaked = Math.floor(Math.random() * 200) + 50;  // Staker provides 50-250 UPS
             const fiReceived = Math.floor(upsStaked / bondingPrice);  // F_i received at curve price
             addTickerMessage('fi_ups_exchange', { foundupIndex: fi, upsAmount: upsStaked, fiAmount: fiReceived, bondingPrice: bondingPrice.toFixed(4) });
         }
@@ -1272,7 +1313,7 @@ const FoundupCube = (function () {
             if (m.type === 'agent_earned' || m.type === 'payout_triggered') {
                 color = `rgba(0, 255, 136, ${alpha})`;  // Bright green for earning
             } else if (m.type === 'fi_ups_exchange') {
-                color = `rgba(255, 215, 0, ${alpha})`;  // GOLD for F_i ↔ UP$ exchange
+                color = `rgba(255, 215, 0, ${alpha})`;  // GOLD for F_i ↔ UPS exchange
             } else if (m.type === 'dao_launched' || m.text.includes('MVP') || m.text.includes('Live')) {
                 color = `rgba(255, 215, 0, ${alpha})`;  // Gold for MVP
             } else if (m.type === 'staker_arrived' || m.text.includes('staker') || m.text.includes('BTC stake')) {
@@ -1775,7 +1816,19 @@ const FoundupCube = (function () {
             return Math.sqrt(dx * dx + dy * dy) < hitRadius;
         });
 
-        if (!clickedAgent) return;
+        if (!clickedAgent) {
+            // Clicked empty space — dismiss tooltip
+            selectedAgent = null;
+            return;
+        }
+
+        // Toggle selection: click same agent = deselect, different = select
+        if (selectedAgent === clickedAgent) {
+            selectedAgent = null;
+            return;
+        }
+        selectedAgent = clickedAgent;
+        selectedAgentTime = Date.now();
 
         const now = Date.now();
 
@@ -1824,6 +1877,103 @@ const FoundupCube = (function () {
             clickedAgent.spazTimer = 90;
             clickedAgent.status = 'visionary!';
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // AGENT INFO TOOLTIP — mini card near selected agent
+    // ═══════════════════════════════════════════════════════════════════════
+    function drawAgentTooltip() {
+        if (!selectedAgent) return;
+
+        // Auto-dismiss after 8 seconds
+        if (Date.now() - selectedAgentTime > 8000) {
+            selectedAgent = null;
+            return;
+        }
+
+        // Check agent still exists
+        if (!agents.includes(selectedAgent)) {
+            selectedAgent = null;
+            return;
+        }
+
+        const a = selectedAgent;
+        const scaleRatio = camera.scale / STYLE.camera.defaultScale;
+        const cubeCenter = { x: w / 2, y: h * 0.45 };
+        const relX = a.x - cubeCenter.x;
+        const relY = a.y - cubeCenter.y;
+        const drawX = cubeCenter.x + relX * scaleRatio;
+        const drawY = cubeCenter.y + relY * scaleRatio;
+
+        // Tooltip card dimensions
+        const cardW = 150;
+        const cardH = 80;
+        const icons = { founder: '★', builder: '$', promoter: '↗', staker: '₿' };
+        const typeNames = { founder: 'Founder', builder: 'Builder', promoter: 'Promoter', staker: 'Staker' };
+
+        // Position: above and to the right of agent, clamped to canvas
+        let cardX = drawX + 12;
+        let cardY = drawY - cardH - 8;
+        if (cardX + cardW > w - 10) cardX = drawX - cardW - 12;
+        if (cardY < 10) cardY = drawY + 16;
+
+        ctx.save();
+
+        // Semi-transparent dark background with rounded corners
+        ctx.fillStyle = 'rgba(15, 15, 40, 0.92)';
+        ctx.strokeStyle = 'rgba(124, 92, 252, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const r = 6;
+        ctx.moveTo(cardX + r, cardY);
+        ctx.lineTo(cardX + cardW - r, cardY);
+        ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + r);
+        ctx.lineTo(cardX + cardW, cardY + cardH - r);
+        ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH);
+        ctx.lineTo(cardX + r, cardY + cardH);
+        ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - r);
+        ctx.lineTo(cardX, cardY + r);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Agent type + icon
+        const icon = icons[a.type] || '?';
+        const typeName = typeNames[a.type] || a.type;
+        ctx.font = 'bold 12px monospace';
+        ctx.fillStyle = a.color;
+        ctx.textAlign = 'left';
+        ctx.fillText(`${icon} ${typeName}`, cardX + 10, cardY + 18);
+
+        // Agent ID (short)
+        ctx.font = '9px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText(a.id, cardX + 10, cardY + 30);
+
+        // Status
+        ctx.font = '10px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillText(`Status: ${a.status}`, cardX + 10, cardY + 46);
+
+        // F_i earned + trips
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.9)';
+        ctx.fillText(`Fᵢ: ${a.fiEarned.toLocaleString()}`, cardX + 10, cardY + 60);
+
+        if (a.tripCount > 0) {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
+            ctx.fillText(`Trips: ${a.tripCount}`, cardX + 85, cardY + 60);
+        }
+
+        // State indicator (for gold-return cycle)
+        if (a.state) {
+            const stateColors = { entering: '#00e5d0', working: '#00ff88', returning: '#ffd700' };
+            ctx.fillStyle = stateColors[a.state] || '#fff';
+            ctx.fillText(`[${a.state}]`, cardX + 85, cardY + 46);
+        }
+
+        ctx.textAlign = 'center';  // Restore default
+        ctx.restore();
     }
 
     function updateAgentBehaviors() {
@@ -2060,6 +2210,9 @@ const FoundupCube = (function () {
         const isPixelMode = scaleRatio < 0.7;  // Below 70% zoom = pixel mode
         const cubeCenter = { x: w / 2, y: h * 0.45 };
 
+        // Track label positions for collision avoidance
+        const labelPositions = [];
+
         agents.forEach(a => {
             ctx.save();
             ctx.globalAlpha = agentAlpha;
@@ -2185,11 +2338,49 @@ const FoundupCube = (function () {
             // Reset font after potential pulse scaling
             ctx.font = `bold ${baseFontSize}px sans-serif`;
 
-            // Status label - only in regular mode (not pixel mode)
-            if (a.showLabel) {
-                ctx.font = '10px monospace';
-                ctx.fillStyle = `rgba(255,255,255,${0.25 * agentAlpha})`;
-                ctx.fillText(a.status, drawX, drawY + drawSize + 12);
+            // Status label - deconflicted to prevent stacking
+            if (a.showLabel && labelPositions.length < 4) {
+                const labelX = drawX;
+                let labelY = drawY + drawSize + 12;
+
+                // Bump label down if colliding with existing labels
+                for (const existing of labelPositions) {
+                    const dx = Math.abs(labelX - existing.x);
+                    const dy = Math.abs(labelY - existing.y);
+                    if (dx < 60 && dy < 12) {
+                        labelY = existing.y + 14; // Bump below
+                    }
+                }
+
+                // Only show labels for agents within 100px of cube center
+                const distToCenter = Math.sqrt(
+                    Math.pow(drawX - cubeCenter.x, 2) +
+                    Math.pow(drawY - cubeCenter.y, 2)
+                );
+                if (distToCenter < 100) {
+                    ctx.font = '10px monospace';
+                    ctx.fillStyle = `rgba(255,255,255,${0.25 * agentAlpha})`;
+                    ctx.fillText(a.status, labelX, labelY);
+                    labelPositions.push({ x: labelX, y: labelY });
+                }
+            }
+
+            // Hover highlight: subtle scale pulse when mouse is near
+            if (mouse.hoveredAgent === a) {
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, drawSize + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * agentAlpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Selected agent: bright ring
+            if (selectedAgent === a) {
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, drawSize + 6, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(0, 229, 208, ${0.8 * agentAlpha})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
             }
 
             ctx.restore();
@@ -2615,6 +2806,8 @@ const FoundupCube = (function () {
                 jigsawSequence = [];
                 jigsawIndex = 0;
                 fiEarned = 0;
+                opoTriggered = false;  // Reset OPO gate for new FoundUp
+                opoTransitionTime = 0;
                 resetCameraPan();  // Reset camera to center
                 // Founder appears center
                 const founder = spawnAgent('founder', 'ideating...');
@@ -2696,14 +2889,45 @@ const FoundupCube = (function () {
 
             case 'STAKING':
                 // BTC staker arrives from right (CABR/PoB: liquidity provider)
+                // ANT FARM MOMENT: All agents react - switch to promoting/announcing!
                 const staker = spawnAgent('staker', 'staking BTC...');
                 staker.sx = w + 50;
                 staker.x = w + 50;
                 staker.ty = h * 0.4;
-                emitEvent('staker_arrived', { agent: staker.id });
+
+                // ALL agents react to the Staker entrance
+                const stakingReactions = [
+                    'announcing!', 'sharing...', 'promoting!', 'excited!',
+                    'spreading word!', 'telling friends!', 'hyping!', 'watching...'
+                ];
+                agents.forEach((a, i) => {
+                    if (a !== staker) {
+                        // Stagger reactions for natural feel
+                        setTimeout(() => {
+                            const reaction = stakingReactions[i % stakingReactions.length];
+                            a.status = reaction;
+                            // Make agents briefly "spaz out" toward staker (excited reaction)
+                            a.tx = w * 0.6 + Math.random() * 80;
+                            a.ty = h * 0.4 + Math.random() * 60;
+                        }, i * 150);
+                    }
+                });
+
+                // Add ticker messages showing the buzz
+                setTimeout(() => addTickerMessage('agent_earned', { actor_id: '0102', amount: 50, foundup_idx: loopCount }), 500);
+                setTimeout(() => addTickerMessage('sim_promoting', {}), 1000);
+
+                emitEvent('staker_arrived', { agent: staker.id, agentsReacted: agents.length - 1 });
                 break;
 
             case 'CUSTOMERS':
+                // OPO TRANSITION - Gate opens! Pre-OPO → Post-OPO
+                // This is the Open Public Offering moment
+                opoTriggered = true;
+                opoTransitionTime = Date.now();
+                spawnConfetti();  // Celebration burst for OPO
+                addTickerMessage('opo_gate_opens', { foundupIndex: loopCount });
+
                 // Customers join - more agents spawn (users/customers)
                 spawnAgent('builder', 'customer!');
                 setTimeout(() => spawnAgent('builder', 'user joined!'), 600);
@@ -2714,7 +2938,7 @@ const FoundupCube = (function () {
                         a.status = 'growing...';
                     }
                 });
-                emitEvent('customers_arrived', { count: 4 });
+                emitEvent('customers_arrived', { count: 4, opo: true });
                 break;
 
             case 'LAUNCH':
@@ -3063,76 +3287,73 @@ const FoundupCube = (function () {
 
     function drawStatusBar() {
         const cx = w / 2;
-        const statusY = h - 20;
-
-        ctx.font = STYLE.fonts.status;
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.textAlign = 'center';
 
         const blocksFilled = filledBlocks.size;
         const totalBlocks = Math.pow(CONFIG.targetSize, 3);
         const pct = Math.round((blocksFilled / totalBlocks) * 100);
         const stage = getLifecycleStage();
 
-        let statusText = `FoundUP Cube: ${CONFIG.targetSize}×${CONFIG.targetSize}×${CONFIG.targetSize}`;
-        statusText += `  |  Agents: ${agents.length}`;
-        statusText += `  |  F_i: ${fiEarned.toLocaleString()}`;
+        // Stage badge colors
+        const stageColors = {
+            'PoC': STYLE.levelColors.P0,       // Red - foundation
+            'Proto': STYLE.levelColors.P1,     // Orange - prototype
+            'MVP': STYLE.levelColors.P2,       // Yellow - MVP
+            'Complete': '#00e5d0',             // Cyan - launched
+        };
 
-        ctx.fillText(statusText, cx, statusY);
-
-        // Lifecycle stage indicator (WSP modular progress) - colored badge only
-        if (currentPhase === 'BUILDING' || currentPhase === 'COMPLETE') {
-            const stageColors = {
-                'PoC': STYLE.levelColors.P0,       // Red - foundation
-                'Proto': STYLE.levelColors.P1,     // Orange - prototype
-                'MVP': STYLE.levelColors.P2,       // Yellow - MVP
-                'Complete': '#00e5d0',             // Cyan - launched
-            };
-            const stageColor = stageColors[stage] || '#fff';
-
-            // Stage badge with percentage - positioned after status text
-            ctx.font = 'bold 10px monospace';
-            ctx.fillStyle = stageColor;
-            const stageText = currentPhase === 'BUILDING' ? `[${stage} ${pct}%]` : `[${stage}]`;
-            ctx.fillText(stageText, cx + 140, statusY);
-        }
-
-        // Phase announcements - ONLY show in single-cube view (not zoomed out)
+        // Phase announcements + progress badge — ONLY in single-cube view
         if (!cameraHandoff.zoomedOut) {
-            // Phase announcement for IDEA (founder with lightbulb)
+            const announcementY = h * 0.15;
+            const badgeY = announcementY + 22;  // Progress badge just below announcement
+
+            // Phase: IDEA (founder with lightbulb)
             if (currentPhase === 'IDEA') {
                 const elapsed = getScaledElapsed(phaseStartTime);
                 const pulse = 0.7 + Math.sin(elapsed / 200) * 0.3;
                 ctx.font = STYLE.fonts.announcement;
                 ctx.fillStyle = `rgba(255, 45, 45, ${pulse})`;  // Red for PoC
-                ctx.fillText('F_i PoC Stage', cx, h * 0.15);
+                ctx.textAlign = 'center';
+                ctx.fillText('Fᵢ PoC Stage', cx, announcementY);
             }
 
-            // Phase announcement for SCAFFOLD/BUILDING (prototype phase)
+            // Phase: SCAFFOLD/BUILDING (prototype phase)
             if (currentPhase === 'SCAFFOLD' || (currentPhase === 'BUILDING' && stage === 'Proto')) {
                 const elapsed = getScaledElapsed(phaseStartTime);
                 const pulse = 0.6 + Math.sin(elapsed / 180) * 0.2;
                 ctx.font = STYLE.fonts.announcement;
                 ctx.fillStyle = `rgba(245, 166, 35, ${pulse})`;  // Orange for Proto
-                ctx.fillText('Building Prototype', cx, h * 0.15);
+                ctx.textAlign = 'center';
+                ctx.fillText('Building Prototype', cx, announcementY);
             }
 
-            // Phase announcement for LAUNCH/CELEBRATE (MVP)
+            // Phase: LAUNCH/CELEBRATE (MVP)
             if (currentPhase === 'LAUNCH' || currentPhase === 'CELEBRATE') {
                 const elapsed = getScaledElapsed(phaseStartTime);
                 const pulse = 0.8 + Math.sin(elapsed / 100) * 0.2;
                 ctx.font = STYLE.fonts.announcement;
                 ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;  // Gold for MVP
-                ctx.fillText('F_i MVP is Live!', cx, h * 0.15);
+                ctx.textAlign = 'center';
+                ctx.fillText('Fᵢ MVP is Live!', cx, announcementY);
             }
 
-            // Phase announcement for CUSTOMERS
+            // Phase: CUSTOMERS
             if (currentPhase === 'CUSTOMERS') {
                 const elapsed = getScaledElapsed(phaseStartTime);
                 const pulse = 0.7 + Math.sin(elapsed / 150) * 0.3;
                 ctx.font = STYLE.fonts.announcement;
                 ctx.fillStyle = `rgba(0, 229, 208, ${pulse})`;
-                ctx.fillText('First paying customers!', cx, h * 0.15);
+                ctx.textAlign = 'center';
+                ctx.fillText('First paying customers!', cx, announcementY);
+            }
+
+            // Progress badge — below announcement (e.g. [Proto 45%])
+            if (currentPhase === 'BUILDING' || currentPhase === 'COMPLETE') {
+                const stageColor = stageColors[stage] || '#fff';
+                ctx.font = 'bold 10px monospace';
+                ctx.fillStyle = stageColor;
+                ctx.textAlign = 'center';
+                const stageText = currentPhase === 'BUILDING' ? `[${stage} ${pct}%]` : `[${stage}]`;
+                ctx.fillText(stageText, cx, badgeY);
             }
         }
     }
@@ -3247,9 +3468,9 @@ const FoundupCube = (function () {
 
     // Get ecosystem tagline based on grid size (012's vision)
     function getEcosystemTagline(tileCount) {
-        if (tileCount <= 4)  return 'FoundUP$ eating the StartUP';
-        if (tileCount <= 9)  return 'FoundUP$ eating corporations';
-        return 'FoundUP$ redistributing Bitcoin';
+        if (tileCount <= 4)  return 'FoundUPS eating the StartUP';
+        if (tileCount <= 9)  return 'FoundUPS eating corporations';
+        return 'FoundUPS redistributing Bitcoin';
     }
 
     function drawEcosystemView() {
@@ -3464,9 +3685,11 @@ const FoundupCube = (function () {
     // Draw scaffolding text floating to the RIGHT of the CUBE (not the key)
     // This is free-floating text near the cube, no border
     function drawCubeScaffoldingText() {
-        // Position relative to cube center (right side of cube)
-        const cubeRightEdge = w / 2 + 80;  // Cube center + offset to right edge
-        const cubeTopY = h / 2 - 60;       // Near top of cube
+        // Position aligned with Key panel left edge, sitting just above it
+        const keyW = 140;
+        const cubeRightEdge = w - keyW - 7;  // Align with key panel left edge
+        const keyTopY = h - 150 - 50 - 12;   // Key panel top edge (after shift)
+        const cubeTopY = keyTopY - 70;        // Just above key panel
 
         ctx.save();
 
@@ -3497,9 +3720,9 @@ const FoundupCube = (function () {
 
     function drawColorKey() {
         const keyW = 140;
-        const keyH = 130;  // Expanded: AGENTS legend + CABR score
-        const keyX = w - keyW - 12;
-        const keyY = h - keyH - 55;
+        const keyH = 150;  // Expanded: AGENTS legend + CABR score + OPO gate
+        const keyX = w - keyW - 7;   // Shifted right 5px
+        const keyY = h - keyH - 50;  // Shifted down 5px
 
         ctx.save();
 
@@ -3530,20 +3753,30 @@ const FoundupCube = (function () {
         ctx.font = 'bold 8px monospace';
         ctx.fillStyle = borderColor;  // Color shows the tier
         ctx.textAlign = 'right';
-        ctx.fillText('F_i Rating', keyX + keyW - 16, keyY - 2);
+        ctx.fillText('Fᵢ Rating', keyX + keyW - 16, keyY - 2);
 
-        // Agent legend header
+        // Count agents by type (live)
+        const agentCounts = { founder: 0, builder: 0, promoter: 0, staker: 0 };
+        agents.forEach(a => { if (agentCounts.hasOwnProperty(a.type)) agentCounts[a.type]++; });
+        const totalAgents = agentCounts.founder + agentCounts.builder + agentCounts.promoter + agentCounts.staker;
+
+        // Agent legend header with total count
         const divY = keyY + 8;
         ctx.font = '9px monospace';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.textAlign = 'left';
         ctx.fillText('AGENTS', keyX, divY);
+        // Total count — right-aligned
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.textAlign = 'right';
+        ctx.fillText(totalAgents, keyX + keyW - 16, divY);
 
         const legend = [
-            { label: 'Founder', color: STYLE.agentColors.founder },
-            { label: 'Builder', color: STYLE.agentColors.builder },
-            { label: 'Promoter', color: STYLE.agentColors.promoter },
-            { label: 'Staker', color: STYLE.agentColors.staker },
+            { label: 'Founder', color: STYLE.agentColors.founder, key: 'founder' },
+            { label: 'Builder', color: STYLE.agentColors.builder, key: 'builder' },
+            { label: 'Promoter', color: STYLE.agentColors.promoter, key: 'promoter' },
+            { label: 'Staker', color: STYLE.agentColors.staker, key: 'staker' },
         ];
 
         legend.forEach((item, i) => {
@@ -3556,6 +3789,12 @@ const FoundupCube = (function () {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
             ctx.textAlign = 'left';
             ctx.fillText(item.label, keyX + 14, ly);
+            // Dynamic count — right-aligned
+            const count = agentCounts[item.key] || 0;
+            ctx.font = 'bold 9px monospace';
+            ctx.fillStyle = item.color;
+            ctx.textAlign = 'right';
+            ctx.fillText(count, keyX + keyW - 16, ly);
         });
 
         // CABR Score display (below agents)
@@ -3572,6 +3811,22 @@ const FoundupCube = (function () {
         ctx.fillStyle = cabrColor;
         ctx.textAlign = 'right';
         ctx.fillText(`${cabrScore.total.toFixed(2)} ${cabrIcon}`, keyX + keyW - 16, cabrY);
+
+        // OPO Gate Status (Pre-OPO = invite only, Post-OPO = public)
+        const gateY = cabrY + 18;
+        ctx.font = '8px monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.textAlign = 'left';
+        ctx.fillText('GATE', keyX, gateY);
+
+        const preOpo = isPreOPO();
+        const gateColor = preOpo ? '#ff8c00' : '#22c55e';  // orange = locked, green = open
+        const gateText = preOpo ? 'PRE-OPO' : 'POST-OPO';
+        const gateIcon = preOpo ? '\u{1F512}' : '\u{1F513}';  // lock emoji / unlock emoji
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = gateColor;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${gateText} ${gateIcon}`, keyX + keyW - 16, gateY);
 
         ctx.restore();
     }
@@ -3636,6 +3891,9 @@ const FoundupCube = (function () {
             if (cameraHandoff.zoomedOut && cameraHandoff.cubePositions.length > 0) {
                 drawMiniCubes();
             }
+
+            // Agent tooltip on top of everything
+            drawAgentTooltip();
         }
 
         animationFrameId = requestAnimationFrame(animate);
@@ -3725,11 +3983,30 @@ const FoundupCube = (function () {
                 const dy = mouse.y - mouse.startY;
                 if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                     mouse.isDragging = true;
-                    // Rotate cube based on drag
                     cubeRotation.targetY = dx * 0.005;
                     cubeRotation.targetX = dy * 0.005;
                 }
             }
+
+            // Hover detection for agents
+            const scaleRatio = camera.scale / STYLE.camera.defaultScale;
+            const cubeCenterH = { x: w / 2, y: h * 0.45 };
+            const hitRadius = scaleRatio < 0.7 ? 10 : 20;
+            let found = null;
+            for (const a of agents) {
+                const relX = a.x - cubeCenterH.x;
+                const relY = a.y - cubeCenterH.y;
+                const drawX = cubeCenterH.x + relX * scaleRatio;
+                const drawY = cubeCenterH.y + relY * scaleRatio;
+                const dx = drawX - mouse.x;
+                const dy = drawY - mouse.y;
+                if (Math.sqrt(dx * dx + dy * dy) < hitRadius) {
+                    found = a;
+                    break;
+                }
+            }
+            mouse.hoveredAgent = found;
+            canvas.style.cursor = found ? 'pointer' : 'default';
         });
 
         canvas.addEventListener('mouseup', (e) => {
@@ -3855,6 +4132,31 @@ const FoundupCube = (function () {
                 if (speedValueEl) speedValueEl.textContent = speedMultiplier + 'x';
             });
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ZOOM SLIDER
+        // ═══════════════════════════════════════════════════════════════════
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomValueEl = document.getElementById('zoomValue');
+
+        function syncZoomSlider() {
+            if (zoomSlider) zoomSlider.value = camera.targetScale;
+            if (zoomValueEl) {
+                const zoomRatio = (camera.targetScale / STYLE.camera.defaultScale).toFixed(1);
+                zoomValueEl.textContent = zoomRatio + 'x';
+            }
+        }
+
+        if (zoomSlider) {
+            zoomSlider.addEventListener('input', (e) => {
+                camera.targetScale = parseFloat(e.target.value);
+                syncZoomSlider();
+            });
+        }
+
+        // Patch wheel handler to sync zoom slider
+        const origWheelSync = () => syncZoomSlider();
+        canvas.addEventListener('wheel', origWheelSync, { passive: true });
 
         // Start
         loopStartTime = Date.now();

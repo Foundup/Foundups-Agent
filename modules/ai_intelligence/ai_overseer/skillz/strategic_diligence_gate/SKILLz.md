@@ -37,10 +37,23 @@ Do not use for low-risk local fixes (lint, small bugfix, typo, isolated test upd
 - `scope_paths`: list of relevant module/doc paths
 - `time_horizon`: `short|medium|long`
 - `constraints`: explicit constraints (security, budget, timeline, compatibility)
+- `risk_tier`: `low|medium|high|critical`
 
 Optional:
 - `candidate_options`: pre-proposed options
 - `must_keep`: invariants that cannot change
+
+## Model Tier Policy
+
+OpenClaw is an execution/control plane, not a model.  
+Model selection should be risk-tiered:
+
+1. `low` (P3/P4): local Qwen or Gemma is sufficient.
+2. `medium` (P2): Qwen primary + Gemma cross-check required.
+3. `high` (P1): frontier model review required (via AI Gateway), plus Qwen draft.
+4. `critical` (P0): frontier model review + explicit 0102 approval gate.
+
+Do not allow Qwen-only final decisions for `high` or `critical` risk tiers.
 
 ## Execution Protocol
 
@@ -99,6 +112,10 @@ Select one option and provide:
 
 If chosen option has high blast radius with low evidence, fail closed.
 
+For `high` and `critical` risk tiers:
+- include a frontier-model adjudication note in output,
+- include disagreement handling (Qwen vs frontier) before execution.
+
 ### Step 6: Emit Handoff Prompt
 
 Produce an execution prompt for worker lanes with:
@@ -155,4 +172,3 @@ Produce an execution prompt for worker lanes with:
 - WSP 77: agent coordination
 - WSP 91: observability and operational traceability
 - WSP 95: SKILLz wardrobe operation
-

@@ -28,6 +28,16 @@ Shows top 5 players in compact format
 @User [U+1F3C6] MAGADOOM Top Whackers: | [U+1F947]Player1 [WAR] 200xp | [U+1F948]Player2 [HUN] 150xp | [U+1F949]Player3 [GRU] 100xp
 ```
 
+### `/whacked` - Most Whacked Trolls Leaderboard
+Shows the trolls that have been whacked the most (teaches the system who trolls are)
+```
+@User 💀 MOST WHACKED TROLLS:
+🥇 MAGATroll123: 47 WHACKS 🎯
+🥈 TrumpFan456: 32 WHACKS 🎯
+🥉 QAnonLover: 28 WHACKS 🎯
+These trolls are auto-flagged as Tier 0 ✊
+```
+
 ### `/sprees` - Active Whacking Sprees
 Shows mods on whacking sprees with 30-second windows
 ```
@@ -38,7 +48,7 @@ Shows mods on whacking sprees with 30-second windows
 
 ### `/help` - Command List
 ```
-@User [U+1F480] MAGADOOM: /score /rank /whacks /leaderboard /sprees /help
+@User [U+1F480] MAGADOOM: /score /rank /whacks /whacked /leaderboard /sprees /help
 ```
 
 ## [U+1F480] EPIC MAGADOOM RANKS 

@@ -1,5 +1,42 @@
 # ModLog - FoundUps Agent Market
 
+## 2026-02-20 - FIX: FAM publish() alias for emit()
+
+### WSP References
+- WSP 22 (ModLog), WSP 91 (Observability)
+
+### Problem
+Comment engagement events were NOT being captured because `comment_engagement_dae.py` called `fam.publish()` but `FAMDaemon` only had `emit()` method. Every call failed with silent AttributeError caught by try/except:
+
+```python
+# comment_engagement_dae.py line 1028
+fam.publish(event_type, fam_payload)  # ❌ AttributeError - method doesn't exist!
+```
+
+### Solution
+Added `publish = emit` alias to `FAMDaemon` class in `fam_daemon.py`:
+
+```python
+# After emit() method definition
+publish = emit  # Alias for backward compatibility
+```
+
+### Verification
+```python
+fam = get_fam_daemon()
+success, msg = fam.publish(FAMEventType.COMMENT_REPLIED, test_payload)
+# Returns: success=True, msg="ok"
+# Event captured in fam_events.jsonl with reply_text_posted
+```
+
+### Impact
+Now all Digital Twin comment replies will be captured in FAM events for:
+- Training data collection
+- Observability/debugging
+- Pattern analysis
+
+---
+
 ## 2026-02-16 - Token symbol guardrails + auto-resolution
 
 ### WSP References
@@ -280,8 +317,8 @@ MANAGING_DIRECTORS = {'UCcnCiZV5ZPJ_cjF7RsWIZ0w'}  # JS (Al-sq5ti)
 
 ### Changes
 - Extended `src/in_memory.py` to implement `MvpOfferingService`:
-  - `accrue_investor_terms()` with 5-term cap and 200 UP$/term defaults
-  - `place_mvp_bid()` with UP$ balance gating
+  - `accrue_investor_terms()` with 5-term cap and 200 UPS/term defaults
+  - `place_mvp_bid()` with UPS balance gating
   - `resolve_mvp_offering()` with treasury-role enforcement, highest-bid allocation, loser refunds
   - MVP treasury injection ledger (`mvp_treasury_injections`) and helper accessors
 - Updated `src/interfaces.py` docstrings to lock MVP offering semantics to F_0 investor program.

@@ -178,7 +178,7 @@ Network-wide awakening orchestration:
 
 ### WSP 77 (Intelligent Internet Vision)
 Future integration pathway:
-- CABR/UP$ optional compute
+- CABR/UPS optional compute
 - Governance alignment
 - Open source agent release
 

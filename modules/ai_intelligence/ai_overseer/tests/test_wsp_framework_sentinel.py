@@ -87,6 +87,33 @@ class TestWSPFrameworkSentinel(unittest.TestCase):
         self.assertTrue(second["cached"])
         self.assertEqual(first["drift_count"], second["drift_count"])
 
+    def test_backup_only_knowledge_files_are_non_blocking_by_default(self) -> None:
+        (self.knowledge_src / "WSP_96_MCP_Governance_and_Consensus_Protocol.md").write_text(
+            "WSP 96 framework version\n",
+            encoding="utf-8",
+        )
+
+        status = self.sentinel.check(force=True)
+        self.assertEqual(status["drift_count"], 0)
+        self.assertEqual(status["framework_only"], [])
+        self.assertIn("WSP_97_System_Execution_Prompting_Protocol", status["knowledge_only"])
+        self.assertEqual(status["severity"], "ok")
+
+    def test_backup_only_can_be_promoted_to_warning_via_env(self) -> None:
+        (self.knowledge_src / "WSP_96_MCP_Governance_and_Consensus_Protocol.md").write_text(
+            "WSP 96 framework version\n",
+            encoding="utf-8",
+        )
+
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"WSP_FRAMEWORK_ALLOW_KNOWLEDGE_ONLY": "0"},
+            clear=False,
+        ):
+            status = self.sentinel.check(force=True)
+        self.assertEqual(status["drift_count"], 0)
+        self.assertEqual(status["severity"], "warning")
+
 
 class TestAIOverseerWSPAuditApi(unittest.TestCase):
     def test_monitor_wsp_framework_updates_last_status(self) -> None:

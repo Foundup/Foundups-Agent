@@ -190,37 +190,6 @@ MPS-M adapts MPS for memory recall. It scores memory cards (WSP/README/ModLog/IN
 
 `MPS-M = C + I + D + Im` (range 4-20). Map P0-P4 the same as WSP 15.
 
-## 7. FPS: FoundUp Performance Score (Planned)
-
-> Forward reference: FPS extends MPS from module scoring to FoundUp scoring.
-> Implementation deferred until production SSE data flows.
-
-**Concept**: Each FoundUp gets a simulation baseline (projected timeline via Mesa model).
-Real FAMDaemon events provide actuals. Delta = projected - actual.
-
-**FPS Dimensions** (mirror MPS):
-| Dimension | What it measures | Data source |
-|-----------|-----------------|-------------|
-| Velocity | Task completion rate | task_state_changed events |
-| Traction | Staking, trades, customers | fi_trade_executed, customer_arrived |
-| Health | Treasury, burn rate | TokenEconomicsEngine |
-| Potential | Market fit, projected ceiling | Simulation vs actual delta |
-
-**FPS Rating Scale**:
-- COLD: Behind projection >30%
-- COOL: Behind 10-30%
-- WARM: Tracking within 10%
-- HOT: Ahead 10-30%
-- RED HOT: Ahead 30-50%
-- CHILLY PEPPER: Ahead >50% (UNICORN)
-
-**Animation Integration**: Cube color/speed reflects FPS score.
-Ecosystem view becomes heat map of FoundUp performance.
-
-**Dependencies**: Production SSE, real FoundUp data, actual vs projected comparison engine.
-
-**See also**: Simulator ModLog (2026-02-13) for FPS vision details.
-
 ### 6.2 Trust Weighting
 
 Apply trust weighting to the MPS-M score before ordering:

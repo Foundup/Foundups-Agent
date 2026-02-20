@@ -15,7 +15,7 @@
 - ✅ [ModLog.md](ModLog.md) - Change tracking
 
 ### Architecture Designed
-- ✅ Two-token system (UP$ + FoundUp tokens)
+- ✅ Two-token system (UPS + FoundUp tokens)
 - ✅ Bio-decay states (ICE/LIQUID/VAPOR)
 - ✅ CABR validation flow (multi-agent consensus)
 - ✅ Rogers Diffusion stage release
@@ -167,9 +167,9 @@ const handleListItem = async (itemData) => {
   });
 
   if (validation.passed) {
-    // UP$ auto-minted to user's wallet
+    // UPS auto-minted to user's wallet
     showNotification({
-      title: `You earned ${validation.upAmount} UP$!`,
+      title: `You earned ${validation.upAmount} UPS!`,
       message: 'Stake to stop decay',
       cta: '/stake'
     });
@@ -222,7 +222,7 @@ pytest tests/test_end_to_end.py
 # Simulates:
 # 1. User lists item
 # 2. CABR validates
-# 3. UP$ minted
+# 3. UPS minted
 # 4. Decay calculated
 # 5. User stakes
 # 6. Decay stops
@@ -318,7 +318,7 @@ tests/
 ## Session Handoff Notes
 
 **What We Figured Out**:
-1. ✅ UP$ minting REQUIRES CABR validation (prevents gaming)
+1. ✅ UPS minting REQUIRES CABR validation (prevents gaming)
 2. ✅ Bio-decay uses Michaelis-Menten kinetics (biology-inspired)
 3. ✅ BTC backing creates autonomous meme → stable transformation
 4. ✅ Rogers Diffusion curve = natural market adoption
@@ -326,7 +326,7 @@ tests/
 **What Still Needs Thought**:
 - [ ] Exact CABR oracle implementation (on-chain vs off-chain)
 - [ ] Gas optimization strategies for decay ticks
-- [ ] Cross-chain bridge for UP$ (Polygon → other L2s?)
+- [ ] Cross-chain bridge for UPS (Polygon → other L2s?)
 - [ ] Governance token vs utility token classification
 
 **Next Session Priorities**:

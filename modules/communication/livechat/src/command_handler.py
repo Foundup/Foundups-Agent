@@ -400,6 +400,36 @@ class CommandHandler:
                 # Join with newlines for vertical display
                 return "\n".join(lines)
             
+            elif text_lower.startswith('/whacked'):
+                # Show most-whacked trolls leaderboard (teaching the system who trolls are)
+                observe_command('/whacked', 0.0)
+                try:
+                    # Use magadoom_scores.db (the REAL whack data source)
+                    from modules.gamification.whack_a_magat.src.whack import get_profile_store
+                    profile_store = get_profile_store()
+                    whacked_trolls = profile_store.get_whacked_leaderboard(limit=10)
+
+                    if not whacked_trolls:
+                        return f"{mention} 💀 WHACKED LEADERBOARD: No trolls whacked yet! Start timing out MAGAts! ✊✋🖐️"
+
+                    # Build leaderboard display
+                    lines = [f"{mention} 💀 MOST WHACKED TROLLS:"]
+
+                    # Show top 5 to keep message size reasonable
+                    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+                    for i, troll in enumerate(whacked_trolls[:5]):
+                        medal = medals[i] if i < len(medals) else f"#{i+1}"
+                        name = troll.get('target_name', 'Unknown')[:15]
+                        whacks = troll.get('whack_count', 0)
+                        lines.append(f"{medal} {name}: {whacks} WHACKS 🎯")
+
+                    lines.append("These trolls are auto-flagged as Tier 0 ✊")
+                    return "\n".join(lines)
+
+                except Exception as e:
+                    logger.error(f"[WHACKED] Error getting leaderboard: {e}")
+                    return f"{mention} 💀 Whacked leaderboard unavailable. Try again later!"
+
             elif text_lower.startswith('/sprees'):
                 # Show active killing sprees
                 active_sprees = get_active_sprees()
@@ -533,13 +563,33 @@ class CommandHandler:
                 # FFCPLN Mining - MAGAts token economy
                 # OWNER + Managing Directors (elevated MODs) can use
                 # Managing Directors = trusted MODs with owner-level command access
-                MANAGING_DIRECTORS = {
-                    # JS (Al-sq5ti) - Move2Japan Managing Director
-                    'UCcnCiZV5ZPJ_cjF7RsWIZ0w',
-                    # Add more Managing Director user IDs here
-                }
 
-                is_managing_director = user_id in MANAGING_DIRECTORS
+                # Load Managing Directors from JSON (can be updated live!)
+                def _load_managing_directors():
+                    """Load MDs from JSON file - allows live updates without code changes."""
+                    try:
+                        import json
+                        md_path = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "data", "managing_directors.json"
+                        )
+                        with open(md_path, 'r') as f:
+                            mds = json.load(f)
+                        return {md['user_id'] for md in mds}
+                    except Exception as e:
+                        logger.warning(f"[FUC] Could not load managing_directors.json: {e}")
+                        return set()
+
+                MANAGING_DIRECTORS = _load_managing_directors()
+                logger.debug(f"[FUC] Loaded {len(MANAGING_DIRECTORS)} Managing Directors from JSON")
+
+                # Managing Directors must also have MOD role (double verification)
+                is_managing_director = user_id in MANAGING_DIRECTORS and role == 'MOD'
+
+                # Debug log for troubleshooting
+                if user_id in MANAGING_DIRECTORS:
+                    logger.info(f"[FUC] Managing Director check: {username} (role={role}, is_md={is_managing_director})")
+
                 if role != 'OWNER' and not is_managing_director:
                     return f"{mention} 💀 /fuc is OWNER/Director only! ✊✋🖐️"
 
@@ -627,16 +677,18 @@ class CommandHandler:
                     try:
                         from modules.gamification.whack_a_magat.src.invite_distributor import get_invite_code
                         # Get stream start time from message processor for duration check
+                        # Note: OWNER bypasses stream duration check (stream_start tracks bot connect, not actual stream start)
                         stream_start = getattr(self.message_processor, 'stream_start_time', None) if self.message_processor else None
-                        invite_result = get_invite_code(user_id, username, stream_start_time=stream_start)
+                        invite_result = get_invite_code(user_id, username, stream_start_time=stream_start, role=role)
 
                         if invite_result['success']:
+                            next_days = invite_result.get('next_invite_days', 5)
                             if target_username:
                                 # Sending invite to specific user
                                 return (f"{target_mention} 🎟️ YOU'VE BEEN GIFTED AN INVITE!\n"
                                        f"💎 Code: {invite_result['code']}\n"
                                        f"🌐 Use at: foundups.com\n"
-                                       f"⚠️ One-time use - join FoundUP$ now! ✊✋🖐️\n"
+                                       f"⚠️ One-time use - join FoundUPS now! ✊✋🖐️\n"
                                        f"🎁 Get 5 invite codes to invite your friends!\n"
                                        f"(Sent by {username})")
                             else:
@@ -644,7 +696,8 @@ class CommandHandler:
                                        f"💎 Code: {invite_result['code']}\n"
                                        f"🌐 Use at: foundups.com\n"
                                        f"⚠️ One-time use only! Share wisely! ✊✋🖐️\n"
-                                       f"🎁 New members get 5 invite codes!")
+                                       f"🎁 New members get 5 invite codes!\n"
+                                       f"🔒 Next invite available in {next_days} days (SCARCITY!)")
                         else:
                             return f"{mention} 🎟️ {invite_result['message']} ✊✋🖐️"
                     except ImportError:
@@ -693,13 +746,27 @@ class CommandHandler:
                         logger.error(f"[FUC] Stats error: {e}")
                         return f"{mention} 📊 Stats error: {str(e)[:50]} ✊✋🖐️"
 
+                elif subcommand == 'help':
+                    # Show all /fuc commands
+                    return [
+                        f"{mention} 💎 FFCPLN MINING COMMANDS:",
+                        "💰 /fuc status → Your MAGAt balance",
+                        "🎁 /fuc claim → Get claim link for pending MAGAts",
+                        "🏆 /fuc top → Leaderboard of top miners",
+                        "⛏️ /fuc mine → Mining progress bar",
+                        "🎟️ /fuc invite → Generate invite code for foundups.com",
+                        "🎟️ /fuc invite @user → Gift invite to specific user",
+                        "📤 /fuc distribute → Auto-send invites to TOP 10",
+                        "📊 /fuc stats → Invite distribution stats ✊✋🖐️"
+                    ]
+
                 else:
-                    return f"{mention} 💀 /fuc commands: status | claim | top | mine | invite | distribute | stats ✊✋🖐️"
+                    return f"{mention} 💀 /fuc help for commands | /fuc status | invite | claim | top | mine ✊✋🖐️"
             
             elif text_lower == '/help' or text_lower.startswith('/help'):
                 # Return list of messages - message_processor sends each one
                 # Message 1: Player commands (everyone)
-                help_msgs = [f"{mention} 💀 /score /rank /whacks /leaderboard /sprees /quiz | !about !short"]
+                help_msgs = [f"{mention} 💀 /score /rank /whacks /whacked /leaderboard /sprees /quiz | !about !short"]
 
                 # Message 2: Role-specific commands
                 if role == 'OWNER':

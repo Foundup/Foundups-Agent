@@ -18,7 +18,7 @@ Strategy Priority:
 import logging
 import random
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,10 @@ class SkillContext:
 
     # Optional subscriber flag (for future subscriber-specific responses)
     is_subscriber: bool = False
+
+    # NEW (2026-02-20): ContentAnalysis for contextual responses
+    # Gap fix: ContentAnalysis was generated but NOT passed to skillz
+    content_analysis: Optional[Any] = None  # ContentAnalysis from comment_content_analyzer
 
 
 class RegularEngagementSkill:

@@ -26,7 +26,7 @@ from modules.communication.livechat.src.message_processor import MessageProcesso
 from modules.communication.livechat.src.chat_sender import ChatSender
 from modules.communication.livechat.src.chat_poller import ChatPoller
 from modules.infrastructure.system_health_monitor.src.system_health_analyzer import SystemHealthAnalyzer
-from modules.communication.livechat.src.chat_memory_manager import ChatMemoryManager
+from modules.communication.livechat.src.chat_memory_manager import get_chat_memory_manager
 from modules.communication.livechat.src.stream_session_logger import get_session_logger
 from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
 from modules.communication.livechat.src.persona_registry import (
@@ -119,8 +119,8 @@ class LiveChatCore:
         self.message_router = message_router
         self.router_mode = message_router is not None
 
-        # WSP-compliant hybrid memory manager (initialize first)
-        self.memory_manager = ChatMemoryManager(self.memory_dir)
+        # WSP-compliant hybrid memory manager (singleton for shared access)
+        self.memory_manager = get_chat_memory_manager(self.memory_dir)
         
         # Initialize modular components
         self.chat_sender = ChatSender(youtube_service, live_chat_id)
@@ -303,6 +303,11 @@ class LiveChatCore:
         stream_title = getattr(self.session_manager, 'stream_title', None)
         self.memory_manager.start_session(self.video_id, stream_title)
         logger.info(f"📹 Started automatic session logging for video {self.video_id}")
+
+        # Update message processor with actual YouTube stream start time (for accurate duration calculations)
+        actual_start_time = getattr(self.session_manager, 'actual_start_time', None)
+        if actual_start_time:
+            self.message_processor.set_actual_start_time(actual_start_time)
 
         # Send greeting
         await self.session_manager.send_greeting(self.send_chat_message)

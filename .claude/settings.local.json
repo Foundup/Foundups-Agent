@@ -71,7 +71,15 @@
       "WebFetch(domain:arxiv.org)",
       "Bash(PYTHONIOENCODING=utf-8 python:*)",
       "Bash(pip show:*)",
-      "WebFetch(domain:foundupscom.web.app)"
+      "WebFetch(domain:foundupscom.web.app)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:llm-stats.com)",
+      "WebFetch(domain:pricepertoken.com)",
+      "WebFetch(domain:defillama.com)",
+      "Bash(sqlite3:*)",
+      "Bash(firebase hosting:channel:list:*)",
+      "WebFetch(domain:supreme-oyster-20.clerk.accounts.dev)"
     ],
     "deny": [],
     "ask": []

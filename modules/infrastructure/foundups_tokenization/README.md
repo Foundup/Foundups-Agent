@@ -1,6 +1,6 @@
 # FoundUps Tokenization System
 
-**Purpose**: Bio-decay economic model for UP$ universal participation token and FoundUp-specific tokens (e.g., JUNK$)
+**Purpose**: Bio-decay economic model for UPS universal participation token and FoundUp-specific tokens (e.g., JUNK$)
 
 **Domain**: `modules/infrastructure/` (WSP 3 infrastructure domain)
 **WSP Compliance**: WSP 26 (Tokenization), WSP 29 (CABR), WSP 58 (IP Lifecycle)
@@ -10,7 +10,7 @@
 ### Two-Token System
 
 ```yaml
-UP$_Universal_Token:
+UPS_Universal_Token:
   scope: "All FoundUps (universal participation)"
   supply_formula: "(BTC_Reserve_Satoshis) / Num_FoundUps"
   minting_trigger: "CABR validation (WSP 29)"
@@ -23,7 +23,7 @@ UP$_Universal_Token:
 FoundUp_Specific_Tokens:
   scope: "Per-FoundUp (e.g., JUNK$ for GotJunk)"
   supply: "21,000,000 fixed (Bitcoin parity)"
-  acquisition: "Swap UP$ (one-way, burns UP$)"
+  acquisition: "Swap UPS (one-way, burns UPS)"
   characteristics:
     - Stage-based release (Rogers Diffusion)
     - Decay rate varies by stage
@@ -36,7 +36,7 @@ FoundUp_Specific_Tokens:
 ### State Machine
 
 ```
-CABR Beneficial Action → Mint UP$ → LIQUID (wallet)
+CABR Beneficial Action → Mint UPS → LIQUID (wallet)
                                          ↓
                     ┌────────────────────┼────────────────────┐
                     ↓                    ↓                    ↓
@@ -78,15 +78,15 @@ Daily cap: max 3% per day (no shock losses)
 
 ## CABR Integration (WSP 29)
 
-### UP$ Minting Trigger
+### UPS Minting Trigger
 
-UP$ is **ONLY** minted when CABR validates a beneficial action:
+UPS is **ONLY** minted when CABR validates a beneficial action:
 
 ```python
 class CABRMintingEngine:
     """
     Consensus-Driven Autonomous Benefit Rate (also referred to as
-    Collective Autonomous Benefit Rate) triggers UP$ creation
+    Collective Autonomous Benefit Rate) triggers UPS creation
     WSP 29 integration
     """
 
@@ -94,13 +94,13 @@ class CABRMintingEngine:
         # Step 1: CABR validates action is beneficial
         cabr_score = self.cabr_oracle.validate_benefit(action)
 
-        # Step 2: Calculate UP$ mint amount
+        # Step 2: Calculate UPS mint amount
         if cabr_score >= BENEFIT_THRESHOLD:
             base_amount = self.calculate_base_reward(action.type)
             quality_multiplier = cabr_score  # 0.0-1.0
             up_amount = base_amount * quality_multiplier
 
-            # Step 3: Mint UP$ to user's LIQUID wallet
+            # Step 3: Mint UPS to user's LIQUID wallet
             self.mint_ups_liquid(user, up_amount)
 
             # Step 4: Trigger decay timer
@@ -128,32 +128,32 @@ List_Item:
     - Description completeness
     - Reasonable pricing (not spam)
     - Geo-location valid (within 50km)
-  base_reward: 1.0 UP$
-  quality_range: 0.5-1.5 UP$ (CABR score multiplier)
+  base_reward: 1.0 UPS
+  quality_range: 0.5-1.5 UPS (CABR score multiplier)
 
 Sell_Item:
   cabr_validation:
     - Transaction completed successfully
     - Both parties confirmed
     - No disputes or fraud
-  base_reward: 2.0 UP$
-  quality_range: 1.0-3.0 UP$
+  base_reward: 2.0 UPS
+  quality_range: 1.0-3.0 UPS
 
 Host_Storage:
   cabr_validation:
     - IPFS file served to peer
     - Merkle proof of hosting
     - Uptime > 95%
-  base_reward: 0.01 UP$ per file served
-  quality_range: 0.005-0.02 UP$
+  base_reward: 0.01 UPS per file served
+  quality_range: 0.005-0.02 UPS
 
 Invite_Friend:
   cabr_validation:
     - Invite redeemed successfully
     - Invitee completes first action
     - No invite farming detected
-  base_reward: 10.0 UP$
-  quality_range: 5.0-15.0 UP$
+  base_reward: 10.0 UPS
+  quality_range: 5.0-15.0 UPS
 ```
 
 ## Module Structure
@@ -168,7 +168,7 @@ modules/infrastructure/foundups_tokenization/
 ├── package.json                       # Solidity deps
 ├── src/
 │   ├── bio_decay_engine.py           # Decay math & state management
-│   ├── cabr_minting_engine.py        # CABR → UP$ minting
+│   ├── cabr_minting_engine.py        # CABR → UPS minting
 │   ├── btc_anchor_engine.py          # BTC reserve management
 │   ├── distribution_dae.py           # Per-FoundUp token distribution
 │   ├── invite_system.py              # Gmail-style invite codes
@@ -241,7 +241,7 @@ async function onUserListItem(userId, itemData) {
   });
 
   if (validation.passed) {
-    // Mint UP$ to user's LIQUID wallet
+    // Mint UPS to user's LIQUID wallet
     await bioDecay.mintUPS(userId, validation.upAmount);
 
     // Start decay timer
@@ -249,8 +249,8 @@ async function onUserListItem(userId, itemData) {
 
     // Notify user
     sendNotification(userId, {
-      title: "You earned UP$!",
-      message: `${validation.upAmount} UP$ → Stake to stop decay`
+      title: "You earned UPS!",
+      message: `${validation.upAmount} UPS → Stake to stop decay`
     });
   }
 }
@@ -282,4 +282,4 @@ async function onUserListItem(userId, itemData) {
 
 ---
 
-*Remember: UP$ is ONLY minted through CABR validation - not arbitrary creation. This ensures all value creation is tied to beneficial actions.*
+*Remember: UPS is ONLY minted through CABR validation - not arbitrary creation. This ensures all value creation is tied to beneficial actions.*

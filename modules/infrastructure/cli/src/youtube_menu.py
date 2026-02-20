@@ -375,8 +375,10 @@ def _handle_comment_engagement_menu() -> None:
         print("  00) Controls (local switches)")
         print("")
         print("  TIP: For full DAE (comments+stream+livechat), use main menu 1→1")
+        print("  TIP: Or just TYPE your message to inject it into replies")
 
-        choice = input("commenting> ").strip().lower()
+        choice_raw = input("inject> ").strip()
+        choice = choice_raw.lower()
         if choice in {"5", "back", "b", "exit", "quit"}:
             break
         if choice in {"00", "controls", "c"}:
@@ -438,7 +440,49 @@ def _handle_comment_engagement_menu() -> None:
                 # Reset the env var after exit
                 os.environ.pop("YT_COMMENT_ONLY_MODE", None)
             continue
-        print("Unknown option")
+
+        # SMART INPUT: If not a menu option, treat as promo message to inject
+        # This makes the UX intuitive - just type content and it gets queued, then DAE launches
+        if choice_raw and len(choice_raw) > 2:
+            # Looks like content, not a menu option - preserve original case
+            print(f"\n[SMART] Setting promo message: \"{choice_raw}\"")
+            set_promo(promo_message=choice_raw, enabled=True, updated_by="012")
+            print("[SMART] ✅ Promo injection ENABLED - launching comment DAE...")
+            print("")
+
+            # Launch comment-only DAE with promo injection
+            print("[DAE] COMMENT-ONLY MODE with PROMO INJECTION")
+            print("=" * 60)
+            groups = group_channels_by_browser(role="comments")
+            chrome_names = [ch.get("name", ch.get("key")) for ch in groups.get("chrome", [])]
+            edge_names = [ch.get("name", ch.get("key")) for ch in groups.get("edge", [])]
+            print(f"  Chrome (9222): {' + '.join(chrome_names) if chrome_names else '(none)'}")
+            print(f"  Edge (9223): {' + '.join(edge_names) if edge_names else '(none)'}")
+            print(f"  Promo: \"{choice_raw}\"")
+            print("=" * 60)
+
+            try:
+                from modules.communication.livechat.src.auto_moderator_dae import AutoModeratorDAE
+
+                os.environ["YT_COMMENT_ONLY_MODE"] = "true"
+                print("[INFO] Starting COMMENT-ONLY DAE with promo injection...")
+                print("[INFO] Press Ctrl+C to stop")
+
+                dae = AutoModeratorDAE(enable_ai_monitoring=False)
+                asyncio.run(dae.run())
+            except KeyboardInterrupt:
+                print("\n[STOP] Comment DAE stopped by user")
+            except ImportError as e:
+                print(f"[ERROR] Could not import: {e}")
+            except Exception as e:
+                print(f"[ERROR] Failed: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                os.environ.pop("YT_COMMENT_ONLY_MODE", None)
+            continue
+
+        print("Unknown option (type a number 1-6, or type your message directly)")
 
 
 def _handle_video_lab_menu() -> None:

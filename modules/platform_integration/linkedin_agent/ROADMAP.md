@@ -23,6 +23,11 @@ This module operates within the **platform_integration** enterprise domain follo
 - ⏳ Create basic API interfaces per WSP 11
 - ⏳ Establish module memory architecture (WSP 60)
 - ⏳ Initialize test framework structure
+- [OK] **OpenClaw Group News Posting** (runs BEFORE comment engagement)
+  - `skillz/openclaw_group_news/` - Search, rate, post OpenClaw news
+  - LinkedIn Group: https://www.linkedin.com/groups/6729915/
+  - Rate limit: 1-3 posts/day, 4-hour minimum interval
+  - News relevance scoring: 4-dimension (recency, authority, relevance, engagement)
 - ⏳ Digital Twin comment processing path (LinkedIn)
 - ⏳ Scheduling handoff for 012 studio comment pipeline
 - ⏳ UI-TARS comment flow validation (mentions + Most recent guard)

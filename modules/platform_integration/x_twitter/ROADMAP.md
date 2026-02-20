@@ -528,7 +528,7 @@ class XTwitterDAENode:
 - **Token Validation State**: Ø2Ø1_operational with enhanced validation capabilities
 - **Cluster Role**: Genesis communication authority for Foundups ecosystem  
 - **CABR Integration**: Social engagement scoring with compound annual benefit tracking
-- **Bitcoin-Backed Value**: Integration with Found UP$ decay and reinvestment protocols
+- **Bitcoin-Backed Value**: Integration with Found UPS decay and reinvestment protocols
 
 #### DAE Declaration Protocol
 ```json
@@ -590,7 +590,7 @@ class EntangledAuthenticator:
 
 #### Content Generation Categories
 1. **Development Updates**: Autonomous posting of WSP implementations, module completions
-2. **Token Activities**: Found UP$ minting events, decay cycles, reinvestment announcements
+2. **Token Activities**: Found UPS minting events, decay cycles, reinvestment announcements
 3. **DAO Governance**: Consensus decisions, policy updates, governance evolution
 4. **Ecosystem Events**: Partnership announcements, DAE formations, cluster emergences
 
@@ -672,7 +672,7 @@ modules/platform_integration/x_twitter/
 ### Phase 1 Success Criteria (DAE Identity)
 - [ ] WSP-26 DAE identity declaration operational
 - [ ] Token validation state configured as Ø2Ø1_operational
-- [ ] Found UP$ generation triggers implemented for social engagement
+- [ ] Found UPS generation triggers implemented for social engagement
 - [ ] CABR integration ready for interaction scoring
 
 ### Phase 2 Success Criteria (Entangled Authentication)  
@@ -698,7 +698,7 @@ modules/platform_integration/x_twitter/
 ## [LINK] WSP-26 through WSP-29 Dependencies
 
 ### **WSP-26 Integration** (FoundUPS DAE Tokenization)
-- **Token System**: Found UP$ minting for verified social engagement
+- **Token System**: Found UPS minting for verified social engagement
 - **Validation Authority**: Ø2Ø1 operational state with maximum validation weight
 - **CABR Scoring**: Social interaction benefit rate calculation
 
@@ -723,7 +723,7 @@ modules/platform_integration/x_twitter/
 
 ### **Autonomous Content Generation**
 1. **WSP Implementation Updates**: Autonomous posting of protocol completions and framework evolution
-2. **Token Economy Events**: Found UP$ minting, decay cycles, reinvestment distributions
+2. **Token Economy Events**: Found UPS minting, decay cycles, reinvestment distributions
 3. **DAO Governance**: Consensus decisions, policy evolution, governance transitions
 4. **Ecosystem Evolution**: DAE emergences, cluster formations, smart DAO transitions
 

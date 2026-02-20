@@ -21,6 +21,7 @@ Shared agent memory and state management.
 """
 
 import json
+import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from .db_manager import DatabaseManager
@@ -227,6 +228,31 @@ class AgentDB:
                 )
             ''')
 
+            # ============================================================================
+            # SOCIAL MEDIA POST CAPTURE (Agent Post Review)
+            # ============================================================================
+
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS agents_social_posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    post_id TEXT UNIQUE NOT NULL,
+                    platform TEXT NOT NULL,
+                    post_type TEXT NOT NULL,
+                    identity TEXT,
+                    target_url TEXT,
+                    target_author TEXT,
+                    content TEXT NOT NULL,
+                    tone TEXT,
+                    trigger_context TEXT,
+                    status TEXT DEFAULT 'draft',
+                    review_notes TEXT,
+                    reviewed_at DATETIME,
+                    posted_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    metadata JSON
+                )
+            ''')
+
             # Create indexes for common queries
             conn.execute('CREATE INDEX IF NOT EXISTS idx_modules_name ON modules(module_name)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_modules_domain ON modules(module_domain)')
@@ -234,6 +260,29 @@ class AgentDB:
             conn.execute('CREATE INDEX IF NOT EXISTS idx_documents_type ON module_documents(doc_type)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_wsp_impl_wsp ON module_wsp_implementations(wsp_number)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_cross_ref_value ON document_cross_references(reference_value)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_social_posts_platform ON agents_social_posts(platform)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_social_posts_status ON agents_social_posts(status)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_social_posts_identity ON agents_social_posts(identity)')
+
+            # ============================================================================
+            # FINANCIAL TRANSACTIONS (Lobster.cash / pAVS)
+            # ============================================================================
+
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS agents_transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tx_id TEXT UNIQUE NOT NULL,
+                    chain_tx_hash TEXT,
+                    amount REAL NOT NULL,
+                    currency TEXT NOT NULL,
+                    purpose TEXT,
+                    status TEXT DEFAULT 'pending',
+                    metadata JSON,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_status ON agents_transactions(status)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_transactions_currency ON agents_transactions(currency)')
 
     def record_awakening(self, agent_id: str, consciousness_level: str, koan: str = None) -> None:
         """Record agent awakening state."""
@@ -925,3 +974,192 @@ class AgentDB:
             return True
         except Exception:
             return False
+
+    # ============================================================================
+    # SOCIAL MEDIA POST CAPTURE (Agent Post Review)
+    # ============================================================================
+
+    def record_post(self, platform: str, post_type: str, content: str,
+                   identity: str = None, target_url: str = None,
+                   target_author: str = None, tone: str = None,
+                   trigger_context: str = None, status: str = 'pending_review',
+                   metadata: Dict[str, Any] = None) -> str:
+        """
+        Record an agent-generated social media post for review.
+
+        Args:
+            platform: Social platform (linkedin, x_twitter, youtube)
+            post_type: Type of post (comment, reply, repost, original)
+            content: The actual post text
+            identity: Which sub-account posted (e.g., UnDaoDu, EduIT)
+            target_url: URL of post being replied to
+            target_author: Author being engaged with
+            tone: Voice tone (pushback, collaborative, philosophical)
+            trigger_context: What prompted this post
+            status: Initial status (default: pending_review)
+            metadata: Additional data (links, mentions, scheduling)
+
+        Returns:
+            post_id (str) — UUID for this post
+        """
+        post_id = str(uuid.uuid4())
+        self.db.execute_write('''
+            INSERT INTO agents_social_posts
+            (post_id, platform, post_type, content, identity, target_url,
+             target_author, tone, trigger_context, status, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            post_id, platform, post_type, content, identity, target_url,
+            target_author, tone, trigger_context, status,
+            json.dumps(metadata) if metadata else None
+        ))
+        return post_id
+
+    def get_posts_for_review(self, platform: str = None, status: str = 'pending_review',
+                            limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Get posts awaiting 012 review.
+
+        Args:
+            platform: Filter by platform (None for all)
+            status: Filter by status (default: pending_review)
+            limit: Max results
+
+        Returns:
+            List of post dictionaries
+        """
+        query = "SELECT * FROM agents_social_posts WHERE status = ?"
+        params: list = [status]
+
+        if platform:
+            query += " AND platform = ?"
+            params.append(platform)
+
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+
+        results = self.db.execute_query(query, tuple(params))
+        for row in results:
+            if row.get('metadata') and isinstance(row['metadata'], str):
+                try:
+                    row['metadata'] = json.loads(row['metadata'])
+                except json.JSONDecodeError:
+                    pass
+        return results
+
+    def approve_post(self, post_id: str, notes: str = None) -> bool:
+        """Approve a post for publishing."""
+        return self.db.execute_write('''
+            UPDATE agents_social_posts
+            SET status = 'approved', review_notes = ?, reviewed_at = ?
+            WHERE post_id = ?
+        ''', (notes, datetime.now().isoformat(), post_id)) > 0
+
+    def reject_post(self, post_id: str, notes: str) -> bool:
+        """Reject a post with feedback."""
+        return self.db.execute_write('''
+            UPDATE agents_social_posts
+            SET status = 'rejected', review_notes = ?, reviewed_at = ?
+            WHERE post_id = ?
+        ''', (notes, datetime.now().isoformat(), post_id)) > 0
+
+    def mark_posted(self, post_id: str) -> bool:
+        """Mark a post as successfully published."""
+        return self.db.execute_write('''
+            UPDATE agents_social_posts
+            SET status = 'posted', posted_at = ?
+            WHERE post_id = ?
+        ''', (datetime.now().isoformat(), post_id)) > 0
+
+    def get_post_stats(self) -> Dict[str, Any]:
+        """Get posting statistics by platform and status."""
+        stats = {}
+
+        # By status
+        status_counts = self.db.execute_query('''
+            SELECT status, COUNT(*) as count FROM agents_social_posts
+            GROUP BY status
+        ''')
+        stats['by_status'] = {row['status']: row['count'] for row in status_counts}
+
+        # By platform
+        platform_counts = self.db.execute_query('''
+            SELECT platform, COUNT(*) as count FROM agents_social_posts
+            GROUP BY platform
+        ''')
+        stats['by_platform'] = {row['platform']: row['count'] for row in platform_counts}
+
+        # By identity
+        identity_counts = self.db.execute_query('''
+            SELECT identity, COUNT(*) as count FROM agents_social_posts
+            WHERE identity IS NOT NULL
+            GROUP BY identity
+        ''')
+        stats['by_identity'] = {row['identity']: row['count'] for row in identity_counts}
+
+        # Total
+        total = self.db.execute_query('SELECT COUNT(*) as count FROM agents_social_posts')
+        stats['total'] = total[0]['count'] if total else 0
+
+        return stats
+
+    def get_posts_by_identity(self, identity: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get all posts by a specific identity/sub-account."""
+        results = self.db.execute_query('''
+            SELECT * FROM agents_social_posts
+            WHERE identity = ?
+            ORDER BY created_at DESC LIMIT ?
+        ''', (identity, limit))
+        for row in results:
+            if row.get('metadata') and isinstance(row['metadata'], str):
+                try:
+                    row['metadata'] = json.loads(row['metadata'])
+                except json.JSONDecodeError:
+                    pass
+        return results
+
+    # ============================================================================
+    # FINANCIAL TRANSACTIONS (Lobster.cash / pAVS)
+    # ============================================================================
+
+    def record_transaction(self, tx_id: str, amount: float, currency: str,
+                          purpose: str, status: str = 'pending',
+                          chain_tx_hash: str = None, metadata: Dict[str, Any] = None) -> str:
+        """
+        Record a financial transaction (Lobster.cash / pAVS).
+
+        Args:
+            tx_id: UUID for the transaction
+            amount: Value amount
+            currency: Currency code (USDC, SOL)
+            purpose: Reason for payment (e.g., 'AVS_Staking')
+            status: Transaction status
+            chain_tx_hash: On-chain hash if available
+            metadata: Additional details
+
+        Returns:
+            tx_id
+        """
+        self.db.execute_write('''
+            INSERT INTO agents_transactions
+            (tx_id, chain_tx_hash, amount, currency, purpose, status, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            tx_id, chain_tx_hash, amount, currency, purpose, status,
+            json.dumps(metadata) if metadata else None
+        ))
+        return tx_id
+
+    def get_transaction_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent financial transactions."""
+        results = self.db.execute_query('''
+            SELECT * FROM agents_transactions
+            ORDER BY created_at DESC LIMIT ?
+        ''', (limit,))
+        for row in results:
+            if row.get('metadata') and isinstance(row['metadata'], str):
+                try:
+                    row['metadata'] = json.loads(row['metadata'])
+                except json.JSONDecodeError:
+                    pass
+        return results

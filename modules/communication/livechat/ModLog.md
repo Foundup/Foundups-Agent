@@ -10,6 +10,133 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-02-18 - Troll Callout + Top Whacker Welcome (Priority 4.5, 4.6)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
+
+### Feature: Proactive troll callouts when known trolls enter chat
+
+When a known troll (3+ whacks from `/whacked` leaderboard) sends their first message of the stream, UnDaoDu mocks them. Uses existing infrastructure:
+
+**greeting_generator.py**:
+- Added `generate_troll_callout(username, whack_count)` method
+- Tier-based mockery: 3-4 whacks, 5-9, 10-19, 20+ (legendary troll)
+- 10% chance to add FoundUps promo
+
+**message_processor.py**:
+- **Priority 4.5**: Troll callout - checks `ChatRulesDB.get_timeout_count_for_target()`
+- **Priority 4.6**: Top whacker greeting - wired up existing `generate_whacker_greeting()` (was unused!)
+- Both use `announced_joins` set to track once-per-stream
+
+**Example callout** (20+ whacks):
+```
+👀 HOLY SHIT! @MAGATroll crawls back! 47 TIMEOUTS and still trying! 💀
+```
+
+---
+
+## 2026-02-18 - /whacked Command: Troll Leaderboard
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+### Feature: `/whacked` command for troll leaderboard
+
+Added `/whacked` command to show the most-whacked trolls. When moderators time out trolls, this teaches the system who the trolls are. The whack history is tracked in `chat_rules.db` via `timeout_history` table.
+
+**command_handler.py**:
+- Added `/whacked` command handler
+- Queries `ChatRulesDB.get_whacked_leaderboard()`
+- Shows top 5 most-whacked trolls with medal icons
+- Notes that these trolls are auto-flagged as Tier 0
+
+**Help updated**: `/help` now includes `/whacked`
+
+### Integration with Classification
+The `commenter_classifier.py` already uses `ChatRulesDB.get_timeout_count_for_target()` to boost Tier 0 confidence for known trolls. This leaderboard makes that data visible to moderators.
+
+---
+
+## 2026-02-18 - CRITICAL FIX: Edge Browser Port + AttributeError
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
+### Problem 1: Edge engagement connecting to wrong browser
+`ThreadRunner._execute_sync()` was ignoring `browser_port=9223` passed from `MultiChannelCoordinator`. The DAE used module-level `CHROME_PORT=9222` (Chrome) instead of Edge (9223), causing:
+- 0 comments processed
+- Browser on wrong page or different account
+- `all_processed: True` with no actual engagement
+
+### Problem 2: AttributeError in per-channel shorts
+`MultiChannelCoordinator` tried to access `self._comment_engagement_status` which doesn't exist. The status is tracked by `AutoModeratorDAE` and passed via callback.
+
+### Fixes
+
+**engagement_runner.py**:
+```python
+# Extract browser_port and pass to _execute_sync
+browser_port = kwargs.get("browser_port", 9222)
+result = await asyncio.to_thread(self._execute_sync, channel_id, max_comments, switches, browser_port)
+
+# In _execute_sync: Override module-level CHROME_PORT
+dae_module.CHROME_PORT = browser_port
+```
+
+**multi_channel_coordinator.py**:
+```python
+# FIX: Use local stats instead of non-existent attribute
+all_comments_done = stats.get("all_processed", False)
+if all_comments_done:
+    # run shorts scheduling...
+```
+
+### Root Cause
+- `CHROME_PORT` was read at module import time from env var
+- `browser_port` was passed to `run_engagement()` but never used
+- Per-channel shorts code referenced parent's `_comment_engagement_status` dict directly
+
+---
+
+## 2026-02-18 - Per-Channel Shorts Scheduling (Occam Model for Edge)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Orchestration)
+
+### Problem
+Edge browser (FoundUps + RavingANTIFA) was running shorts scheduling in **batch mode** after ALL comments completed. User expected per-channel Occam model:
+```
+FoundUps comments → FoundUps shorts → RavingANTIFA comments → RavingANTIFA shorts
+```
+
+### Solution
+Added per-channel shorts check inside Edge engagement loop in `multi_channel_coordinator.py`:
+- After each channel's comments complete (`all_processed=True`)
+- Immediately check and schedule unlisted shorts for THAT channel
+- Then move to next channel
+
+### New Env Vars
+- `YT_SHORTS_PER_CHANNEL_ENABLED` (default: true) - Enable per-channel shorts (Occam model)
+- Existing `YT_SHORTS_SCHEDULING_ENABLED` still controls master toggle
+
+### Flow After Fix
+```
+Edge Loop:
+  FoundUps comments → FoundUps shorts (if unlisted exist)
+    → RavingANTIFA comments → RavingANTIFA shorts (if unlisted exist)
+    → Cycle complete
+```
+
+### Files Modified
+- `src/multi_channel_coordinator.py`: Added per-channel shorts block after line 626
+
+### Related Investigation
+- Reply capture confirmed working (624/697 interactions have reply_text stored)
+- OODA pivot gap identified (breadcrumbs emitted but no action taken)
+
+---
+
 ## 2026-02-12 - Managing Directors + /fuc Command Enhancements
 
 **By:** 0102

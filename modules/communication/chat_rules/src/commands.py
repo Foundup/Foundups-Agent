@@ -10,8 +10,30 @@ from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime
 
-from .whack_a_magat import WhackAMAGAtSystem, ActionType
+# NOTE: WhackAMAGAt moved to gamification module - using conditional import
+try:
+    from modules.gamification.whack_a_magat.src.whack import apply_whack, get_profile
+    WHACK_AVAILABLE = True
+except ImportError:
+    WHACK_AVAILABLE = False
+
 from .user_classifier import UserType, UserProfile
+
+# Legacy stubs for backwards compatibility
+class ActionType:
+    TIMEOUT_10S = "TIMEOUT_10S"
+    TIMEOUT_60S = "TIMEOUT_60S"
+    TIMEOUT_600S = "TIMEOUT_600S"
+    HIDE = "HIDE"
+
+class WhackAMAGAtSystem:
+    """Legacy stub - actual implementation in gamification module."""
+    def __init__(self, *args, **kwargs):
+        pass
+    def record_timeout(self, *args, **kwargs):
+        if WHACK_AVAILABLE:
+            return apply_whack(*args, **kwargs)
+        return None
 
 logger = logging.getLogger(__name__)
 

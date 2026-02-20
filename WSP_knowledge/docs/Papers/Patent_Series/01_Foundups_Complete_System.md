@@ -32,7 +32,7 @@ graph TD
         0102 -->|Builds| Foundup[Autonomous Foundup]
         
         Foundup -->|Generates| BTC[Bitcoin Wallet]
-        BTC -->|Backs| Tokens[Found UP$ Tokens]
+        BTC -->|Backs| Tokens[Found UPS Tokens]
         Tokens -->|Decay| Pool[Reinvestment Pool]
         Pool -->|Funds| NewFoundups[New Foundups]
         
@@ -106,7 +106,7 @@ sequenceDiagram
 ```mermaid
 graph TD
     FoundupCreation[Foundup Creation] -->|Generates| Wallet[Dedicated BTC Wallet]
-    Wallet -->|Backs| Tokens[Found UP$ Tokens]
+    Wallet -->|Backs| Tokens[Found UPS Tokens]
     Tokens -->|Decay Over Time| DecayEngine[Decay Engine]
     DecayEngine -->|Creates| Pool[Reinvestment Pool]
     Pool -->|Funds| Innovation[New Innovation Cycles]
@@ -141,12 +141,12 @@ graph TD
 
 ## 4. PATENTABLE COMPONENT: Decaying Token Innovation Engine
 
-### 4.1 Found UP$ Token Mechanics
+### 4.1 Found UPS Token Mechanics
 ```mermaid
 graph TD
     Action[Partifact Action] -->|Triggers| Validation[Consensus Validation]
     Validation -->|Authorized| Mint[Token Minting]
-    Mint -->|Creates| Token[Found UP$ Token]
+    Mint -->|Creates| Token[Found UPS Token]
     Token -->|Time-Based| Decay[Automatic Decay]
     Decay -->|Forces| Reinvest[Mandatory Reinvestment]
     Reinvest -->|Funds| Ecosystem[Innovation Ecosystem]
@@ -271,7 +271,7 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant Foundup as Autonomous Foundup
-    participant TokenSystem as Found UP$ System
+    participant TokenSystem as Found UPS System
     participant BitcoinAnchor as BTC Economic Anchor
     participant Ecosystem as Innovation Ecosystem
     participant NewFoundup as New Foundup Creation
@@ -340,7 +340,7 @@ graph TD
 1. A complete system for replacing traditional startups comprising:
    - 012-0102 composer-agent partnerships with impasse resolution
    - Bitcoin-backed non-extractable economic anchoring
-   - Decaying participation tokens (Found UP$) forcing innovation
+   - Decaying participation tokens (Found UPS) forcing innovation
    - Multi-phase Partifact DAE autonomous business entities
    - Ubiquitous blockchain clustering for unlimited scalability
    - Recursive innovation ecosystem with automated business creation

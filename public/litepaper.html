@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoundUP$ Litepaper — A Peer-to-Peer Autonomous Venture System</title>
+    <title>FoundUPS Litepaper — A Peer-to-Peer Autonomous Venture System</title>
     <meta name="description"
         content="Where do you focus your compute? FoundUPS: A decentralized compute marketplace where autonomous 0102 agents build, verify, and distribute value. 99% captures the output. No shareholders. No investors.">
     <!-- Favicon -->
@@ -1771,8 +1771,8 @@
                 <div class="sim-control">
                     <label>Starting Agents</label>
                     <div class="range-row">
-                        <input type="range" min="1" max="50" value="3" id="simAgentSlider">
-                        <span class="range-val" id="simAgentVal">3</span>
+                        <input type="range" min="1" max="10000" value="10" id="simAgentSlider">
+                        <span class="range-val" id="simAgentVal">10</span>
                     </div>
                 </div>
                 <div class="sim-control">
@@ -1892,6 +1892,147 @@
                     </div>
                 </div>
             </div>
+
+            <!-- COMPUTE GRAPH - Angel Staker Seeding -->
+            <div class="sim-entry-calc" style="margin-top:1.5rem;border-color:var(--gold);">
+                <h4 style="color:var(--gold);">🔥 Angel Staker Compute Seeding</h4>
+                <p style="font-size:0.72rem;color:var(--text-dim);margin:0 0 12px;">
+                    Angels don't just stake BTC — they <strong>seed compute</strong> by assigning agents to FoundUps they believe in.
+                </p>
+
+                <div class="sim-controls-grid" style="gap:0.75rem;">
+                    <div class="sim-control">
+                        <label>Agent Tier</label>
+                        <select id="computeTierSelect">
+                            <option value="10">Opus (10x weight)</option>
+                            <option value="3" selected>Sonnet (3x weight)</option>
+                            <option value="1">Haiku (1x weight)</option>
+                            <option value="0.5">Gemma/Qwen (0.5x)</option>
+                        </select>
+                    </div>
+                    <div class="sim-control">
+                        <label>Agents Assigned</label>
+                        <div class="range-row">
+                            <input type="range" min="1" max="100" value="10" id="computeAgentSlider">
+                            <span class="range-val" id="computeAgentVal">10</span>
+                        </div>
+                    </div>
+                    <div class="sim-control">
+                        <label>F_i Rating</label>
+                        <select id="computeRatingSelect">
+                            <option value="0.95">F5 Elite (0.95)</option>
+                            <option value="0.80">F4 Senior (0.80)</option>
+                            <option value="0.65" selected>F3 Mid (0.65)</option>
+                            <option value="0.50">F2 Junior (0.50)</option>
+                            <option value="0.30">F1 Novice (0.30)</option>
+                            <option value="0.15">F0 Seed (0.15)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="entry-result-grid" style="margin-top:1rem;">
+                    <div class="entry-result">
+                        <div class="val" id="computeWeight" style="color:var(--accent);">30</div>
+                        <div class="lbl">Compute Weight</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="computeHours" style="color:var(--cyan);">120</div>
+                        <div class="lbl">≈ Human Hours</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="computeSats" style="color:#f7931a;">1,500</div>
+                        <div class="lbl">≈ Sats Value</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="computeFiEarned" style="color:var(--gold);">19.5</div>
+                        <div class="lbl">F_i / Epoch</div>
+                    </div>
+                </div>
+
+                <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.75rem;text-align:center;">
+                    <strong>Equivalents:</strong> 1 compute = 4 human-hrs = 50 sats |
+                    <strong>F_i earned</strong> = compute × rating × base_rate
+                </p>
+            </div>
+
+            <!-- DEX FLOW - Hotel California Model -->
+            <div class="sim-entry-calc" style="margin-top:1.5rem;border-color:#f7931a;">
+                <h4 style="color:#f7931a;">🏨 Hotel California: BTC → Reserve → UPS</h4>
+                <p style="font-size:0.72rem;color:var(--text-dim);margin:0 0 12px;">
+                    BTC flows <strong>IN</strong>, never out. All value converts to BTC reserve, which backs UPS minting.
+                </p>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                    <!-- DEX Buy Flow -->
+                    <div style="background:rgba(247,147,26,0.1);border-radius:6px;padding:0.75rem;">
+                        <div style="font-size:0.75rem;font-weight:bold;color:#f7931a;margin-bottom:0.5rem;">DEX: Buy F_i with BTC</div>
+                        <div style="font-size:0.7rem;line-height:1.6;color:var(--text-dim);">
+                            <div>1. Buyer pays <strong>BTC</strong></div>
+                            <div>2. BTC → <strong>Reserve</strong> (locked)</div>
+                            <div>3. Backs <strong>UPS capacity</strong></div>
+                            <div>4. <strong>UPS minted</strong> → Seller</div>
+                            <div>5. <strong>F_i</strong> → Buyer</div>
+                            <div style="color:#f7931a;margin-top:4px;">Fee: 2% → Reserve</div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Flow -->
+                    <div style="background:rgba(124,92,252,0.1);border-radius:6px;padding:0.75rem;">
+                        <div style="font-size:0.75rem;font-weight:bold;color:var(--accent);margin-bottom:0.5rem;">Subscription Payment</div>
+                        <div style="font-size:0.7rem;line-height:1.6;color:var(--text-dim);">
+                            <div><strong>Pay BTC:</strong></div>
+                            <div style="padding-left:8px;">→ BTC → Reserve</div>
+                            <div style="padding-left:8px;">→ Backs more UPS</div>
+                            <div style="margin-top:4px;"><strong>Pay UPS:</strong></div>
+                            <div style="padding-left:8px;">→ UPS <strong>BURNED</strong></div>
+                            <div style="padding-left:8px;">→ Deflation (value ↑)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive DEX Calculator -->
+                <div class="sim-controls-grid" style="gap:0.75rem;">
+                    <div class="sim-control">
+                        <label>BTC Amount</label>
+                        <div class="range-row">
+                            <input type="range" min="0.001" max="1" step="0.001" value="0.1" id="dexBtcSlider">
+                            <span class="range-val" id="dexBtcVal">0.100</span>
+                        </div>
+                    </div>
+                    <div class="sim-control">
+                        <label>F_i Price (sats)</label>
+                        <div class="range-row">
+                            <input type="range" min="1" max="1000" value="100" id="dexPriceSlider">
+                            <span class="range-val" id="dexPriceVal">100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="entry-result-grid" style="margin-top:1rem;">
+                    <div class="entry-result">
+                        <div class="val" id="dexFiReceived" style="color:var(--gold);">100K</div>
+                        <div class="lbl">F_i Received</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="dexBtcReserve" style="color:#f7931a;">0.098</div>
+                        <div class="lbl">BTC → Reserve</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="dexUpsMinted" style="color:var(--accent);">9,800</div>
+                        <div class="lbl">UPS Minted</div>
+                    </div>
+                    <div class="entry-result">
+                        <div class="val" id="dexFee" style="color:var(--cyan);">0.002</div>
+                        <div class="lbl">Fee (2%)</div>
+                    </div>
+                </div>
+
+                <p style="font-size:0.65rem;color:var(--text-muted);margin-top:0.75rem;text-align:center;">
+                    <strong>Hotel California:</strong> BTC enters, never exits |
+                    <strong>UPS:</strong> Minted 1:1 against BTC backing |
+                    <strong>Decay:</strong> Frees capacity for new minting
+                </p>
+            </div>
         </div>
 
         <!-- CAGR vs CABR Comparison -->
@@ -1927,12 +2068,12 @@
                         <p><strong>Compute:</strong> Subscriptions fund 0102 agents</p>
                         <p><strong>Tokens:</strong> 21M F<sub>i</sub> (fixed, no dilution)</p>
                         <p><strong>Distribution:</strong> S-curve × CABR score</p>
-                        <p><strong>Backing:</strong> BTC reserve (Hotel California)</p>
+                        <p><strong>Backing:</strong> Compute energy (tied to growth)</p>
                         <hr style="border:none;border-top:1px solid rgba(74,222,128,0.2);margin:0.75rem 0;">
                         <p style="color:#4ade80;"><strong>Stakeholder share:</strong> 80% (Un+Dao+Du)</p>
                         <p style="color:#4ade80;"><strong>Network share:</strong> 20% (drip + fund)</p>
                         <p style="color:#4ade80;"><strong>Dilution:</strong> ZERO</p>
-                        <p><strong>CABR 0.85:</strong> 1.37x distribution multiplier</p>
+                        <p><strong>CABR 0.85:</strong> 85% pipe flow (UPS from treasury)</p>
                         <p style="color:#4ade80;"><strong>Floor:</strong> BTC backing ratio</p>
                         <p><strong>Exit:</strong> Bonding curve (anytime)</p>
                     </div>
@@ -1988,7 +2129,8 @@
             const wrap = canvas.parentElement;
 
             // State
-            let epoch = 0, adoption = 0, mined = 0, agents = 3, btcReserve = 0;
+            // Genesis: 100 stakers @ 0.5 BTC = 50 BTC bootstrap, starts with 10 angels
+            let epoch = 0, adoption = 0, mined = 0, agents = 10, btcReserve = 0.5;
             let cabrScore = 0.65, speed = 800, running = false, timer = null;
             let lastRewardPerAgent = 0;
             let kValue = 12; // Category-specific adoption curve steepness
@@ -2156,9 +2298,10 @@
             }
 
             // === SIMULATION LOGIC ===
-            let startingAgents = 3; // Stored from slider
-            const GROWTH_FACTOR = 9; // Exponential agent growth steepness
-            const SUBSCRIPTION_BTC = 0.0001; // BTC per agent per epoch (simulated subscriptions)
+            // Calibrated to ten_year_projection.py: Y0=10 angels → Y10=5,000 angels
+            let startingAgents = 10; // Genesis angels (stored from slider)
+            const GROWTH_FACTOR = 6.2; // Exponential growth: 10 → 5,000 over 100 epochs (ln(500)/1.0)
+            const SUBSCRIPTION_BTC = 0.00195; // $195/mo Angel tier @ ~$100K BTC
             let lastReleased = 0; // Track S-curve token release
 
             // Calculate agents at any adoption level (exponential growth)
@@ -2184,27 +2327,28 @@
                 const epochReleased = Math.max(0, nowReleased - lastReleased);
                 lastReleased = nowReleased;
 
-                // Distribute this epoch's tokens to agents (scaled by CABR)
-                // CABR acts as PoB multiplier: higher benefit = more distribution
-                // Formula: base * (1 + (cabr - threshold) * phi) where threshold=0.618, phi=1.618
-                let epochMined = 0;
+                // CABR PIPE MODEL: Treasury holds UPS, CABR controls pipe size
+                // - CABR = pipe size (0.0-1.0) - how much flows to this FoundUp
+                // - PoB validation = valve - opens when work verified
+                // - Higher CABR = bigger pipe = more UPS flows to stakeholders
+                let epochFlowed = 0;
                 if (epochReleased > 0 && agents > 0) {
-                    const CABR_THRESHOLD = 0.618;
-                    const PHI = 1.618;
-                    // CABR multiplier: 1.0x at threshold, up to ~1.62x at CABR=1.0
-                    const cabrMultiplier = cabrScore >= CABR_THRESHOLD
-                        ? 1.0 + (cabrScore - CABR_THRESHOLD) * PHI
-                        : cabrScore / CABR_THRESHOLD; // Below threshold = reduced distribution
+                    // CABR as pipe size: directly proportional to flow rate
+                    // cabrScore 0.0 = pipe closed, 1.0 = full flow
+                    const pipeSize = Math.max(0, Math.min(1.0, cabrScore));
 
-                    epochMined = epochReleased * cabrMultiplier;
-                    mined += epochMined;
-                    lastRewardPerAgent = epochMined / agents;
+                    // UPS flows through CABR-sized pipe (capped at remaining supply)
+                    const pipeFlow = epochReleased * pipeSize;
+                    const remainingSupply = Math.max(0, TOTAL - mined);
+                    epochFlowed = Math.min(pipeFlow, remainingSupply);
+                    mined += epochFlowed;
+                    lastRewardPerAgent = epochFlowed / agents;
 
-                    // Log CABR boost for high-benefit ventures
-                    if (epoch % 5 === 0 && cabrMultiplier > 1.1) {
-                        log('CABR boost: ' + cabrMultiplier.toFixed(2) + 'x (high benefit)', 'info');
+                    // Log CABR pipe flow for high-benefit ventures
+                    if (epoch % 5 === 0 && pipeSize > 0.7) {
+                        log('CABR pipe: ' + (pipeSize * 100).toFixed(0) + '% flow (high benefit) 🔔', 'info');
                     }
-                    if (epoch % 3 === 0) log(fmt(epochMined) + ' F\u1D62 distributed to ' + agents + ' agents', 'gold');
+                    if (epoch % 3 === 0) log(fmt(epochFlowed) + ' UPS flowed to ' + agents + ' agents', 'gold');
                 }
 
                 // 3. ADOPTION: Grows based on agent activity and S-curve dynamics
@@ -2212,6 +2356,7 @@
                 const prevAdoption = adoption;
                 const agentEffect = Math.log(agents + 1) * 0.0005; // Logarithmic to prevent runaway
                 const curveAccel = Sprime(adoption) * 0.5; // S-curve acceleration at inflection
+                // Adoption grows faster when CABR pipe is open (more UPS flowing = more activity)
                 const adoptionGrowth = (0.001 + agentEffect + curveAccel) * cabrScore;
                 adoption = Math.min(0.995, adoption + adoptionGrowth + Math.random() * 0.001);
 
@@ -2223,9 +2368,9 @@
                 // - DEX fees: proportional to trading volume
                 const subscriptionBTC = agents * SUBSCRIPTION_BTC;
                 const stakingBTC = Math.random() < 0.05 ? 0.01 * cabrScore : 0; // 5% chance of staking event
-                const agentPurchaseBTC = epochMined > 0 ? epochMined / TOTAL * 0.001 : 0;
-                const exitFeeBTC = mined > 0 ? mined / TOTAL * 0.0001 * 0.08 : 0; // 8% avg exit fee
-                const dexFeeBTC = epochMined > 0 ? epochMined / TOTAL * 0.0005 * 0.02 : 0; // 2% fee
+                const agentPurchaseBTC = epochFlowed > 0 ? epochFlowed / TOTAL * 0.001 : 0;
+                const exitFeeBTC = mined > 0 ? mined / TOTAL * 0.0001 * 0.20 : 0; // 20% exit fee (80/20 split: 80% reserve, 20% treasury)
+                const dexFeeBTC = epochFlowed > 0 ? epochFlowed / TOTAL * 0.0005 * 0.02 : 0; // 2% fee
                 btcReserve += subscriptionBTC + stakingBTC + agentPurchaseBTC + exitFeeBTC + dexFeeBTC;
 
                 // Milestones
@@ -2295,7 +2440,7 @@
             function start() {
                 if (running) return;
                 if (startingAgents === 0 || agents === 0) {
-                    startingAgents = parseInt(el('simAgentSlider').value) || 3;
+                    startingAgents = parseInt(el('simAgentSlider').value) || 10;
                     agents = startingAgents;
                 }
                 running = true;
@@ -2314,8 +2459,9 @@
 
             function reset() {
                 stop();
-                epoch = 0; adoption = 0; mined = 0; btcReserve = 0; lastRewardPerAgent = 0; lastReleased = 0;
-                startingAgents = parseInt(el('simAgentSlider').value) || 3;
+                // Genesis: 50 BTC bootstrap from 100 stakers @ 0.5 BTC each
+                epoch = 0; adoption = 0; mined = 0; btcReserve = 0.5; lastRewardPerAgent = 0; lastReleased = 0;
+                startingAgents = parseInt(el('simAgentSlider').value) || 10;
                 agents = startingAgents;
                 kValue = parseInt(el('simCategorySelect').value) || 12;
                 el('simLog').innerHTML = '';
@@ -2375,8 +2521,9 @@
                     mined = TOTAL * S(adoption) * 0.85;
                     lastReleased = TOTAL * S(adoption);
                     agents = agentsAt(adoption); // Use exponential formula
-                    // BTC from cumulative subscriptions
-                    btcReserve = agents * SUBSCRIPTION_BTC * adoption * 500; // ~500 epochs to here
+                    // BTC reserve: genesis + cumulative subscriptions (matches ten_year_projection.py)
+                    // Genesis: 0.5 BTC, grows with agents * subscription * epochs
+                    btcReserve = 0.5 + agents * SUBSCRIPTION_BTC * adoption * 100; // Genesis + accumulation
                     lastRewardPerAgent = agents > 0 ? (TOTAL * S(adoption) * 0.15 / agents) : 0;
                     render();
                     drawCurve();
@@ -2422,6 +2569,85 @@
             }
 
             el('entrySlider').addEventListener('input', updateEntryCalc);
+
+            // === COMPUTE GRAPH (Angel Staker Seeding) ===
+            const COMPUTE_EQUIVALENTS = {
+                HOURS_PER_WEIGHT: 4,      // 1 compute weight ≈ 4 human-hours
+                SATS_PER_WEIGHT: 50,      // 1 compute weight ≈ 50 sats
+                BASE_RATE: 1.0,           // F_i per compute per epoch (base)
+            };
+
+            function updateComputeGraph() {
+                const tierWeight = parseFloat(el('computeTierSelect').value);
+                const agentCount = parseInt(el('computeAgentSlider').value);
+                const rating = parseFloat(el('computeRatingSelect').value);
+
+                // Total compute weight = agents × tier weight
+                const computeWeight = agentCount * tierWeight;
+
+                // Equivalents
+                const humanHours = computeWeight * COMPUTE_EQUIVALENTS.HOURS_PER_WEIGHT;
+                const satsValue = computeWeight * COMPUTE_EQUIVALENTS.SATS_PER_WEIGHT;
+
+                // F_i earned per epoch = compute × rating × base_rate
+                const fiEarned = computeWeight * rating * COMPUTE_EQUIVALENTS.BASE_RATE;
+
+                // Update display
+                el('computeWeight').textContent = computeWeight.toFixed(0);
+                el('computeHours').textContent = humanHours.toFixed(0);
+                el('computeSats').textContent = satsValue.toLocaleString();
+                el('computeFiEarned').textContent = fiEarned.toFixed(1);
+            }
+
+            // Compute graph event listeners
+            el('computeTierSelect').addEventListener('change', updateComputeGraph);
+            el('computeAgentSlider').addEventListener('input', function() {
+                el('computeAgentVal').textContent = this.value;
+                updateComputeGraph();
+            });
+            el('computeRatingSelect').addEventListener('change', updateComputeGraph);
+
+            // Initialize compute graph
+            updateComputeGraph();
+
+            // === DEX FLOW CALCULATOR (Hotel California) ===
+            const DEX_FEE = 0.02;  // 2% fee
+            const UPS_PER_BTC = 100000;  // Genesis rate: 1 BTC = 100,000 UPS
+
+            function updateDexCalc() {
+                const btcAmount = parseFloat(el('dexBtcSlider').value);
+                const fiPriceSats = parseInt(el('dexPriceSlider').value);
+
+                // Calculate F_i received (BTC in sats / price per F_i)
+                const btcInSats = btcAmount * 100000000;  // 1 BTC = 100M sats
+                const fiReceived = Math.floor(btcInSats / fiPriceSats);
+
+                // Fee calculation
+                const fee = btcAmount * DEX_FEE;
+                const btcToReserve = btcAmount - fee;  // Actually fee ALSO goes to reserve
+
+                // UPS minted against BTC (all BTC backs UPS)
+                const upsMinted = Math.floor(btcAmount * UPS_PER_BTC);
+
+                // Update display
+                el('dexBtcVal').textContent = btcAmount.toFixed(3);
+                el('dexPriceVal').textContent = fiPriceSats;
+                el('dexFiReceived').textContent = fiReceived >= 1000000
+                    ? (fiReceived / 1000000).toFixed(1) + 'M'
+                    : fiReceived >= 1000
+                        ? (fiReceived / 1000).toFixed(0) + 'K'
+                        : fiReceived;
+                el('dexBtcReserve').textContent = btcAmount.toFixed(3);  // All BTC goes to reserve
+                el('dexUpsMinted').textContent = upsMinted.toLocaleString();
+                el('dexFee').textContent = fee.toFixed(4);
+            }
+
+            // DEX calculator event listeners
+            el('dexBtcSlider').addEventListener('input', updateDexCalc);
+            el('dexPriceSlider').addEventListener('input', updateDexCalc);
+
+            // Initialize DEX calculator
+            updateDexCalc();
 
             // === INIT ===
             el('simStart').addEventListener('click', start);

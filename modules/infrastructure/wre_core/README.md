@@ -7,6 +7,18 @@ The WRE Core is the central module building engine for 0102 autonomous operation
 
 **NEW**: Universal PatternMemory for collective false-positive learning integrated with AI Overseer, HoloDAE, and WSP automation. See [PATTERN_MEMORY_ARCHITECTURE.md](PATTERN_MEMORY_ARCHITECTURE.md) for complete architecture and integration guide.
 
+## 2026-02-19 Alignment Update
+
+This module now enforces the following runtime behavior:
+- WRE remains the execution control plane; AI Overseer remains governance/sentinel authority.
+- `WREMasterOrchestrator` supports backward-compatible plugin registration signatures and explicit plugin retrieval helpers.
+- Skill execution degrades deterministically when registry entries or skill files are missing (no hard crash in orchestration loop).
+- Skills discovery/export handles cross-platform path separators and both `skills/` and `skillz/` production folder names.
+- Pattern memory uses shared singleton state only for default production DB; explicit DB paths are isolated.
+- Test/runtime override available via `WRE_PATTERN_MEMORY_DB` for deterministic storage targeting.
+
+This README section is the canonical implementation delta for current WRE code.
+
 ## Architecture
 
 ### Core Components (5)

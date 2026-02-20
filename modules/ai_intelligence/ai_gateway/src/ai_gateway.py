@@ -30,6 +30,7 @@ import json
 # Import model registry for centralized model management
 from .model_registry import (
     RECOMMENDED_MODELS,
+    classify_task,
     get_current_models,
     check_model_status,
 )
@@ -141,12 +142,17 @@ class AIGateway:
                 api_key=os.getenv('OPENAI_API_KEY'),
                 base_url='https://api.openai.com/v1',
                 models={
-                    'code_review': 'gpt-4o',          # Best for code (2026 current)
-                    'analysis': 'gpt-4o',              # Best for analysis
-                    'creative': 'gpt-4o-mini',         # Fast creative
-                    'quick': 'gpt-4o-mini'             # Fast responses
+                    'coding': 'gpt-5.2-codex',     # Agentic coding ($1.75/$14 per 1M)
+                    'code_review': 'gpt-5.2-codex',
+                    'math': 'o4-mini',              # Fast reasoning ($1.10/$4.40 per 1M)
+                    'reasoning': 'o3',              # Deep reasoning ($2/$8 per 1M)
+                    'social': 'gpt-5',              # General purpose ($1.25/$10 per 1M)
+                    'research': 'gpt-5.2',          # Flagship thinking ($1.75/$14 per 1M)
+                    'analysis': 'gpt-5.2',
+                    'creative': 'gpt-5',
+                    'quick': 'gpt-5',
                 },
-                cost_per_token=0.0025,  # gpt-4o pricing
+                cost_per_token=0.00175,
                 rate_limit=60
             ),
 
@@ -155,10 +161,15 @@ class AIGateway:
                 api_key=os.getenv('ANTHROPIC_API_KEY'),
                 base_url='https://api.anthropic.com/v1',
                 models={
-                    'code_review': 'claude-opus-4-6',           # Best for code
-                    'creative': 'claude-haiku-4-5-20251001',    # Fast creative
-                    'analysis': 'claude-sonnet-4-5-20250929',   # Balanced analysis
-                    'quick': 'claude-haiku-4-5-20251001'        # Fast responses
+                    'coding': 'claude-opus-4-6',    # Opus for code (012's rule)
+                    'code_review': 'claude-opus-4-6',
+                    'math': 'claude-opus-4-6',
+                    'reasoning': 'claude-opus-4-6',
+                    'social': 'claude-sonnet-4-5-20250929',
+                    'research': 'claude-sonnet-4-5-20250929',
+                    'analysis': 'claude-sonnet-4-5-20250929',
+                    'creative': 'claude-haiku-4-5-20251001',
+                    'quick': 'claude-haiku-4-5-20251001',
                 },
                 cost_per_token=0.015,
                 rate_limit=50
@@ -169,12 +180,17 @@ class AIGateway:
                 api_key=os.getenv('GROK_API_KEY') or os.getenv('XAI_API_KEY'),
                 base_url='https://api.x.ai/v1',
                 models={
-                    'code_review': 'grok-3',
-                    'analysis': 'grok-3',
-                    'creative': 'grok-3',
-                    'quick': 'grok-3'
+                    'coding': 'grok-code-fast-1',   # Agentic coding ($0.20/$1.50 per 1M)
+                    'code_review': 'grok-4',         # Flagship ($3/$15 per 1M)
+                    'math': 'grok-4',
+                    'reasoning': 'grok-4',
+                    'social': 'grok-4',              # Grok primary for social/edgy
+                    'research': 'grok-4',
+                    'analysis': 'grok-4',
+                    'creative': 'grok-4',
+                    'quick': 'grok-4-fast',          # Fast reasoning ($0.20/$0.50 per 1M)
                 },
-                cost_per_token=0.001,
+                cost_per_token=0.0002,
                 rate_limit=30
             ),
 
@@ -183,10 +199,15 @@ class AIGateway:
                 api_key=os.getenv('GEMINI_API_KEY'),
                 base_url='https://generativelanguage.googleapis.com/v1',
                 models={
-                    'code_review': 'gemini-2.5-pro',     # Best for code (thinking)
-                    'analysis': 'gemini-2.5-pro',        # Deep analysis
-                    'creative': 'gemini-2.5-flash',      # Fast creative
-                    'quick': 'gemini-2.5-flash'          # Fast responses
+                    'coding': 'gemini-2.5-pro',
+                    'code_review': 'gemini-2.5-pro',
+                    'math': 'gemini-2.5-pro',       # Thinking model for math
+                    'reasoning': 'gemini-2.5-pro',
+                    'social': 'gemini-2.5-flash',
+                    'research': 'gemini-2.5-pro',   # Gemini primary for research
+                    'analysis': 'gemini-2.5-pro',
+                    'creative': 'gemini-2.5-flash',
+                    'quick': 'gemini-2.5-flash',
                 },
                 cost_per_token=0.0005,
                 rate_limit=60
@@ -298,18 +319,65 @@ class AIGateway:
 
         return GatewayResult("", "none", "", 0, 0, False)
 
-    def _get_provider_priority(self, task_type: str) -> List[str]:
-        """Get provider priority order for task type"""
+    def classify_and_call(self, prompt: str) -> GatewayResult:
+        """Auto-classify prompt into task type, then route to best provider.
 
-        # Task-specific routing preferences
+        This is the orchestration bridge: OpenClaw intent -> classify -> route.
+        Reports model selection to DAEmon if available.
+        """
+        task_type = classify_task(prompt)
+        logger.info(f"[AI-GATEWAY] Classified as '{task_type}' -> {RECOMMENDED_MODELS.get(task_type, ['?'])[0]}")
+
+        result = self.call_with_fallback(prompt, task_type)
+
+        # Report to DAEmon (cardiovascular observation)
+        if result.success:
+            self._report_model_selection(task_type, result.provider, result.model)
+
+        return result
+
+    def _report_model_selection(self, task_type: str, provider: str, model: str) -> None:
+        """Report model selection to central DAEmon for cardiovascular tracking."""
+        try:
+            from modules.infrastructure.dae_daemon.src.dae_adapter import CentralDAEAdapter
+            if not hasattr(self, '_dae_adapter'):
+                self._dae_adapter = CentralDAEAdapter(
+                    dae_id="ai_gateway", dae_name="AI Gateway",
+                    domain="ai_intelligence",
+                    module_path="modules.ai_intelligence.ai_gateway.src.ai_gateway",
+                )
+                self._dae_adapter.register()
+            self._dae_adapter.report_action(
+                action_type="model_selection",
+                target=model,
+                result=f"task={task_type} provider={provider} model={model}",
+            )
+        except Exception:
+            pass  # Graceful if DAEmon not available
+
+    def _get_provider_priority(self, task_type: str) -> List[str]:
+        """Get provider priority order for task type.
+
+        012's activity routing matrix (Feb 2026):
+            coding     -> Opus (anthropic) first
+            math       -> o4-mini/o3 (openai) first
+            reasoning  -> o3/o3-pro (openai) first
+            social     -> Grok-4 first (less inhibited)
+            research   -> Gemini first (deep research)
+        """
         task_routing = {
-            'code_review': ['openai', 'anthropic', 'grok', 'gemini'],  # Best for code
-            'analysis': ['openai', 'grok', 'anthropic', 'gemini'],     # Analysis focused
-            'creative': ['anthropic', 'openai', 'grok', 'gemini'],     # Creative tasks
-            'quick': ['grok', 'gemini', 'openai', 'anthropic']         # Fast responses
+            'coding': ['anthropic', 'openai', 'gemini', 'grok'],
+            'code_review': ['anthropic', 'openai', 'gemini', 'grok'],
+            'math': ['openai', 'gemini', 'anthropic', 'grok'],
+            'reasoning': ['openai', 'gemini', 'anthropic', 'grok'],
+            'social': ['grok', 'openai', 'anthropic', 'gemini'],
+            'research': ['gemini', 'openai', 'anthropic', 'grok'],
+            'analysis': ['openai', 'anthropic', 'gemini', 'grok'],
+            'creative': ['anthropic', 'openai', 'gemini', 'grok'],
+            'quick': ['grok', 'gemini', 'openai', 'anthropic'],
         }
 
-        return task_routing.get(task_type, ['openai', 'anthropic', 'grok', 'gemini'])
+        return task_routing.get(task_type, ['anthropic', 'openai', 'gemini', 'grok'])
 
     def _call_provider(self, provider: ProviderConfig, prompt: str, task_type: str) -> str:
         """Call specific AI provider"""

@@ -101,7 +101,7 @@ WSP_framework/
 -   **"Follow WSP"**: Triggers automatic WRE activation with WSP-54 Agent Suite and WSP_48 recursive self-improvement.
 
 ### New: Intelligent Internet Orchestration Vision (WSP 77)
-- See `src/WSP_77_Intelligent_Internet_Orchestration_Vision.md` for the sovereignty-preserving integration vision aligning optional Intelligent Internet proof-of-benefit receipts with CABR/UP$ (WSP 29, WSP 26), including optional compute term (w_comp), 0102 operator roles, and safety guardrails.
+- See `src/WSP_77_Intelligent_Internet_Orchestration_Vision.md` for the sovereignty-preserving integration vision aligning optional Intelligent Internet proof-of-benefit receipts with CABR/UPS (WSP 29, WSP 26), including optional compute term (w_comp), 0102 operator roles, and safety guardrails.
 
 ## Compliance Requirements for 0102 pArtifacts
 
