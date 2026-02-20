@@ -56,8 +56,10 @@ class NewsRelevanceRater:
     # Source authority tiers
     AUTHORITY_TIERS = {
         "high": ["techcrunch", "wired", "theverge", "arstechnica", "venturebeat",
-                 "reuters", "bloomberg", "wsj", "nytimes", "forbes"],
-        "medium": ["medium", "dev.to", "hackernews", "reddit", "substack", "github"],
+                 "reuters", "bloomberg", "wsj", "nytimes", "forbes",
+                 "arxiv", "acm.org", "ieee.org", "scholar.google", "nature.com", "science.org"],
+        "medium": ["medium", "dev.to", "hackernews", "reddit", "substack", "github",
+                   "researchgate", "semanticscholar", "paperswithcode"],
         "low": []  # Default for unknown sources
     }
 
@@ -437,6 +439,12 @@ def search_openclaw_news(max_results: int = 10) -> List[NewsItem]:
         "lobster.cash Crossmint",
     ]
 
+    # Research paper queries (separate to avoid rate limiting the news queries)
+    research_queries = [
+        "OpenClaw AI agent research paper",
+        "autonomous agent framework arxiv",
+    ]
+
     all_items: List[NewsItem] = []
     seen_urls: set = set()
 
@@ -491,6 +499,34 @@ def search_openclaw_news(max_results: int = 10) -> List[NewsItem]:
 
             if len(all_items) >= max_results:
                 break
+
+        # Search for research papers (via web search for arxiv/scholar links)
+        if len(all_items) < max_results:
+            for i, query in enumerate(research_queries):
+                if len(all_items) >= max_results:
+                    break
+                # Rate limit delay
+                time.sleep(random.uniform(2.0, 4.0))
+                try:
+                    results = list(ddg.text(query, max_results=3))
+                    for r in results:
+                        url = r.get("href", r.get("link", ""))
+                        if url in seen_urls or not url:
+                            continue
+                        # Prioritize arxiv, scholar, research domains
+                        if any(domain in url.lower() for domain in ["arxiv.org", "scholar.google", "research", "paper", "acm.org", "ieee.org"]):
+                            seen_urls.add(url)
+                            item = NewsItem(
+                                title=r.get("title", ""),
+                                url=url,
+                                source=_extract_source(url),
+                                summary=r.get("body", ""),
+                            )
+                            all_items.append(item)
+                            logger.info(f"[RESEARCH] Found paper: {item.title[:50]}...")
+                except Exception as e:
+                    logger.debug(f"[RESEARCH] Query '{query}' failed: {e}")
+                    continue
 
         # Also try general web search if news didn't find enough
         if len(all_items) < max_results // 2:

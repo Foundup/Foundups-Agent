@@ -2,6 +2,17 @@
 
 ## Latest Changes
 
+### V062 - Research Paper Search (Arxiv/Scholar)
+**Date**: 2026-02-20
+**Changes**:
+- Added research paper queries to `search_openclaw_news()`: "OpenClaw AI agent research paper", "autonomous agent framework arxiv"
+- Added arxiv.org, acm.org, ieee.org, scholar.google, nature.com, science.org to HIGH authority tier
+- Added researchgate, semanticscholar, paperswithcode to MEDIUM authority tier
+- Research papers now score 0.64+ (above 0.6 threshold) for automatic posting
+- Prioritizes URLs containing arxiv, scholar, research, paper, acm, ieee domains
+**Impact**: OpenClaw news search now includes academic/research paper sources for more comprehensive coverage.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
 ### V061 - Social Media DAE CLI Integration (Full Action Logging)
 **Date**: 2026-02-20
 **Changes**:
