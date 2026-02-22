@@ -44,6 +44,23 @@ We then separate this negative result from a broader design hypothesis: a unifie
 
 ## 1. Introduction
 
+### 1.0 Reader Orientation (Plain Language)
+
+This manuscript keeps two layers in parallel:
+- formal equations for reproducibility,
+- plain-language summaries so a non-specialist can follow the argument.
+
+Core vocabulary before you read:
+- `UPS` = settlement unit (cash-like rail, 1 UPS = 1 sat accounting unit).
+- `F_i` = FoundUp venture token (earned via work or stake paths).
+- `CABR` = validation gate that controls whether economic flow is allowed.
+- "Sustainable" in this paper means both: `net_revenue_btc > 0` and `downside_ratio_p10 >= 1.0`.
+
+Fast reading route:
+1. Read Sections 1, 2.6, and 2.7 for intuition.
+2. Read Section 3 for accounting/invariant constraints.
+3. Read Section 6 for the main empirical result (downside lane currently fails).
+
 ### 1.1 Problem Statement
 
 Decentralized autonomous organizations face a fundamental economic trilemma: **capital allocation efficiency**, **incentive alignment across participant classes**, and **treasury sustainability without external subsidy**. Traditional platform economics resolve this through advertising (extracting user attention) or transaction fees (extracting value from every interaction), creating misaligned incentives where platform success diverges from participant welfare.
@@ -116,6 +133,8 @@ The FoundUps pAVS model proposes an alternative: a dual-token architecture where
 | Extractive model characterization fair | LOW | Based on documented revenue models |
 
 ## 2. Model Specification
+
+Reader Note (Plain Language): This section is the system dictionary. If a later section mentions reserve, pool, minting, or decay, this section defines the exact meaning and units.
 
 ### 2.1 Entities
 
@@ -331,6 +350,8 @@ result = engine.distribute_operational_profit(
 | Hotel California holds | HIGH | Requires smart contract enforcement |
 
 ## 3. Accounting Identities and Invariants
+
+Reader Note (Plain Language): This is the physics layer of the economy. If any identity here is violated, the model is economically inconsistent regardless of narrative claims.
 
 ### 3.1 Flow-of-Funds Identity
 
@@ -655,6 +676,8 @@ def test_scenario_runner_same_seed_same_digest(tmp_path):
 | Test suite covers all determinism requirements | MEDIUM | Only baseline scenario tested explicitly |
 
 ## 6. Results: Sustainability Envelope
+
+Reader Note (Plain Language): This section answers one practical question: does the current model pay for itself under downside conditions? Current simulation evidence says no for the fee-only lane.
 
 This section reports primary metrics from simulator runs, identifies threshold conditions where sustainability claims hold or fail, and examines distributional outcomes across participant types.
 
