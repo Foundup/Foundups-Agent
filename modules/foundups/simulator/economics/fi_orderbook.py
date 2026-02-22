@@ -19,6 +19,7 @@ Key Flows:
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -26,6 +27,7 @@ from datetime import datetime
 import heapq
 
 logger = logging.getLogger(__name__)
+SATS_PER_BTC: float = 100_000_000.0
 
 
 class OrderSide(Enum):
@@ -43,6 +45,26 @@ class OrderStatus(Enum):
 
 
 @dataclass
+class EntryProtectionConfig:
+    """Anti-manipulation controls for early-stage order books.
+
+    First-principles goal:
+    - Keep order sizes proportional to observed adoption/liquidity.
+    - Prevent one large order from dominating thin books.
+    """
+
+    enabled: bool = True
+    base_max_order_btc: float = 0.10  # Baseline max notional at 1.0x scale.
+    min_adoption_scale: float = 0.50  # Floor at 5% adoption style startup phase.
+    adoption_scale_multiplier: float = 10.0  # 50% adoption -> 5.0x base size.
+    max_adoption_scale: float = 10.0  # Hard ceiling from adoption alone.
+    liquidity_reference_btc: float = 1.0  # 1 BTC observed liquidity -> +1x scale.
+    max_liquidity_boost: float = 4.0  # Max +4x from liquidity.
+    min_depth_for_impact_guard_ups: float = 1000.0
+    max_single_order_share_of_opposing_depth: float = 0.35
+
+
+@dataclass
 class Order:
     """An order in the F_i orderbook."""
 
@@ -54,6 +76,7 @@ class Order:
     quantity: float  # F_i amount
     filled: float = 0.0
     status: OrderStatus = OrderStatus.OPEN
+    rejection_reason: Optional[str] = None
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
     @property
@@ -105,15 +128,96 @@ class FiOrderBook:
 
     # Trading fee (goes to BTC Reserve)
     trading_fee_rate: float = 0.02  # 2% per trade
+    entry_protection_config: EntryProtectionConfig = field(default_factory=EntryProtectionConfig)
 
     # Statistics
     total_volume_fi: float = 0.0
     total_volume_ups: float = 0.0
     total_fees_collected: float = 0.0
+    rejected_buy_orders: int = 0
+    rejected_sell_orders: int = 0
+
+    # Market context for dynamic anti-whale sizing.
+    market_adoption_rate: float = 0.05
+    market_liquidity_hint_ups: float = 0.0
 
     # Order counter
     _order_counter: int = 0
     _trade_counter: int = 0
+
+    def update_market_context(
+        self,
+        adoption_rate: Optional[float] = None,
+        liquidity_hint_ups: Optional[float] = None,
+    ) -> None:
+        """Update market context used by entry-side order limits."""
+        if adoption_rate is not None:
+            self.market_adoption_rate = max(0.0, min(1.0, float(adoption_rate)))
+        if liquidity_hint_ups is not None:
+            self.market_liquidity_hint_ups = max(0.0, float(liquidity_hint_ups))
+
+    def _opposing_depth_notional_ups(self, side: OrderSide, levels: int = 5) -> float:
+        """Estimate opposing-side depth notional for impact guards."""
+        if side == OrderSide.BUY:
+            opposing_orders = sorted(self.sell_orders)[:levels]
+        else:
+            opposing_orders = sorted(self.buy_orders, reverse=True)[:levels]
+        return sum(max(0.0, o.remaining) * max(0.0, o.price) for o in opposing_orders)
+
+    def _max_buy_notional_ups(self) -> float:
+        """Adoption/liquidity-scaled max notional for buy orders."""
+        cfg = self.entry_protection_config
+        adoption_scale = max(
+            cfg.min_adoption_scale,
+            min(cfg.max_adoption_scale, self.market_adoption_rate * cfg.adoption_scale_multiplier),
+        )
+        observed_liquidity_btc = max(
+            self.market_liquidity_hint_ups / SATS_PER_BTC,
+            self.total_volume_ups / SATS_PER_BTC,
+        )
+        liquidity_scale = 1.0 + min(
+            cfg.max_liquidity_boost,
+            observed_liquidity_btc / max(1e-9, cfg.liquidity_reference_btc),
+        )
+        max_btc = cfg.base_max_order_btc * adoption_scale * liquidity_scale
+        return max_btc * SATS_PER_BTC
+
+    def _validate_order(self, side: OrderSide, price: float, quantity: float) -> Optional[str]:
+        """Return rejection reason if order violates anti-manipulation controls."""
+        if price <= 0:
+            return "invalid_price_non_positive"
+        if quantity <= 0:
+            return "invalid_quantity_non_positive"
+
+        cfg = self.entry_protection_config
+        if not cfg.enabled:
+            return None
+
+        order_notional_ups = price * quantity
+
+        # Entry-specific guard: throttle oversized BUY notional in low-adoption stages.
+        if side == OrderSide.BUY:
+            max_buy_notional = self._max_buy_notional_ups()
+            if order_notional_ups > max_buy_notional:
+                max_btc = max_buy_notional / SATS_PER_BTC
+                order_btc = order_notional_ups / SATS_PER_BTC
+                return (
+                    "entry_notional_limit_exceeded:"
+                    f" order={order_btc:.6f}BTC cap={max_btc:.6f}BTC"
+                    f" adoption={self.market_adoption_rate:.3f}"
+                )
+
+        # Whale impact guard on both sides once meaningful opposing depth exists.
+        opposing_depth_ups = self._opposing_depth_notional_ups(side=side)
+        if opposing_depth_ups >= cfg.min_depth_for_impact_guard_ups:
+            max_impact_notional = opposing_depth_ups * cfg.max_single_order_share_of_opposing_depth
+            if order_notional_ups > max_impact_notional:
+                return (
+                    "depth_impact_limit_exceeded:"
+                    f" order={order_notional_ups:.2f}UPS"
+                    f" cap={max_impact_notional:.2f}UPS"
+                )
+        return None
 
     def place_buy_order(
         self,
@@ -141,6 +245,16 @@ class FiOrderBook:
             quantity=quantity,
         )
         self.all_orders[order.order_id] = order
+
+        rejection = self._validate_order(OrderSide.BUY, price=price, quantity=quantity)
+        if rejection:
+            order.status = OrderStatus.CANCELLED
+            order.rejection_reason = rejection
+            self.rejected_buy_orders += 1
+            logger.warning(
+                f"[OrderBook:{self.foundup_id}] BUY rejected {order.order_id}: {rejection}",
+            )
+            return (order, [])
 
         # Try to match against sell orders
         trades = self._match_buy_order(order)
@@ -182,6 +296,16 @@ class FiOrderBook:
             quantity=quantity,
         )
         self.all_orders[order.order_id] = order
+
+        rejection = self._validate_order(OrderSide.SELL, price=price, quantity=quantity)
+        if rejection:
+            order.status = OrderStatus.CANCELLED
+            order.rejection_reason = rejection
+            self.rejected_sell_orders += 1
+            logger.warning(
+                f"[OrderBook:{self.foundup_id}] SELL rejected {order.order_id}: {rejection}",
+            )
+            return (order, [])
 
         # Try to match against buy orders
         trades = self._match_sell_order(order)
@@ -373,6 +497,10 @@ class FiOrderBook:
             "total_volume_fi": self.total_volume_fi,
             "total_volume_ups": self.total_volume_ups,
             "total_fees_collected": self.total_fees_collected,
+            "rejected_buy_orders": self.rejected_buy_orders,
+            "rejected_sell_orders": self.rejected_sell_orders,
+            "market_adoption_rate": self.market_adoption_rate,
+            "max_buy_notional_ups": self._max_buy_notional_ups(),
             "best_bid": self.best_bid,
             "best_ask": self.best_ask,
             "spread": self.spread,
@@ -382,9 +510,14 @@ class FiOrderBook:
 class OrderBookManager:
     """Manages order books for all FoundUps."""
 
-    def __init__(self, trading_fee_rate: float = 0.02):
+    def __init__(
+        self,
+        trading_fee_rate: float = 0.02,
+        entry_protection_config: Optional[EntryProtectionConfig] = None,
+    ):
         self.order_books: Dict[str, FiOrderBook] = {}
         self.trading_fee_rate = trading_fee_rate
+        self.entry_protection_config = entry_protection_config or EntryProtectionConfig()
 
     def get_or_create_book(self, foundup_id: str) -> FiOrderBook:
         """Get or create order book for a FoundUp."""
@@ -392,6 +525,7 @@ class OrderBookManager:
             self.order_books[foundup_id] = FiOrderBook(
                 foundup_id=foundup_id,
                 trading_fee_rate=self.trading_fee_rate,
+                entry_protection_config=deepcopy(self.entry_protection_config),
             )
         return self.order_books[foundup_id]
 
@@ -401,9 +535,15 @@ class OrderBookManager:
         human_id: str,
         price: float,
         quantity: float,
+        adoption_rate: Optional[float] = None,
+        liquidity_hint_ups: Optional[float] = None,
     ) -> Tuple[Order, List[Trade]]:
         """Place a buy order for F_i tokens."""
         book = self.get_or_create_book(foundup_id)
+        book.update_market_context(
+            adoption_rate=adoption_rate,
+            liquidity_hint_ups=liquidity_hint_ups,
+        )
         return book.place_buy_order(human_id, price, quantity)
 
     def place_sell(
@@ -412,9 +552,15 @@ class OrderBookManager:
         human_id: str,
         price: float,
         quantity: float,
+        adoption_rate: Optional[float] = None,
+        liquidity_hint_ups: Optional[float] = None,
     ) -> Tuple[Order, List[Trade]]:
         """Place a sell order for F_i tokens."""
         book = self.get_or_create_book(foundup_id)
+        book.update_market_context(
+            adoption_rate=adoption_rate,
+            liquidity_hint_ups=liquidity_hint_ups,
+        )
         return book.place_sell_order(human_id, price, quantity)
 
     def get_total_fees(self) -> float:
