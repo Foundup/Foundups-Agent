@@ -1,5 +1,156 @@
 # Simulator ModLog
 
+## 2026-02-22 - Layer-D BTC Anchor Connector (WSP 78 Settlement)
+
+### Why
+012 requested implementation of the actual Layer-D anchor connector interface for blockchain settlement.
+The epoch_ledger.py already had `prepare_settlement_commitment()` for pre-settlement evidence,
+but needed the external connector for publish_commitment → tx_ref persistence → idempotent replay guard.
+
+### Changes
+- Added `economics/btc_anchor_connector.py` (450+ lines):
+  - `BTCAnchorConnector`: Layer-D interface for Bitcoin anchoring
+  - `AnchorMode`: mock/testnet/mainnet operating modes
+  - `AnchorStatus`: pending/published/confirmed/failed lifecycle
+  - `AnchorRecord`: SQLite-persisted anchor state with tx_ref
+  - `publish_commitment()`: Idempotent publishing with replay guard
+  - `check_confirmation()`: Mock confirmation simulation (increments on each check)
+  - Feature flag: `LAYER_D_ENABLED=1` required for non-mock modes
+
+- Added `epoch_ledger.anchor_epoch()` convenience method:
+  - Combines `prepare_settlement_commitment()` + `publish_commitment()`
+  - Simple one-call anchoring from ledger instance
+
+- Added `tests/test_btc_anchor_connector.py`:
+  - Mock publishing, replay guard, tx_ref persistence, confirmation checking
+  - Epoch ledger integration test
+
+- Updated `economics/__init__.py`:
+  - Exports all anchor connector components
+
+### Architecture (WSP 78 Layer D)
+```
+EpochLedger.record_epoch() → prepare_settlement_commitment()
+    ↓
+BTCAnchorConnector.publish_commitment() [idempotent]
+    ↓
+anchor_state.db (SQLite) [tx_ref persistence]
+    ↓
+check_confirmation() [mock: +1 per check; real: blockchain query]
+    ↓
+status: pending → published → confirmed
+```
+
+### Validation
+- Manual test via Python: 4/4 scenarios passed (mock publish, replay guard, integration, confirmation)
+
+### WSP References
+- WSP 78: Database Architecture (Layer D settlement)
+- WSP 26: FoundUPS DAE Tokenization (Section 15 - auditable ledger)
+
+---
+
+## 2026-02-21 - Proxy Distribution + Operational Profit Lane (Agent/012 Boundary)
+
+### Why
+012 clarified canonical boundary for autonomous trading economics:
+- 0102 agents should not be the UPS beneficiary.
+- Agent work earns `F_i`; operational business profit is distributed as UPS to the owning 012 proxy.
+- Proxy can hold, stake, or exit UPS (with fee capture to treasury lanes).
+
+### Changes
+- Updated `economics/token_economics.py`:
+  - added `OperationalProfitPolicy` and `OperationalProfitResult`.
+  - added `distribute_operational_profit(...)` with first-principles equations:
+    - `net = max(0, gross - cost)`
+    - `net -> proxy + foundup_treasury + network` via normalized shares
+    - optional proxy actions (`stake`, `exit`) with explicit fee accounting.
+  - added `resolve_proxy_owner(...)` and `credit_012_distribution_ups(...)`.
+  - retained `human_earns_ups(...)` as compatibility alias to distribution crediting.
+  - hardened `agent_completes_task(...)` to auto-register missing wallets/accounts and unlock mint capacity via adoption update.
+- Updated `mesa_model.py`:
+  - task payout path now mints `F_i` for work (`fi_mined_for_work` event).
+  - CABR UPS flow now credits proxy owner (beneficiary) instead of direct assignee semantics.
+  - added autonomous trading profit simulation lane for trading-classified FoundUps (`operational_profit_distributed` events).
+  - operational network/exit-fee deltas now sync into treasury telemetry lanes.
+- Updated `step_pipeline.py` to run `_simulate_autonomous_trading_profits()` each tick.
+- Updated `state_store.py` to track `operational_profit_distributed` effects.
+
+### Validation
+- Targeted:
+  - `python -m pytest modules/foundups/simulator/tests/test_operational_profit_proxy_flow.py modules/foundups/simulator/tests/test_fam_lifecycle_flow.py modules/foundups/simulator/tests/test_alignment_and_tokenomics.py -q`
+  - `12/12 PASSED`
+- Full simulator suite (excluding SSE dependency-gated module):
+  - `python -m pytest modules/foundups/simulator/tests -q --ignore=modules/foundups/simulator/tests/test_sse_server.py`
+  - `130/130 PASSED`
+
+---
+
+## 2026-02-21 - Unified Sustainability Engine (Compute Stats + Combined Revenue)
+
+### Why
+012 audit revealed sustainability_matrix.py only tracks DEX fees (0.0002-0.0012 ratios),
+ignoring subscription + angel + compute revenue. The ~5000× gap is **architecture-scale**
+when viewing fees alone, but **closes completely** when all streams are combined.
+
+### Changes
+- Added `economics/unified_sustainability.py`:
+  - `UnifiedSustainabilityCalculator`: Combines all revenue streams
+  - `ComputeBackingState`: Tracks compute spend as backing for mined F_i
+  - `RevenueSnapshot`: Point-in-time revenue across fee/subscription/angel/compute
+  - `SustainabilityMetrics`: Unified metrics with fee-only vs combined ratios
+  - `compare_sustainability_models()`: Quick CLI comparison
+
+- Added `tests/test_unified_sustainability.py`:
+  - Fee-only ratio < 1.0 (without subscriptions)
+  - Combined ratio > 1.0 (with subscriptions)
+  - Compute backing accumulation
+  - Minimum viable subscribers (~6,000 for break-even)
+
+- Updated `docs/FOUNDUPS_PAVS_PAPER_MANUSCRIPT_TEMPLATE.md`:
+  - Added Section 6.1.1 "Unified Sustainability Analysis (NEW)"
+  - Key result: Fee-only ratio 0.08 → Combined ratio 9.43
+  - Documented compute backing model for mined F_i
+
+### Key Results
+| Metric | Fee-Only | Combined |
+|--------|----------|----------|
+| Ratio | 0.08 | 9.43 |
+| Sustainable? | NO | **YES** |
+| Min subscribers | N/A | ~6,000 |
+
+### Validation
+```bash
+python -m modules.foundups.simulator.economics.unified_sustainability
+```
+
+---
+
+## 2026-02-20 - Paper Execution Kit (Template + Section Prompts)
+
+### Why
+The prior paper outline defined architecture but not a direct production workflow for delegated 0102 writers. We need a copy/paste-ready execution layer for section-by-section drafting with hard evidence discipline.
+
+### Changes
+- Added `docs/FOUNDUPS_PAVS_PAPER_MANUSCRIPT_TEMPLATE.md`
+  - full manuscript skeleton from abstract to appendices,
+  - claim audit and reproducibility appendix structure.
+- Added `docs/FOUNDUPS_PAVS_PAPER_SECTION_PROMPTS_0102.md`
+  - global instruction prompt,
+  - 12 section-specific delegated prompts,
+  - CTO hostile-referee review prompt.
+- Updated `docs/FOUNDUPS_SELF_SUSTAINING_ECON_MODEL_PAPER_OUTLINE.md`
+  - linked new execution companion docs.
+
+### Validation
+- Prompts enforce:
+  - falsifiability language,
+  - source-path evidence mapping,
+  - explicit assumptions and risk labeling,
+  - no legal overreach claims.
+
+---
+
 ## 2026-02-18 - Academic Paper Blueprint: Self-Sustaining Economic Model
 
 ### Why
@@ -2129,3 +2280,45 @@ REGISTRY → TASK_PIPELINE → PERSISTENCE → EVENTS → TOKEN_ECON → GOVERNA
   - added `tests/test_smartdao_runtime_events.py`:
     - validates emergence + phase command emission,
     - validates F2 autonomy and cross-DAO funding emission.
+
+## 2026-02-21 - Settlement Boundary + Satellite Store Documentation (WSP 78)
+
+### Why
+External audit confirmed architecture is mostly aligned but two items were still implicit:
+- simulator satellite stores needed explicit retention/ownership policy,
+- epoch ledger needed a formal pre-settlement commitment payload to mark Layer D as pending external anchoring.
+
+### Changes
+- Added `docs/SATELLITE_STORES.md` with owner/scope/retention/migration decision.
+- Extended `economics/epoch_ledger.py` with `prepare_settlement_commitment(epoch)`.
+  - Returns explicit `pre_settlement` payload with anchor/merkle/entry summary.
+  - Marks `wsp_78_layer=D_pending` and `requires=external_btc_anchor_connector`.
+- Added `tests/test_epoch_ledger_settlement_commitment.py`.
+- Updated WSP 78 checklist status in framework + knowledge mirrors.
+
+## 2026-02-22 - Layer-D Runtime Wiring (Epoch -> Commitment -> Anchor)
+
+### Why
+- Settlement preparation existed (`prepare_settlement_commitment`) but was not invoked by runtime.
+- Simulator needed explicit config knobs for safe Layer-D rollout without changing default behavior.
+
+### Changes
+- Added Layer-D config knobs in `config.py`:
+  - `layer_d_anchor_enabled`
+  - `layer_d_anchor_every_n_epochs`
+  - `layer_d_anchor_force_republish`
+  - `layer_d_anchor_mode`
+  - `layer_d_anchor_db_path`
+- Added parameter wiring:
+  - `params/defaults.json`
+  - `params/parameters.schema.json`
+  - `parameter_registry.py`
+- Wired runtime in `mesa_model.py`:
+  - model now creates `EpochLedger` for `F_0` and optional `BTCAnchorConnector` from config.
+  - epoch distribution path records ledger entries via `_record_epoch_distribution(...)`.
+  - optional anchor publishing emits `settlement_anchor_published` telemetry.
+  - `get_stats()` now exposes Layer-D anchor counters and mode.
+
+### Behavior
+- Default remains unchanged (`layer_d_anchor_enabled=False`).
+- When enabled, anchoring cadence is deterministic by epoch modulo.

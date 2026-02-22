@@ -3,7 +3,7 @@
 Coordinates agent stepping and integrates with FAM modules.
 
 Token Economics (WSP 26 Section 6.8):
-- UPS: Universal fuel (humans EARN, agents SPEND allocated budgets)
+- UPS: Universal fuel (humans RECEIVE distributions, agents SPEND allocated budgets)
 - F_i: FoundUp-specific tokens (agents EARN through PoUW, humans OWN)
 """
 
@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Type
 
 from .config import SimulatorConfig, DEFAULT_CONFIG
@@ -36,6 +37,8 @@ from .economics.pool_distribution import (
     PoolDistributor, FoundUpTokenDistributor,
     ParticipantType, ActivityLevel,
 )
+from .economics.epoch_ledger import EpochLedger
+from .economics.btc_anchor_connector import AnchorMode, BTCAnchorConnector
 from .economics.fi_rating import FiRatingEngine, get_rating_engine
 from .economics.allocation_engine import AllocationEngine
 from .economics.fee_revenue_tracker import (
@@ -181,6 +184,20 @@ class FoundUpsModel:
         self._network_pool_fees_synced_sats = 0
         self._creation_fee_notional_sats = 0  # Conservative: no synthetic creation volume by default.
         self._creation_fee_recorded_foundups: set[str] = set()
+        self._autonomous_trading_event_probability = 0.12
+        self._autonomous_trading_profit_min_ups = 25.0
+        self._autonomous_trading_profit_max_ups = 180.0
+        self._autonomous_trading_cost_ratio_min = 0.20
+        self._autonomous_trading_cost_ratio_max = 0.65
+        self._autonomous_trading_keywords = (
+            "trade",
+            "trader",
+            "trading",
+            "bot",
+            "arb",
+            "market",
+            "alpha",
+        )
 
         # SmartDAO escalation runtime (WSP 100 event wiring)
         self._smartdao_engine = SmartDAOSpawningEngine()
@@ -193,6 +210,8 @@ class FoundUpsModel:
         self._f0_seed_btc = 10.0
         self._f0_seeded = False
         self._f0_source_foundup_id = "F_0"
+        self._epoch_ledger = EpochLedger(foundup_id=self._f0_source_foundup_id)
+        self._anchor_connector: Optional[BTCAnchorConnector] = self._build_anchor_connector()
         self._f0_investor_ids: List[str] = [f"f0_investor_{idx:03d}" for idx in range(8)]
         self._mvp_offerings_resolved = 0
         self._total_dex_trades = 0
@@ -221,6 +240,27 @@ class FoundUpsModel:
             f"[MODEL] Initialized with {len(self._agents)} agents, "
             f"seed={self._seed}"
         )
+
+    def _build_anchor_connector(self) -> Optional[BTCAnchorConnector]:
+        """Build optional Layer-D anchor connector from simulator config."""
+        if not self._config.layer_d_anchor_enabled:
+            return None
+
+        mode_name = str(self._config.layer_d_anchor_mode or "mock").strip().lower()
+        try:
+            mode = AnchorMode(mode_name)
+        except ValueError:
+            logger.warning(
+                "[ANCHOR] Invalid layer_d_anchor_mode=%s; defaulting to mock.",
+                mode_name,
+            )
+            mode = AnchorMode.MOCK
+
+        db_path = None
+        if self._config.layer_d_anchor_db_path:
+            db_path = Path(self._config.layer_d_anchor_db_path)
+
+        return BTCAnchorConnector(mode=mode, db_path=db_path)
 
     def _create_agents(self) -> None:
         """Create initial agent population."""
@@ -506,6 +546,7 @@ class FoundUpsModel:
 
         Snapshot lists are used so a task only advances one stage per tick.
         """
+        daemon = self._fam_bridge.get_daemon()
         claimed_tasks = list(self._fam_bridge.get_claimed_tasks())
         submitted_tasks = list(self._fam_bridge.get_submitted_tasks())
         verified_tasks = list(self._fam_bridge.get_verified_tasks())
@@ -532,6 +573,27 @@ class FoundUpsModel:
                 self._route_cabr_ups_for_task(task)
                 # Emit agent earning event for ticker
                 agent_id = task.assignee_id or "agent_000"
+                _, fi_earned = self._token_econ_engine.agent_completes_task(
+                    agent_id=agent_id,
+                    foundup_id=task.foundup_id,
+                    task_cost_ups=0.0,
+                    work_reward_fi=float(getattr(task, "reward_amount", 0.0)),
+                )
+                proxy_owner_id = self._token_econ_engine.resolve_proxy_owner(agent_id)
+                if daemon and fi_earned > 0:
+                    daemon.emit(
+                        event_type="fi_mined_for_work",
+                        payload={
+                            "task_id": task.task_id,
+                            "agent_id": agent_id,
+                            "proxy_owner_id": proxy_owner_id,
+                            "foundup_id": task.foundup_id,
+                            "fi_earned": round(fi_earned, 6),
+                        },
+                        actor_id=agent_id,
+                        foundup_id=task.foundup_id,
+                        task_id=task.task_id,
+                    )
                 self._fam_bridge.emit_agent_earning(
                     agent_id=agent_id,
                     foundup_id=task.foundup_id,
@@ -582,12 +644,13 @@ class FoundUpsModel:
         network_ups = flow.routed_ups - worker_ups - foundup_treasury_ups
 
         assignee_id = getattr(task, "assignee_id", None) or "user_000"
-        if assignee_id not in self._token_econ_engine.human_accounts:
-            self._token_econ_engine.register_human(assignee_id, initial_ups=0.0)
-        self._token_econ_engine.human_earns_ups(
-            assignee_id,
+        proxy_owner_id = self._token_econ_engine.resolve_proxy_owner(assignee_id)
+        if proxy_owner_id not in self._token_econ_engine.human_accounts:
+            self._token_econ_engine.register_human(proxy_owner_id, initial_ups=0.0)
+        self._token_econ_engine.credit_012_distribution_ups(
+            proxy_owner_id,
             worker_ups,
-            source="cabr_pipe_flow",
+            source="cabr_pipe_flow_distribution",
         )
 
         foundup_pool = self._token_econ_engine.foundup_pools.get(foundup_id)
@@ -607,6 +670,7 @@ class FoundUpsModel:
                     "task_id": getattr(task, "task_id", ""),
                     "foundup_id": foundup_id,
                     "assignee_id": assignee_id,
+                    "proxy_owner_id": proxy_owner_id,
                     "pob_validated": flow.valve_open,
                     "cabr_pipe_size": round(flow.cabr_pipe_size, 6),
                     "requested_ups": round(flow.requested_ups, 6),
@@ -632,6 +696,80 @@ class FoundUpsModel:
                 actor_id="cabr_flow_router",
                 foundup_id=foundup_id,
             )
+
+    def _is_autonomous_trading_foundup(self, foundup_id: str) -> bool:
+        """Heuristic classifier for FoundUps that run autonomous trading bots."""
+        tile = self._state_store.get_state().foundups.get(foundup_id)
+        if tile is None:
+            return False
+        marker_text = f"{tile.name} {tile.token_symbol}".lower()
+        return any(keyword in marker_text for keyword in self._autonomous_trading_keywords)
+
+    def _simulate_autonomous_trading_profits(self) -> None:
+        """Simulate external trading PnL and route it through proxy economics.
+
+        This is intentionally separate from DEX fee flow. It models business
+        profit produced by autonomous trading FoundUps.
+        """
+        daemon = self._fam_bridge.get_daemon()
+        for foundup_id in self._state_store.get_foundup_ids():
+            if not self._is_autonomous_trading_foundup(foundup_id):
+                continue
+            if random.random() >= self._autonomous_trading_event_probability:
+                continue
+
+            tile = self._state_store.get_state().foundups.get(foundup_id)
+            if tile is None:
+                continue
+
+            operator_agent_id = tile.owner_id or "user_000"
+            gross_profit = random.uniform(
+                self._autonomous_trading_profit_min_ups,
+                self._autonomous_trading_profit_max_ups,
+            )
+            cost_ratio = random.uniform(
+                self._autonomous_trading_cost_ratio_min,
+                self._autonomous_trading_cost_ratio_max,
+            )
+            operating_cost = gross_profit * cost_ratio
+
+            result = self._token_econ_engine.distribute_operational_profit(
+                foundup_id=foundup_id,
+                operator_agent_id=operator_agent_id,
+                gross_profit_ups=gross_profit,
+                operating_cost_ups=operating_cost,
+                stake_target_foundup_id=foundup_id,
+            )
+            if result.net_profit_ups <= 0:
+                continue
+
+            self._demurrage.total_to_network_pool += result.network_pool_ups
+            if result.proxy_exit_fee_ups > 0:
+                self._demurrage.update_pavs_treasury_balance(
+                    self._demurrage.pavs_treasury_balance + result.proxy_exit_fee_ups
+                )
+
+            if daemon:
+                daemon.emit(
+                    event_type="operational_profit_distributed",
+                    payload={
+                        "foundup_id": foundup_id,
+                        "operator_agent_id": operator_agent_id,
+                        "proxy_owner_id": result.proxy_owner_id,
+                        "gross_profit_ups": round(result.gross_profit_ups, 6),
+                        "operating_cost_ups": round(result.operating_cost_ups, 6),
+                        "net_profit_ups": round(result.net_profit_ups, 6),
+                        "proxy_distribution_ups": round(result.proxy_distribution_ups, 6),
+                        "foundup_treasury_ups": round(result.foundup_treasury_ups, 6),
+                        "network_pool_ups": round(result.network_pool_ups, 6),
+                        "proxy_staked_ups": round(result.proxy_staked_ups, 6),
+                        "proxy_exit_gross_ups": round(result.proxy_exit_gross_ups, 6),
+                        "proxy_exit_fee_ups": round(result.proxy_exit_fee_ups, 6),
+                        "stake_target_foundup_id": result.stake_target_foundup_id,
+                    },
+                    actor_id=operator_agent_id,
+                    foundup_id=foundup_id,
+                )
 
     def _simulate_market_activity(self) -> None:
         """Simulate decentralized F_i exchange activity for active FoundUps."""
@@ -963,9 +1101,57 @@ class FoundUpsModel:
         state = self._state_store.get_state()
         epoch_rewards = float(state.total_stakes) * 0.01  # 1% of total stakes per epoch
         if epoch_rewards > 0 and self._pool_distributor.participants:
-            self._pool_distributor.distribute_epoch(
+            distribution = self._pool_distributor.distribute_epoch(
                 epoch=self._epoch_counter,
                 total_ups_rewards=epoch_rewards,
+            )
+            self._record_epoch_distribution(distribution)
+
+    def _record_epoch_distribution(self, distribution: object) -> None:
+        """Record epoch distribution to ledger and optionally publish Layer-D anchor."""
+        entry = self._epoch_ledger.record_from_distribution(distribution)
+        daemon = self._fam_bridge.get_daemon()
+        if daemon:
+            daemon.emit(
+                event_type="epoch_ledger_recorded",
+                payload={
+                    "epoch": entry.epoch_number,
+                    "entry_hash": entry.entry_hash,
+                    "participant_count": len(entry.participant_rewards),
+                    "total_distributed": round(float(entry.total_fi_distributed), 6),
+                },
+                actor_id="epoch_ledger",
+                foundup_id=self._f0_source_foundup_id,
+            )
+
+        if not self._anchor_connector:
+            return
+
+        every = max(1, int(self._config.layer_d_anchor_every_n_epochs))
+        if entry.epoch_number % every != 0:
+            return
+
+        commitment = self._epoch_ledger.prepare_settlement_commitment(entry.epoch_number)
+        if commitment is None:
+            return
+
+        result = self._anchor_connector.publish_commitment(
+            commitment,
+            force=bool(self._config.layer_d_anchor_force_republish),
+        )
+        if daemon:
+            daemon.emit(
+                event_type="settlement_anchor_published",
+                payload={
+                    "epoch": entry.epoch_number,
+                    "success": bool(result.get("success", False)),
+                    "status": result.get("status"),
+                    "tx_ref": result.get("tx_ref"),
+                    "idempotent_hit": bool(result.get("idempotent_hit", False)),
+                    "error": result.get("error"),
+                },
+                actor_id="btc_anchor_connector",
+                foundup_id=self._f0_source_foundup_id,
             )
 
     def _simulate_012_allocations(self) -> None:
@@ -1758,6 +1944,7 @@ class FoundUpsModel:
         econ_stats = self._token_econ_engine.get_system_stats()
         fee_metrics = self._fee_tracker.get_sustainability_metrics()
         tide_metrics = self._tide_engine.get_ecosystem_metrics()
+        anchor_stats = self._anchor_connector.get_stats() if self._anchor_connector else {}
         scenario_pack = fee_metrics.get("scenario_pack", {})
         downside = scenario_pack.get("downside", {})
         base = scenario_pack.get("base", {})
@@ -1780,6 +1967,7 @@ class FoundUpsModel:
             "total_tokens": state.total_tokens_circulating,
             "total_dex_trades": state.total_dex_trades,
             "total_dex_volume_ups": state.total_dex_volume_ups,
+            "total_operational_profit_ups": state.total_operational_profit_ups,
             "agent_count": len(self._agents),
             "founders": len([a for a in self._agents.values() if a.agent_type == "founder"]),
             "users": len([a for a in self._agents.values() if a.agent_type == "user"]),
@@ -1788,6 +1976,14 @@ class FoundUpsModel:
             "fi_outstanding": econ_stats["total_fi_outstanding"],
             "btc_vault_total": econ_stats["total_btc_vault"],
             "fees_collected": econ_stats["total_fees_ops"] + econ_stats["total_fees_insurance"],
+            "operational_profit_gross_ups": econ_stats["operational_profit_gross_ups"],
+            "operational_cost_ups": econ_stats["operational_cost_ups"],
+            "operational_profit_net_ups": econ_stats["operational_profit_net_ups"],
+            "operational_proxy_distributions_ups": econ_stats["operational_proxy_distributions_ups"],
+            "operational_foundup_treasury_ups": econ_stats["operational_foundup_treasury_ups"],
+            "operational_network_pool_ups": econ_stats["operational_network_pool_ups"],
+            "proxy_exit_volume_ups": econ_stats["proxy_exit_volume_ups"],
+            "proxy_exit_fees_ups": econ_stats["proxy_exit_fees_ups"],
             "investor_pool_rate": self._investor_pool.founder_share_per_foundup,
             "investor_hurdle_met": self._investor_pool.return_hurdle_met,
             "f0_seed_btc": self._f0_seed_btc,
@@ -1812,6 +2008,12 @@ class FoundUpsModel:
             "allocation_ups_total": self._allocation_engine.total_allocated_ups,
             "allocation_fi_total": self._allocation_engine.total_fi_acquired,
             "epochs_completed": self._epoch_counter,
+            "layer_d_anchor_enabled": bool(self._anchor_connector),
+            "layer_d_anchor_mode": anchor_stats.get("mode", "disabled"),
+            "layer_d_anchor_total_published": int(anchor_stats.get("total_published", 0)),
+            "layer_d_anchor_total_confirmed": int(anchor_stats.get("total_confirmed", 0)),
+            "layer_d_anchor_total_failed": int(anchor_stats.get("total_failed", 0)),
+            "layer_d_anchor_replay_guards_triggered": int(anchor_stats.get("replay_guards_triggered", 0)),
             "pure_step_shadow_checks": self._pure_step_shadow_checks,
             "pure_step_shadow_failures": self._pure_step_shadow_failures,
             "pure_step_shadow_last_tick": int(self._pure_step_shadow_last.get("tick", 0)),

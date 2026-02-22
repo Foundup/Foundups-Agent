@@ -40,6 +40,11 @@ class SimulatorConfig:
     max_token_supply: int = 21_000_000
     token_release_per_tick: int = 100
     founder_max_foundups: int = 3  # Per-founder cap for new FoundUps
+    layer_d_anchor_enabled: bool = False
+    layer_d_anchor_every_n_epochs: int = 1
+    layer_d_anchor_force_republish: bool = False
+    layer_d_anchor_mode: str = "mock"
+    layer_d_anchor_db_path: Optional[str] = None
 
     # Agent behavior
     agent_action_probability: float = 0.3  # Chance to act each tick

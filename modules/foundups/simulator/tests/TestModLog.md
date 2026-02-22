@@ -2,6 +2,26 @@
 
 ## Test Modification Log (WSP 22 Compliance)
 
+### 2026-02-21 - Proxy distribution + operational profit lane regression
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_operational_profit_proxy_flow.py modules/foundups/simulator/tests/test_fam_lifecycle_flow.py modules/foundups/simulator/tests/test_alignment_and_tokenomics.py -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests -q --ignore=modules/foundups/simulator/tests/test_sse_server.py`
+
+**Status**:
+- `12/12 PASSED` (targeted operational-profit/proxy boundary set)
+- `130/130 PASSED` (full simulator suite excluding SSE module)
+
+**Coverage**:
+- Added `test_operational_profit_proxy_flow.py`
+  - verifies operational PnL routes to 012 proxy owner, not agent wallet.
+  - verifies stake/exit action math over proxy distribution lane.
+  - verifies CABR task payout credits proxy owner semantics.
+  - verifies trading-classified FoundUp emits operational-profit distribution events.
+- Updated `test_fam_lifecycle_flow.py`
+  - asserts `fi_mined_for_work` emission and owner F_i credit on payout pipeline.
+
+---
+
 ### 2026-02-18 - Contract alignment guardrails (SSE interface + genesis doc math)
 **Command**:
 - `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_docs_contract_alignment.py -q`
@@ -386,3 +406,30 @@
 
 **Environment note**:
 - `test_sse_server.py` remains dependency-gated in this environment (`fastapi` missing).
+
+### 2026-02-21 - Epoch pre-settlement commitment coverage
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_epoch_ledger_settlement_commitment.py -q`
+
+**Coverage**:
+- `test_prepare_settlement_commitment_returns_none_when_epoch_missing`
+- `test_prepare_settlement_commitment_contains_expected_fields`
+
+**Status**:
+- Validates Layer D boundary semantics remain explicit as pre-settlement until external anchoring exists.
+
+### 2026-02-22 - Layer-D runtime anchoring coverage
+**Commands**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_parameter_registry.py modules/foundups/simulator/tests/test_epoch_ledger_settlement_commitment.py modules/foundups/simulator/tests/test_btc_anchor_connector.py modules/foundups/simulator/tests/test_layer_d_anchor_runtime.py -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests -q --ignore=modules/foundups/simulator/tests/test_sse_server.py`
+
+**Coverage**:
+- Added `test_layer_d_anchor_runtime.py`
+  - `test_layer_d_anchor_publishes_on_configured_cadence`
+  - `test_layer_d_anchor_disabled_records_epoch_without_publish`
+- Extended `test_parameter_registry.py`
+  - validates Layer-D parameter mapping into `SimulatorConfig`
+
+**Status**:
+- `22/22 PASSED` targeted Layer-D set
+- `150/150 PASSED` full simulator suite excluding SSE module

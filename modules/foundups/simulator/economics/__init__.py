@@ -46,6 +46,8 @@ Key Classes:
 from .token_economics import (
     TokenType,
     FeeConfig,
+    OperationalProfitPolicy,
+    OperationalProfitResult,
     SubscriptionTier,
     SubscriptionConfig,
     SUBSCRIPTION_TIERS,
@@ -252,6 +254,16 @@ from .epoch_ledger import (
     reset_epoch_ledgers,
 )
 
+from .btc_anchor_connector import (
+    AnchorMode,
+    AnchorStatus,
+    AnchorRecord,
+    BTCAnchorConnector,
+    get_anchor_connector,
+    reset_anchor_connector,
+    LAYER_D_ENABLED,
+)
+
 from .participation_sentinel import (
     AlertType,
     RecommendedAction,
@@ -340,6 +352,8 @@ __all__ = [
     # Token economics (Human vs Agent)
     "TokenType",
     "FeeConfig",
+    "OperationalProfitPolicy",
+    "OperationalProfitResult",
     "AgentExecutionWallet",
     "HumanUPSAccount",
     "StakedPosition",
@@ -509,6 +523,14 @@ __all__ = [
     "EpochLedger",
     "get_epoch_ledger",
     "reset_epoch_ledgers",
+    # Layer-D BTC Anchor Connector (WSP 78 - blockchain settlement)
+    "AnchorMode",
+    "AnchorStatus",
+    "AnchorRecord",
+    "BTCAnchorConnector",
+    "get_anchor_connector",
+    "reset_anchor_connector",
+    "LAYER_D_ENABLED",
     # Participation Sentinel (WSP 26 Section 15 - AI pattern detection)
     "AlertType",
     "RecommendedAction",

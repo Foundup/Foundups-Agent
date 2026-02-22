@@ -28,7 +28,7 @@ Reference: WSP 26 Section 15, WSP 29 (CABR integration)
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 import hashlib
 import json
@@ -167,7 +167,7 @@ class EpochLedger:
 
         entry = EpochEntry(
             epoch_number=epoch,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             total_fi_distributed=total,
             pool_allocations=pool_allocations,
             participant_rewards=participant_rewards,
@@ -425,7 +425,7 @@ class EpochLedger:
             "foundup": self.foundup_id,
             "epoch": epoch,
             "merkle_root": merkle_root,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # 20-byte OP_RETURN payload (40 hex chars)
@@ -434,6 +434,65 @@ class EpochLedger:
         ).hexdigest()[:40]
 
         return op_return_hex
+
+    def prepare_settlement_commitment(self, epoch: int) -> Optional[Dict]:
+        """Prepare pre-settlement evidence for external blockchain anchoring.
+
+        This payload is intentionally off-chain. Final settlement remains pending
+        until an external anchor connector publishes it and returns tx metadata.
+        """
+        anchor_hex = self.anchor_to_chain(epoch)
+        if not anchor_hex:
+            return None
+
+        entry = next((e for e in self.entries if e.epoch_number == epoch), None)
+        if entry is None:
+            return None
+
+        return {
+            "status": "pre_settlement",
+            "wsp_78_layer": "D_pending",
+            "requires": "external_btc_anchor_connector",
+            "foundup_id": self.foundup_id,
+            "epoch": epoch,
+            "anchor_hex": anchor_hex,
+            "merkle_root": self.merkle_roots.get(epoch),
+            "entry_hash": entry.entry_hash,
+            "total_distributed": entry.total_fi_distributed,
+            "participant_count": len(entry.participant_rewards),
+            "timestamp": entry.timestamp,
+        }
+
+    def anchor_epoch(self, epoch: int, force: bool = False) -> Optional[Dict]:
+        """Anchor epoch to blockchain via Layer-D connector.
+
+        Convenience method that combines prepare_settlement_commitment()
+        with BTCAnchorConnector.publish_commitment().
+
+        Args:
+            epoch: Epoch number to anchor
+            force: Force re-anchor even if already anchored
+
+        Returns:
+            Anchor result dict, or None if commitment not available
+        """
+        commitment = self.prepare_settlement_commitment(epoch)
+        if commitment is None:
+            return None
+
+        try:
+            from .btc_anchor_connector import get_anchor_connector
+
+            connector = get_anchor_connector()
+            return connector.publish_commitment(commitment, force=force)
+        except ImportError:
+            # Anchor connector not available
+            return {
+                "success": False,
+                "error": "btc_anchor_connector not available",
+                "foundup_id": self.foundup_id,
+                "epoch": epoch,
+            }
 
 
 # Singleton management
