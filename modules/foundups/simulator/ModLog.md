@@ -1,5 +1,48 @@
 # Simulator ModLog
 
+## 2026-02-22 - pAVS Submission Checklist Execution
+
+### Why
+012 requested full execution of the submission checklist rather than planning-only review.
+
+### Changes
+- Updated `docs/FOUNDUPS_PAVS_SUBMISSION_CHECKLIST.md` with:
+  - concrete pass/fail marks per section (A-H),
+  - command evidence,
+  - hostile-referee summary,
+  - remaining blockers.
+- Generated venue-neutral submission export artifacts:
+  - `docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE_2026-02-22.zip`
+  - `docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE.md`
+
+### Outcome
+- Checklist is now mostly complete.
+- Remaining blockers:
+  1. Update manuscript base commit hash at final submission commit.
+
+---
+
+## 2026-02-22 - pAVS Paper Submission Package Hardening
+
+### Why
+Paper workflow moved from section drafting to submission preparation. The docs needed a canonical manuscript path, submission checklist, and reusable submission artifacts.
+
+### Changes
+- Added `docs/FOUNDUPS_PAVS_SUBMISSION_CHECKLIST.md`:
+  - final pre-submit gates for math consistency, evidence discipline, reproducibility, and disclosure.
+- Added `docs/FOUNDUPS_PAVS_COVER_LETTER_TEMPLATE.md`:
+  - venue-neutral cover letter template with reproducibility/legal boundary language.
+- Updated `docs/FOUNDUPS_SELF_SUSTAINING_ECON_MODEL_PAPER_OUTLINE.md`:
+  - switched references from template drafting to completed manuscript + submission phase tasks.
+- Updated `docs/FOUNDUPS_PAVS_PAPER_SECTION_PROMPTS_0102.md`:
+  - added submission-phase rules and final-pass prompts for patching the existing manuscript in place.
+
+### Notes
+- Submission manuscript path is now:
+  - `modules/foundups/simulator/docs/FOUNDUPS_PAVS_PAPER_MANUSCRIPT.md`
+
+---
+
 ## 2026-02-22 - Layer-D BTC Anchor Connector (WSP 78 Settlement)
 
 ### Why
@@ -2322,3 +2365,21 @@ External audit confirmed architecture is mostly aligned but two items were still
 ### Behavior
 - Default remains unchanged (`layer_d_anchor_enabled=False`).
 - When enabled, anchoring cadence is deterministic by epoch modulo.
+
+## 2026-02-22 - pAVS Submission Checklist Closure
+
+### Why
+- Final submission docs had one stale checklist blocker entry even though manuscript base hash already matched repository HEAD.
+- Submission bundle manifest needed refresh after checklist edits.
+
+### Changes
+- Updated `docs/FOUNDUPS_PAVS_SUBMISSION_CHECKLIST.md`:
+  - marked base commit hash item complete.
+  - added explicit hash verification evidence (`git rev-parse HEAD`).
+  - cleared stale hostile-referee minor findings and remaining blocker.
+- Regenerated `docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE_2026-02-22.zip`.
+- Updated `docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE.md` with refreshed ZIP and checklist hashes.
+
+### Validation
+- Manifest ZIP hash verified against actual artifact:
+  - `b3f26924fbd36abc1f6bafde59e63eaea1e9cd86cf0db0168c57c502971cbbbf`

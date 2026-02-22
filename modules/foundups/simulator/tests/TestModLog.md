@@ -2,6 +2,35 @@
 
 ## Test Modification Log (WSP 22 Compliance)
 
+### 2026-02-22 - Submission checklist determinism verification
+**Command**:
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_scenario_runner_determinism.py -q`
+
+**Status**:
+- `1/1 PASSED`
+- 2 non-blocking pytest config warnings in this environment (`asyncio_*` unknown config options)
+
+**Purpose**:
+- Confirm determinism reference in submission checklist is currently valid.
+
+---
+
+### 2026-02-22 - Paper submission docs packaging (docs-only)
+**Commands**:
+- None (documentation-only update)
+
+**Status**:
+- No simulator code paths changed.
+- No tests executed for this docs-only pass.
+
+**Coverage**:
+- Added submission checklist and cover letter templates in `modules/foundups/simulator/docs/`.
+- Updated outline and delegated prompt pack for submission-phase workflow.
+- Added venue-neutral submission bundle export metadata:
+  - `FOUNDUPS_PAVS_SUBMISSION_PACKAGE.md`
+
+---
+
 ### 2026-02-21 - Proxy distribution + operational profit lane regression
 **Commands**:
 - `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; python -m pytest modules/foundups/simulator/tests/test_operational_profit_proxy_flow.py modules/foundups/simulator/tests/test_fam_lifecycle_flow.py modules/foundups/simulator/tests/test_alignment_and_tokenomics.py -q`
@@ -433,3 +462,12 @@
 **Status**:
 - `22/22 PASSED` targeted Layer-D set
 - `150/150 PASSED` full simulator suite excluding SSE module
+
+### 2026-02-22 - Submission package integrity verification
+**Commands**:
+- `Get-FileHash modules/foundups/simulator/docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE_2026-02-22.zip -Algorithm SHA256`
+- `Select-String -Path modules/foundups/simulator/docs/FOUNDUPS_PAVS_SUBMISSION_PACKAGE.md -Pattern '^- SHA256: \`([0-9a-f]+)\`$'`
+
+**Status**:
+- Manifest hash and artifact hash match exactly:
+  - `b3f26924fbd36abc1f6bafde59e63eaea1e9cd86cf0db0168c57c502971cbbbf`

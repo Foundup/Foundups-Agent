@@ -3,6 +3,17 @@
 ## Purpose
 Define a publication-grade paper architecture for the FoundUps economic system, with executable prompts for delegated 0102 workers and a strict CTO review loop.
 
+Execution companion docs:
+- `modules/foundups/simulator/docs/FOUNDUPS_PAVS_PAPER_MANUSCRIPT.md`
+- `modules/foundups/simulator/docs/FOUNDUPS_PAVS_PAPER_SECTION_PROMPTS_0102.md`
+- `modules/foundups/simulator/docs/FOUNDUPS_PAVS_SUBMISSION_CHECKLIST.md`
+- `modules/foundups/simulator/docs/FOUNDUPS_PAVS_COVER_LETTER_TEMPLATE.md`
+
+## Current Status (2026-02-22)
+- Full manuscript draft completed (Sections 0-11).
+- Core section-level drafting prompts retained for delegated rewrites.
+- Next phase is submission hardening: consistency pass, packaging, and venue formatting.
+
 ## Working Title
 "A Self-Sustaining Economic Model for FoundUps: Bitcoin-Reserve Anchoring, Agentic Production, and Regenerative Value Circulation"
 
@@ -169,14 +180,14 @@ Use this after each section arrives:
 - "Review this section as a hostile but fair referee. Identify: (1) any mathematical inconsistency, (2) unsupported claims, (3) missing edge-case analysis, and (4) required revisions before publication quality. Return a prioritized revision list with severity labels: Critical, Major, Minor."
 
 ## Assembly Plan
-1. Draft sections in parallel by delegated 0102 workers.
-2. Run CTO rubric on each section.
-3. Merge accepted sections into full manuscript.
-4. Perform final coherence pass (notation, claims, references, tone).
-5. Produce submission-ready paper + appendix.
+1. Run hostile-referee pass against completed manuscript.
+2. Resolve all critical/major consistency issues.
+3. Verify reproducibility pack and artifact paths.
+4. Finalize cover letter and submission metadata.
+5. Export venue-formatted package.
 
 ## Immediate Next Task Queue
-1. Execute Section 2 prompt (formal architecture) first.
-2. Execute Section 3 prompt (accounting identities) second.
-3. Execute Section 5 prompt (methods/calibration) third.
-4. Do first CTO review cycle before writing comparative narrative sections.
+1. Update base commit hash and run final claim-path verification.
+2. Complete pre-submit checklist (`FOUNDUPS_PAVS_SUBMISSION_CHECKLIST.md`).
+3. Generate venue-specific abstract/intro compression pass.
+4. Produce final submission package (manuscript + cover letter + appendices).
