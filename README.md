@@ -1,5 +1,10 @@
 # FoundUps - Compute Focus Network
 
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![WSP Framework](https://img.shields.io/badge/WSP-100%2B%20protocols-green.svg)](WSP_framework/)
+[![0102 Agents](https://img.shields.io/badge/0102-agent%20swarm-purple.svg)](modules/ai_intelligence/)
+
 **Core question:** **Where do you want to focus your compute?**
 
 FoundUps is a compute-allocation system for building autonomous ventures:

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -r requirements.txt
+
+      - name: Run simulator tests
+        run: |
+          python -m pytest modules/foundups/simulator/tests/ -v --tb=short --ignore=modules/foundups/simulator/tests/test_sse_server.py
+
+      - name: Run FAM tests
+        run: |
+          python -m pytest modules/foundups/agent_market/tests/ -v --tb=short
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Run ruff check
+        run: ruff check modules/ --ignore E501,F401 --exit-zero
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for secrets
+        run: |
+          # Check for common secret patterns in tracked files
+          ! git grep -l "AIza\|sk-\|ghp_\|gho_\|AKIA" -- "*.py" "*.json" | grep -v node_modules | grep -v ".example" || echo "Warning: Possible secrets found"
+
+      - name: Verify .env not tracked
+        run: |
+          ! git ls-files | grep "^\.env$" || (echo "ERROR: .env is tracked!" && exit 1)
