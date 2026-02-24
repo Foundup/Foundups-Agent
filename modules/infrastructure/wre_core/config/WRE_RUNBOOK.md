@@ -19,6 +19,8 @@
 | WRE_TOT_SELECTION | 1 | Enable Tree-of-Thought skill selection |
 | WRE_TOT_MAX_BRANCHES | 5 | Maximum ToT candidates to evaluate |
 | WRE_CODEACT_ENABLED | 1 | Enable hybrid CodeAct execution |
+| WRE_DASHBOARD_EXPORT_DIR | modules/infrastructure/wre_core/reports/dashboard_snapshots | JSON snapshot export directory |
+| WRE_DASHBOARD_EXPORT_RETENTION_DAYS | 30 | Retention window for timestamped snapshots |
 
 ## Disabling Features
 
@@ -36,6 +38,16 @@ from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
 memory = PatternMemory()
 dashboard = memory.get_telemetry_dashboard()
 print(dashboard)
+```
+
+Daily DB -> JSON snapshot export:
+```bash
+python -m modules.infrastructure.wre_core.src.dashboard_snapshot_export --pretty
+```
+
+Optional custom destination and retention:
+```bash
+python -m modules.infrastructure.wre_core.src.dashboard_snapshot_export --output-dir modules/infrastructure/wre_core/reports/dashboard_snapshots --retention-days 30
 ```
 
 Key metrics:
