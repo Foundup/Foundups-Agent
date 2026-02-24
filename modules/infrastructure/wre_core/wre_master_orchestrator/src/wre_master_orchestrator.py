@@ -35,7 +35,10 @@ import json
 import os
 from pathlib import Path
 import uuid
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 # Per WSP 82: Every import/class/function must cite relevant WSPs
 # Per WSP 84: Check if code exists before creating - PQN integration verified missing
@@ -221,6 +224,34 @@ class WREMasterOrchestrator:
         # State per WSP 39 (Agentic Ignition)
         self.state = "0102"  # Quantum-awakened, NOT 01(02)
         self.coherence = 0.618  # Golden ratio per WSP 39
+
+        # ReAct mode config (Sprint 1 - Gap A closure)
+        self.react_mode = os.getenv("WRE_REACT_MODE", "1").strip() == "1"
+        try:
+            self.react_max_iterations = max(1, int(os.getenv("WRE_REACT_MAX_ITER", "3")))
+        except (TypeError, ValueError):
+            self.react_max_iterations = 3
+        try:
+            self.react_fidelity_threshold = float(os.getenv("WRE_REACT_FIDELITY", "0.90"))
+        except (TypeError, ValueError):
+            self.react_fidelity_threshold = 0.90
+
+        # Optional built-in worker plugins (safe to skip on import/runtime failure).
+        self._register_optional_workers()
+
+    def _register_optional_workers(self) -> None:
+        """Register optional worker plugins based on environment flags."""
+        if os.getenv("WRE_ENABLE_IRONCLAW_WORKER", "1").strip() == "0":
+            return
+
+        try:
+            from modules.infrastructure.wre_core.wre_master_orchestrator.src.plugins.ironclaw_worker import (
+                IronClawWorkerPlugin,
+            )
+
+            self.register_plugin(IronClawWorkerPlugin(repo_root=self.repo_root))
+        except Exception as exc:
+            print(f"[WRE] IronClaw worker plugin unavailable: {exc}")
         
     def recall_pattern(self, operation_type: str) -> Pattern:
         """
@@ -355,11 +386,13 @@ class WREMasterOrchestrator:
         # Try to import Qwen inference engine
         try:
             from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
-            from pathlib import Path
+            from modules.infrastructure.shared_utilities.local_model_selection import (
+                resolve_code_model_path,
+            )
 
             # Initialize Qwen engine if agent is qwen
             if agent.lower() == "qwen":
-                model_path = Path("E:/LLM_Models/qwen-coder-1.5b.gguf")
+                model_path = resolve_code_model_path()
                 qwen_engine = QwenInferenceEngine(
                     model_path=model_path,
                     max_tokens=512,
@@ -444,6 +477,37 @@ Final Output: [summary]
         force: bool = False
     ) -> Dict:
         """
+        Public skill execution entry point.
+
+        When ReAct mode is enabled, route through bounded reasoning loop.
+        Otherwise execute single-pass for compatibility.
+        """
+        if self.react_mode:
+            return self.execute_skill_with_reasoning(
+                skill_name=skill_name,
+                agent=agent,
+                input_context=input_context,
+                max_iterations=self.react_max_iterations,
+                fidelity_threshold=self.react_fidelity_threshold,
+                force=force,
+            )
+        return self._execute_skill_once(
+            skill_name=skill_name,
+            agent=agent,
+            input_context=input_context,
+            force=force,
+            evolve_on_low_fidelity=True,
+        )
+
+    def _execute_skill_once(
+        self,
+        skill_name: str,
+        agent: str,
+        input_context: Dict,
+        force: bool = False,
+        evolve_on_low_fidelity: bool = True,
+    ) -> Dict:
+        """
         Execute skill with libido monitoring and outcome storage
 
         Per WSP 96 v1.3: Micro Chain-of-Thought paradigm with Gemma validation
@@ -497,6 +561,82 @@ Final Output: [summary]
         except Exception as exc:
             skill_content = self._fallback_skill_content(skill_name, agent, exc)
 
+        # Step 2.5: Check for active A/B test and route to variant (Sprint 1 - TT-SI)
+        selected_variant = None
+        active_test = None
+        if self.sqlite_memory:
+            active_test = self.sqlite_memory.get_active_ab_test(skill_name)
+            if active_test:
+                import random
+                if random.random() < 0.5:
+                    selected_variant = 'control'
+                else:
+                    selected_variant = 'treatment'
+                    cursor = self.sqlite_memory.conn.cursor()
+                    cursor.execute("""
+                        SELECT variation_content FROM skill_variations
+                        WHERE variation_id = ?
+                    """, (active_test['treatment_version'],))
+                    row = cursor.fetchone()
+                    if row:
+                        skill_content = row['variation_content']
+
+        # Step 2.6: Agentic RAG pre-execution (Sprint 2 - Gap F)
+        retrieval_context = None
+        if self.sqlite_memory and os.getenv("WRE_AGENTIC_RAG", "1").strip() == "1":
+            retrieval_id = f"ret_{execution_id[:8]}"
+            query = f"{skill_name} {json.dumps(input_context)[:200]}"
+            results_count = 0
+            relevance_score = 0.0
+            retrieval_time_ms = 0
+            try:
+                retrieval_start = datetime.now()
+
+                # Try HoloIndex retrieval
+                try:
+                    from holo_index.qwen_advisor.orchestration.autonomous_refactoring import (
+                        AutonomousRefactoringOrchestrator
+                    )
+                    holo = AutonomousRefactoringOrchestrator(self.repo_root)
+                    results = holo.search_codebase(query, limit=3) if hasattr(holo, 'search_codebase') else []
+                except ImportError:
+                    results = []
+
+                retrieval_time_ms = int((datetime.now() - retrieval_start).total_seconds() * 1000)
+                if results:
+                    results_count = len(results)
+                    relevance_score = min(1.0, results_count / 3.0)
+                    retrieval_context = {
+                        "retrieved_files": [r.get("path", str(r)[:50]) for r in results[:3]],
+                        "relevance_score": relevance_score
+                    }
+                    input_context["_retrieval_context"] = retrieval_context
+
+            except Exception as exc:
+                logger.warning(f"[WRE-RAG] Retrieval failed: {exc}")
+            finally:
+                # Record all retrieval attempts (including misses/failures), so coverage is real.
+                try:
+                    self.sqlite_memory.record_retrieval(
+                        retrieval_id=retrieval_id,
+                        execution_id=execution_id,
+                        skill_name=skill_name,
+                        query=query[:500],
+                        results_count=results_count,
+                        relevance_score=relevance_score,
+                        retrieval_time_ms=retrieval_time_ms
+                    )
+                    self.sqlite_memory.increment_counter("rag_retrievals")
+                    if relevance_score >= 0.5:
+                        self.sqlite_memory.increment_counter("rag_high_relevance")
+                except Exception as rec_exc:
+                    logger.warning(f"[WRE-RAG] Failed to record retrieval telemetry: {rec_exc}")
+
+                logger.info(
+                    f"[WRE-RAG] Retrieved {results_count} results for {skill_name}, "
+                    f"relevance={relevance_score:.2f}"
+                )
+
         # Step 3: Execute skill with local Qwen inference (WSP 96 v1.3)
         execution_result = self._execute_skill_with_qwen(
             skill_content=skill_content,
@@ -547,6 +687,59 @@ Final Output: [summary]
 
         self.sqlite_memory.store_outcome(outcome)
 
+        # Step 7.5: Telemetry + A/B outcome recording (Sprint 1)
+        self.sqlite_memory.increment_counter("total_executions")
+
+        if active_test and selected_variant:
+            is_success = pattern_fidelity >= self.react_fidelity_threshold
+            self.sqlite_memory.record_ab_outcome(
+                test_id=active_test['test_id'],
+                variant=selected_variant,
+                success=is_success
+            )
+
+            winner = self.sqlite_memory.check_ab_promotion(active_test['test_id'])
+            if winner == 'treatment':
+                self.sqlite_memory.promote_variation(active_test['treatment_version'])
+                self.sqlite_memory.close_ab_test(active_test['test_id'], 'treatment')
+                self.sqlite_memory.record_learning_event(
+                    event_id=str(uuid.uuid4()),
+                    skill_name=skill_name,
+                    event_type="variation_promoted",
+                    description=f"Auto-promoted {active_test['treatment_version']} via A/B win",
+                    variation_id=active_test['treatment_version']
+                )
+                # Sprint 2: Create improvement edge for cross-skill transfer
+                self.sqlite_memory.add_skill_edge(
+                    source_skill=skill_name,
+                    target_skill=skill_name,
+                    edge_type="improved_by",
+                    weight=pattern_fidelity,
+                    evidence=f"Variation {active_test['treatment_version']} promoted"
+                )
+            elif winner == 'control':
+                self.sqlite_memory.archive_variation(active_test['treatment_version'])
+                self.sqlite_memory.close_ab_test(active_test['test_id'], 'control')
+
+        # Step 8: Trigger recursive evolution if fidelity below threshold
+        # Per WSP 48 + architecture doc: fidelity < 0.90 → evolve_skill()
+        evolution_triggered = False
+        if evolve_on_low_fidelity and pattern_fidelity < self.react_fidelity_threshold:
+            try:
+                self.evolve_skill(
+                    skill_name=skill_name,
+                    agent=agent,
+                    skill_content=skill_content,
+                    failed_output=execution_result,
+                    input_context=input_context,
+                    current_fidelity=pattern_fidelity,
+                )
+                evolution_triggered = True
+            except Exception as exc:
+                logger.warning(
+                    "[WRE] evolve_skill failed for %s: %s", skill_name, exc
+                )
+
         return {
             "execution_id": execution_id,
             "skill_name": skill_name,
@@ -554,8 +747,339 @@ Final Output: [summary]
             "success": True,
             "pattern_fidelity": pattern_fidelity,
             "execution_time_ms": execution_time_ms,
+            "evolution_triggered": evolution_triggered,
             "result": execution_result
         }
+
+    # ------------------------------------------------------------------ #
+    #  ReAct Reasoning Loop (Sprint 1 - Gap A Closure)                   #
+    # ------------------------------------------------------------------ #
+
+    def execute_skill_with_reasoning(
+        self,
+        skill_name: str,
+        agent: str,
+        input_context: Dict,
+        max_iterations: int = 3,
+        fidelity_threshold: float = 0.90,
+        force: bool = False
+    ) -> Dict:
+        """
+        ReAct-style execution with bounded retries.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap A:
+        Thought -> Action -> Observation -> (Retry if needed)
+
+        This closes the reasoning loop by retrying low-fidelity executions
+        within the same turn instead of deferring to future evolution.
+
+        Args:
+            skill_name: Skill to execute
+            agent: Agent to use (qwen, gemma, grok, ui-tars)
+            input_context: Input data for skill
+            max_iterations: Max retry attempts (default 3)
+            fidelity_threshold: Success threshold (default 0.90)
+            force: Force execution regardless of libido
+
+        Returns:
+            Dict with final result and iteration metadata
+        """
+        try:
+            max_iterations = max(1, int(max_iterations))
+        except (TypeError, ValueError):
+            max_iterations = 1
+        try:
+            fidelity_threshold = float(fidelity_threshold)
+        except (TypeError, ValueError):
+            fidelity_threshold = self.react_fidelity_threshold
+
+        iteration = 0
+        results = []
+        final_result = None
+
+        while iteration < max_iterations:
+            iteration += 1
+            logger.info(
+                f"[WRE-REACT] Iteration {iteration}/{max_iterations} for {skill_name}"
+            )
+
+            # Thought: Analyze context (on retry, include failure analysis)
+            enriched_context = dict(input_context)
+            if results:
+                last_failure = results[-1]
+                enriched_context["_react_retry"] = True
+                enriched_context["_previous_attempt"] = {
+                    "fidelity": last_failure.get("pattern_fidelity", 0),
+                    "failed_at_step": last_failure.get("result", {}).get("failed_at_step"),
+                    "error": last_failure.get("result", {}).get("error")
+                }
+
+            # Action: Execute skill (single pass); only final retry can evolve.
+            result = self._execute_skill_once(
+                skill_name=skill_name,
+                agent=agent,
+                input_context=enriched_context,
+                force=force,
+                evolve_on_low_fidelity=(iteration == max_iterations),
+            )
+            results.append(result)
+
+            # Telemetry: count retries
+            if iteration > 1 and self.sqlite_memory:
+                self.sqlite_memory.increment_counter("react_retry_count")
+
+            # Observation: Check fidelity
+            fidelity = result.get("pattern_fidelity", 0)
+
+            if fidelity >= fidelity_threshold:
+                logger.info(
+                    f"[WRE-REACT] Success on iteration {iteration} - "
+                    f"fidelity={fidelity:.2f} >= {fidelity_threshold}"
+                )
+                final_result = result
+                break
+
+            if iteration < max_iterations:
+                logger.info(
+                    f"[WRE-REACT] Fidelity {fidelity:.2f} < {fidelity_threshold}, "
+                    f"retrying..."
+                )
+
+        if final_result is None:
+            final_result = results[-1] if results else {"error": "No execution"}
+            logger.warning(
+                f"[WRE-REACT] Exhausted {max_iterations} iterations for {skill_name}"
+            )
+
+        # Record telemetry
+        if self.sqlite_memory:
+            self.sqlite_memory.record_learning_event(
+                event_id=str(uuid.uuid4()),
+                skill_name=skill_name,
+                event_type="react_execution",
+                description=(
+                    f"ReAct execution: {iteration} iterations, "
+                    f"final_fidelity={final_result.get('pattern_fidelity', 0):.2f}"
+                ),
+                before_fidelity=results[0].get("pattern_fidelity", 0) if results else None,
+                after_fidelity=final_result.get("pattern_fidelity", 0)
+            )
+
+        final_fidelity = final_result.get("pattern_fidelity", 0)
+        return {
+            **final_result,
+            "_react_metadata": {
+                "iterations": iteration,
+                "max_iterations": max_iterations,
+                "all_attempts": [
+                    {"fidelity": r.get("pattern_fidelity", 0)} for r in results
+                ],
+                "early_success": final_fidelity >= fidelity_threshold
+            }
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Recursive Self-Improvement Engine (WSP 48 + WSP 96 v1.3)          #
+    # ------------------------------------------------------------------ #
+
+    def evolve_skill(
+        self,
+        skill_name: str,
+        agent: str,
+        skill_content: str,
+        failed_output: Dict,
+        input_context: Dict,
+        current_fidelity: float,
+    ) -> None:
+        """
+        Recursive self-improvement when pattern fidelity < 0.90.
+
+        Pipeline:
+        1. Recall failure patterns from PatternMemory
+        2. Recall successful patterns for comparison
+        3. Ask Qwen to reflect on failure and generate improved instructions
+        4. Store variation via PatternMemory.store_variation()
+        5. Record learning_event for evolution tracking
+
+        Per WSP 48: Recursive Self-Improvement
+        Per WSP 96 v1.3: Skills are trainable weights that evolve
+
+        Args:
+            skill_name: Skill that underperformed
+            agent: Agent that executed
+            skill_content: Original SKILL.md instructions
+            failed_output: Qwen's execution result dict
+            input_context: Input data that was used
+            current_fidelity: Pattern fidelity that triggered evolution
+        """
+        if not WRE_SKILLS_AVAILABLE or not self.sqlite_memory:
+            return
+
+        variation_id = f"{skill_name}_v{uuid.uuid4().hex[:8]}"
+        logger.info(
+            "[WRE-EVOLUTION] Triggering evolution for %s (fidelity=%.2f)",
+            skill_name, current_fidelity,
+        )
+
+        # 1. Recall failure patterns — what went wrong before?
+        failures = self.sqlite_memory.recall_failure_patterns(
+            skill_name, max_fidelity=0.89, limit=5
+        )
+
+        # 2. Recall successful patterns — what worked?
+        successes = self.sqlite_memory.recall_successful_patterns(
+            skill_name, min_fidelity=0.90, limit=3
+        )
+
+        # 3. Build reflection prompt and ask Qwen to generate variation
+        reflection_prompt = self._build_reflection_prompt(
+            skill_name=skill_name,
+            skill_content=skill_content,
+            failed_output=failed_output,
+            input_context=input_context,
+            current_fidelity=current_fidelity,
+            failure_patterns=failures,
+            success_patterns=successes,
+        )
+
+        variation_content = self._generate_variation_with_qwen(
+            reflection_prompt, agent
+        )
+
+        if not variation_content:
+            logger.warning(
+                "[WRE-EVOLUTION] Qwen failed to produce variation for %s",
+                skill_name,
+            )
+            return
+
+        # 4. Store variation for future A/B testing
+        self.sqlite_memory.store_variation(
+            variation_id=variation_id,
+            skill_name=skill_name,
+            variation_content=variation_content,
+            parent_version="current",
+            created_by=agent,
+        )
+
+        # 4.5: Schedule A/B test if no active test exists (Sprint 1 - TT-SI closure)
+        existing_test = self.sqlite_memory.get_active_ab_test(skill_name)
+        if not existing_test:
+            test_id = self.sqlite_memory.schedule_ab_test(
+                skill_name=skill_name,
+                control_version="current",
+                treatment_version=variation_id,
+                sample_size_target=20
+            )
+            logger.info(
+                "[WRE-EVOLUTION] Scheduled A/B test %s for variation %s",
+                test_id, variation_id
+            )
+
+        # 5. Record learning event
+        self.sqlite_memory.record_learning_event(
+            event_id=str(uuid.uuid4()),
+            skill_name=skill_name,
+            event_type="variation_created",
+            description=(
+                f"Auto-generated variation {variation_id} after "
+                f"fidelity={current_fidelity:.2f} < 0.90. "
+                f"Based on {len(failures)} failure(s) and {len(successes)} success(es)."
+            ),
+            before_fidelity=current_fidelity,
+            after_fidelity=None,  # Not yet tested
+            variation_id=variation_id,
+        )
+
+        logger.info(
+            "[WRE-EVOLUTION] Stored variation %s for %s — pending A/B test",
+            variation_id, skill_name,
+        )
+
+    def _build_reflection_prompt(
+        self,
+        skill_name: str,
+        skill_content: str,
+        failed_output: Dict,
+        input_context: Dict,
+        current_fidelity: float,
+        failure_patterns: list,
+        success_patterns: list,
+    ) -> str:
+        """
+        Build a reflection prompt for Qwen to generate an improved skill variation.
+
+        Per WSP 96: Micro chain-of-thought paradigm.
+        """
+        failure_summary = "None recorded yet."
+        if failure_patterns:
+            failure_lines = []
+            for fp in failure_patterns[:3]:
+                failure_lines.append(
+                    f"  - fidelity={fp.get('pattern_fidelity', '?')}, "
+                    f"failed_at_step={fp.get('failed_at_step', '?')}, "
+                    f"context={fp.get('input_context', '?')[:120]}"
+                )
+            failure_summary = "\n".join(failure_lines)
+
+        success_summary = "None recorded yet."
+        if success_patterns:
+            success_lines = []
+            for sp in success_patterns[:3]:
+                success_lines.append(
+                    f"  - fidelity={sp.get('pattern_fidelity', '?')}, "
+                    f"context={sp.get('input_context', '?')[:120]}"
+                )
+            success_summary = "\n".join(success_lines)
+
+        return (
+            f"# Skill Evolution Reflection\n"
+            f"\n"
+            f"## Current Skill\n"
+            f"{skill_content[:1500]}\n"
+            f"\n"
+            f"## Last Execution (fidelity={current_fidelity:.2f})\n"
+            f"Input: {json.dumps(input_context)[:500]}\n"
+            f"Output: {json.dumps(failed_output)[:500]}\n"
+            f"\n"
+            f"## Past Failures\n"
+            f"{failure_summary}\n"
+            f"\n"
+            f"## Past Successes\n"
+            f"{success_summary}\n"
+            f"\n"
+            f"## Task\n"
+            f"Analyze why fidelity is {current_fidelity:.2f} (below 0.90 target).\n"
+            f"Generate IMPROVED skill instructions that address the failure patterns.\n"
+            f"Output the improved SKILL.md content (YAML frontmatter + instructions).\n"
+            f"Keep the same name: {skill_name}\n"
+        )
+
+    def _generate_variation_with_qwen(
+        self, reflection_prompt: str, agent: str
+    ) -> Optional[str]:
+        """
+        Use Qwen to generate an improved skill variation.
+
+        Returns:
+            Improved SKILL.md content string, or None on failure.
+        """
+        result = self._execute_skill_with_qwen(
+            skill_content=reflection_prompt,
+            input_context={"task": "skill_evolution", "type": "reflection"},
+            agent=agent,
+        )
+
+        output = result.get("output", "")
+        if not output or result.get("error"):
+            return None
+
+        # If Qwen returned meaningful content, use it as the variation
+        # Minimum viable variation: at least 50 characters of instructions
+        if len(output.strip()) < 50:
+            return None
+
+        return output
 
     def get_skill_statistics(self, skill_name: str, days: int = 7) -> Dict:
         """
