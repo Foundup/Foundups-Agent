@@ -23,6 +23,57 @@
     src="https://supreme-oyster-20.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
     type="text/javascript"
   ></script>
+  <script>
+    // FoundUPS Clerk Theme - Dark premium aesthetic
+    window.FOUNDUPS_CLERK_APPEARANCE = {
+      variables: {
+        colorPrimary: '#7c5cfc',
+        colorBackground: '#0a0a0f',
+        colorInputBackground: '#12121a',
+        colorInputText: '#e4e2ec',
+        colorText: '#e4e2ec',
+        colorTextSecondary: '#9e9baf',
+        colorTextOnPrimaryBackground: '#ffffff',
+        colorDanger: '#ff4e4e',
+        colorSuccess: '#4ade80',
+        colorWarning: '#ffd700',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        borderRadius: '12px',
+        colorNeutral: '#6b6880'
+      },
+      elements: {
+        card: {
+          backgroundColor: '#0e0e1c',
+          border: '1px solid rgba(124, 92, 252, 0.2)',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(124, 92, 252, 0.1)'
+        },
+        headerTitle: { color: '#e4e2ec', fontWeight: '600' },
+        headerSubtitle: { color: '#9e9baf' },
+        socialButtonsBlockButton: {
+          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px'
+        },
+        formFieldInput: {
+          backgroundColor: '#12121a',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px',
+          color: '#e4e2ec'
+        },
+        formButtonPrimary: {
+          backgroundColor: '#7c5cfc',
+          borderRadius: '10px',
+          fontWeight: '600'
+        },
+        footerActionLink: { color: '#7c5cfc' }
+      },
+      layout: {
+        socialButtonsPlacement: 'top',
+        socialButtonsVariant: 'blockButton'
+      }
+    };
+  </script>
 
   <link rel="stylesheet" href="css/member.css">
 </head>
@@ -32,6 +83,97 @@
     <img src="/logo-dog.png" alt="FoundUPS" class="loading-logo">
     <div class="loading-text">Checking credentials...</div>
   </div>
+
+  <!-- Username Claim Modal (shown after successful invite validation) -->
+  <div id="usernameModal" class="invite-gate" style="display:none;">
+    <div class="invite-gate-card">
+      <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+      <h2 style="font-size:1.75rem;margin-bottom:0.5rem;">Welcome to FoundUPS!</h2>
+      <p style="color:rgba(228,226,236,0.7);margin-bottom:1.5rem;">Claim your vanity URL. This becomes your member identity.</p>
+
+      <p style="color:rgba(228,226,236,0.5);font-size:0.85rem;margin-bottom:0.5rem;">foundups.com/member/<span style="color:#7c5cfc;font-weight:600;">@yourname</span></p>
+
+      <div style="position:relative;margin-bottom:0.75rem;">
+        <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#7c5cfc;font-weight:600;">@</span>
+        <input type="text" id="usernameInput" placeholder="yourname" maxlength="20"
+          style="width:100%;padding:1rem 1rem 1rem 2.5rem;font-size:1.1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#fff;font-family:'JetBrains Mono',monospace;">
+      </div>
+      <div id="usernameStatus" style="font-size:0.85rem;margin-bottom:0.75rem;min-height:1.5rem;"></div>
+      <button id="claimUsernameBtn" style="width:100%;padding:1rem;background:linear-gradient(135deg,#7c5cfc,#00d4aa);border:none;border-radius:12px;color:#fff;font-weight:600;font-size:1rem;cursor:pointer;">Claim @name</button>
+
+      <p style="color:rgba(228,226,236,0.5);font-size:0.8rem;margin-top:1rem;">3-20 characters. Letters, numbers, underscores only. Choose wisely — this can't be changed!</p>
+    </div>
+  </div>
+
+  <!-- Invite Gate (shown if user has no valid invite) -->
+  <div id="inviteGate" class="invite-gate" style="display:none;">
+    <div class="invite-gate-card">
+      <img src="/logo-dog.png" alt="FoundUPS" style="width:64px;height:auto;margin-bottom:1.5rem;">
+      <h2 style="font-size:1.75rem;margin-bottom:0.5rem;">Do you have an invite to<br><span style="color:#7c5cfc;">Join FoundUPS Alpha?</span></h2>
+      <p style="color:rgba(228,226,236,0.7);margin-bottom:1.5rem;">Like Gmail in 2004 — you need an invite.<br>Get in early. Invite friends. Rise together.</p>
+
+      <div class="invite-toggle" style="display:flex;gap:0.5rem;margin-bottom:1.5rem;">
+        <button id="gateToggleInvite" class="toggle-btn active" style="flex:1;padding:0.75rem;border-radius:8px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.15);color:#fff;cursor:pointer;">I Have an Invite</button>
+        <button id="gateToggleWaitlist" class="toggle-btn" style="flex:1;padding:0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(228,226,236,0.7);cursor:pointer;">Join the Waitlist</button>
+      </div>
+
+      <!-- Invite Code Panel -->
+      <div id="gateInvitePanel">
+        <input type="text" id="gateInviteInput" placeholder="FUP-XXXX-XXXX" maxlength="14"
+          style="width:100%;padding:1rem;font-size:1.1rem;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:2px;margin-bottom:0.75rem;">
+        <div id="gateInviteStatus" style="font-size:0.85rem;margin-bottom:0.75rem;min-height:1.5rem;"></div>
+        <button id="gateVerifyBtn" style="width:100%;padding:1rem;background:linear-gradient(135deg,#7c5cfc,#00d4aa);border:none;border-radius:12px;color:#fff;font-weight:600;font-size:1rem;cursor:pointer;">Verify Invite</button>
+      </div>
+
+      <!-- Waitlist Panel -->
+      <div id="gateWaitlistPanel" style="display:none;">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">✅</div>
+        <p style="color:#00d4aa;font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">You're on the Waitlist!</p>
+        <p style="color:rgba(228,226,236,0.7);font-size:0.9rem;margin-bottom:1rem;">Since you've signed in, you're automatically on our waitlist.</p>
+        <div style="background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+          <p style="color:#00d4aa;font-size:0.9rem;margin:0;">We'll notify you at <strong id="gateUserEmail">your email</strong> when a spot opens up.</p>
+        </div>
+        <p style="color:rgba(228,226,236,0.5);font-size:0.8rem;margin-bottom:1rem;">Got an invite code? Switch to "I Have an Invite" above.</p>
+        <button id="gateSignOutBtn" style="width:100%;padding:0.75rem;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(228,226,236,0.7);cursor:pointer;">Sign Out</button>
+      </div>
+
+      <p style="color:rgba(228,226,236,0.5);font-size:0.8rem;margin-top:1.5rem;">🔒 <strong>Invite-only.</strong> Early members get priority access + 5 invites to share.</p>
+    </div>
+  </div>
+
+  <style>
+    .invite-gate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #08080f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .invite-gate-card {
+      background: linear-gradient(145deg, rgba(20,20,35,0.95), rgba(15,15,25,0.98));
+      border: 1px solid rgba(124,92,252,0.2);
+      border-radius: 24px;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .toggle-btn.active {
+      background: rgba(124,92,252,0.15) !important;
+      border-color: rgba(124,92,252,0.3) !important;
+      color: #fff !important;
+    }
+    #gateInviteInput:focus {
+      outline: none;
+      border-color: #7c5cfc;
+    }
+  </style>
 
   <!-- Main member area (hidden until auth confirmed) -->
   <div id="memberArea" class="member-area" style="display:none;">
@@ -221,18 +363,17 @@
             <div class="card">
               <h3 class="card-title">Profile</h3>
               <div class="form-group">
-                <label>Display Name</label>
-                <input type="text" id="displayNameInput" class="form-input" placeholder="Your name">
+                <label>Username</label>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <span style="color:#7c5cfc;font-weight:600;">@</span>
+                  <input type="text" id="usernameDisplay" class="form-input" disabled style="flex:1;">
+                </div>
+                <p style="font-size:0.8rem;color:rgba(228,226,236,0.5);margin-top:0.5rem;">Your permanent identity. Can't be changed.</p>
               </div>
               <div class="form-group">
                 <label>Email</label>
                 <input type="email" id="emailDisplay" class="form-input" disabled>
               </div>
-              <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="usernameDisplay" class="form-input" disabled>
-              </div>
-              <button class="btn-primary" id="saveProfileBtn">Save Changes</button>
             </div>
 
             <div class="card">
@@ -282,10 +423,14 @@
     // DOM elements
     const loadingState = document.getElementById('loadingState');
     const memberArea = document.getElementById('memberArea');
+    const inviteGate = document.getElementById('inviteGate');
     const userName = document.getElementById('userName');
     const userAvatar = document.getElementById('userAvatar');
     const logoutBtn = document.getElementById('logoutBtn');
     const inviteCodes = document.getElementById('inviteCodes');
+
+    // Store current user for gate functions
+    let currentClerkUser = null;
 
     // ─── CLERK AUTH CHECK ───
     // Wait for Clerk to load, then check auth
@@ -296,30 +441,437 @@
       }
 
       // Wait for Clerk to finish loading
-      await window.Clerk.load();
+      await window.Clerk.load({ appearance: window.FOUNDUPS_CLERK_APPEARANCE });
 
-      const user = window.Clerk.user;
+      // Give Clerk a moment to establish the session (important after OAuth redirect)
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Retry getting user a few times (session may take a moment after OAuth)
+      let user = window.Clerk.user;
+      let retries = 0;
+      while (!user && retries < 5) {
+        console.log('[Member] Waiting for Clerk session...', retries);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        user = window.Clerk.user;
+        retries++;
+      }
+
+      currentClerkUser = user;
+      console.log('[Member] Clerk user:', user ? user.id : 'none');
 
       if (user) {
-        // User is signed in via Clerk - show member area
-        loadingState.style.display = 'none';
-        memberArea.style.display = 'flex';
-
-        // Set user info from Clerk
-        userName.textContent = user.firstName || user.primaryEmailAddress?.emailAddress || 'Member';
-        if (user.imageUrl) {
-          userAvatar.src = user.imageUrl;
+        // Check for cached invite code from landing page
+        const pendingCode = localStorage.getItem('pendingInviteCode');
+        if (pendingCode) {
+          console.log('[Member] Found pending invite code:', pendingCode);
+          // Try to validate the cached code
+          const codeValidated = await tryValidateCachedCode(user.id, pendingCode);
+          if (codeValidated) {
+            console.log('[Member] Cached code validated successfully');
+          }
+          // Clear the cached code regardless of result
+          localStorage.removeItem('pendingInviteCode');
         }
 
-        // Load/create user data in Firestore (keyed by Clerk user ID)
-        await loadUserData(user.id, user);
+        // User is signed in via Clerk - check invite status
+        const hasValidInvite = await checkInviteStatus(user.id, user);
+
+        loadingState.style.display = 'none';
+
+        if (hasValidInvite) {
+          // Check if user has claimed a username
+          const userRef = doc(db, 'users', user.id);
+          const userDoc = await getDoc(userRef);
+          const userData = userDoc.exists() ? userDoc.data() : {};
+
+          if (!userData.username) {
+            // User needs to claim username first
+            document.getElementById('usernameModal').style.display = 'flex';
+          } else {
+            // User has username - show member area
+            memberArea.style.display = 'flex';
+
+            // Set user info - prefer @username format
+            userName.textContent = userData.username ? '@' + userData.username : (user.firstName || user.primaryEmailAddress?.emailAddress || 'Member');
+            if (user.imageUrl) {
+              userAvatar.src = user.imageUrl;
+            }
+
+            // Load full user data
+            await loadUserData(user.id, user);
+          }
+        } else {
+          // User has NO valid invite - show invite gate
+          inviteGate.style.display = 'flex';
+
+          // Set email in waitlist panel
+          const gateUserEmail = document.getElementById('gateUserEmail');
+          if (gateUserEmail) {
+            gateUserEmail.textContent = user.primaryEmailAddress?.emailAddress || 'your email';
+          }
+        }
       } else {
         // User is not signed in - redirect to landing
         window.location.href = '/?signin=required';
       }
     }
 
+    // Check if user has a valid invite in Firestore
+    async function checkInviteStatus(clerkUserId, clerkUser) {
+      try {
+        const userRef = doc(db, 'users', clerkUserId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // User has access if inviteValidated is true OR they have an inviteCode
+          return userData.inviteValidated === true || !!userData.usedInviteCode;
+        } else {
+          // New user - create record and add to waitlist
+          const newUserData = {
+            clerkUserId: clerkUserId,
+            email: clerkUser.primaryEmailAddress?.emailAddress || '',
+            createdAt: new Date().toISOString(),
+            inviteCodes: [],
+            upsBalance: 0,
+            inviteValidated: false,
+            waitlistJoined: new Date().toISOString()
+          };
+          await setDoc(userRef, newUserData);
+          console.log('Created new waitlist user:', clerkUserId);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error checking invite status:', error);
+        return false;
+      }
+    }
+
+    // Try to validate a cached invite code (from landing page)
+    async function tryValidateCachedCode(clerkUserId, code) {
+      try {
+        // Check if user is already validated
+        const userRef = doc(db, 'users', clerkUserId);
+        const existingUser = await getDoc(userRef);
+        if (existingUser.exists() && existingUser.data().inviteValidated === true) {
+          console.log('[Member] User already validated, skipping cached code validation');
+          return true;
+        }
+
+        // Query by code field (not document ID) - collection is 'invites'
+        const q = query(collection(db, 'invites'), where('code', '==', code.toUpperCase()));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          console.log('[Member] Cached code not found in Firestore');
+          return false;
+        }
+
+        const inviteDoc = querySnapshot.docs[0];
+        const inviteData = inviteDoc.data();
+
+        // Check if code is already used (status !== 'active' or usedBy is set)
+        const isUsed = inviteData.status !== 'active' || inviteData.usedBy;
+        if (isUsed && inviteData.usedBy !== clerkUserId) {
+          console.log('[Member] Cached code already used by someone else');
+          return false;
+        }
+
+        if (inviteData.expiresAt && new Date(inviteData.expiresAt) < new Date()) {
+          console.log('[Member] Cached code expired');
+          return false;
+        }
+
+        // IMPORTANT: Update user record FIRST (critical write)
+        try {
+          // Generate codes AND store them in invites collection
+          const newInviteCodes = await generateAndStoreInviteCodes(5, clerkUserId);
+          await setDoc(userRef, {
+            inviteValidated: true,
+            usedInviteCode: code.toUpperCase(),
+            inviteValidatedAt: new Date().toISOString(),
+            inviteCodes: newInviteCodes
+          }, { merge: true });
+          console.log('[Member] User validated successfully via cached code:', clerkUserId);
+        } catch (userWriteError) {
+          console.error('[Member] CRITICAL: Failed to update user document:', userWriteError);
+          return false; // Don't mark invite as used if user update failed
+        }
+
+        // Only mark invite as used AFTER user was successfully updated
+        try {
+          await setDoc(inviteDoc.ref, {
+            ...inviteData,
+            status: 'used',
+            usedBy: clerkUserId,
+            usedAt: new Date().toISOString()
+          });
+          console.log('[Member] Invite code marked as used:', code);
+        } catch (inviteWriteError) {
+          // User is validated but invite marking failed - log but continue
+          console.warn('[Member] Warning: Failed to mark invite as used:', inviteWriteError);
+        }
+
+        return true;
+      } catch (error) {
+        console.error('[Member] Error validating cached code:', error);
+        return false;
+      }
+    }
+
     initClerkAuth();
+
+    // ─── INVITE GATE LOGIC ───
+    // Toggle between invite/waitlist panels
+    const gateToggleInvite = document.getElementById('gateToggleInvite');
+    const gateToggleWaitlist = document.getElementById('gateToggleWaitlist');
+    const gateInvitePanel = document.getElementById('gateInvitePanel');
+    const gateWaitlistPanel = document.getElementById('gateWaitlistPanel');
+
+    gateToggleInvite?.addEventListener('click', () => {
+      gateToggleInvite.classList.add('active');
+      gateToggleWaitlist.classList.remove('active');
+      gateInvitePanel.style.display = 'block';
+      gateWaitlistPanel.style.display = 'none';
+    });
+
+    gateToggleWaitlist?.addEventListener('click', () => {
+      gateToggleWaitlist.classList.add('active');
+      gateToggleInvite.classList.remove('active');
+      gateWaitlistPanel.style.display = 'block';
+      gateInvitePanel.style.display = 'none';
+    });
+
+    // Verify invite code
+    const gateVerifyBtn = document.getElementById('gateVerifyBtn');
+    const gateInviteInput = document.getElementById('gateInviteInput');
+    const gateInviteStatus = document.getElementById('gateInviteStatus');
+
+    gateVerifyBtn?.addEventListener('click', async () => {
+      const code = gateInviteInput.value.trim().toUpperCase();
+
+      if (!code || code.length < 10) {
+        gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">Please enter a valid invite code</span>';
+        return;
+      }
+
+      gateVerifyBtn.disabled = true;
+      gateVerifyBtn.textContent = 'Verifying...';
+      gateInviteStatus.innerHTML = '<span style="color:#7c5cfc;">Checking code...</span>';
+
+      try {
+        // Query Firestore for the invite code by field (not document ID) - collection is 'invites'
+        const q = query(collection(db, 'invites'), where('code', '==', code));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const inviteDoc = querySnapshot.docs[0];
+          const inviteData = inviteDoc.data();
+
+          // Check if this user already validated (allow re-entry with same code)
+          const userRef = doc(db, 'users', currentClerkUser.id);
+          const existingUser = await getDoc(userRef);
+          const existingUserData = existingUser.exists() ? existingUser.data() : {};
+
+          // If user is already validated, skip to username claim
+          if (existingUserData.inviteValidated === true) {
+            gateInviteStatus.innerHTML = '<span style="color:#00d4aa;">You\'re already validated! Setting up...</span>';
+            setTimeout(() => {
+              inviteGate.style.display = 'none';
+              if (!existingUserData.username) {
+                document.getElementById('usernameModal').style.display = 'flex';
+              } else {
+                window.location.reload();
+              }
+            }, 1000);
+            return;
+          }
+
+          // Check if code is already used (status !== 'active' or usedBy is set)
+          const isUsed = inviteData.status !== 'active' || inviteData.usedBy;
+          if (isUsed && inviteData.usedBy !== currentClerkUser.id) {
+            gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">This code has already been used by someone else</span>';
+          } else if (inviteData.expiresAt && new Date(inviteData.expiresAt) < new Date()) {
+            gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">This code has expired</span>';
+          } else {
+            // Valid code! Grant access
+            gateInviteStatus.innerHTML = '<span style="color:#00d4aa;">Valid! Setting up your account...</span>';
+
+            // IMPORTANT: Update user record FIRST (critical write)
+            try {
+              // Generate codes AND store them in invites collection
+              const newInviteCodes = await generateAndStoreInviteCodes(5, currentClerkUser.id);
+              await setDoc(userRef, {
+                inviteValidated: true,
+                usedInviteCode: code,
+                inviteValidatedAt: new Date().toISOString(),
+                // Generated invite codes for new member
+                inviteCodes: newInviteCodes
+              }, { merge: true });
+              console.log('[Member] User validated successfully:', currentClerkUser.id);
+            } catch (userWriteError) {
+              console.error('[Member] CRITICAL: Failed to update user document:', userWriteError);
+              gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">Error setting up account. Please try again or contact support.</span>';
+              gateVerifyBtn.disabled = false;
+              gateVerifyBtn.textContent = 'Verify Invite';
+              return; // Don't mark invite as used if user update failed
+            }
+
+            // Only mark invite as used AFTER user was successfully updated
+            try {
+              await setDoc(inviteDoc.ref, {
+                ...inviteData,
+                status: 'used',
+                usedBy: currentClerkUser.id,
+                usedAt: new Date().toISOString()
+              });
+              console.log('[Member] Invite code marked as used:', code);
+            } catch (inviteWriteError) {
+              // User is validated but invite marking failed - log but continue
+              console.warn('[Member] Warning: Failed to mark invite as used:', inviteWriteError);
+            }
+
+            // Show username claim modal instead of reloading
+            setTimeout(() => {
+              inviteGate.style.display = 'none';
+              document.getElementById('usernameModal').style.display = 'flex';
+            }, 1000);
+            return;
+          }
+        } else {
+          gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">Invalid invite code</span>';
+        }
+      } catch (error) {
+        console.error('[Member] Error verifying invite:', error);
+        gateInviteStatus.innerHTML = '<span style="color:#ff6b6b;">Error checking code: ' + (error.message || 'Unknown error') + '</span>';
+      }
+
+      gateVerifyBtn.disabled = false;
+      gateVerifyBtn.textContent = 'Verify Invite';
+    });
+
+    // Generate invite codes helper - returns array of code strings
+    function generateInviteCodes(count) {
+      const codes = [];
+      for (let i = 0; i < count; i++) {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = 'FUP-';
+        for (let j = 0; j < 4; j++) code += chars[Math.floor(Math.random() * chars.length)];
+        code += '-';
+        for (let j = 0; j < 4; j++) code += chars[Math.floor(Math.random() * chars.length)];
+        codes.push(code);
+      }
+      return codes;
+    }
+
+    // Generate invite codes AND store them in the invites collection
+    async function generateAndStoreInviteCodes(count, ownerUserId) {
+      const codes = generateInviteCodes(count);
+
+      // Store each code in the invites collection so they can be validated
+      for (const code of codes) {
+        try {
+          const inviteRef = doc(collection(db, 'invites'));
+          await setDoc(inviteRef, {
+            code: code,
+            status: 'active',
+            createdBy: ownerUserId,
+            createdAt: new Date().toISOString(),
+            usedBy: null,
+            usedAt: null
+          });
+          console.log('[Member] Created invite in collection:', code);
+        } catch (err) {
+          console.error('[Member] Failed to create invite:', code, err);
+        }
+      }
+
+      return codes;
+    }
+
+    // Auto-format invite code input
+    gateInviteInput?.addEventListener('input', (e) => {
+      let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (val.length > 3) val = val.slice(0,3) + '-' + val.slice(3);
+      if (val.length > 8) val = val.slice(0,8) + '-' + val.slice(8);
+      e.target.value = val.slice(0, 14);
+    });
+
+    // Gate sign out button
+    document.getElementById('gateSignOutBtn')?.addEventListener('click', async () => {
+      await window.Clerk.signOut();
+      window.location.href = '/';
+    });
+
+    // ─── USERNAME CLAIM LOGIC ───
+    const usernameInput = document.getElementById('usernameInput');
+    const usernameStatus = document.getElementById('usernameStatus');
+    const claimUsernameBtn = document.getElementById('claimUsernameBtn');
+
+    // Format username as they type
+    usernameInput?.addEventListener('input', (e) => {
+      // Only allow lowercase letters, numbers, underscores
+      let val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      e.target.value = val.slice(0, 20);
+
+      // Update preview
+      if (val.length >= 3) {
+        usernameStatus.innerHTML = `<span style="color:#00d4aa;">foundups.com/member/@${val}</span>`;
+      } else if (val.length > 0) {
+        usernameStatus.innerHTML = `<span style="color:rgba(228,226,236,0.5);">At least 3 characters needed</span>`;
+      } else {
+        usernameStatus.innerHTML = '';
+      }
+    });
+
+    // Claim username
+    claimUsernameBtn?.addEventListener('click', async () => {
+      const username = usernameInput.value.trim().toLowerCase();
+
+      // Validate format
+      if (username.length < 3) {
+        usernameStatus.innerHTML = '<span style="color:#ff6b6b;">Username must be at least 3 characters</span>';
+        return;
+      }
+      if (!/^[a-z0-9_]+$/.test(username)) {
+        usernameStatus.innerHTML = '<span style="color:#ff6b6b;">Only letters, numbers, and underscores allowed</span>';
+        return;
+      }
+
+      claimUsernameBtn.disabled = true;
+      claimUsernameBtn.textContent = 'Checking availability...';
+
+      try {
+        // Check if username is already taken
+        const usernameQuery = query(collection(db, 'users'), where('username', '==', username));
+        const existingUsers = await getDocs(usernameQuery);
+
+        if (!existingUsers.empty) {
+          usernameStatus.innerHTML = '<span style="color:#ff6b6b;">@' + username + ' is already taken. Try another!</span>';
+          claimUsernameBtn.disabled = false;
+          claimUsernameBtn.textContent = 'Claim @name';
+          return;
+        }
+
+        // Username available! Claim it
+        usernameStatus.innerHTML = '<span style="color:#00d4aa;">@' + username + ' is yours! Setting up...</span>';
+
+        const userRef = doc(db, 'users', currentClerkUser.id);
+        await setDoc(userRef, {
+          username: username,
+          usernameClaimedAt: new Date().toISOString()
+        }, { merge: true });
+
+        // Reload to show member dashboard
+        setTimeout(() => window.location.reload(), 1000);
+
+      } catch (error) {
+        console.error('Error claiming username:', error);
+        usernameStatus.innerHTML = '<span style="color:#ff6b6b;">Error claiming username. Please try again.</span>';
+        claimUsernameBtn.disabled = false;
+        claimUsernameBtn.textContent = 'Claim @name';
+      }
+    });
 
     // Load user data from Firestore (keyed by Clerk user ID)
     async function loadUserData(clerkUserId, clerkUser) {
@@ -331,24 +883,20 @@
         if (userDoc.exists()) {
           const userData = userDoc.data();
 
-          // Update UI with Firestore data
-          if (userData.displayName) {
-            userName.textContent = userData.displayName;
-            const displayNameInput = document.getElementById('displayNameInput');
-            if (displayNameInput) displayNameInput.value = userData.displayName;
+          // Update UI with Firestore data - username is single source of truth
+          if (userData.username) {
+            userName.textContent = '@' + userData.username;
+            const usernameDisplay = document.getElementById('usernameDisplay');
+            if (usernameDisplay) usernameDisplay.value = userData.username;
           }
           if (userData.email) {
             const emailDisplay = document.getElementById('emailDisplay');
             if (emailDisplay) emailDisplay.value = userData.email;
           }
-          if (userData.username) {
-            const usernameDisplay = document.getElementById('usernameDisplay');
-            if (usernameDisplay) usernameDisplay.value = userData.username;
-          }
 
-          // Load invite codes
+          // Load invite codes with live status from invites collection
           if (userData.inviteCodes && userData.inviteCodes.length > 0) {
-            renderInviteCodes(userData.inviteCodes);
+            await loadAndRenderInviteCodes(userData.inviteCodes);
             const inviteCount = document.getElementById('inviteCount');
             if (inviteCount) inviteCount.textContent = userData.inviteCodes.length;
           } else {
@@ -362,7 +910,6 @@
           const newUserData = {
             clerkUserId: clerkUserId,
             email: clerkUser.primaryEmailAddress?.emailAddress || '',
-            displayName: clerkUser.firstName || clerkUser.primaryEmailAddress?.emailAddress || 'Member',
             createdAt: new Date().toISOString(),
             inviteCodes: [],
             upsBalance: 0
@@ -380,12 +927,50 @@
       }
     }
 
-    // Render invite codes
-    function renderInviteCodes(codes) {
-      inviteCodes.innerHTML = codes.map(code => `
-        <div class="invite-code-item">
-          <code>${code}</code>
-          <button class="copy-btn" onclick="copyCode('${code}')">Copy</button>
+    // Load invite codes with status from invites collection
+    async function loadAndRenderInviteCodes(codes) {
+      const codesWithStatus = [];
+      let activeCount = 0;
+
+      for (const code of codes) {
+        try {
+          // Query the invites collection for this code's status
+          const q = query(collection(db, 'invites'), where('code', '==', code));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const inviteData = querySnapshot.docs[0].data();
+            const isActive = inviteData.status === 'active' && !inviteData.usedBy;
+            codesWithStatus.push({ code, status: isActive ? 'active' : 'used', usedBy: inviteData.usedBy });
+            if (isActive) activeCount++;
+          } else {
+            // Code not in collection (legacy) - assume active
+            codesWithStatus.push({ code, status: 'active', usedBy: null });
+            activeCount++;
+          }
+        } catch (err) {
+          console.error('[Member] Error checking code status:', code, err);
+          codesWithStatus.push({ code, status: 'unknown', usedBy: null });
+        }
+      }
+
+      // Update active count in stats
+      const inviteCount = document.getElementById('inviteCount');
+      if (inviteCount) inviteCount.textContent = activeCount;
+
+      // Render with status
+      renderInviteCodes(codesWithStatus);
+    }
+
+    // Render invite codes with status
+    function renderInviteCodes(codesWithStatus) {
+      inviteCodes.innerHTML = codesWithStatus.map(({ code, status }) => `
+        <div class="invite-code-item ${status === 'used' ? 'used' : ''}">
+          <code style="${status === 'used' ? 'opacity:0.5;text-decoration:line-through;' : ''}">${code}</code>
+          ${status === 'used'
+            ? '<span style="color:#ff6b6b;font-size:0.8rem;">Used</span>'
+            : `<button class="copy-btn" onclick="copyCode('${code}')">Copy</button>`
+          }
         </div>
       `).join('');
     }

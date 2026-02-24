@@ -8,6 +8,39 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - [U+1F9EC] **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [Member Area Invite System Complete]
+- Date: 2026-02-24
+- Description: Complete member area with OAuth (Clerk), invite code validation, username claim, and live invite status tracking. Fixed Clerk/Firestore integration issues - Clerk auth doesn't populate Firebase's request.auth so rules updated to allow public read/write with Clerk as auth layer.
+- WSP Compliance: WSP 22 (Traceable Narrative), WSP 50 (Pre-Action Verification)
+
+### Changes Made:
+1. **Firestore Rules** (`firestore.rules`):
+   - Fixed `invites` collection: `allow read/write: true` (Clerk handles auth)
+   - Fixed `users` collection: `allow read/write: true` (keyed by Clerk user ID)
+   - Added TODO comments for Cloud Functions migration in production
+
+2. **Member Area** (`public/member/index.html`):
+   - Fixed invite code collection name: `invite_codes` → `invites`
+   - Fixed invite status check: `used: true` → `status: 'active'`
+   - Fixed race condition: User document updated BEFORE marking invite as used
+   - Added re-entry support for already-validated users
+   - Removed `displayName` field (Occam's Razor - username is single source of truth)
+   - Added `generateAndStoreInviteCodes()` to store codes in `invites` collection
+   - Added `loadAndRenderInviteCodes()` for live status checking
+   - Invite codes now show "Used" with strikethrough when consumed
+   - "Invites Left" count reflects only active codes
+
+3. **Data Model Simplification**:
+   - Removed: `displayName` (was auto-filled from OAuth, never used)
+   - Kept: `username` as permanent identity (@handle)
+   - Settings page simplified: Username (readonly) + Email (readonly)
+
+### Files Modified:
+- `firestore.rules` - Clerk-compatible permissions
+- `public/member/index.html` - Complete invite flow + status tracking
+====================================================================
+
+====================================================================
 ## MODLOG - [rESP Paper Detector-First Reframe]
 - Date: 2026-02-04
 - Description: Reframed rESP paper as detector protocol, added null models, falsification criteria, and replaced entanglement language with coupling where operational. Added geometry witness (near-singularity) framing and experimental design commitments.
