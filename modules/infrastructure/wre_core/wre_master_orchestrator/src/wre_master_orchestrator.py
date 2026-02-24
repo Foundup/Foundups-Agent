@@ -57,6 +57,14 @@ try:
 except ImportError:
     WRE_SKILLS_AVAILABLE = False
 
+# Sprint 3: ToT Skill Selection and CodeAct Execution
+try:
+    from modules.infrastructure.wre_core.src.skill_selector import SkillSelector, ToTSelection
+    from modules.infrastructure.wre_core.src.codeact_executor import CodeActExecutor, detect_skill_format
+    SPRINT3_AVAILABLE = True
+except ImportError:
+    SPRINT3_AVAILABLE = False
+
 @dataclass
 class Pattern:
     """
@@ -236,6 +244,30 @@ class WREMasterOrchestrator:
         except (TypeError, ValueError):
             self.react_fidelity_threshold = 0.90
 
+        # Sprint 3: ToT Skill Selection config (Gap B closure)
+        self.tot_enabled = os.getenv("WRE_TOT_SELECTION", "1").strip() == "1"
+        try:
+            self.tot_max_branches = max(1, int(os.getenv("WRE_TOT_MAX_BRANCHES", "5")))
+        except (TypeError, ValueError):
+            self.tot_max_branches = 5
+
+        # Sprint 3: CodeAct executor config (Gap E closure)
+        self.codeact_enabled = os.getenv("WRE_CODEACT_ENABLED", "1").strip() == "1"
+
+        # Initialize Sprint 3 components
+        if SPRINT3_AVAILABLE and WRE_SKILLS_AVAILABLE:
+            self.skill_selector = SkillSelector(
+                pattern_memory=self.sqlite_memory,
+                skills_loader=self.skills_loader
+            )
+            self.codeact_executor = CodeActExecutor(
+                repo_root=self.repo_root,
+                llm_callback=self._codeact_llm_callback
+            )
+        else:
+            self.skill_selector = None
+            self.codeact_executor = None
+
         # Optional built-in worker plugins (safe to skip on import/runtime failure).
         self._register_optional_workers()
 
@@ -351,6 +383,165 @@ class WREMasterOrchestrator:
         """Log operation per WSP 22 (Module ModLog and Roadmap)"""
         # In real implementation, would update ModLog
         print(f"Logged: {task} -> {result} (per WSP 22)")
+
+    # ------------------------------------------------------------------ #
+    #  Sprint 3: ToT Skill Selection (Gap B)                              #
+    # ------------------------------------------------------------------ #
+
+    def select_skill_tot(
+        self,
+        candidates: list,
+        context: Dict,
+        max_branches: Optional[int] = None
+    ) -> tuple:
+        """
+        Select best skill from candidates using Tree-of-Thought.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap B: Multi-candidate selection
+
+        Args:
+            candidates: List of candidate skill names
+            context: Execution context with keywords for matching
+            max_branches: Max candidates to evaluate (default: self.tot_max_branches)
+
+        Returns:
+            (selected_skill_name, selection_metadata)
+        """
+        if not self.tot_enabled or not candidates:
+            return (candidates[0] if candidates else None), {}
+
+        if not self.skill_selector:
+            logger.warning("[WRE-TOT] SkillSelector not available")
+            return candidates[0], {"tot_error": "SkillSelector not available"}
+
+        max_branches = max_branches or self.tot_max_branches
+
+        try:
+            selection = self.skill_selector.select_skill(candidates, context, max_branches)
+
+            # Record telemetry
+            if self.sqlite_memory:
+                self.sqlite_memory.increment_counter("tot_selections")
+                self.sqlite_memory.increment_counter("tot_branch_count", selection.branch_count)
+                if selection.confidence >= 0.7:
+                    self.sqlite_memory.increment_counter("tot_high_confidence")
+
+            logger.info(
+                f"[WRE-TOT] Selected {selection.selected.skill_name} "
+                f"(score={selection.selected.score:.3f}, branches={selection.branch_count})"
+            )
+
+            return selection.selected.skill_name, {
+                "tot_score": selection.selected.score,
+                "tot_confidence": selection.confidence,
+                "tot_reason": selection.selection_reason,
+                "tot_branch_count": selection.branch_count
+            }
+        except Exception as exc:
+            logger.warning(f"[WRE-TOT] Selection failed: {exc}")
+            return candidates[0], {"tot_error": str(exc)}
+
+    def find_skill_candidates(self, intent: str) -> list:
+        """
+        Find candidate skills that could handle an intent.
+
+        Uses skills_loader to discover matching skills.
+        """
+        if not self.skill_selector:
+            return []
+
+        return self.skill_selector.find_candidates_for_intent(intent)
+
+    # ------------------------------------------------------------------ #
+    #  Sprint 3: CodeAct Execution (Gap E)                                #
+    # ------------------------------------------------------------------ #
+
+    def _codeact_llm_callback(self, prompt: str) -> str:
+        """
+        LLM callback for CodeAct executor.
+
+        Routes to Qwen inference engine for prompt completion.
+        """
+        try:
+            from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+            from modules.infrastructure.shared_utilities.local_model_selection import (
+                resolve_code_model_path,
+            )
+
+            model_path = resolve_code_model_path()
+            qwen = QwenInferenceEngine(
+                model_path=model_path,
+                max_tokens=256,
+                temperature=0.2
+            )
+
+            if not qwen.initialize():
+                return f"[LLM unavailable] Prompt: {prompt[:100]}..."
+
+            response = qwen.generate_response(
+                prompt=prompt,
+                system_prompt="You are executing a CodeAct skill step. Respond concisely."
+            )
+            return response or ""
+        except Exception as e:
+            logger.warning(f"[WRE-CODEACT] LLM callback failed: {e}")
+            return f"[LLM error: {e}]"
+
+    def execute_codeact_skill(
+        self,
+        skill_spec: Dict,
+        input_context: Dict
+    ) -> Dict:
+        """
+        Execute a CodeAct format skill.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap E: Hybrid prompt+code execution
+
+        Args:
+            skill_spec: Full skill specification with code_section
+            input_context: Input variables
+
+        Returns:
+            CodeActResult as dict
+        """
+        if not self.codeact_enabled or not self.codeact_executor:
+            return {
+                "success": False,
+                "error": "CodeAct executor not available"
+            }
+
+        try:
+            result = self.codeact_executor.execute(skill_spec, input_context)
+
+            # Record telemetry
+            if self.sqlite_memory:
+                if result.success:
+                    self.sqlite_memory.increment_counter("codeact_exec_success")
+                else:
+                    self.sqlite_memory.increment_counter("codeact_exec_fail")
+
+                if result.gates_triggered:
+                    self.sqlite_memory.increment_counter(
+                        "codeact_gate_triggers",
+                        len(result.gates_triggered)
+                    )
+
+            return {
+                "success": result.success,
+                "outputs": result.outputs,
+                "error": result.error,
+                "execution_time_ms": result.execution_time_ms,
+                "actions_executed": result.actions_executed,
+                "gates_triggered": result.gates_triggered
+            }
+        except Exception as exc:
+            logger.error(f"[WRE-CODEACT] Execution failed: {exc}")
+            if self.sqlite_memory:
+                self.sqlite_memory.increment_counter("codeact_exec_fail")
+            return {
+                "success": False,
+                "error": str(exc)
+            }
 
     @staticmethod
     def _fallback_skill_content(skill_name: str, agent: str, error: Exception) -> str:

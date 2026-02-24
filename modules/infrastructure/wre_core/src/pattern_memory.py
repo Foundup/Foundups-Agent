@@ -962,6 +962,19 @@ class PatternMemory:
         """)
         connected_skills = cursor.fetchone()['connected_skills'] or 0
 
+        # Sprint 3: ToT and CodeAct metrics
+        tot_selections = counters.get("tot_selections", 0)
+        tot_high_confidence = counters.get("tot_high_confidence", 0)
+        tot_branch_count = counters.get("tot_branch_count", 0)
+        tot_confidence_rate = tot_high_confidence / max(tot_selections, 1)
+        tot_avg_branches = tot_branch_count / max(tot_selections, 1)
+
+        codeact_success = counters.get("codeact_exec_success", 0)
+        codeact_fail = counters.get("codeact_exec_fail", 0)
+        codeact_total = codeact_success + codeact_fail
+        codeact_success_rate = codeact_success / max(codeact_total, 1)
+        codeact_gate_triggers = counters.get("codeact_gate_triggers", 0)
+
         return {
             # Sprint 1
             "retry_count": counters.get("react_retry_count", 0),
@@ -975,7 +988,14 @@ class PatternMemory:
             "avg_retrieval_relevance": round(ret_row['avg_relevance'] or 0, 3),
             "total_retrievals": retrieval_total,
             "skill_edges": edge_count,
-            "connected_skills": connected_skills
+            "connected_skills": connected_skills,
+            # Sprint 3
+            "tot_selections": tot_selections,
+            "tot_confidence_rate": round(tot_confidence_rate, 3),
+            "tot_avg_branches": round(tot_avg_branches, 1),
+            "codeact_executions": codeact_total,
+            "codeact_success_rate": round(codeact_success_rate, 3),
+            "codeact_gate_triggers": codeact_gate_triggers
         }
 
     # ------------------------------------------------------------------ #
@@ -1151,6 +1171,123 @@ class PatternMemory:
             "patterns_transferred": len(source_successes),
             "best_source_fidelity": source_successes[0]["pattern_fidelity"]
         }
+
+    # ------------------------------------------------------------------ #
+    #  Tree-of-Thought Skill Scoring (Sprint 3 - Gap B)                   #
+    # ------------------------------------------------------------------ #
+
+    def get_skill_fidelity_stats(self, skill_name: str, days: int = 30) -> Dict:
+        """
+        Get historical fidelity statistics for a skill.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap B: ToT skill selection
+
+        Returns:
+            {
+                "skill_name": str,
+                "total_executions": int,
+                "avg_fidelity": float,
+                "success_rate": float,  # fidelity >= 0.7
+                "recent_trend": float   # last 7 days vs previous
+            }
+        """
+        cursor = self.conn.cursor()
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        recent_cutoff = (datetime.now() - timedelta(days=7)).isoformat()
+
+        # Overall stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                AVG(pattern_fidelity) as avg_fidelity,
+                SUM(CASE WHEN pattern_fidelity >= 0.7 THEN 1 ELSE 0 END) as successes
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ?
+        """, (skill_name, cutoff))
+        row = cursor.fetchone()
+
+        total = row['total'] or 0
+        avg_fidelity = row['avg_fidelity'] or 0.5
+        success_rate = (row['successes'] or 0) / max(total, 1)
+
+        # Recent trend (last 7 days vs previous)
+        cursor.execute("""
+            SELECT AVG(pattern_fidelity) as recent_avg
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ?
+        """, (skill_name, recent_cutoff))
+        recent_avg = cursor.fetchone()['recent_avg'] or avg_fidelity
+
+        cursor.execute("""
+            SELECT AVG(pattern_fidelity) as older_avg
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ? AND timestamp < ?
+        """, (skill_name, cutoff, recent_cutoff))
+        older_avg = cursor.fetchone()['older_avg'] or avg_fidelity
+
+        recent_trend = recent_avg - older_avg
+
+        return {
+            "skill_name": skill_name,
+            "total_executions": total,
+            "avg_fidelity": round(avg_fidelity, 3),
+            "success_rate": round(success_rate, 3),
+            "recent_trend": round(recent_trend, 3)
+        }
+
+    def rank_skills_for_context(
+        self,
+        candidate_skills: List[str],
+        context_keywords: List[str]
+    ) -> List[Dict]:
+        """
+        Rank candidate skills by historical fidelity and context match.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap B: ToT skill selection
+
+        ToT scoring formula:
+            score = (0.6 * avg_fidelity) + (0.2 * success_rate) + (0.1 * trend_bonus) + (0.1 * context_match)
+
+        Returns sorted list of {skill_name, score, components, total_executions}
+        """
+        scored = []
+
+        for skill in candidate_skills:
+            stats = self.get_skill_fidelity_stats(skill)
+
+            # Context match: check if skill name contains context keywords
+            context_match = sum(
+                1 for kw in context_keywords
+                if kw.lower() in skill.lower()
+            ) / max(len(context_keywords), 1)
+
+            # Trend bonus: positive trend = bonus, negative = penalty
+            trend_bonus = max(0, min(1, 0.5 + stats['recent_trend']))
+
+            # ToT score
+            score = (
+                0.6 * stats['avg_fidelity'] +
+                0.2 * stats['success_rate'] +
+                0.1 * trend_bonus +
+                0.1 * context_match
+            )
+
+            scored.append({
+                "skill_name": skill,
+                "score": round(score, 3),
+                "components": {
+                    "fidelity": stats['avg_fidelity'],
+                    "success_rate": stats['success_rate'],
+                    "trend_bonus": round(trend_bonus, 3),
+                    "context_match": round(context_match, 3)
+                },
+                "total_executions": stats['total_executions']
+            })
+
+        # Sort by score descending
+        scored.sort(key=lambda x: x['score'], reverse=True)
+        logger.debug(f"[PATTERN-MEMORY] Ranked {len(scored)} skills for ToT selection")
+        return scored
 
     def close(self) -> None:
         """Close database connection"""

@@ -2,6 +2,60 @@
 
 <!-- Per WSP 22: Journal format - NEWEST entries at TOP, oldest at bottom -->
 
+## Sprint 3: Multi-Path & CodeAct - ToT Selection + Hybrid Execution
+**Date**: 2026-02-24
+**WSP Protocol**: WSP 46, WSP 48, WSP 77, WSP 64
+**Type**: Feature - Multi-Path Selection (P2)
+**Reference**: `WRE_COT_DEEP_ANALYSIS.md`, `docs/sprints/SPRINT_3_MULTIPATH_CODEACT_TICKETS.md`
+
+### Summary
+Closed two remaining reasoning gaps identified in CTO deep-dive analysis:
+- **Gap B (ToT)**: Added Tree-of-Thought skill selection with N-candidate scoring
+- **Gap E (CodeAct)**: Added hybrid prompt+code execution with strict safety gates
+
+### Implementation
+
+#### PatternMemory Additions (`pattern_memory.py`)
+- **ToT Scoring**: `get_skill_fidelity_stats()`, `rank_skills_for_context()`
+- **Scoring Formula**: `score = 0.6*fidelity + 0.2*success_rate + 0.1*trend + 0.1*context_match`
+- **Dashboard Extended**: `tot_selections`, `tot_confidence_rate`, `tot_avg_branches`, `codeact_*` metrics
+
+#### New Modules Created
+- **`skill_selector.py`**: SkillSelector class with ToT branch evaluation
+  - `select_skill()`: Multi-candidate selection with confidence scoring
+  - `find_candidates_for_intent()`: Intent-based skill discovery
+  - `SkillCandidate`, `ToTSelection` dataclasses
+
+- **`codeact_executor.py`**: CodeActExecutor with strict safety gates
+  - `SafetyGates`: Allowlist/blocklist command validation
+  - `execute()`: Pre-actions -> Conditionals -> Main -> Post-actions
+  - Shell, LLM, Python action types with sandboxing
+
+#### WREMasterOrchestrator Additions (`wre_master_orchestrator.py`)
+- **Config**: `WRE_TOT_SELECTION`, `WRE_TOT_MAX_BRANCHES`, `WRE_CODEACT_ENABLED`
+- **ToT Selection**: `select_skill_tot()`, `find_skill_candidates()`
+- **CodeAct Execution**: `execute_codeact_skill()`, `_codeact_llm_callback()`
+- **Telemetry**: `tot_*`, `codeact_*` counters wired
+
+### Validation
+```
+[OK] PatternMemory: get_skill_fidelity_stats(), rank_skills_for_context()
+[OK] SkillSelector: select_skill() with confidence calculation
+[OK] CodeActExecutor: SafetyGates blocking dangerous commands
+[OK] WRE integration: select_skill_tot(), execute_codeact_skill()
+[OK] Dashboard extended with Sprint 3 metrics
+```
+
+### Acceptance Criteria (from CTO Gate)
+- [x] ToT selection scores multiple candidates
+- [x] Best skill selected by fidelity + context match
+- [x] CodeAct skills have strict safety gates
+- [x] Dashboard tracks ToT and CodeAct metrics
+- [ ] 80% ToT selection accuracy (pending production data)
+- [ ] <5% gate trigger rate (pending production data)
+
+---
+
 ## Sprint 2: Context & Transfer - Agentic RAG + Graph Edges
 **Date**: 2026-02-24
 **WSP Protocol**: WSP 46, WSP 48, WSP 60, WSP 87
