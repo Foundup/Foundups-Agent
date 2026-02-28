@@ -120,6 +120,7 @@ from .btc_reserve import (
 from .fi_orderbook import (
     OrderSide,
     OrderStatus,
+    EntryProtectionConfig,
     Order,
     Trade,
     FiOrderBook,
@@ -415,6 +416,7 @@ __all__ = [
     # F_i Order Book (buy/sell FoundUp tokens)
     "OrderSide",
     "OrderStatus",
+    "EntryProtectionConfig",
     "Order",
     "Trade",
     "FiOrderBook",

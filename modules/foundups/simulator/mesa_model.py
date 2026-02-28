@@ -792,6 +792,11 @@ class FoundUpsModel:
         sell_price = max(0.01, base_price - spread * random.uniform(0.2, 1.0))
         buy_price = base_price + spread * random.uniform(0.2, 1.2)
         quantity = round(random.uniform(3.0, 20.0), 2)
+        adoption_rate = min(
+            1.0,
+            float(tile.customer_count) / float(max(1, self._config.num_user_agents)),
+        )
+        liquidity_hint_ups = float(max(0, tile.total_staked))
 
         seller_id = random.choice(user_ids)
         buyer_pool = [uid for uid in user_ids if uid != seller_id]
@@ -804,12 +809,16 @@ class FoundUpsModel:
             human_id=seller_id,
             price=round(sell_price, 4),
             quantity=quantity,
+            adoption_rate=adoption_rate,
+            liquidity_hint_ups=liquidity_hint_ups,
         )
         buy_order, trades = self._orderbook.place_buy(
             foundup_id=foundup_id,
             human_id=buyer_id,
             price=round(buy_price, 4),
             quantity=quantity,
+            adoption_rate=adoption_rate,
+            liquidity_hint_ups=liquidity_hint_ups,
         )
         daemon = self._fam_bridge.get_daemon()
         book = self._orderbook.get_or_create_book(foundup_id)

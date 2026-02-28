@@ -182,6 +182,10 @@ Advanced protocols for complex system behaviors and architectural concerns.
 | WSP 97 | System Execution Prompting Protocol | Active | **META-FRAMEWORK** - Establishes baked-in execution methodology with core mantra "HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP"; defines agent profiles (0102/Qwen/Gemma), mission templates, and compliance validation for building Rubik Cubes (MVP DAEs). Rubik = fully agentic PWA connecting to any blockchain via FoundUp MCPs | WSP 21, WSP 77, WSP 80, WSP 35 | Execution methodology, agent profiles, mission templates, Rubik cubes, MVP DAEs, PWA blockchain connectivity |
 | WSP 98 | FoundUps Mesh-Native Architecture Protocol | Active | Establishes mesh-native architecture for FoundUps with user-as-infrastructure patterns, DAE-to-DAE mesh communication, distributed compute, and zero-server operation guidance | WSP 27, WSP 80, WSP 3, WSP 97 | Mesh-native FoundUps, P2P infrastructure, distributed DAE coordination |
 | WSP 99 | Machine-to-Machine (M2M) Prompting Protocol | Active | Compact K:V schema prompting for 0102 swarm operations; extends WSP 21 with machine-optimized format reducing tokens 4x; Qwen-delegatable compiler for 012 prose -> M2M conversion; integrates with ANNEX_PROMETHEUS_RECURSION philosophy | WSP 21 (parent), WSP 77, WSP 95, WSP 97 | M2M prompting, token efficiency, swarm communication, Qwen delegation, compact schema |
+| WSP 100 | DAE SmartDAO Escalation Protocol | Active | Defines escalation patterns from DAE to SmartDAO including tier progression, governance triggers, and autonomous-to-collective decision handoffs | WSP 27, WSP 80, WSP 26 | DAE escalation, SmartDAO, governance, tier progression |
+| WSP 101 | UPS Utility Classification Protocol | Active | Classifies UPS token utility types (staking, compute, governance, access) and their economic behaviors within the pAVS ecosystem | WSP 26, WSP 29, WSP 58 | UPS utility, token classification, economic behavior |
+| WSP 102 | FoundUps Web Design Protocol | Active | Establishes web design patterns for FoundUps interfaces including component libraries, accessibility standards, and responsive patterns | WSP 42, WSP 3 | Web design, UI patterns, accessibility |
+| WSP 103 | CLI Interface Standard | Active | Standardizes CLI interfaces for agent automation: --json output, exit codes, flag conventions, catalog requirements. Enables OpenClaw/IronClaw to invoke module CLIs reliably | WSP 77, WSP 91, WSP 90 | CLI, JSON output, agent automation, OpenClaw, IronClaw |
 
 ### PLATFORM INTEGRATION MODULES (Non-WSP Components)
 For platform/module catalogs, see `WSP_framework/src/MODULE_MASTER.md`.
@@ -248,10 +252,10 @@ See WSP 48 (Recursive Self-Improvement) and WSP 70 (System Status Reporting) for
 
 ## [U+1F4CA] WSP STATUS SUMMARY
 
- - **Total Numbered Slots Tracked**: 100 (WSP 00-99)
- - **Highest Assigned Number**: WSP 99
- - **In-Range Available Slots**: 0
- - **Next Available Number**: WSP 100
+ - **Total Numbered Slots Tracked**: 104 (WSP 00-103)
+ - **Highest Assigned Number**: WSP 103
+ - **Recently Added**: WSP 100 (DAE Escalation), WSP 101 (UPS Classification), WSP 102 (Web Design), WSP 103 (CLI Standard)
+ - **Next Available Number**: WSP 104
  - **Status Mix**: Active/deprecated/superseded/historical protocols are explicitly marked per-row in the catalog table above
  - **Layers**: Entry 00; Foundation 1-19; Operational 20-39; Advanced 40-59; Memory/Knowledge 60-99
 

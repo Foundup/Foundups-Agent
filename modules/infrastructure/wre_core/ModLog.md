@@ -2,6 +2,32 @@
 
 ## Chronological Change Log
 
+### [2026-02-24] - DB-First Daily Snapshot Export (SQLite -> JSON)
+**WSP Protocol References**: WSP 22, WSP 50, WSP 60
+**Impact Analysis**: Keeps SQLite as runtime source of truth while enabling scheduled JSON exports for audits/watch reports.
+
+#### Changes Made
+- `src/dashboard_snapshot_export.py` (NEW):
+  - Added `export_dashboard_snapshot()` for timestamped + `latest.json` exports.
+  - Added retention pruning via `prune_old_snapshots()`.
+  - Added CLI:
+    - `python -m modules.infrastructure.wre_core.src.dashboard_snapshot_export`
+    - `--output-dir`, `--retention-days`, `--pretty`, `--quiet`
+- `tests/test_dashboard_snapshot_export.py` (NEW):
+  - Verifies snapshot and latest file creation.
+  - Verifies pruning only removes aged timestamped snapshots (keeps `latest.json`).
+- `config/wre_defaults.env`:
+  - Added `WRE_DASHBOARD_EXPORT_DIR`
+  - Added `WRE_DASHBOARD_EXPORT_RETENTION_DAYS`
+- `config/WRE_RUNBOOK.md`:
+  - Added export flags and daily export command examples.
+
+#### Operational Notes
+- Runtime metrics and alert decisions remain DB-backed (`PatternMemory`).
+- JSON is export-only for observability/audits.
+
+---
+
 ### [2026-02-19] - WRE Runtime/API Hardening + Docs Alignment
 **WSP Protocol References**: WSP 46, WSP 95, WSP 96, WSP 50, WSP 22
 **Impact Analysis**: Closed critical drift between claimed WRE behavior and executable behavior; restored reliability for skills discovery/execution and test isolation.

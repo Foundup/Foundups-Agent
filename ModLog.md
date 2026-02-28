@@ -9,6 +9,78 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-02-24] Sprint 1 Wiring Fix - ReAct Activated in Runtime Path
+
+**Change Type**: Orchestration Fix
+**By**: 0102 (Codex)
+**WSP References**: WSP 15, WSP 46, WSP 48, WSP 50
+
+### Summary
+
+Closed a functional gap in Sprint 1 implementation: `execute_skill_with_reasoning()` existed but was not used by public `execute_skill()` path.
+
+### Files
+
+| File | Change |
+|------|--------|
+| `modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py` | `execute_skill()` now routes through ReAct when enabled, single-pass moved to `_execute_skill_once()`, retry loop now calls single-pass directly, evolution only runs on final retry to avoid duplicate variation generation |
+
+### Validation
+
+- `py_compile` passes for orchestrator module
+- direct runtime smoke confirms:
+  - no recursion in `execute_skill()`
+  - ReAct executes bounded retries
+  - evolution not triggered on intermediate retries
+
+---
+
+## [2026-02-24] Sprint 2 Validation Fix - RAG Attempt Telemetry on Failures
+
+**Change Type**: Metrics Accuracy Fix
+**By**: 0102 (Codex)
+**WSP References**: WSP 15, WSP 22, WSP 50
+
+### Summary
+
+During Sprint 2 verification, retrieval telemetry was only recorded on successful/no-result paths inside the main `try` block. Hard retrieval failures could skip recording, inflating coverage metrics.
+
+### File
+
+| File | Change |
+|------|--------|
+| `modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py` | Moved retrieval telemetry write into `finally` path so every retrieval attempt is recorded (success, miss, or failure). |
+
+### Validation
+
+- `py_compile` passes.
+- Runtime smoke confirms retrieval attempt is recorded even when retrieval throws.
+
+---
+
+## [2026-02-24] CTO WRE CoT Deep Analysis Baseline
+
+**Change Type**: Architecture Analysis Document
+**By**: 0102 (Codex)
+**WSP References**: WSP 15 (Priority Scoring), WSP 22 (ModLog), WSP 46 (WRE Protocol), WSP 50 (Pre-Action)
+
+### Summary
+
+Added a CTO-level analysis document comparing current WRE/OpenClaw reasoning behavior against modern agentic patterns (ReAct, ToT, GoT, TT-SI, CodeAct, Agentic RAG), with a phased implementation order and acceptance criteria.
+
+| File | Change |
+|------|--------|
+| `WRE_COT_DEEP_ANALYSIS.md` | New deep-dive analysis and rollout plan |
+
+### Decision
+
+Treat current gap as a "reasoning wiring" issue rather than full architecture replacement:
+- P0: close variation promotion loop (TT-SI) + add ReAct retries
+- P1: add agentic retrieval and cross-skill graph edges
+- P2: add ToT selection and expand hybrid prompt+code execution
+
+---
+
 ## [2026-02-19] Database Consolidation + 0/1/2 Classifier Fix
 
 **Change Type**: Architectural Cleanup + Bug Fix
