@@ -1,5 +1,44 @@
 # antifaFM Broadcaster - ModLog
 
+## V3.1.0 - WRE Integration (2026-03-07)
+
+**Context**: CTO assessment revealed antifaFM at 19% WRE integration - isolated island unable to execute skills autonomously or participate in ecosystem coordination.
+
+**Solution**: Added SkillTriggerMixin for full WRE integration. Broadcaster now fires domain skills on cadence during heartbeat loop.
+
+**Changes**:
+1. `AntifaFMBroadcaster` now inherits `SkillTriggerMixin`
+2. Initializes with `domain="streaming"`, `cadence_minutes=15`
+3. Fires `fire_pending_skills()` in heartbeat loop when broadcasting
+4. Skills registered in `skills_registry_v2.json` with domain metadata
+5. Status includes WRE trigger status for observability
+
+**Skills Registered** (domain=streaming):
+| Skill | Agents | Description |
+|-------|--------|-------------|
+| suno_stt_lyrics_extract | qwen, gemma | Whisper STT lyrics extraction |
+| antifafm_add_video | qwen | Video library management |
+
+**WRE Pipeline**:
+```
+Heartbeat (30s) → fire_pending_skills() → Discover domain skills
+    → Libido gating → Execute via WREMasterOrchestrator
+    → Store outcome in PatternMemory → Learn for next cycle
+```
+
+**WSP Compliance**:
+- WSP 46: WRE Protocol (skill trigger integration)
+- WSP 77: Agent Coordination (streaming domain skills)
+- WSP 96: WRE Skills (domain-based discovery)
+
+**Files Modified**:
+- `src/antifafm_broadcaster.py` - Added SkillTriggerMixin
+- `skillz/suno_stt_extract.json` - Added domain field
+- `skillz/add_video_link.json` - Added domain field
+- `wre_core/skillz/skills_registry_v2.json` - Registered skills
+
+---
+
 ## V3.0.0 - Modular Schema Architecture (2026-03-06)
 
 **Context**: 012 requested WSP-compliant modular architecture for visual schemas to enable independent expansion without monolithic growth. Schemas need individual ROADMAPs.

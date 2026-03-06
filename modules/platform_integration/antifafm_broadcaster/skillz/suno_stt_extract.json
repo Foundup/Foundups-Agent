@@ -1,0 +1,98 @@
+{
+  "skill_id": "suno_stt_lyrics_extract",
+  "name": "Suno STT Lyrics Extractor",
+  "description": "Fully automated lyrics extraction from Suno using Speech-to-Text. Downloads audio from CDN, transcribes via faster-whisper, deduplicates to SQLite, and bridges to karaoke cache with estimated timing.",
+  "domain": "streaming",
+  "command": "/suno-stt",
+  "aliases": ["/extract-lyrics", "/suno-lyrics", "/ffcpln-lyrics", "/karaoke-import"],
+  "version": "1.1.0",
+  "author": "0102",
+  "permissions": {
+    "required_role": "contributor",
+    "allowed_users": ["012", "undaodu", "antifafm", "foundups", "0102"]
+  },
+  "parameters": {
+    "playlist_id": {
+      "type": "string",
+      "required": false,
+      "default": "3adb1878-12f8-4c1c-a815-bde3d7d320ed",
+      "description": "Suno playlist UUID (default: 012's FFCPLN 238-song playlist)"
+    },
+    "max_songs": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Max songs to process (0 = all)"
+    },
+    "model": {
+      "type": "string",
+      "required": false,
+      "default": "base",
+      "enum": ["tiny", "base", "small", "medium", "large-v3"],
+      "description": "Whisper model size (base=fast, small=accurate)"
+    },
+    "force": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Re-process already processed songs"
+    },
+    "import_to_cache": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Bridge STT lyrics to karaoke cache with estimated timing"
+    },
+    "import_limit": {
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Limit songs to import to karaoke cache (0 = all)"
+    }
+  },
+  "examples": [
+    "/suno-stt",
+    "/suno-stt --max 5",
+    "/suno-stt --model small",
+    "/suno-stt --import-to-cache",
+    "/karaoke-import --import-limit 50",
+    "/extract-lyrics --playlist 3adb1878-12f8-4c1c-a815-bde3d7d320ed",
+    "/ffcpln-lyrics --max 10 --model small --import-to-cache"
+  ],
+  "handler": {
+    "module": "modules.platform_integration.antifafm_broadcaster.scripts.launch",
+    "function": "run_suno_stt_extract",
+    "bridge_function": "run_stt_to_karaoke_bridge"
+  },
+  "cli_handler": {
+    "script": "modules/platform_integration/antifafm_broadcaster/scripts/suno_stt_lyrics_extractor.py",
+    "args_template": "--playlist {playlist_id} --max {max_songs} --model {model}",
+    "bridge_args": "--import-to-cache --import-limit {import_limit}"
+  },
+  "output": {
+    "format": "json",
+    "success_template": "[STT] Extracted {new_lyrics} new lyrics from {processed} songs (dedup ratio: {dedup_ratio}x)",
+    "bridge_template": "[KARAOKE] Imported {imported} songs to karaoke cache ({skipped} skipped, {errors} errors)",
+    "error_template": "[STT] Failed: {error}"
+  },
+  "pipeline": {
+    "description": "Suno CDN -> Download MP3 -> faster-whisper STT -> Lyrics -> Hash Dedup -> SQLite -> Karaoke Cache Bridge",
+    "components": [
+      {"name": "SunoAudioDownloader", "role": "Download from cdn1.suno.ai/{id}.mp3"},
+      {"name": "SunoSTTTranscriber", "role": "Wraps FasterWhisperSTT (WSP 84 reuse)"},
+      {"name": "LyricsDeduplicator", "role": "SHA256 hash dedup, SQLite storage"},
+      {"name": "KaraokeCacheBridge", "role": "Estimate timing, import to lyrics_cache.db"}
+    ]
+  },
+  "wsp_compliance": [
+    "WSP 84: Reuses FasterWhisperSTT from voice_command_ingestion",
+    "WSP 50: HoloIndex search verified BatchTranscriber exists",
+    "WSP 72: Suno-specific logic isolated from core STT",
+    "WSP 78: SQLite storage (Layer B - Operational Relational Store)"
+  ],
+  "dependencies": {
+    "python": ["faster-whisper", "librosa"],
+    "internal": ["voice_command_ingestion.FasterWhisperSTT"]
+  },
+  "motivation": "Everything 012 does, 0102 should be able to do - ZERO manual work"
+}

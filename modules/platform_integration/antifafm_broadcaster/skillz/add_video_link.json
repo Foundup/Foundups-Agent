@@ -1,0 +1,45 @@
+{
+  "skill_id": "antifafm_add_video",
+  "name": "Add Video Link",
+  "description": "Managing Directors can add YouTube video links to antifaFM broadcast background library",
+  "domain": "streaming",
+  "command": "/add link",
+  "aliases": ["/addlink", "/add video", "/addvideo"],
+  "version": "1.0.0",
+  "author": "0102",
+  "permissions": {
+    "required_role": "managing_director",
+    "allowed_users": ["012", "undaodu", "antifafm", "foundups"]
+  },
+  "parameters": {
+    "url": {
+      "type": "string",
+      "required": true,
+      "description": "YouTube URL (shorts, regular videos, etc.)",
+      "pattern": "^https?://(www\\.)?(youtube\\.com|youtu\\.be)/"
+    },
+    "title": {
+      "type": "string",
+      "required": false,
+      "description": "Optional title for the video"
+    }
+  },
+  "examples": [
+    "/add link https://www.youtube.com/shorts/J9CmL54rhU8",
+    "/add link https://youtu.be/dQw4w9WgXcQ",
+    "/addlink https://www.youtube.com/watch?v=abc123def45"
+  ],
+  "handler": {
+    "module": "modules.platform_integration.antifafm_broadcaster.src.video_library",
+    "function": "handle_add_link_command"
+  },
+  "output": {
+    "format": "text",
+    "success_template": "[VIDEO] Added: {filename} - Downloaded successfully",
+    "error_template": "[VIDEO] Failed: {message}"
+  },
+  "wsp_compliance": [
+    "WSP 64: Permission check before execution",
+    "WSP 91: Download logging for observability"
+  ]
+}
