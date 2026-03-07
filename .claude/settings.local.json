@@ -125,7 +125,8 @@
       "Bash(else echo \"MISSING: $wt\")",
       "Bash(done)",
       "Bash(git config:*)",
-      "Bash(git sync-both:*)"
+      "Bash(git sync-both:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
