@@ -28,6 +28,13 @@ from datetime import datetime
 from typing import Optional
 from dotenv import load_dotenv
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+    get_default_company,
+    ACCOUNT_ALIASES,
+)
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -73,13 +80,14 @@ class AntiDetectionLinkedIn:
         load_dotenv()
         self.email = os.getenv('LINKEDIN_EMAIL')
         self.password = os.getenv('LINKEDIN_PASSWORD')
-        self.company_id = "1263645"  # Default: FoundUps LinkedIn page (can be overridden)
+        self.company_id = get_default_company()  # Use central registry default
 
         # Map numeric IDs to vanity URLs for proper navigation
+        # Uses ACCOUNT_ALIASES from central registry for reverse lookup
         self.company_vanity_map = {
-            "68706058": "undaodu",     # UnDaoDu (CORRECTED from 165749317)
-            "1263645": "foundups"      # FoundUps
-            # Note: Move2Japan (104834798) removed - will use company ID directly
+            get_company_id("undaodu"): "undaodu",
+            get_company_id("foundups"): "foundups",
+            # Note: Move2Japan uses company ID directly (no vanity URL)
         }
 
         # Use vanity URL if available, otherwise use numeric ID

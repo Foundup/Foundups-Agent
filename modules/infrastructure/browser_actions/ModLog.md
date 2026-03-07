@@ -7,6 +7,19 @@
 
 ## Change Log
 
+### 2026-03-07: LinkedIn Registry Migration
+**By:** 0102
+**WSP References:** WSP 22, WSP 60, WSP 3
+
+**Changes:**
+- `src/ai_overseer_integration.py`: Default LinkedIn profile now uses registry lookup
+- Import: `from modules.infrastructure.shared_utilities.linkedin_account_registry import get_default_company`
+
+**Impact:**
+- LinkedIn company IDs managed via `LINKEDIN_ACCOUNTS_JSON` env var
+
+---
+
 ### 2026-03-05: Digital Twin parameter passthrough (L1/L3)
 **By:** 0102
 **WSP References:** WSP 22, WSP 50, WSP 73

@@ -42,6 +42,11 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 # Ensure UTF-8 encoding
 if sys.platform.startswith('win'):
     os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -199,7 +204,7 @@ class GitPushDAE:
         try:
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             from modules.platform_integration.linkedin_agent.src.git_linkedin_bridge import GitLinkedInBridge
-            self.git_bridge = GitLinkedInBridge(company_id="1263645")
+            self.git_bridge = GitLinkedInBridge(company_id="foundups")
             self.git_bridge.auto_mode = True  # Enable autonomous commit message generation
             self.logger.info(f"[{self.daemon_name}] Git bridge initialized successfully")
         except Exception as e:

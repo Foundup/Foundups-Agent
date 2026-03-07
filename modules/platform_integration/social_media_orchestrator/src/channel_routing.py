@@ -15,6 +15,12 @@ from dataclasses import dataclass
 import logging
 import os
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+    get_default_company,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,52 +62,62 @@ class SocialMediaRouter:
     _ANTIFAFM_ID = os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
 
     # Channel routing mappings (uses env vars for channel IDs)
-    CHANNEL_MAPPINGS = {
-        _FOUNDUPS_ID: ChannelRouting(
-            channel_id=_FOUNDUPS_ID,
-            channel_name='FoundUps',
-            linkedin_page_id='1263645',
-            x_account='foundups',
-            enabled=True
-        ),
-        _MOVE2JAPAN_ID: ChannelRouting(
-            channel_id=_MOVE2JAPAN_ID,
-            channel_name='Move2Japan',
-            linkedin_page_id='104834798',  # GeoZai page
-            x_account='geozai',
-            enabled=True
-        ),
-        _MOVE2JAPAN_ALT_ID: ChannelRouting(
-            channel_id=_MOVE2JAPAN_ALT_ID,
-            channel_name='Move2Japan',
-            linkedin_page_id='104834798',  # GeoZai page
-            x_account='geozai',
-            enabled=True
-        ),
-        _UNDAODU_ID: ChannelRouting(
-            channel_id=_UNDAODU_ID,
-            channel_name='UnDaoDu',
-            linkedin_page_id='165749317',
-            x_account='undaodu',
-            enabled=True
-        ),
-        # antifaFM - Edge browser (9223), shares with FoundUps
-        _ANTIFAFM_ID: ChannelRouting(
-            channel_id=_ANTIFAFM_ID,
-            channel_name='antifaFM',
-            linkedin_page_id='1263645',  # Share FoundUps LinkedIn for now
-            x_account='antifafm',
-            enabled=True
-        ),
-        # Test channel (disabled by default)
-        'UCROkIz1wOCP3tPk-1j3umyQ': ChannelRouting(
-            channel_id='UCROkIz1wOCP3tPk-1j3umyQ',
-            channel_name='FoundUps1934',
-            linkedin_page_id='1263645',
-            x_account='foundups',
-            enabled=False  # Safety: keep test channel disabled for social posting
-        ),
-    }
+    # Channel routing mappings (uses central registry for LinkedIn page IDs)
+    @classmethod
+    def _build_channel_mappings(cls):
+        """Build channel mappings using central registry for LinkedIn IDs."""
+        foundups_id = get_company_id("foundups")
+        move2japan_id = get_company_id("move2japan")
+        undaodu_id = get_company_id("undaodu")
+
+        return {
+            cls._FOUNDUPS_ID: ChannelRouting(
+                channel_id=cls._FOUNDUPS_ID,
+                channel_name='FoundUps',
+                linkedin_page_id=foundups_id,
+                x_account='foundups',
+                enabled=True
+            ),
+            cls._MOVE2JAPAN_ID: ChannelRouting(
+                channel_id=cls._MOVE2JAPAN_ID,
+                channel_name='Move2Japan',
+                linkedin_page_id=move2japan_id,  # GeoZai page
+                x_account='geozai',
+                enabled=True
+            ),
+            cls._MOVE2JAPAN_ALT_ID: ChannelRouting(
+                channel_id=cls._MOVE2JAPAN_ALT_ID,
+                channel_name='Move2Japan',
+                linkedin_page_id=move2japan_id,  # GeoZai page
+                x_account='geozai',
+                enabled=True
+            ),
+            cls._UNDAODU_ID: ChannelRouting(
+                channel_id=cls._UNDAODU_ID,
+                channel_name='UnDaoDu',
+                linkedin_page_id=undaodu_id,
+                x_account='undaodu',
+                enabled=True
+            ),
+            # antifaFM - Edge browser (9223), shares with FoundUps
+            cls._ANTIFAFM_ID: ChannelRouting(
+                channel_id=cls._ANTIFAFM_ID,
+                channel_name='antifaFM',
+                linkedin_page_id=foundups_id,  # Share FoundUps LinkedIn for now
+                x_account='antifafm',
+                enabled=True
+            ),
+            # Test channel (disabled by default)
+            'UCROkIz1wOCP3tPk-1j3umyQ': ChannelRouting(
+                channel_id='UCROkIz1wOCP3tPk-1j3umyQ',
+                channel_name='FoundUps1934',
+                linkedin_page_id=foundups_id,
+                x_account='foundups',
+                enabled=False  # Safety: keep test channel disabled for social posting
+            ),
+        }
+
+    CHANNEL_MAPPINGS = None  # Lazy initialized
 
     # Display names with visual indicators
     # Updated 2026-01-09: Uses env vars for channel IDs
@@ -115,6 +131,13 @@ class SocialMediaRouter:
     }
 
     @classmethod
+    def _get_mappings(cls):
+        """Get or initialize channel mappings."""
+        if cls.CHANNEL_MAPPINGS is None:
+            cls.CHANNEL_MAPPINGS = cls._build_channel_mappings()
+        return cls.CHANNEL_MAPPINGS
+
+    @classmethod
     def get_routing(cls, channel_id: str) -> Optional[ChannelRouting]:
         """
         Get complete routing configuration for a YouTube channel.
@@ -125,7 +148,7 @@ class SocialMediaRouter:
         Returns:
             ChannelRouting object or None if channel not configured
         """
-        routing = cls.CHANNEL_MAPPINGS.get(channel_id)
+        routing = cls._get_mappings().get(channel_id)
         if routing:
             logger.debug(f"[ROUTING] Found config for {channel_id}: {routing}")
         else:
@@ -149,9 +172,10 @@ class SocialMediaRouter:
             logger.info(f"[ROUTING] {channel_id} -> LinkedIn page: {routing.linkedin_page_id} ({routing.channel_name})")
             return routing.linkedin_page_id
 
-        # Fallback to FoundUps (default)
-        logger.info(f"[ROUTING] Unknown channel {channel_id}, using default LinkedIn: 1263645 (FoundUps)")
-        return '1263645'
+        # Fallback to FoundUps (default from central registry)
+        default_id = get_default_company()
+        logger.info(f"[ROUTING] Unknown channel {channel_id}, using default LinkedIn: {default_id} (FoundUps)")
+        return default_id
 
     @classmethod
     def get_x_account(cls, channel_id: str) -> str:
@@ -216,7 +240,7 @@ class SocialMediaRouter:
         Returns:
             List of YouTube channel IDs
         """
-        return list(cls.CHANNEL_MAPPINGS.keys())
+        return list(cls._get_mappings().keys())
 
     @classmethod
     def validate_linkedin_page(cls, linkedin_page_id: str) -> bool:
@@ -230,7 +254,7 @@ class SocialMediaRouter:
         Returns:
             True if page ID is valid, False otherwise
         """
-        valid_pages = {r.linkedin_page_id for r in cls.CHANNEL_MAPPINGS.values()}
+        valid_pages = {r.linkedin_page_id for r in cls._get_mappings().values()}
         return linkedin_page_id in valid_pages
 
 

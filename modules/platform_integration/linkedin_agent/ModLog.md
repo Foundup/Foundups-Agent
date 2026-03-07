@@ -2,6 +2,17 @@
 
 ## Latest Changes
 
+### V068 - LinkedIn Registry Migration
+**Date**: 2026-03-07
+**Changes**:
+- Migrated hardcoded LinkedIn company IDs to central registry
+- Files updated:
+  - `src/anti_detection_poster.py` - replaced hardcoded IDs with `get_company_id()` calls
+  - `src/git_linkedin_bridge.py` - constructor now uses registry lookup
+- Import added: `from modules.infrastructure.shared_utilities.linkedin_account_registry import get_company_id, get_default_company`
+**Impact**: All LinkedIn company IDs now managed via `LINKEDIN_ACCOUNTS_JSON` env var
+**WSP**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
+
 ### V067 - LinkedIn Layered CLI Wiring + WRE Recursive Diagnosis
 **Date**: 2026-03-05
 **Changes**:

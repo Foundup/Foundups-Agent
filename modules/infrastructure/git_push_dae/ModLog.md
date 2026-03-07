@@ -3,6 +3,16 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## LinkedIn Registry Migration - 2026-03-07
+**WSP References**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
+
+**Changes Made**:
+- `src/git_push_dae.py`: GitLinkedInBridge now initialized with name `"foundups"` instead of hardcoded ID
+- Import: `from modules.infrastructure.shared_utilities.linkedin_account_registry import get_company_id`
+
+**Impact**:
+- LinkedIn company IDs managed via `LINKEDIN_ACCOUNTS_JSON` env var
+
 ## Operational Noise Reduction - 2026-02-17
 **WSP References**: WSP 22 (ModLog), WSP 49 (module boundaries), WSP 91 (operational clarity)
 

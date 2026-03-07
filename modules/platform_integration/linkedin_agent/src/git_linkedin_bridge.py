@@ -20,6 +20,10 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+    get_default_company,
+)
 # Removed direct LinkedIn import - now using unified interface
 
 # Import Qwen for intelligent content generation
@@ -36,14 +40,14 @@ class GitLinkedInBridge:
     Detects pushes and creates engaging LinkedIn content.
     """
     
-    def __init__(self, company_id: str = "1263645"):
+    def __init__(self, company_id: str = None):
         """
         Initialize Git-LinkedIn bridge.
 
         Args:
-            company_id: LinkedIn company page ID (default: 1263645)
+            company_id: LinkedIn company page ID or name (default: from registry)
         """
-        self.company_id = company_id
+        self.company_id = get_company_id(company_id) if company_id else get_default_company()
         self.repo_root = Path(__file__).resolve().parents[4]
         self.last_post_result: Optional[Dict[str, str]] = None
 
@@ -1732,7 +1736,7 @@ def test_git_linkedin():
     print("Git to LinkedIn Bridge Test")
     print("=" * 60)
     
-    bridge = GitLinkedInBridge(company_id="1263645")
+    bridge = GitLinkedInBridge(company_id="foundups")
     
     # Get recent commits
     commits = bridge.get_recent_commits(3)

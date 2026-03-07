@@ -32,6 +32,11 @@ import json
 import os
 from datetime import datetime
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 
 def generate_x_content(commit_msg, file_count):
     """Generate compelling X/Twitter content (280 char limit)"""
@@ -94,8 +99,8 @@ def git_push_and_post():
     print("="*60)
     print("[WARN] LEGACY MODE: Consider using GitPushDAE for full autonomy")
 
-    # Use the git bridge module with X support
-    bridge = GitLinkedInBridge(company_id="1263645")
+    # Use the git bridge module with X support (central registry for company ID)
+    bridge = GitLinkedInBridge(company_id="foundups")
     bridge.push_and_post()
 
     input("\nPress Enter to continue...")

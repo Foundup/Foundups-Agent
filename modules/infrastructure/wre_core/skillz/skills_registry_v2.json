@@ -1,7 +1,7 @@
 {
   "version": "2.0",
-  "last_updated": "2026-03-07T00:00:00+00:00",
-  "total_skills": 27,
+  "last_updated": "2026-03-07T12:00:00+00:00",
+  "total_skills": 28,
   "skills": {
     "suno_stt_lyrics_extract": {
       "location": "O:\\Foundups-Agent\\modules\\platform_integration\\antifafm_broadcaster\\skillz\\suno_stt_extract.json",
@@ -403,6 +403,24 @@
       ],
       "invocation": "/audit-data",
       "description": "WSP 78 compliance auditing of FoundUps data architecture"
+    },
+    "qwen_bulk_import_migration": {
+      "location": "O:\\Foundups-Agent\\modules\\infrastructure\\wre_core\\skillz\\qwen_bulk_import_migration",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "REFACTOR",
+      "version": "1.0.0",
+      "promotion_state": "production",
+      "wsp_chain": [
+        "WSP 77",
+        "WSP 50",
+        "WSP 84",
+        "WSP 22"
+      ],
+      "invocation": "/migrate-imports",
+      "description": "Bulk import migration using Qwen planning and Gemma validation"
     }
   }
 }

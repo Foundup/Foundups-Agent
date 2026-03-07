@@ -1,5 +1,19 @@
 # ModLog — FoundUps Selenium
 
+## V0.8.1 — LinkedIn Registry Migration
+
+**Date**: 2026-03-07
+**WSP Compliance**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
+
+### Changes
+- Migrated hardcoded LinkedIn profile mappings to central registry
+- `src/browser_manager.py`: Profile mappings now built dynamically from registry
+
+### Impact
+- LinkedIn browser profiles now managed via `LINKEDIN_ACCOUNTS_JSON` env var
+
+---
+
 ## V0.8.0 — Cross-Process Browser Reconnection (CDP Support)
 
 **Date**: 2026-02-24

@@ -25,6 +25,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 # Directory to store browser session info for cross-process reconnection
 BROWSER_SESSION_DIR = Path("O:/Foundups-Agent/modules/infrastructure/foundups_selenium/data/sessions")
 BROWSER_SESSION_DIR.mkdir(parents=True, exist_ok=True)
@@ -231,11 +236,16 @@ class BrowserManager:
 
         # Use existing profile to maintain session and reuse browser
         # Map profile names to actual Chrome profile directories (must match actual implementations)
+        # Build profile mapping dynamically using central registry
+        move2japan_id = get_company_id("move2japan")
+        foundups_id = get_company_id("foundups")
+        undaodu_id = get_company_id("undaodu")
+
         profile_mapping = {
-            # LinkedIn profiles
-            'linkedin_104834798': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',  # GeoZai
-            'linkedin_1263645': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',     # FoundUps
-            'linkedin_165749317': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',   # UnDaoDu
+            # LinkedIn profiles (using central registry IDs)
+            f'linkedin_{move2japan_id}': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',  # GeoZai
+            f'linkedin_{foundups_id}': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',     # FoundUps
+            f'linkedin_{undaodu_id}': 'O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile',   # UnDaoDu
 
             # X/Twitter profiles
             'x_move2japan': 'O:/Foundups-Agent/modules/platform_integration/x_twitter/data/chrome_profile_geozai',

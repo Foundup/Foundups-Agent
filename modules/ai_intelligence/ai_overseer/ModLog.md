@@ -6,6 +6,39 @@
 
 ---
 
+## 2026-03-07 - LinkedIn Company Poster Registry Migration
+
+**Author**: 0102
+**WSP**: 22, 60, 3
+
+### Changes
+
+- **skillz/linkedin_company_poster/executor.py**:
+  - Migrated from hardcoded COMPANY_ID to central registry import
+  - Now imports from `modules.infrastructure.shared_utilities.linkedin_account_registry`
+  - Functions updated: `get_article_url()`, `list_accounts()`, `switch_author()`
+  - Removed hardcoded company ID dictionary
+
+### Why
+
+LinkedIn company IDs were hardcoded across ~14+ modules. Created central registry in shared_utilities for single source of truth. This skill is first migrated consumer.
+
+### Migration
+
+```python
+# Before (hardcoded)
+COMPANY_ID = "1263645"
+ACCOUNT_IDS = {"foundups": "1263645", ...}
+
+# After (central registry)
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id, get_article_url, get_admin_url, ACCOUNT_ALIASES
+)
+COMPANY_ID = _get_default_company_id()
+```
+
+---
+
 ## 2026-03-07 - Rotation Stall Detection + CLI Trigger
 
 **Author**: 0102

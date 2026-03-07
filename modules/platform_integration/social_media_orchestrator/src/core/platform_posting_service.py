@@ -15,6 +15,11 @@ from typing import Dict, Optional, Tuple, Any
 from enum import Enum
 from dataclasses import dataclass
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 
 class PostingStatus(Enum):
     """Posting status codes"""
@@ -85,11 +90,11 @@ class PlatformPostingService:
         start_time = time.time()
 
         try:
-            # Channel-to-LinkedIn page validation
+            # Channel-to-LinkedIn page validation (using central registry)
             page_mapping = {
-                "104834798": "GeoZai (Move2Japan)",  # Corrected GeoZai page ID
-                "165749317": "UnDaoDu",
-                "1263645": "FoundUps"
+                get_company_id("move2japan"): "GeoZai (Move2Japan)",
+                get_company_id("undaodu"): "UnDaoDu",
+                get_company_id("foundups"): "FoundUps",
             }
 
             # Verify we're posting to a valid page
@@ -108,12 +113,15 @@ class PlatformPostingService:
             self.logger.info(f"[OK] Verified LinkedIn page: {page_name} (ID: {linkedin_page})")
 
             # Double-check channel mapping from title
-            if "Move2Japan" in title and linkedin_page != "104834798":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: Move2Japan stream should post to GeoZai (104834798), but got {linkedin_page}")
-            elif "UnDaoDu" in title and linkedin_page != "165749317":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: UnDaoDu stream should post to UnDaoDu (165749317), but got {linkedin_page}")
-            elif "FoundUps" in title and linkedin_page != "1263645":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: FoundUps stream should post to FoundUps (1263645), but got {linkedin_page}")
+            move2japan_id = get_company_id("move2japan")
+            undaodu_id = get_company_id("undaodu")
+            foundups_id = get_company_id("foundups")
+            if "Move2Japan" in title and linkedin_page != move2japan_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: Move2Japan stream should post to GeoZai ({move2japan_id}), but got {linkedin_page}")
+            elif "UnDaoDu" in title and linkedin_page != undaodu_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: UnDaoDu stream should post to UnDaoDu ({undaodu_id}), but got {linkedin_page}")
+            elif "FoundUps" in title and linkedin_page != foundups_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: FoundUps stream should post to FoundUps ({foundups_id}), but got {linkedin_page}")
 
             # Apply posting delay to slow down requests
             current_time = time.time()
@@ -375,7 +383,7 @@ class PlatformPostingService:
             'antifafm' in title.lower() or
             'antifa' in title.lower() or
             'ffcpln' in title.lower() or
-            linkedin_page == "104834798"  # GeoZai page handles antifaFM
+            linkedin_page == get_company_id("move2japan")  # GeoZai page handles antifaFM
         )
 
         if is_antifafm:

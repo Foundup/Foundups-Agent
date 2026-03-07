@@ -21,6 +21,22 @@ Centralized orchestration system providing unified social media management acros
 
 ## Recent Changes
 
+### 2026-03-07 - LinkedIn Registry Migration
+**WSP References**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
+
+**Changes Made**
+- Migrated all hardcoded LinkedIn company IDs to central registry
+- Files updated:
+  - `src/core/platform_posting_service.py` - page_mapping uses `get_company_id()`
+  - `src/core/channel_configuration_manager.py` - LinkedInPage enum values from registry
+  - `src/channel_routing.py` - lazy initialization with `_build_channel_mappings()`
+  - `src/unified_linkedin_interface.py` - LinkedInCompanyPage enum from registry
+  - `src/simple_posting_orchestrator.py` - routing config uses registry
+  - `src/multi_account_manager.py` - credential company_id from registry
+
+**Impact**
+- All LinkedIn company IDs now managed via `LINKEDIN_ACCOUNTS_JSON` env var
+- No more hardcoded IDs in this module
 
 ### 2026-03-03 - SocialMediaDAE + WRE Skill Triggers
 **WSP References**: WSP 22 (ModLog), WSP 46 (Skill Execution), WSP 96 (WRE Skills)

@@ -10,12 +10,17 @@ import logging
 from typing import Dict, Optional, List, Any
 from enum import Enum
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 
 class LinkedInPage(Enum):
-    """LinkedIn company pages"""
-    UNDAODU = "165749317"
-    FOUNDUPS = "1263645"  # Corrected FoundUps page ID
-    GEOZAI = "104834798"  # Corrected GeoZai page ID for Move2Japan
+    """LinkedIn company pages - values loaded from central registry"""
+    UNDAODU = get_company_id("undaodu")
+    FOUNDUPS = get_company_id("foundups")
+    GEOZAI = get_company_id("move2japan")  # GeoZai page for Move2Japan
 
 
 class XAccount(Enum):
@@ -101,13 +106,16 @@ class ChannelConfigurationManager:
                 if config.get('channel_id') == channel_identifier:
                     self.logger.info(f"[CONFIG] Found config for channel ID {channel_identifier}: {config_name}")
                     self.logger.info(f"[CONFIG] LinkedIn page: {config.get('linkedin_page')} | X account: {config.get('x_account')}")
-                    # Validate configuration
-                    if config_name == "Move2Japan" and config.get('linkedin_page') != "104834798":
-                        self.logger.error(f"[CONFIG ERROR] Move2Japan should use LinkedIn page 104834798 (GeoZai), not {config.get('linkedin_page')}")
-                    elif config_name == "@UnDaoDu" and config.get('linkedin_page') != "165749317":
-                        self.logger.error(f"[CONFIG ERROR] UnDaoDu should use LinkedIn page 165749317, not {config.get('linkedin_page')}")
-                    elif config_name in ["@FoundUps", "FoundUps"] and config.get('linkedin_page') != "1263645":
-                        self.logger.error(f"[CONFIG ERROR] FoundUps should use LinkedIn page 1263645, not {config.get('linkedin_page')}")
+                    # Validate configuration using central registry
+                    move2japan_id = get_company_id("move2japan")
+                    undaodu_id = get_company_id("undaodu")
+                    foundups_id = get_company_id("foundups")
+                    if config_name == "Move2Japan" and config.get('linkedin_page') != move2japan_id:
+                        self.logger.error(f"[CONFIG ERROR] Move2Japan should use LinkedIn page {move2japan_id} (GeoZai), not {config.get('linkedin_page')}")
+                    elif config_name == "@UnDaoDu" and config.get('linkedin_page') != undaodu_id:
+                        self.logger.error(f"[CONFIG ERROR] UnDaoDu should use LinkedIn page {undaodu_id}, not {config.get('linkedin_page')}")
+                    elif config_name in ["@FoundUps", "FoundUps"] and config.get('linkedin_page') != foundups_id:
+                        self.logger.error(f"[CONFIG ERROR] FoundUps should use LinkedIn page {foundups_id}, not {config.get('linkedin_page')}")
                     return config.copy()
 
             # Fallback to hardcoded mapping if not found

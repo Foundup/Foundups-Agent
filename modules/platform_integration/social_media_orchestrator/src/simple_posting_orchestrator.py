@@ -24,6 +24,12 @@ from dataclasses import dataclass
 from enum import Enum
 import threading
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+    get_default_company,
+)
+
 logger = logging.getLogger(__name__)
 
 # WSP 77: Agent Coordination - Import child DAE adapters
@@ -168,11 +174,11 @@ class SimplePostingOrchestrator:
         except Exception as e:
             self.logger.error(f"[CONFIG] Error loading channel configuration: {e}")
 
-        # Return default configuration if file not found
+        # Return default configuration if file not found (using central registry)
         return {
             "channel_routing": {},
             "default_routing": {
-                "linkedin_page_id": "1263645",
+                "linkedin_page_id": get_default_company(),
                 "x_account": "X_Acc2"
             }
         }
@@ -319,14 +325,14 @@ class SimplePostingOrchestrator:
         if platforms_already_posted:
             logger.info(f"[ORCHESTRATOR] ⏭�E�ESKIPPING: {[p.value for p in platforms_already_posted]} (already posted)")
 
-        # Determine channel handle based on LinkedIn page
+        # Determine channel handle based on LinkedIn page (using central registry)
         channel_handle = "@UnDaoDu"  # Default
         if linkedin_page:
             # Map LinkedIn page IDs to channel handles
             page_to_handle = {
-                "68706058": "@UnDaoDu",     # UnDaoDu page
-                "1263645": "@FoundUps",     # FoundUps page
-                "104834798": "@Move2Japan"  # Move2Japan page
+                get_company_id("undaodu"): "@UnDaoDu",
+                get_company_id("foundups"): "@FoundUps",
+                get_company_id("move2japan"): "@Move2Japan",
             }
             channel_handle = page_to_handle.get(linkedin_page, "@UnDaoDu")
 

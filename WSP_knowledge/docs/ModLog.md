@@ -8,6 +8,33 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - [U+1F9EC] **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [LinkedIn Registry Migration - Cross-Module Centralization]
+- Date: 2026-03-07
+- Description: Created central LinkedIn account registry and migrated 13 files across 6 modules to eliminate hardcoded company IDs. Added reusable `qwen_bulk_import_migration` skill to WRE for future migrations.
+- WSP Compliance: WSP 60 (Module Memory), WSP 3 (Shared Utilities), WSP 22 (ModLog), WSP 84 (Code Reuse)
+
+### New Files:
+- `modules/infrastructure/shared_utilities/linkedin_account_registry.py` - Central registry
+- `modules/infrastructure/wre_core/skillz/qwen_bulk_import_migration/` - Reusable migration skill
+
+### Modules Updated:
+- linkedin_agent (2 files)
+- social_media_orchestrator (6 files)
+- foundups_selenium (1 file)
+- browser_actions (1 file)
+- git_push_dae (1 file)
+- wre_core (1 file)
+- git_social_posting (1 file)
+
+### Environment Variables Added:
+- `LINKEDIN_ACCOUNTS_JSON` - JSON map of company names to IDs
+- `LINKEDIN_DEFAULT_COMPANY` - Default company name (fallback: foundups)
+
+### Discovery:
+- Skill indexed in HoloIndex (46 total skills)
+- Searchable via `holo_index.py --search "bulk import migration"`
+
+====================================================================
 ## MODLOG - [WSP 90 Bulk Fix - UTF-8 Wrapping Deduplication]
 - Date: 2026-02-26
 - Description: Fixed "lost sys.stderr" startup error caused by 379 modules re-wrapping stdout/stderr at import time. Created bulk fix script and updated WSP 90 with proper guard pattern.

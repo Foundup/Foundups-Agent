@@ -30,6 +30,11 @@ from typing import Dict, List, Optional
 
 # Add parent paths for imports
 sys.path.insert(0, 'O:/Foundups-Agent')
+
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
 # Removed direct LinkedIn import - now using unified interface
 
 class DevelopmentMonitorDAE:
@@ -39,19 +44,24 @@ class DevelopmentMonitorDAE:
     Part of WRE recursive improvement system.
     """
     
-    # Company pages configuration
-    COMPANY_PAGES = {
-        'foundups': {
-            'id': '104834798',
-            'name': 'FoundUps',
-            'post_frequency': 'immediate'  # Post live streams immediately
-        },
-        'development': {
-            'id': '1263645',
-            'name': 'Development Updates',
-            'post_frequency': 'batch'  # Batch Git commits
+    # Company pages configuration (using central registry)
+    @classmethod
+    def _get_company_pages(cls):
+        """Build company pages config using central registry."""
+        return {
+            'foundups': {
+                'id': get_company_id("move2japan"),  # GeoZai/Move2Japan
+                'name': 'FoundUps',
+                'post_frequency': 'immediate'  # Post live streams immediately
+            },
+            'development': {
+                'id': get_company_id("foundups"),
+                'name': 'Development Updates',
+                'post_frequency': 'batch'  # Batch Git commits
+            }
         }
-    }
+
+    COMPANY_PAGES = None  # Lazy initialized
     
     def __init__(self):
         """Initialize Development Monitor DAE per WSP protocols"""

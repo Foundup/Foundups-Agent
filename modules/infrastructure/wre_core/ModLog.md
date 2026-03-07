@@ -2,6 +2,41 @@
 
 ## Chronological Change Log
 
+### [2026-03-07] - Qwen Bulk Import Migration Skill
+
+**WSP Protocol References**: WSP 77 (Agent Coordination), WSP 50 (Pre-Action), WSP 84 (Code Reuse), WSP 22 (ModLog)
+**Impact Analysis**: New WRE skill for migrating hardcoded values to central registries using Qwen/Gemma coordination.
+
+#### Changes Made
+
+- `skillz/qwen_bulk_import_migration/`:
+  - `SKILLz.md` - Skill documentation with input/output schemas
+  - `executor.py` - Migration executor with dry-run support
+  - `__init__.py` - Module exports
+- `skillz/skills_registry_v2.json`:
+  - Registered new skill (total_skills: 28)
+  - Intent type: REFACTOR
+  - Invocation: `/migrate-imports`
+
+#### Built-in Presets
+
+- `linkedin_registry`: Migrate LinkedIn company IDs to central registry
+- `youtube_registry`: Migrate YouTube channel IDs to central registry
+
+#### Usage
+
+```bash
+# Preview LinkedIn registry migration
+python -m modules.infrastructure.wre_core.skillz.qwen_bulk_import_migration.executor \
+  --preset linkedin_registry --dry-run
+
+# Apply migration
+python -m modules.infrastructure.wre_core.skillz.qwen_bulk_import_migration.executor \
+  --preset linkedin_registry --apply
+```
+
+---
+
 ### [2026-03-05] - Phase 2 Self-Audit: Repeated-Failure Escalation + Adaptive Remediation
 
 **WSP Protocol References**: WSP 15 (Priority Closure), WSP 48 (Recursive Self-Improvement), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention), WSP 22 (ModLog)  
