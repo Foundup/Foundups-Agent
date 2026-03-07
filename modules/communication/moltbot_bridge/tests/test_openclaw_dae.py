@@ -536,6 +536,162 @@ class TestConversationRuntimeFlags:
             assert "local/qwen3.5-4b" in snapshot["local"]
             assert snapshot["local"]["local/qwen3.5-4b"] == "ready"
 
+    def test_default_conversation_target_prefers_qwen3_5_general_model(self, tmp_path: Path):
+        with patch.dict(
+            os.environ,
+            {
+                "LOCAL_MODEL_ROOT": str(tmp_path),
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_CONVERSATION_MODEL_TARGET": "",
+            },
+            clear=False,
+        ):
+            qwen35_dir = tmp_path / "qwen3.5-4b"
+            qwen35_dir.mkdir(parents=True, exist_ok=True)
+            (qwen35_dir / "Qwen3.5-4B-Instruct-Q4_K_M.gguf").write_bytes(b"test")
+
+            dae = OpenClawDAE(repo_root=project_root)
+            assert dae._conversation_model_target_id == "local/qwen3.5-4b"
+
+    def test_agentic_model_selection_routes_code_turn_to_coder(self, tmp_path: Path):
+        with patch.dict(
+            os.environ,
+            {
+                "LOCAL_MODEL_ROOT": str(tmp_path),
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_AGENTIC_MODEL_SELECTION": "1",
+                "OPENCLAW_CONVERSATION_MODEL_TARGET": "",
+                "OPENCLAW_CONVERSATION_MODEL_LOCK": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "0",
+                "OPENCLAW_NO_API_KEYS": "1",
+                "OPENCLAW_OLLAMA_MODEL": "",
+            },
+            clear=False,
+        ):
+            for folder, filename in (
+                ("qwen3.5-4b", "Qwen3.5-4B-Instruct-Q4_K_M.gguf"),
+                ("qwen-coder-7b", "qwen2.5-coder-7b-instruct-q4_k_m.gguf"),
+                ("gemma-270m", "gemma-3-270m-it-Q4_K_M.gguf"),
+            ):
+                model_dir = tmp_path / folder
+                model_dir.mkdir(parents=True, exist_ok=True)
+                (model_dir / filename).write_bytes(b"test")
+
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="fix the failing test in main.py and patch the module",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_agentic_code",
+                is_authorized_commander=True,
+            )
+
+            with patch.object(type(dae), "overseer", new_callable=PropertyMock, return_value=None):
+                dae._execute_conversation(intent)
+
+            snapshot = dae.get_identity_snapshot(include_runtime_probe=False)
+            assert dae._conversation_model_target_id == "local/qwen-coder-7b"
+            assert snapshot["auto_model_role"] == "code"
+            assert snapshot["auto_model_target"] == "local/qwen-coder-7b"
+
+    def test_agentic_model_selection_routes_triage_turn_to_gemma(self, tmp_path: Path):
+        with patch.dict(
+            os.environ,
+            {
+                "LOCAL_MODEL_ROOT": str(tmp_path),
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_AGENTIC_MODEL_SELECTION": "1",
+                "OPENCLAW_CONVERSATION_MODEL_TARGET": "",
+                "OPENCLAW_CONVERSATION_MODEL_LOCK": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "0",
+                "OPENCLAW_NO_API_KEYS": "1",
+                "OPENCLAW_OLLAMA_MODEL": "",
+            },
+            clear=False,
+        ):
+            for folder, filename in (
+                ("qwen3.5-4b", "Qwen3.5-4B-Instruct-Q4_K_M.gguf"),
+                ("qwen-coder-7b", "qwen2.5-coder-7b-instruct-q4_k_m.gguf"),
+                ("gemma-270m", "gemma-3-270m-it-Q4_K_M.gguf"),
+            ):
+                model_dir = tmp_path / folder
+                model_dir.mkdir(parents=True, exist_ok=True)
+                (model_dir / filename).write_bytes(b"test")
+
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="status check the runtime health and diagnose what is failing",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_agentic_triage",
+                is_authorized_commander=True,
+            )
+
+            with patch.object(type(dae), "overseer", new_callable=PropertyMock, return_value=None):
+                dae._execute_conversation(intent)
+
+            snapshot = dae.get_identity_snapshot(include_runtime_probe=False)
+            assert dae._conversation_model_target_id == "local/gemma-270m"
+            assert snapshot["auto_model_role"] == "triage"
+            assert snapshot["auto_model_target"] == "local/gemma-270m"
+
+    def test_manual_model_switch_locks_target_against_agentic_override(self, tmp_path: Path):
+        with patch.dict(
+            os.environ,
+            {
+                "LOCAL_MODEL_ROOT": str(tmp_path),
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_AGENTIC_MODEL_SELECTION": "1",
+                "OPENCLAW_CONVERSATION_MODEL_TARGET": "",
+                "OPENCLAW_CONVERSATION_MODEL_LOCK": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "0",
+                "OPENCLAW_NO_API_KEYS": "1",
+                "OPENCLAW_OLLAMA_MODEL": "",
+            },
+            clear=False,
+        ):
+            for folder, filename in (
+                ("qwen3.5-4b", "Qwen3.5-4B-Instruct-Q4_K_M.gguf"),
+                ("qwen-coder-7b", "qwen2.5-coder-7b-instruct-q4_k_m.gguf"),
+                ("gemma-270m", "gemma-3-270m-it-Q4_K_M.gguf"),
+            ):
+                model_dir = tmp_path / folder
+                model_dir.mkdir(parents=True, exist_ok=True)
+                (model_dir / filename).write_bytes(b"test")
+
+            dae = OpenClawDAE(repo_root=project_root)
+            switch_intent = OpenClawIntent(
+                raw_message="switch model to qwen3.5",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_agentic_lock_switch",
+                is_authorized_commander=True,
+            )
+            dae._execute_conversation(switch_intent)
+
+            with patch.object(type(dae), "overseer", new_callable=PropertyMock, return_value=None):
+                dae._execute_conversation(
+                    OpenClawIntent(
+                        raw_message="fix the failing test in main.py and patch the module",
+                        category=IntentCategory.CONVERSATION,
+                        confidence=0.9,
+                        sender="@UnDaoDu",
+                        channel="local_repl",
+                        session_key="sess_agentic_lock_followup",
+                        is_authorized_commander=True,
+                    )
+                )
+
+            snapshot = dae.get_identity_snapshot(include_runtime_probe=False)
+            assert dae._conversation_model_target_id == "local/qwen3.5-4b"
+            assert snapshot["conversation_model_locked"] == "ON"
+
     def test_model_switch_external_grok_without_key_reports_unconfigured(self):
         with patch.dict(
             os.environ,

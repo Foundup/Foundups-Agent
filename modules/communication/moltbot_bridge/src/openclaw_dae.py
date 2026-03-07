@@ -3010,7 +3010,6 @@ class OpenClawDAE:
                     "0102: model switch blocked by runtime profile zeroclaw. "
                     "external targets are disabled."
                 )
-            self._conversation_model_target_locked = True
             self._preferred_external_provider = provider
             self._preferred_external_model = model
             os.environ["OPENCLAW_CONVERSATION_PREFERRED_PROVIDER"] = provider
@@ -3053,6 +3052,7 @@ class OpenClawDAE:
                 self._mark_preferred_external_status("selected", f"live_probe:{detail}")
             else:
                 self._mark_preferred_external_status("selected", "probe_disabled")
+            self._conversation_model_target_locked = True
             return (
                 "0102: Model switched to "
                 f"{provider}/{model}. "
