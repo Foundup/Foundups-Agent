@@ -56,10 +56,28 @@ async def post(content: str, options: Dict = None) -> str
 async def authenticate(credentials: Dict[str, Any]) -> bool
 def get_platform_limits() -> Dict[str, Any]
 
-# LinkedInAdapter  
+# LinkedInAdapter
 async def post(content: str, options: Dict = None) -> str
 async def authenticate(credentials: Dict[str, Any]) -> bool
 def get_platform_limits() -> Dict[str, Any]
+
+# LinkedIn Company Poster Skill (0102🦞)
+# Location: modules/ai_intelligence/ai_overseer/skillz/linkedin_company_poster/
+def post_update(content: str, signature: str = "0102🦞") -> Tuple[bool, str]
+def write_article(title: str, body: str, signature: str = "0102🦞") -> Tuple[bool, str]
+def open_article_editor() -> Tuple[bool, str]
+```
+
+### LinkedIn Company Poster CLI
+```bash
+# Post update to FoundUps company page
+python -m modules.ai_intelligence.ai_overseer.skillz.linkedin_company_poster --post "Your content"
+
+# Write article
+python -m modules.ai_intelligence.ai_overseer.skillz.linkedin_company_poster --article "Title" --body "Body"
+
+# Test article editor
+python -m modules.ai_intelligence.ai_overseer.skillz.linkedin_company_poster --test-article
 ```
 
 ## Parameters

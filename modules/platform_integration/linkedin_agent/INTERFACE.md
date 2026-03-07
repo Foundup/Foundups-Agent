@@ -6,11 +6,19 @@
 
 ## [TARGET] Module Overview
 
-**Module Name:** `linkedin_agent`  
-**Domain:** `platform_integration`  
-**Purpose:** Autonomous LinkedIn platform engagement and content distribution  
-**Current Phase:** Prototype (v1.x.x) - Enhanced Integration  
+**Module Name:** `linkedin_agent`
+**Domain:** `platform_integration`
+**Purpose:** Autonomous LinkedIn platform engagement and content distribution
+**Current Phase:** Prototype (v1.x.x) - Enhanced Integration
 **WSP Compliance:** WSP 1, WSP 3, WSP 11, WSP 30, WSP 42, WSP 53
+
+### Related Skills
+- **LinkedIn Company Poster** (`modules/ai_intelligence/ai_overseer/skillz/linkedin_company_poster/`)
+  - CLI posting to FoundUps company page (1263645)
+  - Signature: `0102🦞 #FoundUps #pAVS #0102`
+  - Post updates: `--post "content"`
+  - Write articles: `--article "title" --body "body"`
+  - Article URL: `https://www.linkedin.com/article/new/?author=urn%3Ali%3Afs_normalized_company%3A1263645`
 
 ---
 
