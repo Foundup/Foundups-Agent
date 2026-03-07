@@ -820,7 +820,7 @@ class YouTubeStudioDOM:
         "UCfHM9Fw9HD-NwiS0seD_oIA": "UnDaoDu",         # UnDaoDu
         # Edge channels (port 9223)
         "UCSNTUXjAgpd4sgWYP0xoJgw": "FoundUps",        # FoundUps
-        "UCVSmg5aOhP4tnQ9KFUg97qA": "RavingANTIFA",    # RavingANTIFA
+        "UCVSmg5aOhP4tnQ9KFUg97qA": "antifaFM",    # antifaFM
     }
 
     def detect_oops_page(self) -> bool:
@@ -1246,6 +1246,9 @@ class YouTubeStudioDOM:
         Open the filter UI on the Shorts list page.
 
         YouTube Studio UI changes frequently; do not rely on a single selector.
+
+        2026-02-25 FIX: After clicking, move mouse INTO dropdown area to keep it open.
+        Edge browser closes hover-dependent dropdowns faster than Chrome.
         """
         selectors = [
             "input#text-input[placeholder='Filter']",
@@ -1254,6 +1257,9 @@ class YouTubeStudioDOM:
             "#text-input[placeholder='Filter']",
         ]
 
+        clicked = False
+        click_element = None
+
         for sel in selectors:
             try:
                 elem = WebDriverWait(self.driver, 3).until(
@@ -1261,28 +1267,54 @@ class YouTubeStudioDOM:
                 )
                 if elem and elem.is_displayed():
                     self.safe_click(elem)
-                    return True
+                    click_element = elem
+                    clicked = True
+                    break
             except Exception:
                 continue
 
         # Fallback 1: click known toolbar coords (from module ModLog ADR-008)
-        try:
-            x, y = self.selectors.FILTER_ICON_COORDS
-            self._click_viewport_point(int(x), int(y))
-            return True
-        except Exception:
-            pass
+        if not clicked:
+            try:
+                x, y = self.selectors.FILTER_ICON_COORDS
+                self._click_viewport_point(int(x), int(y))
+                clicked = True
+            except Exception:
+                pass
 
         # Fallback 2: JS click element under point (sometimes enough to open dropdown)
-        try:
-            x, y = self.selectors.FILTER_ICON_COORDS
-            self.driver.execute_script(
-                "const el = document.elementFromPoint(arguments[0], arguments[1]); if (el) el.click();",
-                int(x), int(y)
-            )
-            return True
-        except Exception:
-            return False
+        if not clicked:
+            try:
+                x, y = self.selectors.FILTER_ICON_COORDS
+                self.driver.execute_script(
+                    "const el = document.elementFromPoint(arguments[0], arguments[1]); if (el) el.click();",
+                    int(x), int(y)
+                )
+                clicked = True
+            except Exception:
+                return False
+
+        # 2026-02-25: HOVER FIX - Move mouse into dropdown area to keep it open
+        # Edge browser closes hover-dependent menus faster than Chrome.
+        # The dropdown appears ~80px below the filter button.
+        if clicked:
+            try:
+                import time
+                time.sleep(0.3)  # Let dropdown start rendering
+                actions = ActionChains(self.driver)
+                if click_element:
+                    # Move from clicked element down into dropdown
+                    actions.move_to_element_with_offset(click_element, 0, 80).perform()
+                else:
+                    # Move from filter coords down into dropdown area
+                    x, y = self.selectors.FILTER_ICON_COORDS
+                    body = self.driver.find_element(By.TAG_NAME, "body")
+                    actions.move_to_element_with_offset(body, int(x), int(y) + 80).perform()
+                logger.debug("[DOM] Moved mouse into dropdown area to keep it open")
+            except Exception as e:
+                logger.debug(f"[DOM] Hover move failed (non-critical): {e}")
+
+        return clicked
 
     def _apply_filter_via_dom(self, visibility: str = "UNLISTED") -> bool:
         """

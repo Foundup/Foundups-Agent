@@ -1,5 +1,34 @@
 # YouTube Shorts Scheduler - Interface Documentation
 
+## CLI Interface (Agent-Callable)
+
+```bash
+# Schedule videos for a channel
+python -m modules.platform_integration.youtube_shorts_scheduler.cli --channel move2japan
+
+# Schedule with limit
+python -m modules.platform_integration.youtube_shorts_scheduler.cli --channel undaodu --max-videos 5
+
+# List available channels
+python -m modules.platform_integration.youtube_shorts_scheduler.cli --list-channels
+
+# Dry run (show what would be scheduled)
+python -m modules.platform_integration.youtube_shorts_scheduler.cli --channel move2japan --dry-run
+```
+
+### CLI Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--channel`, `-c` | str | required | Channel key: move2japan, undaodu, foundups |
+| `--max-videos`, `-m` | int | 10 | Maximum videos to schedule |
+| `--list-channels` | flag | - | List available channels and exit |
+| `--dry-run` | flag | - | Show what would be scheduled |
+| `--browser`, `-b` | str | chrome | Browser: chrome or edge |
+| `--verbose`, `-v` | flag | - | Enable verbose logging |
+
+---
+
 ## Public API
 
 ### YouTubeShortsScheduler

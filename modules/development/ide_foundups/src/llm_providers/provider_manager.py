@@ -232,6 +232,15 @@ class UniversalLLMProviderManager:
     def _check_local_model_availability(self) -> bool:
         """Check if local models are available"""
         try:
+            # First check explicit local model selections (centralized config).
+            from modules.infrastructure.shared_utilities.local_model_selection import get_model_selections
+            selections = get_model_selections()
+            if any(selection.exists for selection in selections.values()):
+                return True
+        except Exception:
+            pass
+
+        try:
             # Check for common local model frameworks
             import torch
             return True

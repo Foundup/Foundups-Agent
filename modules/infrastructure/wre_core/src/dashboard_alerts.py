@@ -16,12 +16,17 @@ Or programmatically:
 """
 
 import logging
+import os
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Minimum samples required before evaluating thresholds
+# Below this, report UNKNOWN/INSUFFICIENT_DATA instead of CRITICAL
+MIN_SAMPLES_DEFAULT = 25
 
 
 @dataclass
@@ -145,12 +150,20 @@ class DashboardAlertMonitor:
         Args:
             pattern_memory: Optional PatternMemory instance.
                            If None, will create one.
+
+        Env controls:
+            WRE_DASHBOARD_MIN_SAMPLES: Minimum executions before alerting (default 25)
+            WRE_DASHBOARD_UNKNOWN_MODE: If "1", treat insufficient data as UNKNOWN (default on)
         """
         self.pattern_memory = pattern_memory
         self.thresholds = ALERT_THRESHOLDS
         self.baselines = PRODUCTION_BASELINES
         self.watch_period_start = datetime(2026, 2, 24)
         self.watch_period_end = self.watch_period_start + timedelta(days=7)
+
+        # Minimum sample threshold
+        self.min_samples = int(os.getenv("WRE_DASHBOARD_MIN_SAMPLES", str(MIN_SAMPLES_DEFAULT)))
+        self.unknown_mode = os.getenv("WRE_DASHBOARD_UNKNOWN_MODE", "1") != "0"
 
     def _get_memory(self):
         """Lazy-load pattern memory."""
@@ -163,6 +176,16 @@ class DashboardAlertMonitor:
         """Get current dashboard metrics."""
         memory = self._get_memory()
         return memory.get_telemetry_dashboard()
+
+    def get_total_executions(self, dashboard: Optional[Dict] = None) -> int:
+        """Get total skill executions from dashboard."""
+        if dashboard is None:
+            dashboard = self.get_dashboard()
+        return int(dashboard.get("total_executions", 0))
+
+    def has_sufficient_data(self, dashboard: Optional[Dict] = None) -> bool:
+        """Check if we have enough data to evaluate thresholds."""
+        return self.get_total_executions(dashboard) >= self.min_samples
 
     def check_threshold(self, metric: str, value: float, threshold: AlertThreshold) -> Optional[Alert]:
         """Check if metric breaches threshold."""
@@ -184,15 +207,28 @@ class DashboardAlertMonitor:
             )
         return None
 
-    def check_all(self) -> List[Alert]:
+    def check_all(self, skip_if_insufficient: bool = True) -> List[Alert]:
         """
         Check all metrics against thresholds.
 
+        Args:
+            skip_if_insufficient: If True and unknown_mode enabled, skip threshold
+                                  evaluation when below min_samples (default True)
+
         Returns:
-            List of triggered alerts (empty if healthy)
+            List of triggered alerts (empty if healthy or insufficient data)
         """
         alerts = []
         dashboard = self.get_dashboard()
+
+        # Check for insufficient data - don't alert on zero-data startup
+        if skip_if_insufficient and self.unknown_mode:
+            if not self.has_sufficient_data(dashboard):
+                logger.debug(
+                    f"[WRE-DASHBOARD] Insufficient data: "
+                    f"{self.get_total_executions(dashboard)}/{self.min_samples} samples"
+                )
+                return []  # No alerts when data is insufficient
 
         # Add computed metrics
         codeact_total = dashboard.get("codeact_executions", 0)
@@ -279,11 +315,23 @@ def check_dashboard_health() -> Dict:
     Quick health check function.
 
     Returns:
-        {"healthy": bool, "alerts": [...], "dashboard": {...}}
+        {
+            "healthy": bool,
+            "alerts": [...],
+            "dashboard": {...},
+            "insufficient_data": bool,
+            "total_executions": int,
+            "min_samples": int,
+            "timestamp": str
+        }
     """
     monitor = DashboardAlertMonitor()
-    alerts = monitor.check_all()
     dashboard = monitor.get_dashboard()
+    total_executions = monitor.get_total_executions(dashboard)
+    insufficient_data = not monitor.has_sufficient_data(dashboard)
+
+    # check_all will return empty list if insufficient data
+    alerts = monitor.check_all()
 
     return {
         "healthy": len(alerts) == 0,
@@ -298,6 +346,9 @@ def check_dashboard_health() -> Dict:
             for a in alerts
         ],
         "dashboard": dashboard,
+        "insufficient_data": insufficient_data,
+        "total_executions": total_executions,
+        "min_samples": monitor.min_samples,
         "timestamp": datetime.now().isoformat()
     }
 

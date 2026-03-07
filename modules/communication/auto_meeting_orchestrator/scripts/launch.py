@@ -11,7 +11,17 @@ Module: auto_meeting_orchestrator
 import asyncio
 import traceback
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("auto_meeting_orchestrator_dae")
 def run_amo_dae():
     """Run AMO DAE (Autonomous Moderation Operations)."""
     print("[AMO] Starting AMO DAE (Autonomous Moderation Operations)...")

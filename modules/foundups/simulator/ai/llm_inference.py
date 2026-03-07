@@ -12,12 +12,16 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 logger = logging.getLogger(__name__)
 
 # Default model paths
-DEFAULT_GEMMA_PATH = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
-DEFAULT_QWEN_PATH = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+DEFAULT_GEMMA_PATH = resolve_triage_model_path()
+DEFAULT_QWEN_PATH = resolve_code_model_path()
 
 
 @dataclass
@@ -56,10 +60,14 @@ class SimulatorLLM:
         )
         self._llm: Optional[Any] = None
         self._initialized = False
+        self._backend = self._resolve_backend()
+        self._wre_orchestrator: Optional[Any] = None
         self._stats = {
             "queries": 0,
             "total_latency_ms": 0,
             "errors": 0,
+            "ironclaw_queries": 0,
+            "wre_ironclaw_queries": 0,
         }
 
     @classmethod
@@ -75,6 +83,17 @@ class SimulatorLLM:
         if cls._qwen_instance is None:
             cls._qwen_instance = cls("qwen")
         return cls._qwen_instance
+
+    def _resolve_backend(self) -> str:
+        """Resolve backend routing for this model instance."""
+        if self._model_type != "qwen":
+            return "local"
+
+        backend = os.getenv("SIM_QWEN_BACKEND", "local").strip().lower()
+        allowed = {"local", "ironclaw", "wre_ironclaw"}
+        if backend not in allowed:
+            backend = "local"
+        return backend
 
     def _initialize(self) -> bool:
         """Lazy-load the LLM model."""
@@ -138,6 +157,95 @@ class SimulatorLLM:
             logger.error(f"[SIM-LLM] Failed to load {self._model_type}: {e}")
             return False
 
+    def _generate_via_ironclaw(
+        self,
+        prompt: str,
+        max_tokens: int,
+        temperature: float,
+    ) -> Optional[InferenceResult]:
+        """Route Qwen simulation prompt to IronClaw gateway directly."""
+        started = time.time()
+        try:
+            from modules.communication.moltbot_bridge.src.ironclaw_gateway_client import (
+                IronClawGatewayClient,
+            )
+
+            client = IronClawGatewayClient()
+            system_prompt = (
+                "You are a FoundUps simulator coding worker. "
+                "Respond concisely and deterministically for simulation use."
+            )
+            text = client.chat_completion(
+                user_message=prompt,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+            if not text:
+                return None
+
+            latency_ms = int((time.time() - started) * 1000)
+            self._stats["queries"] += 1
+            self._stats["ironclaw_queries"] += 1
+            self._stats["total_latency_ms"] += latency_ms
+            return InferenceResult(
+                text=text.strip(),
+                model="qwen_ironclaw",
+                latency_ms=latency_ms,
+                confidence=0.75,
+                tokens_used=0,
+            )
+        except Exception as exc:
+            logger.debug("[SIM-LLM] IronClaw route unavailable: %s", exc)
+            return None
+
+    def _generate_via_wre_ironclaw(
+        self,
+        prompt: str,
+        max_tokens: int,
+        temperature: float,
+        stop: Optional[list],
+    ) -> Optional[InferenceResult]:
+        """Route Qwen simulation prompt through WRE ironclaw_worker plugin."""
+        started = time.time()
+        try:
+            from modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator import (
+                WREMasterOrchestrator,
+            )
+
+            if self._wre_orchestrator is None:
+                self._wre_orchestrator = WREMasterOrchestrator()
+
+            task = {
+                "plugin": "ironclaw_worker",
+                "work_type": "sim",
+                "input_payload": {"prompt": prompt, "stop": stop or []},
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "require_healthy": False,
+            }
+            result = self._wre_orchestrator.execute(task)
+            if not isinstance(result, dict) or not result.get("success"):
+                return None
+            response = str(result.get("response", "")).strip()
+            if not response:
+                return None
+
+            latency_ms = int((time.time() - started) * 1000)
+            self._stats["queries"] += 1
+            self._stats["wre_ironclaw_queries"] += 1
+            self._stats["total_latency_ms"] += latency_ms
+            return InferenceResult(
+                text=response,
+                model="qwen_wre_ironclaw",
+                latency_ms=latency_ms,
+                confidence=0.75,
+                tokens_used=0,
+            )
+        except Exception as exc:
+            logger.debug("[SIM-LLM] WRE IronClaw route unavailable: %s", exc)
+            return None
+
     def generate(
         self,
         prompt: str,
@@ -157,6 +265,29 @@ class SimulatorLLM:
             InferenceResult with generated text
         """
         start_time = time.time()
+
+        # Backend route toggle for simulator Qwen lane:
+        # - local (default): llama.cpp GGUF local model
+        # - ironclaw: direct IronClaw gateway
+        # - wre_ironclaw: route through WRE ironclaw_worker plugin
+        if self._model_type == "qwen":
+            if self._backend == "wre_ironclaw":
+                routed = self._generate_via_wre_ironclaw(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    stop=stop,
+                )
+                if routed is not None:
+                    return routed
+            elif self._backend == "ironclaw":
+                routed = self._generate_via_ironclaw(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                if routed is not None:
+                    return routed
 
         # Try to initialize if not done
         if not self._initialize():
@@ -252,7 +383,10 @@ class SimulatorLLM:
         )
         return {
             "model": self._model_type,
+            "backend": self._backend,
             "queries": self._stats["queries"],
             "errors": self._stats["errors"],
+            "ironclaw_queries": self._stats["ironclaw_queries"],
+            "wre_ironclaw_queries": self._stats["wre_ironclaw_queries"],
             "avg_latency_ms": round(avg_latency, 1),
         }

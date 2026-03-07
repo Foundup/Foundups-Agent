@@ -18,6 +18,7 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
 import os
 import sys
 import webbrowser
+import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../')))
 
@@ -46,6 +47,19 @@ def _pick_edge_browser() -> str:
 
 def main():
     """Authorize set 10"""
+    parser = argparse.ArgumentParser(description="Authorize YouTube OAuth credential set 10")
+    parser.add_argument(
+        "--manual",
+        action="store_true",
+        help="Do not auto-open a browser. Print a clean consent URL and wait for the callback.",
+    )
+    parser.add_argument(
+        "--browser",
+        choices=["edge", "default"],
+        default="edge",
+        help="Browser to use for auto-open mode. Ignored by --manual.",
+    )
+    args = parser.parse_args()
 
     client_secret_file = 'credentials/client_secret10.json'
     token_file = 'credentials/oauth_token10.json'
@@ -69,16 +83,38 @@ def main():
         # Run OAuth flow
         flow = InstalledAppFlow.from_client_secrets_file(client_secret_file, SCOPES)
 
-        browser_name = _pick_edge_browser()
+        browser_name = _pick_edge_browser() if args.browser == "edge" else None
         port = int(os.getenv("OAUTH_PORT_SET10", "8090"))
 
-        print("\n[U+1F310] Opening browser for authorization...")
+        print("\n[U+1F310] Starting authorization flow...")
         print(f"   Port: {port}")
-        print(f"   Browser: {'Edge' if browser_name else 'default'}")
-        print("\nIMPORTANT: Use a DIFFERENT Google account than set 1")
-        print("   This gives you an additional 10,000 API units per day")
-
-        creds = flow.run_local_server(port=port, browser=browser_name)
+        if args.manual:
+            print("   Mode: manual URL copy/paste")
+            print("\nIMPORTANT:")
+            print("   1. Open a clean browser window for the account you want on set 10")
+            print("   2. Paste the printed URL into that window")
+            print("   3. Complete consent and let Google redirect to localhost")
+            print("   4. This avoids broken Google account delegation pages")
+            auth_message = (
+                "\n" + "=" * 60 + "\n"
+                "COPY THIS URL INTO A CLEAN BROWSER WINDOW:\n{url}\n"
+                + "=" * 60 + "\n"
+            )
+            creds = flow.run_local_server(
+                port=port,
+                open_browser=False,
+                authorization_prompt_message=auth_message,
+                success_message="Authorization complete. You may close this window.",
+            )
+        else:
+            print(f"   Browser: {'Edge' if browser_name else 'default'}")
+            print("\nIMPORTANT: Use the Google account/channel you actually want on set 10")
+            print("   If Google opens a 400 delegation page, rerun with --manual")
+            creds = flow.run_local_server(
+                port=port,
+                browser=browser_name,
+                success_message="Authorization complete. You may close this window.",
+            )
 
         # Save the credentials
         with open(token_file, 'w', encoding="utf-8") as token:

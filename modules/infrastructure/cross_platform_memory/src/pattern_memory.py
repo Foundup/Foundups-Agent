@@ -17,9 +17,10 @@ import asyncio
 from dataclasses import dataclass, asdict
 import sys
 import io
+import os
 
 # WSP 90 UTF-8 Enforcement for Windows compatibility
-if sys.platform.startswith('win'):
+if sys.platform.startswith('win') and not os.environ.get('FOUNDUPS_UTF8_WRAPPED'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 

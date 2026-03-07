@@ -620,6 +620,26 @@ Rules:
                 )
             elif action == "verify":
                 executed = {"ok": True}
+            elif action == "find":
+                # find = verify = locate element without clicking
+                # Used by find_by_description in action_router
+                executed = {"ok": True, "found": True}
+            elif action == "diagnose":
+                # Diagnose mode: DOM action failed, vision helps find what went wrong
+                # Returns diagnosis info without executing action
+                original_error = context.get("error", "unknown")
+                original_action = context.get("original_action", "unknown")
+
+                # Build diagnostic response
+                executed = {
+                    "ok": True,
+                    "diagnosis": thought or "Element located via vision",
+                    "element_found": True,
+                    "suggested_selector": f"xpath://*[contains(text(), '{description[:20]}')]",  # Placeholder
+                    "coordinates": {"x": normalized_x, "y": normalized_y},
+                    "action_executed": False,  # Diagnosis only, no click
+                }
+                logger.info(f"[UI-TARS] Diagnosis complete: element at ({normalized_x}, {normalized_y})")
             else:
                 raise Exception(f"Unsupported action: {action}")
 

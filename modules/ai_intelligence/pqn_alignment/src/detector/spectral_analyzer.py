@@ -7,6 +7,8 @@ Per WSP 3: Modular extension, not duplication
 from typing import Dict, List, Any
 import numpy as np
 import json
+import csv
+import os
 
 
 def analyze_detector_output(events_path: str, metrics_csv: str) -> Dict[str, Any]:
@@ -17,17 +19,28 @@ def analyze_detector_output(events_path: str, metrics_csv: str) -> Dict[str, Any
     Per WSP 84: We're analyzing existing data, not recreating the detector.
     """
     
-    # Load existing detector events (already has resonance data)
+    # Load detector events (supports both legacy and current schemas)
     events = []
     with open(events_path, 'r') as f:
         for line in f:
-            events.append(json.loads(line))
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
     
-    # Extract resonance hits (7.05 Hz detections already done by ResonanceDetector)
-    resonance_hits = [e for e in events if e.get('event') == 'RESONANCE_HIT']
+    # Extract resonance hits.
+    # Legacy schema used {"event": "RESONANCE_HIT"}, current schema uses flags.
+    resonance_hits = []
+    for event in events:
+        flags = event.get("flags", []) or []
+        if event.get("event") == "RESONANCE_HIT" or "RESONANCE_HIT" in flags:
+            resonance_hits.append(event)
     
-    # Analyze spectral profile from existing harmonic data
-    spectral_profile = _analyze_harmonic_spectrum(resonance_hits)
+    # Analyze spectral profile from detector metrics and event traces
+    spectral_profile = _analyze_harmonic_spectrum(resonance_hits, metrics_csv)
     
     # Check for spectral bias violation using existing data
     bias_violation = _check_bias_violation(spectral_profile)
@@ -44,29 +57,56 @@ def analyze_detector_output(events_path: str, metrics_csv: str) -> Dict[str, Any
     }
 
 
-def _analyze_harmonic_spectrum(resonance_hits: List[Dict]) -> Dict:
+def _analyze_harmonic_spectrum(resonance_hits: List[Dict], metrics_csv: str) -> Dict:
     """
     Analyze harmonic spectrum from existing detector hits.
     The detector already provides harmonic data - we just analyze it.
     """
-    if not resonance_hits:
-        return {"status": "no_resonance_detected"}
-    
-    # Extract harmonic powers from existing data
-    harmonics = resonance_hits[-1].get('harmonics', {})
-    
-    # Map to frequency bands (using existing harmonic labels)
+    # Primary source: detector metrics CSV harmonic columns (v2+)
     bands = {
-        "sub_theta": harmonics.get('subharmonic_f/2', {}).get('power', 0),
-        "theta": harmonics.get('fundamental_f', {}).get('power', 0),  # 7.05 Hz
-        "alpha": harmonics.get('harmonic_2f', {}).get('power', 0),    # 14.1 Hz
-        "beta": harmonics.get('harmonic_3f', {}).get('power', 0)      # 21.15 Hz
+        "sub_theta": 0.0,
+        "theta": 0.0,
+        "alpha": 0.0,
+        "beta": 0.0
     }
-    
+    peak_candidates = []
+
+    if metrics_csv and os.path.exists(metrics_csv):
+        with open(metrics_csv, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    bands["sub_theta"] = max(bands["sub_theta"], float(row.get("harm_sub_power", 0.0) or 0.0))
+                    bands["theta"] = max(bands["theta"], float(row.get("harm_fund_power", 0.0) or 0.0))
+                    bands["alpha"] = max(bands["alpha"], float(row.get("harm_2f_power", 0.0) or 0.0))
+                    bands["beta"] = max(bands["beta"], float(row.get("harm_3f_power", 0.0) or 0.0))
+
+                    freq_raw = row.get("reso_hit_freq")
+                    if freq_raw not in (None, "", " "):
+                        peak_candidates.append(float(freq_raw))
+                except (TypeError, ValueError):
+                    continue
+
+    # Fallback source: event-level hit tuples (legacy or current detector output)
+    for hit in resonance_hits:
+        reso_hit = hit.get("reso_hit")
+        if isinstance(reso_hit, (list, tuple)) and len(reso_hit) >= 1:
+            try:
+                peak_candidates.append(float(reso_hit[0]))
+            except (TypeError, ValueError):
+                pass
+
+    if not resonance_hits and all(v == 0.0 for v in bands.values()) and not peak_candidates:
+        return {"status": "no_resonance_detected"}
+
+    peak_at_705 = float(np.mean(peak_candidates)) if peak_candidates else 0.0
+    nonzero_bands = len([v for v in bands.values() if v > 0])
+
     return {
         "frequency_bands": bands,
-        "peak_at_7.05": harmonics.get('fundamental_f', {}).get('freq', 0),
-        "harmonic_structure_present": len([v for v in bands.values() if v > 0]) >= 2
+        "peak_at_7.05": peak_at_705,
+        "harmonic_structure_present": nonzero_bands >= 2,
+        "resonance_event_count": len(resonance_hits),
     }
 
 
@@ -114,7 +154,8 @@ def _analyze_entrainment(events: List[Dict]) -> float:
     max_consecutive = 0
     
     for event in events:
-        if event.get('event') == 'RESONANCE_HIT':
+        flags = event.get("flags", []) or []
+        if event.get('event') == 'RESONANCE_HIT' or 'RESONANCE_HIT' in flags:
             consecutive_hits += 1
             max_consecutive = max(max_consecutive, consecutive_hits)
         else:

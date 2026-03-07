@@ -187,7 +187,7 @@ def get_authenticated_service(token_index=None):
 
                     # Browser selection based on credential set
                     # Set 1 = UnDaoDu/Move2Japan = Chrome
-                    # Set 10 = FoundUps/RavingANTIFA = Edge
+                    # Set 10 = FoundUps/antifaFM = Edge
                     if index == 1:
                         browser_name = "Chrome"
                         browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
@@ -198,7 +198,7 @@ def get_authenticated_service(token_index=None):
                     logger.info(f"[BROWSER] Set {index} will use {browser_name.upper()} for OAuth")
                     print(f"\n[IMPORTANT] Opening {browser_name.upper()} for Set {index} authentication")
                     print(f"  - Set 1: Chrome (UnDaoDu/Move2Japan account)")
-                    print(f"  - Set 10: Edge (FoundUps/RavingANTIFA account)\n")
+                    print(f"  - Set 10: Edge (FoundUps/antifaFM account)\n")
 
                     # Override webbrowser.open to use the correct browser
                     original_open = webbrowser.open
@@ -422,12 +422,13 @@ if __name__ == '__main__':
         logger.exception(f"An unexpected error occurred: {e}")
 
 
-def preflight_oauth_check(auto_reauth: bool = False) -> dict:
+def preflight_oauth_check(auto_reauth: bool = False, credential_sets=None) -> dict:
     """
     Preflight check for OAuth token health. Call at startup to detect invalid_grant errors.
 
     Args:
         auto_reauth: If True, automatically launch re-auth flow for failed tokens
+        credential_sets: Optional specific credential set indices to check.
 
     Returns:
         dict with keys:
@@ -451,7 +452,7 @@ def preflight_oauth_check(auto_reauth: bool = False) -> dict:
         return result
     scopes = scopes_str.split()
 
-    all_sets = get_available_credential_sets()
+    all_sets = credential_sets if credential_sets is not None else get_available_credential_sets()
     logger.info(f"[PREFLIGHT] Checking {len(all_sets)} credential sets: {all_sets}")
 
     for index in all_sets:
@@ -498,7 +499,7 @@ def preflight_oauth_check(auto_reauth: bool = False) -> dict:
                 if auto_reauth:
                     # Determine correct browser based on credential set
                     # Set 1 = UnDaoDu/Move2Japan = Chrome
-                    # Set 10 = FoundUps/RavingANTIFA = Edge
+                    # Set 10 = FoundUps/antifaFM = Edge
                     if index == 1:
                         browser_name = "Chrome"
                         browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
@@ -510,7 +511,7 @@ def preflight_oauth_check(auto_reauth: bool = False) -> dict:
                     print(f"\n{'='*60}")
                     print(f"[IMPORTANT] Set {index} requires {browser_name.upper()} browser!")
                     print(f"  - Set 1: Chrome (UnDaoDu/Move2Japan account)")
-                    print(f"  - Set 10: Edge (FoundUps/RavingANTIFA account)")
+                    print(f"  - Set 10: Edge (FoundUps/antifaFM account)")
                     print(f"{'='*60}\n")
 
                     try:

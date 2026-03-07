@@ -57,7 +57,8 @@ class TestOpenClawSecuritySentinel(unittest.TestCase):
                 "modules.communication.moltbot_bridge.src.skill_safety_guard.run_skill_scan",
                 return_value=self._scan_result(available=False, passed=False, message="scanner missing", exit_code=127),
             ):
-                status = self.sentinel.check(force=True)
+                with patch.object(self.sentinel, "_scan_ports", return_value=([], [])):
+                    status = self.sentinel.check(force=True)
         self.assertFalse(status["passed"])
         self.assertFalse(status["available"])
         self.assertTrue(status["required"])
@@ -76,7 +77,8 @@ class TestOpenClawSecuritySentinel(unittest.TestCase):
                 "modules.communication.moltbot_bridge.src.skill_safety_guard.run_skill_scan",
                 return_value=self._scan_result(available=False, passed=False, message="scanner missing", exit_code=127),
             ):
-                status = self.sentinel.check(force=True)
+                with patch.object(self.sentinel, "_scan_ports", return_value=([], [])):
+                    status = self.sentinel.check(force=True)
         self.assertTrue(status["passed"])
         self.assertFalse(status["available"])
         self.assertFalse(status["required"])
@@ -95,7 +97,8 @@ class TestOpenClawSecuritySentinel(unittest.TestCase):
                 "modules.communication.moltbot_bridge.src.skill_safety_guard.run_skill_scan",
                 return_value=self._scan_result(available=True, passed=False, message="threshold exceeded", exit_code=1),
             ):
-                status = self.sentinel.check(force=True)
+                with patch.object(self.sentinel, "_scan_ports", return_value=([], [])):
+                    status = self.sentinel.check(force=True)
         self.assertTrue(status["passed"])
         self.assertTrue(status["available"])
         self.assertFalse(status["enforced"])
@@ -114,8 +117,9 @@ class TestOpenClawSecuritySentinel(unittest.TestCase):
                 "modules.communication.moltbot_bridge.src.skill_safety_guard.run_skill_scan",
                 return_value=self._scan_result(available=True, passed=True),
             ) as mock_scan:
-                first = self.sentinel.check(force=False)
-                second = self.sentinel.check(force=False)
+                with patch.object(self.sentinel, "_scan_ports", return_value=([], [])):
+                    first = self.sentinel.check(force=False)
+                    second = self.sentinel.check(force=False)
 
         self.assertTrue(first["passed"])
         self.assertTrue(second["passed"])
@@ -140,12 +144,93 @@ class TestOpenClawSecuritySentinel(unittest.TestCase):
                     self._scan_result(available=True, passed=True, message="second"),
                 ],
             ) as mock_scan:
-                first = self.sentinel.check(force=False)
-                second = self.sentinel.check(force=True)
+                with patch.object(self.sentinel, "_scan_ports", return_value=([], [])):
+                    first = self.sentinel.check(force=False)
+                    second = self.sentinel.check(force=True)
 
         self.assertFalse(first["cached"])
         self.assertFalse(second["cached"])
         self.assertEqual(mock_scan.call_count, 2)
+
+    def test_scan_ports_ignores_system_and_ephemeral_listeners(self):
+        netstat_output = "\n".join(
+            [
+                "TCP    0.0.0.0:135    0.0.0.0:0    LISTENING    4",
+                "TCP    0.0.0.0:3000   0.0.0.0:0    LISTENING    4321",
+                "TCP    0.0.0.0:56238  0.0.0.0:0    LISTENING    9876",
+                "TCP    127.0.0.1:18800 0.0.0.0:0   LISTENING    2222",
+                "TCP    [::]:445       [::]:0       LISTENING    4",
+            ]
+        ).encode("utf-8")
+
+        with patch.dict(
+            os.environ,
+            {"OPENCLAW_PORT_SCAN_MONITORED_PORTS": ""},
+            clear=False,
+        ):
+            with patch(
+                "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.subprocess.check_output",
+                return_value=netstat_output,
+            ):
+                with patch(
+                    "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.os.name",
+                    "nt",
+                ):
+                    open_ports, risky = self.sentinel._scan_ports()
+
+        self.assertIn(3000, open_ports)
+        self.assertIn(56238, open_ports)
+        self.assertEqual(risky, ["0.0.0.0:3000"])
+
+    def test_scan_ports_defaults_to_openclaw_bridge_port(self):
+        netstat_output = "\n".join(
+            [
+                "TCP    0.0.0.0:3000   0.0.0.0:0    LISTENING    4321",
+                "TCP    0.0.0.0:18800  0.0.0.0:0    LISTENING    2222",
+            ]
+        ).encode("utf-8")
+
+        with patch.dict(
+            os.environ,
+            {"OPENCLAW_BRIDGE_PORT": "18800"},
+            clear=False,
+        ):
+            with patch(
+                "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.subprocess.check_output",
+                return_value=netstat_output,
+            ):
+                with patch(
+                    "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.os.name",
+                    "nt",
+                ):
+                    _, risky = self.sentinel._scan_ports()
+
+        self.assertEqual(risky, ["0.0.0.0:18800"])
+
+    def test_scan_ports_can_limit_to_monitored_ports(self):
+        netstat_output = "\n".join(
+            [
+                "TCP    0.0.0.0:3000   0.0.0.0:0    LISTENING    4321",
+                "TCP    0.0.0.0:18800  0.0.0.0:0    LISTENING    2222",
+            ]
+        ).encode("utf-8")
+
+        with patch.dict(
+            os.environ,
+            {"OPENCLAW_PORT_SCAN_MONITORED_PORTS": "18800"},
+            clear=False,
+        ):
+            with patch(
+                "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.subprocess.check_output",
+                return_value=netstat_output,
+            ):
+                with patch(
+                    "modules.ai_intelligence.ai_overseer.src.openclaw_security_sentinel.os.name",
+                    "nt",
+                ):
+                    _, risky = self.sentinel._scan_ports()
+
+        self.assertEqual(risky, ["0.0.0.0:18800"])
 
 
 if __name__ == "__main__":

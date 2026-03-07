@@ -2,6 +2,29 @@
 
 ## Chronological Change Log
 
+### 2026-02-22 - pAVS IronClaw Agent Builder + Digital Twin Roadmap
+
+**By:** 0102
+**WSP References:** WSP 11, WSP 15, WSP 22, WSP 46, WSP 50, WSP 73, WSP 77
+
+**What changed**
+- Added dedicated cross-domain roadmap:
+  - `modules/foundups/docs/FOUNDUPS_PAVS_IRONCLAW_AGENT_BUILDER_DIGITAL_TWIN_ROADMAP.md`
+- Updated domain roadmap to include IronClaw lane and new reference:
+  - `modules/foundups/ROADMAP.md`
+- Updated simulator roadmap with tranche and P0 alignment for IronClaw parity:
+  - `modules/foundups/simulator/ROADMAP.md`
+
+**Why**
+- 012 requested a WSP-aligned continuation roadmap to run IronClaw in pAVS
+  as both:
+  1) an agent-builder runtime and
+  2) a Digital Twin execution lane.
+- This keeps existing OpenClaw/WRE control contracts stable while adding a
+  Rust-sidecar execution surface.
+
+---
+
 ### 2026-02-16 - Occam Layered Continuity Pack
 
 **By:** 0102

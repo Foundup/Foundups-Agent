@@ -1,7 +1,7 @@
-# WSP 103: CLI Interface Standard
+# WSP 103: CLI Interface Standard (Typeball Architecture)
 
 **Status**: ACTIVE
-**Version**: 1.0
+**Version**: 2.0 (Digital Twin Mappings)
 **Date**: 2026-02-28
 **Author**: 0102 (CLI Standardization)
 
@@ -9,271 +9,170 @@
 
 ## Executive Summary
 
-WSP 103 establishes standards for command-line interfaces (CLIs) across the Foundups ecosystem. All CLIs that may be invoked by agents (OpenClaw, IronClaw, HoloDAE) MUST follow these standards for reliable automation.
+WSP 103 establishes standards for command-line interfaces (CLIs) across the Foundups ecosystem. It explicitly defines the "Typeball Architecture," converting OpenClaw operations and UI-TARS vision predictions into standardized, per-site CLIs for Digital Twin execution on behalf of 012.
 
-**Key Principle**: Every CLI is an API endpoint for agents.
+**Key Principle**: Every site capability must be compiled into deterministic CLI endpoints (a "Typeball"), treating the DOM purely as an execution substrate.
 
 ---
 
 ## Scope
 
 This WSP applies to:
+
+- Digital Twin OpenClaw/IronClaw Site CLIs ("Typeballs")
 - Module launch scripts (`scripts/launch.py`)
-- Skill executors (`skillz/*/executor.py`)
-- Standalone tools with `if __name__ == "__main__"`
-- Any Python script invoked by agents
+- Any Python script invoked by agents for orchestration operations
 
 **Related WSPs**:
+
 - WSP 77: Agent Coordination (task dispatch logic)
 - WSP 91: DAEMON Observability (telemetry output)
-- WSP 90: UTF-8 Encoding (output encoding)
+- WSP 73: 012 Digital Twin Architecture
 
 ---
 
-## Required CLI Flags
+## Typeball CLI Architecture (Per-Site Capability Map)
 
-### Tier 1: Mandatory (All Agent-Accessible CLIs)
+Every target external site gets its own generic CLI build mapping, referred to conceptually as a "Typeball." The typeball acts as a compiler translating 012's intentions into programmatic DOM steps or Vision-based (UI-TARS) interactions.
 
-| Flag | Purpose | Output |
-|------|---------|--------|
-| `--json` | Machine-readable output | JSON to stdout |
-| `--help`, `-h` | Usage documentation | Human-readable usage |
+### The Linguistic Metaphor
 
-### Tier 2: Lifecycle CLIs (DAEs, Services)
+- **Glyphs** = API/CLI commands (atomic capabilities like clicking, typing, extracting).
+- **Kerning** = Preconditions (authentication state, roles, visible panels).
+- **Word** = Action chain / Multi-step sequences (e.g., login + navigate).
+- **Sentence** = Agent task plan (goal → subgoals → commands).
+- **Typewriter** = The executor engine (Playwright / Selenium / UI-TARS fallback) handling retries, delays, and telemetry.
 
-| Flag | Purpose | Output |
-|------|---------|--------|
-| `--start` | Start service/process | `{"success": true, "pid": 12345}` |
-| `--stop` | Stop service/process | `{"success": true, "stopped": true}` |
-| `--status` | Check current state | `{"running": true, "status": "active"}` |
+### The Two-Stage CLI Generation Pipeline
 
-### Tier 3: Optional Enhancements
+The Digital Twin does NOT vibe-navigate sites repeatedly. Sites are mapped once into structured limits, then executed via strict policies.
 
-| Flag | Purpose | Output |
-|------|---------|--------|
-| `--diagnose` | Run diagnostics | `{"health": {...}, "errors": [...]}` |
-| `--verbose`, `-v` | Detailed human output | Extended logging |
-| `--quiet`, `-q` | Minimal output | Errors only |
+#### Stage 1: UI → Capability Map (UITars/DOM)
+
+1. **Crawl**: Enter start URL + authenticated session.
+2. **Snapshot**: Capture DOM snapshots, visible text, forms, links, SVGs, modals.
+3. **Normalize**: Map selectors (stable data-testids, unique IDs, relative anchor chains).
+4. **Action Detection**: Detect capabilities (`click`, `upload`, `submit`, `filter`, `download`).
+5. **Output**: Generates `<site_slug>/site_map.json` and human-skim `<site_slug>/site_map.md`.
+
+_Rules_: Site capability graphs must treat state (modals, pagination) as first-class, not visual layouts.
+
+#### Stage 2: Capability Map → CLI Specification
+
+1. **Namespace Generation**: Produce CLI grammar that mirrors site capabilities directly (e.g., `oclaw twitter do follow --user @user`).
+2. **Contracts**: Establish args, validations, side effects for every command.
+3. **Policies & Safety**: Inject read-only mode boundaries, `--dry-run`, and wait conditions.
+4. **Outputs**: Generates `<site_slug>/commands.yaml` + Python execution adapter + `runlog.jsonl`.
 
 ---
 
-## JSON Output Format
+## Foundational `--json` Agent Interfaces
 
-### Success Response
+All generated CLI commands, including legacy `launch.py` instances, MUST support JSON-based programmatic communication.
+
+| Flag        | Purpose                           | Output Structure                               |
+| ----------- | --------------------------------- | ---------------------------------------------- |
+| `--json`    | Machine-readable output           | JSON stdout strictly                           |
+| `--dry-run` | **MANDATORY**: Test plan          | Print plan without executing side effects      |
+| `--confirm` | **MANDATORY**: Destructive action | Proceed with destructive state limits bypassed |
+| `--help`    | Usage documentation               | Human-readable manual                          |
+| `--status`  | Active connection/pid             | `{"running": true, "auth": "chrome-profile"}`  |
+
+### Output JSON Format
+
 ```json
 {
   "success": true,
+  "status": "completed",
   "data": {
     "result": "...",
-    "details": {}
-  }
+    "state_hash": "...",
+    "screenshots": ["/tmp_screenshots/action_post.png"]
+  },
+  "error": null
 }
 ```
 
-### Error Response
+---
+
+## Engine Router Contract (Fallback Strategies)
+
+Agents are logic-agnostic, not runtime-agnostic. WSP 103 mandates Python as the core orchestrator, dictating strict adherence to an Engine Adapter Contract that determines _how_ interactions transpire based on snapshot confidence.
+
+### The Engine Selection Router
+
+| Priority         | Engine               | Use Case                                                                                                      |
+| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **1 (Primary)**  | Playwright (DOM/CDP) | DOM + Accessibility tree is intact. Requires speed, strong wait determinism, trace artifacts.                 |
+| **2 (Compat)**   | Selenium             | Legacy sites, Enterprise grid restrictions. "Good enough" selector maps.                                      |
+| **3 (Fallback)** | UI-TARS (Vision)     | DOM hostile (canvas, shadow dom, shifting IDs). Repeated selector failures; acts on screen pixels explicitly. |
+
+### Adapter Input Contract (JSON Schema)
+
 ```json
 {
-  "success": false,
-  "error": "error_code_snake_case",
-  "message": "Human-readable error description"
+  "goal_step": "string - intent",
+  "context": "URL/Session state",
+  "selectors": "Array of fallback candidate selectors",
+  "assertions": "Regex/Status checks to verify success",
+  "limits": { "timeout": 30000, "read_only": true }
 }
 ```
 
-### Status Response
-```json
-{
-  "running": true,
-  "status": "broadcasting",
-  "uptime": 3600,
-  "pid": 12345
-}
+_Verification of success equals state assertions (element visible, URL regex match), not merely "no exceptions thrown."_
+
+---
+
+## Typeball Project Structure
+
+Generated Typeballs are stored within the module executing the interface logic.
+
+```text
+/typeballs/<site_slug>/
+  site_map.json            # UITars capability graph (pages, states, actions)
+  selectors.json           # robust selector sets + fallbacks
+  commands.yaml            # CLI spec (args, validation, side effects)
+  policies.yaml            # confirm rules, read-only zones, rate limits
+  flows/                   # reusable multi-step macros (yaml)
+  cli/                     # generated Python implementation
+  fixtures/                # test creds + mock data (no secrets committed)
+  logs/                    # jsonl audit trails & screenshot before/afters
 ```
 
 ---
 
-## Exit Codes
+## The Master `oclaw` Syntax
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Invalid arguments |
-| 3 | Connection/resource error |
-| 4 | Permission denied |
+The universal CLI interface invoked by 0102 agents operates identically irrespective of language implementation underlying it:
 
----
-
-## Implementation Template
-
-```python
-#!/usr/bin/env python3
-"""
-Module CLI - WSP 103 Compliant
-
-Usage:
-  python script.py --json --action "value"
-"""
-
-import sys
-import json
-
-def main():
-    args = sys.argv[1:]
-    json_output = "--json" in args
-
-    # Parse flags
-    if "--help" in args or "-h" in args:
-        print(__doc__)
-        return 0
-
-    result = {"success": False}
-
-    try:
-        # ... do work ...
-        result["success"] = True
-        result["data"] = {"example": "value"}
-
-    except Exception as e:
-        result["error"] = type(e).__name__.lower()
-        result["message"] = str(e)
-
-    # Output
-    if json_output:
-        print(json.dumps(result))
-    else:
-        if result.get("success"):
-            print(f"[OK] {result.get('data', {})}")
-        else:
-            print(f"[ERROR] {result.get('message', 'Unknown error')}")
-
-    return 0 if result.get("success") else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-```
-
----
-
-## CLI Catalog Requirements
-
-### Registration
-All agent-accessible CLIs MUST be registered in:
-- `holo_index/docs/AGENT_CLI_CATALOG.md`
-
-### Catalog Entry Format
-```markdown
-| CLI | Path | Purpose | JSON Flags |
-|-----|------|---------|------------|
-| `launch.py` | `modules/.../scripts/launch.py` | Description | `--json --start --stop` |
-```
-
-### Indexing
-The CLI catalog is indexed by HoloIndex for semantic search:
 ```bash
-python holo_index.py --search "OpenClaw CLI broadcast"
+# Typeball installation/generation
+oclaw typeball install <site_slug>
+
+# Auditing and mapping
+oclaw site scan --url https://<target> --auth chrome-profile
+oclaw site map build --from scan_output/
+oclaw cli gen --map site_map.json --persona digital-twin-012
+
+# Standard Orchestration
+oclaw <site_slug> help
+oclaw <site_slug> do <command> [args] --dry-run
+oclaw <site_slug> do <command> [args] --confirm
+oclaw <site_slug> flow run <flow_name> ...
 ```
 
 ---
 
-## Agent Invocation Pattern
+## Non-Negotiables & Validations
 
-### OpenClaw/IronClaw
-```python
-import subprocess
-import json
-
-def invoke_cli(script_path: str, args: list[str]) -> dict:
-    """Invoke CLI and parse JSON response."""
-    cmd = ["python", script_path, "--json"] + args
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return {
-            "success": False,
-            "error": "invalid_json",
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "exit_code": result.returncode
-        }
-
-# Example usage
-result = invoke_cli(
-    "modules/platform_integration/antifafm_broadcaster/scripts/launch.py",
-    ["--start", "--title", "antifaFM Radio"]
-)
-```
-
----
-
-## Compliance Checklist
-
-For each CLI:
-- [ ] `--json` flag outputs valid JSON
-- [ ] `--help` documents all flags
-- [ ] Exit code 0 on success, non-zero on error
-- [ ] Registered in AGENT_CLI_CATALOG.md
-- [ ] UTF-8 output (WSP 90)
-
----
-
-## Testing
-
-### Validation Script
-```bash
-# Test JSON output
-python script.py --json --status | python -c "import json, sys; json.load(sys.stdin)"
-
-# Test exit codes
-python script.py --invalid-flag; echo "Exit code: $?"
-```
-
----
-
-## Examples
-
-### antifaFM Broadcaster (Reference Implementation)
-
-**launch.py**:
-```bash
-python launch.py --json --start --title "Live Radio"
-# {"success": true, "status": "started", "pid": 12345, "title": "Live Radio"}
-
-python launch.py --json --status
-# {"running": true, "status": "broadcasting", "uptime": 3600}
-
-python launch.py --json --stop
-# {"success": true, "stopped": true}
-```
-
-**youtube_go_live.py**:
-```bash
-python youtube_go_live.py --json --go-live --title "Stream Title"
-# {"success": true, "go_live": {...}, "edit": {...}}
-```
-
----
-
-## Relationship to WSP 77
-
-| WSP | Scope | Example |
-|-----|-------|---------|
-| WSP 77 | Agent task routing logic | "Route orphan analysis to Gemma" |
-| WSP 103 | CLI interface standards | "--json output format" |
-
-WSP 77 defines WHAT agents do.
-WSP 103 defines HOW agents invoke CLIs.
+1. **Dry-runs**: `--dry-run` must always be supported to dump execution plans without causing side effects.
+2. **Confirm Actions**: `--confirm` defaults to FALSE. Any destructive action (posts, deletes, money flow) throws a validation error unless provided.
+3. **Audit Log**: Every step must generate `jsonl` logs + screen clippings (`screenshots_pre`, `screenshots_post`).
+4. **Testing**: Regression tests per command using recorded fixtures.
+5. **No Secrets**: Use `WSP_71_Secrets_Management_Protocol.md`, openclaw secret injects or Vault. Never commit keys to the typeball directories.
 
 ---
 
 **Protocol Status**: ACTIVE
-
 **Catalog Location**: `holo_index/docs/AGENT_CLI_CATALOG.md`
-
-**Compliance Verification**: `python holo_index.py --check-cli-compliance`
-
----
-
-*WSP 103 ensures every CLI is agent-ready.*
+**Compliance**: `python holo_index.py --check-cli-compliance`

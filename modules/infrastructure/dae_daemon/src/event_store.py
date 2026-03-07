@@ -75,18 +75,35 @@ class DAEEventStore:
     # ------------------------------------------------------------------
 
     def _init_sqlite(self) -> None:
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             conn.executescript(self.SQLITE_SCHEMA)
             conn.commit()
 
     def _load_sequence_counter(self) -> None:
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("SELECT MAX(sequence_id) FROM dae_events")
             row = cursor.fetchone()
             if row and row[0] is not None:
                 self._sequence_counter = row[0]
 
+    def _connect(self) -> sqlite3.Connection:
+        """Return a configured SQLite connection for event-store operations."""
+        conn = sqlite3.connect(str(self._sqlite_path), timeout=5.0)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=5000")
+        return conn
+
     def _next_sequence_id(self) -> int:
+        """Get next sequence_id, refreshing from DB to avoid race conditions."""
+        # Refresh from DB to handle multi-process scenarios
+        with self._connect() as conn:
+            cursor = conn.execute("SELECT MAX(sequence_id) FROM dae_events")
+            row = cursor.fetchone()
+            if row and row[0] is not None:
+                self._sequence_counter = max(self._sequence_counter, row[0])
         self._sequence_counter += 1
         return self._sequence_counter
 
@@ -94,10 +111,11 @@ class DAEEventStore:
     # Write
     # ------------------------------------------------------------------
 
-    def write(self, event: DAEEvent) -> Tuple[bool, str]:
+    def write(self, event: DAEEvent, _retry: int = 0) -> Tuple[bool, str]:
         """Write event to both JSONL and SQLite.
 
         Returns (success, message).
+        Retries up to 3 times on sequence_id collision (multi-process race).
         """
         with self._lock:
             try:
@@ -117,11 +135,16 @@ class DAEEventStore:
                 return (True, "ok")
 
             except Exception as e:
+                # Retry on sequence_id collision (multi-process race condition)
+                if "UNIQUE constraint failed: dae_events.sequence_id" in str(e) and _retry < 3:
+                    logger.warning("[DAE-STORE] Sequence collision, retrying (%d/3)...", _retry + 1)
+                    event.sequence_id = 0  # Reset to get fresh sequence_id
+                    return self.write(event, _retry=_retry + 1)
                 logger.error("[DAE-STORE] Write failed: %s", e)
                 return (False, f"error: {e}")
 
     def _is_duplicate(self, dedupe_key: str) -> bool:
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute(
                 "SELECT 1 FROM dae_events WHERE dedupe_key = ? LIMIT 1",
                 (dedupe_key,),
@@ -133,7 +156,7 @@ class DAEEventStore:
             f.write(json.dumps(event.to_dict(), default=str) + "\n")
 
     def _write_sqlite(self, event: DAEEvent) -> None:
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO dae_events (
@@ -179,8 +202,7 @@ class DAEEventStore:
         where_clause = " AND ".join(conditions)
         params.append(limit)
 
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
-            conn.row_factory = sqlite3.Row
+        with self._connect() as conn:
             cursor = conn.execute(
                 f"""
                 SELECT * FROM dae_events
@@ -214,7 +236,7 @@ class DAEEventStore:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get event store statistics."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM dae_events")
             total = cursor.fetchone()[0]
 
@@ -242,7 +264,7 @@ class DAEEventStore:
                 with open(self._jsonl_path, "r", encoding="utf-8") as f:
                     jsonl_count = sum(1 for _ in f)
 
-            with sqlite3.connect(str(self._sqlite_path)) as conn:
+            with self._connect() as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM dae_events")
                 sqlite_count = cursor.fetchone()[0]
 

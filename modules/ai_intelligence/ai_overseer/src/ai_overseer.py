@@ -299,6 +299,7 @@ class AIIntelligenceOverseer:
             logger.warning(f"[AI-OVERSEER] OpenClaw security sentinel unavailable: {e}")
         self.openclaw_security_monitor_task = None
         self.openclaw_security_last_status: Optional[Dict[str, Any]] = None
+        self.ironclaw_runtime_last_status: Optional[Dict[str, Any]] = None
         self.openclaw_security_alert_dedupe_sec = int(
             os.getenv("OPENCLAW_SECURITY_ALERT_DEDUPE_SEC", "900")
         )
@@ -416,6 +417,93 @@ class AIIntelligenceOverseer:
         """Save patterns to memory for WSP 48 learning"""
         with open(self.memory_path, 'w', encoding='utf-8') as f:
             json.dump(self.patterns, f, indent=2)
+
+    def _create_ironclaw_gateway_client(self):
+        """Factory seam for IronClaw gateway client (testable hook)."""
+        from modules.communication.moltbot_bridge.src.ironclaw_gateway_client import (
+            IronClawGatewayClient,
+        )
+
+        return IronClawGatewayClient()
+
+    def monitor_ironclaw_runtime(self, force: bool = False) -> Dict[str, Any]:
+        """
+        Probe IronClaw runtime status for AI Overseer monitoring panel.
+
+        Args:
+            force: Reserved for parity with other monitor methods.
+
+        Returns:
+            Normalized status payload with health/model/isolation details.
+        """
+        _ = force  # Reserved for future TTL caching behavior.
+
+        try:
+            client = self._create_ironclaw_gateway_client()
+        except Exception as exc:
+            status = {
+                "success": False,
+                "available": False,
+                "healthy": False,
+                "message": f"IronClaw client unavailable: {exc}",
+            }
+            self.ironclaw_runtime_last_status = status
+            return status
+
+        try:
+            healthy, detail = client.health()
+            models = client.list_models()
+
+            local_code_model_path = ""
+            local_code_model_exists = False
+            try:
+                from modules.infrastructure.shared_utilities.local_model_selection import (
+                    resolve_code_model_path,
+                )
+
+                code_model_path = resolve_code_model_path()
+                local_code_model_path = str(code_model_path)
+                local_code_model_exists = bool(code_model_path.exists())
+            except Exception:
+                pass
+
+            status = {
+                "success": bool(healthy),
+                "available": True,
+                "healthy": bool(healthy),
+                "message": detail,
+                "base_url": client.config.base_url,
+                "model": client.config.model,
+                "auth_configured": bool(client.config.auth_token),
+                "key_isolation": bool(client.config.no_api_keys),
+                "models": models,
+                "models_count": len(models),
+                "local_code_model_path": local_code_model_path,
+                "local_code_model_exists": local_code_model_exists,
+                "checked_at": time.time(),
+            }
+            self.ironclaw_runtime_last_status = status
+            return status
+        except Exception as exc:
+            status = {
+                "success": False,
+                "available": False,
+                "healthy": False,
+                "message": f"IronClaw runtime probe failed: {exc}",
+            }
+            self.ironclaw_runtime_last_status = status
+            return status
+
+    def get_ironclaw_runtime_status(self) -> Dict[str, Any]:
+        """Return last IronClaw runtime status captured by AI Overseer."""
+        if self.ironclaw_runtime_last_status:
+            return self.ironclaw_runtime_last_status
+        return {
+            "success": False,
+            "available": False,
+            "healthy": False,
+            "message": "No IronClaw runtime probe has run in this session",
+        }
 
     def monitor_openclaw_security(self, force: bool = False) -> Dict[str, Any]:
         """
@@ -3363,6 +3451,16 @@ index 0000000..1111111 100644
                 "[AI-OVERSEER] WSP framework audit complete | severity=%s drift=%s",
                 status.get("severity"),
                 status.get("drift_count", 0),
+            )
+
+        elif event_type == "ironclaw_runtime_status_request":
+            force = str(event.get("force", "0")).strip().lower() in {"1", "true", "yes", "on"}
+            status = self.monitor_ironclaw_runtime(force=force)
+            logger.info(
+                "[AI-OVERSEER] IronClaw runtime status | healthy=%s models=%s base_url=%s",
+                status.get("healthy"),
+                status.get("models_count", 0),
+                status.get("base_url", "n/a"),
             )
 
         else:

@@ -62,7 +62,12 @@ def get_next_schedule_slot() -> tuple:
     return date_str, time_str
 
 
-def test_layer3_selenium(dry_run: bool = False) -> dict:
+def test_layer3_selenium(
+    dry_run: bool = False,
+    repost_text: str = "",
+    schedule_date: str = "",
+    schedule_time: str = "",
+) -> dict:
     """
     Test Layer 3 with pure Selenium.
     
@@ -202,7 +207,7 @@ def test_layer3_selenium(dry_run: bool = False) -> dict:
     print("\n[STEP 3.3] Typing repost text...")
     time.sleep(step_delay)
     template = load_repost_template()
-    repost_text = template.get("text", "Test repost from 0102.")
+    repost_body = repost_text.strip() if repost_text and repost_text.strip() else template.get("text", "Test repost from 0102.")
 
     editor_selectors = [
         ".share-creation-state__text-editor .ql-editor",
@@ -226,10 +231,10 @@ def test_layer3_selenium(dry_run: bool = False) -> dict:
         try:
             editor.click()
             time.sleep(0.3)
-            editor.send_keys(repost_text)
+            editor.send_keys(repost_body)
             time.sleep(max(0.5, step_delay))
             result["repost_text_entered"] = True
-            print(f"[OK] Typed: {repost_text[:40]}...")
+            print(f"[OK] Typed: {repost_body[:40]}...")
         except Exception as e:
             print(f"[WARNING] Could not type text: {e}")
     else:
@@ -273,7 +278,10 @@ def test_layer3_selenium(dry_run: bool = False) -> dict:
             print("[WARNING] Could not find Schedule button - may need to click dropdown arrow")
 
     # Step 3.5-3.6: Date and Time picker
-    date_str, time_str = get_next_schedule_slot()
+    if schedule_date.strip() and schedule_time.strip():
+        date_str, time_str = schedule_date.strip(), schedule_time.strip()
+    else:
+        date_str, time_str = get_next_schedule_slot()
     print(f"\n[STEP 3.5-3.6] Target schedule: {date_str} at {time_str}")
     time.sleep(step_delay)
 
@@ -390,6 +398,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Layer 3: Schedule Repost Test")
     parser.add_argument("--selenium", action="store_true", help="Run with pure Selenium")
     parser.add_argument("--dry-run", action="store_true", help="Validate without scheduling")
+    parser.add_argument("--repost-text", default="", help="Override repost text for this run")
+    parser.add_argument("--schedule-date", default="", help="Explicit schedule date for this run")
+    parser.add_argument("--schedule-time", default="", help="Explicit schedule time for this run")
     parser.add_argument("--info", action="store_true", help="Show layer info only")
 
     args = parser.parse_args()
@@ -397,7 +408,12 @@ if __name__ == "__main__":
     if args.info:
         test_layer3_info()
     elif args.selenium:
-        result = test_layer3_selenium(dry_run=args.dry_run)
+        result = test_layer3_selenium(
+            dry_run=args.dry_run,
+            repost_text=args.repost_text,
+            schedule_date=args.schedule_date,
+            schedule_time=args.schedule_time,
+        )
         sys.exit(0 if result["success"] else 1)
     else:
         test_layer3_info()

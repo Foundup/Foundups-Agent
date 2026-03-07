@@ -264,7 +264,7 @@ The tests use YouTubeStudioDOM pattern from commenting system (WSP 84: Code Reus
     --remote-debugging-port=9222 ^
     --user-data-dir="%LOCALAPPDATA%\Google\Chrome\User Data"
 
-# Edge for FoundUps/ravingANTIFA (port 9223)
+# Edge for FoundUps/antifaFM (port 9223)
 "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" ^
     --remote-debugging-port=9223 ^
     --user-data-dir="%LOCALAPPDATA%\Microsoft\Edge\User Data"

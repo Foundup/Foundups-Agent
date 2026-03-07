@@ -803,7 +803,7 @@ class NoQuotaStreamChecker:
             'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',     # UnDaoDu (ADDED - was missing)
             'UC-LSSlOZwpGIRIYihaz8zCw': '@MOVE2JAPAN',  # Move2Japan
             'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',  # Move2Japan alternate
-            'UCVSmg5aOhP4tnQ9KFUg97qA': '@ravingantifa', # RavingANTIFA
+            'UCVSmg5aOhP4tnQ9KFUg97qA': '@antifaFM', # antifaFM
             'UCROkIz1wOCP3tPk-1j3umyQ': '@foundups1934'  # FoundUps1934 (test channel)
         }
 

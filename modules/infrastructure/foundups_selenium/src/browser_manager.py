@@ -3,6 +3,11 @@ Browser Manager
 Manages singleton browser instances to avoid opening multiple windows
 Reuses existing browser sessions for posting and streams telemetry for WSP oversight.
 
+CROSS-PROCESS BROWSER REUSE:
+- Browsers start with --remote-debugging-port to enable reconnection
+- Port info saved to .browser_session files
+- On get_browser(), tries to connect to existing browser before creating new
+
 Migrated from social_media_orchestrator to foundups_selenium (Sprint V4)
 WSP References: WSP 3 (Architecture), WSP 77 (AI Overseer telemetry)
 """
@@ -11,12 +16,21 @@ import os
 import json
 import logging
 import threading
+import requests
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
+
+# Directory to store browser session info for cross-process reconnection
+BROWSER_SESSION_DIR = Path("O:/Foundups-Agent/modules/infrastructure/foundups_selenium/data/sessions")
+BROWSER_SESSION_DIR.mkdir(parents=True, exist_ok=True)
+
+# Port range for debugging (each profile gets unique port)
+BASE_DEBUG_PORT = 9222
 
 try:
     from modules.infrastructure.foundups_selenium.src.foundups_driver import (
@@ -52,9 +66,68 @@ class BrowserManager:
                     )
         return cls._instance
 
+    def _get_session_file(self, browser_key: str) -> Path:
+        """Get path to session file for browser."""
+        return BROWSER_SESSION_DIR / f"{browser_key}.json"
+
+    def _save_session(self, browser_key: str, port: int, profile_dir: str) -> None:
+        """Save browser session info for cross-process reconnection."""
+        session_file = self._get_session_file(browser_key)
+        session_data = {
+            "port": port,
+            "profile_dir": profile_dir,
+            "created": datetime.utcnow().isoformat() + "Z",
+            "pid": os.getpid()
+        }
+        with open(session_file, "w") as f:
+            json.dump(session_data, f)
+        self.logger.info(f"・Session saved: {browser_key} on port {port}")
+
+    def _load_session(self, browser_key: str) -> Optional[Dict[str, Any]]:
+        """Load browser session info if exists."""
+        session_file = self._get_session_file(browser_key)
+        if session_file.exists():
+            try:
+                with open(session_file, "r") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return None
+
+    def _is_browser_running(self, port: int) -> bool:
+        """Check if browser is running on the given debug port."""
+        try:
+            resp = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    def _connect_to_existing(self, browser_key: str, port: int) -> Optional[Any]:
+        """Try to connect to an existing browser via CDP."""
+        try:
+            chrome_options = ChromeOptions()
+            chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+            driver = webdriver.Chrome(options=chrome_options)
+            # Verify connection
+            _ = driver.current_url
+            self.logger.info(f"・Connected to existing browser on port {port}")
+            return driver
+        except Exception as e:
+            self.logger.debug(f"・Could not connect to existing browser: {e}")
+            return None
+
+    def _get_debug_port(self, profile_name: str) -> int:
+        """Get unique debug port for profile (deterministic hash)."""
+        # Simple hash to get port in range 9222-9322
+        port_offset = hash(profile_name) % 100
+        return BASE_DEBUG_PORT + port_offset
+
     def get_browser(self, browser_type: str, profile_name: str, options: Dict[str, Any] = None, dae_name: Optional[str] = None) -> Any:
         """
         Get or create a browser instance.
+
+        CROSS-PROCESS REUSE: If a browser is already running (from previous process),
+        connects to it via CDP instead of creating a new instance.
 
         When `dae_name` is provided, BrowserManager tracks allocations to prevent
         multiple DAEs from hijacking the same browser/profile session.
@@ -78,7 +151,7 @@ class BrowserManager:
                         f"Browser {browser_key} is allocated to {current_owner}; cannot use for {dae_name}"
                     )
 
-        # Check if browser exists and is still valid
+        # Check if browser exists in THIS process and is still valid
         if browser_key in self._browsers:
             browser = self._browsers[browser_key]
             try:
@@ -97,8 +170,23 @@ class BrowserManager:
                 with self._allocations_lock:
                     self._allocations.pop(browser_key, None)
 
+        # CROSS-PROCESS REUSE: Check if browser is running from previous process
+        session = self._load_session(browser_key)
+        if session and browser_type.lower() == 'chrome':
+            port = session.get("port")
+            if port and self._is_browser_running(port):
+                self.logger.info(f"・Found existing browser on port {port}, connecting...")
+                browser = self._connect_to_existing(browser_key, port)
+                if browser:
+                    self._browsers[browser_key] = browser
+                    self._ensure_observer(browser_key, browser)
+                    if dae_name:
+                        with self._allocations_lock:
+                            self._allocations[browser_key] = dae_name
+                    return browser
+
         # Create new browser instance
-        self.logger.info(f" Creating new {browser_type} browser for {profile_name}")
+        self.logger.info(f"・Creating new {browser_type} browser for {profile_name}")
 
         if browser_type.lower() == 'chrome':
             browser = self._create_chrome_browser(browser_key, profile_name, options)
@@ -118,13 +206,18 @@ class BrowserManager:
         return browser
 
     def _create_chrome_browser(self, browser_key: str, profile_name: str, custom_options: Dict[str, Any] = None):
-        """Create Chrome browser with anti-detection settings"""
+        """Create Chrome browser with anti-detection settings and CDP support for cross-process reuse."""
         chrome_options = ChromeOptions()
 
         # Anti-detection flags
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
+
+        # CROSS-PROCESS REUSE: Enable remote debugging for reconnection
+        debug_port = self._get_debug_port(profile_name)
+        chrome_options.add_argument(f'--remote-debugging-port={debug_port}')
+        self.logger.info(f"・Enabling CDP on port {debug_port} for cross-process reuse")
 
         # Standard settings
         chrome_options.add_argument('--window-size=1920,1080')
@@ -174,6 +267,9 @@ class BrowserManager:
 
         if not hasattr(driver, 'register_observer'):
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+        # Save session for cross-process reconnection
+        self._save_session(browser_key, debug_port, profile_dir)
 
         return driver
 

@@ -16,7 +16,9 @@ WSP Compliance: WSP 5 (Test Coverage), WSP 6 (Test Audit)
 """
 
 import asyncio
+import os
 import sys
+import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -132,6 +134,906 @@ class TestIntentClassification:
             session_key="sess8",
         )
         assert intent.is_authorized_commander is False
+
+
+class TestConversationRuntimeFlags:
+    """Test OpenClaw conversation backend and key-isolation flag parsing."""
+
+    def test_no_api_keys_false_strings_are_respected(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "false",
+                "IRONCLAW_NO_API_KEYS": "no",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "true",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            assert dae._conversation_backend == "openclaw"
+            assert dae._no_api_keys is False
+            assert dae._allow_external_llm is True
+
+    def test_no_api_keys_forces_external_llm_off(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "ironclaw",
+                "OPENCLAW_NO_API_KEYS": "1",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            assert dae._conversation_backend == "ironclaw"
+            assert dae._no_api_keys is True
+            assert dae._allow_external_llm is False
+
+    def test_runtime_profile_zeroclaw_forces_fail_closed_external_policy(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_RUNTIME_PROFILE": "zeroclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            snapshot = dae.get_identity_snapshot(include_runtime_probe=False)
+            assert dae._runtime_profile == "zeroclaw"
+            assert dae._no_api_keys is True
+            assert dae._allow_external_llm is False
+            assert snapshot["runtime_profile"] == "zeroclaw"
+
+    def test_ironclaw_defaults_to_strict_mode(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("OPENCLAW_IRONCLAW_STRICT", None)
+            os.environ.pop("OPENCLAW_IRONCLAW_ALLOW_LOCAL_FALLBACK", None)
+            os.environ["OPENCLAW_CONVERSATION_BACKEND"] = "ironclaw"
+
+            dae = OpenClawDAE(repo_root=project_root)
+            assert dae._conversation_backend == "ironclaw"
+            assert dae._ironclaw_strict is True
+            assert dae._ironclaw_allow_local_fallback is False
+
+    def test_identity_query_returns_deterministic_card_on_explicit_details_request(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "DaVinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "MODEL:{MODEL}",
+                "OPENCLAW_IDENTITY_MODEL_CATALOG": "qwen2.5,qwen3,codex5.3",
+                "OPENCLAW_IDENTITY_PROTOCOL": "WSP_00",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="Which model and species are you? show full identity card details",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert "Identity card" in response
+            assert "genus=ex.machina" in response.lower()
+            assert "model_family=davinci" in response.lower()
+            assert "model_name=model:" in response.lower()
+            assert "model_catalog=qwen2.5,qwen3,codex5.3" in response.lower()
+            assert "protocol_anchor=wsp_00" in response.lower()
+            assert dae._last_conversation_engine == "identity_card"
+
+    def test_identity_query_defaults_to_compact_response(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "MODEL:{MODEL}",
+                "OPENCLAW_IDENTITY_MODEL_CATALOG": "qwen2.5,qwen3,codex5.3",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="Which model and species are you?",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_compact",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert response.lower().startswith("0102: model_name=")
+            assert "model_name=" in response.lower()
+            assert dae._last_conversation_engine == "identity_compact"
+
+    def test_identity_query_handles_quinn_stt_alias(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "local/qwen-coder-7b",
+                "OPENCLAW_IDENTITY_MODEL_CATALOG": "qwen2.5,qwen3,codex5.3",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="are you quinn",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_quinn_alias",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert response.lower().startswith("0102: model_name=")
+            assert "local/qwen-coder-7b" in response.lower()
+            assert dae._last_conversation_engine == "identity_compact"
+
+    def test_short_model_query_includes_runtime_verification_fields(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "local/qwen-coder-7b",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            dae._preferred_external_provider = "grok"
+            dae._preferred_external_model = "grok-4"
+            dae._mark_preferred_external_status("failed", "provider_key_missing")
+            dae._last_conversation_engine = "local_qwen"
+            dae._last_conversation_detail = "ai_overseer.quick_response"
+            intent = OpenClawIntent(
+                raw_message="model",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_model_short",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert response.lower().startswith("0102: model_name=")
+            assert "last_engine=identity_compact" in response.lower()
+            assert "previous_engine=local_qwen" in response.lower()
+            assert "preferred_external=grok/grok-4" in response.lower()
+            assert "preferred_external_status=failed" in response.lower()
+            assert dae._last_conversation_engine == "identity_compact"
+
+    def test_identity_verify_phrase_returns_detailed_card(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "local/qwen-coder-7b",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="seems like you are qwen not grok can you verify?",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_verify",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert "Identity card" in response
+            assert "last_engine=" in response
+            assert dae._last_conversation_engine == "identity_card"
+
+    def test_token_usage_query_returns_deterministic_report(self):
+        dae = OpenClawDAE(repo_root=project_root)
+        dae._record_token_usage(
+            prompt_text="User: hello",
+            completion_text="0102: ready",
+            engine="local_qwen",
+            provider="local_qwen",
+            model="local/qwen-coder-7b",
+            source="estimated",
+            cost_estimate_usd=0.001,
+        )
+        intent = OpenClawIntent(
+            raw_message="can we see the token expendure?",
+            category=IntentCategory.CONVERSATION,
+            confidence=0.9,
+            sender="@UnDaoDu",
+            channel="local_repl",
+            session_key="sess_token_usage",
+            is_authorized_commander=True,
+        )
+
+        response = dae._execute_conversation(intent)
+        assert "token usage telemetry" in response.lower()
+        assert "last_turn:" in response.lower()
+        assert "session:" in response.lower()
+        assert "total=" in response.lower()
+        assert dae._last_conversation_engine == "token_usage"
+
+    def test_direct_channel_model_identity_stays_conversation_route(self):
+        """Voice/local channels should force model/identity prompts to conversation route."""
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_GEMMA_INTENT": "1",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+
+            with patch.object(
+                dae,
+                "_get_gemma_classifier",
+                side_effect=AssertionError("gemma classifier should not run for deterministic identity route"),
+            ):
+                intent = dae.classify_intent(
+                    message="can you give me your model name",
+                    sender="@UnDaoDu",
+                    channel="voice_repl",
+                    session_key="sess_direct_identity_route",
+                )
+
+            assert intent.category == IntentCategory.CONVERSATION
+            assert intent.target_domain == "digital_twin"
+            assert intent.metadata.get("classification_method") == "deterministic_direct_conversation"
+
+    def test_identity_model_name_prefers_external_target_when_configured(self):
+        """Compact identity should report selected external target when key + external mode are enabled."""
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "{model}",
+                "GROK_API_KEY": "test-key",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            dae._preferred_external_provider = "grok"
+            dae._preferred_external_model = "grok-4"
+
+            response = dae._build_identity_compact()
+            assert response.lower() == "0102: model_name=grok/grok-4"
+
+    def test_identity_query_model_unavailable_phrase_returns_card(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "local/qwen-coder-7b",
+                "OPENCLAW_IDENTITY_MODEL_CATALOG": "qwen2.5,qwen3,codex5.3",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="why is quinn not available right now",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_unavailable_alias",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert "Identity card" in response
+            assert "model_name=local/qwen-coder-7b" in response
+            assert dae._last_conversation_engine == "identity_card"
+
+    def test_role_lock_blocks_human_role_inversion(self):
+        response = OpenClawDAE._ensure_conversation_identity(
+            "I'm UnDaoDu and you are 0102."
+        )
+        assert response.lower().startswith("0102: role lock active")
+        assert "i am 0102" in response.lower()
+        assert "you are 012" in response.lower()
+
+    def test_role_lock_preserves_normal_identity_prefix(self):
+        response = OpenClawDAE._ensure_conversation_identity(
+            "we can troubleshoot this together"
+        )
+        assert response == "0102: we can troubleshoot this together"
+
+    def test_model_switch_local_qwen3_updates_conversation_target(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "LOCAL_MODEL_ROOT": "E:/LM_studio/models/local",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="switch model to qwen3",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_qwen3",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "model switched to local/qwen3-4b" in response.lower()
+            assert dae._conversation_model_target_id == "local/qwen3-4b"
+            assert os.environ.get("LOCAL_MODEL_CODE_DIR", "").lower().replace("\\", "/").endswith("/qwen3-4b")
+            assert dae._last_conversation_engine == "model_switch"
+
+    def test_model_switch_local_qwen3_5_updates_conversation_target(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "LOCAL_MODEL_ROOT": "E:/LM_studio/models/local",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="switch model to qwen3.5",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_qwen3_5",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "model switched to local/qwen3.5-4b" in response.lower()
+            assert dae._conversation_model_target_id == "local/qwen3.5-4b"
+            assert os.environ.get("LOCAL_MODEL_CODE_DIR", "").lower().replace("\\", "/").endswith("/qwen3.5-4b")
+            assert dae._last_conversation_engine == "model_switch"
+
+    def test_model_availability_snapshot_includes_qwen3_5_target(self, tmp_path: Path):
+        with patch.dict(
+            os.environ,
+            {
+                "LOCAL_MODEL_ROOT": str(tmp_path),
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+            },
+            clear=False,
+        ):
+            qwen35_dir = tmp_path / "qwen3.5-4b"
+            qwen35_dir.mkdir(parents=True, exist_ok=True)
+            (qwen35_dir / "Qwen3.5-4B-Q4_K_M.gguf").write_bytes(b"test")
+
+            dae = OpenClawDAE(repo_root=project_root)
+            snapshot = dae.get_model_availability_snapshot(live_probe=False)
+            assert "local/qwen3.5-4b" in snapshot["local"]
+            assert snapshot["local"]["local/qwen3.5-4b"] == "ready"
+
+    def test_model_switch_external_grok_without_key_reports_unconfigured(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "GROK_API_KEY": "",
+                "XAI_API_KEY": "",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="become grok",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_grok",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "provider api key is not configured" in response.lower()
+            assert dae._preferred_external_provider == "grok"
+            assert dae._preferred_external_model == "grok-4"
+            assert dae._last_conversation_engine == "model_switch"
+
+    def test_model_switch_external_blocked_by_zeroclaw_profile(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_RUNTIME_PROFILE": "zeroclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "OPENCLAW_WSP00_BOOT": "1",
+                "OPENCLAW_IDENTITY_PROTOCOL": "wsp_00",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="become grok",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_grok_zeroclaw",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "model switch blocked by runtime profile zeroclaw" in response.lower()
+            assert dae._last_conversation_engine == "model_switch_blocked"
+
+    def test_parse_model_switch_target_supports_quick_and_reasoning_profiles(self):
+        assert OpenClawDAE._parse_model_switch_target("become grok fast") == "grok-4-fast"
+        assert OpenClawDAE._parse_model_switch_target("switch model to gemini flash") == "gemini-2.5-flash"
+        assert OpenClawDAE._parse_model_switch_target("become gpt5") == "gpt-5"
+        assert OpenClawDAE._parse_model_switch_target("become o3 pro") == "o3-pro"
+        assert OpenClawDAE._parse_model_switch_target("become haiku") == "claude-haiku-4-5-20251001"
+
+    def test_resolve_external_target_includes_quick_models(self):
+        assert OpenClawDAE._resolve_external_target("grok-4-fast") == ("grok", "grok-4-fast")
+        assert OpenClawDAE._resolve_external_target("gemini-2.5-flash") == ("gemini", "gemini-2.5-flash")
+        assert OpenClawDAE._resolve_external_target("gpt-5") == ("openai", "gpt-5")
+        assert OpenClawDAE._resolve_external_target("o3-pro") == ("openai", "o3-pro")
+        assert OpenClawDAE._resolve_external_target("claude-haiku-4-5-20251001") == (
+            "anthropic",
+            "claude-haiku-4-5-20251001",
+        )
+
+    def test_model_switch_without_target_returns_guidance_not_identity(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "OPENCLAW_WSP00_BOOT": "1",
+                "OPENCLAW_IDENTITY_PROTOCOL": "wsp_00",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="can you change your model",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_missing_target",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "model switch request received" in response.lower()
+            assert "catalog=" not in response.lower()
+            assert dae._last_conversation_engine == "model_switch"
+            assert dae._last_conversation_detail == "target_missing"
+
+    def test_identity_question_running_qwen_does_not_trigger_switch(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_WSP00_BOOT": "1",
+                "OPENCLAW_IDENTITY_PROTOCOL": "wsp_00",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "local/qwen-coder-7b",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="are you running qwen",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_identity_running_qwen",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert response.lower().startswith("0102: model_name=")
+            assert dae._last_conversation_engine == "identity_compact"
+
+    def test_model_switch_blocked_when_wsp00_boot_disabled(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_NO_API_KEYS": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "1",
+                "OPENCLAW_WSP00_BOOT": "0",
+                "OPENCLAW_IDENTITY_PROTOCOL": "wsp_00",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="switch model to qwen3",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.9,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_switch_wsp_blocked",
+                is_authorized_commander=True,
+            )
+            response = dae._execute_conversation(intent)
+            assert "model switch blocked" in response.lower()
+            assert "wsp_00 boot is disabled" in response.lower()
+            assert dae._last_conversation_engine == "model_switch_blocked"
+            assert dae._conversation_model_target_id != "local/qwen3-4b"
+
+    def test_ironclaw_strict_blocks_local_fallback_when_unavailable(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "ironclaw",
+                "OPENCLAW_IRONCLAW_STRICT": "1",
+                "OPENCLAW_IRONCLAW_ALLOW_LOCAL_FALLBACK": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "0",
+                "OPENCLAW_VERBOSE_RUNTIME_ERRORS": "1",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="hello",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.5,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_strict",
+                is_authorized_commander=True,
+            )
+
+            with patch.object(dae, "_try_ironclaw_conversation", return_value=None), patch.object(
+                dae,
+                "_probe_ironclaw_runtime",
+                return_value={
+                    "healthy": "FAIL",
+                    "detail": "test_unavailable",
+                    "model": "local/qwen-coder-7b",
+                    "models": "none",
+                },
+            ), patch.object(type(dae), "overseer", new_callable=PropertyMock) as mock_overseer:
+                mock_overseer.side_effect = AssertionError(
+                    "overseer should not be consulted in strict ironclaw mode"
+                )
+                response = dae._execute_conversation(intent)
+
+            assert "strict mode" in response.lower()
+            assert "local fallback is disabled" in response.lower()
+            assert "detail=test_unavailable" in response
+            assert dae._last_conversation_engine == "ironclaw_unavailable_strict"
+
+    def test_ironclaw_strict_autostart_recovers_conversation(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "ironclaw",
+                "OPENCLAW_IRONCLAW_STRICT": "1",
+                "OPENCLAW_IRONCLAW_ALLOW_LOCAL_FALLBACK": "0",
+                "OPENCLAW_ALLOW_EXTERNAL_LLM": "0",
+                "OPENCLAW_IRONCLAW_AUTOSTART": "1",
+                "IRONCLAW_START_CMD": "ironclaw gateway",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="hello",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.5,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_strict_autostart",
+                is_authorized_commander=True,
+            )
+
+            with patch.object(
+                dae,
+                "_try_ironclaw_conversation",
+                side_effect=[None, "0102: recovered"],
+            ), patch.object(
+                dae,
+                "_attempt_ironclaw_autostart",
+                return_value=(True, "autostart_recovered"),
+            ):
+                response = dae._execute_conversation(intent)
+
+            assert response == "0102: recovered"
+            assert dae._last_conversation_engine == "ironclaw"
+            assert dae._last_conversation_detail == "autostart_recovered"
+
+    def test_ironclaw_autostart_missing_executable_returns_fast(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "ironclaw",
+                "OPENCLAW_IRONCLAW_AUTOSTART": "1",
+                "OPENCLAW_IRONCLAW_DEFAULT_START_CMD": "",
+                "IRONCLAW_START_CMD": "definitely_missing_ironclaw_binary_0102 gateway",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            dae._ironclaw_autostart_wait_sec = 4.0
+
+            with patch(
+                "modules.communication.moltbot_bridge.src.openclaw_dae.shutil.which",
+                return_value=None,
+            ):
+                started = time.time()
+                recovered, detail = dae._attempt_ironclaw_autostart()
+                elapsed = time.time() - started
+
+            assert recovered is False
+            assert detail.startswith("autostart_executable_missing:")
+            assert elapsed < 1.0
+            assert dae._ironclaw_autostart_missing_backoff_until > time.time()
+
+    def test_identity_query_via_query_route_returns_card_on_explicit_details_request(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "{model}",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="what model are you operating from? show full identity card details",
+                category=IntentCategory.QUERY,
+                confidence=0.7,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_query_identity",
+                is_authorized_commander=True,
+            )
+
+            response = asyncio.run(dae._execute_query(intent))
+            assert "Identity card" in response
+            assert "genus=ex.machina" in response.lower()
+            assert "model_family=davinci" in response.lower()
+            assert "model_name=" in response.lower()
+
+    def test_conversation_honors_turn_cancellation(self):
+        dae = OpenClawDAE(repo_root=project_root)
+        intent = OpenClawIntent(
+            raw_message="hello there",
+            category=IntentCategory.CONVERSATION,
+            confidence=0.8,
+            sender="@UnDaoDu",
+            channel="voice_repl",
+            session_key="sess_cancel",
+            is_authorized_commander=True,
+        )
+
+        dae.request_turn_cancel("test_voice_barge")
+        response = dae._execute_conversation(intent)
+        assert "interrupted" in response.lower()
+        assert dae._last_conversation_engine == "cancelled"
+
+    def test_compact_identity_query_handles_punctuation(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_CATALOG": "qwen2.5,qwen3,grok4",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            intent = OpenClawIntent(
+                raw_message="model?",
+                category=IntentCategory.CONVERSATION,
+                confidence=0.8,
+                sender="@UnDaoDu",
+                channel="local_repl",
+                session_key="sess_compact_identity",
+                is_authorized_commander=True,
+            )
+
+            response = dae._execute_conversation(intent)
+            assert response.lower().startswith("0102: model_name=")
+            assert "catalog=" not in response.lower()
+            assert dae._last_conversation_engine == "identity_compact"
+
+    def test_identity_snapshot_exposes_lineage_and_resolved_model(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_IDENTITY_GENUS": "ex.machina",
+                "OPENCLAW_IDENTITY_MODEL_FAMILY": "davinci",
+                "OPENCLAW_IDENTITY_MODEL_NAME": "model:{model}",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            with patch.object(
+                dae,
+                "_resolve_local_code_model_snapshot",
+                return_value={
+                    "path": r"E:\LM_studio\models\local\qwen-coder-7b\qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+                    "state": "OK",
+                    "source": "LOCAL_MODEL_CODE_FILE",
+                },
+            ):
+                snapshot = dae.get_identity_snapshot(include_runtime_probe=False)
+                line = dae.get_identity_label_line(include_runtime_probe=False)
+
+            assert snapshot["genus"] == "Ex.machina"
+            assert snapshot["lineage"] == "davinci"
+            assert snapshot["model_family"] == "davinci"
+            assert snapshot["model_name"] == "model:qwen2.5-coder-7b-instruct-q4_k_m.gguf"
+            assert "lineage=davinci" in line
+            assert "model_name=model:qwen2.5-coder-7b-instruct-q4_k_m.gguf" in line
+
+    def test_monitor_reports_lineage_and_model_name(self):
+        dae = OpenClawDAE(repo_root=project_root)
+        dae._conversation_backend = "ironclaw"
+        intent = OpenClawIntent(
+            raw_message="status",
+            category=IntentCategory.MONITOR,
+            confidence=0.9,
+            sender="@UnDaoDu",
+            channel="local_repl",
+            session_key="sess_monitor",
+            is_authorized_commander=True,
+        )
+
+        snapshot = {
+            "backend": "ironclaw",
+            "key_isolation": "ON",
+            "ironclaw_strict": "ON",
+            "ironclaw_allow_local_fallback": "OFF",
+            "genus": "Ex.machina",
+            "lineage": "davinci",
+            "model_family": "davinci",
+            "model_name": "local/qwen-coder-7b",
+            "model_catalog": "qwen2.5,qwen3",
+            "protocol_anchor": "wsp_00",
+            "wsp00_boot": "ON",
+            "wsp00_boot_mode": "compact",
+            "wsp00_file_override": "NO",
+            "last_engine": "ironclaw",
+            "last_engine_detail": "gateway_chat_completion",
+            "local_code_model_path": "E:/LM_studio/models/local/qwen-coder-7b/model.gguf",
+            "local_code_model_state": "OK",
+            "local_code_model_source": "LOCAL_MODEL_CODE_FILE",
+            "ironclaw_runtime_healthy": "PASS",
+            "ironclaw_runtime_detail": "ok",
+            "ironclaw_runtime_model": "local/qwen-coder-7b",
+            "ironclaw_runtime_models": "local/qwen-coder-7b, local/qwen3-4b",
+        }
+        with patch.object(type(dae), "wre", new_callable=PropertyMock, return_value=None), patch.object(
+            type(dae), "overseer", new_callable=PropertyMock, return_value=None
+        ), patch.object(dae, "get_identity_snapshot", return_value=snapshot):
+            response = dae._execute_monitor(intent)
+
+        assert "lineage=davinci" in response.lower()
+        assert "model_name=local/qwen-coder-7b" in response.lower()
+        assert "ironclaw runtime: pass (ok)" in response.lower()
+
+    def test_wsp00_boot_prompt_enabled_by_default(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_WSP00_BOOT": "1",
+                "OPENCLAW_WSP00_BOOT_MODE": "compact",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            prompt = dae._build_conversation_system_prompt()
+            assert "WSP_00 BOOT" in prompt
+            assert "identity=0102" in prompt.lower()
+            assert "You are 0102" in prompt
+
+    def test_wsp00_boot_prompt_can_be_disabled(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_WSP00_BOOT": "0",
+                "OPENCLAW_WSP00_BOOT_MODE": "compact",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            prompt = dae._build_conversation_system_prompt()
+            assert "WSP_00 BOOT" not in prompt
+            assert prompt.startswith("You are 0102")
+
+    def test_wsp00_boot_prompt_file_override(self, tmp_path):
+        prompt_file = tmp_path / "wsp00_boot_prompt.txt"
+        prompt_file.write_text("WSP_00 CUSTOM BOOT FROM FILE", encoding="utf-8")
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_WSP00_BOOT": "1",
+                "OPENCLAW_WSP00_BOOT_MODE": "compact",
+                "OPENCLAW_WSP00_PROMPT_FILE": str(prompt_file),
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            prompt = dae._build_conversation_system_prompt()
+            assert prompt.startswith("WSP_00 CUSTOM BOOT FROM FILE")
+            assert "You are 0102" in prompt
+
+    def test_platform_context_pack_is_injected_into_conversation_prompt(self, tmp_path):
+        context_file = tmp_path / "platform_context.txt"
+        context_file.write_text(
+            "foundups platform context\n"
+            "- openclaw routes to wre\n"
+            "- pAVS uses btc reserve + utility layers\n",
+            encoding="utf-8",
+        )
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_WSP00_BOOT": "0",
+                "OPENCLAW_PLATFORM_CONTEXT_ENABLED": "1",
+                "OPENCLAW_PLATFORM_CONTEXT_FILES": str(context_file),
+                "OPENCLAW_PLATFORM_CONTEXT_MAX_CHARS": "600",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            prompt = dae._build_conversation_system_prompt()
+            assert "PLATFORM CONTEXT PACK" in prompt
+            assert "foundups platform context" in prompt.lower()
+            assert str(context_file.name) in prompt
+
+    def test_platform_context_pack_can_be_disabled(self, tmp_path):
+        context_file = tmp_path / "platform_context.txt"
+        context_file.write_text("foundups platform context", encoding="utf-8")
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_WSP00_BOOT": "0",
+                "OPENCLAW_PLATFORM_CONTEXT_ENABLED": "0",
+                "OPENCLAW_PLATFORM_CONTEXT_FILES": str(context_file),
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            prompt = dae._build_conversation_system_prompt()
+            assert "PLATFORM CONTEXT PACK" not in prompt
+            assert prompt.startswith("You are 0102")
 
 
 # ---------------------------------------------------------------------------
@@ -736,6 +1638,46 @@ class TestEndToEndProcess:
         ))
         assert isinstance(result, str)
         assert "Status" in result or "status" in result.lower()
+
+    def test_zeroclaw_downgrades_mutating_intent_to_conversation_route(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENCLAW_RUNTIME_PROFILE": "zeroclaw",
+                "OPENCLAW_CONVERSATION_BACKEND": "openclaw",
+                "OPENCLAW_GEMMA_INTENT": "0",
+            },
+            clear=False,
+        ):
+            dae = OpenClawDAE(repo_root=project_root)
+            captured_plan = {}
+
+            async def _capture_execute(plan):
+                captured_plan["category"] = plan.intent.category
+                captured_plan["route"] = plan.route
+                captured_plan["metadata"] = dict(plan.intent.metadata)
+                return "stub-response"
+
+            with patch.object(dae, "_execute_plan", side_effect=_capture_execute), patch.object(
+                dae,
+                "_validate_and_remember",
+                return_value=MagicMock(response_text="stub-response"),
+            ):
+                result = asyncio.run(
+                    dae.process(
+                        message="run the deploy script now",
+                        sender="@UnDaoDu",
+                        channel="voice_repl",
+                    )
+                )
+
+            assert result == "stub-response"
+            assert captured_plan["category"] == IntentCategory.CONVERSATION
+            assert captured_plan["route"] == "digital_twin"
+            assert captured_plan["metadata"].get("runtime_profile") == "zeroclaw"
+            assert captured_plan["metadata"].get("runtime_profile_gate", "").startswith(
+                "blocked_mutating:"
+            )
 
     def test_security_filter_blocks_secrets(self):
         """Validate phase catches secret patterns in output."""

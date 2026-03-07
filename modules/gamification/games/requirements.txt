@@ -1,0 +1,2 @@
+# Games module dependencies
+python-chess>=1.9.0

@@ -114,7 +114,13 @@ def test_model_advances_claimed_task_to_paid_and_published(tmp_path) -> None:
 
     milestone_events = daemon.query_events(event_type="milestone_published", limit=50)
     assert len(milestone_events) == 1
+    fi_mined_events = daemon.query_events(event_type="fi_mined_for_work", limit=50)
+    assert fi_mined_events
 
     state = model.state_store.get_state()
     assert state.foundups[foundup_id].tasks_completed >= 1
+
+    worker = model.token_economics.human_accounts.get("worker_0")
+    assert worker is not None
+    assert worker.foundup_tokens.get(foundup_id, 0.0) > 0
 

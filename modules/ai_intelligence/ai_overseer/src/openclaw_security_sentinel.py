@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 import subprocess
 import re
 import logging
@@ -198,9 +198,29 @@ class OpenClawSecuritySentinel:
         return status
 
     def _scan_ports(self) -> tuple[List[int], List[str]]:
-        """Scan active listening ports for 0.0.0.0 bindings."""
-        open_ports = []
-        risky_bindings = []
+        """Scan active listening ports and flag wildcard bindings with sane defaults.
+
+        This check focuses on likely application exposure and avoids failing on:
+        - Core Windows system listeners (PID 0/4)
+        - Ephemeral high ports (default >= 49152)
+        - Operator-configured ignore lists
+        """
+        open_ports: Set[int] = set()
+        risky_bindings: Set[str] = set()
+
+        ignore_ports = self._parse_port_set(
+            os.getenv("OPENCLAW_PORT_SCAN_IGNORE_PORTS", "135,445,1900,5353,5355,5357,5358,5040")
+        )
+        default_monitored_ports = (
+            os.getenv("OPENCLAW_BRIDGE_PORT")
+            or os.getenv("MOLTBOT_BRIDGE_PORT")
+            or "18800"
+        )
+        monitored_ports = self._parse_port_set(
+            os.getenv("OPENCLAW_PORT_SCAN_MONITORED_PORTS", default_monitored_ports)
+        )
+        ignore_ephemeral = _env_bool("OPENCLAW_PORT_SCAN_IGNORE_EPHEMERAL", True)
+        ignore_system_pids = _env_bool("OPENCLAW_PORT_SCAN_IGNORE_SYSTEM_PIDS", True)
         
         try:
             # Cross-platform netstat (mostly Windows/Linux compatible for this flag verify)
@@ -212,37 +232,134 @@ class OpenClawSecuritySentinel:
                 
             output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf-8', errors='ignore')
             
-            for line in output.splitlines():
-                line = line.strip()
+            for raw_line in output.splitlines():
+                line = raw_line.strip()
                 if "LISTEN" not in line and "LISTENING" not in line:
                     continue
-                    
-                # Parse "TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING"
-                parts = re.split(r'\s+', line)
-                if len(parts) >= 2:
-                    proto = parts[0]
-                    local_addr = parts[1]
-                    
-                    if ':' in local_addr:
-                        # IPv4 (0.0.0.0:8000) or IPv6 ([::]:8000)
-                        ip_part = local_addr.rsplit(':', 1)[0]
-                        port_part = local_addr.rsplit(':', 1)[1]
-                        
-                        try:
-                            port = int(port_part)
-                            open_ports.append(port)
-                            
-                            # Check for risky binding
-                            # 0.0.0.0 or [::] (all interfaces)
-                            if ip_part == '0.0.0.0' or ip_part == '[::]' or ip_part == '*':
-                                risky_bindings.append(f"{ip_part}:{port}")
-                        except ValueError:
-                            continue
+
+                host, port, pid = self._extract_binding(line)
+                if host is None or port is None:
+                    continue
+
+                open_ports.add(port)
+                if not self._is_wildcard_host(host):
+                    continue
+
+                if ignore_system_pids and pid in {0, 4}:
+                    continue
+                if ignore_ephemeral and port >= 49152:
+                    continue
+                if port in ignore_ports:
+                    continue
+                if monitored_ports and port not in monitored_ports:
+                    continue
+
+                host_display = "[::]" if host == "::" else host
+                risky_bindings.add(f"{host_display}:{port}")
                             
         except Exception as e:
             logger.error(f"Failed to scan ports: {e}")
             
-        return sorted(list(set(open_ports))), sorted(list(set(risky_bindings)))
+        return sorted(open_ports), sorted(risky_bindings)
+
+    @staticmethod
+    def _is_wildcard_host(host: str) -> bool:
+        normalized = host.strip().lower().strip("[]")
+        return normalized in {"0.0.0.0", "::", "*", ":::*"}
+
+    @staticmethod
+    def _parse_port_set(raw: str) -> Set[int]:
+        ports: Set[int] = set()
+        for token in (raw or "").split(","):
+            value = token.strip()
+            if not value:
+                continue
+            if "-" in value:
+                start_s, end_s = value.split("-", 1)
+                try:
+                    start = int(start_s.strip())
+                    end = int(end_s.strip())
+                except ValueError:
+                    continue
+                if end < start:
+                    start, end = end, start
+                for port in range(max(start, 1), min(end, 65535) + 1):
+                    ports.add(port)
+                continue
+            try:
+                port = int(value)
+            except ValueError:
+                continue
+            if 1 <= port <= 65535:
+                ports.add(port)
+        return ports
+
+    def _extract_binding(self, line: str) -> Tuple[Optional[str], Optional[int], Optional[int]]:
+        parts = re.split(r"\s+", line.strip())
+        if len(parts) < 2:
+            return None, None, None
+
+        local_addr: Optional[str] = None
+        pid: Optional[int] = None
+
+        # Windows netstat -ano format:
+        # TCP  0.0.0.0:135  0.0.0.0:0  LISTENING  916
+        if os.name == "nt" and len(parts) >= 4:
+            local_addr = parts[1]
+            if parts[-1].isdigit():
+                pid = int(parts[-1])
+        else:
+            # Linux-ish fallback:
+            # tcp  0  0 0.0.0.0:22  0.0.0.0:*  LISTEN  123/sshd
+            try:
+                state_idx = next(
+                    i for i, token in enumerate(parts)
+                    if token.upper() in {"LISTEN", "LISTENING"}
+                )
+            except StopIteration:
+                state_idx = -1
+            if state_idx >= 2:
+                candidate = parts[state_idx - 2]
+                if ":" in candidate:
+                    local_addr = candidate
+            tail = parts[-1]
+            if tail.isdigit():
+                pid = int(tail)
+            elif "/" in tail:
+                maybe_pid = tail.split("/", 1)[0]
+                if maybe_pid.isdigit():
+                    pid = int(maybe_pid)
+
+        if not local_addr:
+            return None, None, pid
+
+        host, port = self._split_host_port(local_addr)
+        return host, port, pid
+
+    @staticmethod
+    def _split_host_port(local_addr: str) -> Tuple[Optional[str], Optional[int]]:
+        addr = (local_addr or "").strip()
+        if not addr or ":" not in addr:
+            return None, None
+
+        if addr.startswith("[") and "]:" in addr:
+            host, _, port_part = addr[1:].partition("]:")
+        else:
+            host, _, port_part = addr.rpartition(":")
+
+        if not port_part.isdigit():
+            return None, None
+        try:
+            port = int(port_part)
+        except ValueError:
+            return None, None
+        if not (1 <= port <= 65535):
+            return None, None
+
+        normalized_host = (host or "*").strip().strip("[]")
+        if normalized_host == ":::":
+            normalized_host = "::"
+        return normalized_host, port
 
     def _load_cache(self) -> Optional[Dict[str, Any]]:
         if not self.cache_path.exists():

@@ -1,92 +1,33 @@
-# database Test Suite
+ï»¿# Database Test Suite
 
-**Test Coverage:** 0% (implementation needed)
-**Last Run:** Never
-**Framework:** pytest
+## Scope
+This suite validates database infrastructure behavior, with emphasis on:
+- SQLite safety and runtime pragma enforcement
+- Audit/report tooling for SQLite stores
+- Legacy quantum/chroma compatibility tests
 
-## [TEST] Test Categories
+## Primary Tests
+- `test_db_manager_sqlite_pragmas.py`
+  - verifies per-connection foreign key enforcement
+  - verifies runtime busy-timeout pragma behavior
+- `test_sqlite_audit.py`
+  - validates per-file SQLite audit output
+  - validates summary counts for existing vs missing targets
+- `test_quantum_compatibility.py`
+  - legacy compatibility coverage for `AgentDB`/`QuantumAgentDB`
+- `test_corruption_prevention.py`
+  - legacy Chroma corruption prevention checks
 
-### Unit Tests (test_*.py)
-- test_[module_name].py - Core functionality tests
-- test_integration.py - Integration tests (when applicable)
+## Run
 
-### Test Structure
-```
-tests/
-„¥„Ÿ„Ÿ __init__.py              # Test package
-„¥„Ÿ„Ÿ README.md               # This file
-„¥„Ÿ„Ÿ test_[module_name].py   # Main test file
-„¤„Ÿ„Ÿ TestModLog.md          # Test evolution log
-```
-
-## [RUN] Running Tests
-
-### All Tests
 ```bash
-cd modules/infrastructure/database
-python -m pytest tests/
+python -m pytest modules/infrastructure/database/tests -q
 ```
 
-### Specific Test
+Run only new infrastructure hardening tests:
+
 ```bash
-cd modules/infrastructure/database
-python -m pytest tests/test_[module_name].py
+python -m pytest \
+  modules/infrastructure/database/tests/test_db_manager_sqlite_pragmas.py \
+  modules/infrastructure/database/tests/test_sqlite_audit.py -q
 ```
-
-### With Coverage
-```bash
-cd modules/infrastructure/database
-python -m pytest --cov=src --cov-report=html tests/
-```
-
-## [COVERAGE] Coverage Requirements
-
-**WSP 13 Compliance Target:** >=90% coverage
-
-### Current Status
-- **Lines:** 0%
-- **Functions:** 0%
-- **Branches:** 0%
-
-### Coverage Areas Required
-- [ ] Core functionality
-- [ ] Error handling
-- [ ] Edge cases
-- [ ] Integration points
-
-## [CONFIG] Test Configuration
-
-### pytest.ini (if needed)
-```ini
-[tool:pytest]
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts = -v --tb=short
-```
-
-## [CASES] Test Cases (TODO)
-
-### Basic Functionality
-- [ ] Test initialization
-- [ ] Test main methods
-- [ ] Test configuration handling
-
-### Error Conditions
-- [ ] Test invalid inputs
-- [ ] Test missing dependencies
-- [ ] Test network failures (if applicable)
-
-### Integration Tests
-- [ ] Test with dependent modules
-- [ ] Test end-to-end workflows
-- [ ] Test performance requirements
-
-## [EVOLUTION] Test Evolution Log
-
-See TestModLog.md for detailed test development history.
-
----
-
-**WSP 13 Testing Compliance:** Structure Complete, Implementation Pending

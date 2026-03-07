@@ -22,6 +22,14 @@ from modules.infrastructure.shared_utilities.youtube_channel_registry import gro
 
 logger = logging.getLogger(__name__)
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import run_dae_preflight
+    _WRE_PREFLIGHT_AVAILABLE = True
+except ImportError:
+    _WRE_PREFLIGHT_AVAILABLE = False
+    run_dae_preflight = None
+
 def _build_browser_channels() -> dict:
     grouped = group_channels_by_browser(role="shorts")
     return {
@@ -113,6 +121,186 @@ def _record_channel_result(channel_key: str, cache: dict, unlisted_count: int, s
     }
 
 
+# ---------------------------------------------------------------------------
+# Idle Detection for Continuous Rotation
+# ---------------------------------------------------------------------------
+_IDLE_THRESHOLD_SECONDS = int(os.getenv("YT_IDLE_THRESHOLD", "60"))  # 1 min default
+
+
+def _is_browser_idle(cache: dict, channels: list, cooldown: int = None) -> bool:
+    """
+    Check if ALL channels for a browser have no work (idle state).
+
+    Returns True if every channel either:
+    - Had 0 unlisted videos recently (within cooldown)
+    - Has been checked and has no work
+    """
+    if cooldown is None:
+        cooldown = _SKIP_COOLDOWN_SECONDS
+
+    now = _time.time()
+
+    for ch in channels:
+        entry = cache.get(ch)
+        if not entry:
+            # Never checked - has potential work
+            return False
+
+        last_unlisted = entry.get("last_unlisted_count", -1)
+        last_ts = entry.get("last_checked_ts", 0)
+        elapsed = now - last_ts
+
+        # Channel has work if: had videos OR cooldown expired
+        if last_unlisted != 0 or elapsed >= cooldown:
+            return False
+
+    # All channels skipped within cooldown = browser idle
+    return True
+
+
+def _get_idle_wait_time(cache: dict, channels: list, cooldown: int = None) -> float:
+    """
+    Calculate how long until the next channel's cooldown expires.
+
+    Returns seconds until next channel becomes available, or 0 if one is ready now.
+    """
+    if cooldown is None:
+        cooldown = _SKIP_COOLDOWN_SECONDS
+
+    now = _time.time()
+    min_wait = float('inf')
+
+    for ch in channels:
+        entry = cache.get(ch)
+        if not entry:
+            return 0  # Never checked - ready now
+
+        last_unlisted = entry.get("last_unlisted_count", -1)
+        if last_unlisted != 0:
+            return 0  # Had videos - ready to check again
+
+        last_ts = entry.get("last_checked_ts", 0)
+        elapsed = now - last_ts
+        remaining = cooldown - elapsed
+
+        if remaining <= 0:
+            return 0  # Cooldown expired - ready now
+
+        min_wait = min(min_wait, remaining)
+
+    return min_wait if min_wait != float('inf') else 0
+
+
+def run_continuous_scheduler(
+    browser: str = "both",
+    mode: str = "schedule",
+    max_per_channel: int = 9999,
+) -> None:
+    """
+    Run scheduler continuously, auto-rotating when idle.
+
+    This is the autonomous mode - keeps running until Ctrl+C.
+    When all channels are idle (no unlisted videos), waits for cooldown and retries.
+
+    Args:
+        browser: "chrome", "edge", or "both"
+        mode: "enhance" or "schedule"
+        max_per_channel: Max videos to process per channel per cycle
+    """
+    # WRE preflight before long-running autonomous mode
+    if _WRE_PREFLIGHT_AVAILABLE and run_dae_preflight:
+        if not run_dae_preflight("youtube_shorts_continuous"):
+            print("[ABORT] WRE preflight failed - startup blocked")
+            return
+
+    import threading
+    import signal
+
+    print("\n" + "=" * 60)
+    print("[CONTINUOUS] Autonomous Rotation Mode")
+    print("=" * 60)
+    print(f"Browser: {browser.upper()}")
+    print(f"Mode: {mode.upper()}")
+    print(f"Cooldown: {_SKIP_COOLDOWN_SECONDS}s between idle checks")
+    print("Press Ctrl+C to stop")
+    print("=" * 60)
+
+    stop_event = threading.Event()
+    rotation_count = 0
+
+    def _signal_handler(sig, frame):
+        print("\n[STOP] Ctrl+C received - stopping after current cycle...")
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, _signal_handler)
+
+    try:
+        while not stop_event.is_set():
+            rotation_count += 1
+            print(f"\n[ROTATION {rotation_count}] Starting cycle...")
+
+            if browser == "both":
+                # Run both browsers in parallel
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                    chrome_future = executor.submit(
+                        run_multi_channel_scheduler,
+                        browser="chrome", mode=mode, max_per_channel=max_per_channel,
+                        stop_event=stop_event
+                    )
+                    edge_future = executor.submit(
+                        run_multi_channel_scheduler,
+                        browser="edge", mode=mode, max_per_channel=max_per_channel,
+                        stop_event=stop_event
+                    )
+                    chrome_result = chrome_future.result()
+                    edge_result = edge_future.result()
+
+                total_scheduled = (
+                    chrome_result.get("total_scheduled", 0) +
+                    edge_result.get("total_scheduled", 0)
+                )
+            else:
+                # Single browser
+                result = run_multi_channel_scheduler(
+                    browser=browser, mode=mode, max_per_channel=max_per_channel,
+                    stop_event=stop_event
+                )
+                total_scheduled = result.get("total_scheduled", 0)
+
+            if stop_event.is_set():
+                break
+
+            # Check idle state
+            cache = _load_schedule_cache()
+            channels = BROWSER_CHANNELS.get(browser, [])
+            if browser == "both":
+                channels = BROWSER_CHANNELS.get("chrome", []) + BROWSER_CHANNELS.get("edge", [])
+
+            if total_scheduled == 0 and _is_browser_idle(cache, channels):
+                wait_time = _get_idle_wait_time(cache, channels)
+                if wait_time > 0:
+                    wait_mins = wait_time / 60
+                    print(f"\n[IDLE] All channels idle. Waiting {wait_mins:.1f}m until next cycle...")
+                    # Sleep in small increments to allow Ctrl+C
+                    sleep_interval = min(30, wait_time)
+                    slept = 0
+                    while slept < wait_time and not stop_event.is_set():
+                        _time.sleep(min(sleep_interval, wait_time - slept))
+                        slept += sleep_interval
+                else:
+                    print(f"\n[READY] Cooldown expired - starting next cycle...")
+            else:
+                # Brief pause between active rotations
+                print(f"\n[ACTIVE] Scheduled {total_scheduled} videos. Brief pause before next cycle...")
+                _time.sleep(5)
+
+    except KeyboardInterrupt:
+        print("\n[STOP] Keyboard interrupt - exiting...")
+
+    print(f"\n[DONE] Completed {rotation_count} rotation cycles")
+
+
 def run_shorts_scheduler(
     mode: str = "enhance",
     channel_id: Optional[str] = None,
@@ -187,7 +375,7 @@ def run_shorts_scheduler(
         # Determine browser/port from channel_id or explicit port
         chrome_port = int(os.getenv("CHROME_PORT", "9222"))
 
-        # Auto-detect browser from channel_id (Edge for FoundUps/RavingANTIFA)
+        # Auto-detect browser from channel_id (Edge for FoundUps/antifaFM)
         use_edge = False
         for cfg in CHANNELS.values():
             if cfg.get("id") == channel_id and cfg.get("chrome_port") == 9223:
@@ -386,23 +574,18 @@ def show_shorts_scheduler_menu() -> str:
     """
     Display the scheduler submenu and return choice.
 
-    Occam menu design (0102-first) - SIMPLIFIED 2026-01-19:
-    - ONE primary action: Schedule ALL shorts continuously
-    - Dev options accessible via CLI or env vars
+    2026-02-24: Added browser selection and continuous autonomous mode.
     """
-    import os
-
-    channel_key = os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan"
-
     print("\n[MENU] YouTube Shorts Scheduler")
     print("=" * 60)
-    print(f"Channel: {channel_key} (set YT_SHORTS_SCHEDULER_CHANNEL_KEY to change)")
-    print("Schedules ALL unlisted shorts until complete (like comment engagement)")
+    print("Select browser to schedule shorts:")
     print("=" * 60)
-    print("1. Schedule ALL Shorts (continuous until complete)")
+    print("1. CHROME (9222) - Move2Japan + UnDaoDu")
+    print("2. EDGE (9223)   - FoundUps + antifaFM")
+    print("3. BOTH PARALLEL - Chrome + Edge at same time")
+    print("4. CONTINUOUS    - Auto-rotate until Ctrl+C (never idle)")
     print("0. Back")
     print("=" * 60)
-    print("[DEV] CLI: python -m modules.platform_integration.youtube_shorts_scheduler.scripts.launch --help")
     print("[DEV] Multi-channel: --browser chrome|edge")
 
     return input("\nSelect: ").strip()
@@ -469,7 +652,7 @@ def run_multi_channel_scheduler(
 
     This is the rotation pattern:
     - Chrome (9222): Move2Japan -> UnDaoDu
-    - Edge (9223): FoundUps -> RavingANTIFA
+    - Edge (9223): FoundUps -> antifaFM
 
     Args:
         browser: "chrome" or "edge"
@@ -572,7 +755,7 @@ def run_multi_channel_scheduler(
         "move2japan": "Move2Japan",
         "undaodu": "UnDaoDu",
         "foundups": "FoundUps",
-        "ravingantifa": "RavingANTIFA",
+        "antifafm": "antifaFM",
     }
 
     # Process each channel with rotation
@@ -885,6 +1068,13 @@ def run_multi_channel_scheduler(
 if __name__ == "__main__":
     import argparse
 
+    # WRE preflight for CLI entry
+    if _WRE_PREFLIGHT_AVAILABLE and run_dae_preflight:
+        if not run_dae_preflight("youtube_shorts_cli"):
+            print("[ABORT] WRE preflight failed - startup blocked")
+            import sys
+            sys.exit(1)
+
     parser = argparse.ArgumentParser(description="YouTube Shorts Scheduler")
     parser.add_argument("--mode", choices=["enhance", "schedule"], default="enhance")
     parser.add_argument("--channel", help="YouTube channel ID")
@@ -895,7 +1085,7 @@ if __name__ == "__main__":
     # 2026-02-01: Content Page Scheduler CLI options
     parser.add_argument("--content-page", action="store_true", help="Use Content Page Scheduler (inline popup)")
     parser.add_argument("--audit", action="store_true", help="Audit calendar for conflicts/gaps (no scheduling)")
-    parser.add_argument("--channel-key", help="Channel key for CPS: move2japan, undaodu, foundups, ravingantifa")
+    parser.add_argument("--channel-key", help="Channel key for CPS: move2japan, undaodu, foundups, antifafm")
 
     args = parser.parse_args()
 

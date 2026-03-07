@@ -46,11 +46,18 @@ from modules.communication.livechat.src.consciousness_handler import Consciousne
 from modules.ai_intelligence.banter_engine.src.agentic_sentiment_0102 import AgenticSentiment0102
 from modules.communication.livechat.src.event_handler import EventHandler
 from modules.communication.livechat.src.command_handler import CommandHandler
+
+# Move2Japan FoundUp handler (WSP 95 - Skillz Wardrobe)
+try:
+    from modules.communication.livechat.src.m2j_handler import Move2JapanHandler
+except ImportError:
+    Move2JapanHandler = None
 from modules.communication.livechat.src.greeting_generator import GrokGreetingGenerator
 from modules.communication.livechat.src.persona_registry import get_persona_config, get_persona_greeting
 from modules.gamification.whack_a_magat.src.self_improvement import get_self_improvement
 from modules.communication.livechat.src.agentic_chat_engine import AgenticChatEngine
 from modules.communication.livechat.src.intelligent_livechat_reply import get_livechat_reply_generator
+from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channel_ids
 try:
     from modules.communication.livechat.src.emoji_response_limiter import EmojiResponseLimiter
     from modules.communication.livechat.src.agentic_self_improvement import AgenticSelfImprovement
@@ -77,6 +84,20 @@ def _sanitize_username(username: str) -> str:
         return username
     return username.strip().lstrip("@")
 
+
+def _get_known_bot_channel_ids() -> List[str]:
+    channel_ids = set(get_channel_ids())
+    for env_name in (
+        "FOUNDUPS_CHANNEL_ID",
+        "UNDAODU_CHANNEL_ID",
+        "MOVE2JAPAN_CHANNEL_ID",
+        "ANTIFAFM_CHANNEL_ID",
+    ):
+        channel_id = os.getenv(env_name, "").strip()
+        if channel_id:
+            channel_ids.add(channel_id)
+    return sorted(channel_ids)
+
 class MessageProcessor:
     """Handles processing of chat messages and generating responses."""
     
@@ -89,6 +110,7 @@ class MessageProcessor:
         channel_name: Optional[str] = None,
         channel_id: Optional[str] = None,
         bot_channel_id: Optional[str] = None,
+        stream_title: Optional[str] = None,
     ):
         self.youtube_service = youtube_service
         self.memory_manager = memory_manager  # WSP-compliant hybrid storage
@@ -97,11 +119,13 @@ class MessageProcessor:
         self.channel_name = channel_name
         self.channel_id = channel_id
         self.bot_channel_id = bot_channel_id
+        self.stream_title = stream_title
         self.persona_config = get_persona_config(
             persona_key=persona_key,
             channel_name=channel_name,
             channel_id=channel_id,
             bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
         )
         self.banter_enabled = _env_truthy("LIVECHAT_BANTER_ENABLED", "false")
         self.banter_engine = get_banter_engine() if self.banter_enabled else None
@@ -130,6 +154,7 @@ class MessageProcessor:
             channel_name=channel_name,
             channel_id=channel_id,
             bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
         )
         
         # NEW: Intelligent throttling systems
@@ -186,7 +211,36 @@ class MessageProcessor:
         # Ensure memory directory exists
         os.makedirs(self.memory_dir, exist_ok=True)
         logger.info(f"📁 Memory directory set to: {self.memory_dir}")
-    
+
+    def update_persona_context(
+        self,
+        persona_key: Optional[str] = None,
+        channel_name: Optional[str] = None,
+        channel_id: Optional[str] = None,
+        bot_channel_id: Optional[str] = None,
+        stream_title: Optional[str] = None,
+    ) -> None:
+        """Refresh persona-dependent state after session metadata is available."""
+        self.persona_key = persona_key
+        self.channel_name = channel_name
+        self.channel_id = channel_id
+        self.bot_channel_id = bot_channel_id
+        self.stream_title = stream_title
+        self.persona_config = get_persona_config(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
+        )
+        self.intelligent_reply = get_livechat_reply_generator(
+            persona_key=persona_key,
+            channel_name=channel_name,
+            channel_id=channel_id,
+            bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
+        )
+
     def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process a single chat message and extract relevant information.
@@ -293,13 +347,7 @@ class MessageProcessor:
                     # Continue processing if we can't parse timestamp
             
             # CRITICAL: Never respond to self (prevent infinite loops)
-            BOT_CHANNEL_IDS = [
-                "UCfHM9Fw9HD-NwiS0seD_oIA",  # UnDaoDu bot account (Set 1)
-                "UCSNTUXjAgpd4sgWYP0xoJgw",  # Foundups bot account (Set 10)
-                # Add other bot account IDs here if using multiple
-            ]
-
-            if author_id in BOT_CHANNEL_IDS:
+            if author_id in _get_known_bot_channel_ids():
                 logger.debug(f"[BOT] Ignoring self-message from {author_name}")
                 return {"skip": True, "reason": "self-message"}
             
@@ -336,6 +384,9 @@ class MessageProcessor:
             # Check for YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
             has_shorts_command = self._check_shorts_command(message_text)
 
+            # Check for Move2Japan FoundUp commands (!move2japan, !m2j, !japan)
+            has_m2j_command = self._check_m2j_command(message_text)
+
             # Check for whack commands (score, level, rank, etc)
             has_whack_command = self._check_whack_command(message_text)
 
@@ -362,6 +413,7 @@ class MessageProcessor:
                 "has_consciousness": has_consciousness,
                 "has_factcheck": has_factcheck,
                 "has_shorts_command": has_shorts_command,
+                "has_m2j_command": has_m2j_command,
                 "has_whack_command": has_whack_command,
                 "has_maga": has_maga,
                 "maga_response": maga_response,  # Store generated response to prevent double-call
@@ -645,6 +697,18 @@ class MessageProcessor:
 
                     return response
 
+            # Priority 3.4: Handle Move2Japan FoundUp commands (!move2japan, !m2j, !japan)
+            if processed_message.get("has_m2j_command"):
+                logger.info("[BOT][AI] [QWEN-DAE-DECISION] EXECUTE m2j_command_handler (confidence: 0.90)")
+                logger.info(f"🇯🇵 Routing M2J command: '{message_text}' from {author_name} (role: {role})")
+
+                response = self._handle_m2j_command(message_text, author_name, author_id, role)
+                if response:
+                    logger.info(f"🇯🇵 M2J command response for {author_name}: {response[:100]}")
+                    return response
+                else:
+                    logger.warning(f"🇯🇵[FAIL] No response from M2J handler for '{message_text}'")
+
             # Priority 3.5: Handle YouTube Shorts commands (!createshort, !shortveo, !shortsora, !shortstatus, !shortstats)
             if processed_message.get("has_shorts_command"):
                 logger.info("[BOT][AI] [QWEN-DAE-DECISION] EXECUTE shorts_command_handler (confidence: 0.90)")
@@ -672,7 +736,8 @@ class MessageProcessor:
                 # Extra debug for /quiz
                 if '/quiz' in message_text.lower():
                     logger.warning(f"[AI][GAME] QUIZ DETECTED IN MESSAGE_PROCESSOR! Sending to handle_whack_command")
-                response = self._handle_whack_command(message_text, author_name, author_id, role)
+                is_member = processed_message.get("is_member", False)
+                response = self._handle_whack_command(message_text, author_name, author_id, role, is_member)
                 if response:
                     # Handle list responses (e.g., /help returns multiple messages)
                     if isinstance(response, list):
@@ -870,6 +935,7 @@ class MessageProcessor:
                 # Generate a general stream greeting, not user-specific
                 persona_greeting = get_persona_greeting(
                     persona_key=self.persona_key,
+                    stream_title=self.stream_title,
                     channel_name=self.channel_name,
                     channel_id=self.channel_id,
                     bot_channel_id=self.bot_channel_id,
@@ -1115,6 +1181,28 @@ class MessageProcessor:
 
         return has_shorts
 
+    def _check_m2j_command(self, text: str) -> bool:
+        """
+        Check if message contains Move2Japan FoundUp commands.
+
+        Commands:
+        - !move2japan - Start BC0 intake (or continue conversation)
+        - !m2j - Short alias
+        - !japan - Short alias
+
+        Note: M2J uses ! prefix, same as Shorts. No collision because
+        command names are distinct.
+        """
+        m2j_commands = ['!move2japan', '!m2j', '!japan']
+        text_lower = text.lower().strip()
+
+        has_m2j = any(text_lower.startswith(cmd) for cmd in m2j_commands)
+
+        if has_m2j:
+            logger.info(f"\U0001f1ef\U0001f1f5 Detected Move2Japan command: {text_lower}")
+
+        return has_m2j
+
     def _check_whack_command(self, text: str) -> bool:
         """
         Check if message contains whack gamification commands.
@@ -1127,6 +1215,12 @@ class MessageProcessor:
             '/score', '/rank', '/stats', '/leaderboard', '/frags', '/whacks',
             '/help', '/quiz', '/facts', '/sprees', '/toggle', '/session',
             '/fuc',  # FFCPLN Mining economy (OWNER only)
+            # antifaFM schema commands (with typo variants)
+            '/karaoke', '/karaoki', '/karaokie', '/lyrics',
+            '/video', '/grid', '/full', '/news',
+            '/entangled', '/bell', '/0102', '/wave',
+            # Games commands
+            '/chess', '/checkers', '/move', '/resign', '/board',
             # Deprecated but handled with helpful messages:
             '/level', '/answer', '/top', '/fscale', '/rate'
         ]
@@ -1135,7 +1229,15 @@ class MessageProcessor:
         quiz_answers = ['!1', '!2', '!3', '!4']
 
         # Additional ! commands routed through CommandHandler (non-quiz)
-        bang_commands = ['!party']
+        bang_commands = [
+            '!party',
+            # antifaFM schema commands (with typo variants)
+            '!karaoke', '!karaoki', '!karaokie', '!lyrics',
+            '!video', '!grid', '!full', '!news',
+            '!entangled', '!bell', '!0102', '!wave',
+            # Games commands
+            '!chess', '!checkers', '!move', '!resign', '!board'
+        ]
 
         text_lower = text.lower().strip()
 
@@ -1286,9 +1388,28 @@ class MessageProcessor:
 
         return all_messages
 
-    def _handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
+    def _handle_whack_command(self, text: str, username: str, user_id: str, role: str, is_member: bool = False) -> Optional[str]:
         """Delegate whack command handling to CommandHandler."""
-        return self.command_handler.handle_whack_command(text, username, user_id, role)
+        return self.command_handler.handle_whack_command(text, username, user_id, role, is_member)
+
+    def _handle_m2j_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
+        """Delegate Move2Japan commands to M2J handler (WSP 95 - Skillz Wardrobe)."""
+        if not hasattr(self, '_m2j_handler'):
+            self._m2j_handler = None
+            if Move2JapanHandler:
+                try:
+                    self._m2j_handler = Move2JapanHandler()
+                    logger.info("\U0001f1ef\U0001f1f5 Move2Japan handler initialized")
+                except Exception as exc:
+                    logger.error(f"\U0001f1ef\U0001f1f5 Failed to init M2J handler: {exc}")
+        if self._m2j_handler:
+            # Check for sub-commands (stats, reset)
+            info_response = self._m2j_handler.handle_info_command(text, username, user_id)
+            if info_response:
+                return info_response
+            return self._m2j_handler.handle_command(text, username, user_id, role)
+        logger.warning("\U0001f1ef\U0001f1f5 M2J handler not available")
+        return None
     
     def _handle_timeout_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Delegate timeout event handling to EventHandler."""

@@ -23,6 +23,7 @@ from modules.infrastructure.cli.src.utilities import (
     env_flag,
     maybe_clear_screen,
     maybe_auto_index_holo,
+    local_model_routing_menu,
 )
 from modules.infrastructure.cli.src.git_menu import handle_git_menu
 from modules.infrastructure.cli.src.youtube_menu import handle_youtube_menu
@@ -30,6 +31,7 @@ from modules.infrastructure.cli.src.holodae_menu import handle_holodae_menu
 from modules.infrastructure.cli.src.fam_menu import handle_fam_menu
 from modules.infrastructure.cli.src.openclaw_menu import handle_openclaw_menu
 from modules.infrastructure.cli.src.social_media_menu import handle_social_media_menu
+from modules.infrastructure.cli.src.wsp_explainer_menu import run_wsp_explainer
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,12 @@ def run_main_menu(
     show_mcp_services_menu,
     PATTERN_MEMORY_AVAILABLE: bool,
     PatternMemory,
+    # antifaFM broadcaster (optional for backwards compat)
+    run_antifafm_broadcaster=None,
+    start_antifafm_background=None,
+    stop_antifafm_background=None,
+    get_antifafm_status=None,
+    run_suno_sync_cli=None,
 ) -> None:
     """
     Main entry point for interactive CLI.
@@ -116,7 +124,7 @@ def run_main_menu(
     parser.add_argument('--youtube', action='store_true', help='Monitor YouTube only')
     parser.add_argument('--holodae', '--holo', action='store_true', help='Run HoloDAE (Code Intelligence & Monitoring)')
     parser.add_argument('--amo', action='store_true', help='Run AMO DAE (Autonomous Moderation Operations)')
-    parser.add_argument('--smd', action='store_true', help='Run Social Media DAE (012 Digital Twin)')
+    parser.add_argument('--smd', action='store_true', help='Run Social Media DAE (0102 Autonomous)')
     parser.add_argument('--vision', action='store_true', help='Run FoundUps Vision DAE (Pattern Sensorium)')
     parser.add_argument('--pqn', action='store_true', help='Run PQN Orchestration (Research & Alignment)')
     parser.add_argument('--liberty', action='store_true', help='Run Liberty Alert Mesh Alert System (Community Protection)')
@@ -126,6 +134,7 @@ def run_main_menu(
     parser.add_argument('--deps', action='store_true', help='Start/check local automation dependencies (Chrome + LM Studio)')
     parser.add_argument('--no-lock', action='store_true', help='Disable instance lock (allow multiple instances)')
     parser.add_argument('--status', action='store_true', help='Check instance status and health')
+    parser.add_argument('--connect-wre', action='store_true', help='Connect WRE and report readiness state')
     parser.add_argument('--training-command', type=str, help='Execute training command via Holo (e.g., utf8_scan, batch)')
     parser.add_argument('--targets', type=str, help='Comma-separated target paths for training command')
     parser.add_argument('--json-output', action='store_true', help='Return training command result as JSON')
@@ -136,6 +145,22 @@ def run_main_menu(
     parser.add_argument('--deploy-firebase', action='store_true', help='Deploy Firebase Hosting')
     parser.add_argument('--chat', action='store_true', help='OpenClaw Local Chat (talk to 0102 directly)')
     parser.add_argument('--voice', action='store_true', help='OpenClaw Voice Chat (talk to 0102 via headset)')
+    parser.add_argument('--ironclaw-chat', action='store_true', help='IronClaw chat backend (no API keys)')
+    parser.add_argument('--ironclaw-voice', action='store_true', help='IronClaw voice backend (no API keys)')
+    parser.add_argument('--local-models', action='store_true', help='Open local model routing editor (LOCAL_MODEL_*)')
+    parser.add_argument('--ln-action', type=str, help='Run LinkedIn action directly (agent API)')
+    parser.add_argument('--ln-param', action='append', help='LinkedIn action parameter key=value (repeatable)')
+    parser.add_argument('--agent-command', type=str, help='Run standalone action command (linkedin/x/social/youtube)')
+    parser.add_argument('--agent-repeat', type=int, default=1, help='Repeat count for --agent-command')
+    parser.add_argument('--agent-interval-sec', type=float, default=0.0, help='Delay between repeated agent commands')
+    parser.add_argument('--agent-via-dae', action='store_true', help='Route --agent-command via OpenClawDAE')
+    parser.add_argument('--agent-backend', choices=['openclaw', 'ironclaw'], default='openclaw', help='Backend for --agent-via-dae')
+    parser.add_argument(
+        '--agent-no-api-keys',
+        choices=['auto', 'on', 'off'],
+        default='auto',
+        help='Key isolation for --agent-via-dae (auto/on/off)',
+    )
 
     # Re-parse with all arguments now that they're defined
     args = parser.parse_args()
@@ -195,6 +220,52 @@ def run_main_menu(
     if args.training_command:
         execute_training_command(args.training_command, args.targets, args.json_output)
         return
+    if args.agent_command:
+        try:
+            from modules.communication.moltbot_bridge.src.action_cli import run_action_command
+
+            no_api_keys = None
+            if args.agent_no_api_keys == "on":
+                no_api_keys = True
+            elif args.agent_no_api_keys == "off":
+                no_api_keys = False
+
+            result = run_action_command(
+                command=args.agent_command,
+                sender="@012",
+                channel="cli",
+                session_key="main_menu_agent_command",
+                repeat=args.agent_repeat,
+                interval_sec=args.agent_interval_sec,
+                via_dae=bool(args.agent_via_dae),
+                backend=args.agent_backend,
+                no_api_keys=no_api_keys,
+            )
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+        except Exception as exc:
+            print(json.dumps({"success": False, "error": str(exc)}, indent=2))
+        return
+    if args.ln_action:
+        try:
+            from modules.communication.moltbot_bridge.src.linkedin_social_adapter import (
+                execute_linkedin_action,
+            )
+
+            params: Dict[str, str] = {}
+            for raw in args.ln_param or []:
+                if "=" not in raw:
+                    continue
+                key, value = raw.split("=", 1)
+                key = key.strip().lower()
+                value = value.strip()
+                if key:
+                    params[key] = value
+
+            result = asyncio.run(execute_linkedin_action(args.ln_action.strip().lower(), params))
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+        except Exception as exc:
+            print(json.dumps({"success": False, "error": str(exc)}, indent=2))
+        return
     if args.training_menu:
         run_training_system()
         return
@@ -211,6 +282,20 @@ def run_main_menu(
     if args.voice:
         from modules.infrastructure.cli.src.openclaw_voice import run_voice_repl
         run_voice_repl()
+        return
+    if args.ironclaw_chat:
+        from modules.infrastructure.cli.src.openclaw_chat import run_chat_repl
+        run_chat_repl(conversation_backend="ironclaw", no_api_keys=True)
+        return
+    if args.ironclaw_voice:
+        from modules.infrastructure.cli.src.openclaw_voice import run_voice_repl
+        run_voice_repl(conversation_backend="ironclaw", no_api_keys=True)
+        return
+    if args.local_models:
+        local_model_routing_menu()
+        return
+    if args.connect_wre:
+        _run_connect_wre(verbose=args.verbose)
         return
 
     if args.status:
@@ -332,6 +417,12 @@ def run_main_menu(
             run_training_system=run_training_system,
             show_mcp_services_menu=show_mcp_services_menu,
             enable_key_hygiene=enable_key_hygiene,
+            # antifaFM broadcaster functions
+            run_antifafm_broadcaster=run_antifafm_broadcaster,
+            start_antifafm_background=start_antifafm_background,
+            stop_antifafm_background=stop_antifafm_background,
+            get_antifafm_status=get_antifafm_status,
+            run_suno_sync_cli=run_suno_sync_cli,
         )
 
 
@@ -355,6 +446,12 @@ def _run_interactive_menu(
     run_training_system,
     show_mcp_services_menu,
     enable_key_hygiene: bool,
+    # antifaFM broadcaster (optional)
+    run_antifafm_broadcaster=None,
+    start_antifafm_background=None,
+    stop_antifafm_background=None,
+    get_antifafm_status=None,
+    run_suno_sync_cli=None,
 ) -> None:
     """Run interactive menu loop."""
     # Initialize centralized DAEmon (cardiovascular system)
@@ -411,7 +508,7 @@ def _run_interactive_menu(
         print("1. YouTube DAEs (Live/Comments/Shorts/Indexing)    | --youtube")
         print("2. HoloDAE (Code Intelligence & Search)            | --holodae")
         print("3. AMO DAE (Autonomous Moderation Operations)      | --amo")
-        print("4. Social Media DAE (012 Digital Twin)             | --smd")
+        print("4. Social Media DAE (0102 Autonomous)              | --smd")
         print("5. Liberty Alert DAE (Community Protection)        | --liberty-dae")
         print("6. PQN Orchestration (Research & Alignment)        | --pqn")
         print("7. Liberty Alert (Mesh Alert System)               | --liberty")
@@ -425,10 +522,14 @@ def _run_interactive_menu(
         print("13. Automation Dependencies (Chrome + LM Studio)  | --deps")
         print("14. FoundUps Ecosystem (FAM + Simulator + Demo)  | --fam")
         print("15. Follow WSP (WSP_00 gated orchestration)      | --follow-wsp")
-        print("16. OpenClaw (Chat / Voice / Server / Portal)    | --chat --voice")
+        print("16. OpenClaw / IronClaw (Unified Chat/Voice + Server/Portal/Runtime) | --chat --voice --ironclaw-chat --ironclaw-voice")
         print("17. DAE Dashboard (Cardiovascular Monitor)        | Central switch")
+        print("18. WSP & Vocabulary Explainer (Developer Onboarding)")
+        print("19. Connect WRE (preflight + readiness check)     | --connect-wre")
+        print("20. antifaFM Broadcaster (YouTube Live Radio)     | --antifafm")
         print("=" * 60)
-        print("CLI: --youtube --no-lock (bypass menu + instance lock)")
+        print("CLI: --youtube --no-lock | --ln-action <action> --ln-param key=value")
+        print("CLI: --agent-command \"youtube action comments channel=move2japan ...\" [--agent-via-dae]")
         print("=" * 60)
 
         try:
@@ -471,7 +572,7 @@ def _run_interactive_menu(
                 print("\n[STOP] AMO DAE stopped by user")
 
         elif choice == "4":
-            # Social Media DAE (012 Digital Twin) - LinkedIn Automation
+            # Social Media DAE (0102 Autonomous) - LinkedIn Automation
             while True:
                 if handle_social_media_menu():
                     break
@@ -554,6 +655,24 @@ def _run_interactive_menu(
         elif choice == "17":
             _run_dae_dashboard(_central_daemon)
 
+        elif choice == "18":
+            # WSP & Vocabulary Explainer (Developer Onboarding)
+            run_wsp_explainer()
+
+        elif choice == "19":
+            _run_connect_wre(verbose=args.verbose)
+            input("\nPress Enter to continue...")
+
+        elif choice == "20":
+            # antifaFM Broadcaster (YouTube Live Radio)
+            _handle_antifafm_menu(
+                run_antifafm_broadcaster=run_antifafm_broadcaster,
+                start_antifafm_background=start_antifafm_background,
+                stop_antifafm_background=stop_antifafm_background,
+                get_antifafm_status=get_antifafm_status,
+                run_suno_sync_cli=run_suno_sync_cli,
+            )
+
         else:
             print("Invalid choice. Please try again.")
 
@@ -599,6 +718,86 @@ def _run_follow_wsp(task: str) -> None:
         f"[WSP] Complete: tasks_completed={results.get('tasks_completed', 0)} "
         f"tasks_failed={results.get('tasks_failed', 0)}"
     )
+
+
+def _run_connect_wre(verbose: bool = False) -> bool:
+    """Connect WRE and report runtime readiness/enforcement state."""
+    print("[CONNECT-WRE] coded=YES | command=--connect-wre")
+
+    preflight_ok = False
+    health: Dict[str, Any] = {}
+    in_watch = None
+    errors = []
+
+    try:
+        from modules.infrastructure.wre_core.src.dae_preflight import run_dae_preflight
+        preflight_ok = bool(run_dae_preflight("connect_wre", quiet=False))
+    except Exception as exc:
+        errors.append(f"preflight import/run failed: {exc}")
+
+    try:
+        from modules.infrastructure.wre_core.src.dashboard_alerts import (
+            DashboardAlertMonitor,
+            check_dashboard_health,
+        )
+        monitor = DashboardAlertMonitor()
+        in_watch = monitor.is_in_watch_period()
+        health = check_dashboard_health() or {}
+    except Exception as exc:
+        errors.append(f"dashboard alerts unavailable: {exc}")
+        health = {}
+
+    enabled = os.getenv("WRE_DASHBOARD_PREFLIGHT", "1") != "0"
+    manual_enforced = os.getenv("WRE_DASHBOARD_PREFLIGHT_ENFORCED", "0") != "0"
+    auto_enforce = os.getenv("WRE_DASHBOARD_AUTO_ENFORCE", "1") != "0"
+    insufficient_data = bool(health.get("insufficient_data", False))
+    total_executions = int(health.get("total_executions", 0))
+    min_samples = int(health.get("min_samples", int(os.getenv("WRE_DASHBOARD_MIN_SAMPLES", "25"))))
+    alerts = health.get("alerts", []) if isinstance(health.get("alerts", []), list) else []
+    critical = sum(1 for alert in alerts if alert.get("severity") == "critical")
+    warnings = sum(1 for alert in alerts if alert.get("severity") == "warning")
+
+    auto_enforced = bool(
+        auto_enforce
+        and in_watch is not None
+        and not in_watch
+        and not insufficient_data
+    )
+    effective_enforced = bool(manual_enforced or auto_enforced)
+
+    if not enabled:
+        readiness = "DISABLED"
+    elif insufficient_data:
+        readiness = "INSUFFICIENT_DATA"
+    elif critical > 0 and effective_enforced:
+        readiness = "BLOCKED"
+    elif critical > 0:
+        readiness = "DEGRADED"
+    else:
+        readiness = "READY"
+
+    connection_state = "CONNECTED" if preflight_ok and not errors else "PARTIAL"
+
+    print(f"[CONNECT-WRE] connection={connection_state} readiness={readiness}")
+    print(
+        f"[CONNECT-WRE] preflight_enabled={enabled} manual_enforced={manual_enforced} "
+        f"auto_enforce={auto_enforce} auto_enforced_now={auto_enforced}"
+    )
+    if in_watch is not None:
+        mode = "WATCH" if in_watch else "STABLE"
+        print(f"[CONNECT-WRE] mode={mode} samples={total_executions}/{min_samples}")
+    else:
+        print(f"[CONNECT-WRE] mode=UNKNOWN samples={total_executions}/{min_samples}")
+    print(f"[CONNECT-WRE] alerts critical={critical} warnings={warnings}")
+
+    if errors:
+        print("[CONNECT-WRE] issues detected:")
+        for err in errors:
+            print(f"  - {err}")
+    elif verbose:
+        print("[CONNECT-WRE] no import/runtime issues detected.")
+
+    return readiness in {"READY", "INSUFFICIENT_DATA", "DEGRADED"} and preflight_ok
 
 
 def _run_dae_dashboard(central_daemon) -> None:
@@ -679,7 +878,7 @@ def _run_dae_dashboard(central_daemon) -> None:
 
 def _check_instances_with_timeout() -> list:
     """Check for duplicate instances with timeout protection."""
-    print("[INFO] Checking for duplicate instances (timeout: 3s)...")
+    print("[INFO] Checking for duplicate instances (timeout: 10s)...")
 
     duplicates = []
     try:
@@ -697,10 +896,10 @@ def _check_instances_with_timeout() -> list:
 
         check_thread = threading.Thread(target=check_with_timeout, daemon=True)
         check_thread.start()
-        check_thread.join(timeout=3.0)
+        check_thread.join(timeout=10.0)
 
         if check_thread.is_alive():
-            print("[WARN] Instance check timed out (>3s) - skipping duplicate detection")
+            print("[WARN] Instance check timed out (>10s) - skipping duplicate detection")
             print("   Use --status to manually check for running instances\n")
             duplicates = []
         elif result_holder and result_holder[0] is not None:
@@ -796,3 +995,198 @@ def _handle_duplicate_instances(duplicates: list, check_instance_status) -> bool
             print(f"[ERROR]Invalid choice '{choice}'. Please enter 1, 2, 3, or 4.")
             print("   Try again...\n")
             continue
+
+
+def _handle_antifafm_menu(
+    run_antifafm_broadcaster=None,
+    start_antifafm_background=None,
+    stop_antifafm_background=None,
+    get_antifafm_status=None,
+    run_suno_sync_cli=None,
+) -> None:
+    """
+    Handle antifaFM Broadcaster menu.
+
+    Options:
+    1. Start in foreground (blocking)
+    2. Start in background (non-blocking)
+    3. Stop background instance
+    4. Show status
+    5. Back to main menu
+    """
+    if run_antifafm_broadcaster is None:
+        print("[RADIO] antifaFM broadcaster not available")
+        print("[INFO] Check that the module is properly installed")
+        input("\nPress Enter to continue...")
+        return
+
+    while True:
+        print("\n" + "=" * 60)
+        print("antifaFM YouTube Live Broadcaster")
+        print("=" * 60)
+
+        # Show current status
+        if get_antifafm_status:
+            status = get_antifafm_status()
+            if status.get("running"):
+                print(f"[STATUS] BROADCASTING - Uptime: {status.get('uptime_formatted', 'N/A')}")
+            else:
+                print("[STATUS] STOPPED")
+
+        print("\n1. Start with OBS Mode (OBS streams, script handles chat)")
+        print("2. Start with FFmpeg (script handles everything)")
+        print("3. Start in Background (FFmpeg mode)")
+        print("4. Stop Background Broadcaster")
+        print("5. Show Detailed Status")
+        print("6. Video Library (manage background videos)")
+        print("7. Extract Lyrics via STT (FULLY AUTOMATED - 012's 238 songs)")
+        print("0. Back to Main Menu")
+        print("=" * 60)
+
+        choice = input("\nSelect option: ").strip()
+
+        if choice == "1":
+            # OBS Mode - OBS handles streaming, script handles chat/schemas
+            print("\n[RADIO] Starting antifaFM in OBS MODE...")
+            print("[INFO] OBS handles streaming - script handles chat commands + schemas")
+            print("[INFO] Make sure OBS is streaming before continuing!")
+            print("[INFO] Press Ctrl+C to stop")
+            os.environ["ANTIFAFM_USE_OBS"] = "1"
+            run_antifafm_broadcaster()
+
+        elif choice == "2":
+            print("\n[RADIO] Starting antifaFM in FFmpeg mode (foreground)...")
+            print("[INFO] FFmpeg handles streaming to YouTube")
+            print("[INFO] Press Ctrl+C to stop")
+            os.environ.pop("ANTIFAFM_USE_OBS", None)  # Ensure OBS mode is off
+            run_antifafm_broadcaster()
+
+        elif choice == "3":
+            if start_antifafm_background:
+                print("\n[RADIO] Starting antifaFM in background (FFmpeg mode)...")
+                os.environ.pop("ANTIFAFM_USE_OBS", None)  # Ensure OBS mode is off
+                start_antifafm_background()
+            else:
+                print("[ERROR] Background start not available")
+
+        elif choice == "4":
+            if stop_antifafm_background:
+                print("\n[RADIO] Stopping background broadcaster...")
+                stop_antifafm_background()
+            else:
+                print("[ERROR] Background stop not available")
+
+        elif choice == "5":
+            if get_antifafm_status:
+                import json
+                status = get_antifafm_status()
+                print("\n[STATUS] antifaFM Broadcaster Status:")
+                print(json.dumps(status, indent=2, default=str))
+            else:
+                print("[ERROR] Status not available")
+            input("\nPress Enter to continue...")
+
+        elif choice == "6":
+            _handle_video_library_menu()
+
+        elif choice == "7":
+            # Suno Lyrics STT Extraction - FULLY AUTOMATED (no browser needed)
+            print("\n[SUNO-STT] Fully Automated Lyrics Extraction")
+            print("=" * 60)
+            print("Pipeline: Suno CDN → Download MP3 → faster-whisper STT → Dedup")
+            print()
+            print("This will:")
+            print("  1. Download audio from Suno CDN (cdn1.suno.ai)")
+            print("  2. Transcribe lyrics via Speech-to-Text (faster-whisper)")
+            print("  3. Deduplicate using SHA256 hashing")
+            print("  4. Store in SQLite for karaoke mode")
+            print()
+            print("NO MANUAL WORK NEEDED - fully automated!")
+            print()
+            limit = input("Limit songs (Enter for all 238, or number): ").strip()
+            max_songs = int(limit) if limit.isdigit() else 0
+            model = input("Model size (tiny/base/small, default=base): ").strip() or "base"
+            print()
+            print("[STARTING] This may take a while for full playlist...")
+            print()
+            try:
+                from modules.platform_integration.antifafm_broadcaster.scripts.launch import run_suno_stt_extract
+                run_suno_stt_extract(max_songs=max_songs, model_size=model)
+            except ImportError as e:
+                print(f"[ERROR] Could not import STT extractor: {e}")
+                print("[FIX] Install: pip install faster-whisper librosa")
+            except Exception as e:
+                print(f"[ERROR] Extraction failed: {e}")
+            input("\nPress Enter to continue...")
+
+        elif choice == "0":
+            break
+
+        else:
+            print(f"[ERROR] Invalid choice '{choice}'")
+
+
+def _handle_video_library_menu() -> None:
+    """Manage antifaFM video library."""
+    try:
+        from modules.platform_integration.antifafm_broadcaster.src.video_library import VideoLibrary
+    except ImportError as e:
+        print(f"[ERROR] Video library not available: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    library = VideoLibrary()
+
+    while True:
+        print("\n" + "=" * 60)
+        print("antifaFM Video Library")
+        print("=" * 60)
+
+        status = library.get_status()
+        print(f"[LIBRARY] {status['total_videos']} videos ({status['ready']} ready, {status['pending']} pending)")
+        print(f"[LIBRARY] Total size: {status['total_size_mb']:.1f} MB")
+
+        print("\n1. List Videos")
+        print("2. Scan for New Videos (register untracked)")
+        print("3. Add Video (YouTube URL)")
+        print("0. Back")
+        print("=" * 60)
+
+        choice = input("\nSelect option: ").strip()
+
+        if choice == "1":
+            videos = library.list_videos()
+            print(f"\n[VIDEOS] {len(videos)} total:")
+            for v in videos:
+                print(f"  - {v.filename} ({v.status.value}) - {v.title}")
+            input("\nPress Enter to continue...")
+
+        elif choice == "2":
+            print("\n[SCAN] Scanning for unregistered videos...")
+            result = library.scan_for_unregistered_videos("012")
+            print(f"[SCAN] {result.get('message', 'Done')}")
+            if result.get("new_videos"):
+                for v in result["new_videos"]:
+                    print(f"  + {v}")
+            input("\nPress Enter to continue...")
+
+        elif choice == "3":
+            url = input("\nEnter YouTube URL: ").strip()
+            if url:
+                print(f"\n[ADD] Adding video: {url}")
+                result = library.add_video(url, "012", download_now=True)
+                if result.get("success"):
+                    print(f"[OK] {result.get('message', 'Added')}")
+                else:
+                    print(f"[FAIL] {result.get('message', 'Failed')}")
+                    if result.get("manual_instructions"):
+                        print("\nManual download instructions:")
+                        for step in result["manual_instructions"]:
+                            print(f"  {step}")
+            input("\nPress Enter to continue...")
+
+        elif choice == "0":
+            break
+
+        else:
+            print(f"[ERROR] Invalid choice '{choice}'")

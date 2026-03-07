@@ -36,6 +36,58 @@ class FoundupsResponse(BaseModel):
     to: str | None = None           # Override recipient
 ```
 
+### Standalone Action CLI (Direct Agent Invocation)
+
+```bash
+python -m modules.communication.moltbot_bridge.src.action_cli \
+  --command "linkedin action read_feed max_posts=3"
+```
+
+Supported command families:
+- `linkedin action <action> key=value`
+- `x action <action> key=value`
+- `social campaign <campaign_name> key=value`
+- `youtube action <action> key=value`
+- `yt action <action> key=value`
+
+Optional routing controls:
+- `--via-dae` (use full OpenClawDAE intent + permission path)
+- `--backend openclaw|ironclaw` (with `--via-dae`)
+- `--no-api-keys auto|on|off` (with `--via-dae`)
+- `--repeat N --interval-sec S` for repeatable standalone runs
+
+Safety note:
+- Direct adapter mode now runs Cisco skill-safety gate before execution.
+- `--via-dae` mode also applies OpenClawDAE skill-safety gating.
+
+LinkedIn `digital_twin` action parameters:
+- required: `comment_text`, `repost_text`, `schedule_date`, `schedule_time`
+- optional: `mentions` (comma-separated), `identity_cycle` (comma-separated), `dry_run`
+
+Current adapter behavior:
+- `execute_linkedin_action(action="digital_twin", ...)` forwards all above params to `LinkedInActions.run_digital_twin_flow(...)`.
+
+Structured result contract:
+
+```json
+{
+  "success": true,
+  "command": "youtube action comments channel=move2japan ...",
+  "mode": "adapter|dae",
+  "repeat": 1,
+  "results": [
+    {
+      "success": true,
+      "route": "youtube",
+      "action": "comments",
+      "iteration": 1,
+      "duration_ms": 1234,
+      "memory_stored": true
+    }
+  ]
+}
+```
+
 ## Environment Variables
 
 | Variable | Required | Description |
@@ -43,6 +95,15 @@ class FoundupsResponse(BaseModel):
 | `FOUNDUPS_WEBHOOK_TOKEN` | Yes | Shared secret with OpenClaw |
 | `OPENCLAW_GATEWAY_URL` | No | OpenClaw gateway (default: ws://127.0.0.1:18789) |
 | `MOLTBOT_GATEWAY_URL` | No | Legacy name (fallback) |
+| `OPENCLAW_CONVERSATION_BACKEND` | No | `openclaw` (default) or `ironclaw` for sidecar conversational runtime |
+| `OPENCLAW_NO_API_KEYS` | No | `1` disables external/cloud LLM calls in OpenClaw/FAM paths |
+| `OPENCLAW_ALLOW_EXTERNAL_LLM` | No | `1` allows AI Gateway cloud fallback (auto-disabled when `*_NO_API_KEYS=1`) |
+| `OPENCLAW_OLLAMA_MODEL` | No | Ollama model ID for local fallback (default `qwen2.5-coder:7b`) |
+| `IRONCLAW_BASE_URL` | No | IronClaw OpenAI-compatible endpoint (default `http://127.0.0.1:3000`) |
+| `IRONCLAW_MODEL` | No | Model ID sent to IronClaw `/v1/chat/completions` |
+| `IRONCLAW_AUTH_TOKEN` | No | Optional bearer token for IronClaw gateway auth |
+| `IRONCLAW_NO_API_KEYS` | No | `1` enables key-isolation mode for IronClaw runtime launch |
+| `IRONCLAW_START_CMD` | No | Command used by CLI submenu to start IronClaw gateway |
 
 ## Auth Headers
 
@@ -114,7 +175,12 @@ response = await dae.process(
 - Cisco skill scanner preflight runs before mutating/skill-driven routes:
   `command`, `system`, `schedule`, `social`, `automation`, `foundup`
 - Secret patterns (AIza*, sk-*, oauth_token*) redacted from output
+- Key-isolation mode:
+  - `OPENCLAW_NO_API_KEYS=1` blocks cloud provider fallback in conversation/FAM paths.
+  - `IRONCLAW_NO_API_KEYS=1` scrubs provider API keys from IronClaw launch subprocess env.
 - All decisions logged to WRE pattern memory (WSP 22)
+- Standalone action CLI writes `SkillOutcome` records to PatternMemory with
+  `skill_name=action_cli_<route>_<action>` (WSP 60/48 memory recall path).
 - Skill boundary policy (workspace skills vs internal `skillz`) is codified in:
   `modules/communication/moltbot_bridge/docs/SKILL_BOUNDARY_POLICY.md`
 - MONITOR responses include OpenClaw skill safety gate state:
@@ -128,6 +194,13 @@ response = await dae.process(
 | `OPENCLAW_SKILL_SCAN_ENFORCED` | No | `1` block risky scans above threshold (default) |
 | `OPENCLAW_SKILL_SCAN_MAX_SEVERITY` | No | Scanner threshold (default `medium`) |
 | `OPENCLAW_SKILL_SCAN_TTL_SEC` | No | Cached scan TTL in seconds (default `900`) |
+| `OPENCLAW_SKILL_SCAN_ALWAYS` | No | `1` bypass TTL and scan every mutating route |
+| `OPENCLAW_SKILL_MANIFEST_REQUIRED` | No | `1` require workspace skill hash manifest (default) |
+| `OPENCLAW_SKILL_MANIFEST_ENFORCED` | No | `1` block on manifest mismatch/missing (default) |
+| `OPENCLAW_SKILL_MANIFEST_VERIFY_SIGNATURE` | No | `1` verify HMAC signature in manifest |
+| `OPENCLAW_SKILL_MANIFEST_ALLOW_EXTRA` | No | `1` allow skill files not listed in manifest |
+| `OPENCLAW_SKILL_MANIFEST_FILE` | No | Optional override path to manifest JSON |
+| `OPENCLAW_SKILL_MANIFEST_HMAC_KEY` | No | Optional HMAC key for signature verification |
 
 ### Rate Limiting (Webhook)
 

@@ -348,17 +348,27 @@ class FAMEventStore:
 
     def _init_sqlite(self) -> None:
         """Initialize SQLite schema."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             conn.executescript(self.SQLITE_SCHEMA)
             conn.commit()
 
     def _load_sequence_counter(self) -> None:
         """Load max sequence ID from SQLite."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("SELECT MAX(sequence_id) FROM fam_events")
             row = cursor.fetchone()
             if row and row[0] is not None:
                 self._sequence_counter = row[0]
+
+    def _connect(self) -> sqlite3.Connection:
+        """Return a configured SQLite connection for event-store operations."""
+        conn = sqlite3.connect(str(self._sqlite_path), timeout=5.0)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=5000")
+        return conn
 
     def _next_sequence_id(self) -> int:
         """Get next sequence ID (thread-safe)."""
@@ -400,7 +410,7 @@ class FAMEventStore:
 
     def _is_duplicate(self, dedupe_key: str) -> bool:
         """Check if dedupe key exists in SQLite."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute(
                 "SELECT 1 FROM fam_events WHERE dedupe_key = ? LIMIT 1",
                 (dedupe_key,),
@@ -414,7 +424,7 @@ class FAMEventStore:
 
     def _write_sqlite(self, event: FAMEvent) -> None:
         """Insert event into SQLite."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO fam_events (
@@ -474,8 +484,7 @@ class FAMEventStore:
         where_clause = " AND ".join(conditions)
         params.append(limit)
 
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
-            conn.row_factory = sqlite3.Row
+        with self._connect() as conn:
             cursor = conn.execute(
                 f"""
                 SELECT * FROM fam_events
@@ -507,7 +516,7 @@ class FAMEventStore:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get event store statistics."""
-        with sqlite3.connect(str(self._sqlite_path)) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM fam_events")
             total = cursor.fetchone()[0]
 
@@ -545,7 +554,7 @@ class FAMEventStore:
                     jsonl_count = sum(1 for _ in f)
 
             # Count SQLite rows
-            with sqlite3.connect(str(self._sqlite_path)) as conn:
+            with self._connect() as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM fam_events")
                 sqlite_count = cursor.fetchone()[0]
 

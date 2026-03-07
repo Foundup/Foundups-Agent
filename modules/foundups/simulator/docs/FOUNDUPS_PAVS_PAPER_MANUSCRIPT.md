@@ -16,7 +16,7 @@ This paper evaluates the FoundUps pAVS (Peer-to-Peer Autonomous Venture System) 
 
 Using deterministic runs (seed=42) across downside/base/upside scenarios (`demand_factor=0.65/1.00/1.25`), the current fee-only engine does **not** satisfy the sustainability gate. Observed fee-to-burn ratios remain between `0.000132` and `0.001195`, far below the threshold (`>= 1.0`), implying an architecture-scale volume deficit if sustainability is attempted through DEX fees alone.
 
-We then separate this negative result from a broader design hypothesis: a unified multi-revenue architecture (fees + subscriptions + angel lane + compute margin) can cross break-even in model space, but only under assumptions that require empirical validation.
+We then separate this negative result from a broader design hypothesis: a unified multi-revenue architecture (fees + subscriptions + angel lane + compute margin) can cross break-even in model space. In the unified baseline, compute economics are positive (`compute_spend_usd=6,725`, `compute_margin_usd=4,035`), yielding **Return on Compute (RoC) = 0.60** (60%), or **$1.60 gross compute value per $1.00 spend**.
 
 **Limitations**: Results are simulation-derived, uncalibrated to live market data, and sensitive to behavioral assumptions (non-strategic agents, fixed fee policy, no regulatory shocks).
 
@@ -54,6 +54,7 @@ Core vocabulary before you read:
 - `UPS` = settlement unit (cash-like rail, 1 UPS = 1 sat accounting unit).
 - `F_i` = FoundUp venture token (earned via work or stake paths).
 - `CABR` = validation gate that controls whether economic flow is allowed.
+- `RoC` = Return on Compute, defined as `(V_generated - C_compute) / C_compute`.
 - "Sustainable" in this paper means both: `net_revenue_btc > 0` and `downside_ratio_p10 >= 1.0`.
 
 Fast reading route:
@@ -66,6 +67,8 @@ Fast reading route:
 Decentralized autonomous organizations face a fundamental economic trilemma: **capital allocation efficiency**, **incentive alignment across participant classes**, and **treasury sustainability without external subsidy**. Traditional platform economics resolve this through advertising (extracting user attention) or transaction fees (extracting value from every interaction), creating misaligned incentives where platform success diverges from participant welfare.
 
 The FoundUps pAVS model proposes an alternative: a dual-token architecture where autonomous agents earn through validated work (Proof of Benefit), while human participants allocate compute resources through stake-based participation. This paper evaluates whether such a system can achieve self-sustainability under realistic market conditions.
+
+Interpretive thesis used throughout: Bitcoin provides the scarcity base layer, while pAVS provides the utility layer by locking BTC in reserves and routing circulating UPS into validated work. In that framing, the decision metric shifts from ROI-first capital allocation to RoC-first compute allocation (`roi financed labor; roc finances verified compute`).
 
 **First-Principles Constraints**:
 1. **Conservation**: Total token supply is fixed (21M F_i per FoundUp); value cannot be created from nothing
@@ -173,6 +176,20 @@ The pAVS model comprises five entity classes:
 | `DeltaF_i(t)` | F_i Released | tokens/tick | Per-FoundUp token release | `pool_distribution.py` |
 | `f_dex` | DEX Fee | sats/trade | 2% of trade volume | `fee_revenue_tracker.py` |
 | `f_exit` | Exit Fee | sats/exit | 2-15% of extraction | `btc_reserve.py:43` |
+| `rho_compute(t)` | Return on Compute (RoC) | ratio | `(V_generated - C_compute) / C_compute` | `economics/unified_sustainability.py` |
+
+**E2.6: Return on Compute (RoC)**
+```
+rho_compute = (V_generated - C_compute) / C_compute
+            = compute_margin_usd / compute_spend_usd
+```
+where:
+- `V_generated = compute_generated_value_usd`
+- `C_compute = compute_spend_usd`
+
+Interpretation:
+- `rho_compute > 0`: autonomous labor lane is net-productive
+- `rho_compute < 0`: autonomous labor lane is treasury drag
 
 ### 2.4 State Transition Equations
 
@@ -757,12 +774,21 @@ The `unified_sustainability.py` calculator combines:
 | Subscription margin | - | $109,438 |
 | Angel revenue | - | $39,000 |
 | Angel OPO fees | - | $100,000 |
+| Compute spend | - | $6,725 |
+| Compute generated value | - | $10,760 |
 | Compute margin | - | $4,035 |
+| **Return on Compute (RoC)** | **N/A** | **0.60 (60%)** |
+| **Value per $1 compute** | **N/A** | **1.60x** |
 | **Total revenue** | **$2,050** | **$254,522** |
 | **Ratio** | **0.08** | **9.43** |
 | **Sustainable?** | NO | **YES** |
 
 **Source**: `economics/unified_sustainability.py` (committed 2026-02-21)
+
+**RoC validation**:
+- `RoC = compute_margin_usd / compute_spend_usd = 4,035 / 6,725 = 0.60`
+- `value_per_compute_dollar = (compute_spend_usd + compute_margin_usd) / compute_spend_usd = 1.60`
+- These metrics are emitted directly by `SustainabilityMetrics.to_dict()` in `economics/unified_sustainability.py`.
 
 **Minimum viable scale** (binary search result):
 - ~6,000 paying subscribers for break-even (no angels)
@@ -1552,6 +1578,8 @@ To upgrade confidence from hypothesis to demonstrated, the following evidence is
 ### 11.4 Summary Statement
 
 This paper presents a **simulation model** of the FoundUps pAVS token economy. The model demonstrates correct accounting mechanics and flow routing. However, it does **not demonstrate** self-sustainability under stress conditions, and all behavioral and scale claims remain **hypothesis**.
+
+Within this model boundary, the intended architecture is explicit: BTC is the scarcity foundation (`B(t+1) >= B(t)`), and utility is expressed through UPS circulation plus compute outcomes. The economic bridge from traditional finance is `RoC`, where compute productivity is measured directly instead of assuming labor-mediated ROI.
 
 The model provides:
 - A testbed for economic mechanism design

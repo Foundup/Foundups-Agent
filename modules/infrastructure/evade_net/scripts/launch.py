@@ -27,7 +27,17 @@ Module: evade_net
 import asyncio
 import traceback
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("evade_net_dae")
 def run_evade_net():
     """Run Liberty Alert Mesh Alert System (Community Protection)."""
     print("[WARN] Starting Liberty Alert - Mesh Alert System...")

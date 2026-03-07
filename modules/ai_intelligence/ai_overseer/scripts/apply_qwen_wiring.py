@@ -25,10 +25,10 @@ def apply_qwen_wiring():
 
         try:
             from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
-            from pathlib import Path
+            from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 
             self._qwen_engine = QwenInferenceEngine(
-                model_path=Path("E:/LLM_Models/qwen-coder-1.5b.gguf"),
+                model_path=resolve_code_model_path(),
                 max_tokens=512,
                 temperature=0.2,
                 context_length=2048

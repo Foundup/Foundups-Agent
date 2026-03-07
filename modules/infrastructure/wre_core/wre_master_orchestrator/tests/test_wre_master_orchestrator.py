@@ -54,6 +54,24 @@ class TestWREMasterOrchestrator:
         assert "execution_time_ms" in result
 
     @pytest.mark.skipif(not WRE_SKILLS_AVAILABLE, reason="WRE Skills infrastructure not available")
+    def test_execute_skill_blocks_when_supply_chain_gate_fails(self, orchestrator, monkeypatch):
+        """Per-skill scanner gate must block execution when enforced failure occurs."""
+        monkeypatch.setattr(
+            orchestrator,
+            "_ensure_wre_skill_safety",
+            lambda skill_name, force=False: (False, "blocked by test"),
+        )
+        result = orchestrator.execute_skill(
+            "qwen_gitpush",
+            "qwen",
+            {"files_changed": 1},
+            force=True,
+        )
+        assert result["success"] is False
+        assert result.get("blocked") is True
+        assert result.get("blocked_by") == "wre_skill_scan"
+
+    @pytest.mark.skipif(not WRE_SKILLS_AVAILABLE, reason="WRE Skills infrastructure not available")
     def test_execute_skill_throttle_behavior(self, orchestrator):
         """Test skill execution respects libido THROTTLE signal"""
         skill_name = "qwen_gitpush"

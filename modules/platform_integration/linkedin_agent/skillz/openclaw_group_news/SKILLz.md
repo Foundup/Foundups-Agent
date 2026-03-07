@@ -30,11 +30,14 @@ News API queries:
 1. "OpenClaw AI agent"
 2. "OpenClaw framework"
 3. "lobster.cash Crossmint"
+4. "OpenClaw OpenAI nonprofit"
+5. "OpenClaw wallet"
+6. "IronClaw OpenClaw"
 
 Web search fallback (if news insufficient):
-4. "OpenClaw"
-5. "OpenClaw AI framework"
-6. "Peeka AI agent"
+7. "OpenClaw"
+8. "OpenClaw AI framework"
+9. "Peeka AI agent"
 ```
 
 **Ecosystem Terms Recognized** (0.95 relevance score):
@@ -92,6 +95,48 @@ Web search fallback (if news insufficient):
 13. LOG to agents_social_posts (WSP 78)
 ```
 
+### LinkedIn Group Membership DAE (Welcome + Approve)
+
+This skill now includes a second flow for `https://www.linkedin.com/groups/6729915/manage/membership/requested/`:
+
+```
+1. OPEN membership request queue
+     ->
+2. READ first pending member row (name/headline/profile/image)
+     ->
+3. DETECT language from script (ko/ja/zh/sr/ar/en fallback)
+     ->
+4. DRAFT welcome message:
+   - template fallback (localized)
+   - optional Qwen3 via IronClaw gateway (`/v1/chat/completions`)
+   - set `LINKEDIN_GROUP_WELCOME_MODEL=local/qwen3-4b` (or another model id)
+   - disable drafting with `LINKEDIN_GROUP_WELCOME_USE_IRONCLAW=0`
+     ->
+5. CLICK row overflow ("...") -> select Message
+   - keyword match across locales
+   - fallback to second menu item (Message)
+     ->
+6. TYPE welcome message in overlay (`.msg-form__contenteditable`)
+   CLICK Send (`.msg-form__send-button`)
+     ->
+7. CLICK Approve on request row
+     ->
+8. LOG to `agents_social_group_actions` (WSP 78 `agents_*` namespace)
+```
+
+**Dry-run watch mode**:
+- No approval clicks.
+- Captures message drafts and optional screenshots so 012 can observe behavior before enabling live mode.
+
+**CLI entry**:
+- Social Media DAE -> `LinkedIn Group Membership DAE (Welcome + Approve)`
+
+**Live policy toggles**:
+- `welcome + approve`
+- `approve only`
+- `welcome only`
+- `full cycle` (process queue, then post OpenClaw news)
+
 ### Key Tips
 
 - **Do ALL research before touching LinkedIn tab** — switching back and forth is inefficient
@@ -125,9 +170,11 @@ Simple 4-dimension scoring (lighter than WSP 15 MPS):
 
 ### Start Post Button
 ```
-Selector: button.share-box-feed-entry__top-bar (contains "Start a post in this group")
-Fallback: button[id^="ember"][class*="share-box"]
+Selector: button.share-box-feed-entry__trigger (legacy)
+Fallback: button[class*='hare-box-feed-entry'] (LinkedIn redesign)
+Fallback: button[class*='share-box']
 Position: top=268px, left=72px, width=439px, height=48px
+Note: LinkedIn may use hare-box-v2__modal, hare-creation-.tate for modal
 ```
 
 ### Post Textarea
@@ -233,6 +280,12 @@ if filtered and can_post_today():
 ---
 
 ## Changelog
+
+### v1.0.1 (2026-02-23)
+- Added hare-box fallback selectors (LinkedIn redesign)
+- Added search terms: OpenClaw OpenAI nonprofit, OpenClaw wallet, IronClaw OpenClaw
+- Fixed executor: create_driver → setup_driver (AntiDetectionLinkedIn API)
+- Audit: docs/LINKEDIN_OPENCLAW_GROUP_NEWS_AUDIT_20260223.md
 
 ### v1.0.0 (2026-02-19)
 - Initial skill creation

@@ -78,10 +78,12 @@ Research tasks:
   modules/foundups/simulator/economics/
 - Build notation table with dimensions/units.
 - Define state transition equations with clear tick semantics.
+- Define Return on Compute (RoC) explicitly and map it to simulator output fields.
 
 Constraints:
 - Every variable has unit and interpretation.
 - No equation without unit consistency statement.
+- RoC must include interpretation boundaries (`RoC > 0`, `RoC < 0`).
 ```
 
 ## Section 3 Prompt: Accounting Identities and Invariants
@@ -136,6 +138,7 @@ Write Section 6 (Results: Sustainability Envelope).
 
 Research tasks:
 - Report primary metrics: sustainability ratios, treasury trajectory, reserve behavior.
+- Report compute-lane metrics: `compute_spend_usd`, `compute_margin_usd`, `compute_generated_value_usd`, `return_on_compute_ratio`.
 - Provide threshold analysis (smallest parameter shifts that flip sustainability).
 - Report participant-level distribution outcomes, not just aggregate means.
 
@@ -143,6 +146,7 @@ Constraints:
 - Use evidence-first language.
 - Every numeric statement must cite metric source/artifact.
 - Include one "result robustness caveat" subsection.
+- Reconcile fee-only non-sustainability with unified RoC-positive results without claiming real-world proof.
 ```
 
 ## Section 7 Prompt: Stress and Adversarial Conditions

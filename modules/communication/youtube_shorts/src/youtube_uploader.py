@@ -42,13 +42,13 @@ class YouTubeShortsUploader:
         "move2japan": "credentials/oauth_token.json",   # Set 1 (shared with UnDaoDu)
         "undaodu": "credentials/oauth_token.json",      # Set 1
         "foundups": "credentials/oauth_token10.json",   # Set 10
-        "ravingantifa": "credentials/oauth_token10.json",  # Set 10 (shared account)
+        "antifafm": "credentials/oauth_token10.json",  # Set 10 (shared account)
     }
     DEFAULT_TAGS = {
         "move2japan": ["Shorts", "Japan", "Move2Japan"],
         "undaodu": ["Shorts", "UnDaoDu"],
         "foundups": ["Shorts", "FoundUps"],
-        "ravingantifa": ["Shorts", "RavingANTIFA"],
+        "antifafm": ["Shorts", "antifaFM"],
     }
 
     @classmethod
@@ -61,11 +61,11 @@ class YouTubeShortsUploader:
         Initialize uploader with existing YouTube OAuth.
 
         Args:
-            channel: Which channel to use ("move2japan", "undaodu", "foundups", "ravingantifa")
+            channel: Which channel to use ("move2japan", "undaodu", "foundups", "antifafm")
                     - "move2japan": Set 1 (oauth_token.json) - Move2Japan channel
                     - "undaodu": Set 1 (oauth_token.json) - UnDaoDu channel
                     - "foundups": Set 10 (oauth_token10.json) - FoundUps channel
-                    - "ravingantifa": Set 10 (oauth_token10.json) - RavingANTIFA channel
+                    - "antifafm": Set 10 (oauth_token10.json) - antifaFM channel
 
         Uses youtube_auth.get_authenticated_service() - read-only.
         """
@@ -85,7 +85,7 @@ class YouTubeShortsUploader:
             "move2japan": "python modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
             "undaodu": "python modules/platform_integration/youtube_auth/scripts/authorize_set1.py",
             "foundups": "python modules/platform_integration/youtube_auth/scripts/authorize_set10.py",
-            "ravingantifa": "python modules/platform_integration/youtube_auth/scripts/authorize_set10.py",
+            "antifafm": "python modules/platform_integration/youtube_auth/scripts/authorize_set10.py",
         }
 
         # Verify token file exists

@@ -350,7 +350,7 @@ def handle_automation_intent(message: str, sender: str) -> str:
     if any(kw in msg_lower for kw in ["scheduler", "scheduled", "shorts", "how many"]):
         # Extract channel name if mentioned
         channel = None
-        for ch in ["move2japan", "undaodu", "foundups", "ravingantifa"]:
+        for ch in ["move2japan", "undaodu", "foundups", "antifafm"]:
             if ch in msg_lower:
                 channel = ch
                 break
@@ -362,7 +362,7 @@ def handle_automation_intent(message: str, sender: str) -> str:
     
     # Command: Skip channel
     if "skip" in msg_lower:
-        for ch in ["move2japan", "undaodu", "foundups", "ravingantifa"]:
+        for ch in ["move2japan", "undaodu", "foundups", "antifafm"]:
             if ch in msg_lower:
                 hours = 1.0
                 if "2 hour" in msg_lower:
@@ -370,11 +370,11 @@ def handle_automation_intent(message: str, sender: str) -> str:
                 elif "30 min" in msg_lower:
                     hours = 0.5
                 return bridge.skip_channel(ch, hours)
-        return "❓ Which channel should I skip? (Move2Japan, UnDaoDu, FoundUps, RavingANTIFA)"
+        return "❓ Which channel should I skip? (Move2Japan, UnDaoDu, FoundUps, antifaFM)"
     
     # Command: Resume channel
     if "resume" in msg_lower:
-        for ch in ["move2japan", "undaodu", "foundups", "ravingantifa"]:
+        for ch in ["move2japan", "undaodu", "foundups", "antifafm"]:
             if ch in msg_lower:
                 return bridge.resume_channel(ch)
         return "❓ Which channel should I resume?"

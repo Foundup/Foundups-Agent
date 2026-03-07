@@ -117,6 +117,30 @@
           "max": 0.80
         }
       }
+    },
+    "account_antifaFM": {
+      "coordinates": {
+        "x": 178,
+        "y": 353
+      },
+      "variance": {
+        "x": 12,
+        "y": 8
+      },
+      "action": "click",
+      "bypass_sentinel": true,
+      "critical": true,
+      "description": "antifaFM account selection - CRITICAL (no error simulation)",
+      "timing": {
+        "before_click": {
+          "min": 0.25,
+          "max": 0.45
+        },
+        "after_click": {
+          "min": 0.50,
+          "max": 0.80
+        }
+      }
     }
   },
   "global_timing": {

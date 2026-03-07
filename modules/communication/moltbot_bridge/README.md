@@ -36,6 +36,73 @@ OpenClaw becomes **0102** — the Digital Twin of 012:
 3. **Configure workspace**: Point to this module's `workspace/` directory
 4. **Set env**: `DISCORD_BOT_TOKEN`, `FOUNDUPS_WEBHOOK_TOKEN`
 
+## IronClaw Sidecar Mode (Optional)
+
+OpenClaw DAE can route conversational responses through an IronClaw
+OpenAI-compatible gateway while keeping existing WRE control-plane behavior.
+
+- `OPENCLAW_CONVERSATION_BACKEND=ironclaw`
+- `IRONCLAW_BASE_URL=http://127.0.0.1:3000`
+- `IRONCLAW_MODEL=local/qwen-coder-7b`
+- `IRONCLAW_AUTH_TOKEN=<token>` (optional, if gateway requires bearer auth)
+- `IRONCLAW_NO_API_KEYS=1` (default): strips provider API keys from IronClaw launch env
+- `OPENCLAW_NO_API_KEYS=1` (recommended): disables OpenClaw cloud LLM fallbacks
+- `OPENCLAW_ALLOW_EXTERNAL_LLM=0` (recommended with key isolation)
+- `IRONCLAW_START_CMD=<your start command>` (used by CLI submenu launcher)
+
+CLI integration:
+- Main menu -> `16. OpenClaw / IronClaw` -> options `5/6/7/8`
+- Direct flags: `--ironclaw-chat`, `--ironclaw-voice`
+
+## Standalone Action CLI (Agent API Surface)
+
+For autonomous execution outside menu navigation, use:
+
+```bash
+python -m modules.communication.moltbot_bridge.src.action_cli \
+  --command "youtube action comments channel=move2japan max_comments=2 dry_run=true"
+```
+
+Optional DAE-routed mode:
+
+```bash
+python -m modules.communication.moltbot_bridge.src.action_cli \
+  --command "x action post content=smoke_test dry_run=true" \
+  --via-dae --backend ironclaw --no-api-keys on
+```
+
+Repeat mode for 012 observation/testing:
+
+```bash
+python -m modules.communication.moltbot_bridge.src.action_cli \
+  --command "linkedin action read_feed max_posts=2" \
+  --repeat 5 --interval-sec 60
+```
+
+LinkedIn digital twin command example:
+
+```bash
+python -m modules.communication.moltbot_bridge.src.action_cli \
+  --command "linkedin action digital_twin comment_text='...' repost_text='...' schedule_date='Mar 12, 2026' schedule_time='10:00 PM' mentions='@foundups,@Mo Gawdat' identity_cycle='FOUNDUPS,Move2Japan,UnDaoDu'" \
+  --via-dae
+```
+
+Adapter note:
+- `linkedin_social_adapter` now passes `mentions` and `identity_cycle` through to the LinkedIn layered digital twin flow.
+
+Security:
+- Standalone adapter mode runs the same Cisco skill-safety gate before execution.
+- DAE mode (`--via-dae`) also enforces skill safety through OpenClawDAE.
+
+### Memory Writeback (WSP 60 / WSP 48)
+
+Standalone action runs are now persisted into WRE PatternMemory as `skill_outcomes`
+records (`action_cli_<route>_<action>`), enabling recall of:
+- what command ran,
+- whether it succeeded,
+- response summary,
+- execution duration.
+
 ## Files
 
 | Path | Purpose |
@@ -61,6 +128,13 @@ Environment toggles:
 - `OPENCLAW_SKILL_SCAN_ENFORCED=1` (default): block risky scans above threshold
 - `OPENCLAW_SKILL_SCAN_MAX_SEVERITY=medium` (default)
 - `OPENCLAW_SKILL_SCAN_TTL_SEC=900` (default cache window)
+- `OPENCLAW_SKILL_SCAN_ALWAYS=0` (default): set `1` to force scan on every mutating route
+- `OPENCLAW_SKILL_MANIFEST_REQUIRED=1` (default): require `workspace/skills/SKILL_MANIFEST.json`
+- `OPENCLAW_SKILL_MANIFEST_ENFORCED=1` (default): block on missing/mismatched manifest
+- `OPENCLAW_SKILL_MANIFEST_VERIFY_SIGNATURE=0` (default): verify HMAC signature when enabled
+- `OPENCLAW_SKILL_MANIFEST_ALLOW_EXTRA=0` (default): block unlisted `SKILL.md/SKILLz.md` files
+- `OPENCLAW_SKILL_MANIFEST_FILE=` (optional): override manifest path
+- `OPENCLAW_SKILL_MANIFEST_HMAC_KEY=` (optional): key for signature verification
 
 ## Skill Boundary Policy
 

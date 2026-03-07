@@ -101,6 +101,8 @@ class PeriodicStreamMonitor:
 
     def _trigger_social_media_posting(self, video_data: Dict[str, Any]):
         """Trigger LinkedIn and X posting when stream detected"""
+        # antifaFM posts to GeoZai LinkedIn (104834798), not FoundUps LinkedIn (1263645)
+        # Routing is handled by channels_config.json
         logger.info("="*60)
         logger.info("[SOCIAL] TRIGGERING SOCIAL MEDIA POSTING")
         logger.info("="*60)

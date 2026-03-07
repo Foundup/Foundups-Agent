@@ -16,7 +16,7 @@ This paper evaluates the FoundUps pAVS (Peer-to-Peer Autonomous Venture System) 
 
 Using deterministic runs (seed=42) across downside/base/upside scenarios (`demand_factor=0.65/1.00/1.25`), the current fee-only engine does **not** satisfy the sustainability gate. Observed fee-to-burn ratios remain between `0.000132` and `0.001195`, far below the threshold (`>= 1.0`), implying an architecture-scale volume deficit if sustainability is attempted through DEX fees alone.
 
-We then separate this negative result from a broader design hypothesis: a unified multi-revenue architecture (fees + subscriptions + angel lane + compute margin) can cross break-even in model space, but only under assumptions that require empirical validation.
+We then separate this negative result from a broader design hypothesis: a unified multi-revenue architecture (fees + subscriptions + angel lane + compute margin) can cross break-even in model space. In the unified baseline, compute economics are positive (`compute_spend_usd=6,725`, `compute_margin_usd=4,035`), yielding **Return on Compute (RoC) = 0.60** (60%), or **$1.60 gross compute value per $1.00 spend**.
 
 **Limitations**: Results are simulation-derived, uncalibrated to live market data, and sensitive to behavioral assumptions (non-strategic agents, fixed fee policy, no regulatory shocks).
 
@@ -154,6 +154,20 @@ The pAVS model comprises five entity classes:
 | `DeltaF_i(t)` | F_i Released | tokens/tick | Per-FoundUp token release | `pool_distribution.py` |
 | `f_dex` | DEX Fee | sats/trade | 2% of trade volume | `fee_revenue_tracker.py` |
 | `f_exit` | Exit Fee | sats/exit | 2-15% of extraction | `btc_reserve.py:43` |
+| `rho_compute(t)` | Return on Compute (RoC) | ratio | `(V_generated - C_compute) / C_compute` | `economics/unified_sustainability.py` |
+
+**E2.6: Return on Compute (RoC)**
+```
+rho_compute = (V_generated - C_compute) / C_compute
+            = compute_margin_usd / compute_spend_usd
+```
+where:
+- `V_generated = compute_generated_value_usd`
+- `C_compute = compute_spend_usd`
+
+Interpretation:
+- `rho_compute > 0`: autonomous labor lane is net-productive
+- `rho_compute < 0`: autonomous labor lane is treasury drag
 
 ### 2.4 State Transition Equations
 
@@ -734,12 +748,21 @@ The `unified_sustainability.py` calculator combines:
 | Subscription margin | - | $109,438 |
 | Angel revenue | - | $39,000 |
 | Angel OPO fees | - | $100,000 |
+| Compute spend | - | $6,725 |
+| Compute generated value | - | $10,760 |
 | Compute margin | - | $4,035 |
+| **Return on Compute (RoC)** | **N/A** | **0.60 (60%)** |
+| **Value per $1 compute** | **N/A** | **1.60x** |
 | **Total revenue** | **$2,050** | **$254,522** |
 | **Ratio** | **0.08** | **9.43** |
 | **Sustainable?** | NO | **YES** |
 
 **Source**: `economics/unified_sustainability.py` (committed 2026-02-21)
+
+**RoC validation**:
+- `RoC = compute_margin_usd / compute_spend_usd = 4,035 / 6,725 = 0.60`
+- `value_per_compute_dollar = (compute_spend_usd + compute_margin_usd) / compute_spend_usd = 1.60`
+- These metrics are emitted directly by `SustainabilityMetrics.to_dict()` in `economics/unified_sustainability.py`.
 
 **Minimum viable scale** (binary search result):
 - ~6,000 paying subscribers for break-even (no angels)

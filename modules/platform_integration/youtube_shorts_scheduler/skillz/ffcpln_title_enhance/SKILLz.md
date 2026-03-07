@@ -124,7 +124,7 @@ The FFCPLN playlist contains 160+ pro-democracy, anti-authoritarian songs advoca
 ✊ Climate action
 ✊ Immigrant rights vs ICE cruelty
 
-🎵 FULL PLAYLIST: https://ravingANTIFA.com
+🎵 FULL PLAYLIST: https://antifaFM.com
 
 2026: 250 years of freedom at stake.
 This is the soundtrack of resistance.

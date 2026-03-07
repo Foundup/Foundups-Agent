@@ -52,10 +52,17 @@ src/engagement/
 - **Status**: [OK] COMPLETED (298 lines)
 - **Features**:
   - Connection request management
+  - Outbound role policy gate (strict targeting)
   - Profile tracking and relationship strength
   - Networking strategy configuration
   - Connection statistics and acceptance rates
   - Search and filtering capabilities
+
+**Outbound connection policy (0102 training gate)**:
+- Allow targets: CxO, founder/co-founder, architect, blockchain/web3 profiles
+- Hard deny: business development, marketing, recruiting/talent roles
+- Deny: employee-level roles when no allow signal
+- If profile metadata is missing, request is blocked by default
 
 ### **4. LinkedInMessaging (messaging.py)**
 - **Purpose**: Manages LinkedIn messaging, conversations, and communication automation
@@ -137,7 +144,17 @@ messaging_mgr = LinkedInMessaging()
 result = interaction_mgr.like_post("post_123", "author_456")
 
 # Send connection request
-request = connection_mgr.send_connection_request("profile_789", "Hi, let's connect!")
+target = LinkedInProfile(
+    profile_id="profile_789",
+    first_name="Gary",
+    last_name="Phillips",
+    headline="Founder | Architect | Blockchain",
+)
+request = connection_mgr.send_connection_request(
+    "profile_789",
+    "Hi, let's connect!",
+    target_profile=target,
+)
 
 # Send message
 message = messaging_mgr.send_message("profile_789", "Great to connect with you!")

@@ -21,6 +21,67 @@ Centralized orchestration system providing unified social media management acros
 
 ## Recent Changes
 
+
+### 2026-03-03 - SocialMediaDAE + WRE Skill Triggers
+**WSP References**: WSP 22 (ModLog), WSP 46 (Skill Execution), WSP 96 (WRE Skills)
+
+**Changes Made**
+- Replaced stub `scripts/launch.py` with functional `SocialMediaDAE` class
+- Integrates `SkillTriggerMixin` from `wre_core/src/skill_trigger.py`
+- Domain: `social` - fires social-media skills on 15-minute cadence
+- Instance locking via `get_instance_lock()` prevents duplicate DAEs
+
+**Files Changed**
+- `scripts/launch.py` - stub replaced with `SocialMediaDAE` class
+
+**Impact**
+- Social-media skills (e.g. `linkedin_engagement`) now auto-fire on cadence
+- Skills must have `domain: social` in SKILLz.md frontmatter to be discovered
+
+---
+
+
+### 2026-02-24 - ChannelConfigurationManager Move2Japan Mapping Fix
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification), WSP 3 (Module Organization)
+
+**Problem Identified**
+- Error: `[CONFIG] No configuration found for channel: Move2Japan [JAPAN]`
+- `channel_configuration_manager.py` line 169 had WRONG channel ID mapping:
+  - `UC-LSSlOZwpGIRIYihaz8zCw` was mapped to `@UnDaoDu` - **WRONG!** This is Move2Japan's channel ID!
+- Missing config key: `Move2Japan [JAPAN]` (display name from SocialMediaRouter) not in channel_configs
+
+**Root Cause**
+Two routing systems with inconsistent mappings:
+1. `channel_routing.py` (SocialMediaRouter): Correctly maps `UC-LSSlOZwpGIRIYihaz8zCw` → `Move2Japan [JAPAN]`
+2. `channel_configuration_manager.py`: Had wrong mapping + missing key
+
+**CRITICAL SYSTEM SEPARATION** (documented for future 0102):
+| System | Purpose | Config Source | Quota |
+|--------|---------|---------------|-------|
+| YouTube Shorts Scheduling | Schedule unlisted videos | `youtube_channel_registry` | FREE (Selenium) |
+| Social Media Posting | Post to LinkedIn/X | `ChannelConfigurationManager` | FREE (Selenium) |
+
+These systems are **COMPLETELY SEPARATE** - YouTube scheduling should NEVER use social_media_orchestrator.
+
+**Changes Made**
+1. Fixed channel ID mapping (line 167-176):
+   - `UC-LSSlOZwpGIRIYihaz8zCw` → `Move2Japan [JAPAN]` (was `@UnDaoDu`)
+   - `UCfHM9Fw9HD-NwiS0seD_oIA` → `@UnDaoDu` (correct UnDaoDu ID)
+   - Added `UCVSmg5aOhP4tnQ9KFUg97qA` → `RavingANTIFA`
+
+2. Added missing config keys:
+   - `Move2Japan [JAPAN]` with correct channel_id and LinkedIn/X routing
+   - `RavingANTIFA` channel configuration
+
+**Files Updated**
+- `modules/platform_integration/social_media_orchestrator/src/core/channel_configuration_manager.py`
+
+**Impact**
+- Social media posting to LinkedIn/X now correctly routes Move2Japan streams
+- YouTube shorts scheduling is NOT affected (uses separate `youtube_channel_registry`)
+
+---
+
 ### 2026-01-22 - Cached Stream channel_name=None Bug Fix
 **WSP References**: WSP 22 (ModLog), WSP 50 (Pre-action verification)
 
@@ -202,10 +263,10 @@ x_twitter_dae.py ALREADY has advanced agentic features:
 - No automatic training data collection for Gemma
 - No Gemini Vision UI analysis
 
-**Solution**: All posting flows through Social Media DAE 竊・MCP with auto-triggered dual-platform posting
+**Solution**: All posting flows through Social Media DAE  ->MCP with auto-triggered dual-platform posting
 
 **CRITICAL WORKFLOW** (Mimics 012 exactly):
-- User clicks LinkedIn "Post" button 竊・AUTO-TRIGGERS both platforms
+- User clicks LinkedIn "Post" button  ->AUTO-TRIGGERS both platforms
 - LinkedIn posts first (with anti-detection delays)
 - Wait 3 seconds (mimics tab switching)
 - X posts automatically (with anti-detection delays)
@@ -239,11 +300,11 @@ x_twitter_dae.py ALREADY has advanced agentic features:
 #### Architecture Flow:
 ```
 All Posting Systems (git_linkedin_bridge, stream notifications, etc.)
-       竊・
+        ->
 Social Media DAE Orchestrator (unified_linkedin_interface, unified_x_interface)
-       竊・
+        ->
 MCP FastMCP HoloIndex Server (post_to_linkedin_via_selenium, post_to_x_via_selenium)
-       竊・
+        ->
 Selenium + Gemini Vision + Automatic Training Data Collection
 ```
 
@@ -277,7 +338,7 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 #### Anti-Detection Timing (Indistinguishable from Human - 012):
 1. **Pre-Posting Delay**: 2-5 seconds random wait (mimics reading/reviewing)
 2. **Post-Posting Delay**: 1-3 seconds random wait (mimics verifying success)
-3. **LinkedIn 竊・X Sequencing**: X only posts if LinkedIn succeeds (critical)
+3. **LinkedIn  ->X Sequencing**: X only posts if LinkedIn succeeds (critical)
 4. **Inter-Platform Delay**: 3 seconds between LinkedIn and X (from git_linkedin_bridge)
 5. **All Delays Logged**: `[ANTI-DETECTION]` markers show timing behavior
 
@@ -288,13 +349,13 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 - **Grand Total**: ~13-23 seconds for dual-platform post (human-like)
 
 #### Testing:
-- LinkedIn posting: Uses MCP 竊・Selenium 竊・Gemini Vision 竊・Training data
-- X/Twitter posting: Uses MCP 竊・Selenium 竊・Gemini Vision 竊・Training data
+- LinkedIn posting: Uses MCP  ->Selenium  ->Gemini Vision  ->Training data
+- X/Twitter posting: Uses MCP  ->Selenium  ->Gemini Vision  ->Training data
 - Git commits: Both platforms via unified interfaces
 - Duplicate prevention: Maintained in both unified interfaces
 - Anti-detection timing: Random delays logged in all posting operations
 
-**Status**: 笨・Complete - All posting centralized with human-like anti-detection timing
+**Status**: - Complete - All posting centralized with human-like anti-detection timing
 
 ---
 
@@ -341,7 +402,7 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 - Provides reference for performance optimization decisions
 - Demonstrates WSP 83 compliance for future doc creation
 
-**Status**: 笨・Complete - Documentation properly attached to module tree
+**Status**: - Complete - Documentation properly attached to module tree
 
 ---
 
@@ -458,7 +519,7 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 #### What Changed:
 1. **Added `handle_multiple_streams_detected()` method** to RefactoredPostingOrchestrator
    - Accepts list of detected streams from livechat DAE
-   - Sorts streams by priority (Move2Japan 竊・UnDaoDu 竊・FoundUps)
+   - Sorts streams by priority (Move2Japan  ->UnDaoDu  ->FoundUps)
    - Handles 15-second delays between posts
    - Maps channels to correct LinkedIn pages and browsers
 
@@ -559,13 +620,13 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
    - Clean module paths for navigation
 
 #### Architecture Benefits:
-- 笨・**Single Responsibility**: Each module has one clear purpose
-- 笨・**Testability**: Easy to write focused unit tests
-- 笨・**Maintainability**: Changes isolated to specific modules
-- 笨・**Reusability**: Components work independently
-- 笨・**Debugging**: Issues traced to specific modules
-- 笨・**Performance**: Same functionality, better organized
-- 笨・**Extensibility**: Easy to add new platforms or features
+- - **Single Responsibility**: Each module has one clear purpose
+- - **Testability**: Easy to write focused unit tests
+- - **Maintainability**: Changes isolated to specific modules
+- - **Reusability**: Components work independently
+- - **Debugging**: Issues traced to specific modules
+- - **Performance**: Same functionality, better organized
+- - **Extensibility**: Easy to add new platforms or features
 
 #### Migration Path:
 1. **Immediate**: Use migration bridge (no code changes)
@@ -772,13 +833,13 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 - **Scalable scheduling**: APScheduler for high-volume scheduling
 
 ## Testing Status
-- 笨・**Twitter Hello World**: PASSED (Dry run)
-- 笨・**LinkedIn Hello World**: PASSED (Dry run)  
-- 笨・**Orchestrator Integration**: PASSED
-- 笨・**Content Formatting**: PASSED
-- 笨・**OAuth Simulation**: PASSED
-- 笨・**Platform Limits**: VERIFIED
-- 笨・**WSP 49 Compliance**: VERIFIED
+- - **Twitter Hello World**: PASSED (Dry run)
+- - **LinkedIn Hello World**: PASSED (Dry run)  
+- - **Orchestrator Integration**: PASSED
+- - **Content Formatting**: PASSED
+- - **OAuth Simulation**: PASSED
+- - **Platform Limits**: VERIFIED
+- - **WSP 49 Compliance**: VERIFIED
 
 ## Dependencies
 - Python 3.8+ with asyncio support
@@ -830,9 +891,9 @@ schedule_id = await orchestrator.schedule_content(
 **Agent**: ComplianceGuardian
 
 #### Changes
-- 笨・Auto-fixed 8 compliance violations
-- 笨・Violations analyzed: 9
-- 笨・Overall status: FAIL
+- - Auto-fixed 8 compliance violations
+- - Violations analyzed: 9
+- - Overall status: FAIL
 
 #### Violations Fixed
 - WSP_49: Missing required directory: docs/
@@ -857,14 +918,14 @@ schedule_id = await orchestrator.schedule_content(
   - Modified `../../../main.py` - Added option 0 for Git push with social posting
 - **Key Features**:
   - Configuration-driven account selection
-  - Event-based routing (youtube_live 竊・FoundUps, git_push 竊・Development)
+  - Event-based routing (youtube_live  ->FoundUps, git_push  ->Development)
   - Secure credential management via environment variables
   - Per-account Chrome profiles for session isolation
   - Content adaptation per account (hashtags, tone, formatting)
   - Rate limiting and scheduling preferences per account
 - **Integration Points**:
-  - YouTube LiveChat DAE 竊・posts to FoundUps company page (1263645)
-  - Git push from main.py 竊・posts to FoundUps page (1263645)
+  - YouTube LiveChat DAE  ->posts to FoundUps company page (1263645)
+  - Git push from main.py  ->posts to FoundUps page (1263645)
   - Future: Remote DAE, WRE monitoring, etc.
 - **Testing**: Test with `python modules/platform_integration/social_media_orchestrator/tests/test_git_push_posting.py`
 
@@ -978,10 +1039,10 @@ schedule_id = await orchestrator.schedule_content(
 - Enhanced duplicate prevention for social media content
 
 #### WSP Compliance:
-- 笨・WSP 84: Enhanced existing code rather than creating duplicate
-- 笨・WSP 50: Used HoloIndex to search before creating
-- 笨・WSP 5: Extended existing test suite with proper coverage
-- 笨・WSP 22: Documented implementation in ModLogs
+- - WSP 84: Enhanced existing code rather than creating duplicate
+- - WSP 50: Used HoloIndex to search before creating
+- - WSP 5: Extended existing test suite with proper coverage
+- - WSP 22: Documented implementation in ModLogs
 
 ---
 

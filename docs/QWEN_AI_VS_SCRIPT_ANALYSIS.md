@@ -7,21 +7,21 @@
 
 ## Answer: YES - Real AI Running on E: Drive
 
-**Qwen is ACTUAL AI** (1.5B parameter LLM running locally on E: drive), NOT just a script.
+**Qwen is ACTUAL AI** (7B-class coding LLM running locally on E: drive), NOT just a script.
 
 **Evidence**:
 ```bash
 # E: drive Qwen model (confirmed exists):
-E:/HoloIndex/models/qwen-coder-1.5b.gguf
-Size: 1.1GB
+E:/LM_studio/models/local/qwen-coder-7b/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+Size: 4.4GB
 Format: GGUF (quantized LLM for CPU inference)
 ```
 
 **Other E: Drive Models**:
 ```
-E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf    (242MB - Fast pattern matching)
-E:/HoloIndex/models/qwen-coder-1.5b.gguf           (1.1GB - Strategic planning)
-E:/HoloIndex/models/UI-TARS-1.5-7B.Q4_K_M.gguf     (4.4GB - UI interactions)
+E:/LM_studio/models/local/gemma-270m/gemma-3-270m-it-Q4_K_M.gguf          (242MB - Fast pattern matching)
+E:/LM_studio/models/local/qwen3-4b/qwen3-4b-instruct-q4_k_m.gguf           (2.4GB - General reasoning)
+E:/LM_studio/models/local/qwen-coder-7b/qwen2.5-coder-7b-instruct-q4_k_m.gguf (4.4GB - Strategic coding)
 ```
 
 ---
@@ -37,7 +37,7 @@ from llama_cpp import Llama  # llama-cpp-python (C++ inference engine)
 
 # Initialize the model with optimized settings for 1.5B model
 self.llm = Llama(
-    model_path=str(self.model_path),  # E:/HoloIndex/models/qwen-coder-1.5b.gguf
+    model_path=str(self.model_path),  # E:/LM_studio/models/local/qwen-coder-7b/...
     n_ctx=self.context_length,        # 2048 tokens context window
     n_threads=4,                       # Use 4 CPU threads
     n_gpu_layers=0,                    # CPU-only (GGUF optimized for CPU)
@@ -268,7 +268,7 @@ Output format:
 ```
 1. GitPushDAE monitors git status every 5 min
 2. Detects uncommitted changes
-3. Calls Qwen skill: qwen_gitpush (E:/HoloIndex/models/qwen-coder-1.5b.gguf)
+3. Calls Qwen skill: qwen_gitpush (LOCAL_MODEL_CODE_* routing)
 4. Qwen analyzes diff (Step 1: AI inference)
 5. Qwen calculates MPS (Step 2: AI + arithmetic)
 6. Qwen generates commit message (Step 3: AI generation)
@@ -310,7 +310,7 @@ Output format:
 
 ## Gemma Validation (270M Parameters)
 
-**File**: `E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf` (242MB)
+**File**: `E:/LM_studio/models/local/gemma-270m/gemma-3-270m-it-Q4_K_M.gguf` (242MB)
 
 **Purpose**: Fast binary classification (50-100ms)
 
@@ -390,7 +390,7 @@ if skill_result.action == "push_now":
 **Answer to User Question**: "is qwen AI on E: acutally handling the push or is it ust a script?"
 
 **YES - Real AI**:
-- Qwen 1.5B (1.5 billion parameters) runs on E:/HoloIndex/models/qwen-coder-1.5b.gguf
+- Qwen Coder 7B runs via LOCAL_MODEL_CODE_* routing (default under E:/LM_studio/models/local/qwen-coder-7b)
 - Performs actual neural network inference (200-500ms per response)
 - Generates commit messages using natural language generation
 - Understands semantic meaning of code changes
@@ -412,9 +412,9 @@ if skill_result.action == "push_now":
 ```
 Model                              Size    Parameters  Purpose
 -----------------------------------------------------------------------------------
-qwen-coder-1.5b.gguf               1.1GB   1.5B       Strategic planning (200-500ms)
-gemma-3-270m-it-Q4_K_M.gguf        242MB   270M       Fast validation (50-100ms)
-UI-TARS-1.5-7B.Q4_K_M.gguf         4.4GB   7B         UI interactions (1-2s)
+qwen2.5-coder-7b-instruct-q4_k_m.gguf  4.4GB   7B   Strategic coding (200-700ms)
+qwen3-4b-instruct-q4_k_m.gguf          2.4GB   4B   General reasoning (100-400ms)
+gemma-3-270m-it-Q4_K_M.gguf            242MB   270M Fast validation (50-100ms)
 ```
 
 **Inference Stack**:

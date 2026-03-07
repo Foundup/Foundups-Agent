@@ -211,21 +211,22 @@ def check_firebase_invite() -> Optional[Dict]:
         return None
 
 
-def get_invite_code(user_id: str, username: str, stream_start_time: Optional[float] = None, role: str = None) -> Dict:
+def get_invite_code(user_id: str, username: str, stream_start_time: Optional[float] = None, role: str = None, is_managing_director: bool = False) -> Dict:
     """
     Get an invite code for distribution.
 
     Rules:
-    1. Stream must be running for 30+ minutes (prevents drive-by requests) - OWNER bypasses
-    2. User must wait 24h between invite requests
-    3. Population must be below threshold OR user is top whacker
+    1. Stream must be running for 30+ minutes (prevents drive-by requests) - OWNER/MD bypasses
+    2. User must wait 24h between invite requests - OWNER/MD bypasses
+    3. Population must be below threshold OR user is top whacker - OWNER/MD bypasses
     4. Returns Firebase code if available, else local code
 
     Args:
         user_id: User requesting the invite
         username: Display name
         stream_start_time: Unix timestamp when stream started (for duration check)
-        role: User role (OWNER bypasses stream duration check)
+        role: User role (OWNER bypasses all checks)
+        is_managing_director: True if user is a Managing Director (bypasses same as OWNER)
 
     Returns:
         Dict with success, code, message
@@ -234,10 +235,13 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
 
     current_time = time.time()
 
-    # Check stream duration (must be 30+ minutes) - OWNER bypasses this check
+    # Managing Directors get same bypass as OWNER (they already passed /fuc permission check)
+    bypass_gates = role == 'OWNER' or is_managing_director
+
+    # Check stream duration (must be 30+ minutes) - OWNER/MD bypasses this check
     # stream_start_time now uses YouTube's actualStartTime when available (see session_manager.py)
-    # OWNER bypass is safe because /fuc invite is already OWNER/Director-only
-    if stream_start_time and role != 'OWNER':
+    # OWNER/MD bypass is safe because /fuc invite is already OWNER/Director-only
+    if stream_start_time and not bypass_gates:
         stream_minutes = (current_time - stream_start_time) / 60
         if stream_minutes < MIN_STREAM_DURATION_MINUTES:
             remaining = MIN_STREAM_DURATION_MINUTES - stream_minutes
@@ -248,27 +252,30 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
             }
 
     # Check PERSISTENT cooldown (SQLite - survives restarts)
-    remaining_hours = check_persistent_cooldown(user_id)
-    if remaining_hours:
-        # Format nicely: show days if > 24h
-        if remaining_hours >= 24:
-            remaining_days = remaining_hours / 24
-            return {
-                'success': False,
-                'code': None,
-                'message': f"🔒 SCARCITY COOLDOWN! {remaining_days:.1f} days remaining. Invites are RARE! 💎"
-            }
-        else:
-            return {
-                'success': False,
-                'code': None,
-                'message': f"🔒 Cooldown active! {remaining_hours:.1f} hours remaining."
-            }
+    # OWNER/MD bypasses cooldown - can generate invites anytime
+    if not bypass_gates:
+        remaining_hours = check_persistent_cooldown(user_id)
+        if remaining_hours:
+            # Format nicely: show days if > 24h
+            if remaining_hours >= 24:
+                remaining_days = remaining_hours / 24
+                return {
+                    'success': False,
+                    'code': None,
+                    'message': f"🔒 SCARCITY COOLDOWN! {remaining_days:.1f} days remaining. Invites are RARE! 💎"
+                }
+            else:
+                return {
+                    'success': False,
+                    'code': None,
+                    'message': f"🔒 Cooldown active! {remaining_hours:.1f} hours remaining."
+                }
 
     # Check population threshold
+    # OWNER/MD bypasses population threshold - can invite anytime
     population = get_population_count()
 
-    if population >= POPULATION_THRESHOLD:
+    if population >= POPULATION_THRESHOLD and not bypass_gates:
         # Check if user is top whacker (bypass threshold)
         try:
             from modules.gamification.whack_a_magat.src.whack import get_user_position
@@ -304,14 +311,16 @@ def get_invite_code(user_id: str, username: str, stream_start_time: Optional[flo
             logger.info(f"[INVITE] Local code {code} generated for {username} (Firebase unavailable)")
 
     # Set PERSISTENT cooldown (5 days - scarcity!)
-    set_persistent_cooldown(user_id, username)
+    # OWNER bypasses cooldown - don't set it for them
+    if role != 'OWNER':
+        set_persistent_cooldown(user_id, username)
 
     return {
         'success': True,
         'code': code,
         'message': f"Code distributed to {username}",
         'population': population,
-        'next_invite_days': INVITE_COOLDOWN_DAYS
+        'next_invite_days': 0 if role == 'OWNER' else INVITE_COOLDOWN_DAYS
     }
 
 

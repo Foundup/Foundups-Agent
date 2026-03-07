@@ -58,26 +58,54 @@
     type="text/javascript"
   ></script>
   <script>
+    // FoundUPS Clerk Theme
+    const FOUNDUPS_CLERK_APPEARANCE = {
+      variables: {
+        colorPrimary: '#7c5cfc',
+        colorBackground: '#0a0a0f',
+        colorInputBackground: '#12121a',
+        colorText: '#e4e2ec'
+      },
+      elements: {
+        card: { backgroundColor: '#0e0e1c', border: '1px solid rgba(124, 92, 252, 0.2)', borderRadius: '16px' }
+      }
+    };
+
     window.addEventListener('load', async () => {
-      // Wait for Clerk to load
+      // Wait for Clerk SDK to be available
       while (!window.Clerk) {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       try {
-        // Handle the OAuth callback
-        await window.Clerk.handleRedirectCallback();
+        // Initialize Clerk - this automatically processes any OAuth callback tokens
+        await window.Clerk.load({ appearance: FOUNDUPS_CLERK_APPEARANCE });
 
-        // If we get here, auth was successful - redirect to member area
+        // Give Clerk a moment to establish the session
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Check if user session is now established
         if (window.Clerk.user) {
+          // Success - go to member area
           window.location.href = '/member/';
         } else {
-          // Something went wrong, go back to landing
+          // Try handleRedirectCallback for any pending OAuth
+          try {
+            await window.Clerk.handleRedirectCallback();
+            // Check again after handling callback
+            if (window.Clerk.user) {
+              window.location.href = '/member/';
+              return;
+            }
+          } catch (e) {
+            console.log('No redirect callback to handle:', e.message);
+          }
+          // Still no user - redirect to landing
           window.location.href = '/?auth=failed';
         }
       } catch (err) {
         console.error('SSO callback error:', err);
-        window.location.href = '/?auth=error';
+        window.location.href = '/?auth=error&msg=' + encodeURIComponent(err.message || 'unknown');
       }
     });
   </script>

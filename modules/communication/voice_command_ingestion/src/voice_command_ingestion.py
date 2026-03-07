@@ -60,6 +60,8 @@ class FasterWhisperSTT:
         model_size: str = "base",
         device: str = "cpu",
         compute_type: str = "int8",
+        use_vad_filter: bool = True,
+        vad_min_silence_ms: int = 250,
     ) -> None:
         """Initialize faster-whisper model.
 
@@ -67,10 +69,14 @@ class FasterWhisperSTT:
             model_size: Model size (tiny, base, small, medium, large-v3)
             device: Device to use (cpu, cuda)
             compute_type: Computation type (int8, float16, float32)
+            use_vad_filter: Whether to apply Whisper VAD filtering.
+            vad_min_silence_ms: Minimum silence for VAD segmentation.
         """
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
+        self.use_vad_filter = bool(use_vad_filter)
+        self.vad_min_silence_ms = int(max(50, vad_min_silence_ms))
         self._model = None
         self._initialized = False
 
@@ -116,12 +122,17 @@ class FasterWhisperSTT:
             start_ms = 0
 
             # Transcribe
-            segments, info = self._model.transcribe(
-                audio,
-                beam_size=5,
-                language="en",
-                vad_filter=True,  # Filter out silence
-            )
+            transcribe_kwargs = {
+                "beam_size": 5,
+                "language": "en",
+                "vad_filter": self.use_vad_filter,
+            }
+            if self.use_vad_filter:
+                transcribe_kwargs["vad_parameters"] = {
+                    "min_silence_duration_ms": self.vad_min_silence_ms,
+                }
+
+            segments, info = self._model.transcribe(audio, **transcribe_kwargs)
 
             # Collect all segments
             text_parts = []

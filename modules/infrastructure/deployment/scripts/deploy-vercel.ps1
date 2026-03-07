@@ -37,23 +37,44 @@ if (Test-Path ".vercel") {
 Write-Host "[TOOL] Setting up environment variables..." -ForegroundColor Yellow
 Write-Host "Enter values for environment variables (or press Enter for defaults):"
 
-# HOLO_QWEN_MODEL
-$modelPath = Read-Host "HOLO_QWEN_MODEL (default: E:/HoloIndex/models/qwen-coder-1.5b.gguf)"
-if (-not $modelPath) { $modelPath = "E:/HoloIndex/models/qwen-coder-1.5b.gguf" }
-& vercel env add HOLO_QWEN_MODEL production 2>$null
-& vercel env add HOLO_QWEN_MODEL preview 2>$null
+function Set-VercelEnvValue {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+    foreach ($target in @("production", "preview")) {
+        $Value | & vercel env add $Name $target 2>$null | Out-Null
+    }
+}
+
+$localModelRoot = Read-Host "LOCAL_MODEL_ROOT (default: E:/LM_studio/models/local)"
+if (-not $localModelRoot) { $localModelRoot = "E:/LM_studio/models/local" }
+Set-VercelEnvValue -Name "LOCAL_MODEL_ROOT" -Value $localModelRoot
+
+$triageDir = Read-Host "LOCAL_MODEL_TRIAGE_DIR (default: E:/LM_studio/models/local/gemma-270m)"
+if (-not $triageDir) { $triageDir = "$localModelRoot/gemma-270m" }
+Set-VercelEnvValue -Name "LOCAL_MODEL_TRIAGE_DIR" -Value $triageDir
+
+$generalDir = Read-Host "LOCAL_MODEL_GENERAL_DIR (default: E:/LM_studio/models/local/qwen3-4b)"
+if (-not $generalDir) { $generalDir = "$localModelRoot/qwen3-4b" }
+Set-VercelEnvValue -Name "LOCAL_MODEL_GENERAL_DIR" -Value $generalDir
+
+$codeDir = Read-Host "LOCAL_MODEL_CODE_DIR (default: E:/LM_studio/models/local/qwen-coder-7b)"
+if (-not $codeDir) { $codeDir = "$localModelRoot/qwen-coder-7b" }
+Set-VercelEnvValue -Name "LOCAL_MODEL_CODE_DIR" -Value $codeDir
+
+# Legacy alias retained for compatibility with older workers.
+Set-VercelEnvValue -Name "HOLO_QWEN_MODEL" -Value $codeDir
 
 # HOLO_QWEN_MAX_TOKENS
 $maxTokens = Read-Host "HOLO_QWEN_MAX_TOKENS (default: 512)"
 if (-not $maxTokens) { $maxTokens = "512" }
-& vercel env add HOLO_QWEN_MAX_TOKENS production 2>$null
-& vercel env add HOLO_QWEN_MAX_TOKENS preview 2>$null
+Set-VercelEnvValue -Name "HOLO_QWEN_MAX_TOKENS" -Value $maxTokens
 
 # HOLO_QWEN_TEMPERATURE
 $temperature = Read-Host "HOLO_QWEN_TEMPERATURE (default: 0.2)"
 if (-not $temperature) { $temperature = "0.2" }
-& vercel env add HOLO_QWEN_TEMPERATURE production 2>$null
-& vercel env add HOLO_QWEN_TEMPERATURE preview 2>$null
+Set-VercelEnvValue -Name "HOLO_QWEN_TEMPERATURE" -Value $temperature
 
 # Deploy
 Write-Host "[ROCKET] Deploying to production..." -ForegroundColor Green

@@ -63,6 +63,11 @@ Enhancements by previous 0102:
 - 012 behavior simulation via `foundups_selenium`
 - `test_layer1_comment.py` fixed asyncio.run when event loop already running
 - `test_linkedin_comment_flow_ui_tars.py` deprecated in favor of layered tests
+- Full-chain wiring now accepts orchestration overrides for:
+  - L1: `comment_text`, `mentions`
+  - L3: `repost_text`, `schedule_date`, `schedule_time`
+- `digital_twin` CLI paths now pass mentions/identity cycle through adapter and script entrypoints
+- L1/L3 failures in full chain now trigger WRE recursive diagnostics (bounded reasoning loop)
 
 Dependency guidance (LEGO pattern — extend, don't create):
 - **LM Studio + Browser bootstrap**: [`modules/infrastructure/dependency_launcher/INTERFACE.md`](../../infrastructure/dependency_launcher/INTERFACE.md), [`README.md`](../../infrastructure/dependency_launcher/README.md)

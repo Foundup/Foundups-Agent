@@ -552,22 +552,30 @@ _PAVS_SYSTEM_PROMPT = (
 )
 
 
+def _env_truthy(name: str, default: str = "0") -> bool:
+    """Return True when environment flag is set to truthy value."""
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _key_isolation_enabled() -> bool:
+    """Block external API-provider calls when key isolation mode is enabled."""
+    return _env_truthy("OPENCLAW_NO_API_KEYS", "0") or _env_truthy("IRONCLAW_NO_API_KEYS", "0")
+
+
 def _get_qwen():
-    """Tier 1: Qwen 1.5B from E: SSD via llama_cpp (free, local)."""
+    """Tier 1: Local Qwen code model via centralized LOCAL_MODEL_* routing."""
     global _qwen_engine
     if _qwen_engine is not None:
         return _qwen_engine
 
     try:
-        from pathlib import Path
         from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+        from modules.infrastructure.shared_utilities.local_model_selection import (
+            resolve_code_model_path,
+        )
 
-        for p in ["E:/HoloIndex/models/qwen-coder-1.5b.gguf",
-                   "E:/LLM_Models/qwen-coder-1.5b.gguf"]:
-            model_path = Path(p)
-            if model_path.exists():
-                break
-        else:
+        model_path = resolve_code_model_path()
+        if not model_path.exists():
             return None
 
         engine = QwenInferenceEngine(
@@ -578,7 +586,7 @@ def _get_qwen():
         )
         if engine.initialize():
             _qwen_engine = engine
-            logger.info("[FAM] Qwen loaded from E: SSD")
+            logger.info("[FAM] Qwen loaded from LOCAL_MODEL_CODE_* routing")
             return _qwen_engine
     except Exception as exc:
         logger.debug("[FAM] Qwen init: %s", exc)
@@ -598,6 +606,10 @@ def _get_api():
     global _api_connector
     if _api_connector is not None:
         return _api_connector
+
+    if _key_isolation_enabled():
+        logger.info("[FAM] API fallback disabled by key-isolation policy")
+        return None
 
     for model, key_name in _API_PROVIDERS:
         if os.getenv(key_name):
@@ -628,7 +640,7 @@ def _qwen_enrich(question: str, knowledge: str) -> Optional[str]:
     """Try Qwen local, then API (with failover), return None if all fail."""
     system = f"{_PAVS_SYSTEM_PROMPT}\n\nKnowledge:\n{knowledge}"
 
-    # Tier 1: Qwen on E: SSD
+    # Tier 1: Local Qwen via centralized LOCAL_MODEL_* routing
     engine = _get_qwen()
     if engine:
         try:

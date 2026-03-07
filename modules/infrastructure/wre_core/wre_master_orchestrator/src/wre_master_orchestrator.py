@@ -37,6 +37,7 @@ from pathlib import Path
 import uuid
 import logging
 from datetime import datetime
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,12 @@ try:
     SPRINT3_AVAILABLE = True
 except ImportError:
     SPRINT3_AVAILABLE = False
+
+try:
+    from modules.communication.moltbot_bridge.src.skill_safety_guard import run_skill_scan
+    WRE_SKILL_SCANNER_AVAILABLE = True
+except ImportError:
+    WRE_SKILL_SCANNER_AVAILABLE = False
 
 @dataclass
 class Pattern:
@@ -253,6 +260,25 @@ class WREMasterOrchestrator:
 
         # Sprint 3: CodeAct executor config (Gap E closure)
         self.codeact_enabled = os.getenv("WRE_CODEACT_ENABLED", "1").strip() == "1"
+
+        # WRE skill supply-chain gate (per-skill scan before execution).
+        runtime_24x7 = os.getenv("OPENCLAW_24X7", "0").strip() == "1"
+        enforced_default = "1" if runtime_24x7 else "0"
+        self.wre_skill_scan_required = (
+            os.getenv("WRE_SKILL_SCAN_REQUIRED", enforced_default).strip() == "1"
+        )
+        self.wre_skill_scan_enforced = (
+            os.getenv("WRE_SKILL_SCAN_ENFORCED", enforced_default).strip() == "1"
+        )
+        self.wre_skill_scan_always = os.getenv("WRE_SKILL_SCAN_ALWAYS", "0").strip() == "1"
+        try:
+            self.wre_skill_scan_ttl_sec = max(0, int(os.getenv("WRE_SKILL_SCAN_TTL_SEC", "900")))
+        except (TypeError, ValueError):
+            self.wre_skill_scan_ttl_sec = 900
+        self.wre_skill_scan_max_severity = os.getenv(
+            "WRE_SKILL_SCAN_MAX_SEVERITY", "medium"
+        ).strip().lower() or "medium"
+        self._wre_skill_scan_cache: Dict[str, Dict[str, Any]] = {}
 
         # Initialize Sprint 3 components
         if SPRINT3_AVAILABLE and WRE_SKILLS_AVAILABLE:
@@ -555,6 +581,189 @@ class WREMasterOrchestrator:
             f"- Note: loader degraded due to: {error}\n"
         )
 
+    def _try_executor_dispatch(
+        self, skill_name: str, input_context: Dict, agent: str
+    ) -> Optional[Dict]:
+        """
+        Check if skill has a programmatic executor (executor.py) and dispatch to it.
+
+        Skills with executor.py bypass Qwen LLM inference and run their own
+        adapter/bridge code directly, while still benefiting from the full WRE
+        pipeline (libido gating, A/B testing, PatternMemory, evolution).
+
+        Returns:
+            Executor result dict if executor found and succeeded, None otherwise.
+            On executor error, returns an error dict (not None) so the error
+            is captured in PatternMemory rather than silently falling through to Qwen.
+        """
+        # Cache executor paths per session to avoid repeated filesystem scans
+        if not hasattr(self, '_executor_cache'):
+            self._executor_cache: Dict[str, Optional[str]] = {}
+
+        # Check cache first
+        if skill_name in self._executor_cache:
+            executor_path = self._executor_cache[skill_name]
+            if executor_path is None:
+                return None  # Known: no executor for this skill
+        else:
+            # Scan for executor.py alongside SKILLz.md / SKILL.md
+            executor_path = self._find_skill_executor(skill_name)
+            self._executor_cache[skill_name] = executor_path
+            if executor_path is None:
+                return None
+
+        # Dynamic import and execution
+        try:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                f"wre_executor_{skill_name}", executor_path
+            )
+            if spec is None or spec.loader is None:
+                logger.warning(
+                    "[WRE-EXECUTOR] Failed to create module spec for %s at %s",
+                    skill_name, executor_path,
+                )
+                return None
+
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            execute_fn = getattr(mod, 'execute', None)
+            if not callable(execute_fn):
+                logger.warning(
+                    "[WRE-EXECUTOR] %s/executor.py has no execute() function",
+                    skill_name,
+                )
+                return None
+
+            # Build task dict for executor
+            task = dict(input_context)
+            task.setdefault("skill_name", skill_name)
+            task.setdefault("agent", agent)
+
+            logger.info(
+                "[WRE-EXECUTOR] Dispatching %s via executor.py (bypassing Qwen)",
+                skill_name,
+            )
+            result = execute_fn(task)
+
+            # Normalize result to dict
+            if not isinstance(result, dict):
+                result = {"output": str(result), "success": True}
+
+            result["_executor_dispatch"] = True
+            return result
+
+        except Exception as exc:
+            logger.error(
+                "[WRE-EXECUTOR] Executor failed for %s: %s", skill_name, exc
+            )
+            return {
+                "output": f"Executor error: {exc}",
+                "success": False,
+                "error": str(exc)[:500],
+                "_executor_dispatch": True,
+                "_executor_error": True,
+            }
+
+    def _find_skill_executor(self, skill_name: str) -> Optional[str]:
+        """
+        Locate executor.py for a skill by scanning known skill directories.
+
+        Searches:
+        1. modules/*/*/skillz/<skill_name>/executor.py
+        2. modules/*/*/skills/<skill_name>/executor.py
+        3. holo_index/skills/<skill_name>/executor.py
+        """
+        search_patterns = [
+            f"modules/*/*/skillz/{skill_name}/executor.py",
+            f"modules/*/*/skills/{skill_name}/executor.py",
+            f"holo_index/skills/{skill_name}/executor.py",
+        ]
+        for pattern in search_patterns:
+            matches = list(self.repo_root.glob(pattern))
+            if matches:
+                found = str(matches[0])
+                logger.info(
+                    "[WRE-EXECUTOR] Found executor for %s: %s", skill_name, found
+                )
+                return found
+
+        return None
+
+    def _resolve_wre_skill_file(self, skill_name: str) -> Optional[Path]:
+        """Resolve physical skill file path for supply-chain scanning."""
+        if not self.skills_loader:
+            return None
+        try:
+            return self.skills_loader.resolve_skill_file(skill_name)
+        except Exception:
+            return None
+
+    def _ensure_wre_skill_safety(self, skill_name: str, force: bool = False) -> tuple[bool, str]:
+        """
+        Run per-skill Cisco scan gate before execution.
+
+        Returns:
+            (ok, message)
+        """
+        skill_file = self._resolve_wre_skill_file(skill_name)
+        if skill_file is None:
+            msg = f"skill source not resolved for {skill_name}"
+            if self.wre_skill_scan_required and self.wre_skill_scan_enforced:
+                return False, msg
+            return True, msg
+
+        scan_dir = skill_file.parent.resolve()
+        cache_key = str(scan_dir)
+        now = time.time()
+        cache = self._wre_skill_scan_cache.get(cache_key)
+        if (
+            cache
+            and not force
+            and not self.wre_skill_scan_always
+            and (now - float(cache.get("checked_at", 0))) < self.wre_skill_scan_ttl_sec
+        ):
+            return bool(cache.get("ok", False)), str(cache.get("message", "cached"))
+
+        if not WRE_SKILL_SCANNER_AVAILABLE:
+            ok = not self.wre_skill_scan_required
+            msg = "WRE skill scanner unavailable (missing Cisco scanner integration)"
+            self._wre_skill_scan_cache[cache_key] = {
+                "checked_at": now,
+                "ok": ok,
+                "message": msg,
+            }
+            return ok, msg
+
+        report_dir = (
+            self.repo_root / "modules/infrastructure/wre_core/reports/skill_scans"
+        )
+        result = run_skill_scan(
+            skills_dir=scan_dir,
+            max_severity=self.wre_skill_scan_max_severity,
+            report_dir=report_dir,
+            manifest_required=False,
+            manifest_enforced=False,
+        )
+
+        if not result.available:
+            ok = not self.wre_skill_scan_required
+        else:
+            ok = bool(result.passed) or (not self.wre_skill_scan_enforced)
+
+        msg = (
+            f"{skill_name}: {'pass' if ok else 'fail'} | "
+            f"available={result.available} enforced={self.wre_skill_scan_enforced} "
+            f"threshold={self.wre_skill_scan_max_severity} detail={result.message}"
+        )
+        self._wre_skill_scan_cache[cache_key] = {
+            "checked_at": now,
+            "ok": ok,
+            "message": msg,
+        }
+        return ok, msg
+
     def _execute_skill_with_qwen(
         self,
         skill_content: str,
@@ -746,6 +955,25 @@ Final Output: [summary]
                 "reason": "Pattern frequency throttled by libido monitor"
             }
 
+        # Step 1.5: Per-skill supply-chain gate (Cisco scanner).
+        scan_ok, scan_message = self._ensure_wre_skill_safety(skill_name, force=force)
+        if self.sqlite_memory:
+            self.sqlite_memory.increment_counter("wre_skill_scan_checks")
+        if not scan_ok:
+            if self.sqlite_memory:
+                self.sqlite_memory.increment_counter("wre_skill_scan_blocked")
+            logger.error("[WRE-SKILL-SCAN] BLOCKED %s", scan_message)
+            return {
+                "execution_id": execution_id,
+                "skill_name": skill_name,
+                "agent": agent,
+                "success": False,
+                "blocked": True,
+                "blocked_by": "wre_skill_scan",
+                "reason": scan_message,
+            }
+        logger.info("[WRE-SKILL-SCAN] %s", scan_message)
+
         # Step 2: Load skill instructions
         try:
             skill_content = self.skills_loader.load_skill(skill_name, agent)
@@ -828,12 +1056,19 @@ Final Output: [summary]
                     f"relevance={relevance_score:.2f}"
                 )
 
-        # Step 3: Execute skill with local Qwen inference (WSP 96 v1.3)
-        execution_result = self._execute_skill_with_qwen(
-            skill_content=skill_content,
-            input_context=input_context,
-            agent=agent
-        )
+        # Step 3: Check for programmatic executor (executor.py alongside SKILLz.md)
+        # Skills with executor.py bypass Qwen LLM and run their own logic directly.
+        # This bridges adapter-based skills (LinkedIn, X, YouTube) into the WRE pipeline.
+        executor_result = self._try_executor_dispatch(skill_name, input_context, agent)
+        if executor_result is not None:
+            execution_result = executor_result
+        else:
+            # Step 3b: Execute skill with local Qwen inference (WSP 96 v1.3)
+            execution_result = self._execute_skill_with_qwen(
+                skill_content=skill_content,
+                input_context=input_context,
+                agent=agent
+            )
 
         # Step 4: Calculate execution time
         execution_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)

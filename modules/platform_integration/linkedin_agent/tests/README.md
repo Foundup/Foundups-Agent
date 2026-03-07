@@ -84,6 +84,14 @@ python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --se
 
 # Full live execution
 python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --selenium
+
+# Full chain with explicit orchestration inputs
+python -m modules.platform_integration.linkedin_agent.tests.test_full_chain --selenium \
+  --comment-text "custom comment" \
+  --mentions "@foundups,@Mo Gawdat" \
+  --repost-text "custom repost thought" \
+  --schedule-date "Mar 12, 2026" \
+  --schedule-time "10:00 PM"
 ```
 
 ## [LOCK] Prerequisites
@@ -114,6 +122,7 @@ Environment controls:
 - `LINKEDIN_AUTO_LOAD_UI_TARS_MODEL=true|false` (default: true)
 - `LINKEDIN_ACTION_DELAY_SEC=3` (step delay for slow 012 review)
 - `LINKEDIN_LAYER_DELAY_SEC=4` (between-layer delay in full chain)
+- `LINKEDIN_WRE_DIAG_ENABLED=true|false` (default: true, recursive layer failure diagnosis)
 
 ## [BLOCK] Blockers
 
@@ -130,9 +139,11 @@ Environment controls:
 ## [NOTES] Continuation Notes
 
 - All tests use argparse with `--selenium`, `--dry-run`, `--info` flags
+- Full chain accepts orchestrated overrides: `--comment-text`, `--mentions`, `--repost-text`, `--schedule-date`, `--schedule-time`
 - Follows YouTube cake pattern: test each layer, combine into full chain
 - Identity switcher loads from JSON; filter by action: `"like_only"`
 - Mention validation checks for `<a>`, `<strong>`, or mention marker in editor HTML
+- On L1/L3 failure, full chain triggers WRE bounded reasoning diagnostics for recursive troubleshooting
 
 ## [DAEMON] Pulse Points (Core Only, WSP 91)
 

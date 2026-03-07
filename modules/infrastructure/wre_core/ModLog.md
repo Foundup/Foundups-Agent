@@ -2,11 +2,183 @@
 
 ## Chronological Change Log
 
+### [2026-03-05] - Phase 2 Self-Audit: Repeated-Failure Escalation + Adaptive Remediation
+
+**WSP Protocol References**: WSP 15 (Priority Closure), WSP 48 (Recursive Self-Improvement), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention), WSP 22 (ModLog)  
+**Impact Analysis**: Extends 0102 daemon self-audit from event logging into adaptive repeated-failure escalation with policy-gated dispatch and telemetry.
+
+#### Changes Made
+
+- `src/daemon_self_audit_loop.py`:
+  - Added per-signature rolling stats (`_signature_stats`) and escalation cooldown tracking.
+  - Added escalation trigger:
+    - `OPENCLAW_SELF_AUDIT_ESCALATE_AFTER`
+    - `OPENCLAW_SELF_AUDIT_ESCALATION_WINDOW_SEC`
+    - `OPENCLAW_SELF_AUDIT_ESCALATION_COOLDOWN_SEC`
+  - Added optional escalation command dispatch:
+    - `OPENCLAW_SELF_AUDIT_ESCALATE_CMD`
+    - `OPENCLAW_SELF_AUDIT_ESCALATE_ALLOW_SHELL_CMD`
+  - Added escalation report stream:
+    - `modules/infrastructure/wre_core/reports/daemon_self_audit_escalations.jsonl`
+  - Added telemetry counters:
+    - `self_audit_escalations_total`
+    - `self_audit_escalation_dispatch_success`
+    - `self_audit_escalation_dispatch_fail`
+- `tests/test_daemon_self_audit_loop.py`:
+  - Added repeated-signature escalation trigger test.
+  - Added escalation command dispatch test.
+- Config/docs:
+  - Updated `.env.example`, `config/wre_defaults.env`, `config/WRE_RUNBOOK.md` with escalation controls.
+
+#### Validation
+
+- `pytest -q modules/infrastructure/wre_core/tests/test_daemon_self_audit_loop.py` -> PASS
+- `python -m py_compile modules/infrastructure/wre_core/src/daemon_self_audit_loop.py` -> OK
+
+---
+
+### [2026-03-05] - Self-Audit Loop Expanded to Adaptive 0102 Self-Improving Remediation
+
+**WSP Protocol References**: WSP 15 (Priority Closure), WSP 48 (Recursive Self-Improvement), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention), WSP 22 (ModLog)  
+**Impact Analysis**: Upgrades daemon self-audit from static detect/queue behavior into adaptive remediation with safety-first execution, diagnostic fix handlers, and telemetry feedback.
+
+#### Changes Made
+
+- `src/daemon_self_audit_loop.py`:
+  - Added adaptive fix recommendation scoring using persisted fix outcome stats (`fix_stats`) for continuous improvement across restarts.
+  - Added new policy-bound safe handlers:
+    - `diagnose_microphone_device` (writes structured diagnostics report)
+    - `verify_dae_event_store` (SQLite integrity + duplicate sequence checks with report output)
+  - Hardened gateway start dispatch path:
+    - default `shell=False` execution
+    - optional legacy shell mode behind `OPENCLAW_SELF_AUDIT_ALLOW_SHELL_START_CMD=1`
+  - Added WRE telemetry counter emission:
+    - `self_audit_events_total`
+    - `self_audit_auto_fix_attempts`
+    - `self_audit_auto_fix_success`
+    - `self_audit_auto_fix_fail`
+- `.env.example`:
+  - Expanded self-audit defaults to include safe fix allowlist entries and telemetry controls.
+- `config/WRE_RUNBOOK.md`:
+  - Documented new self-audit policy/env controls.
+- `tests/test_daemon_self_audit_loop.py`:
+  - Added coverage for event-store verification fix path.
+  - Added state persistence test for adaptive fix stats.
+
+#### Validation
+
+- `pytest -q modules/infrastructure/wre_core/tests/test_daemon_self_audit_loop.py` -> **4 passed**
+- `python -m py_compile modules/infrastructure/wre_core/src/daemon_self_audit_loop.py` -> **OK**
+
+---
+
+### [2026-03-05] - WSP 15 Security Gap Closure (P0/P1) for 24x7 0102 Runtime
+
+**WSP Protocol References**: WSP 15 (MPS Prioritization), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention), WSP 71 (Supply-Chain Safety), WSP 95 (Skill Safety), WSP 22 (ModLog)  
+**Impact Analysis**: Closes priority security gaps by adding runtime skill-scan gates, strict CodeAct shell controls, dependency CVE startup preflight, signed manifest checks, and continuous daemon self-audit.
+
+#### Changes Made
+
+- `wre_master_orchestrator/src/wre_master_orchestrator.py`:
+  - Added per-skill Cisco scan gate before `_execute_skill_once` execution.
+  - Added `WRE_SKILL_SCAN_*` policy/env controls and telemetry counters.
+- `src/codeact_executor.py`:
+  - Removed `shell=True` execution path; now tokenized command execution with `shell=False`.
+  - Added strict allowlist mode + shell metacharacter blocking (`WRE_CODEACT_STRICT`).
+- `src/dependency_security_preflight.py` (NEW) + `main.py` integration:
+  - Added Python/Node/Rust dependency preflight with TTL cache and enforceable startup gate.
+- `src/skill_manifest_guard.py` (NEW):
+  - Added hash manifest verification and optional HMAC signature verification for skill files.
+- `src/daemon_self_audit_loop.py` (NEW) + `main.py` integration:
+  - Added continuous daemon log tailing, task creation, dedupe/cooldown, and policy-bound auto-fix dispatch.
+- Config/docs:
+  - `config/wre_defaults.env`, `config/WRE_RUNBOOK.md`, `.env.example` updated with new controls.
+
+#### Validation
+
+- New/updated tests passing:
+  - `test_codeact_executor_hardening.py`
+  - `test_dependency_security_preflight.py`
+  - `test_skill_manifest_guard.py`
+  - `test_daemon_self_audit_loop.py`
+  - existing guard suites (`test_skill_safety_guard.py`, `test_wre_master_orchestrator.py` targeted)
+
+---
+
+### [2026-03-05] - Shared DAE Preflight Now Enforces OpenClaw Security Sentinel
+
+**WSP Protocol References**: WSP 50 (Pre-Action Verification), WSP 71 (Secrets + Supply-Chain Safety), WSP 95 (Skillz Wardrobe), WSP 22 (ModLog)
+**Impact Analysis**: Closes a startup security gap where non-`main.py` DAE launchers could run dashboard checks but skip OpenClaw skill-scan preflight.
+
+#### Changes Made
+
+- `src/dae_preflight.py`:
+  - Added `_run_openclaw_security_preflight(...)` using `OpenClawSecuritySentinel`.
+  - `run_dae_preflight(...)` now executes security preflight before WRE dashboard preflight.
+  - Added support for shared env controls:
+    - `OPENCLAW_SECURITY_PREFLIGHT`
+    - `OPENCLAW_SECURITY_PREFLIGHT_ENFORCED`
+    - `OPENCLAW_SECURITY_PREFLIGHT_FORCE`
+    - `OPENCLAW_24X7`
+- `tests/test_dae_preflight_integration_guard.py`:
+  - Added regression guard requiring shared DAE preflight to include OpenClaw security gate semantics.
+- `tests/test_dae_preflight_security_behavior.py`:
+  - Added behavior tests for enforced blocking, warn-only mode, and `OPENCLAW_24X7` force-rescan defaults.
+- `config/WRE_RUNBOOK.md`:
+  - Added OpenClaw security preflight env flags to canonical feature-flag table.
+
+#### Result
+
+- All DAE launchers that already use `run_dae_preflight(...)` or `@preflight_guard(...)` now inherit both:
+  - OpenClaw security sentinel gate
+  - WRE dashboard health gate
+
+---
+
+### [2026-03-03] - Executor Dispatch + SkillTriggerMixin + Discovery Fix
+
+**WSP Protocol References**: WSP 46 (Skill Execution), WSP 96 (WRE Skills), WSP 22 (ModLog)
+**Impact Analysis**: Enables WRE to dispatch skills with `executor.py` bridges directly (bypassing Qwen), and provides a reusable mixin for DAEs to trigger domain-specific skills on cadence.
+
+#### Changes Made
+
+1. **Critical Discovery Bug Fix** (`skillz/wre_skills_discovery.py`):
+   - `discover_all_skills()` only scanned `skills/` directories — 14 modules use `skillz/`
+   - Added glob patterns for `skillz/` directories
+   - **37 production skills were invisible to WRE** — now discoverable (TOTAL=38)
+
+2. **Executor Dispatch** (`wre_master_orchestrator/src/wre_master_orchestrator.py`):
+   - Added `_try_executor_dispatch(skill_name, task)` — finds, imports, executes `executor.py`
+   - Added `_find_skill_executor(skill_name)` — scans common locations
+   - Modified `_execute_skill_once()` — checks executor before Qwen LLM fallback
+   - Skills with `executor.py` still get libido gating, A/B testing, PatternMemory, evolution
+
+3. **SkillTriggerMixin** (`src/skill_trigger.py` — NEW):
+   - Reusable mixin for DAEs to fire WRE skills by domain tag
+   - `init_skill_triggers(domain, cadence_minutes)` — configure domain and gating
+   - `fire_pending_skills()` (async) / `fire_pending_skills_sync()` — execute on cadence
+   - Lazy-loads WREMasterOrchestrator to avoid startup overhead
+   - `get_trigger_status()` for observability
+
+4. **LinkedIn Engagement Skill** (NEW — `linkedin_agent/skillz/linkedin_engagement/`):
+   - `SKILLz.md` — WRE skill definition with 13 actions, domain tags
+   - `executor.py` — bridge to `linkedin_social_adapter` with `dry_run=True` default
+
+#### Validation
+
+- Discovery: 38 skills found (up from 1)
+- SkillTriggerMixin: imports and initializes cleanly
+- Executor finder: locates `linkedin_engagement/executor.py`
+
+---
+
 ### [2026-02-24] - DB-First Daily Snapshot Export (SQLite -> JSON)
+
 **WSP Protocol References**: WSP 22, WSP 50, WSP 60
 **Impact Analysis**: Keeps SQLite as runtime source of truth while enabling scheduled JSON exports for audits/watch reports.
 
 #### Changes Made
+
 - `src/dashboard_snapshot_export.py` (NEW):
   - Added `export_dashboard_snapshot()` for timestamped + `latest.json` exports.
   - Added retention pruning via `prune_old_snapshots()`.
@@ -23,16 +195,19 @@
   - Added export flags and daily export command examples.
 
 #### Operational Notes
+
 - Runtime metrics and alert decisions remain DB-backed (`PatternMemory`).
 - JSON is export-only for observability/audits.
 
 ---
 
 ### [2026-02-19] - WRE Runtime/API Hardening + Docs Alignment
+
 **WSP Protocol References**: WSP 46, WSP 95, WSP 96, WSP 50, WSP 22
 **Impact Analysis**: Closed critical drift between claimed WRE behavior and executable behavior; restored reliability for skills discovery/execution and test isolation.
 
 #### Changes Made
+
 - `wre_master_orchestrator/src/wre_master_orchestrator.py`:
   - Added backward-compatible plugin registration signatures:
     - `register_plugin(plugin_instance)`
@@ -53,6 +228,7 @@
   - Cooldown gating adjusted to avoid throttling steady-state runtime loops after warmup.
 
 #### Validation
+
 - `67 passed` across:
   - `test_wre_skills_discovery.py`
   - `test_pattern_memory.py`
@@ -62,10 +238,12 @@
 ---
 
 ### [2026-01-17] - Memory Preflight uses HoloIndex Bundle JSON (Canonical Retrieval)
+
 **WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)  
 **Impact Analysis**: Makes HoloIndex the canonical, machine-readable retrieval emitter (`--bundle-json`) for WRE memory preflight; Tier-0 enforcement now executes from bundle output rather than ad-hoc stdout parsing.
 
 #### Changes Made
+
 - `recursive_improvement/src/memory_preflight.py`:
   - Added `WRE_MEMORY_USE_HOLO_BUNDLE` (default: true).
   - Preflight now calls `holo_index.py --bundle-json` and translates the result into a structured `MemoryBundle`.
@@ -73,10 +251,12 @@
   - Added `ROADMAP.md` into Tier-1 optional artifacts (retrieval visibility, not hard gate).
 
 ### [2026-01-11] - Memory Preflight Guard (WSP_CORE Tier-0 Enforcement)
+
 **WSP Protocol References**: WSP_CORE (WSP Memory System), WSP_00 Section 3.4 (Post-Awakening Operational Protocol), WSP 50 (Pre-Action Verification), WSP 87 (Code Navigation), WSP 22 (ModLog Updates)
 **Impact Analysis**: Automates Tier-0 artifact enforcement as a hard gate before code-changing operations. Turns HoloIndex retrieval from advisory to mandatory.
 
 #### Changes Made
+
 1. **Created `memory_preflight.py`** (500+ lines):
    - `MemoryPreflightGuard` class with tiered retrieval (Tier 0/1/2)
    - `TIER_DEFINITIONS` mirroring WSP_CORE canonical spec
@@ -101,6 +281,7 @@
    - Updated Section 5.1 with Core Operational Chain
 
 #### Architecture Realized
+
 ```
 HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (Safe Writes)
                                       ↓
@@ -110,13 +291,15 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
 ```
 
 #### Environment Variables
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `WRE_MEMORY_PREFLIGHT_ENABLED` | true | Enable/disable preflight checks |
-| `WRE_MEMORY_AUTOSTUB_TIER0` | false | Auto-create missing Tier-0 stubs |
-| `WRE_MEMORY_ALLOW_DEGRADED` | false | Allow proceed with warnings |
+
+| Variable                       | Default | Purpose                          |
+| ------------------------------ | ------- | -------------------------------- |
+| `WRE_MEMORY_PREFLIGHT_ENABLED` | true    | Enable/disable preflight checks  |
+| `WRE_MEMORY_AUTOSTUB_TIER0`    | false   | Auto-create missing Tier-0 stubs |
+| `WRE_MEMORY_ALLOW_DEGRADED`    | false   | Allow proceed with warnings      |
 
 #### Validation
+
 - `python -m py_compile memory_preflight.py` - PASS
 - Smoke test against known module - PASS
 - Block behavior verified - PASS
@@ -125,10 +308,12 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
 ---
 
 ### [2026-01-07] - Commenting Submenu (012 → Comment DAE Control Plane)
+
 **WSP Protocol References**: WSP 60 (Module Memory), WSP 54 (DAE Operations), WSP 22 (ModLog Updates)
 **Impact Analysis**: Adds a lightweight pathway for 012 to publish “broadcast updates” consumed by the commenting DAEs without code edits.
 
 #### Changes Made
+
 - `run_wre.py`: Added `commenting` interactive command that opens a submenu to:
   - toggle broadcast enablement
   - set promo handles (e.g., `@NewChannel`)
@@ -137,23 +322,26 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
 - Writes to `modules/communication/video_comments/memory/commenting_broadcast.json` via the video_comments control-plane API (no wre_core-owned state).
 
 ### [2026-01-11] - WRE Memory Start-of-Work Loop Hook (Structured Retrieval + Evaluation)
+
 **WSP Protocol References**: WSP_CORE (WSP Memory System), WSP 60 (Module Memory Architecture), WSP 87 (Code Navigation), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)
 **Impact Analysis**: Makes “Holo-first structured memory retrieval + evaluation” executable inside WRE integration code paths (CLI-driven), enabling orchestration to gate work on missing artifacts.
 
 #### Changes Made
+
 - `recursive_improvement/src/holoindex_integration.py`:
   - Added `retrieve_structured_memory()` for module docs (`README/INTERFACE/ROADMAP/ModLog/tests/README/tests/TestModLog/memory/README/requirements.txt`).
   - Added `evaluate_retrieval_quality()` with proxy metrics (missing artifacts + duplication rate).
   - Added `start_of_work_loop()` bundle to unify structured memory retrieval + quality evaluation. Improvement iteration remains an explicit hook for future plugin-level implementation.
 
-
 ### [2025-10-25] - Skills Registry v2 & Metadata Fixes (COMPLETE)
+
 **Date**: 2025-10-25
 **WSP Protocol References**: WSP 96 (WRE Skills), WSP 50 (Pre-Action Verification), WSP 22 (ModLog Updates)
 **Impact Analysis**: All 16 SKILL.md files now discoverable with valid metadata
 **Enhancement Tracking**: Fixed skill discovery blockers, created loader-compatible registry
 
 #### Changes Made
+
 1. **Fixed 11 SKILL.md files missing YAML frontmatter**:
    - Added agents field to all prototype skills
    - Skills: unicode_daemon_monitor, qwen_cleanup_strategist, qwen_roadmap_auditor, qwen_training_data_miner
@@ -173,12 +361,14 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
    - Fixed: KeyError 'location' by using absolute paths (bypasses loader path joining bug)
 
 #### Results
+
 - Discovery: 16/16 skills with valid metadata
 - Registry: WRESkillsLoader.load_skill() working
 - Agents: 12 Qwen, 9 Gemma skills
 - Token efficiency: 800 tokens (micro-sprints) vs 15K+ (analysis)
 
 #### Issues Fixed
+
 - Registry format mismatch (location field)
 - Circular dependency (OrchestratorPlugin)
 - Missing YAML frontmatter (11 skills)
@@ -186,12 +376,14 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
 ---
 
 ### [2025-10-25] - Phase 3: HoloDAE Integration & Autonomous Skill Execution (COMPLETE)
+
 **Date**: 2025-10-25
 **WSP Protocol References**: WSP 96 (WRE Skills v1.3), WSP 77 (Agent Coordination), WSP 80 (DAE Protocol)
 **Impact Analysis**: HoloDAE monitoring loop now autonomously triggers WRE skills based on health checks
 **Enhancement Tracking**: Completed Phase 3 of WSP 96 v1.3 implementation - autonomous execution chain operational
 
 #### Changes Made
+
 1. **Added health check methods to holodae_coordinator.py** (230+ lines):
    - `check_git_health()` (lines 1854-1911) - Detects uncommitted changes, time since last commit
      - Triggers qwen_gitpush if >5 files and >1 hour
@@ -213,8 +405,8 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
    - Logs: WRE-TRIGGER, WRE-SUCCESS (with fidelity), WRE-THROTTLE, WRE-ERROR
 
 4. **Wired WRE into monitoring loop** (lines 1067-1070):
-   - After actionable events detected, calls _check_wre_triggers()
-   - If triggers present, calls _execute_wre_skills()
+   - After actionable events detected, calls \_check_wre_triggers()
+   - If triggers present, calls \_execute_wre_skills()
    - Complete autonomous chain: HoloDAE → WRE → GitPushDAE
 
 5. **Created test_phase3_wre_integration.py**:
@@ -224,6 +416,7 @@ HoloIndex (Retrieval Memory) ←→ WRE (Enforcement Gate) ←→ AI_Overseer (S
    - test_phase3_complete() - Final validation runner
 
 #### Test Results
+
 ```
 [SUCCESS] PHASE 3 COMPLETE
 ✅ Health check methods (git, daemon, WSP)
@@ -238,7 +431,9 @@ Real-world validation:
 ```
 
 #### Architecture
+
 Phase 3 completes the autonomous execution chain:
+
 1. **HoloDAE Monitoring Loop** - Runs continuous monitoring
 2. **Health Check Methods** - Detect actionable conditions
 3. **WRE Trigger Detection** - Analyze conditions for skill triggers
@@ -246,12 +441,14 @@ Phase 3 completes the autonomous execution chain:
 5. **GitPushDAE** - Autonomous commits (future integration)
 
 #### Expected Outcomes
+
 - HoloDAE autonomously triggers qwen_gitpush when uncommitted changes accumulate
 - Libido monitor prevents skill spam (respects cooldowns)
 - Pattern memory learns from execution outcomes
 - 0102 supervision via force override flag
 
 #### Next Steps
+
 - Wire GitPushDAE to WRE orchestrator for autonomous commits
 - Add real daemon health monitoring (process checks)
 - Enhance WSP compliance checks with violation detection
@@ -260,16 +457,18 @@ Phase 3 completes the autonomous execution chain:
 ---
 
 ### [2025-10-24] - Phase 2: Filesystem Skills Discovery & Local Inference (COMPLETE)
+
 **Date**: 2025-10-24
 **WSP Protocol References**: WSP 96 (WRE Skills), WSP 50 (Pre-Action Verification), WSP 15 (MPS), WSP 5 (Test Coverage)
 **Impact Analysis**: Filesystem-based skills discovery + local Qwen inference enables autonomous skill execution
 **Enhancement Tracking**: Completed Phase 2 of WSP 96 v1.3 implementation
 
 #### Changes Made
+
 1. **Created wre_skills_discovery.py** (416 lines):
    - WRESkillsDiscovery class - Filesystem scanner (not registry-dependent)
    - DiscoveredSkill dataclass - Metadata container
-   - discover_all_skills() - Scans modules/*/*/skillz/**/SKILLz.md
+   - discover_all_skills() - Scans modules/_/_/skillz/\*\*/SKILLz.md
    - discover_by_agent() - Filter by agent type (qwen, gemma, grok, ui-tars)
    - discover_by_module() - Filter by module path
    - discover_production_ready() - Filter by fidelity threshold
@@ -314,6 +513,7 @@ Phase 3 completes the autonomous execution chain:
    - Updated requirements.txt to document llama-cpp-python dependency
 
 #### Expected Outcomes (ALL ACHIEVED)
+
 - ✅ Dynamic skill discovery without manual registry updates
 - ✅ Automatic detection of new SKILL.md files
 - ✅ Promotion state inferred from filesystem location
@@ -323,6 +523,7 @@ Phase 3 completes the autonomous execution chain:
 - ✅ Gemma validation integrated with execution pipeline
 
 #### Testing (WSP 5 Compliance)
+
 - ✅ test_wre_skills_discovery.py: 20+ tests, all passing
 - ✅ test_qwen_inference_wiring.py: 4 integration tests, all passing
 - ✅ Manual testing: 16 files discovered, 5 valid skills
@@ -332,30 +533,35 @@ Phase 3 completes the autonomous execution chain:
 - ✅ Verified Qwen inference integration with fallback
 
 #### Known Limitations (By Design)
+
 - 11 SKILL.md files missing **Agents** field in frontmatter (data quality issue)
 - Production-ready filtering returns 0 (no fidelity history yet - expected)
 - Qwen inference requires llama-cpp-python + model files (graceful fallback implemented)
 - Currently supports Qwen agent only (Gemma/Grok/UI-TARS return mock - Phase 3)
 
 #### Phase 2 Status: COMPLETE ✅
+
 - MPS=7: Update documentation (COMPLETED)
 - MPS=6: Add filesystem watcher for hot reload (COMPLETED)
 - MPS=10: Create Phase 2 tests (COMPLETED)
 - MPS=21: Wire execute_skill() to local Qwen inference (COMPLETED)
 
 #### Next Steps (Phase 3)
+
 - Implement Convergence Loop (autonomous skill promotion based on fidelity)
 - Add Gemma/Grok/UI-TARS inference support
 - MCP server integration (if remote inference needed)
 - Real-world skill execution validation
 
 ### [2025-10-24] - Phase 1: Libido Monitor & Pattern Memory Implementation
+
 **Date**: 2025-10-24
 **WSP Protocol References**: WSP 96 (WRE Skills), WSP 48 (Recursive Improvement), WSP 60 (Module Memory), WSP 5 (Test Coverage)
 **Impact Analysis**: Critical infrastructure for WRE Skills Wardrobe system
 **Enhancement Tracking**: Completed Phase 1 of WSP 96 v1.3 implementation
 
 #### Changes Made
+
 1. **Created libido_monitor.py** (369 lines):
    - GemmaLibidoMonitor class - Pattern frequency sensor
    - LibidoSignal enum (CONTINUE, THROTTLE, ESCALATE)
@@ -393,6 +599,7 @@ Phase 3 completes the autonomous execution chain:
    - Documented: No heavy ML deps (Qwen/Gemma via MCP servers)
 
 #### Expected Outcomes
+
 - Gemma validates Qwen step fidelity in <10ms per step
 - Pattern memory stores outcomes for recursive learning
 - Skill execution frequency controlled by libido monitor
@@ -400,12 +607,14 @@ Phase 3 completes the autonomous execution chain:
 - Convergence to >90% fidelity through execution-based learning
 
 #### Testing
+
 - test_libido_monitor.py: 20+ tests covering all signal logic
 - test_pattern_memory.py: 25+ tests covering SQLite operations
 - test_wre_master_orchestrator.py: 15+ tests covering integration
 - All tests use pytest fixtures, mocking, and assertions
 
 #### Next Steps
+
 - Wire execute_skill() to actual Qwen/Gemma inference (currently mocked)
 - Implement Phase 2: Skills Discovery (filesystem scanning, validation)
 - Implement Phase 3: Convergence Loop (autonomous promotion pipeline)
@@ -413,12 +622,14 @@ Phase 3 completes the autonomous execution chain:
 - Verify graduated autonomy: 0-10 executions → 100+ → 500+ convergence
 
 ### [2025-09-16] - Activated WRE Learning Loop
+
 **Date**: 2025-09-16
 **WSP Protocol References**: WSP 48 (Recursive Improvement), WSP 27 (DAE Architecture)
 **Impact Analysis**: Critical activation of dormant learning system
 **Enhancement Tracking**: Connected DAEs to recursive learning
 
 #### = Changes Made
+
 1. **Created wre_integration.py**:
    - Bridge between DAEs and RecursiveLearningEngine
    - Simple API: record_error(), record_success(), get_optimized_approach()
@@ -437,17 +648,54 @@ Phase 3 completes the autonomous execution chain:
    - Success tracking for initialization
 
 #### Expected Outcomes
+
 - Errors will be recorded and patterns extracted
 - Solutions will be suggested for known patterns
 - Token usage will decrease as patterns are learned
 - System will improve without manual intervention
 
 #### Testing
+
 - WRE integration imports successfully
 - Error recording creates pattern files
 - Success tracking updates metrics
 
 #### Next Steps
+
 - Monitor memory/ directories for pattern accumulation
 - Verify token savings metrics
 - Extend to other DAEs (LinkedIn, X, etc.)
+
+### [2026-03-06] - Dependency Security Preflight Node Multi-Lock Scope
+
+**Date**: 2026-03-06
+**WSP Protocol References**: WSP 15 (MPS), WSP 48 (Recursive Improvement)
+**Impact Analysis**: Expands startup CVE coverage from single root lockfile to full repo lockfile inventory.
+**Enhancement Tracking**: Dependency preflight + targeted regression tests.
+
+#### Changes Made
+
+1. **Expanded Node audit discovery**:
+   - Added lockfile enumeration helper to discover all `package-lock.json` files.
+   - Added `OPENCLAW_DEP_SECURITY_NODE_LOCK_SCOPE` env flag (`all` default, `root` optional).
+   - Excluded `.git`, `.worktrees`, and `node_modules` paths from discovery.
+   - Excludes hidden top-level nested worktrees (for example `.feature_clean`) to prevent duplicate scans.
+
+2. **Hardened Node audit execution**:
+   - Changed Node audit invocation to `npm audit --json --package-lock-only --omit=dev`.
+   - Executes audit in each lockfile directory and aggregates counts into global totals.
+   - Stores per-target check metadata in preflight status (`target` path).
+   - Added Windows-safe tool resolution (`npm.cmd` / `cargo.exe`) to avoid `WinError 2` false tool failures.
+
+3. **Status payload improvements**:
+   - Added `node_lock_scope` and `node_lock_count` to preflight output for observability.
+   - Added `max_unknown` threshold support (`OPENCLAW_DEP_SECURITY_MAX_UNKNOWN`) for severity-less advisories.
+   - Startup preflight line now prints `unknown=` alongside `critical`/`high`.
+
+4. **pip-audit parser hardening**:
+   - Added support for modern pip-audit JSON schema (`{"dependencies":[...],"fixes":[...]}`).
+   - Unknown-severity vulnerabilities are now counted per-vulnerability (instead of collapsing to parser noise).
+
+5. **Regression coverage**:
+   - Updated existing tests for `_run(..., cwd=...)` support.
+   - Added multi-lock aggregation test validating scope, lock count, and aggregated severity totals.

@@ -320,8 +320,9 @@ If Qwen or Gemma agents are not available, methods fall back to:
 ### Environment Variables
 ```bash
 # Agent Configuration
-QWEN_MODEL_PATH="models/qwen-1.5b-chat.gguf"
-GEMMA_MODEL_PATH="models/gemma-2b.gguf"
+LOCAL_MODEL_ROOT="E:/LM_studio/models/local"
+LOCAL_MODEL_GENERAL_DIR="E:/LM_studio/models/local/qwen3-4b"
+LOCAL_MODEL_TRIAGE_DIR="E:/LM_studio/models/local/gemma-270m"
 PQN_RESEARCH_TIMEOUT=300  # seconds
 
 # Performance Tuning

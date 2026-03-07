@@ -9,6 +9,15 @@
 Provide deterministic market + lifecycle simulation that mirrors FoundUps runtime
 contracts and supports operator decisions (CABR/PoB, liquidity, allocation policy).
 
+## Recent Progress (2026-02-22)
+- Added simulator backend route toggle for Qwen lane:
+  - `SIM_QWEN_BACKEND=local|ironclaw|wre_ironclaw`
+- Enables direct IronClaw and WRE->IronClaw scenario modeling without changing agent behavior code.
+
+Related strategy docs:
+- `modules/foundups/docs/OCCAM_LAYERED_EXECUTION_PLAN.md`
+- `modules/foundups/docs/FOUNDUPS_PAVS_IRONCLAW_AGENT_BUILDER_DIGITAL_TWIN_ROADMAP.md`
+
 ## Prototype Tranches
 
 ### Tranche S1 - Deterministic Core (Complete)
@@ -45,12 +54,19 @@ contracts and supports operator decisions (CABR/PoB, liquidity, allocation polic
 - Optimizer feedback loops into parameter scenarios.
 - Operator runbook-grade metrics packs.
 
+### Tranche S6 - IronClaw Agent Builder + Digital Twin Lane (Planned)
+- Runtime parity validation against existing OpenClaw ingress contracts.
+- Agent-builder scenario pack (template -> build -> verify -> publish) with deterministic evidence.
+- Digital Twin scenario pack with role tiers, containment behavior, and observability assertions.
+- Accounting linkage checks: runtime usage -> CC/UPS lane attribution.
+
 ## WSP 15 Priority Queue
 
 ### P0
 1. Canonical DEX event contract parity with `agent_market`.
 2. SSE/API member gate hardening.
 3. Concatenated integration tests with `moltbot_bridge` and `agent_market`.
+4. IronClaw integration parity tests for agent-builder and Digital Twin flows.
 
 ### P1
 1. Read-model outputs for control panel.

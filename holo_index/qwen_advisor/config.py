@@ -9,6 +9,7 @@ import io
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 
 
 # === UTF-8 ENFORCEMENT (WSP 90) ===
@@ -31,7 +32,7 @@ class QwenAdvisorConfig:
     editing source (WSP 87 navigation compliance).
     """
 
-    model_path: Path = Path(os.getenv("HOLO_QWEN_MODEL", "E:/HoloIndex/models/qwen-coder-1.5b.gguf"))
+    model_path: Path = resolve_code_model_path()
     telemetry_path: Path = Path(os.getenv("HOLO_QWEN_TELEMETRY", "E:/HoloIndex/indexes/holo_usage.json"))
     max_tokens: int = int(os.getenv("HOLO_QWEN_MAX_TOKENS", "512"))
     temperature: float = float(os.getenv("HOLO_QWEN_TEMPERATURE", "0.2"))

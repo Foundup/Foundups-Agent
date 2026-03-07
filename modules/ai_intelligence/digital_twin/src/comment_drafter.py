@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 from .schemas import CommentDraft, Platform
 from .style_guardrails import StyleGuardrails
 from .voice_memory import VoiceMemory
@@ -26,8 +27,8 @@ from .voice_memory import VoiceMemory
 logger = logging.getLogger(__name__)
 
 # Default model paths (WSP 84: follows gemma_rag_inference.py)
-# Qwen 1.5B for generation (better reasoning), Gemma 270M is for classification
-DEFAULT_QWEN_PATH = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+# Local code model for generation (Qwen coder default).
+DEFAULT_QWEN_PATH = resolve_code_model_path()
 
 
 class LocalLLM:
@@ -51,7 +52,7 @@ class LocalLLM:
 
         Args:
             mock_mode: If True, return deterministic mock responses (for tests)
-            model_path: Path to Qwen GGUF model (default: E:/HoloIndex/models/qwen-coder-1.5b.gguf)
+            model_path: Path to local code GGUF model (default: LOCAL_MODEL_CODE_*)
         """
         self.mock_mode = mock_mode
         self.model_path = model_path or DEFAULT_QWEN_PATH
@@ -114,7 +115,9 @@ class LocalLLM:
         self,
         prompt: str,
         context_snippets: List[str],
-        max_tokens: int = 150
+        max_tokens: int = 150,
+        platform: str = "youtube",
+        constraints: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Generate comment text from prompt + context using Qwen 1.5B.
@@ -130,8 +133,14 @@ class LocalLLM:
         if self.mock_mode:
             return self._mock_generate(prompt)
 
-        # Build Qwen prompt with RAG context - optimized for short comments
-        system_prompt = """Write a 1-2 sentence reply as 012 (Michael Trauth).
+        platform_name = str(platform or "youtube").strip().lower()
+        if platform_name == "linkedin":
+            system_prompt = """Write a concise LinkedIn reply as 0102 operating in 012's voice.
+Style: Direct, technical, grounded, useful.
+Add one concrete point. No empty praise. No filler words.
+No hashtags unless explicitly requested. Max 90 words."""
+        else:
+            system_prompt = """Write a 1-2 sentence reply as 012 (Michael Trauth).
 Style: Direct, personal, helpful. Share real experience.
 NO filler words. NO "Sure!" or "Great question!".
 Max 50 words."""
@@ -143,7 +152,15 @@ Max 50 words."""
                 f"- {s[:80]}" for s in context_snippets[:2]
             )
 
-        full_prompt = f"{system_prompt}{context_str}\n\nUser question: {prompt}\n\n012 reply:"
+        constraint_str = ""
+        if constraints:
+            constraint_lines = [f"- {k}: {v}" for k, v in constraints.items()]
+            constraint_str = "\n\nConstraints:\n" + "\n".join(constraint_lines[:8])
+
+        full_prompt = (
+            f"{system_prompt}{context_str}{constraint_str}\n\n"
+            f"User question: {prompt}\n\n012 reply:"
+        )
 
         try:
             output = self._llm(
@@ -291,10 +308,18 @@ class CommentDrafter:
         logger.info(f"[DRAFTER] Retrieved {len(snippets)} voice memory snippets for context")
         
         # 2. Build prompt
-        prompt = self._build_prompt(thread_context, snippets, constraints)
-        
+        prompt = self._build_prompt(thread_context, snippets, constraints, platform)
+
         # 3. Generate with LLM
-        raw_draft = self.llm.generate(prompt, snippets)
+        try:
+            raw_draft = self.llm.generate(
+                prompt,
+                snippets,
+                platform=platform,
+                constraints=constraints,
+            )
+        except TypeError:
+            raw_draft = self.llm.generate(prompt, snippets)
         
         # 4. Apply guardrails
         cleaned_text, violations = self.guardrails.enforce(raw_draft)
@@ -327,16 +352,30 @@ class CommentDrafter:
         self,
         thread_context: str,
         snippets: List[str],
-        constraints: Dict[str, Any]
+        constraints: Dict[str, Any],
+        platform: str,
     ) -> str:
         """Build LLM prompt with context."""
-        prompt_parts = [
-            "You are 012's digital twin. Write a comment in 012's voice.",
-            "",
-            "Thread context:",
-            thread_context,
-            "",
-        ]
+        platform_name = str(platform or "youtube").strip().lower()
+        if platform_name == "linkedin":
+            prompt_parts = [
+                "You are 0102, drafting a LinkedIn reply through 012's account.",
+                "Write like a real operator: concrete, specific, and useful.",
+                "Do not write generic praise. Add a point, counterpoint, or extension.",
+                "Refer to FoundUps, Holo Index, or 0102 only if it genuinely advances the discussion.",
+                "",
+                "LinkedIn post context:",
+                thread_context,
+                "",
+            ]
+        else:
+            prompt_parts = [
+                "You are 012's digital twin. Write a comment in 012's voice.",
+                "",
+                "Thread context:",
+                thread_context,
+                "",
+            ]
         
         if snippets:
             prompt_parts.extend([
@@ -352,7 +391,10 @@ class CommentDrafter:
                 "",
             ])
         
-        prompt_parts.append("Write a comment (max 300 chars, friendly expert tone):")
+        if platform_name == "linkedin":
+            prompt_parts.append("Write the LinkedIn reply (max 300 chars, direct expert tone):")
+        else:
+            prompt_parts.append("Write a comment (max 300 chars, friendly expert tone):")
         
         return "\n".join(prompt_parts)
     

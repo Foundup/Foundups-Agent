@@ -242,8 +242,20 @@ def create_stub_index_json(
     - later enrichment by full indexers (Gemini/Whisper/browser) without losing linkage
 
     Enhanced to extract topics and key points from title for better description context.
+    Channel-aware: Uses channel_key to set appropriate categories and summaries.
     """
-    cats = categories[:] if categories else ["FFCPLN", "Music", "Shorts"]
+    # Channel-aware default categories
+    channel_defaults = {
+        "move2japan": (["FFCPLN", "Music", "Japan", "Travel"], "Move2Japan FFCPLN short"),
+        "foundups": (["pAVS", "AI", "Startup", "OpenClaw", "Agents"], "FoundUps pAVS short"),
+        "undaodu": (["Mindfulness", "Spirituality", "Zen", "Meditation"], "UnDaoDu mindfulness short"),
+        "antifafm": (["FFCPLN", "Music", "Political", "Shorts"], "antifaFM FFCPLN short"),
+    }
+
+    channel_lower = (channel_key or "").lower()
+    default_cats, summary_prefix = channel_defaults.get(channel_lower, (["FFCPLN", "Music", "Shorts"], "FFCPLN short"))
+
+    cats = categories[:] if categories else default_cats
 
     # Extract topics from title for richer metadata
     tops = topics[:] if topics else _extract_topics_from_title(title)
@@ -251,9 +263,9 @@ def create_stub_index_json(
     # Generate key point from title for description context
     key_points = _generate_key_point_from_title(title)
 
-    summary = "FFCPLN music short (index stub; enrich later)."
+    summary = f"{summary_prefix} (index stub; enrich later)."
     if isinstance(title, str) and title.strip():
-        summary = f"FFCPLN music short: {title.strip()}"
+        summary = f"{summary_prefix}: {title.strip()}"
 
     return {
         "video_id": video_id,

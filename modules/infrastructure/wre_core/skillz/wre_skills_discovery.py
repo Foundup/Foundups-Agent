@@ -71,13 +71,16 @@ class WRESkillsDiscovery:
         discovered_skills = []
 
         # Scan patterns - SKILLz.md first (preferred), then SKILL.md (legacy)
+        # Both skills/ and skillz/ directory names are scanned (some modules use skillz/)
         scan_patterns = [
             # SKILLz.md - new naming convention
             "modules/*/*/skills/**/SKILLz.md",    # Production skills (domain/module/skills/)
+            "modules/*/*/skillz/**/SKILLz.md",    # Production skills (domain/module/skillz/)
             ".claude/skills/**/SKILLz.md",         # Prototype skills
             "holo_index/skills/**/SKILLz.md",      # HoloIndex skills
             # SKILL.md - legacy (backward compatibility)
             "modules/*/*/skills/**/SKILL.md",    # Legacy production skills
+            "modules/*/*/skillz/**/SKILL.md",    # Legacy production skills (skillz/)
             ".claude/skills/**/SKILL.md",         # Legacy prototype skills
             "holo_index/skills/**/SKILL.md",      # Legacy HoloIndex skills
         ]

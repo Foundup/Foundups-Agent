@@ -141,8 +141,8 @@ class PlatformPostingService:
                     duration=time.time() - start_time
                 )
 
-            # Prepare post content
-            post_content = self._format_linkedin_post(title, url)
+            # Prepare post content (pass linkedin_page for channel-specific templates)
+            post_content = self._format_linkedin_post(title, url, linkedin_page)
 
             # Run anti-detection poster
             self.logger.info(f"[ROCKET] Launching anti-detection poster for {page_name} (browser: {self.browser_config['linkedin']})")
@@ -358,18 +358,53 @@ class PlatformPostingService:
         else:
             return self.browser_config['x_geozei']
 
-    def _format_linkedin_post(self, title: str, url: str) -> str:
+    def _format_linkedin_post(self, title: str, url: str, linkedin_page: str = None) -> str:
         """
         Format content for LinkedIn post
 
         Args:
             title: Stream title
             url: Stream URL
+            linkedin_page: LinkedIn page ID (for channel-specific formatting)
 
         Returns:
             Formatted post content
         """
-        # LinkedIn allows up to 3000 characters
+        # Check if this is an antifaFM post (GeoZai page + antifaFM content)
+        is_antifafm = (
+            'antifafm' in title.lower() or
+            'antifa' in title.lower() or
+            'ffcpln' in title.lower() or
+            linkedin_page == "104834798"  # GeoZai page handles antifaFM
+        )
+
+        if is_antifafm:
+            # Use antifaFM skill templates
+            try:
+                from modules.platform_integration.social_media_orchestrator.skillz.antifafm_linkedin_post.executor import generate_post
+                # Extract video_id from URL
+                video_id = url.split("v=")[-1].split("&")[0] if "v=" in url else "live"
+                result = generate_post(video_id, title)
+                content = result.get("post_content", "")
+                if content:
+                    self.logger.info(f"[FFCPLN] Using antifaFM template: {result.get('template_used')}")
+                    return content
+            except Exception as e:
+                self.logger.warning(f"[FFCPLN] Skill failed, using fallback: {e}")
+
+            # Fallback antifaFM template
+            content = f"""🔴 LIVE NOW: antifaFM - 24/7 Music for Fighting Fascism
+
+The resistance has a soundtrack. 160+ songs for democracy.
+
+🎵 Tune in: {url}
+
+#FFCPLN #Democracy2026 #Resistance #AntiFascist #Music
+
+👆 2026 is the year. Join us."""
+            return content
+
+        # Default LinkedIn template
         content = f"🔴 LIVE NOW: {title}\n\n"
         content += f"Join the conversation: {url}\n\n"
         content += "#LiveStream #Tech #Coding #AI #Innovation"

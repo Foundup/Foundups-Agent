@@ -10,6 +10,498 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-03-07 - RotationSupervisor Integration + AI Overseer Stall Detection
+
+**By:** 0102
+**WSP References:** WSP 77 (Agent Coordination), WSP 91 (DAEmon Observability), WSP 15 (MPS Scoring)
+
+### Problem Analysis
+
+Deep dive analysis revealed the rotation system stalls because:
+1. **RotationSupervisor EXISTS** with complete heartbeat/stall detection (598 lines)
+2. **But NOT wired** into auto_moderator_dae.py main loop
+3. **AI Overseer** has no trigger to invoke rotation CLI when stalls detected
+
+### Architecture Gap
+
+```
+CURRENT (stalls silently):
+  _browser_engagement_loop() → multi_channel_coordinator.run_browser_engagement()
+  └─ Nested async loops that can hang indefinitely (no stall detection)
+
+NEW (auto-recovers):
+  _browser_engagement_loop() → RotationSupervisor.run_rotation()
+  └─ Spawns CLI task → monitors heartbeat → kills on stall → rotates next
+  └─ Emits breadcrumb on stall → AI Overseer detects → triggers CLI rotation
+```
+
+### Changes Applied
+
+**1. auto_moderator_dae.py (lines 1381-1435):**
+```python
+# NEW: Environment toggle for supervised rotation
+use_rotation_supervisor = _env_truthy("YT_USE_ROTATION_SUPERVISOR", "false")
+
+if use_rotation_supervisor:
+    supervisor = RotationSupervisor(browser=browser_name, ...)
+    result = await supervisor.run_rotation(operation=RotationOperation.COMMENTS)
+    # Emits stall_detected breadcrumb on failure
+```
+
+**2. youtube_daemon_monitor.json (signal_patterns):**
+```json
+"rotation_stall_detected": {
+  "regex": "stall_detected|Heartbeat STALE|rotation stalled|KILLED.*rotating",
+  "qwen_action": "auto_fix",
+  "fix_action": "trigger_next_rotation",
+  "fix_commands": {...}
+}
+```
+
+**3. daemon_monitor_mixin.py:**
+- Added `trigger_next_rotation` fix handler (lines 440-494)
+- Added `check_rotation_stalls()` method for proactive breadcrumb monitoring
+
+### Activation
+
+```bash
+# Enable supervised rotation (opt-in)
+export YT_USE_ROTATION_SUPERVISOR=true
+
+# Configure timeouts
+export YT_ROTATION_HEARTBEAT_TIMEOUT=60   # Kill after 60s stale heartbeat
+export YT_ROTATION_TASK_TIMEOUT=300       # 5 min max per channel
+```
+
+### Verification
+
+1. **Test stall detection**: Kill a running comment task → supervisor should detect heartbeat stale → rotate to next channel
+2. **Test AI Overseer trigger**: Check `check_rotation_stalls()` detects breadcrumbs and spawns CLI rotation
+3. **Test full flow**: Chrome comments → Edge comments → Shorts → Indexing with automatic stall recovery
+
+---
+
+## 2026-03-07 - Managing Director /fuc Fix + /help Cooldown
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 64 (Permission Verification), WSP 77 (Agent Coordination)
+
+### Problem Analysis
+
+012 reported `/fuc invite` not working for Managing Directors. Deep dive investigation revealed:
+
+**Root Cause:** Double verification requirement + downstream bypass mismatch
+
+1. **Permission Check** (command_handler.py): `is_managing_director = user_id in MANAGING_DIRECTORS and role == 'MOD'`
+   - This check PASSED for MDs
+
+2. **Downstream Bypass** (invite_distributor.py): Only bypassed for `role == 'OWNER'`
+   - Stream duration check (30 min)
+   - Cooldown check (5 days)
+   - Population threshold check (<20 users)
+   - MDs have `role='MOD'`, NOT `role='OWNER'` → BLOCKED
+
+### Fixes Applied
+
+**1. invite_distributor.py:**
+```python
+# Added is_managing_director parameter
+def get_invite_code(..., is_managing_director: bool = False):
+    bypass_gates = role == 'OWNER' or is_managing_director
+    # All 3 checks now use: if not bypass_gates:
+```
+
+**2. command_handler.py:**
+```python
+# Pass MD flag to invite function
+invite_result = get_invite_code(
+    ...,
+    is_managing_director=is_managing_director
+)
+```
+
+**3. /help Command Enhancement:**
+- Added `HelpCooldownTracker` class (30 min cooldown per user)
+- Categorized output by command classes:
+  - 🎮 PLAYER (sub/mod): Requires SUBSCRIBER or MOD+
+  - 🎤 MOD+: MOD, MD, OWNER
+  - 💎 DIRECTOR+: MD, OWNER
+  - 👑 OWNER: OWNER only
+  - 🏆 TOP X: Conditional perks
+- OWNER bypasses cooldown
+- MDs now see /fuc commands in /help
+
+**4. Subscriber Gate for PLAYER Commands:**
+- MAGAs (trolls) without subscription are BLOCKED from game
+- Forces subscription to play MAGADOOM
+- MOD = "free sub" (has player access)
+
+```python
+# Permission hierarchy
+has_player_access = role in ['MOD', 'OWNER'] or is_member
+
+# Blocked non-subscribers get:
+"🔒 Subscribe to play MAGADOOM! Members get full access ✊✋🖐️"
+```
+
+### Permission Hierarchy
+
+```
+USER (no sub)     → 🔒 BLOCKED (must subscribe)
+SUBSCRIBER        → 🎮 PLAYER (paid access)
+MOD               → 🎮 + 🎤 MOD+ (free sub + stream controls)
+MANAGING MOD (MD) → 🎮 + 🎤 + 💎 DIRECTOR+ (/fuc economy)
+OWNER             → All access
+```
+
+### Files Changed
+
+- `src/command_handler.py`: HelpCooldownTracker + subscriber gate + MD flag
+- `src/message_processor.py`: Pass is_member to handle_whack_command
+- `modules/gamification/whack_a_magat/src/invite_distributor.py`: bypass_gates pattern
+
+### Commands Verified
+
+All commands present and routing correctly:
+- Player: /score, /rank, /whacks, /leaderboard, /sprees, /quiz, !about, !party
+- MOD: /fc, /session, /troll, /karaoki, /news
+- Schema: /video, /full, /entangled, /chess, /checkers, /move, /resign
+- Economy: /fuc (status|claim|top|mine|invite|distribute|stats)
+- Help: /help (with 30-min cooldown)
+
+---
+
+## 2026-03-06 - PartyReactor Simple Fallback (External Stream Chat Pattern)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination)
+
+### Problem
+
+`!party` command in livechat DAE was failing because `human_interaction` module's complex `spam_action()` and `party_spam()` methods were not working reliably.
+
+### Solution
+
+Added simple coordinate-based fallback methods that use the same approach as External Stream Chat's working `party_full()`:
+
+**party_reactor.py**:
+- `_simple_party_fallback()`: Fallback for `spam_single()` when `spam_action()` fails
+- `_simple_full_party_fallback()`: Fallback for `party_mode()` when `party_spam()` fails
+
+### Fallback Pattern
+
+```python
+# Primary: Human Interaction Module (complex anti-detection)
+results = await self.interaction.spam_action(action_name, count=count)
+
+# Fallback: Simple coordinate clicking (from External Stream Chat)
+except Exception as e:
+    return await self._simple_party_fallback(reaction_name, count)
+```
+
+### Key Insight
+
+Two different coordinate systems exist:
+- **Own stream** (livechat DAE): x=359, y=646-790 (vertical popup)
+- **External stream** (viewer): x=1432, y=657 (M2M reference)
+
+### Related
+
+- External Stream Chat skill: `ai_overseer/skillz/external_stream_chat/`
+- Memory: `memory/external_stream_chat_m2m.md`
+
+---
+
+## 2026-03-03 - WRE Skill Triggers in AutoModeratorDAE
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 46 (Skill Execution), WSP 96 (WRE Skills)
+
+### Changes
+
+**auto_moderator_dae.py**:
+- `__init__`: Initializes `SkillTriggerMixin(domain="youtube")` with cadence via `WRE_YOUTUBE_SKILL_CADENCE_MINUTES` (default: 10)
+- `_browser_engagement_loop`: Fires pending youtube skills before sleep (non-idle cycles only)
+- Graceful degradation: if mixin unavailable, DAE operates normally
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WRE_YOUTUBE_SKILL_CADENCE_MINUTES` | `10` | Minutes between youtube skill triggers |
+
+### Impact
+
+- YouTube-domain skills auto-fire each engagement cycle
+- Skills run through full WRE pipeline: libido gating, executor dispatch, PatternMemory
+
+---
+
+## 2026-02-27 - Agentic Rotation Supervisor (Task-Based Architecture)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 91 (Observability)
+
+### Problem
+
+YouTube DAE rotation was hanging:
+- `run_engagement()` per channel could block for 1 hour (3600s unlimited timeout)
+- Sequential channel processing meant FoundUps hang → antifaFM never processes
+- Complex nested async loops made debugging difficult
+- No heartbeat/ping mechanism to detect "processing" vs "hung" state
+
+### Solution: Task-Based Rotation Supervisor
+
+New architecture: **Spawn → Ping → Rotate** (Unix Philosophy)
+
+```
+OLD (Hanging Architecture):
+  _browser_engagement_loop()
+    └─ run_browser_engagement()
+         └─ _run_edge_engagement()
+              └─ for each channel:
+                   └─ run_engagement()  # Can hang 1+ hour
+                        └─ No heartbeat, no kill option
+
+NEW (Agentic Supervisor):
+  RotationSupervisor.run_rotation()
+    └─ for channel in channels:
+         task = spawn_cli_task(channel)      # Discrete subprocess
+         while not task.done:
+             if heartbeat_stale(60s): kill → rotate
+             await ping(5s)                  # Heartbeat check
+         signal_channel_complete(channel)
+    signal_rotation_complete()               # Breadcrumb telemetry
+```
+
+### Files Created/Modified
+
+**NEW: `rotation_supervisor.py`** (400+ lines):
+- `RotationSupervisor` class with heartbeat monitoring
+- `TaskHeartbeat` dataclass for progress tracking
+- `OperationType` enum (COMMENTS, SHORTS, INDEXING)
+- Per-channel timeout: 300s (5 min) vs 3600s (1 hour!)
+- CLI entry point for testing
+
+**MODIFIED: `run_skill.py`**:
+- Added `--heartbeat-file` argument
+- Background heartbeat writer task (5s interval)
+- Enables supervisor to detect hung tasks
+
+**MODIFIED: `comment_engagement_dae.py`**:
+- Added `_current_stats` alias for heartbeat access
+
+**MODIFIED: `youtube_menu.py`**:
+- Options 8/9: "Run Agentic Rotation (Edge/Chrome)"
+- `_run_agentic_rotation()` function with configurable timeout
+
+### Usage
+
+```bash
+# CLI Menu
+Main Menu → YouTube → R (Rotation Controls) → 8 (Edge) or 9 (Chrome)
+
+# Direct Python
+from modules.communication.livechat.src.rotation_supervisor import RotationSupervisor, OperationType
+
+supervisor = RotationSupervisor(browser="edge", task_timeout=300)
+result = await supervisor.run_rotation(
+    operation=OperationType.COMMENTS,
+    max_items_per_channel=10
+)
+```
+
+### Key Differences
+
+| Aspect | Old Architecture | New Supervisor |
+|--------|------------------|----------------|
+| Timeout per channel | 3600s (1 hour) | 300s (5 min) |
+| Hang detection | None | Heartbeat every 5s |
+| Hang recovery | Wait for 90min Phase1 timeout | Kill + rotate in 60s |
+| Architecture | Nested async loops | Discrete CLI tasks |
+| Debugging | Complex state | Simple spawn/kill |
+
+### Next Steps
+
+1. Test rotation: `FoundUps → antifaFM` via CLI option 8
+2. Integrate with shorts scheduler
+3. Integrate with video indexer
+4. Replace `_browser_engagement_loop` in production
+
+---
+
+## 2026-02-24 - LinkedIn Group Rotation (Agentic Chrome Flow)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Pattern)
+
+### Problem
+
+012 requested full agentic flow: YT Comments → YT Shorts → LN Group (approve + post) → Return to Comments.
+LinkedIn group rotation was missing from multi_channel_coordinator.py Chrome loop.
+
+### Architecture After (IMPLEMENTED)
+
+```
+Chrome Rotation:
+  Move2Japan comments → Move2Japan shorts →
+  UnDaoDu comments → UnDaoDu shorts →
+  [If total_shorts >= 10]:
+    → LN Group: Approve members (with welcome DM)
+    → LN Group: Search OpenClaw news → Rate (WSP 15 lite) → Post
+  → Return to Comments next cycle
+```
+
+### Changes
+
+**multi_channel_coordinator.py**:
+- Added `total_shorts_scheduled` counter (line 760)
+- Accumulate shorts in loop (line 1047): `total_shorts_scheduled += scheduled`
+- Added LinkedIn rotation block after Chrome loop (lines 1098-1150):
+  - Check threshold: `LN_GROUP_SHORTS_THRESHOLD` (default: 10)
+  - Step 1: `run_group_membership_cycle()` - approve members
+  - Step 2: `run_openclaw_news_flow()` - search, rate, post news
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LN_GROUP_ROTATION_ENABLED` | `true` | Enable LinkedIn rotation |
+| `LN_GROUP_SHORTS_THRESHOLD` | `10` | Min shorts before LN triggers |
+| `LN_GROUP_DRY_RUN` | `false` | Preview mode (no actual actions) |
+| `LN_GROUP_MAX_MEMBERS` | `10` | Max members to approve per cycle |
+
+### Verification
+
+```bash
+# Test LinkedIn executor CLI
+python -m modules.platform_integration.linkedin_agent.skillz.openclaw_group_news.executor \
+    --action full_cycle --dry-run
+```
+
+### Impact
+
+Full agentic flow: Chrome YT automation → LinkedIn group automation → Loop. AI Overseer integration via MissionType.SOCIAL_MEDIA (priority 8).
+
+---
+
+## 2026-02-24 - Per-Channel Shorts Scheduling for Chrome (Dual Process Architecture)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Pattern)
+
+### Problem
+
+Per-channel shorts scheduling was only implemented for Edge browser, not Chrome. This caused:
+- Move2Japan comments done → waited for Edge to finish before any shorts
+- If Edge stuck, Chrome shorts never ran
+- Inconsistent flow between browsers
+
+### Root Cause
+
+In `multi_channel_coordinator.py`:
+- Edge engagement loop (lines 642-683) had per-channel shorts: Comments → Shorts → Next Channel
+- Chrome engagement loop (lines 747-1053) was missing this block entirely
+- Shorts only ran via `_run_shorts_scheduling_chain()` AFTER both browsers completed
+
+### Architecture Before (BROKEN)
+
+```
+Chrome: Move2Japan comments → UnDaoDu comments → (WAIT)
+Edge:   FoundUps comments → FoundUps shorts → Raving comments → Raving shorts
+THEN:   _run_shorts_scheduling_chain() for ALL channels
+```
+
+### Architecture After (FIXED)
+
+```
+Chrome: Move2Japan comments → Move2Japan shorts → UnDaoDu comments → UnDaoDu shorts
+Edge:   FoundUps comments → FoundUps shorts → Raving comments → Raving shorts
+(Chain still runs at end as backup)
+```
+
+### Changes
+
+**multi_channel_coordinator.py** (lines 1016-1058):
+- Added per-channel shorts block after Chrome comment verify/retry
+- Matches Edge implementation (Occam model: Comments → Shorts → Next Channel)
+- Uses `YT_SHORTS_PER_CHANNEL_ENABLED` flag (default: true)
+
+### Impact
+
+- Both browsers now have dual process: Comments → Shorts per channel
+- Chrome no longer waits for Edge to complete before shorts scheduling
+- System more resilient - if one browser stalls, other still processes shorts
+
+---
+
+## 2026-02-21 - OODA Loop Page State Detection + Comment Completion Pivot
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Pattern)
+
+### Problem
+
+The OODA loop detected Chrome was on YouTube Studio comments page but didn't pivot because `_live_chat_active` was still True. When all comments were processed, the system should:
+1. Signal completion to activity router
+2. Take a break
+3. Return to comment processing
+
+### Root Cause
+
+Line 2117 used `_live_chat_active` as sole indicator of current activity, ignoring actual Chrome page state (`youtube_studio_comments`).
+
+### Changes
+
+**auto_moderator_dae.py**
+
+1. **OODA Loop Fix (line 2117)**:
+   - Now checks `page_state["chrome"]["page_type"]` to determine actual activity
+   - If Chrome is on `youtube_studio_comments` → `current_activity = COMMENT_ENGAGEMENT`
+   - When `edge_comments_cleared` AND Chrome on comments → signals `signal_comments_complete()`
+   - Activity router advances to next phase (SHORTS → INDEXING → next channel)
+
+2. **Community Monitor Fix (lines 2271-2301)**:
+   - Uses activity router decision instead of just `_live_chat_active`
+   - Allows comment engagement if Chrome is on comments page OR router says COMMENT_ENGAGEMENT
+   - Only blocks if live chat truly active AND not on comments page AND router doesn't say COMMENTS
+
+### Impact
+
+- OODA loop now correctly detects actual Chrome activity state
+- Comment completion properly signals to activity router
+- Channels advance through phases (COMMENTS → SHORTS → INDEXING → next channel)
+- System takes breaks when all channels complete (IDLE state)
+- Returns to COMMENT_ENGAGEMENT for next cycle
+
+---
+
+## 2026-02-20 - Chrome/Edge Session Health Guard + Early Reconnect
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 64 (Violation Prevention)
+
+### Problem
+
+`MultiChannelCoordinator` could continue rotation with an invalid Selenium DevTools session (for example: `invalid session id`, `not connected to DevTools`) immediately after connect/warmup. This produced cascading account-switch failures.
+
+### Changes
+
+**multi_channel_coordinator.py**
+- Added `_driver_session_alive(...)` health probe.
+- Added immediate post-connect session validation for both Chrome and Edge.
+- Added early reconnect path before rotation starts when session is already invalid.
+- Hardened Chrome account-switch exception handling:
+  - On session errors, reconnect and retry switch once.
+  - Skip channel when recovery fails, rather than continuing with dead driver.
+
+### Impact
+
+- Reduces cascading failures from stale/closed browser sessions.
+- Keeps rotation resilient when DevTools-attached browser is recycled externally.
+
+---
+
 ## 2026-02-18 - Troll Callout + Top Whacker Welcome (Priority 4.5, 4.6)
 
 **By:** 0102

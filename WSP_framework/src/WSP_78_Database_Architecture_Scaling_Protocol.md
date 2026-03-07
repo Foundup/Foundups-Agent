@@ -1,104 +1,128 @@
-# WSP 78: Database Architecture & Scaling Protocol
+# WSP 78: Database Architecture and Scaling Protocol
 
-## Core Principle: One Database, Three Namespaces
+## Status
+- Status: Active
+- Version: 4.0.0
+- Last Updated: 2026-02-21
 
-**"Simple shared storage with module isolation that scales infinitely"**
+## Purpose
+Define canonical data boundaries for FoundUps so SIM, CABR/PoB, and future blockchain settlement remain consistent under scale.
 
-Every FoundUp MUST use a single database with three logical namespaces. No microservices. No per-module databases. One file, three prefixes.
+## First-Principles Model
+Treat data by function, not by tool:
 
----
+1. Execution state
+- Ephemeral runtime state used for fast simulation/automation loops.
+- May be in-memory if fully replayable from events.
 
-## The Three Namespaces
+2. Operational state
+- Mutable relational state used by services and user-facing workflows.
+- Must support queryability, constraints, migrations, and backups.
 
-```
-{foundup}.db
-├── modules_*     # All module data (auto-prefixed per module)
-├── foundups_*    # Independent FoundUp project data
-└── agents_*      # Agent memory, state, and captured outputs
-```
+3. Audit trail
+- Append-only event history for replay, observability, and forensic analysis.
+- Must be durable, ordered, and dedupe-safe.
 
-### Namespace Rules
+4. Settlement state
+- Final economic commitments anchored to blockchain.
+- Off-chain systems are provisional until anchored.
 
-| Namespace | Prefix Pattern                  | Example                                | Owner                                        |
-| --------- | ------------------------------- | -------------------------------------- | -------------------------------------------- |
-| Modules   | `modules_{module_name}_{table}` | `modules_chat_rules_moderators`        | Individual modules via `ModuleDB` base class |
-| FoundUps  | `foundups_{project}_{table}`    | `foundups_youtube_bot_channels`        | Independent FoundUp projects                 |
-| Agents    | `agents_{table}`                | `agents_memory`, `agents_social_posts` | Agent infrastructure                         |
+## Canonical Ordering of Truth
+For economic claims and treasury accounting:
 
----
+1. On-chain settlement anchors (highest authority)
+2. Append-only audit events (replay source)
+3. Operational tables/snapshots
+4. Derived UI/render caches (lowest authority)
 
-## Required Infrastructure
+## Required Storage Layers
 
-### 1. Database Manager (Singleton)
+### Layer A: Runtime/Derived
+- In-memory allowed.
+- Must be replayable from Layer C events.
+- Example: simulator `state_store` render state.
 
-Every FoundUp MUST have a single `DatabaseManager` that:
+### Layer B: Operational Relational Store
+- Default local backend: SQLite.
+- Shared multi-writer backend: PostgreSQL.
+- Backend must be switchable through configuration, not code forks.
+- Current infrastructure entrypoint: `modules/infrastructure/database/src/db_manager.py`.
 
-- Manages one database file
-- Enables WAL mode for concurrency
-- Enables foreign keys
-- Provides thread-safe connection management
-- Exposes `execute_query()` (reads) and `execute_write()` (writes)
+### Layer C: Audit Event Store
+- Append-only JSONL + indexed SQL store are allowed as dual-write pattern.
+- Must guarantee monotonic sequence IDs and dedupe keys.
+- Current implementations: FAM and DAE event stores.
 
-### 2. Module Base Class
+### Layer D: Blockchain Settlement
+- Epoch roots, treasury settlement commitments, and final payouts belong here.
+- Off-chain epoch ledgers are pre-settlement evidence, not final settlement.
 
-Every module that stores data MUST extend a `ModuleDB` base class that:
+## Namespace Contract (Operational Layer)
+In shared relational stores, table ownership must be explicit:
 
-- Auto-prefixes all tables with `modules_{module_name}_`
-- Provides standard CRUD operations
-- Prevents table naming conflicts between modules
+- `modules_*`: module-specific operational tables
+- `agents_*`: agent memory/coordination tables
+- `foundups_*`: FoundUp business/domain tables
 
-### 3. Agent State Tables
+Unprefixed shared tables are allowed only when documented as cross-domain infrastructure in module architecture docs.
 
-Agent data MUST be stored in the unified database under `agents_*` prefix. This includes:
+## SQLite Policy
+SQLite is approved for local deterministic execution and single-host deployment, with these minimum requirements:
 
-- Awakening/consciousness state
-- Learned patterns and memory
-- Error learning
-- Coordination and contracts
-- **All agent-generated outputs** (posts, comments, actions) for operator review
+1. `PRAGMA journal_mode=WAL` for long-lived writable DBs.
+2. `PRAGMA synchronous=NORMAL` unless stronger durability is explicitly required.
+3. `PRAGMA foreign_keys=ON` on every connection (connection-scoped in SQLite).
+4. `PRAGMA busy_timeout` configured for concurrent writer resilience.
+5. Integrity checks and backup cadence documented.
 
----
+## PostgreSQL Policy
+Promote from SQLite to PostgreSQL when one or more are true:
 
-## Scaling Path
+- Multi-process/multi-host writers contend regularly.
+- Write latency under lock contention exceeds SLO.
+- File-level backup/restore windows are operationally unsafe.
+- Cross-service transactional boundaries require stronger isolation.
 
-| Stage | Technology    | When        | Changes Required                           |
-| ----- | ------------- | ----------- | ------------------------------------------ |
-| 1     | SQLite        | 0–10K users | None — WAL handles concurrency             |
-| 2     | PostgreSQL    | 10K–100K    | Change connection string to `DATABASE_URL` |
-| 3     | Read Replicas | 100K–1M     | Add connection pooling and read routing    |
-| 4     | Sharding      | 1M+         | Shard by namespace                         |
+When promoted, keep interface compatibility and migrate via schema/migration tooling, not ad hoc SQL forks.
 
-> [!IMPORTANT]
-> Do NOT pre-optimize. Stay on SQLite until you outgrow it. The namespace design means scaling requires zero code changes — only infrastructure changes.
+## SIM and CABR/PoB Requirements
 
----
+1. Event-first economics
+- CABR flow routing, payout progression, and operational-profit distribution must emit audit events.
+- Derived simulator state must never be treated as accounting truth.
 
-## Satellite DB Exceptions
+2. Beneficiary correctness
+- Agent work can trigger value flow, but 012 proxy beneficiary distribution must be explicit in accounting events.
 
-Some data MAY live outside the unified database when:
+3. Reproducibility
+- Deterministic simulation runs must preserve event ordering and replayability.
 
-- Managed by a third-party library (e.g., ChromaDB vector stores)
-- Contains large binary blobs that would bloat the main DB
-- Is ephemeral/disposable (per-run logs, training batches)
+4. Bridge to settlement
+- Epoch/merkle summaries may exist off-chain, but publication and settlement anchors must be modeled as separate commitments.
 
-All satellite DBs MUST be documented in the system's `ARCHITECTURE.md` with justification and a consolidation plan.
+## Satellite Store Policy
+Satellite DBs are permitted only for one of:
 
----
+- Third-party library-managed stores (for example vector index internals).
+- Large binary/ephemeral workloads that would bloat operational DB.
+- Disposable run artifacts (for example simulation run audit directories).
+
+Every satellite store must document:
+- Owner component
+- Retention policy
+- Why it is not in Layer B
+- Migration or permanence decision
 
 ## Anti-Patterns
+- Treating render/UI caches as accounting truth.
+- Assuming SQLite pragmas like `foreign_keys` persist across connections.
+- Mixing settlement semantics into mutable operational tables without anchoring strategy.
+- Silent proliferation of ad hoc SQLite files without ownership and retention.
 
-❌ Creating separate databases per module
-❌ Storing agent outputs only in-memory (must persist for operator review)
-❌ Using microservices before 1M+ users
-❌ Skipping the review workflow for agent-generated content
-
-✅ One database, three namespaces
-✅ Auto-prefixed module tables
-✅ All agent outputs captured to SQL
-✅ Plan for scaling, don't pre-optimize
-
----
-
-_Protocol Status: ACTIVE_
-_Version: 3.0.0_
-_Last Updated: 2026-02-19_
+## Compliance Checklist
+- [x] Operational DB backend is configurable and documented.
+- [x] Per-connection SQLite safety pragmas are enforced where SQLite is used.
+- [x] Event stores enforce dedupe and monotonic ordering.
+- [x] SIM/CABR economic flows are event-auditable.
+- [x] Settlement/anchoring boundary is explicit in architecture docs.
+- [x] Simulator satellite stores are documented under module policy.

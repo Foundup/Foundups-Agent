@@ -145,7 +145,7 @@ class AIGateway:
                     'coding': 'gpt-5.2-codex',     # Agentic coding ($1.75/$14 per 1M)
                     'code_review': 'gpt-5.2-codex',
                     'math': 'o4-mini',              # Fast reasoning ($1.10/$4.40 per 1M)
-                    'reasoning': 'o3',              # Deep reasoning ($2/$8 per 1M)
+                    'reasoning': 'o3-pro',          # Deep reasoning (Responses API)
                     'social': 'gpt-5',              # General purpose ($1.25/$10 per 1M)
                     'research': 'gpt-5.2',          # Flagship thinking ($1.75/$14 per 1M)
                     'analysis': 'gpt-5.2',

@@ -18,6 +18,7 @@ Key contributions:
 1. A formalized, testable economic model with explicit flow-of-funds identities and conservation constraints.
 2. A deterministic simulation and evidence pack separating demonstrated results from open hypotheses.
 3. A critical negative finding: the fee-only lane does not satisfy downside self-sustainability thresholds in the current configuration.
+4. A positive compute-lane result with explicit Return on Compute (RoC): `RoC = compute_margin_usd / compute_spend_usd = 0.60` in the unified baseline (`$1.60` gross compute value per `$1.00` spend).
 
 We believe this submission fits your venue because it emphasizes falsifiability, reproducibility, and transparent boundary-setting between model evidence and broader economic claims.
 

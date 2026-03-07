@@ -23,6 +23,10 @@
 - **Disaster recovery** - Multi-region failover
 - **Compliance automation** - Security and regulatory compliance
 
+## Phase 4: Website UX Enhancements (Deferred)
+- **Scroll-to-accept for Terms of Access** - Force users to scroll through full terms before accepting (like Kick). Increases legal enforceability by proving user engagement with document.
+- **Terms version tracking** - Track which version user accepted, prompt re-acceptance on major updates.
+
 ## Success Metrics
 - **Deployment time**: < 5 minutes for production deployments
 - **Uptime**: 99.95% availability across all environments

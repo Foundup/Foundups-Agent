@@ -245,6 +245,23 @@ Action Rules:
 
 ---
 
+## [TERMINAL] Entrypoint (main.py) Roadmap
+
+**Purpose**: main.py is the system entrypoint - it should remain thin and delegate to modules.
+
+| Item | Priority | Status | WSP Ref |
+|------|----------|--------|---------|
+| WSP 90 Phase 2: Review 155 entrypoint files for UTF-8 cleanup | Low | DEFERRED | WSP 90 |
+| Feature flags: ENABLE_LINKEDIN, ENABLE_X for platform triggers | P1 | NOT STARTED | - |
+| Startup metrics: Track module load times for optimization | P2 | NOT STARTED | WSP 91 |
+| Graceful degradation: Continue if non-critical modules fail | P2 | PARTIAL | - |
+
+**Architecture Principle**: main.py orchestrates, modules execute. No business logic in entrypoint.
+
+**Tracking**: `modules/development/wsp_tools/TODO_WSP90_PHASE2.md` for UTF-8 deferred items.
+
+---
+
 ## [LINK] Integration Plan: Posting & Engagement (Execution Epics)
 
 Epic 1: YouTube Baseline Verification (No new code)

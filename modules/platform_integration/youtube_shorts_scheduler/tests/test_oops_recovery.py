@@ -20,7 +20,7 @@ Test Scenario:
 
 Browser-Channel Mapping:
     Chrome (9222): Move2Japan, UnDaoDu
-    Edge (9223): FoundUps, RavingANTIFA
+    Edge (9223): FoundUps, antifaFM
 
 Usage:
     python -m modules.platform_integration.youtube_shorts_scheduler.tests.test_oops_recovery
@@ -71,9 +71,9 @@ CHANNELS = {
         "browser": "edge",
         "port": 9223,
     },
-    "ravingantifa": {
+    "antifafm": {
         "id": "UCVSmg5aOhP4tnQ9KFUg97qA",
-        "name": "RavingANTIFA",
+        "name": "antifaFM",
         "browser": "edge",
         "port": 9223,
     },
@@ -154,7 +154,7 @@ async def test_oops_recovery(
         3. StudioAccountSwitcher for recovery (with UI-TARS training)
 
     Args:
-        channel_key: Channel identifier (undaodu, m2j, foundups, ravingantifa)
+        channel_key: Channel identifier (undaodu, m2j, foundups, antifafm)
         dry_run: If True, only log actions without executing
         use_vision: If True, use Gemini Vision for visual verification
 
@@ -251,7 +251,7 @@ async def test_oops_recovery(
                     "undaodu": "UnDaoDu",
                     "m2j": "Move2Japan",
                     "foundups": "FoundUps",
-                    "ravingantifa": "RavingANTIFA"  # Note: Not in StudioAccountSwitcher
+                    "antifafm": "antifaFM"
                 }
                 target_account = account_map.get(channel_key, channel_name)
 
@@ -324,7 +324,7 @@ async def test_cross_account_navigation(
     """
     Test navigating from wrong account to correct account.
 
-    Scenario: Chrome might be logged into FoundUps/RavingANTIFA (wrong)
+    Scenario: Chrome might be logged into FoundUps/antifaFM (wrong)
     but we want to access UnDaoDu/Move2Japan (correct for Chrome).
 
     This tests the full recovery flow.

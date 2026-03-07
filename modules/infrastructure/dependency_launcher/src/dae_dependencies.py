@@ -51,6 +51,11 @@ FOUNDUPS_STUDIO_URL = f"https://studio.youtube.com/channel/{FOUNDUPS_CHANNEL_ID}
 
 LM_STUDIO_PORT = int(os.getenv("LM_STUDIO_PORT", "1234"))
 
+# UI-TARS model configuration for vision-based automation
+# The model should be pre-downloaded in LM Studio
+UI_TARS_MODEL_ID = os.getenv("UI_TARS_MODEL_ID", "lmstudio-community/UI-TARS-1.5-7B-GGUF")
+UI_TARS_MODEL_FILE = os.getenv("UI_TARS_MODEL_FILE", "UI-TARS-1.5-7B-Q4_K_M.gguf")
+
 
 def resolve_lm_studio_path() -> Optional[str]:
     """
@@ -87,6 +92,81 @@ def resolve_edge_path() -> Optional[str]:
     return None
 
 
+# OBS Studio configuration for antifaFM streaming
+OBS_WEBSOCKET_PORT = int(os.getenv("OBS_WEBSOCKET_PORT", "4455"))
+
+
+def resolve_obs_path() -> Optional[str]:
+    """
+    Resolve OBS Studio shortcut or executable path.
+
+    Uses Start Menu shortcut (has correct working directory) or falls back to exe.
+    """
+    # Start Menu shortcut is preferred - has correct working directory
+    shortcut = r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\OBS Studio\OBS Studio (64bit).lnk"
+    if Path(shortcut).exists():
+        return shortcut
+
+    # Fallback to direct exe (may have locale issues)
+    candidates = [
+        os.getenv("OBS_PATH"),
+        r"C:\Program Files\obs-studio\bin\64bit\obs64.exe",
+        r"C:\Program Files (x86)\obs-studio\bin\64bit\obs64.exe",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return str(Path(candidate))
+    return None
+
+
+def is_obs_running() -> bool:
+    """Check if OBS WebSocket is running."""
+    return is_port_open(OBS_WEBSOCKET_PORT)
+
+
+def launch_obs() -> Tuple[bool, str]:
+    """
+    Launch OBS Studio for antifaFM streaming.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    if is_obs_running():
+        logger.info(f"[DEPS] OBS already running (WebSocket port {OBS_WEBSOCKET_PORT})")
+        return True, "OBS already running"
+
+    obs_path = resolve_obs_path()
+    if not obs_path:
+        logger.warning("[DEPS] OBS executable not found (set OBS_PATH in .env)")
+        logger.warning("[DEPS] Please start OBS manually")
+        return False, "OBS executable not found"
+
+    try:
+        logger.info(f"[DEPS] Launching OBS: {obs_path}")
+
+        # Use os.startfile to launch OBS the Windows way (respects working directory)
+        # This is how Start Menu launches it - avoids locale/en-US.ini errors
+        os.startfile(obs_path)
+
+        # Wait for WebSocket to be ready
+        logger.info("[DEPS] Waiting for OBS WebSocket (this may take 10-30 seconds)...")
+        for i in range(60):  # 1 minute timeout
+            time.sleep(1)
+            if is_obs_running():
+                logger.info(f"[DEPS] [OK] OBS WebSocket ready on port {OBS_WEBSOCKET_PORT}")
+                return True, f"OBS started on port {OBS_WEBSOCKET_PORT}"
+            if i % 10 == 0 and i > 0:
+                logger.info(f"[DEPS] Still waiting for OBS... ({i}s)")
+
+        logger.warning("[DEPS] OBS launched but WebSocket not responding")
+        logger.warning("[DEPS] Enable WebSocket: OBS -> Tools -> WebSocket Server Settings")
+        return False, "OBS launched but WebSocket not responding"
+
+    except Exception as e:
+        logger.error(f"[DEPS] Failed to launch OBS: {e}")
+        return False, str(e)
+
+
 def is_port_open(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool:
     """Check if a port is open (service running)."""
     try:
@@ -99,13 +179,63 @@ def is_port_open(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bo
         return False
 
 
+def is_devtools_responding(port: int, timeout: float = 2.0) -> bool:
+    """Check if Chrome/Edge DevTools protocol is actually responding.
+
+    Just checking port open isn't enough - the browser might be hung or
+    another process might be using the port. This makes HTTP requests
+    to both /json/version AND /json (page list) to verify Selenium can connect.
+
+    The "unable to discover open pages" error happens when /json/version works
+    but /json fails - so we must check both.
+    """
+    try:
+        import urllib.request
+        import json as json_module
+
+        # Step 1: Check /json/version (browser info)
+        version_url = f"http://127.0.0.1:{port}/json/version"
+        req = urllib.request.Request(version_url)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            data = response.read().decode('utf-8')
+            if 'Browser' not in data and 'webSocketDebuggerUrl' not in data:
+                logger.debug(f"[DEPS] DevTools version check failed - not Chrome/Edge")
+                return False
+
+        # Step 2: Check /json (page list) - this is what Selenium uses
+        pages_url = f"http://127.0.0.1:{port}/json"
+        req = urllib.request.Request(pages_url)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            pages_data = response.read().decode('utf-8')
+            pages = json_module.loads(pages_data)
+            if not isinstance(pages, list):
+                logger.debug(f"[DEPS] DevTools pages check failed - invalid response")
+                return False
+            # Must have at least one page for Selenium to connect
+            if len(pages) == 0:
+                logger.debug(f"[DEPS] DevTools has 0 pages - browser may be starting")
+                return False
+            logger.debug(f"[DEPS] DevTools OK: {len(pages)} page(s) available")
+            return True
+
+    except Exception as e:
+        logger.debug(f"[DEPS] DevTools check failed on port {port}: {e}")
+        return False
+
+
 def is_chrome_running() -> bool:
-    """Check if Chrome with debug port is running."""
-    return is_port_open(CHROME_DEBUG_PORT)
+    """Check if Chrome with debug port is running AND responding."""
+    if not is_port_open(CHROME_DEBUG_PORT):
+        return False
+    # Verify DevTools is actually responding
+    return is_devtools_responding(CHROME_DEBUG_PORT)
 
 def is_edge_running() -> bool:
-    """Check if Edge with debug port is running."""
-    return is_port_open(EDGE_DEBUG_PORT)
+    """Check if Edge with debug port is running AND responding."""
+    if not is_port_open(EDGE_DEBUG_PORT):
+        return False
+    # Verify DevTools is actually responding
+    return is_devtools_responding(EDGE_DEBUG_PORT)
 
 
 def is_lm_studio_running() -> bool:
@@ -121,7 +251,7 @@ def launch_chrome() -> Tuple[bool, str]:
         Tuple of (success, message)
     """
     if is_chrome_running():
-        logger.info(f"[DEPS] Chrome already running on port {CHROME_DEBUG_PORT}")
+        logger.info(f"[DEPS] Chrome already running on port {CHROME_DEBUG_PORT} (DevTools responding)")
         return True, "Chrome already running"
     
     if not Path(CHROME_PATH).exists():
@@ -177,7 +307,7 @@ def launch_edge() -> Tuple[bool, str]:
         Tuple of (success, message)
     """
     if is_edge_running():
-        logger.info(f"[DEPS] Edge already running on port {EDGE_DEBUG_PORT}")
+        logger.info(f"[DEPS] Edge already running on port {EDGE_DEBUG_PORT} (DevTools responding)")
         return True, "Edge already running"
 
     edge_path = resolve_edge_path()
@@ -226,17 +356,21 @@ def launch_edge() -> Tuple[bool, str]:
         return False, str(e)
 
 
-def launch_lm_studio() -> Tuple[bool, str]:
+def launch_lm_studio(load_model: bool = True) -> Tuple[bool, str]:
     """
-    Launch LM Studio for UI-TARS vision.
-    
-    Note: LM Studio needs to have the UI-TARS model loaded manually or via startup config.
-    
+    Launch LM Studio for UI-TARS vision and optionally load the model.
+
+    Args:
+        load_model: Whether to auto-load UI-TARS model via API after LM Studio starts
+
     Returns:
         Tuple of (success, message)
     """
     if is_lm_studio_running():
         logger.info(f"[DEPS] LM Studio already running on port {LM_STUDIO_PORT}")
+        # Even if running, try to load the model if requested
+        if load_model:
+            _load_ui_tars_model()
         return True, "LM Studio already running"
 
     lm_studio_path = resolve_lm_studio_path()
@@ -244,10 +378,10 @@ def launch_lm_studio() -> Tuple[bool, str]:
         logger.warning("[DEPS] LM Studio executable not found (set LM_STUDIO_PATH in .env)")
         logger.warning("[DEPS] Please start LM Studio manually and load UI-TARS model")
         return False, "LM Studio executable not found"
-    
+
     try:
         logger.info(f"[DEPS] Launching LM Studio: {lm_studio_path}")
-        
+
         # Launch LM Studio as detached process
         subprocess.Popen(
             [lm_studio_path],
@@ -255,24 +389,90 @@ def launch_lm_studio() -> Tuple[bool, str]:
             stderr=subprocess.DEVNULL,
             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
         )
-        
+
         # Wait for API to be ready (LM Studio takes longer to start)
         logger.info("[DEPS] Waiting for LM Studio API (this may take 30-60 seconds)...")
         for i in range(120):  # 2 minute timeout
             time.sleep(1)
             if is_lm_studio_running():
                 logger.info(f"[DEPS] [OK] LM Studio API ready on port {LM_STUDIO_PORT}")
+
+                # Auto-load UI-TARS model
+                if load_model:
+                    time.sleep(2)  # Brief pause for API to fully initialize
+                    _load_ui_tars_model()
+
                 return True, f"LM Studio started on port {LM_STUDIO_PORT}"
             if i % 10 == 0 and i > 0:
                 logger.info(f"[DEPS] Still waiting for LM Studio... ({i}s)")
-        
+
         logger.warning("[DEPS] LM Studio launched but API not responding")
         logger.warning("[DEPS] Please ensure UI-TARS model is loaded in LM Studio")
         return False, "LM Studio launched but API not responding - load UI-TARS model manually"
-        
+
     except Exception as e:
         logger.error(f"[DEPS] Failed to launch LM Studio: {e}")
         return False, str(e)
+
+
+def _load_ui_tars_model() -> bool:
+    """
+    Load UI-TARS model in LM Studio via API.
+
+    Uses the /v1/models/load endpoint to load the model.
+
+    Returns:
+        True if model loaded successfully
+    """
+    import requests
+
+    base_url = f"http://127.0.0.1:{LM_STUDIO_PORT}"
+
+    try:
+        # First check what models are available
+        resp = requests.get(f"{base_url}/v1/models", timeout=5)
+        if resp.status_code == 200:
+            models_data = resp.json()
+            models = models_data.get("data", [])
+
+            # Check if UI-TARS is already loaded
+            for m in models:
+                model_id = m.get("id", "")
+                if "ui-tars" in model_id.lower() or "uitars" in model_id.lower():
+                    logger.info(f"[DEPS] [OK] UI-TARS model already loaded: {model_id}")
+                    return True
+
+            logger.info(f"[DEPS] Available models: {[m.get('id') for m in models]}")
+
+        # Try to load UI-TARS model
+        # LM Studio uses POST /v1/models/load with model identifier
+        load_payload = {
+            "model": UI_TARS_MODEL_ID,
+            "file": UI_TARS_MODEL_FILE,
+        }
+
+        logger.info(f"[DEPS] Loading UI-TARS model: {UI_TARS_MODEL_ID}")
+
+        # Note: LM Studio 0.2.x uses /v1/models/load, newer versions may differ
+        # Try multiple endpoints that LM Studio has used historically
+        for endpoint in ["/v1/models/load", "/api/v0/models/load", "/api/models/load"]:
+            try:
+                resp = requests.post(f"{base_url}{endpoint}", json=load_payload, timeout=30)
+                if resp.status_code in (200, 201, 202):
+                    logger.info(f"[DEPS] [OK] UI-TARS model load initiated via {endpoint}")
+                    return True
+            except Exception:
+                continue
+
+        # If API loading fails, log instructions
+        logger.warning("[DEPS] Could not auto-load UI-TARS model via API")
+        logger.warning(f"[DEPS] Please manually load: {UI_TARS_MODEL_ID} / {UI_TARS_MODEL_FILE}")
+        logger.warning("[DEPS] Or set LM Studio to auto-load this model on startup")
+        return False
+
+    except Exception as e:
+        logger.warning(f"[DEPS] UI-TARS model load failed: {e}")
+        return False
 
 
 async def ensure_dependencies(require_lm_studio: bool = True) -> Dict[str, bool]:
@@ -337,8 +537,233 @@ def get_dependency_status() -> Dict[str, bool]:
     return {
         'chrome': is_chrome_running(),
         'edge': is_edge_running(),
-        'lm_studio': is_lm_studio_running()
+        'lm_studio': is_lm_studio_running(),
+        'obs': is_obs_running()
     }
+
+
+def connect_chrome_with_retry(
+    max_retries: int = 3,
+    retry_delay: float = 2.0,
+    relaunch_on_fail: bool = True,
+) -> Optional[any]:
+    """
+    Connect to Chrome with retry logic and DevTools verification.
+
+    Handles timing races and stale browser states. If DevTools check fails
+    (including "unable to discover open pages"), will kill and restart Chrome.
+
+    Args:
+        max_retries: Maximum connection attempts
+        retry_delay: Seconds between retries
+        relaunch_on_fail: If True, attempt to relaunch Chrome on persistent failure
+
+    Returns:
+        Selenium WebDriver or None if connection failed
+    """
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    port = CHROME_DEBUG_PORT
+    devtools_failures = 0
+
+    for attempt in range(1, max_retries + 1):
+        # Step 1: Verify DevTools is responding (checks /json/version AND /json)
+        if not is_devtools_responding(port):
+            devtools_failures += 1
+            logger.warning(f"[DEPS] Chrome DevTools not responding (attempt {attempt}/{max_retries})")
+
+            # If DevTools failed twice, Chrome is likely in bad state - kill it
+            if devtools_failures >= 2 and relaunch_on_fail:
+                logger.info("[DEPS] DevTools failed twice - killing stale Chrome...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "chrome.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                logger.info("[DEPS] Relaunching Chrome...")
+                launch_chrome()
+                time.sleep(5)
+                devtools_failures = 0  # Reset counter after relaunch
+                continue
+
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+                continue
+            elif relaunch_on_fail:
+                logger.info("[DEPS] Attempting Chrome relaunch...")
+                launch_chrome()
+                time.sleep(3)
+                if not is_devtools_responding(port):
+                    logger.error("[DEPS] Chrome relaunch failed - DevTools not responding")
+                    return None
+
+        # Step 2: Attempt Selenium connection
+        try:
+            opts = Options()
+            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+            driver = webdriver.Chrome(options=opts)
+
+            # Step 3: Verify connection is alive
+            _ = driver.current_url
+            logger.info(f"[DEPS] Chrome connected successfully (attempt {attempt})")
+            return driver
+
+        except Exception as e:
+            error_str = str(e)
+            logger.warning(f"[DEPS] Chrome connection failed (attempt {attempt}/{max_retries}): {e}")
+
+            # "unable to discover open pages" = DevTools is broken, need to restart
+            if "unable to discover open pages" in error_str and relaunch_on_fail:
+                logger.info("[DEPS] Chrome DevTools broken - killing and relaunching...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "chrome.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                launch_chrome()
+                time.sleep(5)
+                continue  # Retry immediately after relaunch
+
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+            elif relaunch_on_fail and attempt == max_retries:
+                logger.info("[DEPS] Final attempt - relaunching Chrome...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "chrome.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                launch_chrome()
+                time.sleep(5)
+
+                # One more try after relaunch
+                try:
+                    opts = Options()
+                    opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+                    driver = webdriver.Chrome(options=opts)
+                    _ = driver.current_url
+                    logger.info("[DEPS] Chrome connected after relaunch")
+                    return driver
+                except Exception as e2:
+                    logger.error(f"[DEPS] Chrome connection failed after relaunch: {e2}")
+
+    return None
+
+
+def connect_edge_with_retry(
+    max_retries: int = 3,
+    retry_delay: float = 2.0,
+    relaunch_on_fail: bool = True,
+) -> Optional[any]:
+    """
+    Connect to Edge with retry logic and DevTools verification.
+
+    Handles timing races and stale browser states. If DevTools check fails
+    (including "unable to discover open pages"), will kill and restart Edge.
+
+    Args:
+        max_retries: Maximum connection attempts
+        retry_delay: Seconds between retries
+        relaunch_on_fail: If True, attempt to relaunch Edge on persistent failure
+
+    Returns:
+        Selenium WebDriver or None if connection failed
+    """
+    from selenium import webdriver
+    from selenium.webdriver.edge.options import Options as EdgeOptions
+
+    port = EDGE_DEBUG_PORT
+    devtools_failures = 0
+
+    for attempt in range(1, max_retries + 1):
+        # Step 1: Verify DevTools is responding (checks /json/version AND /json)
+        if not is_devtools_responding(port):
+            devtools_failures += 1
+            logger.warning(f"[DEPS] Edge DevTools not responding (attempt {attempt}/{max_retries})")
+
+            # If DevTools failed twice, Edge is likely in bad state - kill it
+            if devtools_failures >= 2 and relaunch_on_fail:
+                logger.info("[DEPS] DevTools failed twice - killing stale Edge...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "msedge.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                logger.info("[DEPS] Relaunching Edge...")
+                launch_edge()
+                time.sleep(5)
+                devtools_failures = 0  # Reset counter after relaunch
+                continue
+
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+                continue
+            elif relaunch_on_fail:
+                logger.info("[DEPS] Attempting Edge relaunch...")
+                launch_edge()
+                time.sleep(3)
+                if not is_devtools_responding(port):
+                    logger.error("[DEPS] Edge relaunch failed - DevTools not responding")
+                    return None
+
+        # Step 2: Attempt Selenium connection
+        try:
+            opts = EdgeOptions()
+            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+            driver = webdriver.Edge(options=opts)
+
+            # Step 3: Verify connection is alive
+            _ = driver.current_url
+            logger.info(f"[DEPS] Edge connected successfully (attempt {attempt})")
+            return driver
+
+        except Exception as e:
+            error_str = str(e)
+            logger.warning(f"[DEPS] Edge connection failed (attempt {attempt}/{max_retries}): {e}")
+
+            # "unable to discover open pages" = DevTools is broken, need to restart
+            if "unable to discover open pages" in error_str and relaunch_on_fail:
+                logger.info("[DEPS] Edge DevTools broken - killing and relaunching...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "msedge.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                launch_edge()
+                time.sleep(5)
+                continue  # Retry immediately after relaunch
+
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+            elif relaunch_on_fail and attempt == max_retries:
+                logger.info("[DEPS] Final attempt - relaunching Edge...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "msedge.exe"],
+                                   capture_output=True, timeout=10)
+                    time.sleep(2)
+                except Exception:
+                    pass
+                launch_edge()
+                time.sleep(5)
+
+                # One more try after relaunch
+                try:
+                    opts = EdgeOptions()
+                    opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+                    driver = webdriver.Edge(options=opts)
+                    _ = driver.current_url
+                    logger.info("[DEPS] Edge connected after relaunch")
+                    return driver
+                except Exception as e2:
+                    logger.error(f"[DEPS] Edge connection failed after relaunch: {e2}")
+
+    return None
 
 
 # Quick test
@@ -349,7 +774,8 @@ if __name__ == "__main__":
     print(f"  Chrome (9222): {'READY' if status['chrome'] else 'NOT READY'}")
     print(f"  Edge (9223): {'READY' if status['edge'] else 'NOT READY'}")
     print(f"  LM Studio (1234): {'READY' if status['lm_studio'] else 'NOT READY'}")
-    
+    print(f"  OBS (4455): {'READY' if status['obs'] else 'NOT READY'}")
+
     if not all(status.values()):
         print("\n[INFO] Launching missing dependencies...")
         asyncio.run(ensure_dependencies())

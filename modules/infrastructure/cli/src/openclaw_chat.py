@@ -14,8 +14,11 @@ WSP Compliance:
 """
 
 import asyncio
+import os
+import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 def _ensure_repo_root():
@@ -27,14 +30,84 @@ def _ensure_repo_root():
     return repo
 
 
-def run_chat_repl() -> None:
+def _normalize_text(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").strip())
+
+
+def _parse_backend_switch_command(message: str) -> Optional[str]:
+    """Parse local backend switch commands from chat input."""
+    msg = _normalize_text(message).lower()
+    if not msg:
+        return None
+
+    direct = re.search(r"\bbackend\s+(openclaw|ironclaw)\b", msg)
+    if direct:
+        return direct.group(1)
+
+    switch = re.search(
+        r"\b(?:switch|change|set|use|move)\s+(?:backend\s+)?(?:to\s+)?(openclaw|ironclaw)\b",
+        msg,
+    )
+    if switch:
+        return switch.group(1)
+
+    mode = re.search(r"\b(openclaw|ironclaw)\s+mode\b", msg)
+    if mode:
+        return mode.group(1)
+
+    return None
+
+
+def _configure_backend_runtime(backend: str, announce: bool = True) -> bool:
+    """Apply backend runtime env defaults and return no_api_keys mode."""
+    backend = (backend or "openclaw").strip().lower()
+    if backend not in {"openclaw", "ironclaw"}:
+        backend = "openclaw"
+
+    no_api_keys = backend == "ironclaw"
+    if no_api_keys:
+        os.environ["IRONCLAW_NO_API_KEYS"] = "1"
+        os.environ["OPENCLAW_NO_API_KEYS"] = "1"
+        if "OPENCLAW_IRONCLAW_ALLOW_LOCAL_FALLBACK" not in os.environ:
+            os.environ["OPENCLAW_IRONCLAW_ALLOW_LOCAL_FALLBACK"] = "1"
+            if announce:
+                print("[MODE] ironclaw continuity: local fallback auto-enabled.")
+        if "OPENCLAW_IRONCLAW_AUTOSTART_WAIT_SEC" not in os.environ:
+            os.environ["OPENCLAW_IRONCLAW_AUTOSTART_WAIT_SEC"] = "2.0"
+        if "OPENCLAW_IRONCLAW_AUTOSTART_COOLDOWN_SEC" not in os.environ:
+            os.environ["OPENCLAW_IRONCLAW_AUTOSTART_COOLDOWN_SEC"] = "45"
+    else:
+        os.environ["IRONCLAW_NO_API_KEYS"] = "0"
+        os.environ["OPENCLAW_NO_API_KEYS"] = "0"
+
+    return no_api_keys
+
+
+def run_chat_repl(
+    conversation_backend: str = "openclaw",
+    no_api_keys: bool | None = None,
+) -> None:
     """Interactive REPL loop for OpenClaw."""
     repo_root = _ensure_repo_root()
+    backend = (conversation_backend or "openclaw").strip().lower()
+    if backend not in {"openclaw", "ironclaw"}:
+        backend = "openclaw"
+
+    if no_api_keys is None:
+        no_api_keys = backend == "ironclaw"
 
     print("=" * 60)
-    print("  0102 OpenClaw Local Chat")
-    print("  Commander: @UnDaoDu | Channel: local_repl")
+    if backend == "ironclaw":
+        print("  0102 IronClaw Local Chat (via OpenClaw DAE)")
+    else:
+        print("  0102 OpenClaw Local Chat")
+    print("  Commander: @012 | Channel: local_repl")
     print("  Type 'exit' or Ctrl+C to quit")
+    print("  Type 'backend ironclaw' or 'backend openclaw' to switch runtime mode")
+    print(
+        f"  Conversation backend: {backend} | "
+        f"no_api_keys={'ON' if no_api_keys else 'OFF'}"
+    )
     print("=" * 60)
 
     try:
@@ -44,8 +117,12 @@ def run_chat_repl() -> None:
         print("  Ensure you are running from the repo root (O:/Foundups-Agent)")
         return
 
-    dae = OpenClawDAE(repo_root=repo_root)
+    no_api_keys = _configure_backend_runtime(backend, announce=True)
+
+    dae = OpenClawDAE(repo_root=repo_root, conversation_backend=backend)
     print(f"[OK] OpenClawDAE initialized (state={dae.state}, coherence={dae.coherence})")
+    print(f"[ID] 0102 taxonomy: {dae.get_identity_label_line(include_runtime_probe=(backend == 'ironclaw'))}")
+    print("[ID] tip: ask `model details` for full diagnostics")
     print()
 
     session_key = "local_repl_012"
@@ -63,11 +140,29 @@ def run_chat_repl() -> None:
             print("[EXIT] Session ended.")
             break
 
+        switch_to = _parse_backend_switch_command(message)
+        if switch_to:
+            if switch_to == backend:
+                print(f"[MODE] backend already {backend}.")
+                continue
+            backend = switch_to
+            no_api_keys = _configure_backend_runtime(backend, announce=True)
+            dae = OpenClawDAE(repo_root=repo_root, conversation_backend=backend)
+            print(
+                f"[MODE] backend switched to {backend} | "
+                f"no_api_keys={'ON' if no_api_keys else 'OFF'}"
+            )
+            print(
+                f"[ID] 0102 taxonomy: "
+                f"{dae.get_identity_label_line(include_runtime_probe=(backend == 'ironclaw'))}"
+            )
+            continue
+
         try:
             response = asyncio.run(
                 dae.process(
                     message=message,
-                    sender="@UnDaoDu",
+                    sender="@012",
                     channel="local_repl",
                     session_key=session_key,
                 )

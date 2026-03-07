@@ -692,13 +692,13 @@ async def run_video_indexing_cycle(
 
     # Default channels from env - all 4 channels
     # Chrome (9222): Move2Japan, UnDaoDu (Set 1)
-    # Edge (9223): FoundUps, RavingANTIFA (Set 10)
+    # Edge (9223): FoundUps, antifaFM (Set 10)
     if not channels:
         channels = [
             os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
             os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
             os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
-            os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+            os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
         ]
         channels = [c for c in channels if c]
 
@@ -709,26 +709,28 @@ async def run_video_indexing_cycle(
     logger.info("=" * 60)
 
     # Connect to browser if no driver provided
+    # HARDENED: Use retry helpers with DevTools verification (2026-02-22)
     if driver is None:
         try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
+                connect_chrome_with_retry,
+                connect_edge_with_retry,
+            )
+
             if browser.lower() == "edge":
-                from selenium import webdriver
-                from selenium.webdriver.edge.options import Options as EdgeOptions
-                port = int(os.getenv("FOUNDUPS_EDGE_PORT", "9223"))
-                logger.info(f"[VIDEO-INDEX] Connecting to Edge on port {port}...")
-                edge_opts = EdgeOptions()
-                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
-                driver = webdriver.Edge(options=edge_opts)
-                logger.info(f"[VIDEO-INDEX] Connected to Edge")
+                logger.info("[VIDEO-INDEX] Connecting to Edge with retry...")
+                driver = connect_edge_with_retry(max_retries=3, retry_delay=2.0)
+                if driver is None:
+                    logger.error("[VIDEO-INDEX] Edge connection failed after retries")
+                    return {"error": "Edge connection failed", "total_indexed": 0}
+                logger.info("[VIDEO-INDEX] Connected to Edge (with retry)")
             else:
-                from selenium import webdriver
-                from selenium.webdriver.chrome.options import Options
-                port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
-                logger.info(f"[VIDEO-INDEX] Connecting to Chrome on port {port}...")
-                opts = Options()
-                opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
-                driver = webdriver.Chrome(options=opts)
-                logger.info(f"[VIDEO-INDEX] Connected to Chrome")
+                logger.info("[VIDEO-INDEX] Connecting to Chrome with retry...")
+                driver = connect_chrome_with_retry(max_retries=3, retry_delay=2.0)
+                if driver is None:
+                    logger.error("[VIDEO-INDEX] Chrome connection failed after retries")
+                    return {"error": "Chrome connection failed", "total_indexed": 0}
+                logger.info("[VIDEO-INDEX] Connected to Chrome (with retry)")
         except Exception as e:
             logger.error(f"[VIDEO-INDEX] Failed to connect to {browser}: {e}")
             return {"error": str(e), "total_indexed": 0}

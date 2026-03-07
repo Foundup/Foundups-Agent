@@ -23,5 +23,6 @@ All orchestrators become plugins to the master.
 """
 
 from .holoindex_plugin import HoloIndexPlugin
+from .ironclaw_worker import IronClawWorkerPlugin
 
-__all__ = ['HoloIndexPlugin']
+__all__ = ['HoloIndexPlugin', 'IronClawWorkerPlugin']

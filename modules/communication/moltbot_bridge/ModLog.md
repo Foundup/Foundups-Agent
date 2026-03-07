@@ -1,5 +1,322 @@
 # ModLog - moltbot_bridge
 
+## 2026-03-07: CTO WRE prompt added to OpenClaw default context pack
+
+**Author**: 0102  
+**WSP**: 22, 60, 73, 87
+
+### Changes
+- Added `workspace/CTO_WRE_PROMPT.md`
+  - Canonical CTO operating prompt for fresh 0102 sessions.
+  - Encodes:
+    - WSP-first behavior
+    - `connect WRE` deterministic contract
+    - Occam layered architecture
+    - 24/7 state-machine mindset
+    - model policy and git policy
+- Updated `src/openclaw_dae.py`
+  - Included `workspace/CTO_WRE_PROMPT.md` in the default platform context pack load order.
+- Updated `MEMORY.md`
+  - Added the CTO prompt as an auto-memory topic.
+
+### Impact
+- Fresh OpenClaw sessions now load CTO/WRE operating guidance automatically through the existing context-pack mechanism.
+- This improves continuity without turning startup preflight into a heavy model-launch phase.
+
+## 2026-03-07: Canonical OpenClaw 0102 handoff for fresh-session continuity
+
+**Author**: 0102  
+**WSP**: 22, 60, 73
+
+### Changes
+- Added `docs/OPENCLAW_0102_HANDOFF_2026-03-07.md`
+  - Consolidates current OpenClaw/IronClaw/WRE architecture into one fresh-session handoff.
+  - Separates implemented behavior from operator intent gathered in 012 voice sessions.
+  - Defines the target 24/7 OpenClaw state machine:
+    - boot
+    - preflight
+    - observe
+    - triage
+    - plan
+    - execute
+    - verify
+    - remember
+    - escalate
+    - idle_watch
+  - Clarifies git strategy:
+    - `origin` + `backup` are mirrors, not rollback primitives
+    - rollback should rely on checkpoint tags, clean worktree verification, and revertable commits
+
+### Impact
+- Fresh 0102 sessions now have a canonical operational brief instead of relying on chat history reconstruction.
+- OpenClaw roadmap is now framed as a state-driven 24/7 supervisor problem, not a pure voice/chat UX problem.
+
+## 2026-03-05: LinkedIn digital_twin mentions/identity passthrough
+
+**Author**: 0102  
+**WSP**: 22, 50, 73
+
+### Changes
+- `src/linkedin_social_adapter.py`
+  - Enhanced `digital_twin` action mapping to parse and pass:
+    - `mentions` (comma-separated)
+    - `identity_cycle` (comma-separated)
+  - Preserved existing required args gate for:
+    - `comment_text`, `repost_text`, `schedule_date`, `schedule_time`
+
+### Impact
+- Agent command routing can now carry LinkedIn mention/identity intent into layered Digital Twin execution without manual code edits.
+- Module docs synced: `README.md`, `INTERFACE.md`.
+
+## 2026-03-05: Signed skill-manifest verification in workspace safety gate
+
+**Author**: 0102  
+**WSP**: 22, 50, 71, 95
+
+### Changes
+- `src/skill_safety_guard.py`
+  - Added pre-scan manifest verification using shared guard:
+    - hash verification of `workspace/skills/**/SKILL.md|SKILLz.md`
+    - optional HMAC signature verification
+  - Added policy controls:
+    - `OPENCLAW_SKILL_MANIFEST_REQUIRED`
+    - `OPENCLAW_SKILL_MANIFEST_ENFORCED`
+    - `OPENCLAW_SKILL_MANIFEST_VERIFY_SIGNATURE`
+    - `OPENCLAW_SKILL_MANIFEST_ALLOW_EXTRA`
+    - `OPENCLAW_SKILL_MANIFEST_FILE`
+    - `OPENCLAW_SKILL_MANIFEST_HMAC_KEY`
+  - Added optional function parameters so non-workspace callers can disable manifest checks explicitly.
+- `workspace/skills/SKILL_MANIFEST.json`
+  - Added canonical hash manifest for current workspace skill files.
+- `tests/test_skill_safety_guard.py`
+  - Added tamper regression proving manifest mismatch blocks before scanner execution.
+- Docs updated:
+  - `README.md` + `INTERFACE.md` include new manifest policy controls.
+
+## 2026-03-05: Skill safety always-scan mode for mutating routes
+
+**Author**: 0102  
+**WSP**: 22, 50, 71, 95
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added `OPENCLAW_SKILL_SCAN_ALWAYS` runtime flag.
+  - When enabled (`=1`), `_ensure_skill_safety()` bypasses TTL cache and re-runs
+    Cisco skill scan on every mutating/skill-driven intent.
+- `src/action_cli.py`
+  - Added direct adapter-mode skill safety gate (`_run_adapter_skill_safety_gate()`),
+    so standalone action CLI cannot bypass Cisco scan when not using `--via-dae`.
+- `tests/test_skill_safety_guard.py`
+  - Added regression coverage proving `OPENCLAW_SKILL_SCAN_ALWAYS` forces
+    a fresh `run_skill_scan()` call even when cache is valid.
+- `tests/test_action_cli.py`
+  - Added regression test proving adapter mode blocks when skill safety gate fails.
+- Docs updated:
+  - `README.md` and `INTERFACE.md` now document `OPENCLAW_SKILL_SCAN_ALWAYS`.
+
+## 2026-02-24: Direct-channel model routing + live provider probe + startup availability API
+
+**Author**: 0102  
+**WSP**: 22, 50, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added deterministic direct-channel routing for model/identity utterances
+    (`voice_repl`, `local_repl`) to prevent drift into non-conversation domains.
+  - Added model-switch live probe controls:
+    - `OPENCLAW_MODEL_SWITCH_LIVE_PROBE` (default `1`)
+    - `OPENCLAW_MODEL_SWITCH_PROBE_TIMEOUT_SEC` (default `2.0`)
+  - Added provider endpoint probe utility and startup availability snapshot:
+    - `get_model_availability_snapshot(live_probe=..., timeout_sec=...)`
+    - reports local target readiness + provider key/api status + target status.
+  - Updated identity model resolution:
+    - when external target is configured and key-external mode is valid,
+      compact identity reports `provider/model` instead of silently reverting to local label.
+
+### Tests
+- `tests/test_openclaw_dae.py`
+  - Added deterministic routing test for direct-channel model identity prompts.
+  - Added compact identity test for configured external target reporting.
+
+## 2026-02-24: Model switch reliability + compact identity + WSP_00 gate
+
+**Author**: 0102  
+**WSP**: 22, 50, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Split model-switch detection from identity detection:
+    - Generic switch intent (`change/switch/become ... model`) now routes to model-switch flow.
+    - If no target is provided, returns deterministic target guidance instead of identity/card output.
+  - Added WSP_00 gate for model switch execution:
+    - Requires commander authority
+    - Requires `OPENCLAW_IDENTITY_PROTOCOL=wsp_00`
+    - Requires `OPENCLAW_WSP00_BOOT=1`
+    - Runs preflight gate before applying switch
+  - Expanded STT alias normalization for model terms:
+    - `groc/grock/grog -> grok`
+  - Compact identity response now reports model only:
+    - `0102: model_name=<active_model>`
+    - Removes catalog list from normal identity replies.
+  - Improved external-switch denial copy under key-isolation policy:
+    - Clear local alternatives (`qwen3/qwen/gemma`).
+
+### Tests
+- `tests/test_openclaw_dae.py`
+  - Added coverage for:
+    - switch intent with missing target (guidance path)
+    - WSP_00 boot gate blocking model switch
+  - Updated compact identity assertions to model-name-only response.
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q -s modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "model_switch or identity_query_defaults_to_compact_response or compact_identity_query_handles_punctuation or identity_query_handles_quinn_stt_alias or running_qwen"`: PASS (8 passed)
+
+## 2026-02-24: Live voice model switching (local + external profiles)
+
+**Author**: 0102  
+**WSP**: 22, 50, 60, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added deterministic model-switch intent parsing for natural voice commands:
+    - `switch model to qwen3`
+    - `become codex`
+    - `become grok`
+  - Added STT alias normalization for model names (`coin -> qwen`).
+  - Added runtime model target application:
+    - Local targets update `LOCAL_MODEL_CODE_DIR` and reset Overseer for hot reload.
+    - External targets set preferred provider/model for conversation.
+  - Added preferred external model execution path (operator-selected provider/model).
+  - Added conversation identity/monitor exposure for:
+    - `conversation_model_target`
+    - `preferred_external_provider/model`
+  - Guarded identity intent routing so model-switch commands are not mistaken as identity queries.
+- `tests/test_openclaw_dae.py`
+  - Added tests for local switch (`qwen3`) and external switch (`grok` without key).
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "model_switch or role_lock or identity_query_handles_quinn_stt_alias or identity_query_model_unavailable_phrase_returns_card"`: PASS (6 passed)
+
+## 2026-02-24: Role-lock guard against 0102/012 inversion
+
+**Author**: 0102  
+**WSP**: 22, 50, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added deterministic role-inversion detector for low-quality model drift.
+  - Added canonical role-lock response:
+    - `0102` is always the digital twin
+    - `012 @UnDaoDu` is always the human twin
+  - Updated baseline conversation system prompt with explicit role-lock instructions
+    to prevent identity flips in generation.
+  - Applied role-lock correction in `_ensure_conversation_identity(...)` as final guardrail.
+- `tests/test_openclaw_dae.py`
+  - Added role-lock regression tests for inversion blocking and normal prefix behavior.
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "role_lock or identity_query_handles_quinn_stt_alias or identity_query_model_unavailable_phrase_returns_card"`: PASS (4 passed)
+
+## 2026-02-24: Platform context pack boot for system-wide understanding
+
+**Author**: 0102  
+**WSP**: 22, 50, 60, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added runtime platform-context pack loader with caching and refresh controls.
+  - Injects curated system context into conversation system prompt, so OpenClaw runs
+    with platform-level context (not only minimal identity boot text).
+  - Adds monitor/identity visibility fields:
+    - `platform_context` status
+    - loaded source count
+    - context load age
+  - Adds env controls:
+    - `OPENCLAW_PLATFORM_CONTEXT_ENABLED` (default `1`)
+    - `OPENCLAW_PLATFORM_CONTEXT_FILES` (optional file override list)
+    - `OPENCLAW_PLATFORM_CONTEXT_MAX_CHARS` (default `2200`)
+    - `OPENCLAW_PLATFORM_CONTEXT_REFRESH_SEC` (default `120`)
+    - `OPENCLAW_PLATFORM_CONTEXT_QUICK_RESPONSE_CHARS` (default `1000`)
+  - Local Qwen (`overseer.quick_response`) now receives the platform-context pack
+    in its `context` payload (trimmed), improving answer grounding across modules.
+- `tests/test_openclaw_dae.py`
+  - Added tests for context-pack injection and disable behavior.
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "wsp00_boot_prompt or platform_context_pack or identity_query_handles_quinn_stt_alias or monitor_reports_lineage_and_model_name"`: PASS (7 passed)
+
+## 2026-02-24: Identity query alias bridge for Qwen/Quinn voice STT
+
+**Author**: 0102  
+**WSP**: 22, 50, 73
+
+### Changes
+- `src/openclaw_dae.py`
+  - Added identity-query normalization aliases so STT variants map correctly:
+    - `quinn/quin/queen/gwen` -> `qwen`
+  - Expanded identity-query detection to trigger on model-name prompts such as:
+    - "are you qwen"
+    - "are you quinn"
+    - model/runtime availability phrasing with model aliases
+  - Expanded diagnostic/full-card detection for model availability phrasing:
+    - "not available" now treated as diagnostic signal for identity card route.
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "identity_query_handles_quinn_stt_alias or identity_query_model_unavailable_phrase_returns_card or identity_query_defaults_to_compact_response"`: PASS (3 passed)
+
+## 2026-02-24: IronClaw autostart resilience in strict voice/chat flows
+
+**Author**: 0102  
+**WSP**: 22, 50, 60, 65, 77
+
+### Changes
+- `src/openclaw_dae.py`
+  - Hardened `_attempt_ironclaw_autostart()` to fail fast when the configured executable is missing.
+  - Added missing-executable backoff window to prevent repeated failed spawn loops.
+  - Added explicit executable resolution checks before launch (`Path.exists` / `shutil.which`).
+  - Added optional shell fallback gate (`OPENCLAW_IRONCLAW_AUTOSTART_ALLOW_SHELL`, default off).
+  - Added clearer recovery details for strict-mode conversation responses.
+- `tests/test_openclaw_dae.py`
+  - Added strict/autostart regression coverage for missing executable fast-fail path.
+
+### Validation
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/tests/test_openclaw_dae.py`: PASS
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "autostart or strict or identity or cancellation"`: PASS (10 passed)
+
+## 2026-02-24: Standalone Claw Action CLI + PatternMemory writeback
+
+**Author**: 0102  
+**WSP**: 11, 22, 48, 60, 73
+
+### Changes
+- Added `src/action_cli.py` as a standalone execution surface for Claw actions:
+  - Supports direct commands:
+    - `linkedin action <action> ...`
+    - `x action <action> ...`
+    - `social campaign <campaign> ...`
+    - `youtube action <action> ...`
+  - Supports repeat/interval execution for 012 observation loops.
+  - Supports `--via-dae` to route through full `OpenClawDAE` permission + planning path.
+- Integrated PatternMemory writeback in standalone execution path:
+  - Each run now writes a `SkillOutcome` record using `PatternMemory().store_outcome(...)`.
+  - Skill naming format: `action_cli_<route>_<action>`.
+  - Captures command context, outcome summary, success/failure, and execution time.
+- CLI integration points:
+  - `main.py` non-interactive flags (`--agent-command`, `--agent-repeat`, `--agent-via-dae`, ...).
+  - OpenClaw menu option for interactive standalone action execution.
+
+### Validation
+- `python -m py_compile` on updated files: PASS.
+- `modules/communication/moltbot_bridge/tests/test_action_cli.py`: PASS.
+- Smoke execution:
+  - Adapter mode: PASS (`youtube action comments ... dry_run=true`)
+  - DAE mode: PASS (`x action post ... --via-dae`)
+
 ## 2026-02-16: Conversation identity anchor normalization
 
 **Author**: 0102  
@@ -499,6 +816,28 @@ LaunchOrchestrator (Associate)
 
 ---
 
+## 2026-02-24: Identity Contract Lock (OpenClaw DAE)
+
+**Author**: 0102
+**WSP**: 22, 50, 73
+
+### Changes
+- Enforced runtime identity contract in DAE guardrails:
+  - `0102` = agent/digital twin
+  - `012` = operator/commander (`@012` canonical sender)
+- Authorized commander set now includes canonical `012/@012` (legacy aliases retained for compatibility).
+- Updated role-lock response and system prompt:
+  - Role lock now states: `I am 0102 ... You are 012 (operator)`.
+  - Conversation guardrails enforce `0102` agent role and `012` operator role.
+- Permission/system denials reference `@012` for commander-gated operations.
+
+### Validation
+- `python -m py_compile` passed for updated DAE and CLI files.
+- Focused tests passed with plugin autoload disabled:
+  - `pytest -q modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "role_lock or identity_query_model_unavailable_phrase_returns_card"`
+
+---
+
 ## 2026-02-02: OpenClaw DAE - The Frontal Lobe
 
 **Author**: 0102
@@ -578,3 +917,42 @@ openclaw onboard
 - `docs/INSTALL_OPENCLAW.md` - Full installation guide
 - `docs/CHANNEL_SETUP.md` - Channel configuration (needs update for openclaw commands)
 - `README.md` - Updated with rebrand info
+
+## 2026-03-06: Qwen3.5 local-runtime bootstrap alignment
+
+**Author**: 0102  
+**WSP**: 00, 15, 84
+
+### Changes
+- Updated `src/openclaw_dae.py` local identity catalog default to include `qwen3.5`.
+- Added `local/qwen3.5-4b` to `get_model_availability_snapshot()` so status checks report readiness correctly after model switch.
+- Preserved existing model-switch contract while making runtime diagnostics consistent with `switch model to qwen3.5`.
+
+### Validation
+- Targeted tests pass for Qwen3.5 model-switch and availability snapshot.
+
+## 2026-03-07: ZeroClaw runtime profile enforcement (WSP_77 alignment)
+
+**Author**: 0102  
+**WSP**: 00, 15, 50, 77
+
+### Changes
+- Updated `src/openclaw_dae.py` with runtime profile support:
+  - New env: `OPENCLAW_RUNTIME_PROFILE` (`openclaw|ironclaw|zeroclaw`)
+  - Added runtime profile aliases (`open`, `iron`, `zero`, `failsafe`, `safe`)
+- Implemented ZeroClaw fail-closed behavior:
+  - Forces `no_api_keys` ON
+  - Forces external LLM routing OFF
+  - Downgrades mutating intents (`command/system/schedule/social/automation/foundup/research`) to `conversation` + `digital_twin` route
+- Hardened model switch policy:
+  - Blocks external model targets when runtime profile is `zeroclaw`
+  - Keeps local model switches available
+- Surfaced profile in identity/status outputs:
+  - `get_identity_snapshot()` now returns `runtime_profile`
+  - Added profile signal to identity card/compact runtime/monitor status/label line
+
+### Outcome
+- ZeroClaw now behaves as a real runtime profile (not documentation-only):
+  - Read-safe by default
+  - No external model drift
+  - Mutating intents auto-contained before execution planning

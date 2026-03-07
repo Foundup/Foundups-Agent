@@ -436,7 +436,17 @@ class StreamDiscoveryService:
         """
         Trigger social media posting for detected streams.
         Delegates to SocialMediaOrchestrator.
+        NOTE: antifaFM posts to GeoZai LinkedIn (104834798), routing via channels_config.json
         """
+        if not found_streams:
+            logger.info("=" * 80)
+            logger.info("[SOCIAL] No streams to post")
+            logger.info("=" * 80)
+            return
+
+        # All streams passed through - channel routing handled by config
+        filtered_streams = found_streams
+
         logger.info("=" * 80)
         logger.info("[SOCIAL] SOCIAL MEDIA POSTING ORCHESTRATION")
         logger.info("=" * 80)
@@ -446,8 +456,8 @@ class StreamDiscoveryService:
             orchestrator = get_orchestrator()
             logger.info("[OK] Social media orchestrator loaded")
 
-            logger.info(f"[HANDOFF] Sending {len(found_streams)} stream(s) to Social Media Orchestrator")
-            result = orchestrator.handle_multiple_streams_detected(found_streams)
+            logger.info(f"[HANDOFF] Sending {len(filtered_streams)} stream(s) to Social Media Orchestrator")
+            result = orchestrator.handle_multiple_streams_detected(filtered_streams)
 
             if result.get('success'):
                 logger.info(f"[SUCCESS] Orchestrator processed {result.get('streams_processed')} streams")

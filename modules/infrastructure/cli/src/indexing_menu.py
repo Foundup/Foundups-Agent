@@ -81,7 +81,7 @@ def _handle_gemini_indexing() -> None:
         total_indexed += result.get('total_indexed', 0)
         print(f"[CHROME] Indexed {result.get('total_indexed', 0)} videos")
 
-        # Phase 2: Edge channels (FoundUps + RavingANTIFA)
+        # Phase 2: Edge channels (FoundUps + antifaFM)
         print("\n[PHASE 2] Edge (9223): Registry channels")
         result = asyncio.run(run_video_indexing_cycle(
             channels=edge_channels,

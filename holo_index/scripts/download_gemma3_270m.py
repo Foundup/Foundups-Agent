@@ -25,7 +25,7 @@ Size: ~270M parameters (~160MB GGUF Q4_K_M)
 Speed: Ultra-fast inference (<50ms per query)
 Use case: WSP 57 file naming enforcement, Sentinel augmentation
 
-Target: E:/HoloIndex/models/gemma-3-270m-q4_k_m.gguf
+Target: LOCAL_MODEL_TRIAGE_DIR/gemma-3-270m-it-Q4_K_M.gguf
 
 WSP 35: HoloIndex Qwen Advisor (now supports Gemma)
 WSP 57: Naming Coherence
@@ -33,8 +33,27 @@ WSP 93: CodeIndex Surgical Intelligence
 """
 
 from huggingface_hub import hf_hub_download
+import os
 from pathlib import Path
 import sys
+
+
+def _resolve_code_fallback_path() -> Path:
+    """Resolve best available code model path from centralized env routing."""
+    explicit_path = os.getenv("LOCAL_MODEL_CODE_PATH", "").strip()
+    if explicit_path:
+        return Path(explicit_path)
+
+    default_root = os.getenv("LOCAL_MODEL_ROOT", "E:/LM_studio/models/local")
+    code_dir = Path(os.getenv("LOCAL_MODEL_CODE_DIR", f"{default_root}/qwen-coder-7b"))
+    try:
+        files = [p for p in code_dir.glob("*.gguf") if p.is_file()]
+        if files:
+            files.sort(key=lambda p: p.stat().st_size, reverse=True)
+            return files[0]
+    except OSError:
+        pass
+    return code_dir / "qwen-coder-7b.gguf"
 
 def download_gemma3_270m():
     """
@@ -56,7 +75,8 @@ def download_gemma3_270m():
     # Gemma 3 just released, GGUF versions may be in lmstudio-community
     repo_id = "lmstudio-community/gemma-3-270m-it-GGUF"  # Community GGUF conversion
     filename = "gemma-3-270m-it-Q4_K_M.gguf"
-    local_dir = Path("E:/HoloIndex/models")
+    default_root = os.getenv("LOCAL_MODEL_ROOT", "E:/LM_studio/models/local")
+    local_dir = Path(os.getenv("LOCAL_MODEL_TRIAGE_DIR", f"{default_root}/gemma-270m"))
 
     print(f"Repository: {repo_id}")
     print(f"File: {filename}")
@@ -109,9 +129,9 @@ def download_gemma3_270m():
         print()
         print("Alternative options:")
         print()
-        print("1. Use existing Qwen 1.5B (already installed):")
-        print("   Path: E:/HoloIndex/models/qwen-coder-1.5b.gguf")
-        print("   Size: 1.1GB (larger but proven to work)")
+        print("1. Use existing code model from LOCAL_MODEL_CODE_*:")
+        print(f"   Path: {_resolve_code_fallback_path()}")
+        print("   Size: depends on selected model (qwen-coder-7b default)")
         print()
         print("2. Wait for community GGUF conversion of Gemma 3")
         print("   Check: https://huggingface.co/models?search=gemma-3-270m%20gguf")
@@ -120,7 +140,7 @@ def download_gemma3_270m():
         print("   - Download: https://huggingface.co/google/gemma-3-270m")
         print("   - Convert with llama.cpp convert script")
         print()
-        print("For now, recommend using Qwen 1.5B for file naming task.")
+        print("For now, recommend using the configured code model for fallback.")
         print()
         sys.exit(1)
 
@@ -179,29 +199,28 @@ def verify_model(model_path: str):
 
 
 def use_qwen_fallback():
-    """Use existing Qwen 1.5B as fallback"""
+    """Use configured code model as fallback."""
     print("=" * 70)
-    print("Using Qwen 1.5B Fallback")
+    print("Using Code Model Fallback")
     print("=" * 70)
     print()
 
-    qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+    qwen_path = _resolve_code_fallback_path()
 
     if not qwen_path.exists():
-        print("[ERROR] Qwen 1.5B not found at expected location:")
+        print("[ERROR] Code model not found at expected location:")
         print(f"        {qwen_path}")
         print()
-        print("Please install Qwen first or wait for Gemma 3 GGUF.")
+        print("Set LOCAL_MODEL_CODE_PATH or LOCAL_MODEL_CODE_DIR first.")
         sys.exit(1)
 
-    print(f"[INFO] Qwen 1.5B found: {qwen_path}")
+    print(f"[INFO] Code model found: {qwen_path}")
     size_mb = qwen_path.stat().st_size / (1024 * 1024)
     print(f"       Size: {size_mb:.1f} MB")
     print()
-    print("Qwen 1.5B can be used for file naming enforcement.")
-    print("It's larger (1.1GB) but provides excellent accuracy.")
+    print("Configured code model can be used for file naming enforcement.")
     print()
-    print("To use Qwen for file naming:")
+    print("To use this fallback for file naming:")
     print("  1. Update test_qwen_file_naming_trainer.py")
     print(f"  2. Set model_path = '{qwen_path}'")
     print("  3. Run: python holo_index/tests/test_qwen_file_naming_trainer.py")
@@ -226,7 +245,7 @@ if __name__ == "__main__":
     except SystemExit:
         # Gemma 3 not available, use Qwen fallback
         print()
-        print("Falling back to Qwen 1.5B...")
+        print("Falling back to configured code model...")
         print()
         qwen_path = use_qwen_fallback()
 
@@ -240,11 +259,11 @@ if __name__ == "__main__":
     print("  Speed: <50ms per query")
     print("  Best for: Classification tasks (file naming, yes/no decisions)")
     print()
-    print("Qwen 1.5B (fallback, already installed):")
-    print("  Size: 1.1GB")
-    print("  Speed: ~200-300ms per query")
+    print("Code model fallback (LOCAL_MODEL_CODE_*):")
+    print("  Size: model-dependent")
+    print("  Speed: model-dependent")
     print("  Best for: Code understanding, complex analysis")
     print()
     print("For WSP 57 file naming enforcement, Gemma 3 is ideal")
-    print("but Qwen 1.5B works perfectly fine (just a bit slower).")
+    print("but code-model fallback works if Gemma 3 is unavailable.")
     print()

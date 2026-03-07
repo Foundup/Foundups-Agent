@@ -1,5 +1,48 @@
 # Simulator ModLog
 
+## 2026-02-22 - Simulator Qwen Backend Route Toggle (Local / IronClaw / WRE->IronClaw)
+
+### Why
+Enable pAVS simulation runs to exercise IronClaw worker paths directly and through WRE for route-policy modeling.
+
+### Changes
+- Updated `ai/llm_inference.py`:
+  - Added `SIM_QWEN_BACKEND` routing:
+    - `local` (default)
+    - `ironclaw` (direct gateway call)
+    - `wre_ironclaw` (through WRE `ironclaw_worker` plugin)
+  - Added backend-aware stats (`ironclaw_queries`, `wre_ironclaw_queries`).
+  - Preserved graceful fallback to local inference if routed backend is unavailable.
+- Added tests:
+  - `tests/test_llm_inference_backend_routing.py`
+
+### Outcome
+- Simulator can now run backend strategy comparisons without changing agent logic.
+
+---
+
+## 2026-02-22 - IronClaw Agent Builder + Digital Twin Roadmap Alignment
+
+### Why
+012 requested a continuation roadmap to run IronClaw in pAVS as an agent
+builder and as a Digital Twin lane, without breaking existing OpenClaw control
+contracts.
+
+### Changes
+- Updated simulator roadmap:
+  - Added related strategy doc references.
+  - Added `Tranche S6 - IronClaw Agent Builder + Digital Twin Lane (Planned)`.
+  - Added P0 parity test requirement for IronClaw integration.
+  - File: `modules/foundups/simulator/ROADMAP.md`
+- Added cross-domain roadmap document:
+  - `modules/foundups/docs/FOUNDUPS_PAVS_IRONCLAW_AGENT_BUILDER_DIGITAL_TWIN_ROADMAP.md`
+
+### Outcome
+- Simulator planning now explicitly includes IronClaw parity, builder scenarios,
+  Digital Twin scenarios, and accounting linkage validation.
+
+---
+
 ## 2026-02-22 - pAVS Submission Checklist Execution
 
 ### Why

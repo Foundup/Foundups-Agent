@@ -27,7 +27,17 @@ Module: liberty_alert
 import asyncio
 import traceback
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("liberty_alert_dae")
 def run_liberty_alert_dae():
     """Run Liberty Alert DAE (Community Protection Autonomous Entity)."""
     print("[LIBERTY ALERT DAE] Starting Community Protection Autonomous Entity...")

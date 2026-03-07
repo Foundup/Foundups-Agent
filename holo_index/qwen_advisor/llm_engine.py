@@ -26,7 +26,7 @@ rule-based processing.
 
 NAVIGATION: Local LLM inference engine for Qwen advisor
 -> Called by: qwen_advisor/advisor.py
--> Dependencies: llama-cpp-python, qwen-coder-1.5b.gguf
+-> Dependencies: llama-cpp-python, local code model (GGUF)
 -> Config: qwen_advisor/config.py
 """
 
@@ -42,7 +42,7 @@ class QwenInferenceEngine:
     """
     Local LLM inference engine using llama-cpp-python.
 
-    Loads and runs the Qwen 1.5B coder model for intelligent code analysis
+    Loads and runs the configured local coding model for intelligent analysis
     and guidance generation.
     """
 
@@ -96,7 +96,7 @@ class QwenInferenceEngine:
                 os.dup2(devnull, 1)
                 os.dup2(devnull, 2)
 
-                # Initialize the model with optimized settings for 1.5B model
+                # Initialize with conservative defaults for local coding models.
                 self.llm = Llama(
                     model_path=str(self.model_path),
                     n_ctx=self.context_length,
@@ -228,7 +228,7 @@ Keep response under 200 words.
             "guidance": response,
             "confidence": 0.8,  # High confidence for LLM analysis
             "recommendations": self._extract_recommendations(response),
-            "model_used": "qwen-coder-1.5b"
+            "model_used": self.model_path.stem
         }
 
     def _extract_recommendations(self, response: str) -> list[str]:

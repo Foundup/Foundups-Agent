@@ -24,7 +24,7 @@ WSP Compliance:
 NAVIGATION:
   -> Called by: openclaw_dae.py (classify_intent enhancement)
   -> Pattern from: video_comments/src/gemma_validator.py
-  -> Model: E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf
+  -> Model: LOCAL_MODEL_TRIAGE_* (central resolver)
 """
 
 import logging
@@ -33,6 +33,7 @@ import time
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 from enum import Enum
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 logger = logging.getLogger("gemma_intent_classifier")
 
@@ -51,8 +52,8 @@ class GemmaIntentClassifier:
         # {'category': 'monitor', 'confidence': 0.87, 'method': 'gemma_hybrid'}
     """
 
-    # Default model path (zen coding: model exists on E: drive)
-    DEFAULT_MODEL_PATH = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+    # Default model path from central local model selection.
+    DEFAULT_MODEL_PATH = resolve_triage_model_path()
 
     # Intent category descriptions for Gemma prompts
     CATEGORY_DESCRIPTIONS = {
@@ -78,7 +79,7 @@ class GemmaIntentClassifier:
         Initialize Gemma intent classifier.
 
         Args:
-            model_path: Path to Gemma GGUF model. Defaults to E:/HoloIndex/models/
+            model_path: Path to Gemma GGUF model. Defaults to LOCAL_MODEL_TRIAGE_*.
             max_candidates: Max keyword candidates to validate with Gemma (default 3)
             keyword_weight: Weight for keyword score in combined score (default 0.3)
             gemma_weight: Weight for Gemma score in combined score (default 0.7)

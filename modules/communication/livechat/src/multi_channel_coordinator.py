@@ -218,6 +218,18 @@ class MultiChannelCoordinator:
     def _oops_cooldown_seconds(self) -> int:
         return int(os.getenv("YT_OOPS_COOLDOWN_S", "300"))
 
+    async def _driver_session_alive(self, driver: Any, browser_name: str) -> bool:
+        """Lightweight health probe for Selenium driver session."""
+        if driver is None:
+            return False
+        try:
+            await asyncio.to_thread(driver.execute_script, "return document.readyState")
+            await asyncio.to_thread(lambda: driver.current_url)
+            return True
+        except Exception as exc:
+            logger.warning(f"[ROTATE] [{browser_name}] Session health check failed: {exc}")
+            return False
+
     def _should_skip_oops(self, account_name: str) -> bool:
         last_ts = self._oops_backoff.get(account_name)
         if not last_ts:
@@ -429,21 +441,23 @@ class MultiChannelCoordinator:
         edge_swapper = None
 
         try:
-            from selenium import webdriver
-            from selenium.webdriver.edge.options import Options as EdgeOptions
             from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
-                launch_edge, STUDIO_FILTER
+                connect_edge_with_retry, STUDIO_FILTER, EDGE_DEBUG_PORT,
             )
             from modules.communication.video_comments.skillz.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
 
-            edge_ok, edge_msg = launch_edge()
-            if not edge_ok:
-                logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
+            # HARDENED: Use retry helper with DevTools verification (2026-02-22)
+            edge_driver = await asyncio.to_thread(
+                connect_edge_with_retry,
+                max_retries=3,
+                retry_delay=2.0,
+                relaunch_on_fail=True,
+            )
+            if edge_driver is None:
+                logger.error("[ROTATE] Edge connection failed after retries - skipping Edge channels")
+                return 0
 
-            edge_opts = EdgeOptions()
-            edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
-            edge_driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
-            logger.info(f"[ROTATE] Connected to Edge on port {edge_port}")
+            logger.info(f"[ROTATE] Connected to Edge on port {edge_port} (with retry)")
             edge_swapper = TarsAccountSwapper(edge_driver)
 
         except Exception as e:
@@ -743,26 +757,33 @@ class MultiChannelCoordinator:
         Uses TarsAccountSwapper for account switching within same Google account.
         """
         total_processed = 0
+        total_shorts_scheduled = 0  # Track shorts for LinkedIn rotation trigger
         chrome_driver = None
         swapper = None
         rotation_halt = False
 
         try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
             from modules.communication.video_comments.skillz.tars_account_swapper.account_swapper_skill import TarsAccountSwapper
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
+                connect_chrome_with_retry,
+                CHROME_DEBUG_PORT,
+            )
 
-            chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
-            chrome_ok, chrome_msg = launch_chrome()
-            if not chrome_ok:
-                logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
+            chrome_port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", str(CHROME_DEBUG_PORT)))
 
-            opts = Options()
-            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
-            chrome_driver = await asyncio.to_thread(webdriver.Chrome, options=opts)
+            # HARDENED: Use retry helper with DevTools verification (2026-02-22)
+            chrome_driver = await asyncio.to_thread(
+                connect_chrome_with_retry,
+                max_retries=3,
+                retry_delay=2.0,
+                relaunch_on_fail=True,
+            )
+            if chrome_driver is None:
+                logger.error("[ROTATE] Chrome connection failed after retries - skipping Chrome channels")
+                return 0
+
             swapper = TarsAccountSwapper(chrome_driver)
-            logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port}")
+            logger.info(f"[ROTATE] Connected to Chrome on port {chrome_port} (with retry)")
 
             # 2026-01-29: WARMUP - Navigate to YouTube to ensure session is loaded
             try:
@@ -777,6 +798,19 @@ class MultiChannelCoordinator:
 
             # Smart rotation: detect current account to minimize switching
             chrome_accounts = await self._optimize_rotation_order(chrome_driver, chrome_accounts)
+
+            if not await self._driver_session_alive(chrome_driver, "Chrome"):
+                logger.warning("[ROTATE] [Chrome] Session invalid after connect; attempting immediate reconnect")
+                chrome_driver = await self.reconnect_chrome_driver(chrome_port)
+                if chrome_driver is None:
+                    logger.error("[ROTATE] [Chrome] Immediate reconnect failed - skipping Chrome channels")
+                    return 0
+                swapper = TarsAccountSwapper(chrome_driver)
+                try:
+                    await asyncio.to_thread(chrome_driver.get, "https://www.youtube.com")
+                    await asyncio.sleep(3)
+                except Exception as warmup_err:
+                    logger.warning(f"[ROTATE] [Chrome] Warmup after reconnect failed: {warmup_err}")
 
         except Exception as e:
             logger.error(f"[ROTATE] Failed to connect to Chrome: {e}")
@@ -862,8 +896,30 @@ class MultiChannelCoordinator:
                             continue
 
             except Exception as e:
+                error_text = str(e)
                 logger.error(f"[ROTATE] Account switch error: {e}")
-                if idx > 1:
+
+                recovered = False
+                if _is_session_error(error_text) and _env_truthy("YT_RECONNECT_ON_SESSION_ERROR", "true"):
+                    logger.warning(f"[ROTATE] [Chrome] Session error during switch to {account_name}; reconnecting")
+                    chrome_driver = await self.reconnect_chrome_driver(chrome_port)
+                    if chrome_driver:
+                        swapper = TarsAccountSwapper(chrome_driver)
+                        recovered = await self._driver_session_alive(chrome_driver, "Chrome")
+                    else:
+                        logger.warning("[ROTATE] [Chrome] Reconnect failed during account switch")
+
+                if recovered:
+                    try:
+                        success = await swapper.swap_to(account_name)
+                        if not success:
+                            logger.warning(f"[ROTATE] [Chrome] Post-reconnect switch failed for {account_name}")
+                            continue
+                        logger.info(f"[ROTATE] [Chrome] Recovered and switched to {account_name}")
+                    except Exception as retry_err:
+                        logger.warning(f"[ROTATE] [Chrome] Post-reconnect switch exception: {retry_err}")
+                        continue
+                elif idx > 1 or _is_session_error(error_text):
                     continue
 
             # Process comments
@@ -958,6 +1014,50 @@ class MultiChannelCoordinator:
                         except Exception as dom_err:
                             logger.debug(f"[ROTATE] DOM comment check failed: {dom_err}")
 
+                # ============================================
+                # PER-CHANNEL SHORTS: Check unlisted shorts for THIS channel (Chrome)
+                # Occam model: Comments → Shorts → Next Channel (not batch)
+                # FIX 2026-02-24: Added per-channel shorts for Chrome (was Edge-only)
+                # ============================================
+                shorts_per_channel = _env_truthy("YT_SHORTS_PER_CHANNEL_ENABLED", "true")
+                shorts_enabled = _env_truthy("YT_SHORTS_SCHEDULING_ENABLED", "true")
+
+                if shorts_per_channel and shorts_enabled:
+                    # Only run shorts if comments are done for this channel
+                    all_comments_done = stats.get("all_processed", False)
+                    if all_comments_done:
+                        logger.info(f"[ROTATE] [Chrome] {account_name} comments done → checking unlisted shorts...")
+                        try:
+                            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import YouTubeShortsScheduler
+
+                            # Map account name to channel key
+                            channel_key = account_name.lower().replace(" ", "")  # "Move2Japan" -> "move2japan"
+
+                            shorts_scheduler = YouTubeShortsScheduler(channel_key)
+                            if shorts_scheduler.connect_browser():
+                                max_shorts = int(os.getenv("YT_SHORTS_PER_CYCLE", "10"))
+                                logger.info(f"[ROTATE] [Chrome] Running shorts scheduler for {account_name} (max {max_shorts})...")
+
+                                # Run scheduling cycle (sync, so wrap in thread)
+                                shorts_result = await asyncio.to_thread(
+                                    lambda: asyncio.run(shorts_scheduler.run_scheduling_cycle(max_videos=max_shorts))
+                                )
+
+                                scheduled = shorts_result.get("scheduled", 0) if shorts_result else 0
+                                total_shorts_scheduled += scheduled  # Accumulate for LinkedIn trigger
+                                logger.info(f"[ROTATE] [Chrome] {account_name} shorts: {scheduled} scheduled (total: {total_shorts_scheduled})")
+
+                                shorts_scheduler.close()
+                            else:
+                                logger.warning(f"[ROTATE] [Chrome] Could not connect to browser for {account_name} shorts")
+
+                        except ImportError as ie:
+                            logger.debug(f"[ROTATE] [Chrome] Shorts scheduler not available: {ie}")
+                        except Exception as shorts_err:
+                            logger.warning(f"[ROTATE] [Chrome] {account_name} shorts failed: {shorts_err}")
+                    else:
+                        logger.debug(f"[ROTATE] [Chrome] {account_name} comments not done, skipping shorts")
+
                 # Check halt conditions
                 if strict_inbox:
                     if error_text and not session_recovered:
@@ -994,6 +1094,59 @@ class MultiChannelCoordinator:
                     logger.info(f"[ROTATE] Live stream pending but YT_STOP_ROTATION_ON_LIVE=false - continuing to next channel")
 
             logger.info(f"[ROTATE] [Chrome {idx}/{len(chrome_accounts)}] ✅ {account_name} complete - continuing rotation...")
+
+        # ============================================
+        # LINKEDIN GROUP ROTATION (after Chrome YT loop)
+        # Occam flow: Comments → Shorts → LN Group (approve + post) → Return
+        # FIX 2026-02-24: Added LinkedIn rotation after YT shorts
+        # ============================================
+        ln_rotation_enabled = _env_truthy("LN_GROUP_ROTATION_ENABLED", "true")
+        ln_shorts_threshold = int(os.getenv("LN_GROUP_SHORTS_THRESHOLD", "10"))
+
+        if ln_rotation_enabled and total_shorts_scheduled >= ln_shorts_threshold:
+            logger.info(f"[ROTATE] [LinkedIn] {total_shorts_scheduled} shorts scheduled >= {ln_shorts_threshold} threshold → running LinkedIn group rotation...")
+            try:
+                from modules.platform_integration.linkedin_agent.skillz.openclaw_group_news.executor import (
+                    run_group_membership_cycle,
+                    run_openclaw_news_flow,
+                )
+
+                # Check for dry-run mode (default: live)
+                ln_dry_run = _env_truthy("LN_GROUP_DRY_RUN", "false")
+                ln_max_members = int(os.getenv("LN_GROUP_MAX_MEMBERS", "10"))
+
+                # Step 1: Approve pending members with welcome messages
+                logger.info(f"[ROTATE] [LinkedIn] Step 1: Checking group membership requests (max={ln_max_members}, dry_run={ln_dry_run})...")
+                membership_result = await asyncio.to_thread(
+                    lambda: run_group_membership_cycle(
+                        dry_run=ln_dry_run,
+                        max_requests=ln_max_members,
+                        send_welcome=True,
+                        approve=True,
+                        post_news_after=False  # We handle news separately
+                    )
+                )
+                approved = membership_result.get("approved", 0)
+                messaged = membership_result.get("messaged", 0)
+                logger.info(f"[ROTATE] [LinkedIn] Membership: {approved} approved, {messaged} welcomed")
+
+                # Step 2: Search, rate, and post OpenClaw news
+                logger.info(f"[ROTATE] [LinkedIn] Step 2: Searching and posting OpenClaw news (dry_run={ln_dry_run})...")
+                news_result = await asyncio.to_thread(
+                    lambda: run_openclaw_news_flow(dry_run=ln_dry_run)
+                )
+                news_posted = news_result.get("posted", False)
+                news_status = news_result.get("status", "unknown")
+                logger.info(f"[ROTATE] [LinkedIn] News: status={news_status}, posted={news_posted}")
+
+                logger.info(f"[ROTATE] [LinkedIn] ✅ Group rotation complete - returning to YT comments next cycle")
+
+            except ImportError as ie:
+                logger.debug(f"[ROTATE] [LinkedIn] Group executor not available: {ie}")
+            except Exception as ln_err:
+                logger.warning(f"[ROTATE] [LinkedIn] Group rotation failed: {ln_err}")
+        elif ln_rotation_enabled:
+            logger.debug(f"[ROTATE] [LinkedIn] {total_shorts_scheduled} shorts < {ln_shorts_threshold} threshold - skipping LinkedIn rotation")
 
         return total_processed
 

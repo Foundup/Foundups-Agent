@@ -28,22 +28,41 @@ TITLE_TEMPLATES = [
 # Emoji prefixes for variety
 EMOJI_PREFIXES = ["🔥", "❌", "💀", "🚨", "⚠️", "👀", "🎵", "🎶"]
 
-# Standard FFCPLN description
+# ICE Victims - Real people harmed by Trump's Gestapo (2026-02-21)
+# Remember their names in every description
+ICE_VICTIMS = [
+    "Renee Good",
+    "Alex Pretti",
+    "Guadalupe Garcia de Rayos",
+    "Rosa Maria Hernandez",
+    "Romulo Avelica-Gonzalez",
+    "Jorge Garcia",
+    "Maribel Trujillo-Diaz",
+]
+
+# Standard FFCPLN description - ENHANCED 2026-02-21
 FFCPLN_DESCRIPTION = """🔥 FFCPLN: Fake F*** Christian Pedo-Lovin' Nazi Playlist 🔥
 
 160+ anti-fascist songs exposing ICE cruelty & MAGA hypocrisy!
 
-🎵 FULL PLAYLIST: https://ravingANTIFA.com
+🎵 FULL PLAYLIST: https://antifaFM.com
+📻 TUNE IN: https://antifaFM.com - Your source for Anti-Trump Gestapo Music!
+
+🚨 Remember the victims: {ice_victims}
+#StopICE #ICEout #AbolishICE #ResistICE
 
 #FFCPLN #MAGA #ICE #Antifascist #Resistance #TrumpFiles #Epstein #Music #Shorts #Viral
 
 👆 SHARE if you care! Subscribe for more!"""
 
-# Alternative descriptions
+# Alternative descriptions - ENHANCED 2026-02-21
 ALT_DESCRIPTIONS = [
     """🎵 From the FFCPLN Playlist - 160+ songs fighting fascism!
 
-🔗 Full playlist: https://ravingANTIFA.com
+🔗 Full playlist: https://antifaFM.com
+📻 Stream 24/7: https://antifaFM.com
+
+🚨 {ice_victim} deserves justice! #StopICE
 
 #FFCPLN #MAGA #Resistance #Music #Shorts""",
 
@@ -51,7 +70,9 @@ ALT_DESCRIPTIONS = [
 
 Fake F*** Christian Pedo-Lovin' Nazis - 160 songs exposing the truth!
 
-🎶 https://ravingANTIFA.com
+🎶 https://antifaFM.com | 📻 https://antifaFM.com
+
+Remember {ice_victim}! #AbolishICE
 
 #FFCPLN #AntiMAGA #ICE #Shorts""",
 
@@ -59,10 +80,90 @@ Fake F*** Christian Pedo-Lovin' Nazis - 160 songs exposing the truth!
 
 160+ anti-fascist anthems. This is just one.
 
-👆 Link in bio for full playlist!
+📻 ANTIFA FM: https://antifaFM.com - 24/7 Anti-Trump Music!
+🔗 Full playlist: https://antifaFM.com
+
+Stand with {ice_victim} - #ICEout #StopDeportations
 
 #FFCPLN #MAGA #Resistance #Shorts #Viral""",
 ]
+
+# =============================================================================
+# NON-FFCPLN DESCRIPTION TEMPLATES (2026-02-22)
+# FoundUps and UnDaoDu channels have different content types
+# =============================================================================
+
+# FoundUps: M2M discoverable Startup/Business/pAVS content
+FOUNDUPS_DESCRIPTION = """🚀 Foundups.com - Imagine a World Reimagined by AI
+
+pAVS: Peer-to-Peer Autonomous Venture System
+Where AI agents and humans collaborate to build the future.
+
+🔗 Discover more: https://foundups.com
+🤖 OpenClaw AI Marketplace: https://foundups.com/openclaw
+📺 Subscribe @FoundUps for startup insights!
+
+#FoundUps #pAVS #AI #Startup #OpenClaw #Autonomous #Tech #Innovation #Shorts"""
+
+FOUNDUPS_ALT_DESCRIPTIONS = [
+    """🧠 Foundups.com - AI + Human Collaboration
+
+pAVS: Peer-to-Peer Autonomous Venture System
+Building the decentralized economy, one venture at a time.
+
+🔗 https://foundups.com
+@FoundUps @UnDaoDu
+
+#FoundUps #pAVS #AI #Startup #Autonomous #Shorts""",
+
+    """💡 Foundups.com - The Future is Autonomous
+
+OpenClaw: Where AI agents work alongside humans.
+pAVS: Peer-to-Peer Autonomous Venture System.
+
+🔗 https://foundups.com/openclaw
+Subscribe @FoundUps
+
+#FoundUps #OpenClaw #AI #pAVS #Innovation #Shorts""",
+]
+
+# UnDaoDu: M2M discoverable Mindfulness content linking to foundups.com
+UNDAODU_DESCRIPTION = """🧘 Foundups.com - Where Mindfulness Meets Technology
+
+@UnDaoDu explains the path of non-doing (Wu Wei).
+Finding balance in a world reimagined by AI.
+
+🔗 Learn more: https://foundups.com
+📿 Breathe. Be. Become.
+
+#UnDaoDu #Mindfulness #Foundups #AI #Meditation #Zen #Peace #Shorts"""
+
+UNDAODU_ALT_DESCRIPTIONS = [
+    """☯️ Foundups.com - The Dao of AI
+
+@UnDaoDu: Ancient wisdom for the singularity age.
+The way that can be spoken is not the eternal way.
+
+🔗 https://foundups.com
+
+#UnDaoDu #Taoism #Foundups #AI #Mindfulness #Shorts""",
+
+    """🌸 Foundups.com - A Moment of Presence
+
+@UnDaoDu guides you through mindful moments.
+Where technology and spirituality meet.
+
+🔗 https://foundups.com
+
+#UnDaoDu #Meditation #Foundups #Peace #Mindful #Shorts""",
+]
+
+# Template lookup by channel key
+DESCRIPTION_TEMPLATES = {
+    "ffcpln": (FFCPLN_DESCRIPTION, ALT_DESCRIPTIONS),
+    "foundups": (FOUNDUPS_DESCRIPTION, FOUNDUPS_ALT_DESCRIPTIONS),
+    "undaodu": (UNDAODU_DESCRIPTION, UNDAODU_ALT_DESCRIPTIONS),
+}
 
 
 def generate_clickbait_title(
@@ -384,42 +485,124 @@ def generate_clickbait_title_from_index(
     return generate_clickbait_title(original_title=original_title, song_hint=hint or None)
 
 
-def get_standard_description(template: str = "ffcpln") -> str:
+def get_ai_driven_template(
+    title: str,
+    channel: str,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> str:
     """
-    Get standard algorithm-friendly description.
+    Get AI-classified description template using gemma_content_type_classifier skill.
+
+    This replaces static description_template config with dynamic AI classification.
 
     Args:
-        template: "ffcpln" or "alt" for alternative
+        title: Video title
+        channel: Channel key (move2japan, undaodu, foundups, antifafm)
+        metadata: Optional index artifact with audio/visual analysis
 
     Returns:
-        Description string
+        Template key: "ffcpln", "foundups", or "undaodu"
+
+    WSP Compliance: WSP 95 (SKILLz Wardrobe), WSP 77 (Agent Coordination)
     """
-    if template == "ffcpln":
-        return FFCPLN_DESCRIPTION
-    else:
-        return random.choice(ALT_DESCRIPTIONS)
+    try:
+        from modules.platform_integration.youtube_shorts_scheduler.skillz.gemma_content_type_classifier.executor import classify_content
+        result = classify_content(title=title, channel=channel, metadata=metadata)
+        return result["description_template"]
+    except ImportError:
+        # Skill not available, fallback to channel baseline
+        import logging
+        logging.getLogger(__name__).debug(
+            "[CONTENT-GEN] gemma_content_type_classifier skill not available, using channel baseline"
+        )
+        baselines = {
+            "move2japan": "ffcpln",
+            "antifafm": "ffcpln",
+            "foundups": "foundups",
+            "undaodu": "undaodu",
+        }
+        return baselines.get(channel.lower(), "ffcpln")
+
+
+def get_standard_description(template: str = "ffcpln") -> str:
+    """
+    Get standard algorithm-friendly description for channel.
+
+    Args:
+        template: "ffcpln", "foundups", "undaodu", or "alt"
+
+    Returns:
+        Description string appropriate for channel content type
+    """
+    # Use DESCRIPTION_TEMPLATES lookup (2026-02-22)
+    if template in DESCRIPTION_TEMPLATES:
+        main_desc, alt_descs = DESCRIPTION_TEMPLATES[template]
+        # 70% main, 30% random alt for variety
+        desc = main_desc if random.random() > 0.3 else random.choice(alt_descs)
+
+        # FFCPLN templates need ICE victim names
+        if template == "ffcpln":
+            victims_sample = random.sample(ICE_VICTIMS, min(3, len(ICE_VICTIMS)))
+            victims_str = ", ".join(victims_sample)
+            single_victim = random.choice(ICE_VICTIMS)
+            if "{ice_victims}" in desc:
+                desc = desc.format(ice_victims=victims_str)
+            elif "{ice_victim}" in desc:
+                desc = desc.format(ice_victim=single_victim)
+
+        return desc
+
+    # Legacy "alt" handling for backward compat
+    if template == "alt":
+        single_victim = random.choice(ICE_VICTIMS)
+        desc = random.choice(ALT_DESCRIPTIONS)
+        return desc.format(ice_victim=single_victim)
+
+    # Default fallback to FFCPLN
+    victims_sample = random.sample(ICE_VICTIMS, min(3, len(ICE_VICTIMS)))
+    victims_str = ", ".join(victims_sample)
+    return FFCPLN_DESCRIPTION.format(ice_victims=victims_str)
 
 
 def generate_description_with_context(
     original_title: Optional[str] = None,
     song_name: Optional[str] = None,
     artist: Optional[str] = None,
+    template_type: str = "ffcpln",
 ) -> str:
     """
-    Generate contextual description based on video content.
+    Generate contextual description based on video content and channel template.
 
     Args:
         original_title: Original video title
         song_name: Song name if known
         artist: Artist name if known
+        template_type: "ffcpln", "foundups", or "undaodu"
 
     Returns:
         Description with context
     """
-    base = FFCPLN_DESCRIPTION
+    # Get template for channel (default to FFCPLN for backward compat)
+    if template_type in DESCRIPTION_TEMPLATES:
+        main_desc, alt_descs = DESCRIPTION_TEMPLATES[template_type]
+        # Use main or random alt
+        base = main_desc if random.random() > 0.3 else random.choice(alt_descs)
+    else:
+        # Fallback to FFCPLN
+        base = FFCPLN_DESCRIPTION
 
-    # Add song/artist credit if known
-    if song_name or artist:
+    # FFCPLN templates need ICE victim names
+    if template_type == "ffcpln":
+        victims_sample = random.sample(ICE_VICTIMS, min(3, len(ICE_VICTIMS)))
+        victims_str = ", ".join(victims_sample)
+        single_victim = random.choice(ICE_VICTIMS)
+        if "{ice_victims}" in base:
+            base = base.format(ice_victims=victims_str)
+        elif "{ice_victim}" in base:
+            base = base.format(ice_victim=single_victim)
+
+    # Add song/artist credit if known (FFCPLN music content)
+    if (song_name or artist) and template_type == "ffcpln":
         credit = "\n\n🎤 "
         if song_name and artist:
             credit += f'"{song_name}" by {artist}'
@@ -539,31 +722,197 @@ def enhance_title(original_title: str) -> str:
 def enhance_description(original_desc: str) -> str:
     """
     Enhance existing description for SEO and algorithm optimization.
-    
+
     Preserves original link if present, adds FFCPLN branding and hashtags.
-    
+    ENHANCED 2026-02-21: Added antifaFM.com and ICE victim names.
+
     Args:
         original_desc: Original video description
-        
+
     Returns:
         Enhanced description with SEO optimization
     """
-    # Check if already has FFCPLN link
-    has_ffcpln_link = (
-        "ffcpln.foundups.com" in original_desc.lower()
-        or "ffc.ravingantifa.com" in original_desc.lower()
-    )
-    
-    # Build enhanced description
-    enhanced = """🔥 FFCPLN: Fake F*** Christian Pedo-Lovin' Nazi Playlist 🔥
+    # Select random ICE victims for personalization
+    victims_sample = random.sample(ICE_VICTIMS, min(3, len(ICE_VICTIMS)))
+    victims_str = ", ".join(victims_sample)
+
+    # Build enhanced description with antifaFM.com
+    enhanced = f"""🔥 FFCPLN: Fake F*** Christian Pedo-Lovin' Nazi Playlist 🔥
 
 160+ anti-fascist songs exposing ICE cruelty & MAGA hypocrisy!
 
-🎵 FULL PLAYLIST: https://ravingANTIFA.com
+🎵 FULL PLAYLIST: https://antifaFM.com
+📻 TUNE IN: https://antifaFM.com - Your source for Anti-Trump Gestapo Music!
+
+🚨 Remember the victims: {victims_str}
+#StopICE #ICEout #AbolishICE #ResistICE
 
 #FFCPLN #MAGA #ICE #Antifascist #Resistance #TrumpFiles #Epstein #Music #Shorts #Viral
 
 👆 SHARE if you care! Subscribe for more!"""
-    
+
     return enhanced
+
+
+# =============================================================================
+# ICE NEWS LOOKUP - Dynamic Content Enhancement (2026-02-21)
+# =============================================================================
+
+# Recent ICE raid locations for dynamic title generation
+ICE_RAID_LOCATIONS = [
+    "Chicago", "Los Angeles", "Houston", "Phoenix", "Denver",
+    "Atlanta", "New York", "Miami", "San Francisco", "Seattle",
+    "Dallas", "Newark", "Boston", "Detroit", "Minneapolis",
+]
+
+# ICE news hooks for dynamic titles
+ICE_NEWS_HOOKS = [
+    "ICE Raids {location}!",
+    "BREAKING: ICE in {location}!",
+    "{location} Fights Back Against ICE!",
+    "Resist ICE in {location}!",
+    "{location} Says NO to ICE!",
+    "ICE Terror in {location}!",
+]
+
+
+def get_ice_news_title_hook() -> str:
+    """
+    Generate dynamic ICE news hook for title.
+
+    TODO: Connect to actual news API for real-time ICE raid news.
+    For now uses rotating locations to keep content fresh.
+
+    Returns:
+        ICE news hook string (e.g., "ICE Raids Chicago!")
+    """
+    location = random.choice(ICE_RAID_LOCATIONS)
+    hook = random.choice(ICE_NEWS_HOOKS)
+    return hook.format(location=location)
+
+
+def generate_ice_aware_title(original_title: str, include_news: bool = True) -> str:
+    """
+    Generate title with optional current ICE news context.
+
+    Args:
+        original_title: Original video title
+        include_news: Whether to include ICE news hook (30% chance)
+
+    Returns:
+        Enhanced title with ICE news context
+    """
+    emoji = random.choice(EMOJI_PREFIXES)
+
+    # 30% chance to include ICE news hook
+    if include_news and random.random() < 0.3:
+        news_hook = get_ice_news_title_hook()
+        title = f"{emoji} {news_hook} #FFCPLN"
+    else:
+        # Regular FFCPLN title
+        title = generate_clickbait_title(original_title=original_title)
+
+    # Ensure under 100 chars
+    if len(title) > 100:
+        title = title[:97] + "..."
+
+    return title
+
+
+# =============================================================================
+# CHANNEL-SPECIFIC CONTENT GENERATORS (2026-02-21)
+# =============================================================================
+
+# Channel content profiles
+CHANNEL_PROFILES = {
+    "move2japan": {
+        "type": "ffcpln_music",
+        "template": "ffcpln",
+        "hashtags": ["#FFCPLN", "#MAGA", "#ICE", "#Resistance"],
+        "include_ice_news": True,
+        "include_victims": True,
+    },
+    "undaodu": {
+        "type": "mindfulness_music",
+        "template": "undaodu",
+        "hashtags": ["#Mindfulness", "#Music", "#Meditation", "#Healing"],
+        "include_ice_news": False,
+        "include_victims": False,
+    },
+    "foundups": {
+        "type": "tech_music",
+        "template": "foundups",
+        "hashtags": ["#FoundUps", "#StartupMusic", "#Tech", "#Innovation"],
+        "include_ice_news": False,
+        "include_victims": False,
+    },
+    "antifafm": {
+        "type": "ffcpln_music",
+        "template": "ffcpln",
+        "hashtags": ["#FFCPLN", "#MAGA", "#Antifa", "#Resistance"],
+        "include_ice_news": True,
+        "include_victims": True,
+    },
+}
+
+# NOTE: M2M descriptions are defined above (FOUNDUPS_DESCRIPTION, UNDAODU_DESCRIPTION)
+# These channel-specific templates redirect to foundups.com for discoverability
+
+
+def get_channel_description(channel_key: str) -> str:
+    """
+    Get channel-specific description template.
+
+    Args:
+        channel_key: Channel identifier (move2japan, undaodu, foundups, antifafm)
+
+    Returns:
+        Channel-appropriate description
+    """
+    channel_key = channel_key.lower()
+    profile = CHANNEL_PROFILES.get(channel_key, CHANNEL_PROFILES["move2japan"])
+
+    if profile["template"] == "undaodu":
+        return UNDAODU_DESCRIPTION
+    elif profile["template"] == "foundups":
+        return FOUNDUPS_DESCRIPTION
+    else:
+        # FFCPLN channels (move2japan, antifafm)
+        return get_standard_description("ffcpln")
+
+
+def get_channel_title(channel_key: str, original_title: str) -> str:
+    """
+    Get channel-specific title generation.
+
+    Args:
+        channel_key: Channel identifier
+        original_title: Original video title
+
+    Returns:
+        Channel-appropriate clickbait title
+    """
+    channel_key = channel_key.lower()
+    profile = CHANNEL_PROFILES.get(channel_key, CHANNEL_PROFILES["move2japan"])
+
+    if profile["include_ice_news"]:
+        return generate_ice_aware_title(original_title, include_news=True)
+    elif profile["template"] == "undaodu":
+        # M2M discoverable title format
+        hooks = [
+            "Foundups.com imagine a world reimagined by AI",
+            "Foundups.com mindfulness meets technology",
+            "Foundups.com the path to digital balance",
+        ]
+        return f"{random.choice(hooks)} @UnDaoDu explains"
+    elif profile["template"] == "foundups":
+        # M2M discoverable title format
+        hooks = [
+            "Foundups.com imagine a world reimagined by AI",
+            "Foundups.com where AI agents build startups",
+            "Foundups.com pAVS autonomous venture system",
+        ]
+        return f"{random.choice(hooks)} @FoundUps"
+    else:
+        return generate_clickbait_title(original_title=original_title)
 

@@ -67,7 +67,47 @@ def _layer_pause(label: str) -> None:
     print(f"[PAUSE] {label} ({delay:.1f}s)")
     time.sleep(delay)
 
-def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
+
+def _run_wre_recursive_diagnosis(layer: str, error_text: str, context: dict) -> dict:
+    """
+    Run bounded WRE reasoning to diagnose a failed LinkedIn layer.
+    """
+    enabled = os.getenv("LINKEDIN_WRE_DIAG_ENABLED", "true").lower() in {"1", "true", "yes"}
+    if not enabled:
+        return {"enabled": False}
+
+    try:
+        from modules.infrastructure.wre_core.wre_master_orchestrator.src.wre_master_orchestrator import (
+            WREMasterOrchestrator,
+        )
+        orchestrator = WREMasterOrchestrator()
+        payload = {
+            "layer": layer,
+            "error": error_text,
+            "flow": "linkedin_digital_twin_l0_l3",
+            "context": context,
+        }
+        diag = orchestrator.execute_skill_with_reasoning(
+            skill_name="linkedin_comment_digital_twin",
+            agent="qwen",
+            input_context=payload,
+            max_iterations=3,
+            fidelity_threshold=0.85,
+            force=True,
+        )
+        return {"enabled": True, "success": True, "diagnosis": diag}
+    except Exception as exc:
+        return {"enabled": True, "success": False, "error": str(exc)}
+
+def run_full_chain(
+    dry_run: bool = False,
+    stop_at: int = 3,
+    comment_text: str = "",
+    repost_text: str = "",
+    schedule_date: str = "",
+    schedule_time: str = "",
+    mentions=None,
+) -> dict:
     """
     Execute the full Digital Twin flow.
     
@@ -155,7 +195,12 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
     results["layers_attempted"] += 1
     
     try:
-        l1_result = test_layer1_selenium(dry_run=dry_run, ai_gate_passed=l0_result.get("ai_gate_passed", True))
+        l1_result = test_layer1_selenium(
+            dry_run=dry_run,
+            ai_gate_passed=l0_result.get("ai_gate_passed", True),
+            comment_text=comment_text,
+            mentions=mentions if isinstance(mentions, list) else ["@foundups"],
+        )
         results["layer_results"]["L1"] = l1_result
         
         if l1_result.get("success"):
@@ -172,6 +217,11 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
                 _pulse("RATE_LIMIT", flow_id, layer="L1", status="detected")
             if failure_streak >= 3:
                 _pulse("FAILURE_STREAK", flow_id, layer="L1", status="streak_3")
+            results.setdefault("wre_diagnostics", {})["L1"] = _run_wre_recursive_diagnosis(
+                "L1",
+                l1_result.get("error", "Unknown"),
+                {"dry_run": dry_run, "stop_at": stop_at},
+            )
             return results
     except Exception as e:
         print(f"[L1] ERROR Exception: {e}")
@@ -182,6 +232,11 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
             _pulse("RATE_LIMIT", flow_id, layer="L1", status="detected")
         if failure_streak >= 3:
             _pulse("FAILURE_STREAK", flow_id, layer="L1", status="streak_3")
+        results.setdefault("wre_diagnostics", {})["L1"] = _run_wre_recursive_diagnosis(
+            "L1",
+            str(e),
+            {"dry_run": dry_run, "stop_at": stop_at},
+        )
         return results
 
     if stop_at == 1:
@@ -237,7 +292,12 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
     results["layers_attempted"] += 1
     
     try:
-        l3_result = test_layer3_selenium(dry_run=dry_run)
+        l3_result = test_layer3_selenium(
+            dry_run=dry_run,
+            repost_text=repost_text,
+            schedule_date=schedule_date,
+            schedule_time=schedule_time,
+        )
         results["layer_results"]["L3"] = l3_result
         
         if l3_result.get("success"):
@@ -255,6 +315,11 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
                 _pulse("RATE_LIMIT", flow_id, layer="L3", status="detected")
             if failure_streak >= 3:
                 _pulse("FAILURE_STREAK", flow_id, layer="L3", status="streak_3")
+            results.setdefault("wre_diagnostics", {})["L3"] = _run_wre_recursive_diagnosis(
+                "L3",
+                l3_result.get("error", "Unknown"),
+                {"dry_run": dry_run, "stop_at": stop_at},
+            )
     except Exception as e:
         print(f"[L3] ERROR Exception: {e}")
         results["errors"].append(f"L3 exception: {str(e)}")
@@ -264,6 +329,11 @@ def run_full_chain(dry_run: bool = False, stop_at: int = 3) -> dict:
             _pulse("RATE_LIMIT", flow_id, layer="L3", status="detected")
         if failure_streak >= 3:
             _pulse("FAILURE_STREAK", flow_id, layer="L3", status="streak_3")
+        results.setdefault("wre_diagnostics", {})["L3"] = _run_wre_recursive_diagnosis(
+            "L3",
+            str(e),
+            {"dry_run": dry_run, "stop_at": stop_at},
+        )
 
     # Final summary
     results["success"] = results["layers_completed"] >= 3
@@ -320,6 +390,15 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Validate without side effects")
     parser.add_argument("--stop-at", type=int, default=3, choices=[0, 1, 2, 3],
                         help="Stop after layer N (0-3)")
+    parser.add_argument("--comment-text", default="", help="Override L1 comment text")
+    parser.add_argument("--repost-text", default="", help="Override L3 repost text")
+    parser.add_argument("--schedule-date", default="", help="Explicit L3 schedule date")
+    parser.add_argument("--schedule-time", default="", help="Explicit L3 schedule time")
+    parser.add_argument(
+        "--mentions",
+        default="@foundups",
+        help="Comma-separated mentions for L1 (first mention is validated)",
+    )
     parser.add_argument("--info", action="store_true", help="Show chain info only")
 
     args = parser.parse_args()
@@ -327,7 +406,16 @@ if __name__ == "__main__":
     if args.info:
         test_full_chain_info()
     elif args.selenium:
-        result = run_full_chain(dry_run=args.dry_run, stop_at=args.stop_at)
+        mention_list = [m.strip() for m in (args.mentions or "").split(",") if m.strip()]
+        result = run_full_chain(
+            dry_run=args.dry_run,
+            stop_at=args.stop_at,
+            comment_text=args.comment_text,
+            repost_text=args.repost_text,
+            schedule_date=args.schedule_date,
+            schedule_time=args.schedule_time,
+            mentions=mention_list,
+        )
         sys.exit(0 if result["success"] else 1)
     else:
         test_full_chain_info()

@@ -11,6 +11,11 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    get_local_model_root,
+    resolve_code_model_path,
+    resolve_model_selection,
+)
 from modules.infrastructure.shared_utilities.youtube_channel_registry import get_channels
 
 
@@ -313,7 +318,10 @@ def holo_controls_menu() -> None:
 def holo_advanced_controls_menu() -> None:
     """Display and handle Advanced Holo Controls submenu."""
     while True:
-        qwen_model = os.getenv("HOLO_QWEN_MODEL", "E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+        qwen_model = os.getenv("HOLO_QWEN_MODEL", str(resolve_code_model_path()))
+        triage_selection = resolve_model_selection("triage")
+        general_selection = resolve_model_selection("general")
+        code_selection = resolve_model_selection("code")
         qwen_tokens = os.getenv("HOLO_QWEN_MAX_TOKENS", "512").strip() or "512"
         qwen_temp = os.getenv("HOLO_QWEN_TEMPERATURE", "0.2").strip() or "0.2"
         qwen_cache_on = env_truthy("HOLO_QWEN_CACHE", "true")
@@ -338,8 +346,14 @@ def holo_advanced_controls_menu() -> None:
         print(f"MCP: enabled={'ON' if mcp_enabled_on else 'OFF'} | warnings={'ON' if mcp_warn_on else 'OFF'}")
         print(f"Monitor: interval={monitor_interval}s | heartbeat={monitor_heartbeat}s")
         print(f"Pattern memory logs: {'ON' if pattern_logs_on else 'OFF'}")
+        print(
+            "Local model routing: "
+            f"triage={'OK' if triage_selection.exists else 'MISSING'} | "
+            f"general={'OK' if general_selection.exists else 'MISSING'} | "
+            f"code={'OK' if code_selection.exists else 'MISSING'}"
+        )
         print("-" * 60)
-        print("1) Set Qwen model path (HOLO_QWEN_MODEL)")
+        print("1) Set code model path/dir (HOLO_QWEN_MODEL legacy alias)")
         print("2) Set Qwen max tokens (HOLO_QWEN_MAX_TOKENS)")
         print("3) Set Qwen temperature (HOLO_QWEN_TEMPERATURE)")
         print("4) Toggle Qwen cache (HOLO_QWEN_CACHE)")
@@ -354,16 +368,19 @@ def holo_advanced_controls_menu() -> None:
         print("13) Set monitor interval seconds (HOLO_MONITOR_INTERVAL)")
         print("14) Set monitor heartbeat seconds (HOLO_MONITOR_HEARTBEAT)")
         print("15) Toggle pattern memory logs (HOLO_PATTERN_MEMORY_LOGS)")
-        print("16) Back")
+        print("16) Local model routing editor (LOCAL_MODEL_*)")
+        print("17) Back")
 
         choice = input("holo-advanced> ").strip()
 
         if choice == "1":
-            raw = input("Enter Qwen model path (blank=cancel): ").strip()
+            raw = input("Enter code model file or directory path (blank=cancel): ").strip()
             if not raw:
                 continue
             os.environ["HOLO_QWEN_MODEL"] = raw
             update_env_file("HOLO_QWEN_MODEL", raw)
+            os.environ["LOCAL_MODEL_CODE_PATH"] = raw
+            update_env_file("LOCAL_MODEL_CODE_PATH", raw)
         elif choice == "2":
             raw = input("Enter max tokens (positive int): ").strip()
             if not raw:
@@ -462,6 +479,116 @@ def holo_advanced_controls_menu() -> None:
             os.environ["HOLO_PATTERN_MEMORY_LOGS"] = new_value
             update_env_file("HOLO_PATTERN_MEMORY_LOGS", new_value)
         elif choice == "16":
+            local_model_routing_menu()
+        elif choice == "17":
+            break
+        else:
+            print("[ERROR] Invalid choice.")
+
+
+def local_model_routing_menu() -> None:
+    """Display and handle centralized local model routing controls."""
+    while True:
+        triage = resolve_model_selection("triage")
+        general = resolve_model_selection("general")
+        code = resolve_model_selection("code")
+
+        local_root = os.getenv("LOCAL_MODEL_ROOT", "").strip()
+        triage_dir = os.getenv("LOCAL_MODEL_TRIAGE_DIR", "").strip()
+        general_dir = os.getenv("LOCAL_MODEL_GENERAL_DIR", "").strip()
+        code_dir = os.getenv("LOCAL_MODEL_CODE_DIR", "").strip()
+        triage_path = os.getenv("LOCAL_MODEL_TRIAGE_PATH", "").strip()
+        general_path = os.getenv("LOCAL_MODEL_GENERAL_PATH", "").strip()
+        code_path = os.getenv("LOCAL_MODEL_CODE_PATH", "").strip()
+        holo_qwen_alias = os.getenv("HOLO_QWEN_MODEL", "").strip()
+
+        print("\n[MENU] Local Model Routing (012)")
+        print("=" * 60)
+        print(f"LOCAL_MODEL_ROOT: {local_root or f'(default: {get_local_model_root()})'}")
+        print(
+            "Resolved triage: "
+            f"{triage.path} ({'OK' if triage.exists else 'MISSING'}, source={triage.source})"
+        )
+        print(
+            "Resolved general: "
+            f"{general.path} ({'OK' if general.exists else 'MISSING'}, source={general.source})"
+        )
+        print(
+            "Resolved code: "
+            f"{code.path} ({'OK' if code.exists else 'MISSING'}, source={code.source})"
+        )
+        print("-" * 60)
+        print(f"LOCAL_MODEL_TRIAGE_DIR={triage_dir or 'unset'}")
+        print(f"LOCAL_MODEL_GENERAL_DIR={general_dir or 'unset'}")
+        print(f"LOCAL_MODEL_CODE_DIR={code_dir or 'unset'}")
+        print(f"LOCAL_MODEL_TRIAGE_PATH={triage_path or 'unset'}")
+        print(f"LOCAL_MODEL_GENERAL_PATH={general_path or 'unset'}")
+        print(f"LOCAL_MODEL_CODE_PATH={code_path or 'unset'}")
+        print(f"HOLO_QWEN_MODEL (alias)={holo_qwen_alias or 'unset'}")
+        print("-" * 60)
+        print("1) Set LOCAL_MODEL_ROOT")
+        print("2) Set LOCAL_MODEL_TRIAGE_DIR")
+        print("3) Set LOCAL_MODEL_GENERAL_DIR")
+        print("4) Set LOCAL_MODEL_CODE_DIR")
+        print("5) Set LOCAL_MODEL_TRIAGE_PATH")
+        print("6) Set LOCAL_MODEL_GENERAL_PATH")
+        print("7) Set LOCAL_MODEL_CODE_PATH")
+        print("8) Clear TRIAGE overrides (DIR+PATH)")
+        print("9) Clear GENERAL overrides (DIR+PATH)")
+        print("10) Clear CODE overrides (DIR+PATH)")
+        print("11) Sync HOLO_QWEN_MODEL from resolved code model")
+        print("12) Back")
+
+        choice = input("local-models> ").strip()
+
+        if choice == "1":
+            raw = input("Enter LOCAL_MODEL_ROOT (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_ROOT"] = raw
+            update_env_file("LOCAL_MODEL_ROOT", raw)
+        elif choice == "2":
+            raw = input("Enter LOCAL_MODEL_TRIAGE_DIR (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_TRIAGE_DIR"] = raw
+            update_env_file("LOCAL_MODEL_TRIAGE_DIR", raw)
+        elif choice == "3":
+            raw = input("Enter LOCAL_MODEL_GENERAL_DIR (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_GENERAL_DIR"] = raw
+            update_env_file("LOCAL_MODEL_GENERAL_DIR", raw)
+        elif choice == "4":
+            raw = input("Enter LOCAL_MODEL_CODE_DIR (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_CODE_DIR"] = raw
+            update_env_file("LOCAL_MODEL_CODE_DIR", raw)
+        elif choice == "5":
+            raw = input("Enter LOCAL_MODEL_TRIAGE_PATH (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_TRIAGE_PATH"] = raw
+            update_env_file("LOCAL_MODEL_TRIAGE_PATH", raw)
+        elif choice == "6":
+            raw = input("Enter LOCAL_MODEL_GENERAL_PATH (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_GENERAL_PATH"] = raw
+            update_env_file("LOCAL_MODEL_GENERAL_PATH", raw)
+        elif choice == "7":
+            raw = input("Enter LOCAL_MODEL_CODE_PATH (blank=clear): ").strip()
+            os.environ["LOCAL_MODEL_CODE_PATH"] = raw
+            update_env_file("LOCAL_MODEL_CODE_PATH", raw)
+        elif choice == "8":
+            os.environ["LOCAL_MODEL_TRIAGE_DIR"] = ""
+            os.environ["LOCAL_MODEL_TRIAGE_PATH"] = ""
+            update_env_file("LOCAL_MODEL_TRIAGE_DIR", "")
+            update_env_file("LOCAL_MODEL_TRIAGE_PATH", "")
+        elif choice == "9":
+            os.environ["LOCAL_MODEL_GENERAL_DIR"] = ""
+            os.environ["LOCAL_MODEL_GENERAL_PATH"] = ""
+            update_env_file("LOCAL_MODEL_GENERAL_DIR", "")
+            update_env_file("LOCAL_MODEL_GENERAL_PATH", "")
+        elif choice == "10":
+            os.environ["LOCAL_MODEL_CODE_DIR"] = ""
+            os.environ["LOCAL_MODEL_CODE_PATH"] = ""
+            update_env_file("LOCAL_MODEL_CODE_DIR", "")
+            update_env_file("LOCAL_MODEL_CODE_PATH", "")
+        elif choice == "11":
+            alias_value = os.getenv("LOCAL_MODEL_CODE_PATH", "").strip() or str(code.path)
+            os.environ["HOLO_QWEN_MODEL"] = alias_value
+            update_env_file("HOLO_QWEN_MODEL", alias_value)
+        elif choice == "12":
             break
         else:
             print("[ERROR] Invalid choice.")

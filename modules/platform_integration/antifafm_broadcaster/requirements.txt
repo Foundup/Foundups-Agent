@@ -1,0 +1,8 @@
+# antifaFM YouTube Live Broadcaster
+# Dependencies for streaming radio to YouTube Live
+
+# Process monitoring (optional but recommended)
+psutil>=5.9.0
+
+# System requirement (not pip installable):
+# FFmpeg - install via: choco install ffmpeg (Windows) or apt install ffmpeg (Linux)

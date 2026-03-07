@@ -126,9 +126,45 @@ class AntiDetectionLinkedIn:
                 pass  # Ignore mouse movement errors
     
     def setup_driver(self, use_existing_session=True):
-        """Setup Chrome with anti-detection measures using browser manager"""
+        """Setup Chrome with anti-detection measures using browser manager.
 
-        # Try to import browser manager
+        PRIORITY ORDER:
+        1. Try connecting to existing Chrome on debug port 9222 (user's logged-in session)
+        2. Use browser_manager for profile-based reuse
+        3. Create new browser as fallback
+        """
+        import requests
+        from selenium.webdriver.chrome.options import Options
+
+        # STEP 1: Try to connect to existing Chrome on port 9222 (like YouTube DAE)
+        debug_port = 9222
+        try:
+            # Check if Chrome is running with debug port
+            resp = requests.get(f"http://127.0.0.1:{debug_port}/json/version", timeout=2)
+            if resp.status_code == 200:
+                print(f"[INFO] Found Chrome with debug port {debug_port}, connecting...")
+                chrome_options = Options()
+                chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{debug_port}")
+                self.driver = webdriver.Chrome(options=chrome_options)
+                print("[OK] Connected to existing Chrome session!")
+
+                # Close extra tabs if session restore opened multiple
+                handles = self.driver.window_handles
+                if len(handles) > 1:
+                    print(f"[FIX] Closing {len(handles) - 1} extra tab(s)...")
+                    main_handle = handles[0]
+                    for handle in handles[1:]:
+                        self.driver.switch_to.window(handle)
+                        self.driver.close()
+                    self.driver.switch_to.window(main_handle)
+
+                # Initialize human behavior and return
+                self._init_human_behavior()
+                return self.driver
+        except Exception as e:
+            print(f"[INFO] No Chrome on port {debug_port}: {e}")
+
+        # STEP 2: Try browser manager for profile-based reuse
         try:
             from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
             browser_manager = get_browser_manager()
@@ -150,8 +186,12 @@ class AntiDetectionLinkedIn:
 
         except (ImportError, Exception) as e:
             # Fallback to creating new browser if manager not available
-            print(f"[WARNING] Browser manager not available: {e}")
-            print("[INFO] Creating new Chrome browser...")
+            print(f"[WARNING] Could not connect to existing browser: {e}")
+            print("")
+            print("[TIP] For best results, start Chrome manually with debug port:")
+            print('  chrome.exe --remote-debugging-port=9222 --user-data-dir="O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile"')
+            print("")
+            print("[INFO] Creating new Chrome browser (may conflict with existing Chrome)...")
 
             chrome_options = Options()
 
@@ -198,7 +238,16 @@ class AntiDetectionLinkedIn:
             # Override navigator.webdriver flag
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-        # Initialize centralized human behavior module (Bezier curves + anti-detection)
+        # Initialize human behavior
+        self._init_human_behavior()
+
+        # Random initial delay
+        time.sleep(random.uniform(2, 4))
+
+        return self.driver
+
+    def _init_human_behavior(self):
+        """Initialize centralized human behavior module (Bezier curves + anti-detection)."""
         if HUMAN_BEHAVIOR_AVAILABLE:
             try:
                 self.human = get_human_behavior(self.driver)
@@ -206,11 +255,8 @@ class AntiDetectionLinkedIn:
             except Exception as e:
                 print(f"[ANTI-DETECTION] Failed to initialize human_behavior: {e}")
                 self.human = None
-
-        # Random initial delay
-        time.sleep(random.uniform(2, 4))
-
-        return self.driver
+        else:
+            self.human = None
     
     def is_logged_in(self) -> bool:
         """Check if already logged in to LinkedIn"""

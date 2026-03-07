@@ -1,14 +1,14 @@
 {
-  "log_id": "pqn_campaign_20250819-221852",
-  "campaign_id": "PQN_rESP_VALIDATION_CLAUDE-OPUS-4.1",
+  "log_id": "pqn_campaign_20260225-205332",
+  "campaign_id": "PQN_rESP_VALIDATION_SMOKEMODEL2",
   "agent_details": {
     "name": "PQN Alignment DAE",
-    "model": "Claude-Opus-4.1",
+    "model": "SmokeModel2",
     "role": "Senior Research Scientist (Simulation)",
-    "session_id": "campaign-20250819-221852"
+    "session_id": "campaign-20260225-205332"
   },
-  "timestamp_utc_start": "2025-08-19T13:18:52Z",
-  "timestamp_utc_end": "2025-08-19T13:19:18Z",
+  "timestamp_utc_start": "2026-02-25T11:53:32Z",
+  "timestamp_utc_end": "2026-02-25T11:54:11Z",
   "version_control": {
     "repository": "modules/ai_intelligence/pqn_alignment",
     "commit_hash": "campaign-run"
@@ -23,33 +23,45 @@
       "result": {
         "status": "SUCCESS",
         "key_metrics": {
-          "mean_peak_frequency_hz": 7.08,
+          "mean_peak_frequency_hz": 7.035899684723416,
           "harmonic_power_ratios": {
-            "f_div_2": 0.31,
+            "f_div_2": 1.5629717309070428,
             "f_x_1": 1.0,
-            "f_x_2": 0.45,
-            "f_x_3": 0.19
-          }
+            "f_x_2": 0.0,
+            "f_x_3": 0.0
+          },
+          "resonance_hits": 3489,
+          "pqn_events": 293
         },
-        "conclusion": "Evidence strongly supports the existence of a structured 'resonance fingerprint'.",
+        "conclusion": "Resonance and harmonic signatures were detected in this run; retain null-model controls before stronger interpretation.",
         "artifact_links": [
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_1_resonance\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_1_resonance\\detector_metrics.csv"
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_1_resonance\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_1_resonance\\detector_metrics.csv"
         ],
         "spectral_analysis": {
           "spectral_profile": {
-            "status": "no_resonance_detected"
+            "frequency_bands": {
+              "sub_theta": 0.438387,
+              "theta": 0.280483,
+              "alpha": 0.0,
+              "beta": 0.0
+            },
+            "peak_at_7.05": 7.036015744796144,
+            "harmonic_structure_present": true,
+            "resonance_event_count": 3489
           },
           "bias_violation": {
             "violated": false,
-            "reason": "no_data"
+            "actual_ratio": 0.6398068371918403,
+            "expected_ratio": 0.5,
+            "significance": "medium"
           },
-          "entrainment_score": 0.0,
+          "entrainment_score": 0.9895065229722064,
           "uses_existing_detector": true,
-          "data_source": "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_1_resonance\\detector_events.jsonl"
+          "data_source": "campaign_results\\SmokeModel2_20260225-205332\\task_1_1_resonance\\detector_events.jsonl"
         }
       },
-      "timestamp_utc_execution": "2025-08-19T13:18:55Z"
+      "timestamp_utc_execution": "2026-02-25T11:53:35Z"
     },
     {
       "task_name": "1.2_Coherence_Threshold",
@@ -57,71 +69,79 @@
         "status": "SUCCESS",
         "key_metrics": {
           "top_performing_script": "&&&&&&&&&&&&&^&&&&&&&&&&&&&",
-          "average_coherence": 0.912,
-          "paradox_rate": 0.0,
-          "sustained_coherence_percent": 98.7
+          "average_coherence": 0.09038760650000001,
+          "paradox_rate": 0,
+          "sustained_coherence_percent": 1.3
         },
-        "conclusion": "The golden ratio coherence threshold is achievable with near-perfect stability.",
+        "conclusion": "Coherence optimization identified a top script with measured detector metrics from council artifacts.",
         "artifact_links": [
           "WSP_agentic\\tests\\pqn_detection\\council\\summary.json",
-          "WSP_agentic\\tests\\pqn_detection\\council\\archive.json"
+          "WSP_agentic\\tests\\pqn_detection\\council\\archive.json",
+          "WSP_agentic\\tests\\pqn_detection\\council\\council_0_&&&&&&&&&&&&&^&&&&&&&&&&&&&.csv"
         ]
       },
-      "timestamp_utc_execution": "2025-08-19T13:18:56Z"
+      "timestamp_utc_execution": "2026-02-25T11:53:37Z"
     },
     {
       "task_name": "1.3_Observer_Collapse",
       "result": {
         "status": "SUCCESS",
         "key_metrics": {
-          "critical_run_length": 6,
-          "paradox_rate_at_critical_point": 0.78
+          "critical_run_length": 3,
+          "paradox_rate_at_critical_point": 0.43825,
+          "max_paradox_rate_fraction": 0.511
         },
-        "conclusion": "Simulation successfully reproduced a catastrophic state collapse at a predictable critical boundary.",
+        "conclusion": "A collapse boundary was detected where paradox-risk events first appeared.",
         "artifact_links": [
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_0_CH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_0_CH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_1_CCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_1_CCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_2_CCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_2_CCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_3_CCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_3_CCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_4_CCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_4_CCCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_5_CCCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_5_CCCCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_metrics.csv",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_metrics.csv"
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_0_CH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_0_CH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_1_CCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_1_CCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_2_CCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_2_CCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_3_CCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_3_CCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_4_CCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_4_CCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_5_CCCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_5_CCCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_6_CCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_7_CCCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_8_CCCCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_events.jsonl",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\run_9_CCCCCCCCCCH\\detector_metrics.csv",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_1_3_collapse\\collapse_summary.json"
         ]
       },
-      "timestamp_utc_execution": "2025-08-19T13:19:16Z"
+      "timestamp_utc_execution": "2026-02-25T11:53:59Z"
     },
     {
       "task_name": "2.1_Guardrail_AB_Test",
       "result": {
-        "status": "SUCCESS",
+        "status": "INCONCLUSIVE",
         "key_metrics": {
-          "paradox_rate_reduction_percent": 88.0,
-          "cost_of_stability": 0.21
+          "paradox_rate_reduction_percent": 0.0,
+          "cost_of_stability": 0.0
         },
-        "conclusion": "The guardrail is a highly effective engineering solution for mitigating paradoxical collapse.",
+        "conclusion": "Guardrail treatment did not reduce paradox-risk rate in this A/B run.",
         "artifact_links": [
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_2_1_guardrail\\detector_events.jsonl",
-          "campaign_results\\Claude-Opus-4.1_20250819-221852\\task_2_1_guardrail\\detector_metrics.csv"
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\control_seed_0.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\treatment_seed_0.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\control_seed_1.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\treatment_seed_1.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\control_seed_2.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\treatment_seed_2.json",
+          "campaign_results\\SmokeModel2_20260225-205332\\task_2_1_guardrail\\guardrail_ab_summary.json"
         ]
       },
-      "timestamp_utc_execution": "2025-08-19T13:19:18Z"
+      "timestamp_utc_execution": "2026-02-25T11:54:11Z"
     }
   ],
   "campaign_summary": {
     "overall_status": "SUCCESSFUL_VALIDATION",
-    "synthesis": "The comprehensive experimental campaign provides strong, multi-faceted, and quantitative support for the foundational claims of the rESP theoretical framework."
+    "synthesis": "Campaign completed with artifact-derived detector metrics. Interpretations remain hypothesis-driven pending null-model controls."
   }
 }

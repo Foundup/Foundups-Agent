@@ -14,7 +14,17 @@ import asyncio
 from typing import Optional, Dict, Any
 from holo_index.qwen_advisor.pattern_memory import PatternMemory
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("training_system_dae")
 def run_training_system():
     """
     Qwen/Gemma Training System submenu.
@@ -189,11 +199,14 @@ def run_training_system():
             print("=" * 60)
 
             try:
-                from pathlib import Path
                 from holo_index.qwen_advisor.gemma_rag_inference import GemmaRAGInference
+                from modules.infrastructure.shared_utilities.local_model_selection import (
+                    resolve_code_model_path,
+                    resolve_triage_model_path,
+                )
 
-                gemma_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
-                qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+                gemma_path = resolve_triage_model_path()
+                qwen_path = resolve_code_model_path()
 
                 if not gemma_path.exists() or not qwen_path.exists():
                     print("\n[ERROR] Models not found:")
@@ -201,7 +214,7 @@ def run_training_system():
                         print(f"   Missing: {gemma_path}")
                     if not qwen_path.exists():
                         print(f"   Missing: {qwen_path}")
-                    print("\n   Download models and place in E:/HoloIndex/models/")
+                    print("\n   Configure LOCAL_MODEL_* env vars and ensure GGUF files are available.")
                     input("\nPress Enter to continue...")
                     continue
 

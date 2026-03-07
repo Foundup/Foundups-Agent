@@ -2,6 +2,77 @@
 
 ## Latest Changes
 
+### V067 - LinkedIn Layered CLI Wiring + WRE Recursive Diagnosis
+**Date**: 2026-03-05
+**Changes**:
+- Wired full-chain orchestration parameters end-to-end:
+  - L1 now accepts `comment_text` + `mentions`
+  - L3 now accepts `repost_text` + `schedule_date` + `schedule_time`
+- Added argparse support for the above overrides in:
+  - `tests/test_layer1_comment.py`
+  - `tests/test_layer3_schedule_repost.py`
+  - `tests/test_full_chain.py`
+- Added WRE bounded recursive diagnostics on L1/L3 full-chain failures:
+  - enabled by `LINKEDIN_WRE_DIAG_ENABLED=true|false`
+  - uses `WREMasterOrchestrator.execute_skill_with_reasoning(...)`
+- Updated LN memory docs:
+  - `docs/LINKEDIN_DIGITAL_TWIN_FLOW.md`
+  - `docs/0102_handoff.md`
+  - `tests/README.md`
+  - `README.md`, `INTERFACE.md`, `ROADMAP.md`
+**Impact**: LinkedIn commenting flow is now orchestration-driven (no silent parameter drops) and failure-recursive for autonomous troubleshooting.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 73 (Digital Twin), WSP 91 (Observability)
+
+### V066 - Agentic Visual Confirmation for Browser Readiness
+**Date**: 2026-02-24
+**Changes**:
+- Added UI-TARS integration for agentic visual confirmation (speed doesn't matter - reliability does)
+- New `_agentic_wait_for_element()` method uses vision AI to confirm page elements are visible
+- Fixed "move target out of bounds" error: added `scroll_to_element()` before all human_click() calls
+- Added `maximize_window()` + `switch_to.window()` when reusing browser
+- Increased WebDriverWait timeouts: 10s → 20s for heavy JS rendering
+- Added `document.readyState == 'complete'` wait before visual confirmation
+- Enhanced logging: [BROWSER], [AGENTIC], [POST] tags for clear flow tracking
+- Falls back to timing-based waits if UI-TARS unavailable
+**Root Cause**: Browser reuse left window minimized/scrolled; elements out of viewport for Bezier clicks
+**Impact**: LinkedIn posting now agentic - AI confirms readiness instead of fixed timers
+**WSP**: WSP 22 (ModLog), WSP 77 (AI Coordination), WSP 91 (Observability)
+
+### V065 - Agent-Callable CLI for OpenClaw Group Skillz
+**Date**: 2026-02-24
+**Changes**:
+- Enhanced `executor.py` with full argparse CLI for OpenClaw/IronClaw agent execution
+- Added actions: `approve_members`, `post_news`, `full_cycle`
+- CLI flags: `--dry-run`, `--max-requests`, `--send-welcome`, `--no-welcome`, `--screenshot-dir`
+- JSON output for agent parsing
+- Exit codes: 0=success, 1=failure
+**Usage**:
+```bash
+# Approve pending group members
+python -m modules.platform_integration.linkedin_agent.skillz.openclaw_group_news.executor \
+    --action approve_members --dry-run
+
+# Post OpenClaw news (search, rate, post)
+python -m modules.platform_integration.linkedin_agent.skillz.openclaw_group_news.executor \
+    --action post_news --dry-run
+
+# Full cycle: approve then post
+python -m modules.platform_integration.linkedin_agent.skillz.openclaw_group_news.executor \
+    --action full_cycle --max-requests 10
+```
+**Impact**: OpenClaw/IronClaw agents can now invoke LinkedIn group actions via CLI. Enables AI Overseer orchestration.
+**WSP**: WSP 22 (ModLog), WSP 72 (Module Independence), WSP 11 (Interface)
+
+### V064 - OpenClaw Group News DOM + Search + Executor Fix
+**Date**: 2026-02-23
+**Changes**:
+- Added hare-box fallback selectors for LinkedIn redesign (hare-box-feed-entry, hare-box-v2__modal)
+- Added search terms: OpenClaw OpenAI nonprofit, OpenClaw wallet, IronClaw OpenClaw
+- Fixed executor: create_driver → setup_driver (AntiDetectionLinkedIn API)
+- Created audit: docs/LINKEDIN_OPENCLAW_GROUP_NEWS_AUDIT_20260223.md
+**Impact**: Skillz resilient to LinkedIn UI changes; broader news coverage; executor no longer fails on driver init.
+**WSP**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification)
+
 ### V063 - Research Paper Search (Arxiv/Scholar)
 **Date**: 2026-02-20
 **Changes**:

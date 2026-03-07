@@ -38,12 +38,42 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 # Load environment variables for DAEs (API keys, ports, feature flags).
-# Keep override=False so shell-provided env vars win.
+# Managed mode builds `.env.managed` from `.env` (last duplicate wins) for
+# deterministic runtime behavior while preserving shell env precedence.
 try:
-    from dotenv import load_dotenv  # type: ignore
-    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=False)
+    from modules.infrastructure.shared_utilities.env_managed import (
+        load_managed_env,
+        env_managed_enabled,
+    )
+
+    _repo_root = Path(__file__).resolve().parent
+    if env_managed_enabled():
+        _env_stats = load_managed_env(_repo_root, override=False, regenerate=True)
+        if _env_stats.get("active_file"):
+            os.environ.setdefault("FOUNDUPS_ENV_ACTIVE_FILE", _env_stats["active_file"])
+            os.environ["FOUNDUPS_ENV_DUPLICATE_KEYS"] = str(_env_stats.get("duplicate_keys", 0))
+            os.environ["FOUNDUPS_ENV_DUPLICATE_OVERWRITES"] = str(
+                _env_stats.get("duplicate_overwrites", 0)
+            )
+            os.environ["FOUNDUPS_ENV_ORPHAN_LINES"] = str(_env_stats.get("orphan_lines", 0))
+            os.environ["FOUNDUPS_ENV_MODE"] = str(_env_stats.get("mode", "unknown"))
+            os.environ["FOUNDUPS_ENV_MANAGED_COPY_WRITTEN"] = str(
+                _env_stats.get("managed_copy_written", False)
+            )
+            os.environ["FOUNDUPS_ENV_MANAGED_COPY_DELETED"] = str(
+                _env_stats.get("managed_copy_deleted", False)
+            )
+    else:
+        from dotenv import load_dotenv  # type: ignore
+
+        load_dotenv(dotenv_path=_repo_root / ".env", override=False)
 except Exception:
-    pass
+    try:
+        from dotenv import load_dotenv  # type: ignore
+
+        load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=False)
+    except Exception:
+        pass
 
 try:
     from modules.infrastructure.wre_core.src.pattern_memory import PatternMemory
@@ -60,6 +90,11 @@ except Exception:
 # Save original stderr/stdout for restoration
 _original_stdout = sys.stdout
 _original_stderr = sys.stderr
+
+# WSP 90 FIX: Set flag BEFORE wrapping to prevent 379 modules from re-wrapping
+# Issue: Each module that does UTF-8 wrapping at import breaks the stream
+# Solution: Set env flag, modules should check before wrapping
+os.environ['FOUNDUPS_UTF8_WRAPPED'] = '1'
 
 if sys.platform.startswith('win'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
@@ -146,6 +181,15 @@ from modules.ai_intelligence.pqn.scripts.launch import run_pqn_dae
 from modules.platform_integration.youtube_shorts_scheduler.scripts.launch import (
     run_shorts_scheduler,
     show_shorts_scheduler_menu
+)
+
+# Extracted to modules/platform_integration/antifafm_broadcaster/scripts/launch.py per WSP 62
+from modules.platform_integration.antifafm_broadcaster.scripts.launch import (
+    run_antifafm_broadcaster,
+    start_antifafm_background,
+    stop_antifafm_background,
+    get_antifafm_status,
+    run_suno_sync_cli,
 )
 
 # Re-enable normal logging after all imports are complete
@@ -307,19 +351,21 @@ def run_openclaw_security_preflight(repo_root: Path, overseer: Any | None = None
 
     Env controls:
       OPENCLAW_SECURITY_PREFLIGHT=1         Enable preflight at startup (default on)
-      OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1  Block startup on failed check (default on)
+      OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1  Block startup on failed check
       OPENCLAW_SECURITY_PREFLIGHT_FORCE=0   Bypass TTL cache and force re-scan
+      OPENCLAW_24X7=1                       Apply strict defaults (enforced=1, force=1)
     """
     enabled = os.getenv("OPENCLAW_SECURITY_PREFLIGHT", "1") != "0"
     if not enabled:
         logger.info("[SECURITY] OpenClaw startup preflight disabled")
         return True
 
-    # Default: warn but don't block. The Cisco skill scanner is an optional
-    # external tool that may not be installed on all dev machines.
-    # Set OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1 to hard-gate in production.
-    enforced = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_ENFORCED", "0") != "0"
-    force = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_FORCE", "0") == "1"
+    runtime_24x7 = os.getenv("OPENCLAW_24X7", "0") != "0"
+    enforced_default = "1" if runtime_24x7 else "0"
+    force_default = "1" if runtime_24x7 else "0"
+    # Default remains dev-friendly unless OPENCLAW_24X7 is enabled.
+    enforced = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_ENFORCED", enforced_default) != "0"
+    force = os.getenv("OPENCLAW_SECURITY_PREFLIGHT_FORCE", force_default) == "1"
 
     try:
         if overseer is None:
@@ -345,6 +391,214 @@ def run_openclaw_security_preflight(repo_root: Path, overseer: Any | None = None
         print("[SECURITY] Startup blocked by OPENCLAW_SECURITY_PREFLIGHT_ENFORCED=1")
         return False
     return True
+
+
+def run_dependency_security_preflight(repo_root: Path) -> bool:
+    """
+    Run dependency/CVE preflight at startup.
+
+    Env controls:
+      OPENCLAW_DEP_SECURITY_PREFLIGHT=1            Enable check at startup (default on)
+      OPENCLAW_DEP_SECURITY_PREFLIGHT_ENFORCED=0   Block startup on failures
+      OPENCLAW_DEP_SECURITY_PREFLIGHT_FORCE=0      Ignore cache and re-run now
+      OPENCLAW_DEP_SECURITY_PREFLIGHT_TTL_SEC=21600
+      OPENCLAW_DEP_SECURITY_REQUIRE_TOOLS=0|1      Require pip-audit/npm/cargo-audit availability
+      OPENCLAW_DEP_SECURITY_MAX_CRITICAL=0         Max tolerated critical vulns
+      OPENCLAW_DEP_SECURITY_MAX_HIGH=0             Max tolerated high vulns
+    """
+    enabled = os.getenv("OPENCLAW_DEP_SECURITY_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[DEP-SECURITY] Startup preflight disabled")
+        return True
+
+    runtime_24x7 = os.getenv("OPENCLAW_24X7", "0") != "0"
+    enforced_default = "1" if runtime_24x7 else "0"
+    enforced = os.getenv("OPENCLAW_DEP_SECURITY_PREFLIGHT_ENFORCED", enforced_default) != "0"
+    force = os.getenv("OPENCLAW_DEP_SECURITY_PREFLIGHT_FORCE", "0") == "1"
+
+    try:
+        from modules.infrastructure.wre_core.src.dependency_security_preflight import (
+            run_dependency_security_preflight as run_dep_preflight,
+        )
+
+        status = run_dep_preflight(repo_root=repo_root, force=force)
+    except Exception as exc:
+        logger.error(f"[DEP-SECURITY] Startup preflight execution failed: {exc}")
+        if enforced:
+            print(f"[DEP-SECURITY] Preflight FAILED: {exc}")
+            return False
+        print(f"[DEP-SECURITY] Preflight warning: {exc}")
+        return True
+
+    totals = status.get("totals", {}) if isinstance(status, dict) else {}
+    critical = int(totals.get("critical", 0) or 0)
+    high = int(totals.get("high", 0) or 0)
+    unknown = int(totals.get("unknown", 0) or 0)
+    tool_failures = int(status.get("tool_failures", 0) or 0)
+    cached = bool(status.get("cached", False))
+    passed = bool(status.get("passed", False))
+    cache_state = "cached" if cached else "fresh"
+    print(
+        f"[DEP-SECURITY] preflight={'PASS' if passed else 'FAIL'} ({cache_state}) "
+        f"critical={critical} high={high} unknown={unknown} tool_failures={tool_failures}"
+    )
+
+    if not passed and enforced:
+        print("[DEP-SECURITY] Startup blocked by OPENCLAW_DEP_SECURITY_PREFLIGHT_ENFORCED=1")
+        return False
+    return True
+
+
+def run_env_hygiene_preflight(repo_root: Path) -> bool:
+    """
+    Run startup env-hygiene preflight based on managed-env parser stats.
+
+    Env controls:
+      FOUNDUPS_ENV_PREFLIGHT=1            Enable startup warning checks (default on)
+      FOUNDUPS_ENV_PREFLIGHT_ENFORCED=0   Block startup when duplicates/orphans exist
+    """
+    enabled = os.getenv("FOUNDUPS_ENV_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[ENV-HYGIENE] Startup preflight disabled")
+        return True
+
+    enforced = os.getenv("FOUNDUPS_ENV_PREFLIGHT_ENFORCED", "0") != "0"
+
+    def _int_env(name: str, default: int = 0) -> int:
+        raw = os.getenv(name, str(default))
+        try:
+            return int(raw or default)
+        except (TypeError, ValueError):
+            return default
+
+    duplicate_keys = _int_env("FOUNDUPS_ENV_DUPLICATE_KEYS", 0)
+    duplicate_overwrites = _int_env("FOUNDUPS_ENV_DUPLICATE_OVERWRITES", 0)
+    orphan_lines = _int_env("FOUNDUPS_ENV_ORPHAN_LINES", 0)
+    env_mode = os.getenv("FOUNDUPS_ENV_MODE", "legacy")
+    active_file = os.getenv("FOUNDUPS_ENV_ACTIVE_FILE", str(repo_root / ".env"))
+    active_name = Path(active_file).name if active_file else ".env"
+
+    # Fallback: if managed stats are not present (legacy dotenv path),
+    # perform a lightweight local parse so hygiene checks still work.
+    stats_missing = (
+        "FOUNDUPS_ENV_DUPLICATE_KEYS" not in os.environ
+        and "FOUNDUPS_ENV_ORPHAN_LINES" not in os.environ
+    )
+    env_path = Path(active_file) if active_file else repo_root / ".env"
+    if stats_missing and env_path.exists():
+        try:
+            from modules.infrastructure.shared_utilities.env_managed import _parse_env_lines
+
+            text = env_path.read_text(encoding="utf-8", errors="replace")
+            values, _order, orphan_rows, duplicate_counts = _parse_env_lines(text.splitlines())
+            duplicate_keys = len(duplicate_counts)
+            duplicate_overwrites = sum(duplicate_counts.values())
+            orphan_lines = len(orphan_rows)
+            env_mode = "legacy_scan"
+        except Exception:
+            # Emergency parser if shared utility is unavailable.
+            seen: set[str] = set()
+            duplicate_key_set: set[str] = set()
+            fallback_orphans = 0
+            fallback_overwrites = 0
+            for raw in env_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                stripped = raw.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if "=" not in raw:
+                    fallback_orphans += 1
+                    continue
+                key = raw.split("=", 1)[0].strip()
+                if not key:
+                    fallback_orphans += 1
+                    continue
+                if key in seen:
+                    duplicate_key_set.add(key)
+                    fallback_overwrites += 1
+                else:
+                    seen.add(key)
+
+            duplicate_keys = len(duplicate_key_set)
+            duplicate_overwrites = fallback_overwrites
+            orphan_lines = fallback_orphans
+            env_mode = "legacy_scan"
+
+    has_hygiene_issues = duplicate_keys > 0 or orphan_lines > 0
+    status = "WARN" if has_hygiene_issues else "PASS"
+    print(
+        f"[ENV-HYGIENE] preflight={status} mode={env_mode} "
+        f"duplicates={duplicate_keys} orphan={orphan_lines} "
+        f"overwrites={duplicate_overwrites} file={active_name}"
+    )
+
+    if has_hygiene_issues and enforced:
+        print("[ENV-HYGIENE] Startup blocked by FOUNDUPS_ENV_PREFLIGHT_ENFORCED=1")
+        return False
+    return True
+
+
+def run_wre_dashboard_preflight(repo_root: Path) -> bool:
+    """
+    Run WRE dashboard preflight at startup.
+
+    This mirrors DAE-level enforcement logic so `python main.py` has the same
+    health gate semantics as individual DAE launchers.
+    """
+    enabled = os.getenv("WRE_DASHBOARD_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[WRE-DASHBOARD] Startup preflight disabled")
+        return True
+
+    manual_enforced = os.getenv("WRE_DASHBOARD_PREFLIGHT_ENFORCED", "0") != "0"
+    auto_enforce = os.getenv("WRE_DASHBOARD_AUTO_ENFORCE", "1") != "0"
+
+    try:
+        from modules.infrastructure.wre_core.src.dashboard_alerts import (
+            DashboardAlertMonitor,
+            check_dashboard_health,
+        )
+
+        monitor = DashboardAlertMonitor()
+        health = check_dashboard_health() or {}
+        insufficient_data = bool(health.get("insufficient_data", False))
+        total_executions = int(health.get("total_executions", 0))
+        min_samples = int(health.get("min_samples", 25))
+        in_watch = monitor.is_in_watch_period()
+        auto_enforced = bool(auto_enforce and not in_watch and not insufficient_data)
+        enforced = bool(manual_enforced or auto_enforced)
+
+        if insufficient_data:
+            watch_label = "WATCH" if in_watch else "STABLE"
+            print(
+                f"[WRE-DASHBOARD] preflight=PASS ({watch_label}, INSUFFICIENT_DATA) "
+                f"samples={total_executions}/{min_samples}"
+            )
+            return True
+
+        alerts = health.get("alerts", []) if isinstance(health.get("alerts"), list) else []
+        critical_count = sum(1 for a in alerts if a.get("severity") == "critical")
+        warning_count = sum(1 for a in alerts if a.get("severity") == "warning")
+        healthy = bool(health.get("healthy", True))
+        status = "PASS" if healthy else "FAIL"
+        mode_label = "WATCH" if in_watch else ("STABLE, ENFORCED" if auto_enforced else "STABLE")
+        print(
+            f"[WRE-DASHBOARD] preflight={status} ({mode_label}) "
+            f"critical={critical_count} warnings={warning_count} "
+            f"samples={total_executions}/{min_samples}"
+        )
+
+        if critical_count > 0 and enforced:
+            enforce_source = "AUTO" if auto_enforced else "MANUAL"
+            print(f"[WRE-DASHBOARD] Startup blocked by {enforce_source} enforcement")
+            return False
+        return True
+    except Exception as exc:
+        logger.error(f"[WRE-DASHBOARD] Startup preflight failed: {exc}")
+        if manual_enforced:
+            print(f"[WRE-DASHBOARD] Preflight FAILED: {exc}")
+            return False
+        print(f"[WRE-DASHBOARD] Preflight warning: {exc}")
+        return True
 
 
 def run_wsp_framework_preflight(repo_root: Path, overseer: Any | None = None) -> bool:
@@ -410,6 +664,8 @@ def main():
     repo_root = Path(__file__).resolve().parent
     preflights_requested = (
         os.getenv("OPENCLAW_SECURITY_PREFLIGHT", "1") != "0"
+        or os.getenv("OPENCLAW_DEP_SECURITY_PREFLIGHT", "1") != "0"
+        or os.getenv("WRE_DASHBOARD_PREFLIGHT", "1") != "0"
         or os.getenv("WSP_FRAMEWORK_PREFLIGHT", "1") != "0"
     )
 
@@ -420,38 +676,265 @@ def main():
         except Exception as exc:
             logger.error(f"[PREFLIGHT] Failed to initialize AI Overseer: {exc}")
 
+    if not run_env_hygiene_preflight(repo_root):
+        return
     if not run_openclaw_security_preflight(repo_root, overseer=overseer):
+        return
+    if not run_dependency_security_preflight(repo_root):
+        return
+    if not run_wre_dashboard_preflight(repo_root):
         return
     if not run_wsp_framework_preflight(repo_root, overseer=overseer):
         return
+
+    # Auto-start antifaFM broadcaster (default ON, disable with ANTIFAFM_AUTO_START=0)
+    # NOTE: Uses OBS mode by default - OBS handles streaming, script handles chat/schemas
+    # Stream runs while main.py is running. Exit menu = stream stops.
+    antifafm_auto_started = False
+    if os.getenv("ANTIFAFM_AUTO_START", "1") == "1":
+        # Launch OBS first (like LM Studio auto-launches for YT DAE)
+        from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_obs, is_obs_running
+
+        if not is_obs_running():
+            print("[RADIO] Launching OBS for antifaFM streaming...")
+            obs_ok, obs_msg = launch_obs()
+            if obs_ok:
+                print(f"[RADIO] OBS ready: {obs_msg}")
+            else:
+                print(f"[RADIO] OBS not available: {obs_msg}")
+                print("[RADIO] antifaFM will skip auto-start (start OBS manually, then use menu)")
+
+        # Only start antifaFM if OBS is running
+        if is_obs_running():
+            # Auto-start OBS streaming via WebSocket
+            try:
+                from modules.platform_integration.antifafm_broadcaster.src.obs_controller import OBSController
+
+                async def ensure_obs_broadcast_ready() -> dict:
+                    """
+                    Ensure there is an active/upcoming YouTube broadcast before OBS starts.
+
+                    This avoids OBS getting stuck in the YouTube setup modal where
+                    Start Streaming appears to do nothing.
+                    """
+                    result = {
+                        "ok": False,
+                        "server": (os.getenv("ANTIFAFM_RTMP_URL", "").strip() or "rtmps://a.rtmps.youtube.com:443/live2"),
+                        "key": os.getenv("ANTIFAFM_YOUTUBE_STREAM_KEY", "").strip(),
+                        "source": "env",
+                        "created": False,
+                    }
+                    if os.getenv("ANTIFAFM_OBS_AUTO_CREATE_BROADCAST", "1") != "1":
+                        if result["key"]:
+                            result["ok"] = True
+                        else:
+                            result["error"] = "ANTIFAFM_YOUTUBE_STREAM_KEY missing"
+                        return result
+
+                    try:
+                        from modules.platform_integration.antifafm_broadcaster.src.youtube_broadcast_manager import (
+                            YouTubeBroadcastManager,
+                            generate_clickbait_title,
+                            generate_m2m_description,
+                        )
+
+                        manager = YouTubeBroadcastManager()
+                        broadcasts = await manager.get_active_broadcasts()
+                        ready_states = {"created", "ready", "testing", "live"}
+
+                        has_ready_broadcast = False
+                        for broadcast in broadcasts:
+                            state = (
+                                broadcast.get("status", {}).get("lifeCycleStatus", "").strip().lower()
+                            )
+                            if state in ready_states:
+                                has_ready_broadcast = True
+                                print(f"[RADIO] Broadcast ready for OBS (state={state})")
+                                break
+
+                        if not has_ready_broadcast:
+                            title = os.getenv("ANTIFAFM_BROADCAST_TITLE", "").strip() or generate_clickbait_title()
+                            description = os.getenv("ANTIFAFM_BROADCAST_DESCRIPTION", "").strip() or generate_m2m_description()
+
+                            created = await manager.create_live_broadcast(
+                                title=title,
+                                description=description,
+                                privacy=os.getenv("ANTIFAFM_BROADCAST_PRIVACY", "public"),
+                                enable_auto_start=True,
+                                enable_auto_stop=False,
+                            )
+
+                            if created.success:
+                                print(
+                                    "[RADIO] Created YouTube broadcast for OBS "
+                                    f"(id={created.broadcast_id}, watch={created.watch_url})"
+                                )
+                                result["created"] = True
+                                result["source"] = "youtube_api"
+                                if created.stream_key:
+                                    result["key"] = created.stream_key
+                                if created.rtmps_url:
+                                    result["server"] = created.rtmps_url
+                                elif created.rtmp_url:
+                                    result["server"] = created.rtmp_url
+                            else:
+                                result["error"] = f"broadcast_create_failed:{created.error}"
+                                return result
+
+                        if not result["key"]:
+                            result["error"] = "missing_stream_key_after_broadcast_preflight"
+                            return result
+
+                        os.environ["ANTIFAFM_YOUTUBE_STREAM_KEY"] = result["key"]
+                        os.environ["ANTIFAFM_RTMP_URL"] = result["server"]
+                        result["ok"] = True
+                        return result
+                    except Exception as broadcast_error:
+                        if result["key"]:
+                            print(f"[RADIO] Broadcast preflight unavailable, using env key: {broadcast_error}")
+                            result["ok"] = True
+                            result["source"] = "env_fallback"
+                            return result
+                        result["error"] = f"broadcast_preflight_unavailable:{broadcast_error}"
+                        return result
+
+                async def start_obs_stream():
+                    controller = OBSController()
+                    if await controller.connect():
+                        stream_target = await ensure_obs_broadcast_ready()
+                        if not stream_target.get("ok"):
+                            print(
+                                "[RADIO] Broadcast preflight failed: "
+                                f"{stream_target.get('error', 'unknown')}"
+                            )
+                            controller.disconnect()
+                            return False
+
+                        if os.getenv("ANTIFAFM_OBS_FORCE_CUSTOM_SERVICE", "1") == "1":
+                            service_ok = await controller.ensure_stream_service_custom(
+                                stream_target.get("server", ""),
+                                stream_target.get("key", ""),
+                            )
+                            if not service_ok:
+                                print(
+                                    "[RADIO] Could not configure OBS custom stream service. "
+                                    f"error={controller.get_last_start_error()}"
+                                )
+                                controller.disconnect()
+                                return False
+                        status = await controller.get_stream_status()
+                        if not status.get('streaming'):
+                            print("[RADIO] Starting OBS stream...")
+                            started = await controller.start_streaming()
+                            if started:
+                                print("[RADIO] OBS streaming to YouTube!")
+                            else:
+                                status_after = await controller.get_stream_status()
+                                print(
+                                    "[RADIO] OBS start did not become active. "
+                                    "If OBS shows YouTube Broadcast Setup, click "
+                                    "'Create broadcast and start streaming'."
+                                )
+                                print(
+                                    "[RADIO] Diagnostics: "
+                                    f"streaming={status_after.get('streaming')} "
+                                    f"reconnecting={status_after.get('reconnecting')} "
+                                    f"error={controller.get_last_start_error()}"
+                                )
+                                controller.disconnect()
+                                return False
+                        else:
+                            print("[RADIO] OBS already streaming")
+                        controller.disconnect()
+                        return True
+                    return False
+
+                obs_stream_ok = asyncio.run(start_obs_stream())
+                if not obs_stream_ok:
+                    print("[RADIO] OBS auto-start needs manual confirmation in OBS UI.")
+            except Exception as e:
+                print(f"[RADIO] Could not auto-start OBS stream: {e}")
+                print("[RADIO] Click 'Start Streaming' in OBS manually")
+
+            # Start dynamic metadata daemon (updates title/description from news)
+            try:
+                from modules.platform_integration.antifafm_broadcaster.src.dynamic_metadata_daemon import (
+                    DynamicMetadataDaemon
+                )
+
+                async def init_dynamic_metadata():
+                    daemon = DynamicMetadataDaemon()
+                    # Do initial metadata update from current news
+                    result = await daemon.update_metadata(
+                        update_title=True,
+                        update_description=True,
+                        force=True  # Force initial update
+                    )
+                    if result.get('success'):
+                        print(f"[RADIO] Dynamic metadata: {result.get('changes', [])}")
+                    return result.get('success', False)
+
+                asyncio.run(init_dynamic_metadata())
+                print("[RADIO] Dynamic metadata daemon initialized (auto-updates from news)")
+            except Exception as e:
+                print(f"[RADIO] Dynamic metadata not available: {e}")
+
+            # OBS mode: streaming is handled by OBS, chat starts when YT DAE is selected
+            os.environ["ANTIFAFM_USE_OBS"] = "1"
+            antifafm_auto_started = True  # OBS is streaming, that's enough for auto-start
+            print("[RADIO] OBS streaming to antifaFM - select YT DAE (option 1) to start chat agent")
 
     # Import MCP services for CLI access
     from modules.infrastructure.mcp_manager.src.mcp_manager import show_mcp_services_menu
     
     # Import the main menu runner from the CLI module
     from modules.infrastructure.cli.src.main_menu import run_main_menu
+
+    self_audit_loop = None
+    if os.getenv("OPENCLAW_SELF_AUDIT_ENABLED", "1") != "0":
+        try:
+            from modules.infrastructure.wre_core.src.daemon_self_audit_loop import (
+                DaemonSelfAuditLoop,
+            )
+
+            self_audit_loop = DaemonSelfAuditLoop(repo_root)
+            self_audit_loop.start()
+            print("[SELF-AUDIT] daemon loop started (0102 policy monitor)")
+        except Exception as exc:
+            logger.error(f"[SELF-AUDIT] failed to start: {exc}")
+            print(f"[SELF-AUDIT] warning: {exc}")
     
     # Run the main menu with all required dependencies
-    run_main_menu(
-        monitor_youtube=monitor_youtube,
-        monitor_all_platforms=monitor_all_platforms,
-        search_with_holoindex=search_with_holoindex,
-        check_instance_status=check_instance_status,
-        launch_git_push_dae=launch_git_push_dae,
-        view_git_post_history=view_git_post_history,
-        run_holodae=run_holodae,
-        run_amo_dae=run_amo_dae,
-        run_social_media_dae=run_social_media_dae,
-        run_vision_dae=run_vision_dae,
-        run_pqn_dae=run_pqn_dae,
-        run_evade_net=run_evade_net,
-        run_liberty_alert_dae=run_liberty_alert_dae,
-        run_training_system=run_training_system,
-        execute_training_command=execute_training_command,
-        show_mcp_services_menu=show_mcp_services_menu,
-        PATTERN_MEMORY_AVAILABLE=PATTERN_MEMORY_AVAILABLE,
-        PatternMemory=PatternMemory,
-    )
+    try:
+        run_main_menu(
+            monitor_youtube=monitor_youtube,
+            monitor_all_platforms=monitor_all_platforms,
+            search_with_holoindex=search_with_holoindex,
+            check_instance_status=check_instance_status,
+            launch_git_push_dae=launch_git_push_dae,
+            view_git_post_history=view_git_post_history,
+            run_holodae=run_holodae,
+            run_amo_dae=run_amo_dae,
+            run_social_media_dae=run_social_media_dae,
+            run_vision_dae=run_vision_dae,
+            run_pqn_dae=run_pqn_dae,
+            run_evade_net=run_evade_net,
+            run_liberty_alert_dae=run_liberty_alert_dae,
+            run_training_system=run_training_system,
+            execute_training_command=execute_training_command,
+            show_mcp_services_menu=show_mcp_services_menu,
+            PATTERN_MEMORY_AVAILABLE=PATTERN_MEMORY_AVAILABLE,
+            PatternMemory=PatternMemory,
+            # antifaFM broadcaster
+            run_antifafm_broadcaster=run_antifafm_broadcaster,
+            start_antifafm_background=start_antifafm_background,
+            stop_antifafm_background=stop_antifafm_background,
+            get_antifafm_status=get_antifafm_status,
+            run_suno_sync_cli=run_suno_sync_cli,
+        )
+    finally:
+        if self_audit_loop is not None:
+            self_audit_loop.stop()
 
 
 if __name__ == "__main__":

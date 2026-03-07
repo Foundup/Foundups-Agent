@@ -1,0 +1,92 @@
+{
+  "skillz_name": "bc0_m2j_intake",
+  "skillz_type": "foundup_gate",
+  "foundup": "move2japan",
+  "foundup_module": "modules/foundups/move2japan",
+  "description": "Base Camp 0 — Move2Japan intake and gating skillz. Captures intent, classifies urgency, checks passport readiness, and routes stakeholder to next gate.",
+  "wsp_compliance": ["WSP 77", "WSP 73", "WSP 95", "WSP 3"],
+  "version": "0.1.0",
+
+  "triggers": {
+    "bang_commands": ["!move2japan", "!m2j", "!japan"],
+    "implicit_intents": [
+      "how do i move to japan",
+      "i want to move to japan",
+      "how hard is it to move to japan",
+      "can americans move to japan",
+      "how do i get a visa for japan",
+      "i want out of america"
+    ]
+  },
+
+  "state_machine": {
+    "states": {
+      "BC0.1": "intent_captured",
+      "BC0.2": "timeframe_requested",
+      "BC0.3": "timeframe_classified",
+      "BC0.4": "passport_requested",
+      "BC0.5": "passport_classified",
+      "BC0.6": "route_decision"
+    },
+    "initial_state": "BC0.1"
+  },
+
+  "urgency_levels": {
+    "1": {"label": "explorer",  "description": "Just exploring",    "behavior": "slow education path"},
+    "2": {"label": "planner",   "description": "Maybe 1-2 years",   "behavior": "roadmap introduction"},
+    "3": {"label": "serious",   "description": "Within 12 months",  "behavior": "stronger progression"},
+    "4": {"label": "imminent",  "description": "Within 6 months",   "behavior": "fast-track planning"},
+    "5": {"label": "urgent",    "description": "ASAP",              "behavior": "rapid assistance flow"}
+  },
+
+  "passport_statuses": ["yes", "no", "expired", "in_progress", "unknown"],
+
+  "intent_buckets": {
+    "jobs":          {"keywords": ["job", "work", "teach english", "remote", "career", "salary", "hire"]},
+    "visa":          {"keywords": ["visa", "sponsor", "permanent", "stay", "immigration", "resident"]},
+    "housing":       {"keywords": ["house", "rent", "apartment", "akiya", "live", "share house", "housing"]},
+    "cost":          {"keywords": ["money", "expensive", "cost", "afford", "budget", "cheap", "savings"]},
+    "qualification": {"keywords": ["old", "degree", "japanese", "language", "family", "pets", "age"]},
+    "emotional":     {"keywords": ["need out", "crazy", "insane", "escape", "start over", "safe", "scared", "hate"]}
+  },
+
+  "response_templates": {
+    "welcome": "🇯🇵 I can help with that.\n\nFirst — how soon are you thinking about moving to Japan?\n\n1️⃣ Just exploring\n2️⃣ Maybe 1-2 years\n3️⃣ Within 12 months\n4️⃣ Within 6 months\n5️⃣ ASAP",
+
+    "timeframe_ack": "Got it.\n\nNext question — do you already have a passport?\nYes / No / Expired / Not sure",
+
+    "no_passport": "That's the first real step. Get your passport started first. Once that's in motion, come back and I'll help with the next stage.\n\n📬 Updates + checklist: movetojapan.info",
+
+    "yes_passport": "Perfect — you're past the first gate. Your next big step is figuring out your move path — work, study, family, remote income, or something else.\n\n🗺️ Track your roadmap: movetojapan.foundups.com",
+
+    "redirect_to_gate": "{topic} is a huge part of the move, and we can help with that. Main thing first so I know your stage: How soon are you thinking about moving, and do you already have your passport?",
+
+    "emotional_redirect": "A lot of people are feeling that way right now. Let's make this practical. How soon are you actually thinking about moving, and do you already have your passport?",
+
+    "funnel_casual": "📬 Want updates and relocation tips? Join here: movetojapan.info",
+    "funnel_serious": "🗺️ Want a roadmap account to track your move? Sign up: movetojapan.foundups.com"
+  },
+
+  "routing_matrix": {
+    "exploring_no":    {"route": "passport_first_newsletter",   "message_key": "no_passport"},
+    "exploring_yes":   {"route": "discovery_later",            "message_key": "funnel_casual"},
+    "planner_no":      {"route": "passport_first_nurture",     "message_key": "no_passport"},
+    "planner_yes":     {"route": "pathway_discovery_queue",    "message_key": "funnel_serious"},
+    "serious_no":      {"route": "passport_first_stronger",    "message_key": "no_passport"},
+    "serious_yes":     {"route": "next_skillz",                "message_key": "yes_passport"},
+    "imminent_no":     {"route": "passport_first_urgent",      "message_key": "no_passport"},
+    "imminent_yes":    {"route": "fast_track_next",            "message_key": "yes_passport"},
+    "urgent_no":       {"route": "passport_first_reality",     "message_key": "no_passport"},
+    "urgent_yes":      {"route": "fast_track_pwa",             "message_key": "yes_passport"}
+  },
+
+  "data_collected": [
+    "stakeholder_id", "chat_handle", "urgency_level",
+    "passport_status", "timeline_estimate", "intent_source"
+  ],
+
+  "handoff_targets": {
+    "bc1": "bc1_m2j_passport",
+    "bc2": "bc2_m2j_pathway"
+  }
+}

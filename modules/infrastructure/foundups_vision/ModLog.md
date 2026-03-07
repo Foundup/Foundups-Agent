@@ -7,6 +7,34 @@
 
 ## Change Log
 
+### 2026-02-24: Added `diagnose` action for DOM-first architecture
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Vision), WSP 48 (Pattern Learning)
+
+**Change:** Added `diagnose` action type to UI-TARS bridge.
+
+**Purpose:** Supports new DOM-first + Vision-diagnose architecture in ActionRouter:
+- When Selenium (DOM) fails, UI-TARS diagnoses what went wrong
+- Returns element location, suggested selector, diagnosis reason
+- Does NOT execute the action - just provides diagnostic info
+
+**Code:** `ui_tars_bridge.py` line ~623-637
+```python
+elif action == "diagnose":
+    executed = {
+        "ok": True,
+        "diagnosis": thought,
+        "element_found": True,
+        "suggested_selector": f"xpath://*[...]",
+        "coordinates": {"x": x, "y": y},
+        "action_executed": False,  # Diagnosis only
+    }
+```
+
+**Impact:** UI-TARS becomes debugger, not executor - enables self-healing automation.
+
+---
+
 ### 2026-01-21: UI-TARS model name config
 
 **By:** 0102  

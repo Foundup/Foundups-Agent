@@ -1,6 +1,37 @@
 # WSP Module ModLog: Shared Utilities
 **WSP Compliance**: WSP 22 (Module ModLog and Roadmap Protocol)
 
+## 2026-03-07 - Managed Environment Loader (0102 Autopilot)
+- **Problem**: `.env` had ordering drift, duplicate keys, and non-parseable lines, causing unclear runtime precedence and operator overhead.
+- **Solution**: Added managed env utility: `env_managed.py`.
+  - Builds `.env.managed` from `.env` with deterministic policy:
+    - last duplicate key wins
+    - non-parseable/orphan lines preserved as comments for auditability
+  - Exposes stats (`duplicate_keys`, `duplicate_overwrites`, `orphan_lines`) for runtime diagnostics.
+- **Main Integration**:
+  - `main.py` now uses managed env flow by default (`FOUNDUPS_ENV_MANAGED=1`).
+  - Fallback to legacy direct `.env` loading if managed loader fails or is disabled.
+- **Operational Outcome**:
+  - 0102 can run with stable env precedence without manual `.env` reordering.
+  - Operator no longer needs to actively curate duplicate ordering in large env files.
+- **Files**:
+  - `modules/infrastructure/shared_utilities/env_managed.py`
+  - `main.py`
+  - `.env.example` (`FOUNDUPS_ENV_MANAGED=1`)
+
+## 2026-03-07 - Env Exposure Hardening (no managed copy on disk)
+- **Problem**: Persisting `.env.managed` on disk creates unnecessary secret-copy exposure risk.
+- **Solution**:
+  - Switched managed env runtime to in-memory normalization/application by default.
+  - Added explicit controls:
+    - `FOUNDUPS_ENV_MANAGED_DISK_COPY=0` (default)
+    - `FOUNDUPS_ENV_MANAGED_PURGE_COPY=1` (default)
+  - Auto-purges stale `.env.managed` copy when purge is enabled.
+  - Removed existing `.env.managed` from workspace.
+- **Operational Result**:
+  - Runtime keeps deterministic duplicate resolution without creating extra env files.
+  - `.env` remains the single authoritative secret file.
+
 ## 2026-02-02 - YouTube Channel Registry (Central Source of Truth)
 - **Problem**: Channel rotation lists were duplicated across modules, making new channel onboarding fragile.
 - **Solution**: Added `youtube_channel_registry.py` + registry JSON in module memory to centralize channel metadata (roles, browser grouping, shorts config).

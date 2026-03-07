@@ -61,7 +61,7 @@ Provide a unified, intelligent interface for all platform browser automation, ro
 ### Sprint A3: LinkedIn Actions
 **Priority:** P1 (High)
 **Tokens:** 300
-**Status:** 🔴 Not Started
+**Status:** 🟡 In Progress
 **Depends On:** A1
 
 **Objectives:**
@@ -69,6 +69,7 @@ Provide a unified, intelligent interface for all platform browser automation, ro
 - [ ] Migrate posting from social_media_orchestrator
 - [ ] Add comment functionality
 - [ ] Integrate with UI-TARS scheduler
+- [x] Wire layered digital twin parameter passthrough (L1 comment/mentions, L3 repost/schedule inputs)
 
 **Acceptance Criteria:**
 - Can post to LinkedIn company pages

@@ -40,7 +40,7 @@ class VisionStreamChecker:
         'UCklMTNnu5POwRmQsg5JJumA': '@MOVE2JAPAN',   # Move2Japan (alternate)
         'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',      # UnDaoDu
         'UCSNTUXjAgpd4sgWYP0xoJgw': '@FoundUps',     # FoundUps
-        'UCVSmg5aOhP4tnQ9KFUg97qA': '@ravingantifa', # RavingANTIFA
+        'UCVSmg5aOhP4tnQ9KFUg97qA': '@antifaFM', # antifaFM
     }
     
     def __init__(self):

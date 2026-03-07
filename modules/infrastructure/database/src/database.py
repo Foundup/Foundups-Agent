@@ -1,46 +1,34 @@
-# -*- coding: utf-8 -*-
-import sys
-import io
+"""Convenience facade over DatabaseManager."""
 
+from __future__ import annotations
 
-"""database core implementation"""
+from typing import Any, Dict, List, Sequence, Tuple
 
-# TODO: Implement actual functionality
-# This is a placeholder created for WSP 49 compliance
+from .db_manager import DatabaseManager
 
-# === UTF-8 ENFORCEMENT (WSP 90) ===
-# Prevent UnicodeEncodeError on Windows systems
-# Only apply when running as main script, not during import
-if __name__ == '__main__' and sys.platform.startswith('win'):
-    try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    except (OSError, ValueError):
-        # Ignore if stdout/stderr already wrapped or closed
-        pass
-# === END UTF-8 ENFORCEMENT ===
 
 class Database:
-    """Placeholder main class for [module_name]"""
+    """Small facade used by legacy call sites that import `database.Database`."""
 
-    def __init__(self, config=None):
-        """Initialize Database
-
-        Args:
-            config: Optional configuration dictionary
-        """
+    def __init__(self, config: Dict[str, Any] | None = None) -> None:
         self.config = config or {}
+        self.manager = DatabaseManager()
 
-    def process(self):
-        """Placeholder main method
+    def query(self, sql: str, params: Sequence[Any] | Tuple[Any, ...] = ()) -> List[Dict[str, Any]]:
+        return self.manager.execute_query(sql, params)
 
-        TODO: Implement actual functionality
-        """
-        return f"database placeholder result"
+    def write(self, sql: str, params: Sequence[Any] | Tuple[Any, ...] = ()) -> int:
+        return self.manager.execute_write(sql, params)
 
-def utility_database():
-    """Placeholder utility function
+    def process(self) -> Dict[str, Any]:
+        """Return a lightweight health snapshot for compatibility callers."""
+        return {
+            "backend": self.manager.backend_info(),
+            "stats": self.manager.get_stats(),
+        }
 
-    TODO: Implement actual utility functionality
-    """
-    return "database utility result"
+
+def utility_database() -> Dict[str, Any]:
+    """Return backend metadata for quick diagnostics."""
+    return Database().manager.backend_info()
+

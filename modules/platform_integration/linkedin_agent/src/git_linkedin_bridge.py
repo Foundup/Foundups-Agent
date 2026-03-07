@@ -19,6 +19,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 # Removed direct LinkedIn import - now using unified interface
 
 # Import Qwen for intelligent content generation
@@ -48,11 +49,7 @@ class GitLinkedInBridge:
 
         # Initialize Qwen for 0102-branded content generation
         if QWEN_AVAILABLE:
-            # Try HoloIndex model location first (E: drive)
-            model_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
-            if not model_path.exists():
-                # Fallback to local models directory
-                model_path = Path("models/qwen/qwen-coder-1.5b.gguf")
+            model_path = resolve_code_model_path()
 
             if model_path.exists():
                 self.qwen = QwenInferenceEngine(model_path=model_path, max_tokens=512, temperature=0.7)
@@ -63,7 +60,7 @@ class GitLinkedInBridge:
                     print("[INFO] Qwen initialization failed, using templates")
             else:
                 self.qwen = None
-                print(f"[INFO] Qwen model not found at E:/HoloIndex/models/, using templates")
+                print(f"[INFO] Qwen model not found at {model_path}, using templates")
         else:
             self.qwen = None
 
@@ -143,6 +140,21 @@ class GitLinkedInBridge:
         return {item.strip() for item in raw.split(",") if item.strip()}
 
     @staticmethod
+    def _parse_csv_env_list(
+        name: str,
+        default: str,
+        env: Optional[Dict[str, str]] = None,
+    ) -> List[str]:
+        source = env if env is not None else os.environ
+        raw = source.get(name, default)
+        ordered: List[str] = []
+        for item in raw.split(","):
+            token = item.strip()
+            if token and token not in ordered:
+                ordered.append(token)
+        return ordered
+
+    @staticmethod
     def _matches_branch_pattern(branch: str, pattern: str) -> bool:
         normalized = pattern.strip()
         if not normalized:
@@ -176,6 +188,19 @@ class GitLinkedInBridge:
             env=env,
         )
         return branch in protected and not allow_direct_protected
+
+    @classmethod
+    def _push_remotes(cls, env: Optional[Dict[str, str]] = None) -> List[str]:
+        remotes = cls._parse_csv_env_list(
+            "GIT_PUSH_REMOTES",
+            "origin,backup",
+            env=env,
+        )
+        return remotes or ["origin"]
+
+    @classmethod
+    def _require_all_push_remotes(cls, env: Optional[Dict[str, str]] = None) -> bool:
+        return cls._env_flag("GIT_PUSH_REQUIRE_ALL_REMOTES", default=True, env=env)
         
     def _load_posted_commits(self) -> set:
         """Load set of already posted commit hashes"""
@@ -1483,8 +1508,57 @@ class GitLinkedInBridge:
                     _auto_merge_pr(pr_url)
                 return True
 
-            def _push_current_branch(remote: str = "origin") -> bool:
-                """Push current branch; auto-set upstream when missing."""
+            known_remotes: Optional[set[str]] = None
+
+            def _list_known_remotes() -> set[str]:
+                nonlocal known_remotes
+                if known_remotes is None:
+                    remotes_result = subprocess.run(
+                        ['git', 'remote'],
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        check=True,
+                        cwd=str(self.repo_root),
+                    )
+                    known_remotes = {
+                        line.strip()
+                        for line in remotes_result.stdout.splitlines()
+                        if line.strip()
+                    }
+                return known_remotes
+
+            def _push_branch_to_remote(
+                remote: str,
+                branch: str,
+                *,
+                allow_pr_fallback: bool,
+            ) -> bool:
+                if remote not in _list_known_remotes():
+                    print(f"[WARN] Remote '{remote}' not configured in this repository")
+                    return False
+
+                push_result = subprocess.run(
+                    ['git', 'push', remote, branch],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    cwd=str(self.repo_root),
+                )
+                if push_result.returncode == 0:
+                    return True
+
+                combined = "\n".join(part for part in [push_result.stderr, push_result.stdout] if part).strip()
+                if allow_pr_fallback and _is_pr_required_error(combined):
+                    return _create_pr_for_head(remote, combined)
+
+                print(f"[WARN] Git push failed for remote '{remote}': {combined}")
+                return False
+
+            def _push_current_branch(remote: str) -> bool:
+                """Push current branch to the selected primary remote."""
                 nonlocal current_branch
                 branch_result = subprocess.run(
                     ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
@@ -1507,60 +1581,59 @@ class GitLinkedInBridge:
                     print(f"[INFO] {reason}")
                     return _create_pr_for_head(remote, reason)
 
-                push_result = subprocess.run(
-                    ['git', 'push'],
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    cwd=str(self.repo_root),
-                )
-                if push_result.returncode == 0:
-                    return True
+                return _push_branch_to_remote(remote, branch, allow_pr_fallback=True)
 
-                combined = "\n".join(part for part in [push_result.stderr, push_result.stdout] if part).strip()
-                combined_lower = combined.lower()
-                if "no upstream branch" in combined_lower or "has no upstream branch" in combined_lower:
-                    upstream_result = subprocess.run(
-                        ['git', 'push', '--set-upstream', remote, branch],
-                        capture_output=True,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                        cwd=str(self.repo_root),
-                    )
-                    if upstream_result.returncode == 0:
-                        print(f"[OK] Set upstream and pushed to {remote}/{branch}")
-                        return True
-
-                    upstream_combined = "\n".join(
-                        part for part in [upstream_result.stderr, upstream_result.stdout] if part
-                    ).strip()
-                    if _is_pr_required_error(upstream_combined):
-                        return _create_pr_for_head(remote, upstream_combined)
-                    print(f"[U+26A0]️  Git push failed after setting upstream: {upstream_combined}")
-                    return False
-
-                if _is_pr_required_error(combined):
-                    return _create_pr_for_head(remote, combined)
-                print(f"[U+26A0]️  Git push failed: {combined}")
-                return False
+            push_remotes = self._push_remotes()
+            require_all_remotes = self._require_all_push_remotes()
+            primary_remote = push_remotes[0]
+            synced_remotes: List[str] = []
 
             # Always push before social posting; skip posting if push fails.
-            if not _push_current_branch():
-                print("\n[U+26A0]️  Note: Git push failed - skipping social media posting")
+            if not _push_current_branch(primary_remote):
+                print("\n[WARN] Note: Git push failed - skipping social media posting")
                 return False
+            synced_remotes.append(primary_remote)
 
-            print(f"[OK] Successfully pushed to git! (commit: {commit_hash[:10]})")
+            if pr_was_required:
+                print("[INFO] Primary remote used PR flow; skipping secondary remote sync until merge.")
+            else:
+                for secondary_remote in push_remotes[1:]:
+                    secondary_ok = _push_branch_to_remote(
+                        secondary_remote,
+                        current_branch,
+                        allow_pr_fallback=False,
+                    )
+                    if secondary_ok:
+                        synced_remotes.append(secondary_remote)
+                        continue
+
+                    if require_all_remotes:
+                        print(
+                            f"\n[WARN] Required remote sync failed for '{secondary_remote}' "
+                            "(GIT_PUSH_REQUIRE_ALL_REMOTES=1); skipping social media posting"
+                        )
+                        return False
+
+                    print(
+                        f"[WARN] Continuing after failed optional remote sync for '{secondary_remote}' "
+                        "(set GIT_PUSH_REQUIRE_ALL_REMOTES=1 to enforce)"
+                    )
+
+            print(
+                f"[OK] Successfully pushed to git remotes {synced_remotes} "
+                f"(commit: {commit_hash[:10]})"
+            )
             self.last_push_details = {
                 "commit_hash": commit_hash,
                 "pr_url": pr_url,
                 "pr_branch": pr_branch,
                 "pr_was_required": pr_was_required,
                 "push_mode": "pull_request" if pr_was_required else "direct",
+                "push_remotes_requested": push_remotes,
+                "push_remotes_synced": synced_remotes,
+                "require_all_push_remotes": require_all_remotes,
                 "timestamp": datetime.now().isoformat(),
             }
-
             if pr_was_required and not pr_url:
                 print("[NOTE] PR-required push succeeded, but no PR was created; skipping social media posting.")
                 return True

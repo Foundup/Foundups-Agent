@@ -1,0 +1,137 @@
+{
+  "last_updated": "2026-03-06T05:59:46.632118",
+  "videos": [
+    {
+      "id": "bc7f027c4426",
+      "source_url": "https://www.youtube.com/watch?v=J9CmL54rhU8",
+      "filename": "video_bc7f027c4426.mp4",
+      "title": "Video bc7f027c",
+      "added_by": "012",
+      "added_at": "2026-02-26T13:32:28.761635",
+      "status": "error",
+      "duration_seconds": null,
+      "file_size_bytes": null,
+      "error_message": "ERROR: [Errno 13] Permission denied: '.'\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"O:\\Foundups-Agent\\.venv\\Scripts\\yt-dlp.exe\\__main__.py\", line 6, in <module>\n  File \"o:\\Foundups-Agent\\.venv\\Lib\\site-packages\\yt_dlp\\__init__.py\", line 1030, in main\n    _exit(*variadic(_real_main(argv)))\n                    ^^^^^^^^^^^^^^^^\n  File \"o:\\Foundups-Agent\\.venv\\Lib\\site-packages\\yt_dlp\\__init__.py"
+    },
+    {
+      "id": "051bdf55b239",
+      "source_url": "local://Charlie_Chaplin.mp4",
+      "filename": "Charlie_Chaplin.mp4",
+      "title": "Charlie Chaplin",
+      "added_by": "012",
+      "added_at": "2026-02-26T14:46:06.016055",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 8607813,
+      "error_message": null
+    },
+    {
+      "id": "0bd17ce31f53",
+      "source_url": "local://December 29 2025.mp4",
+      "filename": "December 29 2025.mp4",
+      "title": "December 29 2025.mp4",
+      "added_by": "012",
+      "added_at": "2026-02-26T14:46:06.017212",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 5456166,
+      "error_message": null
+    },
+    {
+      "id": "5d4fc87edb1b",
+      "source_url": "local://January 18 2026.mp4",
+      "filename": "January 18 2026.mp4",
+      "title": "January 18 2026.mp4",
+      "added_by": "012",
+      "added_at": "2026-02-26T14:46:06.018239",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 981593,
+      "error_message": null
+    },
+    {
+      "id": "a269523df990",
+      "source_url": "local://test_video.mp4",
+      "filename": "test_video.mp4",
+      "title": "test_video.mp4",
+      "added_by": "012",
+      "added_at": "2026-02-26T14:46:06.018239",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 31942,
+      "error_message": null
+    },
+    {
+      "id": "46755294b2c9",
+      "source_url": "local://Throw Tomatoes at red Hats.mp4",
+      "filename": "Throw Tomatoes at red Hats.mp4",
+      "title": "Throw Tomatoes at red Hats.mp4",
+      "added_by": "012",
+      "added_at": "2026-02-26T14:46:06.019751",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 2874139,
+      "error_message": null
+    },
+    {
+      "id": "3aaf2aa55d8e",
+      "source_url": "local://BBC_Straits.mp4",
+      "filename": "BBC_Straits.mp4",
+      "title": "BBC_Straits.mp4",
+      "added_by": "012",
+      "added_at": "2026-03-06T05:59:46.628421",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 41759680,
+      "error_message": null
+    },
+    {
+      "id": "fc3b709aca2c",
+      "source_url": "local://beirut3-6-26-5_50tt.mp4",
+      "filename": "beirut3-6-26-5_50tt.mp4",
+      "title": "beirut3-6-26-5_50tt.mp4",
+      "added_by": "012",
+      "added_at": "2026-03-06T05:59:46.629000",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 5266314,
+      "error_message": null
+    },
+    {
+      "id": "f97cebaf0ec0",
+      "source_url": "local://Dildos.mp4",
+      "filename": "Dildos.mp4",
+      "title": "Dildos.mp4",
+      "added_by": "012",
+      "added_at": "2026-03-06T05:59:46.629000",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 610688917,
+      "error_message": null
+    },
+    {
+      "id": "47f0b302e432",
+      "source_url": "local://January 10 2026.mp4",
+      "filename": "January 10 2026.mp4",
+      "title": "January 10 2026.mp4",
+      "added_by": "012",
+      "added_at": "2026-03-06T05:59:46.630520",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 4475956,
+      "error_message": null
+    },
+    {
+      "id": "8fa4ea7d406a",
+      "source_url": "local://Telaviv.mp4",
+      "filename": "Telaviv.mp4",
+      "title": "Telaviv.mp4",
+      "added_by": "012",
+      "added_at": "2026-03-06T05:59:46.632118",
+      "status": "ready",
+      "duration_seconds": null,
+      "file_size_bytes": 37279760,
+      "error_message": null
+    }
+  ]
+}

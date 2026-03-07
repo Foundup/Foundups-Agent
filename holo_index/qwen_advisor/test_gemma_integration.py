@@ -26,7 +26,7 @@ Tests the complete flow:
 
 NAVIGATION: Test suite for Gemma/Qwen adaptive routing
 -> Tests: gemma_rag_inference.py, pattern_memory.py
--> Models: E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf, qwen-coder-1.5b.gguf
+-> Models: resolved via LOCAL_MODEL_TRIAGE_* and LOCAL_MODEL_CODE_*
 """
 
 from pathlib import Path
@@ -43,6 +43,10 @@ sys.path.insert(0, str(project_root))
 
 from holo_index.qwen_advisor.gemma_rag_inference import GemmaRAGInference
 from holo_index.qwen_advisor.pattern_memory import PatternMemory
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 
 def test_pattern_memory_integration():
@@ -84,9 +88,9 @@ def test_gemma_inference():
     print("TEST 2: Gemma Inference")
     print("="*60)
 
-    # Use correct model path from E:/HoloIndex/models/
-    gemma_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
-    qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+    # Use centralized local model routing.
+    gemma_path = resolve_triage_model_path()
+    qwen_path = resolve_code_model_path()
 
     if not gemma_path.exists():
         print(f"[FAIL] Gemma model not found: {gemma_path}")
@@ -159,8 +163,8 @@ def test_performance_stats(engine, results):
     print(f"Qwen Escalated: {stats['qwen_escalated']} ({stats['qwen_percentage']:.1f}%)")
 
     # Calculate average latencies
-    gemma_latencies = [r.latency_ms for r in results if r.model_used == "gemma-3-270m"]
-    qwen_latencies = [r.latency_ms for r in results if r.model_used == "qwen-1.5b"]
+    gemma_latencies = [r.latency_ms for r in results if "gemma" in r.model_used.lower()]
+    qwen_latencies = [r.latency_ms for r in results if "qwen" in r.model_used.lower()]
 
     if gemma_latencies:
         avg_gemma = sum(gemma_latencies) / len(gemma_latencies)

@@ -407,16 +407,11 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js';
     import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
+    import { loadFirebaseRuntimeConfig } from '/js/firebase-runtime-config.js';
 
     // Initialize Firebase (for Firestore data storage only - auth is via Clerk)
-    const app = initializeApp({
-      apiKey: "AIzaSyCwvio08ozOzPECTqCzGmGffPMbk7Ol0Yc",
-      authDomain: "gen-lang-client-0061781628.firebaseapp.com",
-      projectId: "gen-lang-client-0061781628",
-      storageBucket: "gen-lang-client-0061781628.firebasestorage.app",
-      messagingSenderId: "56566376153",
-      appId: "1:56566376153:web:e1d6c460e9be8668ebc0c8"
-    });
+    const firebaseConfig = await loadFirebaseRuntimeConfig();
+    const app = initializeApp(firebaseConfig);
 
     const db = getFirestore(app);
 

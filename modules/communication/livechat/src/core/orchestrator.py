@@ -140,7 +140,13 @@ class LiveChatOrchestrator:
         self.chat_poller.live_chat_id = self.live_chat_id
         self.chat_poller.channel_name = self.channel_name
         self.chat_poller.channel_id = self.channel_id
-        
+        self.message_processor.update_persona_context(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=getattr(self.chat_sender, "bot_channel_id", None),
+            stream_title=getattr(self.session_manager, "stream_title", None),
+        )
+
         await self.session_manager.send_greeting(self.send_message)
         logger.info("Orchestrator initialized successfully")
         return True

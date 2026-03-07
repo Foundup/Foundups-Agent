@@ -165,14 +165,15 @@ QWEN LLM (Primary Orchestrator - Circulatory System)
 
 ### Environment Variables
 ```bash
-QWEN_MODEL_PATH=E:/HoloIndex/models/qwen-coder-1.5b.gguf
+LOCAL_MODEL_ROOT=E:/LM_studio/models/local
+LOCAL_MODEL_CODE_DIR=E:/LM_studio/models/local/qwen-coder-7b
 QWEN_MAX_TOKENS=512
 QWEN_TEMPERATURE=0.2
 QWEN_CACHE_ENABLED=true
 ```
 
 ### Model Requirements
-- **Model**: qwen-coder-1.5b.gguf (1.5GB)
+- **Model**: qwen-coder-7b GGUF (default local code model)
 - **RAM**: ~2GB for model loading
 - **CPU**: 4+ cores recommended
 - **Storage**: SSD strongly recommended

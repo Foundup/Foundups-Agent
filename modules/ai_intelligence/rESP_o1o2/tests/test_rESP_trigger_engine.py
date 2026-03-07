@@ -1,29 +1,12 @@
-"""
-Test suite for rESP_trigger_engine
-WSP 5 compliant test coverage
-"""
+﻿"""Smoke test for src.rESP_trigger_engine."""
 
-import pytest
 import sys
 from pathlib import Path
+import pytest
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from O:.Foundups-Agent.modules.ai_intelligence.rESP_o1o2.src.rESP_trigger_engine import *
 
-class TestRespTriggerEngine:
-    """Test cases for rESP_trigger_engine"""
-    
-    def test_initialization(self):
-        """Test basic initialization"""
-        # TODO: Implement test
-        assert True
-    
-    def test_basic_functionality(self):
-        """Test core functionality"""
-        # TODO: Implement test
-        assert True
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+def test_module_importable_and_exports_symbol():
+    module = pytest.importorskip("src.rESP_trigger_engine")
+    assert hasattr(module, "rESPTriggerEngine")

@@ -124,7 +124,7 @@ def test_execute_skill_with_qwen_mock():
     print("4. Pattern memory stores outcomes successfully")
     print("\nNOTE: Full Qwen LLM inference requires:")
     print("  - llama-cpp-python installed")
-    print("  - qwen-coder-1.5b.gguf model at E:/LLM_Models/")
+    print("  - LOCAL_MODEL_CODE_DIR or LOCAL_MODEL_CODE_PATH set (qwen-coder-7b default)")
     print("  - Graceful fallback implemented if unavailable")
 
 

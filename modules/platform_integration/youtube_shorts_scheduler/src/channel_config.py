@@ -10,7 +10,7 @@ Both browsers have BOTH Google accounts logged in, so any browser can access any
 
 Account Picker Structure (same on both browsers):
 - Section 0 (Google Account A): UnDaoDu, Move2Japan
-- Section 1 (Google Account B): FoundUps, RavingANTIFA
+- Section 1 (Google Account B): FoundUps, antifaFM
 
 The `preferred_port` is for optimization (minimize account switches).
 The `available_ports` shows all browsers that can access the channel.
@@ -116,7 +116,7 @@ def get_channel_config(channel_key: str) -> Optional[Dict[str, Any]]:
     Get configuration for a channel.
 
     Args:
-        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
+        channel_key: "move2japan", "undaodu", "foundups", or "antifafm"
 
     Returns:
         Channel config dict or None
@@ -201,7 +201,7 @@ def get_studio_urls(channel_key: str) -> Dict[str, str]:
     Get all pre-built Studio URLs for a channel.
 
     Args:
-        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
+        channel_key: "move2japan", "undaodu", "foundups", or "antifafm"
 
     Returns:
         Dict with URL keys: unlisted_shorts, scheduled_shorts, all_shorts

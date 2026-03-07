@@ -151,6 +151,18 @@ class LinkedInActions:
         post_id: str
     ) -> ActionResult:
         """Like a LinkedIn post."""
+
+    async def run_digital_twin_flow(
+        self,
+        comment_text: str,
+        repost_text: str,
+        schedule_date: str,
+        schedule_time: str,
+        mentions: Optional[List[str]] = None,
+        identity_cycle: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> ActionResult:
+        """Run LinkedIn layered flow (L0-L3) with explicit orchestration inputs."""
 ```
 
 ### XActions

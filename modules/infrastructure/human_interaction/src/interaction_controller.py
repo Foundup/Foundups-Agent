@@ -411,8 +411,12 @@ class InteractionController:
         # Get coordinates with variance
         x, y = self._get_coordinates_with_variance(action_name)
 
-        # Probabilistic error (mistake)
-        if self.sophistication.should_make_mistake():
+        # Check if this is a critical action (no error simulation allowed)
+        action_config = self.profile.actions.get(action_name, {})
+        is_critical = action_config.get("critical", False)
+
+        # Probabilistic error (mistake) - skip for critical actions
+        if not is_critical and self.sophistication.should_make_mistake():
             await self._make_mistake(x, y)
             self.sophistication.increment_action_count()
             return False  # Mistake made, action failed

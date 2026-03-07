@@ -29,6 +29,7 @@ from typing import Dict, List, Optional, Tuple
 import subprocess
 import shutil
 import time
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 # LLM Integration
 try:
@@ -250,7 +251,7 @@ class AutonomousRefactoringOrchestrator:
         if GEMMA_AVAILABLE:
             try:
                 init_start = time.time()
-                gemma_model_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+                gemma_model_path = resolve_triage_model_path()
                 if gemma_model_path.exists():
                     self.gemma_engine = Llama(
                         model_path=str(gemma_model_path),

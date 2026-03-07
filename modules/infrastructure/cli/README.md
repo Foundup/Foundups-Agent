@@ -32,6 +32,14 @@ from modules.infrastructure.cli.src.main_menu import run_main_menu
 run_main_menu()
 ```
 
+You can also run the package directly:
+
+```bash
+python -m modules.infrastructure.cli --chat
+python -m modules.infrastructure.cli --voice
+python -m modules.infrastructure.cli --agent-command "linkedin action read_feed max_posts=2"
+```
+
 ## WSP Compliance
 
 - **WSP 62**: All files under 600 lines (well below 1200-line OK threshold)

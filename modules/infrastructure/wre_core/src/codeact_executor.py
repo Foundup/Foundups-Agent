@@ -33,6 +33,8 @@ WSP References: WSP 46, WSP 50, WSP 64
 
 import logging
 import subprocess
+import shlex
+import os
 import re
 import time
 from typing import Dict, List, Optional, Any, Callable
@@ -74,6 +76,8 @@ class SafetyGates:
     ])
     max_execution_time_ms: int = 30000
     require_confirmation: List[str] = field(default_factory=list)
+    require_allowlist: bool = False
+    forbid_shell_metacharacters: bool = False
 
     def is_command_allowed(self, command: str) -> bool:
         """
@@ -89,6 +93,9 @@ class SafetyGates:
 
         # If no allowed patterns specified, allow all non-blocked
         if not self.allowed_commands:
+            if self.require_allowlist:
+                logger.warning("[CODEACT-GATE] DENIED: allowlist required but empty")
+                return False
             return True
 
         # Check allowed patterns (allowlist mode)
@@ -143,6 +150,7 @@ class CodeActExecutor:
         self.repo_root = Path(repo_root)
         self.llm_callback = llm_callback
         self.confirmation_callback = confirmation_callback
+        self.strict_mode = os.getenv("WRE_CODEACT_STRICT", "1").strip() == "1"
 
     def execute(
         self,
@@ -172,7 +180,13 @@ class CodeActExecutor:
             allowed_commands=gates_spec.get("allowed_commands", []),
             blocked_patterns=gates_spec.get("blocked_patterns", SafetyGates().blocked_patterns),
             max_execution_time_ms=gates_spec.get("max_execution_time_ms", 30000),
-            require_confirmation=gates_spec.get("require_confirmation", [])
+            require_confirmation=gates_spec.get("require_confirmation", []),
+            require_allowlist=bool(
+                gates_spec.get("require_allowlist", self.strict_mode)
+            ),
+            forbid_shell_metacharacters=bool(
+                gates_spec.get("forbid_shell_metacharacters", self.strict_mode)
+            ),
         )
 
         code_section = skill_spec.get("code_section", {})
@@ -335,6 +349,12 @@ class CodeActExecutor:
                 "gate_triggered": f"blocked:{command[:50]}"
             }
 
+        if gates.forbid_shell_metacharacters and self._has_shell_metacharacters(command):
+            return {
+                "error": f"Command blocked by metacharacter policy: {command}",
+                "gate_triggered": f"metachar_blocked:{command[:50]}"
+            }
+
         # Confirmation check for sensitive commands
         if gates.requires_confirmation(command):
             if self.confirmation_callback:
@@ -351,9 +371,16 @@ class CodeActExecutor:
 
         # Execute with timeout
         try:
+            try:
+                cmd_parts = shlex.split(command, posix=(os.name != "nt"))
+            except ValueError as exc:
+                return {"error": f"Command parse failed: {exc}"}
+            if not cmd_parts:
+                return {"error": "Command parse failed: empty command"}
+
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd_parts,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=gates.max_execution_time_ms / 1000,
@@ -374,6 +401,19 @@ class CodeActExecutor:
             return {"error": f"Command timed out after {gates.max_execution_time_ms}ms"}
         except Exception as e:
             return {"error": f"Shell execution failed: {e}"}
+
+    @staticmethod
+    def _has_shell_metacharacters(command: str) -> bool:
+        """Detect shell metacharacters frequently used for chaining/injection."""
+        patterns = [
+            r"[;&|`]",
+            r"\$\(",
+            r"[<>]",
+        ]
+        for pat in patterns:
+            if re.search(pat, command):
+                return True
+        return False
 
     def _execute_llm(self, action: Dict, context: Dict) -> Dict:
         """Execute LLM generation action."""

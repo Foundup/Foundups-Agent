@@ -50,7 +50,7 @@ class YouTubeShortsScheduler:
     - Move2Japan (Chrome 9222)
     - UnDaoDu (Chrome 9222)
     - FoundUps (Edge 9223)
-    - RavingANTIFA (Edge 9223)
+    - antifaFM (Edge 9223)
 
     Usage:
         scheduler = YouTubeShortsScheduler("move2japan")
@@ -67,7 +67,7 @@ class YouTubeShortsScheduler:
         Initialize scheduler for a channel.
 
         Args:
-            channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
+            channel_key: "move2japan", "undaodu", "foundups", or "antifafm"
             storage_dir: Optional custom storage directory
             dry_run: If True, don't actually make changes
         """
@@ -101,22 +101,33 @@ class YouTubeShortsScheduler:
         """
         Connect to existing Chrome/Edge debug session.
 
+        HARDENED (2026-02-22): Uses retry helpers with DevTools verification.
+
         Returns:
             True if connected successfully
         """
         try:
+            from modules.infrastructure.dependency_launcher.src.dae_dependencies import (
+                connect_chrome_with_retry,
+                connect_edge_with_retry,
+            )
+
             if self.chrome_port == 9223:
                 # Edge browser for FoundUps
-                options = EdgeOptions()
-                options.add_experimental_option("debuggerAddress", f"127.0.0.1:{self.chrome_port}")
-                self.driver = webdriver.Edge(options=options)
-                logger.info(f"[SCHEDULER] Connected to Edge on port {self.chrome_port}")
+                logger.info("[SCHEDULER] Connecting to Edge with retry...")
+                self.driver = connect_edge_with_retry(max_retries=3, retry_delay=2.0)
+                if self.driver is None:
+                    logger.error("[SCHEDULER] Edge connection failed after retries")
+                    return False
+                logger.info(f"[SCHEDULER] Connected to Edge on port {self.chrome_port} (with retry)")
             else:
                 # Chrome browser for Move2Japan/UnDaoDu
-                options = ChromeOptions()
-                options.add_experimental_option("debuggerAddress", f"127.0.0.1:{self.chrome_port}")
-                self.driver = webdriver.Chrome(options=options)
-                logger.info(f"[SCHEDULER] Connected to Chrome on port {self.chrome_port}")
+                logger.info("[SCHEDULER] Connecting to Chrome with retry...")
+                self.driver = connect_chrome_with_retry(max_retries=3, retry_delay=2.0)
+                if self.driver is None:
+                    logger.error("[SCHEDULER] Chrome connection failed after retries")
+                    return False
+                logger.info(f"[SCHEDULER] Connected to Chrome on port {self.chrome_port} (with retry)")
 
             # Initialize DOM automation layer
             self.dom = YouTubeStudioDOM(self.driver)
@@ -136,6 +147,26 @@ class YouTubeShortsScheduler:
                 logger.info("[SCHEDULER] Disconnected from browser")
             except Exception as e:
                 logger.warning(f"[SCHEDULER] Disconnect error: {e}")
+
+    def close(self):
+        """
+        Close browser and release for rotation.
+
+        Unlike disconnect(), this actually quits the browser session
+        so it can be reused by other DAEs (browser rotation).
+        """
+        if self.driver:
+            try:
+                # Actually quit the browser to release it
+                self.driver.quit()
+                logger.info("[SCHEDULER] Browser closed and released for rotation")
+            except Exception as e:
+                logger.warning(f"[SCHEDULER] Close error (browser may already be closed): {e}")
+            finally:
+                self.driver = None
+                self.dom = None
+        else:
+            logger.debug("[SCHEDULER] No browser to close")
 
     def reconnect_browser(self, max_retries: int = 3) -> bool:
         """
@@ -624,17 +655,126 @@ class YouTubeShortsScheduler:
         date_str: str,
         time_str: str,
     ):
-        """Update video title and description (optionally weave index)."""
+        """Update video title and description (optionally weave index).
+
+        CHANNEL-AWARE (2026-02-22):
+        - FFCPLN channels (move2japan, antifafm): Generate clickbait titles
+        - Non-FFCPLN channels (foundups, undaodu): PRESERVE original title
+        """
         try:
-            # Generate new title
-            new_title = generate_clickbait_title(original_title=original_title)
+            # Get description template for this channel
+            description_template = self.config.get("description_template", "ffcpln")
 
-            # Generate description
-            base_description = get_standard_description(
-                self.config.get("description_template", "ffcpln")
-            )
+            # CHANNEL-AWARE TITLE HANDLING
+            # FFCPLN channels: Generate clickbait titles (anti-fascist music promo)
+            # Non-FFCPLN channels: Generate channel-appropriate titles (don't just preserve bad titles)
 
-            new_description = base_description
+            def _is_bad_title(title: str) -> bool:
+                """Check if title is just a timestamp or placeholder."""
+                if not title:
+                    return True
+                title = title.strip()
+                # Match timestamp patterns like "0:50", "1:23", "12:34"
+                import re
+                if re.match(r"^\d{1,2}:\d{2}$", title):
+                    return True
+                # Match "Short #abc123" placeholder
+                if title.lower().startswith("short #"):
+                    return True
+                # Too short to be meaningful
+                if len(title) < 5:
+                    return True
+                return False
+
+            if description_template == "ffcpln":
+                # FFCPLN: Use clickbait title generation
+                new_title = generate_clickbait_title(original_title=original_title)
+                logger.info(f"[SCHEDULER] [FFCPLN] Generated clickbait title for {self.channel_key}")
+            elif description_template == "foundups":
+                # FOUNDUPS: Startup/pAVS/OpenClaw content - distinct branding
+                if _is_bad_title(original_title):
+                    import random
+                    foundups_titles = [
+                        "🚀 Building the Future with AI Agents #FoundUps #pAVS",
+                        "💡 pAVS: Peer-to-Peer Autonomous Ventures #FoundUps",
+                        "⚡ OpenClaw: Where AI Meets Entrepreneurship #FoundUps",
+                        "🔥 Startup Wisdom in 60 Seconds #FoundUps #pAVS",
+                        "🧠 AI + Humans = Better Startups #FoundUps #OpenClaw",
+                        "🎯 The Future of Work is Autonomous #FoundUps #pAVS",
+                        "✨ Innovation Never Sleeps #FoundUps #Startup #AI",
+                        "🌟 From Idea to Launch with AI #FoundUps #pAVS",
+                    ]
+                    new_title = random.choice(foundups_titles)
+                    logger.info(f"[SCHEDULER] [FOUNDUPS] Generated title (original was: '{original_title}')")
+                else:
+                    new_title = original_title.strip()
+                    if "#" in new_title:
+                        new_title = new_title.split("#")[0].strip()
+                    new_title = f"{new_title} #FoundUps #pAVS"
+                    logger.info(f"[SCHEDULER] [FOUNDUPS] Enhanced title for {self.channel_key}")
+            elif description_template == "undaodu":
+                # UNDAODU: Mindfulness/Education/Spirituality content - distinct branding
+                if _is_bad_title(original_title):
+                    import random
+                    undaodu_titles = [
+                        "🧘 Find Your Center Today #UnDaoDu #Mindfulness",
+                        "☯️ Wu Wei: The Art of Non-Doing #UnDaoDu #Zen",
+                        "🌸 A Moment of Peace #UnDaoDu #Meditation",
+                        "✨ Breathe. Be. Become. #UnDaoDu #Mindful",
+                        "🙏 Ancient Wisdom for Modern Times #UnDaoDu",
+                        "💫 The Path to Inner Balance #UnDaoDu #Zen",
+                        "🌿 Mindful Moments #UnDaoDu #Meditation #Peace",
+                        "☮️ Finding Calm in Chaos #UnDaoDu #Mindfulness",
+                    ]
+                    new_title = random.choice(undaodu_titles)
+                    logger.info(f"[SCHEDULER] [UNDAODU] Generated title (original was: '{original_title}')")
+                else:
+                    new_title = original_title.strip()
+                    if "#" in new_title:
+                        new_title = new_title.split("#")[0].strip()
+                    new_title = f"{new_title} #UnDaoDu #Mindfulness"
+                    logger.info(f"[SCHEDULER] [UNDAODU] Enhanced title for {self.channel_key}")
+            else:
+                # Other channels: Just clean up
+                new_title = original_title.strip() if original_title else f"Short #{video_id[:8]}"
+                if "#" in new_title:
+                    new_title = new_title.split("#")[0].strip()
+                logger.info(f"[SCHEDULER] [{description_template.upper()}] Preserved title for {self.channel_key}")
+
+            # CHANNEL-AWARE DESCRIPTION HANDLING
+            # FFCPLN: Replace with promotional description
+            # Non-FFCPLN: READ original description, APPEND template as footer
+            template_description = get_standard_description(description_template)
+
+            if description_template == "ffcpln":
+                # FFCPLN: Use template directly (replace original)
+                base_description = template_description
+                new_description = base_description
+                logger.info(f"[SCHEDULER] [FFCPLN] Using promotional description")
+            else:
+                # NON-FFCPLN: Read original description and PRESERVE it
+                original_description = None
+                try:
+                    original_description = self.dom.get_current_description()
+                    if original_description:
+                        logger.info(f"[SCHEDULER] [{description_template.upper()}] Read original: {original_description[:50]}...")
+                except Exception as read_err:
+                    logger.debug(f"[SCHEDULER] Could not read original description: {read_err}")
+
+                if original_description and original_description.strip():
+                    # ENHANCE: Original + divider + template footer
+                    base_description = f"""{original_description.strip()}
+
+---
+
+{template_description}"""
+                    logger.info(f"[SCHEDULER] [{description_template.upper()}] Enhanced description (preserved original)")
+                else:
+                    # No original - use template as base
+                    base_description = template_description
+                    logger.info(f"[SCHEDULER] [{description_template.upper()}] No original found, using template")
+
+                new_description = base_description
 
             # Optional: weave Digital Twin index into description.
             # Default ON; disable with YT_SCHEDULER_INDEX_WEAVE_ENABLED=false
@@ -970,7 +1110,7 @@ async def run_scheduler_dae(
     DAE entry point for YouTube Shorts scheduling.
 
     Args:
-        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
+        channel_key: "move2japan", "undaodu", "foundups", or "antifafm"
         max_videos: Maximum videos to schedule (0 = unlimited)
         dry_run: Preview mode without actual changes
 
@@ -1003,7 +1143,8 @@ async def run_scheduler_dae(
         results = await scheduler.run_scheduling_cycle(max_videos=max_videos)
         return results
     finally:
-        scheduler.disconnect()
+        # Use close() to actually quit browser and release for rotation
+        scheduler.close()
 
 
 
@@ -1021,7 +1162,7 @@ async def run_indexer_dae(
     Weaves Digital Twin index into description for cloud memory.
 
     Args:
-        channel_key: "move2japan", "undaodu", "foundups", or "ravingantifa"
+        channel_key: "move2japan", "undaodu", "foundups", or "antifafm"
         max_videos: Maximum videos to index
         video_type: "shorts", "videos", or "all"
         sort_oldest: If True, process oldest videos first
@@ -1051,7 +1192,8 @@ async def run_indexer_dae(
         )
         return results
     finally:
-        scheduler.disconnect()
+        # Use close() to actually quit browser and release for rotation
+        scheduler.close()
 
 # =========================================
 # CLI INTERFACE
@@ -1063,7 +1205,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="YouTube Shorts Scheduler")
     parser.add_argument(
         "channel",
-        choices=["move2japan", "undaodu", "foundups", "ravingantifa"],
+        choices=["move2japan", "undaodu", "foundups", "antifafm"],
         help="Channel to schedule for",
     )
     parser.add_argument(

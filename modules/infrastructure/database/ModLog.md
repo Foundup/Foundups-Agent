@@ -68,3 +68,27 @@
 - Semantic similarity detection >70% threshold working
 - Grover's search correctly identifies marked patterns
 - Full backward compatibility maintained with AgentDB
+## Entry: 2026-02-21 - SQLite Architecture Hardening + Audit Surface
+**What Changed**:
+- Hardened runtime SQLite connection behavior in `src/db_manager.py`:
+  - enforce `PRAGMA foreign_keys=ON` per connection
+  - enforce `PRAGMA busy_timeout=5000` per connection
+- Hardened FAM and DAE event stores:
+  - added configured `_connect()` helpers
+  - enabled `journal_mode=WAL` + `synchronous=NORMAL` at init
+  - enforced per-connection `foreign_keys` + `busy_timeout`
+- Added repeatable audit utility: `src/sqlite_audit.py`
+- Exported audit APIs via `src/__init__.py` and module `__init__.py`
+- Replaced placeholder/stale docs:
+  - `README.md`, `INTERFACE.md`, `ARCHITECTURE.md`
+  - WSP 78 framework + knowledge mirror updated to v4.0.0
+
+**Why**:
+- First-principles audit showed operational truth, event audit, and settlement boundaries were under-documented.
+- SQLite FK enforcement was not guaranteed at connection scope.
+- Needed a repeatable audit command for DB drift, not one-off manual inspection.
+
+**Impact**:
+- Stronger integrity guarantees for relational writes.
+- More resilient concurrent event-store writes.
+- Shared architecture language for SIM + CABR + blockchain settlement boundary.

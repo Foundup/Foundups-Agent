@@ -53,7 +53,7 @@ class SocialMediaRouter:
     _MOVE2JAPAN_ALT_ID = os.getenv("MOVE2JAPAN_ALT_CHANNEL_ID", "UCklMTNnu5POwRmQsg5JJumA")
     _FOUNDUPS_ID = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
     _UNDAODU_ID = os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
-    _RAVINGANTIFA_ID = os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
+    _ANTIFAFM_ID = os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
 
     # Channel routing mappings (uses env vars for channel IDs)
     CHANNEL_MAPPINGS = {
@@ -85,12 +85,12 @@ class SocialMediaRouter:
             x_account='undaodu',
             enabled=True
         ),
-        # RavingANTIFA - Edge browser (9223), shares with FoundUps
-        _RAVINGANTIFA_ID: ChannelRouting(
-            channel_id=_RAVINGANTIFA_ID,
-            channel_name='RavingANTIFA',
+        # antifaFM - Edge browser (9223), shares with FoundUps
+        _ANTIFAFM_ID: ChannelRouting(
+            channel_id=_ANTIFAFM_ID,
+            channel_name='antifaFM',
             linkedin_page_id='1263645',  # Share FoundUps LinkedIn for now
-            x_account='ravingantifa',
+            x_account='antifafm',
             enabled=True
         ),
         # Test channel (disabled by default)
@@ -110,7 +110,7 @@ class SocialMediaRouter:
         _MOVE2JAPAN_ALT_ID: 'Move2Japan [JAPAN]',
         _UNDAODU_ID: 'UnDaoDu [MINDFUL]',
         _FOUNDUPS_ID: 'FoundUps [LOYAL]',
-        _RAVINGANTIFA_ID: 'RavingANTIFA [VOICE]',
+        _ANTIFAFM_ID: 'antifaFM [VOICE]',
         'UCROkIz1wOCP3tPk-1j3umyQ': 'FoundUps1934 [TEST]',
     }
 

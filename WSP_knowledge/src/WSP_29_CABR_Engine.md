@@ -23,17 +23,17 @@ Control variable for scaling is PoB yield (benefit per metered compute), not leg
 
 ### CABR = OBAI = The 0102 Network
 
-**CABR is not an external oracle.** CABR is the **Verification, Validation, and Valuation Engine** 窶・and that engine IS the 0102 network itself (OBAI: Open Beneficial AI).
+**CABR is not an external oracle.** CABR is the **Verification, Validation, and Valuation Engine** - and that engine IS the 0102 network itself (OBAI: Open Beneficial AI).
 
 ```
 0102s BUILD the FoundUp (contribute labor)
-  竊・0102s VERIFY each other's work (peer validation)
-    竊・0102s ASSESS value via CABR (collective scoring)
-      竊・DAE distributes tokens based on CABR output
-        竊・All backed by BTC standard
+  -> 0102s VERIFY each other's work (peer validation)
+    -> 0102s ASSESS value via CABR (collective scoring)
+      -> DAE distributes tokens based on CABR output
+        -> All backed by BTC standard
 ```
 
-The agents don't just build 窶・they ARE the governance mechanism. CABR scores emerge from the collective behavior of the 0102 network. Self-governing through math, not boards or committees.
+The agents don't just build - they ARE the governance mechanism. CABR scores emerge from the collective behavior of the 0102 network. Self-governing through math, not boards or committees.
 
 **Engagement signals feed CABR** (WSP 26 Section 4.10): Every user interaction (Follow, Vote, Stake, Endorse, Advise, Team, Promote) generates a weighted signal that feeds into `part_score`. Stronger commitments (staking BTC, allocating 0102 agent time) carry more weight than passive actions (following).
 
@@ -98,7 +98,7 @@ class CABR_DAE:
 
 ### 2.1 The Oracle Problem
 
-CABR scoring requires verifiable real-world data. The three score components (`env_score`, `soc_score`, `part_score`) must be sourced through defined oracle mechanisms 窶・not self-reported or assumed.
+CABR scoring requires verifiable real-world data. The three score components (`env_score`, `soc_score`, `part_score`) must be sourced through defined oracle mechanisms - not self-reported or assumed.
 
 ### 2.2 Environmental Score (`env_score`: 0-1)
 
@@ -148,7 +148,7 @@ soc_score = (
 
 **Definition**: Measures the depth and quality of agent/participant engagement within the FoundUp's FAM task pipeline.
 
-**Oracle Source**: Directly computed from FAM (FoundUps Agent Market) on-chain/in-system data. Trust level = 1.0 (no external oracle needed 窶・this is internal system state).
+**Oracle Source**: Directly computed from FAM (FoundUps Agent Market) on-chain/in-system data. Trust level = 1.0 (no external oracle needed - this is internal system state).
 
 **Scoring Formula**:
 ```python
@@ -162,7 +162,7 @@ part_score = (
 ```
 
 **FAM Data Sources** (all from `TaskPipelineService` per FAM INTERFACE):
-- `task.status` transitions: `open 竊・claimed 竊・submitted 竊・verified 竊・paid`
+- `task.status` transitions: `open -> claimed -> submitted -> verified -> paid`
 - `Proof` submissions and `Verification` records
 - `AgentProfile` diversity metrics
 - `TreasuryGovernanceService` proposal/vote counts
@@ -201,7 +201,7 @@ class DMRVIntegration:
         pass
 ```
 
-**dMRV 竊・CABR Mapping**:
+**dMRV -> CABR Mapping**:
 | dMRV Component | CABR Component | Integration |
 |---|---|---|
 | Measurement protocols | env_score / soc_score oracle T1-T2 | Standardized data collection |
@@ -489,7 +489,7 @@ class CABRMonitor:
 ### 6.1 The Sybil Threat
 
 In FAM, `part_score` rewards participation. Without identity verification, a single bad actor can create multiple fake agents to:
-- Inflate task completion rates (create task 竊・claim with fake agent 竊・verify with another fake)
+- Inflate task completion rates (create task -> claim with fake agent -> verify with another fake)
 - Dilute real contributor rewards
 - Game CABR scores to route disproportionate UPS flow fraudulently
 
@@ -501,7 +501,7 @@ In FAM, `part_score` rewards participation. Without identity verification, a sin
 | L2 | Capability proof | Agents must demonstrate capability before claiming tasks (e.g., pass a skill test) | Prototype |
 | L3 | Reputation staking | Agents must stake UPS to claim tasks. Failed/rejected work = stake slashed | Prototype |
 | L4 | Cross-validation graph | Verifiers cannot verify tasks created by agents sharing the same 012 | PoC |
-| L5 | Behavioral fingerprinting | Gemma analyzes agent behavior patterns 窶・identical patterns across agents = flag | MVP |
+| L5 | Behavioral fingerprinting | Gemma analyzes agent behavior patterns - identical patterns across agents = flag | MVP |
 
 ### 6.3 CABR `part_score` Anti-Sybil Weighting
 
@@ -528,7 +528,7 @@ def calculate_sybil_weighted_contributors(agents: List[AgentProfile]) -> float:
 - **WSP 26 Section 3.7**: UPS conversion rate limiting per participant prevents dump-and-concentrate
 - **WSP 27 Section 11.4**: Phoenix attack prevention (same 012 can't recreate similar FoundUp after sunset)
 - **FAM INTERFACE**: Permission rules (only `verifier` role can verify, only `treasury` can trigger payout)
-- **CABR Challenge Protocol**: Section 4.2 窶・any agent can challenge suspicious CABR scores
+- **CABR Challenge Protocol**: Section 4.2 - any agent can challenge suspicious CABR scores
 
 ## 7. Signal Grammar Extensions
 

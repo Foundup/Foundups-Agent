@@ -33,3 +33,21 @@ def test_release_branch_pattern_matching_custom_patterns() -> None:
     assert GitLinkedInBridge._is_release_branch("prod", env=env) is True
     assert GitLinkedInBridge._is_release_branch("staging/canary", env=env) is True
     assert GitLinkedInBridge._is_release_branch("main", env=env) is False
+
+
+def test_push_remotes_default_origin_and_backup() -> None:
+    assert GitLinkedInBridge._push_remotes(env={}) == ["origin", "backup"]
+
+
+def test_push_remotes_preserve_order_and_deduplicate() -> None:
+    env = {"GIT_PUSH_REMOTES": "origin, backup,origin, mirror"}
+    assert GitLinkedInBridge._push_remotes(env=env) == ["origin", "backup", "mirror"]
+
+
+def test_require_all_push_remotes_default_true() -> None:
+    assert GitLinkedInBridge._require_all_push_remotes(env={}) is True
+
+
+def test_require_all_push_remotes_can_be_disabled() -> None:
+    env = {"GIT_PUSH_REQUIRE_ALL_REMOTES": "0"}
+    assert GitLinkedInBridge._require_all_push_remotes(env=env) is False

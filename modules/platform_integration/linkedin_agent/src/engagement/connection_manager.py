@@ -25,6 +25,7 @@ if __name__ == '__main__' and sys.platform.startswith('win'):
 
 
 import logging
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Any
@@ -92,6 +93,15 @@ class Connection:
     notes: Optional[str] = None
 
 
+@dataclass
+class ConnectionPolicyDecision:
+    """Decision result for outbound connection policy gate."""
+    allowed: bool
+    reason: str
+    matched_allow: List[str]
+    matched_deny: List[str]
+
+
 class LinkedInConnectionManager:
     """
     Manages LinkedIn connections, networking, and relationship building.
@@ -99,6 +109,67 @@ class LinkedInConnectionManager:
     Follows WSP 40 compliance with single responsibility and [U+2264]300 lines.
     Implements WSP 66 proactive component architecture for connection automation.
     """
+
+    # Approved outbound profiles (training policy from 012)
+    ALLOW_ROLE_KEYWORDS = (
+        "founder",
+        "co founder",
+        "cofounder",
+        "founding",
+        "chief executive officer",
+        "chief technology officer",
+        "chief operating officer",
+        "chief financial officer",
+        "chief information officer",
+        "chief product officer",
+        "chief strategy officer",
+        "chief security officer",
+        "ceo",
+        "cto",
+        "coo",
+        "cfo",
+        "cio",
+        "cpo",
+        "cso",
+        "ciso",
+        "architect",
+        "architecture",
+        "blockchain",
+        "web3",
+    )
+
+    # Never connect with these categories (hard deny, overrides allow)
+    HARD_DENY_ROLE_KEYWORDS = (
+        "business development",
+        "biz dev",
+        "bizdev",
+        "marketing",
+        "marketer",
+        "growth",
+        "demand generation",
+        "recruiter",
+        "recruiting",
+        "talent acquisition",
+        "talent sourcer",
+        "human resources",
+        "hr",
+    )
+
+    # Employee-level roles (deny if no allow match)
+    EMPLOYEE_LEVEL_KEYWORDS = (
+        "intern",
+        "assistant",
+        "associate",
+        "coordinator",
+        "specialist",
+        "representative",
+        "administrator",
+        "employee",
+        "staff",
+        "engineer",
+        "developer",
+        "analyst",
+    )
     
     def __init__(self, max_daily_requests: int = 25):
         """
@@ -122,18 +193,26 @@ class LinkedInConnectionManager:
             'target_industries': [],
             'target_companies': [],
             'min_connection_strength': ConnectionStrength.MEDIUM,
-            'personalized_messages': True
+            'personalized_messages': True,
+            'enforce_connection_policy': True,
+            'block_if_profile_missing': True,
         }
         
         self.logger.info("[OK] LinkedInConnectionManager initialized for autonomous networking")
     
-    def send_connection_request(self, target_profile_id: str, message: Optional[str] = None) -> ConnectionRequest:
+    def send_connection_request(
+        self,
+        target_profile_id: str,
+        message: Optional[str] = None,
+        target_profile: Optional[LinkedInProfile] = None,
+    ) -> ConnectionRequest:
         """
         Send a connection request to a LinkedIn user.
         
         Args:
             target_profile_id: ID of the target profile
             message: Optional personalized message
+            target_profile: Optional profile metadata used for policy gate
             
         Returns:
             ConnectionRequest with status
@@ -166,6 +245,44 @@ class LinkedInConnectionManager:
             if target_profile_id in self.pending_requests:
                 self.logger.warning(f"Connection request already pending for {target_profile_id}")
                 return self.pending_requests[target_profile_id]
+
+            # Role policy gate for outbound invites
+            policy_enabled = self.networking_strategy.get('enforce_connection_policy', True)
+            profile_required = self.networking_strategy.get('block_if_profile_missing', True)
+            if policy_enabled:
+                if target_profile is None:
+                    if profile_required:
+                        blocked = ConnectionRequest(
+                            request_id=f"req_{target_profile_id}_{datetime.now().timestamp()}",
+                            from_profile_id="current_user",
+                            to_profile_id=target_profile_id,
+                            message=message,
+                            status=ConnectionStatus.BLOCKED,
+                            timestamp=datetime.now()
+                        )
+                        self.connection_history.append(blocked)
+                        self.logger.info(
+                            f"[POLICY] Blocked connection request to {target_profile_id}: "
+                            "missing profile metadata for role gate"
+                        )
+                        return blocked
+                else:
+                    policy = self.evaluate_connection_policy(target_profile)
+                    if not policy.allowed:
+                        blocked = ConnectionRequest(
+                            request_id=f"req_{target_profile_id}_{datetime.now().timestamp()}",
+                            from_profile_id="current_user",
+                            to_profile_id=target_profile_id,
+                            message=message,
+                            status=ConnectionStatus.BLOCKED,
+                            timestamp=datetime.now()
+                        )
+                        self.connection_history.append(blocked)
+                        self.logger.info(
+                            f"[POLICY] Blocked connection request to {target_profile_id}: {policy.reason} | "
+                            f"deny={policy.matched_deny} allow={policy.matched_allow}"
+                        )
+                        return blocked
             
             # Create connection request
             request = ConnectionRequest(
@@ -197,6 +314,65 @@ class LinkedInConnectionManager:
                 status=ConnectionStatus.WITHDRAWN,
                 timestamp=datetime.now()
             )
+
+    def evaluate_connection_policy(self, profile: LinkedInProfile) -> ConnectionPolicyDecision:
+        """
+        Enforce 012 outbound connection targeting policy:
+        - Allow: CxO, founder, architect, blockchain/web3
+        - Hard deny: business development, marketing, recruiting
+        - Deny employee-level when no allow match
+        """
+        text = self._normalize_policy_text(
+            f"{profile.headline or ''} {profile.company or ''} {profile.industry or ''}"
+        )
+        matched_hard_deny = self._find_keyword_hits(text, self.HARD_DENY_ROLE_KEYWORDS)
+        if matched_hard_deny:
+            return ConnectionPolicyDecision(
+                allowed=False,
+                reason="hard-deny role category matched",
+                matched_allow=[],
+                matched_deny=matched_hard_deny,
+            )
+
+        matched_allow = self._find_keyword_hits(text, self.ALLOW_ROLE_KEYWORDS)
+        if matched_allow:
+            return ConnectionPolicyDecision(
+                allowed=True,
+                reason="allow role category matched",
+                matched_allow=matched_allow,
+                matched_deny=[],
+            )
+
+        matched_employee = self._find_keyword_hits(text, self.EMPLOYEE_LEVEL_KEYWORDS)
+        if matched_employee:
+            return ConnectionPolicyDecision(
+                allowed=False,
+                reason="employee-level role category matched",
+                matched_allow=[],
+                matched_deny=matched_employee,
+            )
+
+        return ConnectionPolicyDecision(
+            allowed=False,
+            reason="no approved role category matched",
+            matched_allow=[],
+            matched_deny=[],
+        )
+
+    @staticmethod
+    def _normalize_policy_text(text: str) -> str:
+        normalized = re.sub(r"[^a-z0-9]+", " ", (text or "").lower())
+        return re.sub(r"\s+", " ", normalized).strip()
+
+    @classmethod
+    def _find_keyword_hits(cls, normalized_text: str, keywords: tuple) -> List[str]:
+        haystack = f" {normalized_text} "
+        hits: List[str] = []
+        for keyword in keywords:
+            token = f" {cls._normalize_policy_text(keyword)} "
+            if token in haystack:
+                hits.append(keyword)
+        return hits
     
     def accept_connection_request(self, request_id: str) -> bool:
         """
@@ -514,7 +690,19 @@ if __name__ == "__main__":
     
     # Test connection request
     test_profile_id = "test_profile_123"
-    request = manager.send_connection_request(test_profile_id, "Hi, let's connect!")
+    test_profile = LinkedInProfile(
+        profile_id=test_profile_id,
+        first_name="Gary",
+        last_name="Phillips",
+        headline="Founder and architect in blockchain systems",
+        company="ELOSIA",
+        industry="Blockchain",
+    )
+    request = manager.send_connection_request(
+        test_profile_id,
+        "Hi, let's connect!",
+        target_profile=test_profile,
+    )
     print(f"Connection request status: {request.status}")
     
     # Test accepting request

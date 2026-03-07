@@ -4,7 +4,63 @@
 
 | Test File | Status | Last Run | Purpose |
 |-----------|--------|----------|---------|
+| `test_obs_controller_startup.py` | NEW | 2026-03-06 | OBS start verification (no false-positive stream started) |
+| `test_suno_stt_extractor.py` | NEW | 2026-03-05 | Suno STT lyrics extraction pipeline tests |
 | `test_go_live_steps.py` | UPDATED | 2026-02-28 | Step-by-step Go Live debugging + DOM verification |
+
+---
+
+## 2026-03-06: OBS Startup Verification + Broadcast Setup Guard
+
+### Added: `test_obs_controller_startup.py`
+**Purpose**: Ensure OBS auto-start only reports success when stream output becomes active.
+
+**Test Cases**:
+1. `test_start_streaming_already_active`: returns success without redundant StartStream call.
+2. `test_start_streaming_waits_until_active`: waits/polls until `output_active=True`.
+3. `test_start_streaming_reports_inactive_timeout`: fails with deterministic error when output never activates.
+4. `test_ensure_stream_service_custom_updates_service`: configures `rtmp_custom` server/key in OBS service settings.
+5. `test_ensure_stream_service_custom_noop_when_already_set`: avoids unnecessary reconfiguration when target already matches.
+
+**Why**:
+- Fixed false-positive startup where logs said `Streaming started!` while OBS was still waiting on
+  "Create broadcast and start streaming" UI flow.
+
+**Run Tests**:
+```bash
+pytest modules/platform_integration/antifafm_broadcaster/tests/test_obs_controller_startup.py -v
+```
+
+---
+
+## 2026-03-05: Suno STT Lyrics Extractor Tests
+
+### Added: `test_suno_stt_extractor.py`
+**Purpose**: Test fully automated Suno lyrics extraction via Speech-to-Text
+
+**Test Classes**:
+1. `TestSunoAudioDownloader` - CDN URL construction, cache directory
+2. `TestLyricsDeduplicator` - Hash generation, normalization, duplicate detection
+3. `TestSunoSTTTranscriber` - WSP 84 FasterWhisperSTT reuse verification
+4. `TestSunoSTTLyricsExtractor` - Full pipeline integration
+5. `TestCLIIntegration` - CLI --help, --stats commands
+6. `TestLaunchIntegration` - launch.py import, SKILLz JSON validation
+
+**Key Tests**:
+- `test_hash_normalization`: Verifies lyrics with different whitespace/case produce same hash
+- `test_deduplicator_detects_duplicate`: Verifies duplicate lyrics are detected across songs
+- `test_wsp84_reuse_import`: Verifies FasterWhisperSTT imported from voice_command_ingestion
+- `test_skill_json_valid`: Verifies suno_stt_extract.json SKILLz file is valid
+
+**WSP Compliance**:
+- WSP 5: Test coverage for new STT functionality
+- WSP 72: Module independence (no cross-module test dependencies)
+- WSP 84: Validates code reuse of FasterWhisperSTT
+
+**Run Tests**:
+```bash
+pytest modules/platform_integration/antifafm_broadcaster/tests/test_suno_stt_extractor.py -v
+```
 
 ---
 

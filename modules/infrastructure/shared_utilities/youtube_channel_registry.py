@@ -58,14 +58,14 @@ def _default_channels() -> List[Dict[str, Any]]:
             "handle": "@UnDaoDu",
             "timezone": "Asia/Tokyo",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
-            "content_types": ["short", "upload"],  # vlogs + shorts
+            "content_types": ["short", "upload"],  # vlogs + shorts (NOT FFCPLN)
             "browser": {
                 "comment_browser": "chrome",
                 "preferred_port": _CHROME_PORT,
                 "available_ports": [_CHROME_PORT, _EDGE_PORT],
                 "account_section": 0,
             },
-            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
+            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "undaodu"},
             "social": {"linkedin_page_id": "165749317", "x_account": "undaodu", "enabled": True},
         },
         {
@@ -75,21 +75,21 @@ def _default_channels() -> List[Dict[str, Any]]:
             "handle": "@FoundUps",
             "timezone": "America/New_York",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
-            "content_types": ["short"],  # music shorts only
+            "content_types": ["short"],  # startup/pAVS content (NOT FFCPLN)
             "browser": {
                 "comment_browser": "edge",
                 "preferred_port": _EDGE_PORT,
                 "available_ports": [_CHROME_PORT, _EDGE_PORT],
                 "account_section": 1,
             },
-            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
+            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "foundups"},
             "social": {"linkedin_page_id": "1263645", "x_account": "foundups", "enabled": True},
         },
         {
-            "key": "ravingantifa",
-            "id": os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
-            "name": "RavingANTIFA",
-            "handle": "@ravingANTIFA",
+            "key": "antifafm",
+            "id": os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+            "name": "antifaFM",
+            "handle": "@antifaFM",
             "timezone": "America/New_York",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
             "content_types": ["short"],  # music shorts only
@@ -100,7 +100,7 @@ def _default_channels() -> List[Dict[str, Any]]:
                 "account_section": 1,
             },
             "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
-            "social": {"linkedin_page_id": "1263645", "x_account": "ravingantifa", "enabled": True},
+            "social": {"linkedin_page_id": "1263645", "x_account": "antifafm", "enabled": True},
         },
     ]
 
@@ -253,7 +253,7 @@ def get_rotation_order(role: Optional[str] = None) -> List[str]:
     """
     Determine rotation order using env override if present.
 
-    Env format: "Move2Japan,UnDaoDu,FoundUps,RavingANTIFA"
+    Env format: "Move2Japan,UnDaoDu,FoundUps,antifaFM"
     Names are matched against channel name or key (case-insensitive).
     """
     channels = get_channels(role=role)

@@ -253,6 +253,7 @@ def run_step(model: "FoundUpsModel") -> None:
     model._track_agent_lifecycle()
     model._advance_task_pipeline()
     model._simulate_market_activity()
+    model._simulate_autonomous_trading_profits()
     model._simulate_f0_investor_program()
     model._sync_token_econ_foundup_pools()
     model._simulate_012_allocations()

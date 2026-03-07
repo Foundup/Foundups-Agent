@@ -30,7 +30,17 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("foundups_vision_dae")
 def run_vision_dae(enable_voice: bool = False):
     """Run FoundUps Vision DAE (multi-modal pattern sensorium)."""
     print("[VISION] Starting FoundUps Vision DAE (Pattern Sensorium)...")
