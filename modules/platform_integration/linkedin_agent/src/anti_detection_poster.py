@@ -403,8 +403,13 @@ class AntiDetectionLinkedIn:
             self.driver.refresh()
             time.sleep(random.uniform(2, 4))
     
-    def post_to_company_page(self, content: str):
-        """Post to company page admin area with anti-detection"""
+    def post_to_company_page(self, content: str, company_id: str = None):
+        """Post to company page admin area with anti-detection
+
+        Args:
+            content: The post content
+            company_id: Optional company page ID (currently unused - page determined by profile)
+        """
 
         # IMMEDIATE LOGGING to confirm method is called
         logger.info("[LINKEDIN] post_to_company_page() CALLED")
