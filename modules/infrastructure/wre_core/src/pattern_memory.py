@@ -179,6 +179,71 @@ class PatternMemory:
             )
         """)
 
+        # A/B test assignments table (Sprint 1 - TT-SI closure)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ab_test_assignments (
+                test_id TEXT PRIMARY KEY,
+                skill_name TEXT NOT NULL,
+                control_version TEXT NOT NULL,
+                treatment_version TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT,
+                status TEXT DEFAULT 'running',
+                sample_size_target INTEGER DEFAULT 20,
+                control_successes INTEGER DEFAULT 0,
+                control_trials INTEGER DEFAULT 0,
+                treatment_successes INTEGER DEFAULT 0,
+                treatment_trials INTEGER DEFAULT 0
+            )
+        """)
+
+        # Telemetry counters table (Sprint 1 - observability)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS telemetry_counters (
+                counter_name TEXT PRIMARY KEY,
+                counter_value INTEGER DEFAULT 0,
+                last_updated TEXT
+            )
+        """)
+
+        # Retrieval quality tracking (Sprint 2 - Agentic RAG)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS retrieval_quality (
+                retrieval_id TEXT PRIMARY KEY,
+                execution_id TEXT NOT NULL,
+                skill_name TEXT NOT NULL,
+                query TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                results_count INTEGER,
+                relevance_score REAL,
+                used_in_execution INTEGER DEFAULT 0,
+                retrieval_time_ms INTEGER
+            )
+        """)
+
+        # Skill relationship edges (Sprint 2 - Graph-of-Thought)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS skill_edges (
+                edge_id TEXT PRIMARY KEY,
+                source_skill TEXT NOT NULL,
+                target_skill TEXT NOT NULL,
+                edge_type TEXT NOT NULL,
+                weight REAL DEFAULT 1.0,
+                created_at TEXT NOT NULL,
+                evidence TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_skill_edges_source
+            ON skill_edges(source_skill)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_skill_edges_target
+            ON skill_edges(target_skill)
+        """)
+
         # False positives table (WSP 48 - learn from mistakes)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS false_positives (
@@ -649,6 +714,580 @@ class PatternMemory:
         rows = cursor.fetchall()
 
         return [dict(row) for row in rows]
+
+    # ------------------------------------------------------------------ #
+    #  A/B Testing & Variation Promotion (Sprint 1 - TT-SI Closure)      #
+    # ------------------------------------------------------------------ #
+
+    def schedule_ab_test(
+        self,
+        skill_name: str,
+        control_version: str,
+        treatment_version: str,
+        sample_size_target: int = 20
+    ) -> str:
+        """
+        Schedule A/B test between control and treatment variation.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap D: Close TT-SI loop
+
+        Args:
+            skill_name: Skill being tested
+            control_version: Current production version ID
+            treatment_version: New variation ID to test
+            sample_size_target: Min samples before promotion decision
+
+        Returns:
+            test_id for tracking
+        """
+        import uuid
+        test_id = f"ab_{skill_name}_{uuid.uuid4().hex[:8]}"
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO ab_test_assignments (
+                test_id, skill_name, control_version, treatment_version,
+                start_time, sample_size_target
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            test_id, skill_name, control_version, treatment_version,
+            datetime.now().isoformat(), sample_size_target
+        ))
+        self.conn.commit()
+        logger.info(f"[PATTERN-MEMORY] Scheduled A/B test {test_id}")
+        return test_id
+
+    def get_active_ab_test(self, skill_name: str) -> Optional[Dict]:
+        """Get active A/B test for skill if exists."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM ab_test_assignments
+            WHERE skill_name = ? AND status = 'running'
+            ORDER BY start_time DESC LIMIT 1
+        """, (skill_name,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def record_ab_outcome(
+        self,
+        test_id: str,
+        variant: str,
+        success: bool
+    ) -> None:
+        """
+        Record outcome for A/B test variant.
+
+        Args:
+            test_id: A/B test identifier
+            variant: 'control' or 'treatment'
+            success: Whether execution met fidelity threshold
+        """
+        cursor = self.conn.cursor()
+        if variant == 'control':
+            cursor.execute("""
+                UPDATE ab_test_assignments
+                SET control_trials = control_trials + 1,
+                    control_successes = control_successes + ?
+                WHERE test_id = ?
+            """, (1 if success else 0, test_id))
+        else:
+            cursor.execute("""
+                UPDATE ab_test_assignments
+                SET treatment_trials = treatment_trials + 1,
+                    treatment_successes = treatment_successes + ?
+                WHERE test_id = ?
+            """, (1 if success else 0, test_id))
+        self.conn.commit()
+
+    def check_ab_promotion(self, test_id: str, min_margin: float = 0.10) -> Optional[str]:
+        """
+        Check if treatment should be promoted.
+
+        Args:
+            test_id: A/B test identifier
+            min_margin: Minimum win margin (default 10%)
+
+        Returns:
+            'treatment' if should promote, 'control' if treatment lost, None if inconclusive
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM ab_test_assignments WHERE test_id = ?", (test_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+
+        test = dict(row)
+        total_trials = test['control_trials'] + test['treatment_trials']
+
+        if total_trials < test['sample_size_target']:
+            return None
+
+        control_rate = test['control_successes'] / max(test['control_trials'], 1)
+        treatment_rate = test['treatment_successes'] / max(test['treatment_trials'], 1)
+
+        margin = treatment_rate - control_rate
+
+        if margin >= min_margin:
+            return 'treatment'
+        elif margin <= -min_margin:
+            return 'control'
+        return None
+
+    def promote_variation(self, variation_id: str) -> None:
+        """Promote variation to production."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE skill_variations
+            SET promoted = 1, test_status = 'promoted'
+            WHERE variation_id = ?
+        """, (variation_id,))
+        self.conn.commit()
+        logger.info(f"[PATTERN-MEMORY] Promoted variation {variation_id}")
+
+    def archive_variation(self, variation_id: str) -> None:
+        """Archive losing variation."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE skill_variations
+            SET test_status = 'archived'
+            WHERE variation_id = ?
+        """, (variation_id,))
+        self.conn.commit()
+        logger.info(f"[PATTERN-MEMORY] Archived variation {variation_id}")
+
+    def close_ab_test(self, test_id: str, winner: str) -> None:
+        """Close A/B test with winner."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE ab_test_assignments
+            SET status = 'completed', end_time = ?
+            WHERE test_id = ?
+        """, (datetime.now().isoformat(), test_id))
+        self.conn.commit()
+        logger.info(f"[PATTERN-MEMORY] Closed A/B test {test_id}, winner={winner}")
+
+    # ------------------------------------------------------------------ #
+    #  Telemetry Counters (Sprint 1 - Observability)                     #
+    # ------------------------------------------------------------------ #
+
+    def increment_counter(self, counter_name: str, delta: int = 1) -> int:
+        """
+        Increment telemetry counter and return new value.
+
+        Per WRE_COT_DEEP_ANALYSIS.md: Track retry_count, variation_win_rate
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO telemetry_counters (counter_name, counter_value, last_updated)
+            VALUES (?, ?, ?)
+            ON CONFLICT(counter_name) DO UPDATE SET
+                counter_value = counter_value + ?,
+                last_updated = ?
+        """, (
+            counter_name, delta, datetime.now().isoformat(),
+            delta, datetime.now().isoformat()
+        ))
+        self.conn.commit()
+
+        cursor.execute(
+            "SELECT counter_value FROM telemetry_counters WHERE counter_name = ?",
+            (counter_name,)
+        )
+        row = cursor.fetchone()
+        return row['counter_value'] if row else delta
+
+    def get_counter(self, counter_name: str) -> int:
+        """Get current counter value."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT counter_value FROM telemetry_counters WHERE counter_name = ?",
+            (counter_name,)
+        )
+        row = cursor.fetchone()
+        return row['counter_value'] if row else 0
+
+    def get_telemetry_dashboard(self) -> Dict:
+        """
+        Get telemetry dashboard for Sprint 1 metrics.
+
+        Returns:
+            Dict with retry_count, variation_win_rate, avg_fidelity_delta
+        """
+        cursor = self.conn.cursor()
+
+        cursor.execute("SELECT * FROM telemetry_counters")
+        counters = {row['counter_name']: row['counter_value'] for row in cursor.fetchall()}
+
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN promoted = 1 THEN 1 ELSE 0 END) as promoted
+            FROM skill_variations
+            WHERE test_status IN ('promoted', 'archived')
+        """)
+        row = cursor.fetchone()
+        total_tested = row['total'] or 0
+        promoted = row['promoted'] or 0
+        win_rate = promoted / max(total_tested, 1)
+
+        cursor.execute("""
+            SELECT AVG(after_fidelity - before_fidelity) as avg_delta
+            FROM learning_events
+            WHERE event_type = 'variation_promoted'
+              AND before_fidelity IS NOT NULL
+              AND after_fidelity IS NOT NULL
+        """)
+        row = cursor.fetchone()
+        avg_delta = row['avg_delta'] or 0
+
+        # Sprint 2: Retrieval metrics
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_retrievals,
+                AVG(relevance_score) as avg_relevance,
+                SUM(CASE WHEN relevance_score >= 0.5 THEN 1 ELSE 0 END) as high_relevance_count
+            FROM retrieval_quality
+        """)
+        ret_row = cursor.fetchone()
+        retrieval_total = ret_row['total_retrievals'] or 0
+        high_relevance = ret_row['high_relevance_count'] or 0
+        retrieval_coverage = high_relevance / max(retrieval_total, 1)
+
+        # Sprint 2: Graph metrics
+        cursor.execute("SELECT COUNT(*) as edge_count FROM skill_edges")
+        edge_count = cursor.fetchone()['edge_count'] or 0
+
+        cursor.execute("""
+            SELECT COUNT(DISTINCT source_skill) as connected_skills
+            FROM skill_edges
+        """)
+        connected_skills = cursor.fetchone()['connected_skills'] or 0
+
+        # Sprint 3: ToT and CodeAct metrics
+        tot_selections = counters.get("tot_selections", 0)
+        tot_high_confidence = counters.get("tot_high_confidence", 0)
+        tot_branch_count = counters.get("tot_branch_count", 0)
+        tot_confidence_rate = tot_high_confidence / max(tot_selections, 1)
+        tot_avg_branches = tot_branch_count / max(tot_selections, 1)
+
+        codeact_success = counters.get("codeact_exec_success", 0)
+        codeact_fail = counters.get("codeact_exec_fail", 0)
+        codeact_total = codeact_success + codeact_fail
+        codeact_success_rate = codeact_success / max(codeact_total, 1)
+        codeact_gate_triggers = counters.get("codeact_gate_triggers", 0)
+
+        return {
+            # Sprint 1
+            "retry_count": counters.get("react_retry_count", 0),
+            "total_executions": counters.get("total_executions", 0),
+            "variation_win_rate": round(win_rate, 3),
+            "avg_fidelity_delta": round(avg_delta, 3),
+            "variations_tested": total_tested,
+            "variations_promoted": promoted,
+            # Sprint 2
+            "retrieval_coverage": round(retrieval_coverage, 3),
+            "avg_retrieval_relevance": round(ret_row['avg_relevance'] or 0, 3),
+            "total_retrievals": retrieval_total,
+            "skill_edges": edge_count,
+            "connected_skills": connected_skills,
+            # Sprint 3
+            "tot_selections": tot_selections,
+            "tot_confidence_rate": round(tot_confidence_rate, 3),
+            "tot_avg_branches": round(tot_avg_branches, 1),
+            "codeact_executions": codeact_total,
+            "codeact_success_rate": round(codeact_success_rate, 3),
+            "codeact_gate_triggers": codeact_gate_triggers
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Retrieval Quality Tracking (Sprint 2 - Agentic RAG)               #
+    # ------------------------------------------------------------------ #
+
+    def record_retrieval(
+        self,
+        retrieval_id: str,
+        execution_id: str,
+        skill_name: str,
+        query: str,
+        results_count: int,
+        relevance_score: float,
+        retrieval_time_ms: int
+    ) -> None:
+        """Record retrieval event for quality tracking."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO retrieval_quality (
+                retrieval_id, execution_id, skill_name, query,
+                timestamp, results_count, relevance_score, retrieval_time_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            retrieval_id, execution_id, skill_name, query,
+            datetime.now().isoformat(), results_count, relevance_score, retrieval_time_ms
+        ))
+        self.conn.commit()
+        logger.debug(f"[PATTERN-MEMORY] Recorded retrieval {retrieval_id}")
+
+    def get_retrieval_stats(self, skill_name: str, days: int = 7) -> Dict:
+        """Get retrieval quality stats for a skill."""
+        cursor = self.conn.cursor()
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_retrievals,
+                AVG(relevance_score) as avg_relevance,
+                AVG(results_count) as avg_results,
+                AVG(retrieval_time_ms) as avg_time_ms
+            FROM retrieval_quality
+            WHERE skill_name = ? AND timestamp >= ?
+        """, (skill_name, cutoff))
+        row = cursor.fetchone()
+        return dict(row) if row else {}
+
+    # ------------------------------------------------------------------ #
+    #  Graph-of-Thought Edges (Sprint 2 - Cross-Skill Transfer)          #
+    # ------------------------------------------------------------------ #
+
+    def add_skill_edge(
+        self,
+        source_skill: str,
+        target_skill: str,
+        edge_type: str,
+        weight: float = 1.0,
+        evidence: Optional[str] = None
+    ) -> str:
+        """
+        Add edge between skills for knowledge transfer.
+
+        Edge types:
+        - caused_by: source caused target to fail/succeed
+        - improved_by: source improvement helped target
+        - similar_to: skills share patterns
+        - depends_on: source depends on target
+        """
+        import uuid
+        edge_id = f"edge_{uuid.uuid4().hex[:8]}"
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO skill_edges (
+                edge_id, source_skill, target_skill, edge_type,
+                weight, created_at, evidence
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            edge_id, source_skill, target_skill, edge_type,
+            weight, datetime.now().isoformat(), evidence
+        ))
+        self.conn.commit()
+        logger.info(
+            f"[PATTERN-MEMORY] Added edge {source_skill} --{edge_type}--> {target_skill}"
+        )
+        return edge_id
+
+    def get_related_skills(
+        self,
+        skill_name: str,
+        edge_types: Optional[List[str]] = None,
+        min_weight: float = 0.5
+    ) -> List[Dict]:
+        """Get skills related to source skill via edges."""
+        cursor = self.conn.cursor()
+
+        if edge_types:
+            placeholders = ",".join(["?"] * len(edge_types))
+            cursor.execute(f"""
+                SELECT * FROM skill_edges
+                WHERE source_skill = ?
+                  AND edge_type IN ({placeholders})
+                  AND weight >= ?
+                ORDER BY weight DESC
+            """, (skill_name, *edge_types, min_weight))
+        else:
+            cursor.execute("""
+                SELECT * FROM skill_edges
+                WHERE source_skill = ?
+                  AND weight >= ?
+                ORDER BY weight DESC
+            """, (skill_name, min_weight))
+
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_skill_graph(self, skill_name: str, depth: int = 2) -> Dict:
+        """
+        Get skill subgraph centered on skill_name.
+
+        Returns nodes and edges for visualization/analysis.
+        """
+        visited = set()
+        nodes = []
+        edges = []
+
+        def traverse(skill: str, current_depth: int):
+            if skill in visited or current_depth > depth:
+                return
+            visited.add(skill)
+            nodes.append({"id": skill, "depth": current_depth})
+
+            related = self.get_related_skills(skill)
+            for rel in related:
+                edges.append({
+                    "source": rel["source_skill"],
+                    "target": rel["target_skill"],
+                    "type": rel["edge_type"],
+                    "weight": rel["weight"]
+                })
+                traverse(rel["target_skill"], current_depth + 1)
+
+        traverse(skill_name, 0)
+        return {"nodes": nodes, "edges": edges}
+
+    def transfer_learning(
+        self,
+        source_skill: str,
+        target_skill: str
+    ) -> Optional[Dict]:
+        """
+        Transfer successful patterns from source to target skill.
+
+        Returns transferred pattern info or None if no transferable patterns.
+        """
+        source_successes = self.recall_successful_patterns(source_skill, min_fidelity=0.90, limit=3)
+
+        if not source_successes:
+            return None
+
+        edges = self.get_related_skills(source_skill, edge_types=["similar_to", "improved_by"])
+        target_related = any(e["target_skill"] == target_skill for e in edges)
+
+        if not target_related:
+            self.add_skill_edge(
+                source_skill=source_skill,
+                target_skill=target_skill,
+                edge_type="similar_to",
+                weight=0.5,
+                evidence="Auto-detected during transfer_learning"
+            )
+
+        return {
+            "source_skill": source_skill,
+            "target_skill": target_skill,
+            "patterns_transferred": len(source_successes),
+            "best_source_fidelity": source_successes[0]["pattern_fidelity"]
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Tree-of-Thought Skill Scoring (Sprint 3 - Gap B)                   #
+    # ------------------------------------------------------------------ #
+
+    def get_skill_fidelity_stats(self, skill_name: str, days: int = 30) -> Dict:
+        """
+        Get historical fidelity statistics for a skill.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap B: ToT skill selection
+
+        Returns:
+            {
+                "skill_name": str,
+                "total_executions": int,
+                "avg_fidelity": float,
+                "success_rate": float,  # fidelity >= 0.7
+                "recent_trend": float   # last 7 days vs previous
+            }
+        """
+        cursor = self.conn.cursor()
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        recent_cutoff = (datetime.now() - timedelta(days=7)).isoformat()
+
+        # Overall stats
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total,
+                AVG(pattern_fidelity) as avg_fidelity,
+                SUM(CASE WHEN pattern_fidelity >= 0.7 THEN 1 ELSE 0 END) as successes
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ?
+        """, (skill_name, cutoff))
+        row = cursor.fetchone()
+
+        total = row['total'] or 0
+        avg_fidelity = row['avg_fidelity'] or 0.5
+        success_rate = (row['successes'] or 0) / max(total, 1)
+
+        # Recent trend (last 7 days vs previous)
+        cursor.execute("""
+            SELECT AVG(pattern_fidelity) as recent_avg
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ?
+        """, (skill_name, recent_cutoff))
+        recent_avg = cursor.fetchone()['recent_avg'] or avg_fidelity
+
+        cursor.execute("""
+            SELECT AVG(pattern_fidelity) as older_avg
+            FROM skill_outcomes
+            WHERE skill_name = ? AND timestamp >= ? AND timestamp < ?
+        """, (skill_name, cutoff, recent_cutoff))
+        older_avg = cursor.fetchone()['older_avg'] or avg_fidelity
+
+        recent_trend = recent_avg - older_avg
+
+        return {
+            "skill_name": skill_name,
+            "total_executions": total,
+            "avg_fidelity": round(avg_fidelity, 3),
+            "success_rate": round(success_rate, 3),
+            "recent_trend": round(recent_trend, 3)
+        }
+
+    def rank_skills_for_context(
+        self,
+        candidate_skills: List[str],
+        context_keywords: List[str]
+    ) -> List[Dict]:
+        """
+        Rank candidate skills by historical fidelity and context match.
+
+        Per WRE_COT_DEEP_ANALYSIS.md Gap B: ToT skill selection
+
+        ToT scoring formula:
+            score = (0.6 * avg_fidelity) + (0.2 * success_rate) + (0.1 * trend_bonus) + (0.1 * context_match)
+
+        Returns sorted list of {skill_name, score, components, total_executions}
+        """
+        scored = []
+
+        for skill in candidate_skills:
+            stats = self.get_skill_fidelity_stats(skill)
+
+            # Context match: check if skill name contains context keywords
+            context_match = sum(
+                1 for kw in context_keywords
+                if kw.lower() in skill.lower()
+            ) / max(len(context_keywords), 1)
+
+            # Trend bonus: positive trend = bonus, negative = penalty
+            trend_bonus = max(0, min(1, 0.5 + stats['recent_trend']))
+
+            # ToT score
+            score = (
+                0.6 * stats['avg_fidelity'] +
+                0.2 * stats['success_rate'] +
+                0.1 * trend_bonus +
+                0.1 * context_match
+            )
+
+            scored.append({
+                "skill_name": skill,
+                "score": round(score, 3),
+                "components": {
+                    "fidelity": stats['avg_fidelity'],
+                    "success_rate": stats['success_rate'],
+                    "trend_bonus": round(trend_bonus, 3),
+                    "context_match": round(context_match, 3)
+                },
+                "total_executions": stats['total_executions']
+            })
+
+        # Sort by score descending
+        scored.sort(key=lambda x: x['score'], reverse=True)
+        logger.debug(f"[PATTERN-MEMORY] Ranked {len(scored)} skills for ToT selection")
+        return scored
 
     def close(self) -> None:
         """Close database connection"""

@@ -272,19 +272,65 @@ class PartyReactor:
 
         logger.info(f"[PARTY-DEBUG] Spamming {reaction_name} (action: {action_name}) x{count}")
 
-        # Use interaction controller with full sophistication
-        results = await self.interaction.spam_action(action_name, count=count)
+        # Try interaction controller with full sophistication
+        try:
+            results = await self.interaction.spam_action(action_name, count=count)
 
-        # Log sophistication stats if available
-        if hasattr(self.interaction, 'get_stats'):
-            stats = self.interaction.get_stats()
-            logger.debug(f"[PARTY-DEBUG] Sophistication stats: {stats}")
+            # Log sophistication stats if available
+            if hasattr(self.interaction, 'get_stats'):
+                stats = self.interaction.get_stats()
+                logger.debug(f"[PARTY-DEBUG] Sophistication stats: {stats}")
 
-        logger.info(
-            f"[PARTY] {reaction_name}: {results['success']}/{count} clicks "
-            f"({results['errors']} mistakes, {results.get('thinking_pauses', 0)} pauses)"
-        )
-        return results['success']
+            logger.info(
+                f"[PARTY] {reaction_name}: {results['success']}/{count} clicks "
+                f"({results['errors']} mistakes, {results.get('thinking_pauses', 0)} pauses)"
+            )
+            return results['success']
+
+        except Exception as e:
+            logger.warning(f"[PARTY] Human interaction failed: {e}")
+            logger.info("[PARTY] Falling back to simple coordinate clicking...")
+            return await self._simple_party_fallback(reaction_name, count)
+
+    async def _simple_party_fallback(self, reaction_name: str, count: int) -> int:
+        """
+        Simple coordinate-based fallback when human_interaction fails.
+
+        Uses the same approach as External Stream Chat - direct coordinate clicking
+        without the complex human simulation module.
+        """
+        from selenium.webdriver.common.action_chains import ActionChains
+
+        coords = REACTION_COORDINATES.get(reaction_name)
+        if not coords:
+            logger.error(f"[PARTY-FALLBACK] No coordinates for: {reaction_name}")
+            return 0
+
+        successful = 0
+        for i in range(count):
+            try:
+                # Add slight randomization (±3px)
+                x = coords[0] + random.randint(-3, 3)
+                y = coords[1] + random.randint(-3, 3)
+
+                # Direct coordinate click
+                actions = ActionChains(self.driver)
+                actions.move_by_offset(x, y)
+                actions.click()
+                actions.move_by_offset(-x, -y)  # Reset position
+                actions.perform()
+
+                successful += 1
+                logger.debug(f"[PARTY-FALLBACK] {reaction_name} clicked at ({x}, {y})")
+
+                # Simple delay between clicks
+                await asyncio.sleep(random.uniform(0.3, 0.8))
+
+            except Exception as e:
+                logger.warning(f"[PARTY-FALLBACK] Click failed: {e}")
+
+        logger.info(f"[PARTY-FALLBACK] {reaction_name}: {successful}/{count} clicks")
+        return successful
         
     async def party_mode(self, total_clicks: int = 30) -> Dict[str, int]:
         """Spam all chat emoji reactions with human-like behavior.
@@ -362,23 +408,79 @@ class PartyReactor:
             if not popup_visible:
                 logger.warning("[PARTY] Vision validation failed twice - proceeding with Tier 0 (Fixed) fallback")
 
-        # Execute hardened sequence
-        results_raw = await self.interaction.party_spam(reaction_sequence)
-        
-        if "error" in results_raw:
-            return results_raw
+        # Execute hardened sequence with fallback
+        try:
+            results_raw = await self.interaction.party_spam(reaction_sequence)
 
-        # Format results back to dict by reaction name
-        results = {r: 0 for r in reactions}
-        # Note: party_spam doesn't return per-reaction counts easily, 
-        # but we can estimate or just return total success.
-        # For simplicity, we'll just track total success in the summary.
-        results["total_success"] = results_raw.get("success", 0)
-        results["total_clicks"] = total_clicks
+            if "error" in results_raw:
+                logger.warning(f"[PARTY] party_spam returned error: {results_raw['error']}")
+                raise Exception(results_raw['error'])
+
+            # Format results back to dict by reaction name
+            results = {r: 0 for r in reactions}
+            results["total_success"] = results_raw.get("success", 0)
+            results["total_clicks"] = total_clicks
+
+        except Exception as e:
+            logger.warning(f"[PARTY] Hardened sequence failed: {e}")
+            logger.info("[PARTY] Falling back to simple full party...")
+            results = await self._simple_full_party_fallback(reactions, total_clicks)
 
         self._last_party_time = now
 
-        logger.info(f"[PARTY] 🎉 Complete! {results['total_success']}/{total_clicks} emoji reactions sent")
+        logger.info(f"[PARTY] 🎉 Complete! {results.get('total_success', 0)}/{total_clicks} emoji reactions sent")
+
+        return results
+
+    async def _simple_full_party_fallback(self, reactions: list, total_clicks: int) -> Dict[str, int]:
+        """
+        Simple full party fallback - cycles through all reactions with direct clicking.
+
+        Uses the same approach as External Stream Chat's party_full().
+        """
+        from selenium.webdriver.common.action_chains import ActionChains
+
+        results = {r: 0 for r in reactions}
+        clicks_per_emoji = max(1, total_clicks // len(reactions))
+
+        logger.info(f"[PARTY-FALLBACK] Simple party: {clicks_per_emoji} clicks per emoji")
+
+        # Randomize order
+        emoji_order = reactions.copy()
+        random.shuffle(emoji_order)
+
+        for emoji_name in emoji_order:
+            coords = REACTION_COORDINATES.get(emoji_name)
+            if not coords:
+                continue
+
+            emoji = REACTION_EMOJIS.get(emoji_name, emoji_name)
+
+            for i in range(clicks_per_emoji):
+                try:
+                    # Add randomization (±3px)
+                    x = coords[0] + random.randint(-3, 3)
+                    y = coords[1] + random.randint(-3, 3)
+
+                    actions = ActionChains(self.driver)
+                    actions.move_by_offset(x, y)
+                    actions.click()
+                    actions.move_by_offset(-x, -y)
+                    actions.perform()
+
+                    results[emoji_name] += 1
+                    logger.debug(f"[PARTY-FALLBACK] {emoji} clicked ({i+1}/{clicks_per_emoji})")
+
+                    await asyncio.sleep(random.uniform(0.3, 0.8))
+
+                except Exception as e:
+                    logger.warning(f"[PARTY-FALLBACK] {emoji} click failed: {e}")
+
+            # Pause between emoji types
+            await asyncio.sleep(random.uniform(0.5, 1.0))
+
+        results["total_success"] = sum(v for k, v in results.items() if k in reactions)
+        results["total_clicks"] = total_clicks
 
         return results
         

@@ -13,8 +13,24 @@ function Get-EnvValue([string]$key) {
 
 $modelPath = $env:LLAMA_CPP_MODEL_PATH
 if ([string]::IsNullOrWhiteSpace($modelPath)) { $modelPath = Get-EnvValue "LLAMA_CPP_MODEL_PATH" }
+if ([string]::IsNullOrWhiteSpace($modelPath)) { $modelPath = $env:LOCAL_MODEL_CODE_PATH }
+if ([string]::IsNullOrWhiteSpace($modelPath)) { $modelPath = Get-EnvValue "LOCAL_MODEL_CODE_PATH" }
 if ([string]::IsNullOrWhiteSpace($modelPath)) {
-  $modelPath = "E:\HoloIndex\models\qwen-coder-1.5b.gguf"
+  $codeDir = $env:LOCAL_MODEL_CODE_DIR
+  if ([string]::IsNullOrWhiteSpace($codeDir)) { $codeDir = Get-EnvValue "LOCAL_MODEL_CODE_DIR" }
+  if ([string]::IsNullOrWhiteSpace($codeDir)) {
+    $localRoot = $env:LOCAL_MODEL_ROOT
+    if ([string]::IsNullOrWhiteSpace($localRoot)) { $localRoot = Get-EnvValue "LOCAL_MODEL_ROOT" }
+    if ([string]::IsNullOrWhiteSpace($localRoot)) { $localRoot = "E:\LM_studio\models\local" }
+    $codeDir = Join-Path $localRoot "qwen-coder-7b"
+  }
+  if (Test-Path $codeDir) {
+    $candidate = Get-ChildItem -Path $codeDir -Filter *.gguf -File | Sort-Object Length -Descending | Select-Object -First 1
+    if ($candidate) { $modelPath = $candidate.FullName }
+  }
+  if ([string]::IsNullOrWhiteSpace($modelPath)) {
+    $modelPath = Join-Path $codeDir "qwen-coder-7b.gguf"
+  }
 }
 
 $bindHost = $env:LLAMA_CPP_HOST

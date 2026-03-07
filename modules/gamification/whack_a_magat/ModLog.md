@@ -1,5 +1,31 @@
 # ModLog — MAGADOOM Whack-a-Magat Autonomous DAE
 
+## Managing Director Bypass Gates in invite_distributor.py (2026-03-07)
+
+**WSP References**: WSP 64 (Permission Verification), WSP 77 (Agent Coordination)
+
+**Problem**: Managing Directors could access `/fuc invite` command but were blocked by downstream gates in `get_invite_code()` that only bypassed for `role == 'OWNER'`.
+
+**Solution**: Added `is_managing_director` parameter to bypass same gates as OWNER:
+
+```python
+def get_invite_code(..., is_managing_director: bool = False):
+    bypass_gates = role == 'OWNER' or is_managing_director
+
+    # Stream duration check
+    if stream_start_time and not bypass_gates: ...
+
+    # Cooldown check
+    if not bypass_gates: ...
+
+    # Population threshold check
+    if population >= POPULATION_THRESHOLD and not bypass_gates: ...
+```
+
+**File Changed**: `src/invite_distributor.py`
+
+---
+
 ## Database Consolidation - Stale Duplicates Removed (2026-02-19)
 **WSP References**: WSP 78 (Database Architecture), WSP 65 (Component Consolidation)
 

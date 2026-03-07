@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from modules.infrastructure.wre_core.src.skill_manifest_guard import verify_skill_manifest
+
 
 @dataclass
 class SkillScanResult:
@@ -27,6 +29,10 @@ class SkillScanResult:
     message: str
     stdout: str = ""
     stderr: str = ""
+    manifest_available: bool = False
+    manifest_passed: bool = False
+    manifest_path: Optional[str] = None
+    manifest_message: str = ""
 
 
 _SEVERITY_ORDER = {
@@ -64,6 +70,12 @@ def run_skill_scan(
     max_severity: str = "medium",
     timeout_sec: int = 90,
     report_dir: Optional[Path] = None,
+    manifest_required: Optional[bool] = None,
+    manifest_enforced: Optional[bool] = None,
+    manifest_verify_signature: Optional[bool] = None,
+    manifest_allow_extra: Optional[bool] = None,
+    manifest_path: Optional[Path] = None,
+    manifest_hmac_key: Optional[str] = None,
 ) -> SkillScanResult:
     """Run Cisco skill scanner against a local skills directory.
 
@@ -76,6 +88,49 @@ def run_skill_scan(
     report_dir = (report_dir or skills_dir.parent / "reports").resolve()
     report_dir.mkdir(parents=True, exist_ok=True)
     report_path = report_dir / "openclaw_skill_scan_report.json"
+
+    if manifest_required is None:
+        manifest_required = os.getenv("OPENCLAW_SKILL_MANIFEST_REQUIRED", "1").strip() == "1"
+    if manifest_enforced is None:
+        manifest_enforced = os.getenv("OPENCLAW_SKILL_MANIFEST_ENFORCED", "1").strip() == "1"
+    if manifest_verify_signature is None:
+        manifest_verify_signature = (
+            os.getenv("OPENCLAW_SKILL_MANIFEST_VERIFY_SIGNATURE", "0").strip() == "1"
+        )
+    if manifest_allow_extra is None:
+        manifest_allow_extra = os.getenv("OPENCLAW_SKILL_MANIFEST_ALLOW_EXTRA", "0").strip() == "1"
+    if manifest_hmac_key is None:
+        manifest_hmac_key = os.getenv("OPENCLAW_SKILL_MANIFEST_HMAC_KEY")
+    if manifest_path is None:
+        manifest_override = os.getenv("OPENCLAW_SKILL_MANIFEST_FILE")
+        manifest_path = (
+            Path(manifest_override).resolve()
+            if manifest_override
+            else (skills_dir / "SKILL_MANIFEST.json")
+        )
+
+    manifest_result = verify_skill_manifest(
+        skills_dir=skills_dir,
+        manifest_path=manifest_path,
+        required=manifest_required,
+        verify_signature=manifest_verify_signature,
+        hmac_key=manifest_hmac_key,
+        allow_extra=manifest_allow_extra,
+    )
+
+    if not manifest_result.passed and manifest_enforced:
+        return SkillScanResult(
+            available=True,
+            passed=False,
+            exit_code=3,
+            skills_dir=str(skills_dir),
+            report_path=str(report_path),
+            message=f"manifest verification failed: {manifest_result.message}",
+            manifest_available=manifest_result.available,
+            manifest_passed=manifest_result.passed,
+            manifest_path=manifest_result.manifest_path,
+            manifest_message=manifest_result.message,
+        )
 
     if scanner_cmd is None:
         # Fallback: local repo venv command path.
@@ -96,6 +151,10 @@ def run_skill_scan(
             skills_dir=str(skills_dir),
             report_path=str(report_path),
             message="skill-scanner not installed (pip install cisco-ai-skill-scanner)",
+            manifest_available=manifest_result.available,
+            manifest_passed=manifest_result.passed,
+            manifest_path=manifest_result.manifest_path,
+            manifest_message=manifest_result.message,
         )
 
     if not skills_dir.exists():
@@ -106,6 +165,10 @@ def run_skill_scan(
             skills_dir=str(skills_dir),
             report_path=str(report_path),
             message=f"skills directory not found: {skills_dir}",
+            manifest_available=manifest_result.available,
+            manifest_passed=manifest_result.passed,
+            manifest_path=manifest_result.manifest_path,
+            manifest_message=manifest_result.message,
         )
 
     cmd = [
@@ -148,4 +211,8 @@ def run_skill_scan(
         message=msg,
         stdout=completed.stdout or "",
         stderr=completed.stderr or "",
+        manifest_available=manifest_result.available,
+        manifest_passed=manifest_result.passed,
+        manifest_path=manifest_result.manifest_path,
+        manifest_message=manifest_result.message,
     )

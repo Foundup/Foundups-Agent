@@ -1,5 +1,24 @@
 # ModLog - voice_command_ingestion
 
+### 2026-02-24 - Faster-Whisper VAD Controls for Voice REPL Stability
+**WSP Protocol**: WSP 22, WSP 84
+**Phase**: Hardening
+**Agent**: 0102
+
+#### Changes
+- `src/voice_command_ingestion.py`
+  - Extended `FasterWhisperSTT` with configurable VAD controls:
+    - `use_vad_filter` (bool)
+    - `vad_min_silence_ms` (int)
+  - `transcribe()` now conditionally passes `vad_filter` and `vad_parameters`.
+  - Preserves previous behavior by default (`use_vad_filter=True`) for non-CLI callers.
+
+#### Purpose
+- Enables OpenClaw voice mode to disable aggressive VAD during short barge/cue captures,
+  reducing false "Could not transcribe" loops from over-filtered audio.
+
+---
+
 ### 2026-01-08 - Selenium Integration & Bug Fixes
 **WSP Protocol**: WSP 22, WSP 62, WSP 84
 **Phase**: Hardening

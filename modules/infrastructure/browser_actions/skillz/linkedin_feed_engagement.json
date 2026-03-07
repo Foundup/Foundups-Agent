@@ -1,78 +1,192 @@
 {
   "skill_id": "linkedin_feed_engagement",
   "name": "LinkedIn Feed Engagement",
-  "description": "Autonomously read and engage with LinkedIn feed posts relevant to 012's interests",
+  "description": "DOM-first feed engagement with 3 modes: like, reply, like_reply. Proactive account switching. Agentic 0102 LinkedIn replies via the digital twin drafter with wardrobe fallback.",
   "platform": "linkedin",
-  "wsp_references": ["WSP 77", "WSP 80"],
-  "version": "1.0.0",
+  "wsp_references": ["WSP 77", "WSP 80", "WSP 91"],
+  "version": "2.1.0",
   "parameters": {
+    "mode": {
+      "type": "string",
+      "required": false,
+      "default": "like_reply",
+      "enum": ["like", "reply", "like_reply"],
+      "description": "Engagement mode: like only, reply only, or both"
+    },
+    "as_page": {
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Page to engage as (e.g., 'foundups', 'move2japan'). Switches BEFORE engaging."
+    },
     "max_posts": {
       "type": "integer",
       "required": false,
       "default": 10,
-      "description": "Maximum posts to read from feed"
+      "description": "Maximum posts to scan in feed"
     },
     "max_engagements": {
       "type": "integer",
       "required": false,
       "default": 3,
-      "description": "Maximum posts to engage with (like/comment)"
+      "description": "Maximum posts to engage with"
     },
-    "duration_minutes": {
-      "type": "integer",
+    "skip_reposts": {
+      "type": "boolean",
       "required": false,
-      "default": 15,
-      "description": "Maximum session duration"
+      "default": true,
+      "description": "Skip reposted content (only engage with originals)"
     },
-    "interests": {
-      "type": "array",
+    "auto_mode": {
+      "type": "boolean",
       "required": false,
-      "default": ["japan", "software", "ai", "startups", "geospatial"],
-      "description": "Topics of interest for filtering"
+      "default": false,
+      "description": "If true, engage without confirmation prompts"
+    },
+    "dry_run": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "If true, scan only - no actual engagement"
+    },
+    "agentic": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "If true, draft reply_text from visible LinkedIn post context instead of fixed templates"
+    },
+    "agent_identity": {
+      "type": "string",
+      "required": false,
+      "default": "0102",
+      "description": "Identity permitted inside the comment text when relevant"
     }
+  },
+  "engagement_filters": {
+    "ai_topic": {
+      "keywords": ["ai", "artificial intelligence", "machine learning", "llm", "gpt", "claude", "autonomous", "agent", "automation"],
+      "reply_type": "ai_thought_leadership"
+    },
+    "capital_pushback": {
+      "keywords": ["series a", "series b", "funding round", "venture capital", "raised", "seed round", "investor", "valuation"],
+      "reply_type": "foundups_alternative"
+    },
+    "target_author": {
+      "names": ["salim ismail", "peter diamandis", "ray kurzweil", "pieter franken"],
+      "reply_type": "thought_leader_engage"
+    }
+  },
+  "brand_guardrails": {
+    "REQUIRED": [
+      "Add one concrete idea, counterpoint, or extension",
+      "Professional, thought-provoking tone",
+      "Direct language with no fluff",
+      "Use FoundUps or Holo Index only when relevant to the post"
+    ],
+    "FORBIDDEN": [
+      "Political content (MAGA, left/right, parties)",
+      "Negative attacks on individuals",
+      "Profanity or inflammatory language",
+      "Competitor bashing",
+      "Off-topic tangents",
+      "Generic praise with no substance"
+    ],
+    "tone": "professional, insightful, inviting discussion",
+    "identity_policy": "It is acceptable for the comment to speak as 0102 when that improves clarity"
   },
   "workflow": [
     {
       "step": 1,
       "action": "navigate_to_feed",
+      "method": "selenium",
       "params": {}
     },
     {
       "step": 2,
-      "action": "read_feed",
-      "params": {
-        "max_posts": "{{max_posts}}"
-      }
+      "action": "refresh_feed",
+      "method": "selenium",
+      "params": {}
     },
     {
       "step": 3,
-      "action": "filter_by_relevance",
+      "action": "iterate_posts_dom",
+      "method": "dom_first",
       "params": {
-        "interests": "{{interests}}",
-        "min_relevance": 0.7
+        "max_posts": "{{max_posts}}",
+        "skip_reposts": "{{skip_reposts}}"
       }
     },
     {
       "step": 4,
-      "action": "like_and_reply",
+      "action": "filter_engagement_worthy",
+      "method": "dom_keywords",
       "params": {
-        "post_id": "{{post.id}}",
-        "reply_text": "{{generated_comment}}"
+        "filters": "{{engagement_filters}}"
+      }
+    },
+    {
+      "step": 5,
+      "action": "switch_account",
+      "method": "dom",
+      "condition": "if as_page is set",
+      "params": {
+        "as_page": "{{as_page}}"
       },
-      "repeat": "for_each_relevant_post",
+      "note": "PROACTIVE - switch BEFORE engaging, not after"
+    },
+    {
+      "step": 6,
+      "action": "engage_post",
+      "method": "dom_first",
+      "params": {
+        "mode": "{{mode}}",
+        "reply_text": "{{generated_reply}}",
+        "as_page": "{{as_page}}",
+        "agentic": "{{agentic}}",
+        "agent_identity": "{{agent_identity}}"
+      },
+      "repeat": "for_each_engagement_worthy_post",
       "max_iterations": "{{max_engagements}}"
     }
   ],
+  "reply_templates": {
+    "ai_thought_leadership": [
+      "The agent paradigm shift is real. At foundups.com we're building where AI agents earn and humans benefit. Post-capitalism starts with compute.",
+      "This resonates with what we're seeing in autonomous systems. When agents become workers, the whole economic model shifts. foundups.com",
+      "Great point! The AI capability curve keeps surprising us. Question is: who benefits? At foundups.com, it's the community, not VCs."
+    ],
+    "foundups_alternative": [
+      "This is why foundups.com is building on different rails. From ROI capitalism to ROC - Return on Compute. When incentives align with communities instead of exits, the outcome changes.",
+      "Perfect visual for why we need post-capitalism models. At foundups.com we're exploring how agents + BTC-native economics can flip this script. Thoughts?",
+      "The shareholder primacy trap in one image. What if compute created value for communities, not just capital? That's what we're building at foundups.com"
+    ],
+    "thought_leader_engage": [
+      "Great insights! This resonates with our work at foundups.com",
+      "Valuable perspective. We're exploring similar ideas at foundups.com - where agents work and communities benefit.",
+      "Thanks for sharing. The future is community-driven. foundups.com"
+    ]
+  },
+  "execution_order": {
+    "note": "Per 012 directive - correct engagement order",
+    "steps": [
+      "1. SWITCH ACCOUNT (proactive, before engaging)",
+      "2. REPLY (if mode includes reply)",
+      "3. LIKE (after reply, if mode includes like)"
+    ]
+  },
   "ai_coordination": {
-    "phase_1_gemma": "Binary relevance check (012's interests)",
-    "phase_2_qwen": "Generate thoughtful, professional comment",
-    "phase_3_0102": "Execute like_and_reply via browser_actions",
-    "phase_4_learning": "Store engagement patterns and responses"
+    "phase_1_dom": "Extract post content via DOM selectors (fast, ~10ms)",
+    "phase_2_keywords": "Detect AI/capital/target keywords (no LLM needed)",
+    "phase_3_gemma": "Optional: Validate engagement decision (binary classification)",
+    "phase_4_agentic_draft": "Draft reply with LinkedIn digital twin prompt + wardrobe fallback",
+    "phase_5_execute": "DOM-first like/reply with vision fallback"
   },
   "telemetry": {
-    "emit_events": ["post_read", "post_liked", "comment_posted", "session_complete"],
-    "metrics": ["posts_read", "posts_engaged", "relevance_score_avg"]
+    "emit_events": ["feed_refresh", "post_scanned", "engagement_detected", "account_switched", "reply_posted", "like_given", "session_complete"],
+    "metrics": ["posts_scanned", "engagements_made", "reposts_skipped", "ai_posts_found", "capital_posts_found"]
   },
+  "test_command": "python -m modules.platform_integration.linkedin_agent.tests.test_feed_iterator --engagement",
   "created_by": "0102",
-  "sprint": "A6"
+  "sprint": "A6",
+  "updated": "2026-02-24"
 }

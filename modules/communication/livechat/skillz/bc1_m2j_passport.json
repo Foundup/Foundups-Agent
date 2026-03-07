@@ -1,0 +1,16 @@
+{
+  "skillz_name": "bc1_m2j_passport",
+  "skillz_type": "foundup_gate",
+  "foundup": "move2japan",
+  "foundup_module": "modules/foundups/move2japan",
+  "description": "Base Camp 1 — Passport acquisition guidance. Stub skillz for BC0 handoff target.",
+  "wsp_compliance": ["WSP 77", "WSP 95"],
+  "version": "0.1.0",
+  "status": "stub",
+
+  "response_templates": {
+    "passport_guidance": "🛂 Here's how to get started with your passport:\n\n1. Check your country's passport office website\n2. Gather required documents (ID, photos, application)\n3. Apply in person or by mail\n4. Processing: 4-6 weeks standard, 2-3 weeks expedited\n\nOnce you have it in hand, come back and type !m2j — we'll pick up where we left off.",
+    "passport_renewal": "🛂 Passport expired? Renewal is usually faster than a new application. Check your country's renewal process — most can be done by mail.\n\nOnce renewed, type !m2j and we'll move to the next stage.",
+    "passport_check_back": "🛂 Get the passport in motion first — that's the real first step. When you're ready, type !m2j and I'll help with the next stage."
+  }
+}

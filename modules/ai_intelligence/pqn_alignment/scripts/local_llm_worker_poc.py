@@ -9,13 +9,13 @@ Architecture:
 3. Analysis: LLM processes CSV output to refine strategy.
 4. Council: Connects to parallel council for multi-agent evaluation.
 
-Models (E:/HoloIndex/models/):
-- qwen-coder-1.5b.gguf (1.5B params, code-focused)
-- gemma-3-270m-it-Q4_K_M.gguf (270M params, fast inference)
+Models (LOCAL_MODEL_* routing):
+- qwen-coder-7b (code-focused)
+- gemma-270m (fast inference)
 - UI-TARS-1.5-7B.Q4_K_M.gguf (7B params, vision-action)
 
 Usage:
-python local_llm_worker_poc.py --model qwen-coder-1.5b.gguf
+python local_llm_worker_poc.py --model qwen-coder-7b
 python local_llm_worker_poc.py --model gemma --strategy "Resonance Amplification"
 
 WSP Compliance: WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
@@ -38,10 +38,18 @@ sys.path.insert(0, str(module_root))
 sys.path.insert(0, str(project_root))
 
 from src.detector.api import run_detector
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    get_local_model_root,
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [LOCAL_LLM] - %(message)s')
 logger = logging.getLogger(__name__)
+
+CODE_MODEL_PATH = resolve_code_model_path()
+TRIAGE_MODEL_PATH = resolve_triage_model_path()
 
 
 @dataclass
@@ -66,25 +74,30 @@ class LocalLLMResearcher:
     - Adaptive routing between models
     """
 
-    # Model registry: E:/HoloIndex/models/
+    # Model registry: centralized LOCAL_MODEL_* routing
     MODEL_REGISTRY = {
         "qwen": {
-            "name": "qwen-coder-1.5b.gguf",
-            "path": Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf"),
+            "name": CODE_MODEL_PATH.name,
+            "path": CODE_MODEL_PATH,
             "type": "coder",
             "n_ctx": 2048,
             "description": "Code-focused, good for script generation"
         },
         "gemma": {
-            "name": "gemma-3-270m-it-Q4_K_M.gguf",
-            "path": Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf"),
+            "name": TRIAGE_MODEL_PATH.name,
+            "path": TRIAGE_MODEL_PATH,
             "type": "general",
             "n_ctx": 512,
             "description": "Fast inference, good for classification"
         },
         "ui-tars": {
             "name": "UI-TARS-1.5-7B.Q4_K_M.gguf",
-            "path": Path("E:/HoloIndex/models/UI-TARS-1.5-7B.Q4_K_M.gguf"),
+            "path": Path(
+                os.getenv(
+                    "UI_TARS_MODEL_PATH",
+                    "E:/LM_studio/models/local/ui-tars-1.5/UI-TARS-1.5-7B.Q4_K_M.gguf",
+                )
+            ),
             "type": "vision-action",
             "n_ctx": 4096,
             "description": "Vision/action model for complex reasoning"
@@ -157,8 +170,10 @@ class LocalLLMResearcher:
 
         # Direct path/filename
         if model_input.lower().endswith(".gguf"):
+            local_root = get_local_model_root()
             search_paths = [
-                Path("E:/HoloIndex/models"),
+                local_root,
+                Path("E:/LM_studio/models/local"),
                 Path("E:/LM_studio/models"),
             ]
 

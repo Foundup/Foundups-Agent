@@ -5541,3 +5541,14 @@ The complete DAE Memory System has been implemented:
 - Replaced grep usage in `holo_index/cli.py` doc-audit reference checks with `rg` (preferred) and a Python fallback.
 - Updated `holo_index/qwen_advisor/gemma_orphan_detector.py` L0 scan to use `rg` or Python, removing grep dependency and clarifying logging/labels.
 - Result: agent runtime paths no longer rely on grep; Windows-safe by default.
+
+## [2026-03-06] - Qwen3.5 bootstrap script for LM Studio
+- Added `holo_index/scripts/bootstrap_qwen3_5_lmstudio.py` to automate:
+  - Download to `E:/HoloIndex/models/qwen3.5-4b`
+  - Mirror/hardlink into `LOCAL_MODEL_GENERAL_DIR` (LM Studio local folder)
+  - LM Studio `/v1/models/load` request + readiness polling
+  - Optional chat-completion smoke test
+- Live validation run:
+  - Downloaded `Qwen3.5-4B-Q4_K_M.gguf`
+  - Hardlinked to `E:/LM_studio/models/local/qwen3.5-4b`
+  - LM Studio reported loaded model id `qwen3.5-4b`

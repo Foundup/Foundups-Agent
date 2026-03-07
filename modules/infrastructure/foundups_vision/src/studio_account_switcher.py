@@ -64,6 +64,7 @@ def _env_truthy(name: str, default: str = "false") -> bool:
 _m2j_id = os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")
 _undaodu_id = os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
 _foundups_id = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
+_antifafm_id = os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
 
 ACCOUNTS = {
     "UnDaoDu": {
@@ -86,9 +87,19 @@ ACCOUNTS = {
         "channel_id": _foundups_id,
         "display_name": "FoundUps",
         "handle": os.getenv("FOUNDUPS_HANDLE", "@FoundUps"),
-        "menu_index": 2,
-        "menu_y": 257,
+        "menu_index": 0,  # When on FoundUps, it's at position 0 (top of list)
+        "menu_y": 132,
         "comments_url": f"https://studio.youtube.com/channel/{_foundups_id}/comments/inbox"
+    },
+    "antifaFM": {
+        "channel_id": _antifafm_id,
+        "display_name": "antifaFM",
+        "account_name": "RavingANTIFA",  # Google account name in account switcher
+        "handle": os.getenv("ANTIFAFM_HANDLE", "@antifaFM"),
+        "menu_index": 1,  # When on FoundUps, antifaFM is at position 1
+        "menu_y": 196,
+        "comments_url": f"https://studio.youtube.com/channel/{_antifafm_id}/comments/inbox",
+        "live_url": f"https://studio.youtube.com/channel/{_antifafm_id}/livestreaming/stream"
     }
 }
 
@@ -130,6 +141,13 @@ SWITCH_COORDINATES = {
         "height": 64,
         "description": "FoundUps account selection item",
     },
+    "account_antifaFM": {
+        "x": 178,
+        "y": 353,  # FoundUps + 64px
+        "width": 290,
+        "height": 64,
+        "description": "antifaFM account selection item (Edge browser, account_section 1)",
+    },
 }
 
 
@@ -141,15 +159,20 @@ class StudioAccountSwitcher:
     def __init__(self):
         self.driver = None
         self.interaction = None
-        self._training_enabled = _env_truthy("STUDIO_ACCOUNT_TRAINING_ENABLED", "true")
+        # 2026-03-03: Disabled by default - was causing 60s timeouts during Go Live flow
+        # Set STUDIO_ACCOUNT_TRAINING_ENABLED=true to enable vision training data collection
+        self._training_enabled = _env_truthy("STUDIO_ACCOUNT_TRAINING_ENABLED", "false")
         self._training_examples_this_session = 0
 
     def _connect_to_chrome(self, driver=None):
-        """Connect to Chrome or reuse provided driver."""
+        """Connect to Chrome/Edge or reuse provided driver."""
         if driver:
             self.driver = driver
-            from modules.infrastructure.human_interaction import get_interaction_controller
-            self.interaction = get_interaction_controller(self.driver, platform="youtube_studio")
+            try:
+                from modules.infrastructure.human_interaction import get_interaction_controller
+                self.interaction = get_interaction_controller(self.driver, platform="youtube_studio")
+            except ImportError:
+                logger.debug("[ACCOUNT-SWITCH] human_interaction not available")
             return True
 
         if self.driver:
@@ -157,14 +180,26 @@ class StudioAccountSwitcher:
 
         try:
             from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from modules.infrastructure.human_interaction import get_interaction_controller
 
             port = int(os.getenv("FOUNDUPS_LIVECHAT_CHROME_PORT", "9222"))
-            opts = Options()
-            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
-            self.driver = webdriver.Chrome(options=opts)
-            self.interaction = get_interaction_controller(self.driver, platform="youtube_studio")
+            is_edge = port == 9223  # Edge uses port 9223
+
+            if is_edge:
+                from selenium.webdriver.edge.options import Options as EdgeOptions
+                opts = EdgeOptions()
+                opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+                self.driver = webdriver.Edge(options=opts)
+            else:
+                from selenium.webdriver.chrome.options import Options
+                opts = Options()
+                opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
+                self.driver = webdriver.Chrome(options=opts)
+
+            try:
+                from modules.infrastructure.human_interaction import get_interaction_controller
+                self.interaction = get_interaction_controller(self.driver, platform="youtube_studio")
+            except ImportError:
+                logger.debug("[ACCOUNT-SWITCH] human_interaction not available")
             return True
         except Exception as e:
             logger.error(f"[ACCOUNT-SWITCH] Connection failed: {e}")
@@ -196,7 +231,7 @@ class StudioAccountSwitcher:
         except Exception as e:
             logger.debug(f"[ACCOUNT-SWITCH-TRAIN] Record failed: {e}")
 
-    async def switch_to_account(self, target_account: Literal["UnDaoDu", "Move2Japan", "FoundUps"], navigate_to_comments: bool = True) -> Dict[str, Any]:
+    async def switch_to_account(self, target_account: Literal["UnDaoDu", "Move2Japan", "FoundUps", "antifaFM"], navigate_to_comments: bool = True, navigate_to_live: bool = False) -> Dict[str, Any]:
         """Switch to target account with optional direct navigation."""
         if not _env_truthy("YT_AUTOMATION_ENABLED", "true"):
             return {"success": False, "error": "automation_disabled"}
@@ -264,16 +299,24 @@ class StudioAccountSwitcher:
             logger.info(f"[ACCOUNT-SWITCH] Step 3/3: Select {target_account}")
             start = time.time()
             
+            # antifaFM channel is under "RavingANTIFA" Google account
+            search_names = [target_account]
+            if target_account == "antifaFM":
+                search_names = ["antifaFM", "RavingANTIFA", "ravingantifa", "antifa"]
+
             account_selected = self.driver.execute_script("""
-                const target = arguments[0];
+                const targets = arguments[0];
                 const items = document.querySelectorAll('ytd-account-item-renderer, ytcp-account-item-renderer');
                 for (const item of items) {
-                    if (item.textContent.includes(target)) {
-                        item.click(); return true;
+                    const text = item.textContent.toLowerCase();
+                    for (const target of targets) {
+                        if (text.includes(target.toLowerCase())) {
+                            item.click(); return true;
+                        }
                     }
                 }
                 return false;
-            """, target_account)
+            """, search_names)
             
             if not account_selected:
                 await self.interaction.click_action(f"account_{target_account}")
@@ -285,7 +328,13 @@ class StudioAccountSwitcher:
             logger.info("[ACCOUNT-SWITCH] ⏳ Waiting for session update...")
             await asyncio.sleep(5.0)
 
-            if navigate_to_comments:
+            # Navigate to target page (live stream or comments)
+            if navigate_to_live and "live_url" in ACCOUNTS[target_account]:
+                live_url = ACCOUNTS[target_account]["live_url"]
+                logger.info(f"[ACCOUNT-SWITCH] 🚀 Navigating to live stream: {live_url}")
+                self.driver.get(live_url)
+                await asyncio.sleep(3)
+            elif navigate_to_comments:
                 comments_url = ACCOUNTS[target_account]["comments_url"]
                 logger.info(f"[ACCOUNT-SWITCH] 🚀 Navigating to comments: {comments_url}")
                 self.driver.get(comments_url)
@@ -375,18 +424,26 @@ def get_account_switcher() -> StudioAccountSwitcher:
     return _account_switcher
 
 
-async def switch_studio_account(target_account: Literal["UnDaoDu", "Move2Japan", "FoundUps"]) -> Dict[str, Any]:
+async def switch_studio_account(
+    target_account: Literal["UnDaoDu", "Move2Japan", "FoundUps", "antifaFM"],
+    navigate_to_live: bool = False
+) -> Dict[str, Any]:
     """
     Async wrapper for switching Studio account.
 
     Args:
         target_account: Account to switch to
+        navigate_to_live: If True, navigate to live streaming page (for antifaFM)
 
     Returns:
         Dict with switch result
     """
     switcher = get_account_switcher()
-    return await switcher.switch_to_account(target_account)
+    return await switcher.switch_to_account(
+        target_account,
+        navigate_to_comments=not navigate_to_live,
+        navigate_to_live=navigate_to_live
+    )
 
 
 if __name__ == "__main__":

@@ -14,7 +14,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("holo_dae")
 def run_holodae():
     """Run HoloDAE (Code Intelligence & Monitoring)."""
     print("[HOLODAE] Starting HoloDAE - Code Intelligence & Monitoring System...")
@@ -54,6 +64,19 @@ def run_holodae():
         current_pid = instance_summary["current_pid"]
         logger.info(f"[INFO]HoloDAE SINGLE INSTANCE: PID {current_pid} - No other HoloDAEs detected")
 
+        # WRE Skill Triggers (WSP 46/96: Fire code_intelligence skills each cycle)
+        _skill_trigger = None
+        try:
+            from modules.infrastructure.wre_core.src.skill_trigger import SkillTriggerMixin
+            _skill_trigger = SkillTriggerMixin()
+            _skill_trigger.init_skill_triggers(
+                domain="code_intelligence",
+                cadence_minutes=10,
+            )
+            logger.info("[WRE-TRIGGER] Code intelligence skill triggers initialized")
+        except Exception as trigger_exc:
+            logger.debug(f"[WRE-TRIGGER] Skill triggers unavailable: {trigger_exc}")
+
         holodae.start_autonomous_monitoring()
 
         print("[HOLODAE] Autonomous monitoring active. Press Ctrl+C to stop.")
@@ -61,6 +84,12 @@ def run_holodae():
         # Keep the process running
         try:
             while holodae.active:
+                # Fire WRE code_intelligence skills on cadence
+                if _skill_trigger:
+                    try:
+                        _skill_trigger.fire_pending_skills_sync()
+                    except Exception as skill_exc:
+                        logger.debug(f"[WRE-TRIGGER] Skill fire error: {skill_exc}")
                 time.sleep(1)
         except KeyboardInterrupt:
             print("[HOLODAE] Stopping autonomous monitoring...")

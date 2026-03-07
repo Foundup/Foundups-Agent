@@ -20,6 +20,7 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 from .types import AgentRole, AgentTeam
 
 logger = logging.getLogger(__name__)
@@ -227,7 +228,7 @@ class DaemonMonitorMixin:
             return getattr(self, "_qwen_available", False)
         try:
             from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
-            model_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+            model_path = resolve_code_model_path()
             self._qwen_engine = QwenInferenceEngine(
                 model_path=model_path,
                 max_tokens=512,
@@ -435,6 +436,60 @@ class DaemonMonitorMixin:
                     "fix_applied": fix_action,
                     "method": "service_reconnect",
                     "message": "Service reconnection attempted (placeholder)",
+                    "execution_id": exec_id,
+                }
+
+            # 2026-03-07: RotationSupervisor stall recovery (WSP 77)
+            if fix_action == "trigger_next_rotation":
+                fix_commands = bug["config"].get("fix_commands", {})
+                # Determine which browser/operation to rotate based on breadcrumb context
+                browser = bug.get("metadata", {}).get("browser", "edge")
+                operation = bug.get("metadata", {}).get("operation", "comments")
+                cmd_key = f"{browser}_{operation}"
+                fix_command = fix_commands.get(cmd_key)
+
+                if not fix_command:
+                    # Default to edge comments rotation
+                    fix_command = fix_commands.get("edge_comments") or \
+                        "python -m modules.communication.livechat.src.rotation_supervisor --browser edge --operation comments --timeout 300"
+
+                logger.info(f"[AUTO-FIX] Triggering rotation: {fix_command}")
+                result = subprocess.run(
+                    fix_command,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=360,  # 6 min for full rotation
+                    cwd=str(self.repo_root),
+                )
+                success = result.returncode == 0
+                execution_time_ms = int((time.time() - start_time) * 1000)
+                self.metrics.append_performance_metric(
+                    skill_name=skill_name,
+                    execution_id=exec_id,
+                    execution_time_ms=execution_time_ms,
+                    agent="ai_overseer",
+                    exception_occurred=not success,
+                )
+                self.metrics.append_outcome_metric(
+                    skill_name=skill_name,
+                    execution_id=exec_id,
+                    decision=fix_action,
+                    expected_decision=fix_action,
+                    correct=success,
+                    confidence=1.0 if success else 0.0,
+                    reasoning=f"Rotation trigger {'succeeded' if success else 'failed'}: {cmd_key}",
+                    agent="ai_overseer",
+                )
+                return {
+                    "success": success,
+                    "bug": pattern_name,
+                    "fix_applied": fix_action,
+                    "method": "cli_rotation",
+                    "command": fix_command,
+                    "stdout": result.stdout[-500:] if result.stdout else None,
+                    "stderr": result.stderr[-500:] if result.stderr else None,
+                    "returncode": result.returncode,
                     "execution_id": exec_id,
                 }
 
@@ -683,3 +738,85 @@ index 0000000..1111111 100644
         if missing_header:
             return {"verified": False, "reason": f"UTF-8 header missing in: {', '.join(missing_header)}"}
         return {"verified": True, "reason": "UTF-8 header confirmed in patched files"}
+
+    def check_rotation_stalls(
+        self,
+        minutes: int = 5,
+        auto_trigger: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Check breadcrumb telemetry for rotation stalls and optionally trigger CLI rotation.
+
+        This enables AI Overseer to autonomously detect when the rotation system stalls
+        (heartbeat_stale, task_killed) and trigger the next rotation phase via CLI.
+
+        Args:
+            minutes: Look back window in minutes
+            auto_trigger: Whether to automatically trigger rotation on stall detection
+
+        Returns:
+            Dict with stalls detected and actions taken
+        """
+        try:
+            from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+            telemetry = get_breadcrumb_telemetry()
+        except ImportError:
+            return {"success": False, "error": "Breadcrumb telemetry not available"}
+
+        # Query for stall-related breadcrumbs
+        stall_patterns = ["stall_detected", "KILLED", "STALE", "rotation stalled"]
+        stalls_found = []
+
+        for pattern in stall_patterns:
+            try:
+                breadcrumbs = telemetry.get_recent_breadcrumbs(minutes=minutes, source_dae="rotation_supervisor")
+                for bc in breadcrumbs:
+                    message = bc.get("message", "")
+                    if pattern.lower() in message.lower():
+                        stalls_found.append({
+                            "pattern": pattern,
+                            "message": message,
+                            "metadata": bc.get("metadata", {}),
+                            "timestamp": bc.get("timestamp"),
+                        })
+            except Exception as e:
+                logger.debug(f"[STALL-CHECK] Error querying breadcrumbs: {e}")
+
+        if not stalls_found:
+            return {"success": True, "stalls_detected": 0, "message": "No stalls detected"}
+
+        logger.warning(f"[STALL-CHECK] Detected {len(stalls_found)} stall events in last {minutes} minutes")
+
+        result = {
+            "success": True,
+            "stalls_detected": len(stalls_found),
+            "stalls": stalls_found,
+            "rotations_triggered": 0,
+        }
+
+        if auto_trigger and stalls_found:
+            # Trigger rotation for the most recent stall
+            latest_stall = stalls_found[-1]
+            browser = latest_stall.get("metadata", {}).get("browser", "edge")
+            operation = "comments"  # Default to comments rotation
+
+            cmd = f"python -m modules.communication.livechat.src.rotation_supervisor --browser {browser} --operation {operation} --timeout 300"
+            logger.info(f"[STALL-CHECK] Triggering rotation: {cmd}")
+
+            try:
+                proc = subprocess.Popen(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=str(self.repo_root),
+                )
+                result["rotations_triggered"] = 1
+                result["rotation_pid"] = proc.pid
+                result["rotation_command"] = cmd
+                logger.info(f"[STALL-CHECK] Rotation spawned (PID: {proc.pid})")
+            except Exception as e:
+                result["rotation_error"] = str(e)
+                logger.error(f"[STALL-CHECK] Failed to spawn rotation: {e}")
+
+        return result

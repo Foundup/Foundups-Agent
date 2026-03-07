@@ -207,7 +207,7 @@ class StatusDisplay:
         last_change = state.get('last_change_time', 'never')
 
         if idle_minutes > 0:
-            print(f"[{now}] [HOLODAE] 竢ｳ idle {idle_minutes}m 窶・watching {watched_paths} paths (last change {last_change})")
+            print(f"[{now}] [HOLODAE] IDLE {idle_minutes}m - watching {watched_paths} paths (last change {last_change})")
         else:
             print(f"[{now}] [HOLODAE] [ACTIVE] monitoring {watched_paths} paths")
 

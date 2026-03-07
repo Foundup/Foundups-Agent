@@ -3,7 +3,7 @@
 Implements WSP 26 Section 6.8: Anti-Sybil dual-token design.
 
 Token Roles:
-- UPS: Universal fuel (humans EARN, agents SPEND allocated budgets)
+- UPS: Universal fuel (humans RECEIVE distributions, agents SPEND allocated budgets)
 - F_i: FoundUp-specific tokens (agents EARN through PoUW, humans OWN)
 
 Fee Boundary:
@@ -119,6 +119,69 @@ class FeeConfig:
     def total_staked_roundtrip_fee(self) -> float:
         """Total round-trip fee for staking (entry + exit = 8%)."""
         return self.staked_fi_entry_fee + self.staked_fi_exit_fee
+
+
+@dataclass
+class OperationalProfitPolicy:
+    """How net operational profit is routed through the system.
+
+    Core equations:
+    - net_profit_ups = max(0, gross_profit_ups - operating_cost_ups)
+    - proxy_ups = net_profit_ups * proxy_share
+    - foundup_treasury_ups = net_profit_ups * foundup_treasury_share
+    - network_pool_ups = net_profit_ups * network_pool_share
+
+    Proxy actions:
+    - stake_ups = proxy_ups * proxy_auto_stake_ratio
+    - exit_gross_ups = (proxy_ups - stake_ups) * proxy_auto_exit_ratio
+    - exit_fee_ups = exit_gross_ups * proxy_exit_fee_rate
+    - hold_ups = proxy_ups - stake_ups - exit_gross_ups
+    """
+
+    proxy_share: float = 0.70
+    foundup_treasury_share: float = 0.20
+    network_pool_share: float = 0.10
+    proxy_auto_stake_ratio: float = 0.0
+    proxy_auto_exit_ratio: float = 0.0
+    proxy_exit_fee_rate: float = 0.07
+
+    def normalized(self) -> "OperationalProfitPolicy":
+        """Return policy with shares normalized to sum to 1.0."""
+        proxy = max(0.0, float(self.proxy_share))
+        treasury = max(0.0, float(self.foundup_treasury_share))
+        network = max(0.0, float(self.network_pool_share))
+        total = proxy + treasury + network
+        if total <= 0:
+            proxy, treasury, network = 0.70, 0.20, 0.10
+            total = 1.0
+        return OperationalProfitPolicy(
+            proxy_share=proxy / total,
+            foundup_treasury_share=treasury / total,
+            network_pool_share=network / total,
+            proxy_auto_stake_ratio=min(1.0, max(0.0, float(self.proxy_auto_stake_ratio))),
+            proxy_auto_exit_ratio=min(1.0, max(0.0, float(self.proxy_auto_exit_ratio))),
+            proxy_exit_fee_rate=max(0.0, float(self.proxy_exit_fee_rate)),
+        )
+
+
+@dataclass
+class OperationalProfitResult:
+    """Result bundle for one operational-profit settlement."""
+
+    foundup_id: str
+    operator_agent_id: str
+    proxy_owner_id: str
+    gross_profit_ups: float
+    operating_cost_ups: float
+    net_profit_ups: float
+    proxy_distribution_ups: float
+    foundup_treasury_ups: float
+    network_pool_ups: float
+    proxy_staked_ups: float
+    proxy_exit_gross_ups: float
+    proxy_exit_fee_ups: float
+    proxy_hold_ups: float
+    stake_target_foundup_id: str
 
 
 class SubscriptionTier(Enum):
@@ -883,6 +946,14 @@ class TokenEconomicsEngine:
         self.total_fees_ops: float = 0.0
         self.total_fees_vault: float = 0.0
         self.total_fees_insurance: float = 0.0
+        self.total_operational_profit_gross_ups: float = 0.0
+        self.total_operational_cost_ups: float = 0.0
+        self.total_operational_profit_net_ups: float = 0.0
+        self.total_operational_proxy_distributions_ups: float = 0.0
+        self.total_operational_foundup_treasury_ups: float = 0.0
+        self.total_operational_network_pool_ups: float = 0.0
+        self.total_proxy_exit_volume_ups: float = 0.0
+        self.total_proxy_exit_fees_ups: float = 0.0
 
     def register_human(self, human_id: str, initial_ups: float = 0.0) -> HumanUPSAccount:
         """Register a human account."""
@@ -902,6 +973,31 @@ class TokenEconomicsEngine:
         self.foundup_pools[foundup_id] = pool
         return pool
 
+    def resolve_proxy_owner(self, agent_id: str) -> str:
+        """Resolve economic beneficiary (012 proxy owner) for an agent."""
+        wallet = self.agent_wallets.get(agent_id)
+        return wallet.allocator_id if wallet else agent_id
+
+    def credit_012_distribution_ups(
+        self,
+        beneficiary_id: str,
+        amount: float,
+        source: str,
+        is_lottery: bool = False,
+    ) -> None:
+        """Credit UPS distribution to a 012 proxy beneficiary account."""
+        amount = max(0.0, float(amount))
+        if amount <= 0:
+            return
+        account = self.human_accounts.get(beneficiary_id)
+        if account is None:
+            account = self.register_human(beneficiary_id)
+
+        if is_lottery:
+            account.earn_lottery(amount)
+        else:
+            account.earn_ups(amount, source)
+
     def human_earns_ups(
         self,
         human_id: str,
@@ -909,15 +1005,13 @@ class TokenEconomicsEngine:
         source: str,
         is_lottery: bool = False,
     ) -> None:
-        """Human earns UPS through verified real-world action."""
-        account = self.human_accounts.get(human_id)
-        if not account:
-            account = self.register_human(human_id)
-
-        if is_lottery:
-            account.earn_lottery(amount)
-        else:
-            account.earn_ups(amount, source)
+        """Backward-compatible alias for UPS distribution crediting."""
+        self.credit_012_distribution_ups(
+            beneficiary_id=human_id,
+            amount=amount,
+            source=source,
+            is_lottery=is_lottery,
+        )
 
     def human_allocates_to_agent(
         self,
@@ -956,28 +1050,143 @@ class TokenEconomicsEngine:
             (success, fi_earned) tuple
         """
         wallet = self.agent_wallets.get(agent_id)
+        if wallet is None:
+            wallet = self.register_agent(agent_id, allocator_id=agent_id)
         pool = self.foundup_pools.get(foundup_id)
-
-        if not wallet or not pool:
-            return (False, 0.0)
+        if pool is None:
+            pool = self.register_foundup(foundup_id)
 
         # Agent spends UPS budget
-        success, fee = wallet.spend(task_cost_ups, f"task:{foundup_id}")
-        if not success:
-            return (False, 0.0)
+        task_cost = max(0.0, float(task_cost_ups))
+        if task_cost > 0:
+            success, _fee = wallet.spend(task_cost, f"task:{foundup_id}")
+            if not success:
+                return (False, 0.0)
+
+        work_reward = max(0.0, float(work_reward_fi))
+        if work_reward > 0:
+            # Work itself should improve adoption so mint capacity can unlock over time.
+            pool.update_adoption(work_completed=work_reward)
 
         # Agent earns F_i (goes to human owner)
-        fi_minted = pool.mint_for_work(work_reward_fi, agent_id)
+        fi_minted = pool.mint_for_work(work_reward, agent_id)
         if fi_minted <= 0:
             return (True, 0.0)  # Task completed but no tokens available
 
         # Transfer F_i to human owner
         owner_id = wallet.allocator_id
         owner = self.human_accounts.get(owner_id)
-        if owner:
-            owner.receive_fi(foundup_id, fi_minted)
+        if owner is None:
+            owner = self.register_human(owner_id, initial_ups=0.0)
+        owner.receive_fi(foundup_id, fi_minted)
 
         return (True, fi_minted)
+
+    def distribute_operational_profit(
+        self,
+        foundup_id: str,
+        operator_agent_id: str,
+        gross_profit_ups: float,
+        operating_cost_ups: float = 0.0,
+        policy: Optional[OperationalProfitPolicy] = None,
+        stake_target_foundup_id: Optional[str] = None,
+    ) -> OperationalProfitResult:
+        """Route operational profit through proxy, treasury, and network lanes.
+
+        This is separate from fee lanes. It models real business PnL produced by
+        autonomous agents (e.g. trading bots) and enforces the beneficiary split:
+        agents produce work, 012 proxy accounts receive UPS distributions.
+        """
+        policy_n = (policy or OperationalProfitPolicy()).normalized()
+        gross = max(0.0, float(gross_profit_ups))
+        cost = max(0.0, float(operating_cost_ups))
+        net = max(0.0, gross - cost)
+
+        proxy_owner_id = self.resolve_proxy_owner(operator_agent_id)
+        proxy_account = self.human_accounts.get(proxy_owner_id)
+        if proxy_account is None:
+            proxy_account = self.register_human(proxy_owner_id, initial_ups=0.0)
+        foundup_pool = self.foundup_pools.get(foundup_id)
+        if foundup_pool is None:
+            foundup_pool = self.register_foundup(foundup_id)
+
+        if net <= 0:
+            return OperationalProfitResult(
+                foundup_id=foundup_id,
+                operator_agent_id=operator_agent_id,
+                proxy_owner_id=proxy_owner_id,
+                gross_profit_ups=gross,
+                operating_cost_ups=cost,
+                net_profit_ups=0.0,
+                proxy_distribution_ups=0.0,
+                foundup_treasury_ups=0.0,
+                network_pool_ups=0.0,
+                proxy_staked_ups=0.0,
+                proxy_exit_gross_ups=0.0,
+                proxy_exit_fee_ups=0.0,
+                proxy_hold_ups=0.0,
+                stake_target_foundup_id=stake_target_foundup_id or foundup_id,
+            )
+
+        proxy_dist = net * policy_n.proxy_share
+        treasury_dist = net * policy_n.foundup_treasury_share
+        network_dist = net * policy_n.network_pool_share
+
+        # Credit the 012 proxy beneficiary with the distribution lane.
+        self.credit_012_distribution_ups(
+            beneficiary_id=proxy_owner_id,
+            amount=proxy_dist,
+            source=f"operational_profit:{foundup_id}",
+        )
+        foundup_pool.ups_treasury += treasury_dist
+        self.total_operational_network_pool_ups += network_dist
+        foundup_pool.update_adoption(revenue_ups=net)
+
+        # Optional proxy stake action.
+        stake_target = stake_target_foundup_id or foundup_id
+        if stake_target not in self.foundup_pools:
+            self.register_foundup(stake_target)
+        proxy_stake_ups = 0.0
+        if policy_n.proxy_auto_stake_ratio > 0:
+            proxy_stake_ups = proxy_dist * policy_n.proxy_auto_stake_ratio
+            self.human_stakes_ups(proxy_owner_id, stake_target, proxy_stake_ups)
+
+        # Optional proxy exit action (cashout from remaining liquid UPS).
+        post_stake_proxy = max(0.0, proxy_dist - proxy_stake_ups)
+        proxy_exit_gross = 0.0
+        proxy_exit_fee = 0.0
+        if policy_n.proxy_auto_exit_ratio > 0 and post_stake_proxy > 0:
+            proxy_exit_gross = post_stake_proxy * policy_n.proxy_auto_exit_ratio
+            proxy_exit_gross = min(proxy_exit_gross, proxy_account.ups_balance)
+            proxy_exit_fee = proxy_exit_gross * policy_n.proxy_exit_fee_rate
+            proxy_account.ups_balance = max(0.0, proxy_account.ups_balance - proxy_exit_gross)
+            self.total_proxy_exit_volume_ups += proxy_exit_gross
+            self.total_proxy_exit_fees_ups += proxy_exit_fee
+
+        proxy_hold_ups = max(0.0, post_stake_proxy - proxy_exit_gross)
+
+        self.total_operational_profit_gross_ups += gross
+        self.total_operational_cost_ups += cost
+        self.total_operational_profit_net_ups += net
+        self.total_operational_proxy_distributions_ups += proxy_dist
+        self.total_operational_foundup_treasury_ups += treasury_dist
+
+        return OperationalProfitResult(
+            foundup_id=foundup_id,
+            operator_agent_id=operator_agent_id,
+            proxy_owner_id=proxy_owner_id,
+            gross_profit_ups=gross,
+            operating_cost_ups=cost,
+            net_profit_ups=net,
+            proxy_distribution_ups=proxy_dist,
+            foundup_treasury_ups=treasury_dist,
+            network_pool_ups=network_dist,
+            proxy_staked_ups=proxy_stake_ups,
+            proxy_exit_gross_ups=proxy_exit_gross,
+            proxy_exit_fee_ups=proxy_exit_fee,
+            proxy_hold_ups=proxy_hold_ups,
+            stake_target_foundup_id=stake_target,
+        )
 
     def human_converts_mined_fi_to_ups(
         self,
@@ -1152,6 +1361,14 @@ class TokenEconomicsEngine:
             "total_fees_ops": self.total_fees_ops,
             "total_fees_vault": self.total_fees_vault,
             "total_fees_insurance": self.total_fees_insurance,
+            "operational_profit_gross_ups": self.total_operational_profit_gross_ups,
+            "operational_cost_ups": self.total_operational_cost_ups,
+            "operational_profit_net_ups": self.total_operational_profit_net_ups,
+            "operational_proxy_distributions_ups": self.total_operational_proxy_distributions_ups,
+            "operational_foundup_treasury_ups": self.total_operational_foundup_treasury_ups,
+            "operational_network_pool_ups": self.total_operational_network_pool_ups,
+            "proxy_exit_volume_ups": self.total_proxy_exit_volume_ups,
+            "proxy_exit_fees_ups": self.total_proxy_exit_fees_ups,
             "num_humans": len(self.human_accounts),
             "num_agents": len(self.agent_wallets),
             "num_foundups": len(self.foundup_pools),

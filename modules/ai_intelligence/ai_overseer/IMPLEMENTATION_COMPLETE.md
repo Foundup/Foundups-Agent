@@ -1,4 +1,4 @@
-# AI_Overseer Gemma/Qwen Wiring - Implementation Complete
+﻿# AI_Overseer Gemma/Qwen Wiring - Implementation Complete
 
 **Date**: 2025-10-28
 **Status**: Architecture & Code Complete - Ready for Testing
@@ -6,7 +6,7 @@
 
 ---
 
-## ✅ Work Completed
+## 笨・Work Completed
 
 ### 1. Architecture Design
 **File**: `docs/AI_WIRING_ARCHITECTURE.md`
@@ -35,27 +35,19 @@ Implemented per your request:
 **Gemma Phase**:
 ```
 Deep Think (regex pre-filter)
-    ↓
-HoloIndex Research (check pattern memory)
-    ↓
-Deep Think (Gemma ML: "Is this a genuine bug?")
-    ↓
-Occam's Razor (SIMPLEST explanation)
-    ↓
-Decision: YES/NO (confidence > 0.7)
+    竊・HoloIndex Research (check pattern memory)
+    竊・Deep Think (Gemma ML: "Is this a genuine bug?")
+    竊・Occam's Razor (SIMPLEST explanation)
+    竊・Decision: YES/NO (confidence > 0.7)
 ```
 
 **Qwen Phase**:
 ```
 Deep Think (analyze bug + context)
-    ↓
-HoloIndex Research (similar fixes)
-    ↓
-Deep Think (WSP 15 MPS scoring)
-    ↓
-Occam's Razor (SIMPLEST solution)
-    ↓
-Decision: auto_fix | bug_report | ignore
+    竊・HoloIndex Research (similar fixes)
+    竊・Deep Think (WSP 15 MPS scoring)
+    竊・Occam's Razor (SIMPLEST solution)
+    竊・Decision: auto_fix | bug_report | ignore
 ```
 
 ### 4. Documentation
@@ -84,7 +76,7 @@ Decision: auto_fix | bug_report | ignore
 
 ---
 
-## ⏳ Pending Actions
+## 竢ｳ Pending Actions
 
 ### Immediate (When Daemons Stopped)
 
@@ -97,7 +89,7 @@ Decision: auto_fix | bug_report | ignore
 2. **Update ModLog**:
    - Document Gemma/Qwen wiring
    - Document iterative research chain
-   - Version bump: 0.5.0 → 0.6.0
+   - Version bump: 0.5.0 竊・0.6.0
 
 3. **Test Gemma Detection**:
    ```bash
@@ -138,7 +130,7 @@ Decision: auto_fix | bug_report | ignore
 
 ---
 
-## 📊 Expected Outcomes
+## 投 Expected Outcomes
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
@@ -149,41 +141,37 @@ Decision: auto_fix | bug_report | ignore
 
 ---
 
-## 🛡️ Risk Mitigation
+## 孱・・Risk Mitigation
 
 All risks mitigated with graceful fallbacks:
 
-✅ **Gemma missing**: Falls back to regex-only detection
-✅ **Qwen missing**: Falls back to static JSON classification
-✅ **Inference slow**: Cached responses for repeated patterns
-✅ **False negatives**: Regex pre-filter ensures safety net
+笨・**Gemma missing**: Falls back to regex-only detection
+笨・**Qwen missing**: Falls back to static JSON classification
+笨・**Inference slow**: Cached responses for repeated patterns
+笨・**False negatives**: Regex pre-filter ensures safety net
 
 **Zero Breaking Changes** - System remains operational with or without AI models.
 
 ---
 
-## 📁 Files Summary
+## 刀 Files Summary
 
 ### Created (Ready to Use)
-- `docs/AI_WIRING_ARCHITECTURE.md` ✅
-- `AI_WIRING_IMPLEMENTATION.patch` ✅
-- `AI_WIRING_STATUS.md` ✅
-- `docs/AI_WARDROBE_INTEGRATION.md` ✅
-- `IMPLEMENTATION_COMPLETE.md` ✅ (this file)
+- `docs/AI_WIRING_ARCHITECTURE.md` 笨・- `AI_WIRING_IMPLEMENTATION.patch` 笨・- `AI_WIRING_STATUS.md` 笨・- `docs/AI_WARDROBE_INTEGRATION.md` 笨・- `IMPLEMENTATION_COMPLETE.md` 笨・(this file)
 
 ### Modified (Via Patch)
-- `src/ai_overseer.py` ⏳ (patch ready, not applied)
-- `ModLog.md` ⏳ (update ready, file locked)
+- `src/ai_overseer.py` 竢ｳ (patch ready, not applied)
+- `ModLog.md` 竢ｳ (update ready, file locked)
 
 ### Dependencies Required
-- Gemma 270M: `E:/LLM_Models/gemma-3-270m-it.gguf`
-- Qwen 1.5B: `E:/LLM_Models/qwen-coder-1.5b.gguf`
+- Gemma 270M: `LOCAL_MODEL_TRIAGE_* (default: E:/LM_studio/models/local/gemma-270m)`
+- Qwen Coder 7B: `LOCAL_MODEL_CODE_* (default: E:/LM_studio/models/local/qwen-coder-7b)`
 - llama-cpp-python installed
 - holo_index.qwen_advisor modules available
 
 ---
 
-## 🎯 Success Criteria
+## 識 Success Criteria
 
 ### POC Success (Base AI Wiring)
 - [ ] Patch applies cleanly
@@ -203,7 +191,7 @@ All risks mitigated with graceful fallbacks:
 
 ---
 
-## 🚀 Quick Start (When Ready)
+## 噫 Quick Start (When Ready)
 
 ```bash
 # 1. Stop all daemons
@@ -214,8 +202,7 @@ cd O:/Foundups-Agent
 git apply modules/ai_intelligence/ai_overseer/AI_WIRING_IMPLEMENTATION.patch
 
 # 3. Verify models exist
-ls E:/LLM_Models/gemma-3-270m-it.gguf
-ls E:/LLM_Models/qwen-coder-1.5b.gguf
+python modules/infrastructure/shared_utilities/local_model_selection.py --strict
 
 # 4. Test with YouTube daemon
 python main.py --youtube --enable-ai-monitoring
@@ -226,32 +213,33 @@ tail -f logs/foundups_agent.log | grep -E "GEMMA|QWEN|AUTO-FIX"
 
 ---
 
-## 📝 Key Design Decisions
+## 統 Key Design Decisions
 
 1. **Lazy Loading**: Gemma/Qwen only loaded when first needed (saves memory)
 2. **Graceful Degradation**: Falls back to static config if models unavailable
-3. **Iterative Chain**: Each phase uses Deep Think → Research → First Principles
+3. **Iterative Chain**: Each phase uses Deep Think 竊・Research 竊・First Principles
 4. **Confidence Threshold**: 0.7 minimum for Gemma validation (tunable)
 5. **JSON Structured Output**: Qwen returns WSP 15 scores as parseable JSON
 6. **Comprehensive Prompts**: Include context, rationale requests, Occam's Razor framing
 
 ---
 
-## 🎓 Lessons for Future Sessions
+## 雌 Lessons for Future Sessions
 
 This work demonstrates:
 
-✅ **Anti-Vibecoding**: Used HoloIndex to find existing Gemma/Qwen infrastructure
-✅ **First Principles**: Broke down problem (static → adaptive AI)
-✅ **Occam's Razor**: Chose SIMPLEST solution (enhance existing, don't rewrite)
-✅ **WSP Compliance**: Aligned with WSP 77, 15, 96, 48, 91
-✅ **Graceful Failure**: System works with OR without AI models
-✅ **Iterative Design**: Research → Design → Implement → Test → Document
+笨・**Anti-Vibecoding**: Used HoloIndex to find existing Gemma/Qwen infrastructure
+笨・**First Principles**: Broke down problem (static 竊・adaptive AI)
+笨・**Occam's Razor**: Chose SIMPLEST solution (enhance existing, don't rewrite)
+笨・**WSP Compliance**: Aligned with WSP 77, 15, 96, 48, 91
+笨・**Graceful Failure**: System works with OR without AI models
+笨・**Iterative Design**: Research 竊・Design 竊・Implement 竊・Test 竊・Document
 
 **Remember**: 012.txt is training data for mining domain-specific examples to create specialized Gemma wardrobes.
 
 ---
 
-**Status**: ✅ ARCHITECTURE COMPLETE | ⏳ TESTING PENDING
+**Status**: 笨・ARCHITECTURE COMPLETE | 竢ｳ TESTING PENDING
 **Blocker**: Running daemon processes with file handles
-**Next**: Stop daemons → Apply patch → Test Gemma → Test Qwen → Wire learning
+**Next**: Stop daemons 竊・Apply patch 竊・Test Gemma 竊・Test Qwen 竊・Wire learning
+

@@ -6,11 +6,19 @@
 
 ## [TARGET] Module Overview
 
-**Module Name:** `linkedin_agent`  
-**Domain:** `platform_integration`  
-**Purpose:** Autonomous LinkedIn platform engagement and content distribution  
-**Current Phase:** Prototype (v1.x.x) - Enhanced Integration  
+**Module Name:** `linkedin_agent`
+**Domain:** `platform_integration`
+**Purpose:** Autonomous LinkedIn platform engagement and content distribution
+**Current Phase:** Prototype (v1.x.x) - Enhanced Integration
 **WSP Compliance:** WSP 1, WSP 3, WSP 11, WSP 30, WSP 42, WSP 53
+
+### Related Skills
+- **LinkedIn Company Poster** (`modules/ai_intelligence/ai_overseer/skillz/linkedin_company_poster/`)
+  - CLI posting to FoundUps company page (1263645)
+  - Signature: `0102🦞 #FoundUps #pAVS #0102`
+  - Post updates: `--post "content"`
+  - Write articles: `--article "title" --body "body"`
+  - Article URL: `https://www.linkedin.com/article/new/?author=urn%3Ali%3Afs_normalized_company%3A1263645`
 
 ---
 
@@ -87,6 +95,33 @@ class LinkedInAgent:
     async def test_linkedin_agent(self) -> bool
     def get_wre_status(self) -> Dict[str, Any]
 ```
+
+#### `LinkedInActions` (Layered Digital Twin Execution Surface)
+**Purpose:** DOM/Selenium-first LinkedIn automation with UI-TARS verification gates.
+
+```python
+class LinkedInActions:
+    async def run_digital_twin_flow(
+        self,
+        comment_text: str,
+        repost_text: str,
+        schedule_date: str,
+        schedule_time: str,
+        mentions: Optional[List[str]] = None,
+        identity_cycle: Optional[List[str]] = None,
+        dry_run: bool = False,
+    ) -> LinkedInActionResult
+```
+
+Behavior contract:
+- Executes layered flow L0 -> L1 -> L2 -> L3.
+- L1 consumes `comment_text` and `mentions`.
+- L3 consumes `repost_text`, `schedule_date`, and `schedule_time`.
+- `dry_run=True` validates selectors/verification gates without live submit.
+
+CLI/adapter mapping (current):
+- `linkedin_action_cli.py --action digital_twin ...`
+- `linkedin_social_adapter.py` action `digital_twin`
 
 #### `LinkedInPost`
 **Purpose:** LinkedIn content data structure  

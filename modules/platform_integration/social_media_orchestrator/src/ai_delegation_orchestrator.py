@@ -18,6 +18,10 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 from .ui_tars_scheduler import get_ui_tars_scheduler, ScheduledPost
 
@@ -76,8 +80,8 @@ class AIDelegationOrchestrator:
         """
         try:
             # Check for model files and running processes
-            qwen_path = Path("E:/HoloIndex/models/qwen")
-            gemma_path = Path("E:/HoloIndex/models/gemma")
+            qwen_path = resolve_code_model_path()
+            gemma_path = resolve_triage_model_path()
 
             models_exist = qwen_path.exists() or gemma_path.exists()
 

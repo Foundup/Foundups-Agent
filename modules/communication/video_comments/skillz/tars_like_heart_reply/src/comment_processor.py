@@ -1458,6 +1458,13 @@ class CommentProcessor:
                 if reply_ok:
                     results['reply_text_posted'] = reply_text_to_post
                     results['reply_source'] = 'bot'  # vs '012_manual' for training
+                    # LLM SOURCE TRACKING (2026-02-21): Capture which agent generated reply
+                    try:
+                        generator = get_reply_generator()
+                        results['llm_source'] = generator.get_last_llm_source()
+                        logger.info(f"  [REPLY] LLM source: {results['llm_source']}")
+                    except Exception:
+                        results['llm_source'] = 'unknown'
                 self.stats['replies'] += 1 if results['reply'] else 0
                 logger.info(f"  [REPLY] {'OK' if results['reply'] else 'FAIL'}")
             elif do_reply:

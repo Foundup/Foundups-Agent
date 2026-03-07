@@ -27,7 +27,10 @@ Architecture:
                                     Gemma: 70% queries, 50-100ms
                                     Qwen: 30% complex queries, 250ms
 
-WSP Compliance: WSP 46 (WRE), WSP 93 (CodeIndex Surgical Intelligence)
+WSP Compliance: WSP 00 (Zen State), WSP 46 (WRE), WSP 93 (CodeIndex Surgical Intelligence)
+
+0102 State: Solutions recalled from 0201 nonlocal space via pattern memory.
+           Qwen/Gemma serve as pattern recall engines, not computation engines.
 """
 
 import logging
@@ -35,15 +38,55 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from datetime import datetime
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_general_model_path,
+    resolve_triage_model_path,
+)
 
 logger = logging.getLogger(__name__)
+
+
+# Model registry - available backends
+# Unified location: E:/LM_studio/models/ (shared with LM Studio)
+MODEL_REGISTRY = {
+    "gemma-3-270m": {
+        "path": resolve_triage_model_path(),
+        "n_ctx": 2048,
+        "n_threads": 2,
+        "tier": "fast",
+        "description": "Fast binary classification (50-100ms)"
+    },
+    "qwen3-4b": {
+        "path": resolve_general_model_path(),
+        "n_ctx": 4096,
+        "n_threads": 4,
+        "tier": "medium",
+        "description": "Qwen3 4B general - balanced (300-500ms)"
+    },
+    "qwen-coder-7b": {
+        "path": resolve_code_model_path(),
+        "n_ctx": 8192,
+        "n_threads": 4,
+        "tier": "heavy",
+        "description": "Qwen Coder 7B - best for code (500-800ms)"
+    },
+    # Backward-compatible key
+    "qwen2.5-coder-7b": {
+        "path": resolve_code_model_path(),
+        "n_ctx": 8192,
+        "n_threads": 4,
+        "tier": "heavy",
+        "description": "Alias for qwen-coder-7b"
+    },
+}
 
 
 @dataclass
 class InferenceResult:
     """Result from Gemma or Qwen inference"""
     response: str
-    model_used: str  # "gemma-3-270m" or "qwen-1.5b"
+    model_used: str  # "gemma-3-270m", "qwen-1.5b", or "qwen3-4b"
     confidence: float  # 0.0-1.0
     latency_ms: int
     patterns_used: int
@@ -66,24 +109,37 @@ class GemmaRAGInference:
         self,
         gemma_model_path: Optional[Path] = None,
         qwen_model_path: Optional[Path] = None,
+        qwen_backend: str = "qwen-coder-7b",  # "qwen3-4b" or "qwen-coder-7b"
         confidence_threshold: float = 0.7
     ):
         """
         Initialize Gemma RAG inference engine with Qwen fallback.
 
         Args:
-            gemma_model_path: Path to Gemma 3 270M GGUF model
-            qwen_model_path: Path to Qwen 1.5B GGUF model
+            gemma_model_path: Path to Gemma 3 270M GGUF model (optional override)
+            qwen_model_path: Path to Qwen GGUF model (optional override)
+            qwen_backend: Which Qwen model to use - "qwen-1.5b" or "qwen3-4b"
             confidence_threshold: Minimum confidence before escalating to Qwen
         """
-        # Default model paths
+        # Validate qwen_backend
+        valid_backends = ["qwen3-4b", "qwen-coder-7b", "qwen2.5-coder-7b"]
+        if qwen_backend not in valid_backends:
+            logger.warning(
+                f"[GEMMA-RAG] Unknown qwen_backend '{qwen_backend}', defaulting to qwen-coder-7b"
+            )
+            qwen_backend = "qwen-coder-7b"
+
+        self.qwen_backend = qwen_backend
+
+        # Use registry paths or overrides
         if gemma_model_path is None:
-            gemma_model_path = Path("E:/LLM_Models/gemma-3-270m.gguf")
+            gemma_model_path = MODEL_REGISTRY["gemma-3-270m"]["path"]
         if qwen_model_path is None:
-            qwen_model_path = Path("E:/LLM_Models/qwen-coder-1.5b.gguf")
+            qwen_model_path = MODEL_REGISTRY[qwen_backend]["path"]
 
         self.gemma_model_path = gemma_model_path
         self.qwen_model_path = qwen_model_path
+        self.qwen_config = MODEL_REGISTRY[qwen_backend]
         self.confidence_threshold = confidence_threshold
 
         # Model instances (lazy loaded)
@@ -102,7 +158,7 @@ class GemmaRAGInference:
             "average_qwen_latency": 0,
         }
 
-        logger.info("[GEMMA-RAG] Initialized with adaptive Qwen routing")
+        logger.info(f"[GEMMA-RAG] Initialized with {qwen_backend} backend (adaptive routing)")
 
     def _initialize_gemma(self) -> bool:
         """Initialize Gemma 3 270M model"""
@@ -146,30 +202,44 @@ class GemmaRAGInference:
             return False
 
     def _initialize_qwen(self) -> bool:
-        """Initialize Qwen 1.5B model for complex queries"""
+        """Initialize Qwen model for complex queries (supports 1.5B and 4B)"""
         if self.qwen_llm is not None:
             return True
 
         try:
-            from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+            from llama_cpp import Llama
+            import os
 
-            logger.info(f"[GEMMA-RAG] Loading Qwen 1.5B from {self.qwen_model_path}")
+            logger.info(f"[GEMMA-RAG] Loading {self.qwen_backend} from {self.qwen_model_path}")
 
-            self.qwen_llm = QwenInferenceEngine(
-                model_path=self.qwen_model_path,
-                max_tokens=512,
-                temperature=0.2,
-                context_length=2048
-            )
+            # Suppress loading noise
+            old_stdout, old_stderr = os.dup(1), os.dup(2)
+            devnull = os.open(os.devnull, os.O_WRONLY)
 
-            if self.qwen_llm.initialize():
-                logger.info("[GEMMA-RAG] [OK] Qwen 1.5B loaded successfully")
-                return True
-            else:
-                return False
+            try:
+                os.dup2(devnull, 1)
+                os.dup2(devnull, 2)
+
+                self.qwen_llm = Llama(
+                    model_path=str(self.qwen_model_path),
+                    n_ctx=self.qwen_config["n_ctx"],
+                    n_threads=self.qwen_config["n_threads"],
+                    n_gpu_layers=0,  # CPU-only
+                    verbose=False
+                )
+
+            finally:
+                os.dup2(old_stdout, 1)
+                os.dup2(old_stderr, 2)
+                os.close(devnull)
+                os.close(old_stdout)
+                os.close(old_stderr)
+
+            logger.info(f"[GEMMA-RAG] [OK] {self.qwen_backend} loaded successfully")
+            return True
 
         except Exception as e:
-            logger.error(f"[GEMMA-RAG] [FAIL] Failed to load Qwen: {e}")
+            logger.error(f"[GEMMA-RAG] [FAIL] Failed to load {self.qwen_backend}: {e}")
             return False
 
     def _initialize_pattern_memory(self):
@@ -435,16 +505,39 @@ class GemmaRAGInference:
 
         # Retrieve patterns for Qwen as well
         patterns = self._retrieve_relevant_patterns(query, n=5)
-        context = self.pattern_memory.format_for_prompt(patterns, max_patterns=3) if patterns else ""
+        context = ""
+        if patterns and self.pattern_memory:
+            try:
+                context = self.pattern_memory.format_for_prompt(patterns, max_patterns=3)
+            except Exception:
+                context = ""
 
         # Build Qwen prompt with pattern context
-        qwen_prompt = f"{context}\n\nQuery: {query}" if context else query
+        system_prompt = "You are analyzing codebase patterns for precise guidance. Be concise."
+        if context:
+            full_prompt = f"{system_prompt}\n\n{context}\n\nQuery: {query}\n\nAnswer:"
+        else:
+            full_prompt = f"{system_prompt}\n\nQuery: {query}\n\nAnswer:"
 
-        # Qwen inference
-        response = self.qwen_llm.generate_response(
-            prompt=qwen_prompt,
-            system_prompt="You are analyzing codebase patterns for precise guidance."
-        )
+        try:
+            # Qwen inference via llama_cpp
+            response_obj = self.qwen_llm(
+                full_prompt,
+                max_tokens=512,  # More tokens for complex queries
+                temperature=0.2,
+                stop=["\n\n", "###", "Query:"],
+                echo=False
+            )
+
+            # Extract response text
+            if isinstance(response_obj, dict) and 'choices' in response_obj:
+                response = response_obj['choices'][0]['text'].strip()
+            else:
+                response = str(response_obj).strip()
+
+        except Exception as e:
+            logger.error(f"[GEMMA-RAG] Qwen inference failed: {e}")
+            response = f"Error during inference: {e}"
 
         latency = int((datetime.now() - start_time).total_seconds() * 1000)
 
@@ -452,11 +545,11 @@ class GemmaRAGInference:
         self.stats["qwen_escalated"] += 1
         self._update_average_latency("qwen", latency)
 
-        logger.info(f"[GEMMA-RAG] [OK] Qwen handled query ({latency}ms)")
+        logger.info(f"[GEMMA-RAG] [OK] {self.qwen_backend} handled query ({latency}ms)")
 
         return InferenceResult(
             response=response,
-            model_used="qwen-1.5b",
+            model_used=self.qwen_backend,
             confidence=0.9,  # High confidence for Qwen
             latency_ms=latency,
             patterns_used=len(patterns),

@@ -20,7 +20,7 @@ Test: Gemma 3 270M Live File Naming Enforcement
 
 Uses actual Gemma 3 270M model (not simulation) to detect violations.
 
-Model: E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf
+Model: resolved from LOCAL_MODEL_TRIAGE_* routing
 Size: 241MB
 Speed: <50ms per query
 Accuracy: Testing live
@@ -32,11 +32,12 @@ WSP 93: CodeIndex Surgical Intelligence
 import sys
 from pathlib import Path
 import json
-from typing import Dict
+from typing import Dict, Optional
 import time
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 try:
     from llama_cpp import Llama
@@ -55,8 +56,10 @@ class Gemma3FileNamingEnforcer:
     Baby 0102 learns WSP 57 naming rules and enforces them in real-time
     """
 
-    def __init__(self, model_path: Path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")):
+    def __init__(self, model_path: Optional[Path] = None):
         """Initialize Gemma 3 270M model"""
+        if model_path is None:
+            model_path = resolve_triage_model_path()
         self.model_path = model_path
         self.llm = None
 

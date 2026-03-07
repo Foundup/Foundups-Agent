@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 
 # UTF-8 enforcement for Windows (WSP 90)
-if sys.platform.startswith('win'):
+if sys.platform.startswith('win') and not os.environ.get('FOUNDUPS_UTF8_WRAPPED'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
@@ -135,21 +135,91 @@ def _run_linkedin_commenting() -> None:
     action_log.log("session_start", {"mode": "linkedin_commenting"})
 
     try:
-        from modules.platform_integration.social_media_orchestrator.src.social_media_orchestrator import SocialMediaOrchestrator
+        from modules.infrastructure.browser_actions.src.linkedin_actions import LinkedInActions
 
-        action_log.log("import_success", {"module": "SocialMediaOrchestrator"})
+        action_log.log("import_success", {"module": "LinkedInActions"})
 
-        orchestrator = SocialMediaOrchestrator()
-        action_log.log("orchestrator_init", {"status": "success"})
+        # Show options
+        print("\n  LinkedIn Engagement Options:")
+        print("  1. Engagement Session (autonomous - read, like, reply)")
+        print("  2. Scan Feed for AI/Capital Posts")
+        print("  3. Read Feed Only (no engagement)")
+        print("  0. Back")
 
-        print("[LN-COMMENT] Digital Twin mode - LinkedIn commenting")
-        print("[LN-COMMENT] (Implementation pending - orchestrator initialized)")
+        try:
+            sub_choice = input("\n  Select: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return
 
-        action_log.log("execution_complete", {"status": "pending_implementation"})
+        if sub_choice == "0":
+            return
+
+        # Initialize LinkedInActions
+        linkedin = LinkedInActions(profile='linkedin_foundups')
+        action_log.log("linkedin_init", {"profile": "linkedin_foundups"})
+
+        if sub_choice == "1":
+            # Engagement session
+            print("\n[LN-SESSION] Running engagement session...")
+            print("Duration: 10 minutes | Max engagements: 5")
+            print("Press Ctrl+C to stop early\n")
+
+            action_log.log("session_start", {"duration": 10, "max_engagements": 5})
+
+            result = asyncio.run(linkedin.run_engagement_session(
+                duration_minutes=10,
+                max_engagements=5,
+                use_dom_iterator=True,
+            ))
+
+            action_log.log("session_complete", result.to_dict())
+            print(f"\n[RESULT] {json.dumps(result.to_dict(), indent=2)}")
+
+        elif sub_choice == "2":
+            # Scan feed for engagement opportunities
+            print("\n[LN-SCAN] Scanning feed for AI/Capital posts...")
+
+            action_log.log("scan_start", {"max_posts": 10})
+
+            # Navigate and scan
+            nav_result = asyncio.run(linkedin.navigate_to_feed())
+            if nav_result.success:
+                posts = asyncio.run(linkedin.scan_feed_for_engagement(max_posts=10))
+                action_log.log("scan_complete", {"posts_found": len(posts)})
+
+                print(f"\n[FOUND] {len(posts)} engagement opportunities:")
+                for i, post in enumerate(posts, 1):
+                    reason = post.get('engagement_reason', 'unknown')
+                    author = post.get('author', 'Unknown')[:30]
+                    content = post.get('content', '')[:60]
+                    print(f"  {i}. [{reason}] {author}: {content}...")
+            else:
+                action_log.log("nav_failed", {"error": nav_result.error})
+                print(f"[ERROR] Could not navigate to feed: {nav_result.error}")
+
+        elif sub_choice == "3":
+            # Read feed only
+            print("\n[LN-READ] Reading feed posts...")
+
+            action_log.log("read_start", {"max_posts": 10})
+
+            posts = asyncio.run(linkedin.read_feed(max_posts=10))
+            action_log.log("read_complete", {"posts_count": len(posts)})
+
+            print(f"\n[READ] {len(posts)} posts:")
+            for i, post in enumerate(posts, 1):
+                relevant = "[RELEVANT]" if post.is_relevant else ""
+                print(f"  {i}. {relevant} {post.author[:25]}: {post.content[:50]}...")
+
+        else:
+            print("  Invalid choice.")
+
+        linkedin.close()
+        action_log.log("linkedin_closed", {"status": "success"})
 
     except ImportError as e:
         action_log.log("import_error", {"error": str(e)}, result="FAILED")
-        print(f"[ERROR] Could not import SocialMediaOrchestrator: {e}")
+        print(f"[ERROR] Could not import LinkedInActions: {e}")
 
     except Exception as e:
         action_log.log("execution_error", {"error": str(e)}, result="FAILED")

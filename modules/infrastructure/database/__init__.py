@@ -24,10 +24,13 @@ One Database, Three Namespaces:
 - agents.*      # Agent memory
 """
 
-from .src import DatabaseManager, ModuleDB, AgentDB
+from .src import DatabaseManager, ModuleDB, AgentDB, Database, audit_sqlite_file, run_sqlite_audit
 
 __all__ = [
     'DatabaseManager',
     'ModuleDB',
-    'AgentDB'
+    'AgentDB',
+    'Database',
+    'audit_sqlite_file',
+    'run_sqlite_audit',
 ]

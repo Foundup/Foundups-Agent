@@ -150,13 +150,14 @@ scipy>=1.10.0
 
 ### Qwen Agent Setup
 ```bash
-export QWEN_MODEL_PATH="models/qwen-1.5b-chat.gguf"
+export LOCAL_MODEL_ROOT="E:/LM_studio/models/local"
+export LOCAL_MODEL_GENERAL_DIR="E:/LM_studio/models/local/qwen3-4b"
 export QWEN_CONTEXT_WINDOW=32768
 ```
 
 ### Gemma Agent Setup
 ```bash
-export GEMMA_MODEL_PATH="models/gemma-2b.gguf"
+export LOCAL_MODEL_TRIAGE_DIR="E:/LM_studio/models/local/gemma-270m"
 export GEMMA_CONTEXT_WINDOW=8192
 ```
 

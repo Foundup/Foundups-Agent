@@ -69,7 +69,7 @@ def _resolve_channel_id(channel_arg: str) -> str:
 
     Supports either:
     - Raw channel id: "UC...."
-    - Named aliases: "move2japan" | "undaodu" | "ravingantifa"
+    - Named aliases: "move2japan" | "undaodu" | "antifafm"
 
     Channel IDs are read from environment to allow 012 to reconfigure without code edits.
     """
@@ -86,8 +86,8 @@ def _resolve_channel_id(channel_arg: str) -> str:
         return os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")
     if alias in {"undaodu", "ud"}:
         return os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
-    if alias in {"ravingantifa", "ravingantifa_channel", "ra"}:
-        return os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
+    if alias in {"antifafm", "antifa", "ravingantifa", "ra"}:  # ravingantifa = legacy alias
+        return os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
 
     # Unknown alias: assume caller intended a raw id.
     return raw
@@ -123,7 +123,7 @@ Or use individual switches for custom configuration.
         "--channel",
         type=str,
         default=DEFAULT_CHANNEL,
-        help="YouTube channel ID (UC...) or alias: move2japan | undaodu | ravingantifa"
+        help="YouTube channel ID (UC...) or alias: move2japan | undaodu | antifafm"
     )
     parser.add_argument(
         "--video",
@@ -221,6 +221,12 @@ Or use individual switches for custom configuration.
         type=int,
         default=9222,
         help="Browser debug port (9222=Chrome, 9223=Edge)"
+    )
+    parser.add_argument(
+        "--heartbeat-file",
+        type=str,
+        default=None,
+        help="Path to heartbeat file for supervisor monitoring (rotation_supervisor)"
     )
 
     args = parser.parse_args()
@@ -358,11 +364,44 @@ Or use individual switches for custom configuration.
         use_dom=True
     )
 
+    # Heartbeat task for rotation supervisor monitoring
+    heartbeat_task = None
+    heartbeat_stop = asyncio.Event()
+
+    async def _heartbeat_writer():
+        """Background task to write heartbeat file for supervisor."""
+        from pathlib import Path
+        import json
+        import time
+
+        while not heartbeat_stop.is_set():
+            try:
+                # Get stats from DAE if available
+                stats = getattr(dae, '_current_stats', {})
+                heartbeat_data = {
+                    "timestamp": time.time(),
+                    "comments_processed": stats.get("comments_processed", 0),
+                    "likes": stats.get("likes", 0),
+                    "hearts": stats.get("hearts", 0),
+                    "replies": stats.get("replies", 0),
+                    "channel": args.channel,
+                    "state": "running",
+                }
+                Path(args.heartbeat_file).write_text(json.dumps(heartbeat_data))
+            except Exception:
+                pass  # Non-critical
+            await asyncio.sleep(5)  # Write every 5s
+
     try:
         browser_type = "Edge" if args.browser_port == 9223 else "Chrome"
         logger.info(f"[DAEMON][DAE-CONNECT] 🔌 Connecting to {browser_type} (port {args.browser_port})...")
         await dae.connect()
         logger.info(f"[DAEMON][DAE-CONNECT] ✅ Connected successfully")
+
+        # Start heartbeat writer if supervisor provided heartbeat file
+        if args.heartbeat_file:
+            logger.info(f"[DAEMON][HEARTBEAT] Starting heartbeat writer → {args.heartbeat_file}")
+            heartbeat_task = asyncio.create_task(_heartbeat_writer())
 
         logger.info(f"[DAEMON][DAE-NAVIGATE] 🧭 Navigating to inbox...")
         await dae.navigate_to_inbox()
@@ -402,6 +441,29 @@ Or use individual switches for custom configuration.
         return error_result
 
     finally:
+        # Stop heartbeat writer
+        if heartbeat_task:
+            heartbeat_stop.set()
+            heartbeat_task.cancel()
+            try:
+                await heartbeat_task
+            except asyncio.CancelledError:
+                pass
+            # Write final heartbeat
+            if args.heartbeat_file:
+                try:
+                    from pathlib import Path
+                    import json
+                    import time
+                    final_data = {
+                        "timestamp": time.time(),
+                        "comments_processed": result.get("stats", {}).get("comments_processed", 0) if 'result' in dir() else 0,
+                        "state": "completed",
+                    }
+                    Path(args.heartbeat_file).write_text(json.dumps(final_data))
+                except Exception:
+                    pass
+
         logger.info(f"[DAEMON][DAE-CLEANUP] 🧹 Closing DAE connection...")
         dae.close()
         logger.info(f"[DAEMON][DAE-CLEANUP] ✅ Cleanup complete")

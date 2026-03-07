@@ -8,6 +8,37 @@ Active - Clean WRE Structure Achieved
 
 ## Chronological Change Log
 
+### main.py Startup Hardening (Dependency CVE Gate + 0102 Self-Audit Loop)
+**Date**: 2026-03-05
+**WSP Protocol References**: WSP 15, WSP 22, WSP 50, WSP 64, WSP 71
+**Impact Analysis**: Startup now includes dependency/CVE gate before CLI launch and continuous daemon log self-audit with policy-bound auto-fix dispatch.
+
+#### [OK] Implementation Details
+- `main.py`:
+  - Added `run_dependency_security_preflight()` call in startup preflight chain.
+  - Added startup + teardown wiring for `DaemonSelfAuditLoop` (`OPENCLAW_SELF_AUDIT_ENABLED`).
+- `modules/infrastructure/wre_core/src/dependency_security_preflight.py` (NEW):
+  - Added Python/Node/Rust dependency checks (`pip-audit`, `npm audit`, `cargo audit`) with TTL cache and enforceable thresholds.
+- `modules/infrastructure/wre_core/src/daemon_self_audit_loop.py` (NEW):
+  - Added continuous log tailing, deduped error signature extraction, task creation, and policy-gated `IRONCLAW_START_CMD` auto-fix.
+- `.env.example`:
+  - Added `OPENCLAW_DEP_SECURITY_*` and `OPENCLAW_SELF_AUDIT_*` controls.
+
+---
+
+### main.py Startup Hardening (Security + WRE Dashboard Preflights)
+**Date**: 2026-03-05
+**WSP Protocol References**: WSP 22, WSP 50, WSP 60, WSP 73
+**Impact Analysis**: Startup now runs explicit WRE dashboard gate in addition to OpenClaw security/WSP framework checks.
+
+#### [OK] Implementation Details
+- `main.py`: Added `run_wre_dashboard_preflight()` with watch/stable/insufficient-data semantics and enforcement handling.
+- `main.py`: Main startup now includes WRE dashboard preflight before CLI/menu launch.
+- `main.py`: Added 24x7-aware defaults for security preflight:
+  - `OPENCLAW_24X7=1` makes security preflight strict by default (`enforced=1`, `force=1`) unless explicitly overridden.
+
+---
+
 ### main.py Startup Performance Fix (3 issues resolved)
 **Date**: 2026-02-07
 **WSP Protocol References**: WSP 22, WSP 50, WSP 84, WSP 87

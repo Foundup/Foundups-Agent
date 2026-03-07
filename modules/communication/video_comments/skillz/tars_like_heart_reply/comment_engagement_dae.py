@@ -226,6 +226,8 @@ class CommentEngagementDAE:
             'errors': 0,
             'moderators_detected': 0,  # Track active mod comments
         }
+        # Alias for rotation_supervisor heartbeat monitoring
+        self._current_stats = self.stats
 
         # ANTI-DETECTION: Break state tracking (human-like rest periods)
         # Pattern learned from party_reactor.py cooldown mechanism
@@ -1021,6 +1023,7 @@ class CommentEngagementDAE:
                         'reply': result.get('reply', False),
                         'reply_text_posted': result.get('reply_text_posted', ''),
                         'reply_source': result.get('reply_source', 'bot'),
+                        'llm_source': result.get('llm_source', 'unknown'),  # NEW (2026-02-21): Track which LLM/skill generated reply
                         'video_id': self.video_id,
                         'channel_id': self.channel_id,
                         'timestamp': datetime.now().isoformat(),
@@ -1107,6 +1110,7 @@ class CommentEngagementDAE:
                                 'reply': nested_result.get('reply', False),
                                 'reply_text_posted': nested_result.get('reply_text_posted', ''),
                                 'reply_source': nested_result.get('reply_source', 'bot'),
+                                'llm_source': nested_result.get('llm_source', 'unknown'),  # NEW (2026-02-21): Track LLM source
                                 'is_nested': True,
                                 'parent_comment_idx': total_processed,
                                 'video_id': self.video_id,

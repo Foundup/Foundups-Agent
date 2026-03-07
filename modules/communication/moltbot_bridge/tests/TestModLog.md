@@ -1,5 +1,26 @@
 # TestModLog - tests
 
+## 2026-03-05: Post-escalation shared security regression sweep
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest -q modules/infrastructure/wre_core/tests/test_codeact_executor_hardening.py modules/infrastructure/wre_core/tests/test_dependency_security_preflight.py modules/infrastructure/wre_core/tests/test_skill_manifest_guard.py modules/infrastructure/wre_core/tests/test_dae_preflight_integration_guard.py modules/infrastructure/wre_core/tests/test_dae_preflight_security_behavior.py modules/infrastructure/wre_core/wre_master_orchestrator/tests/test_wre_master_orchestrator.py modules/communication/moltbot_bridge/tests/test_skill_safety_guard.py -k "supply_chain_gate or hardening or dependency or manifest or self_audit or preflight"`
+- Status: PASS
+- Result: `16 passed, 30 deselected, 2 warnings`
+- Notes:
+  - Confirms Moltbot skill-safety + manifest lanes remain stable after 0102 self-audit escalation phase.
+
+---
+
+## 2026-03-05: Shared WSP 15 security regression sweep (includes skill safety gate)
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest -q modules/infrastructure/wre_core/tests/test_daemon_self_audit_loop.py modules/infrastructure/wre_core/tests/test_codeact_executor_hardening.py modules/infrastructure/wre_core/tests/test_dependency_security_preflight.py modules/infrastructure/wre_core/tests/test_skill_manifest_guard.py modules/infrastructure/wre_core/tests/test_dae_preflight_integration_guard.py modules/infrastructure/wre_core/tests/test_dae_preflight_security_behavior.py modules/infrastructure/wre_core/wre_master_orchestrator/tests/test_wre_master_orchestrator.py modules/communication/moltbot_bridge/tests/test_skill_safety_guard.py -k "supply_chain_gate or hardening or dependency or manifest or self_audit or preflight"`
+- Status: PASS
+- Result: `20 passed, 30 deselected, 2 warnings`
+- Notes:
+  - Confirms Moltbot skill safety and manifest/security controls remain stable alongside WRE self-audit and preflight hardening.
+  - Warnings are repo-level pytest config warnings (`asyncio_*`) under plugin-autoload-disabled mode.
+
+---
+
 ## 2026-02-16: Cross-module concatenated validation (identity-anchor hardening)
 
 - Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests modules/foundups/agent_market/tests modules/foundups/simulator/tests -q`
@@ -82,3 +103,26 @@
 - Status: PASS
 - Result: 20 passed, 2 warnings
 - Notes: Includes skill safety guard tests and OpenClaw DAE routing tests.
+
+## 2026-03-06: Qwen3.5 model-switch coverage
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "qwen3_5 or model_switch_local_qwen3_5_updates_conversation_target or model_availability_snapshot_includes_qwen3_5_target" -q`
+- Status: PASS
+- Result: `2 passed, 84 deselected, 2 warnings`
+- Notes:
+  - Added regression coverage for `switch model to qwen3.5`.
+  - Added availability snapshot assertion for `local/qwen3.5-4b`.
+
+## 2026-03-07: ZeroClaw runtime profile regression coverage
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "zeroclaw or runtime_profile or model_switch_external_blocked_by_zeroclaw_profile" -q`
+- Status: PASS
+- Result: `3 passed, 86 deselected, 2 warnings`
+- Notes:
+  - Validates `OPENCLAW_RUNTIME_PROFILE=zeroclaw` forces fail-closed external policy.
+  - Validates external model-switch commands are blocked under ZeroClaw.
+  - Validates mutating intent is downgraded to conversation route in full `process()` loop.
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -q`
+- Status: PASS
+- Result: `89 passed, 2 warnings`
+- Notes:
+  - Full-file regression confirms new runtime-profile gates do not break existing OpenClaw DAE behavior.

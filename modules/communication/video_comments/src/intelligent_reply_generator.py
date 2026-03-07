@@ -27,6 +27,14 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
+
+# Gemma validator for emoji pattern matching (2026-02-21)
+try:
+    from modules.communication.video_comments.src.gemma_validator import get_gemma_validator
+    GEMMA_AVAILABLE = True
+except ImportError:
+    GEMMA_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -661,8 +669,8 @@ VARIATION GUIDANCE:
             logger.info("[REPLY-GEN] QwenEngine DISABLED via DISABLE_QWEN_ENGINE=true")
         elif QWEN_ENGINE_AVAILABLE and QwenInferenceEngine:
             try:
-                # Use Qwen 1.5B model from HoloIndex models directory
-                qwen_model_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+                # Resolve local code model from central model selection.
+                qwen_model_path = resolve_code_model_path()
                 if qwen_model_path.exists():
                     self.qwen_engine = QwenInferenceEngine(
                         model_path=qwen_model_path,
@@ -701,6 +709,9 @@ VARIATION GUIDANCE:
                 logger.info("[REPLY-GEN] CommentContentAnalyzer ready (contextual replies enabled)")
             except Exception as e:
                 logger.warning(f"[REPLY-GEN] CommentContentAnalyzer init failed: {e}")
+
+        # LLM SOURCE TRACKING (2026-02-21): Track which LLM generated each reply for training data
+        self._last_llm_source = None  # 'grok', 'lm_studio', 'qwen', 'template', 'skill_0', 'skill_1', 'skill_2'
 
         # LLM CHAIN STATUS SUMMARY (diagnostic)
         logger.info("[REPLY-GEN] ═══ LLM CHAIN STATUS ═══")
@@ -1405,8 +1416,29 @@ COMMENT ANALYSIS (use this to craft a relevant response):
 - Key Point: {analysis.key_point}
 - Engagement Hook: {analysis.engagement_hook or 'respond to their main point'}{alignment_guidance}
 
-IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysis.key_point[:30]}". Do NOT use generic phrases like "thanks for watching" or "holding it down" - respond to what they ACTUALLY said."""
+IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysis.key_point[:30]}". Do NOT use generic phrases like "thanks for watching" or "holding it down" - respond to what they ACTUALLY said.
+
+OUTPUT FORMAT: Reply with ONLY the reply text. Do NOT include:
+- Explanations (e.g., "This reply addresses...")
+- Notes (e.g., "Note: This comment...")
+- Reasoning (e.g., "This is relevant because...")
+- Multiple options or alternatives
+Just output the actual reply text, nothing else."""
             logger.info(f"[LLM-CHAIN] 📝 Content analysis added to prompt (topic={analysis.topic}, aligns={analysis.aligns_with_video})")
+
+        # CRITICAL FIX (2026-02-21): OUTPUT FORMAT must ALWAYS be added, not just when content_analysis exists
+        # This prevents LLM from outputting explanations like "Note: This comment..." in replies
+        if "OUTPUT FORMAT:" not in user_prompt:
+            user_prompt += """
+
+OUTPUT FORMAT: Reply with ONLY the reply text. Do NOT include:
+- Explanations (e.g., "This reply addresses...")
+- Notes (e.g., "Note: This comment...")
+- Reasoning (e.g., "This is relevant because...")
+- Multiple options or alternatives
+- Brackets or parentheses with commentary
+Just output the actual reply text, nothing else."""
+            logger.info("[LLM-CHAIN] 📝 OUTPUT FORMAT instructions added to prompt")
 
         try:
             # LLM FALLBACK CHAIN LOGGING (diagnostic)
@@ -1426,6 +1458,7 @@ IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysi
                     if reply:
                         # Clean reply (remove @mentions at start, etc.)
                         reply = self._clean_reply(reply, author_name)
+                        self._last_llm_source = 'grok'  # Track for training data
                         logger.info(f"[LLM-CHAIN] ✅ GROK SUCCESS: {reply[:80]}...")
                         return reply
                     else:
@@ -1464,6 +1497,7 @@ IMPORTANT: Your reply MUST address their {analysis.comment_type} about "{analysi
                         json_resp = response.json()
                         if "choices" in json_resp and json_resp["choices"]:
                             content = json_resp["choices"][0]["message"]["content"]
+                            self._last_llm_source = 'lm_studio'  # Track for training data
                             logger.info(f"[LLM-CHAIN] ✅ LM STUDIO SUCCESS: {content[:80]}...")
                             return content
                         else:
@@ -1490,24 +1524,42 @@ Key point: {analysis.key_point}
 Respond to: {analysis.engagement_hook or 'their main point'}
 """
 
-                    qwen_prompt = f"""Generate a short, contextual reply (1-2 sentences) to this YouTube comment.
+                    qwen_prompt = f"""Generate a SHORT reply (max 15 words) to this YouTube comment.
 {content_context}
 Comment: "{comment_text}"
 
-Reply (address their specific point, no generic phrases):"""
+Rules:
+- MAX 15 WORDS
+- ONE sentence only
+- No explanations
+- Just the reply"""
                     qwen_response = self.qwen_engine.generate_response(
                         prompt=qwen_prompt,
-                        system_prompt="You are a friendly YouTube community member. Reply to what they ACTUALLY said, not generic phrases.",
-                        max_tokens=100
+                        system_prompt="You reply in 15 words or less. Never explain. Just reply.",
+                        max_tokens=50  # Reduced from 100 to force brevity
                     )
                     if qwen_response and not qwen_response.startswith("Error:"):
                         # Clean up the response
                         qwen_response = self._clean_reply(qwen_response, author_name)
+
+                        # QWEN LENGTH GATE (2026-02-21): Reject if too long or has explanatory text
                         if qwen_response and qwen_response.strip():
+                            word_count = len(qwen_response.split())
+                            # Gate: Max 25 words (allow some buffer over 15 word prompt)
+                            if word_count > 25:
+                                logger.warning(f"[LLM-CHAIN] ❌ Qwen response too long ({word_count} words), rejecting")
+                                qwen_response = None
+                            # Gate: Reject if still has explanatory patterns
+                            elif any(p in qwen_response.lower() for p in ['this response', 'this reply', 'note:', 'the key point']):
+                                logger.warning(f"[LLM-CHAIN] ❌ Qwen response has explanatory text, rejecting")
+                                qwen_response = None
+
+                        if qwen_response and qwen_response.strip():
+                            self._last_llm_source = 'qwen'  # Track for training data
                             logger.info(f"[LLM-CHAIN] ✅ QWEN ENGINE SUCCESS: {qwen_response[:80]}...")
                             return qwen_response
                         else:
-                            logger.warning(f"[LLM-CHAIN] ❌ Qwen returned empty after cleaning")
+                            logger.warning(f"[LLM-CHAIN] ❌ Qwen response rejected by length/pattern gate")
                     else:
                         logger.warning(f"[LLM-CHAIN] ❌ Qwen returned error: {qwen_response[:100] if qwen_response else 'None'}")
                 except Exception as e:
@@ -1520,10 +1572,10 @@ Reply (address their specific point, no generic phrases):"""
             if self.banter_engine:
                  # Map tier to BanterEngine style if possible, or just generic
                  logger.warning("[LLM-CHAIN] ⚠️ Using BanterEngine TEMPLATES (NOT contextual!)")
-                 banter_reply = self.banter_engine.generate_reply(
-                     comment_text=comment_text,
-                     author_name=author_name
-                 )
+                 state_info, banter_reply = self.banter_engine.process_input_enhanced(comment_text)
+                 if not banter_reply or banter_reply == "...silence...":
+                     banter_reply = self.banter_engine.get_random_banter_enhanced("default")
+                 self._last_llm_source = 'template'  # Track for training data
                  logger.info(f"[LLM-CHAIN] BanterEngine reply: {banter_reply[:80] if banter_reply else 'None'}...")
                  return banter_reply
 
@@ -1532,23 +1584,77 @@ Reply (address their specific point, no generic phrases):"""
         except Exception as e:
             logger.error(f"[REPLY-GEN] Contextual reply generation failed: {e}")
             return None
-    
+
+    def get_last_llm_source(self) -> str:
+        """Get the LLM source that generated the last reply (for training data).
+
+        Returns:
+            str: 'grok', 'lm_studio', 'qwen', 'template', 'skill_0', 'skill_1', 'skill_2', or 'unknown'
+        """
+        return self._last_llm_source or 'unknown'
+
     def _clean_reply(self, reply: str, author_name: str) -> str:
-        """Clean up LLM-generated reply."""
+        """Clean up LLM-generated reply.
+
+        FIX (2026-02-21): Also strips explanatory text that LLM sometimes outputs
+        despite OUTPUT FORMAT instructions.
+        """
         reply = reply.strip()
+
         # Remove quotes if wrapped
         if reply.startswith('"') and reply.endswith('"'):
             reply = reply[1:-1]
+
+        # FIX (2026-02-21): Strip explanatory text patterns that LLM outputs
+        # These patterns indicate LLM is outputting chain-of-thought instead of just the reply
+        import re
+
+        # Pattern 1: Text followed by "Note:" or "(Note:" - keep only text before
+        note_patterns = [
+            r'\s*Note:.*$',           # "reply text Note: explanation"
+            r'\s*\(Note:.*$',         # "reply text (Note: explanation)"
+            r'\s*\[Note:.*$',         # "reply text [Note: explanation]"
+        ]
+        for pattern in note_patterns:
+            reply = re.sub(pattern, '', reply, flags=re.IGNORECASE | re.DOTALL)
+
+        # Pattern 2: Bracketed/parenthesized explanations at end
+        # E.g., "reply text [This response shows...]" or "reply text (This is a direct response...)"
+        explanation_patterns = [
+            r'\s*\[This\s+(response|reply|comment).*$',
+            r'\s*\(This\s+(response|reply|comment).*$',
+            r'\s*This\s+(response|reply)\s+(addresses|shows|maintains|directly).*$',
+        ]
+        for pattern in explanation_patterns:
+            reply = re.sub(pattern, '', reply, flags=re.IGNORECASE | re.DOTALL)
+
+        # Pattern 3: Multiple quoted replies (LLM outputting options)
+        # Keep only the first quoted section if multiple exist
+        if reply.count('"') >= 4:  # Multiple quoted strings
+            # Extract first quoted string
+            first_quote_match = re.match(r'^["\']?([^"\']+)["\']', reply)
+            if first_quote_match:
+                reply = first_quote_match.group(1).strip()
+
+        # Remove quotes if wrapped (re-check after pattern removal)
+        if reply.startswith('"') and reply.endswith('"'):
+            reply = reply[1:-1]
+        if reply.startswith("'") and reply.endswith("'"):
+            reply = reply[1:-1]
+
         # Remove @ mention if LLM added it
         if reply.startswith(f"@{author_name}"):
             reply = reply[len(f"@{author_name}"):].strip()
+
         # NEVER include @Unknown - that's embarrassing!
         if "@Unknown" in reply or "@unknown" in reply:
             reply = reply.replace("@Unknown", "").replace("@unknown", "").strip()
-            # Clean up any double spaces
-            while "  " in reply:
-                reply = reply.replace("  ", " ")
-        return reply
+
+        # Clean up any double spaces
+        while "  " in reply:
+            reply = reply.replace("  ", " ")
+
+        return reply.strip()
     
     def classify_commenter(
         self,
@@ -1998,6 +2104,46 @@ Reply (address their specific point, no generic phrases):"""
             except Exception as e:
                 logger.warning(f"[REPLY-GEN] Content analysis failed: {e}")
 
+        # EMOJI-TO-EMOJI RESPONSE (2026-02-21): Fast path for emoji-heavy comments
+        # Uses Gemma pattern matching to detect emoji-heavy comments and respond in kind
+        # This avoids LLM generating terrible verbose responses to simple emojis like "🔥🔥🔥"
+        if GEMMA_AVAILABLE:
+            try:
+                gemma = get_gemma_validator()
+                if gemma.is_emoji_heavy(comment_text, threshold=0.6):  # 60%+ emojis
+                    logger.info(f"[REPLY-GEN] 🎯 EMOJI-HEAVY detected: '{comment_text}'")
+                    emoji_result = gemma.generate_emoji_response(comment_text)
+                    emoji_reply = emoji_result.get('emoji_response', '🔥🔥')
+                    self._last_llm_source = f"gemma_emoji:{emoji_result.get('strategy', 'unknown')}"
+                    logger.info(f"[REPLY-GEN] ✨ Emoji response: {emoji_reply} (strategy: {emoji_result.get('strategy')})")
+                    # Return early with emoji response (no signature needed for pure emoji)
+                    return emoji_reply
+            except Exception as e:
+                logger.debug(f"[REPLY-GEN] Emoji detection skipped: {e}")
+
+        # LOW-EFFORT COMMENT RESPONSE (2026-02-21): Use BanterEngine for 1-2 word comments
+        # This avoids LLM generating verbose responses to "Instigator", "Groooovy", "Nice", etc.
+        # BanterEngine provides short, punchy responses appropriate for low-effort comments
+        word_count = len(comment_text.split()) if comment_text else 0
+        if word_count <= 2 and not is_mod and self.banter_engine:  # Mods always get personalized responses
+            logger.info(f"[REPLY-GEN] 🎯 LOW-EFFORT ({word_count} words): '{comment_text}' -> BanterEngine")
+            try:
+                # BanterEngine.process_input_enhanced returns (state_info, response)
+                state_info, banter_reply = self.banter_engine.process_input_enhanced(comment_text)
+                if banter_reply and banter_reply.strip() and banter_reply != "...silence...":
+                    self._last_llm_source = 'banter_low_effort'
+                    logger.info(f"[REPLY-GEN] ✨ BanterEngine low-effort: {banter_reply}")
+                    return self._add_0102_signature(banter_reply, tier=1, comment_age_days=self._current_comment_age_days)
+                else:
+                    # Fallback to themed random banter
+                    banter_reply = self.banter_engine.get_random_banter_enhanced(theme)
+                    if banter_reply and banter_reply.strip():
+                        self._last_llm_source = 'banter_random'
+                        logger.info(f"[REPLY-GEN] ✨ BanterEngine random: {banter_reply}")
+                        return self._add_0102_signature(banter_reply, tier=1, comment_age_days=self._current_comment_age_days)
+            except Exception as e:
+                logger.warning(f"[REPLY-GEN] BanterEngine failed for low-effort: {e}")
+
         # Classify the commenter (uses GrokGreetingGenerator for MAGA detection)
         profile = self.classify_commenter(
             author_name=author_name,
@@ -2034,11 +2180,30 @@ Reply (address their specific point, no generic phrases):"""
             },
             'UCSNTUXjAgpd4sgWYP0xoJgw': {  # FoundUps
                 'name': 'FoundUps',
-                'style': 'Decentralized startups, entrepreneurship vision',
-                'themes': ['foundups', 'vision', 'entrepreneurship', 'decentralization', 'innovation'],
-                'tone': 'visionary, encouraging, practical',
+                'style': 'pAVS ecosystem, AI-human collaboration, decentralized ventures',
+                'themes': ['pAVS', 'AI agents', 'startup', 'UPS tokens', 'CABR engine', 'decentralization'],
+                'tone': 'visionary, encouraging, practical, educational',
                 'maga_response': 'soft_redirect',  # Off-topic redirect
-                'regular_response': 'startup_banter'
+                'regular_response': 'startup_banter',
+                # Litepaper context for intelligent replies (2026-02-25)
+                'context_docs': ['litepaper'],
+                'key_concepts': {
+                    'pAVS': 'Peer-to-Peer Autonomous Venture System - where AI agents and humans build ventures together',
+                    'UPS': 'Universal Participation Stake - backed 1:1 by Bitcoin (Hotel California: BTC enters, never exits)',
+                    'CABR': 'Compute-Adjusted Benefit Ratio - the V3 validation engine for fair work distribution',
+                    'F_i': 'FoundUp tokens - each venture has its own token backed by UPS',
+                    'Du': 'Dedicated User stakers - committed participants who stake long-term',
+                },
+                'promo_url': 'foundups.com/litepaper',
+            },
+            'UCVSmg5aOhP4tnQ9KFUg97qA': {  # antifaFM (formerly RavingANTIFA)
+                'name': 'antifaFM',
+                'style': 'Political music, anti-fascist resistance, FFCPLN playlist',
+                'themes': ['FFCPLN', 'anti-fascism', 'resistance', 'music', 'ICE accountability'],
+                'tone': 'sharp, witty, confrontational, musical',
+                'maga_response': 'aggressive',  # Full mockery
+                'regular_response': 'political_music_banter',
+                'promo_url': 'antifafm.com',
             },
         }
 
@@ -2235,7 +2400,7 @@ Reply (address their specific point, no generic phrases):"""
             if not self.banter_engine:
                 return None
             try:
-                return self.banter_engine.get_random_banter(theme=theme)
+                return self.banter_engine.get_random_banter_enhanced(theme)
             except Exception:
                 return None
 
@@ -2269,6 +2434,7 @@ Reply (address their specific point, no generic phrases):"""
                         content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-2] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                    self._last_llm_source = f"skill_2:{result.get('strategy', 'unknown')}"  # Track for training
                     reply_text = result.get('reply_text', '')
                     if not reply_text or not reply_text.strip():
                         logger.error(f"[SKILL-2] ❌ Returned EMPTY reply_text! Result: {result}")
@@ -2314,6 +2480,7 @@ Reply (address their specific point, no generic phrases):"""
                             content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                         ))
                         logger.info(f"[SKILL-0] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                        self._last_llm_source = f"skill_0:{result.get('strategy', 'unknown')}"  # Track for training
                         reply_text = result.get('reply_text', '')
                         if not reply_text or not reply_text.strip():
                             logger.error(f"[SKILL-0] ❌ Returned EMPTY reply_text! Result: {result}")
@@ -2401,6 +2568,7 @@ Generate your agreement response (1-2 sentences):"""
                         content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}, Subscriber: True")
+                    self._last_llm_source = f"skill_1_sub:{result.get('strategy', 'unknown')}"  # Track for training
                     reply_text = result.get('reply_text', '')
                     if not reply_text or not reply_text.strip():
                         logger.error(f"[SKILL-1] ❌ Returned EMPTY reply_text! Result: {result}")
@@ -2432,6 +2600,7 @@ Generate your agreement response (1-2 sentences):"""
                         content_analysis=self._current_content_analysis  # NEW: enables contextual responses
                     ))
                     logger.info(f"[SKILL-1] Strategy: {result['strategy']}, Confidence: {result['confidence']}")
+                    self._last_llm_source = f"skill_1:{result.get('strategy', 'unknown')}"  # Track for training
                     reply_text = result.get('reply_text', '')
                     if not reply_text or not reply_text.strip():
                         logger.error(f"[SKILL-1] ❌ Returned EMPTY reply_text! Result: {result}")
@@ -2509,7 +2678,7 @@ Generate your agreement response (1-2 sentences):"""
                 # Fallback to BanterEngine if LLM unavailable
                 if self.banter_engine:
                     try:
-                        response = self.banter_engine.get_random_banter(theme=theme)
+                        response = self.banter_engine.get_random_banter_enhanced(theme)
                         if response:
                             response = self._dedupe_reply(
                                 response,

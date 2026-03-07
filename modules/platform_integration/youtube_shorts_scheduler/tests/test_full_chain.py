@@ -17,7 +17,7 @@ from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import 
 
 def main():
     parser = argparse.ArgumentParser(description="Full Chain Test: L1 → L2 → L3 → L4")
-    parser.add_argument("--channel", default="move2japan", help="Channel key (move2japan/undaodu/foundups/ravingantifa)")
+    parser.add_argument("--channel", default="move2japan", help="Channel key (move2japan/undaodu/foundups/antifafm)")
     parser.add_argument("--max", type=int, default=1, help="Max videos to process (default 1)")
     parser.add_argument("--dry-run", action="store_true", help="Preview only (no schedule/save)")
     # Compatibility: main.py launcher passes --selenium to all selenium tests.

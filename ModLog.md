@@ -9,6 +9,281 @@
 
      [OK] DOCUMENT HERE (when pushing to git):
 
+## [2026-03-06] antifaFM Modular Schema Architecture (V3.0)
+
+**Change Type**: Architecture (Module Structure)
+**By**: 0102 (Opus)
+**WSP References**: WSP 3, WSP 11, WSP 27, WSP 49, WSP 84
+
+### Summary
+
+Created WSP-compliant modular schema architecture for antifaFM visual outputs. Each schema is now a self-contained module with independent ROADMAP.md, enabling expansion without monolithic growth.
+
+### Files Created
+
+| Location | Description |
+|----------|-------------|
+| `antifafm_broadcaster/schemas/README.md` | Schema system documentation |
+| `antifafm_broadcaster/schemas/__init__.py` | Registry with auto-import |
+| `antifafm_broadcaster/schemas/base.py` | BaseSchema ABC |
+| `antifafm_broadcaster/schemas/{video_loop,karaoke,entangled,waveform,spectrum,news_ticker,livecam}/` | 7 schema modules |
+
+### Schemas Registered
+
+| Schema | Status | Description |
+|--------|--------|-------------|
+| video_loop | COMPLETE | Background video with color pulse |
+| karaoke | COMPLETE | STT lyrics with beat-sync |
+| entangled | COMPLETE | Bell state 0102 visualization |
+| waveform | COMPLETE | Audio waveform |
+| spectrum | COMPLETE | Frequency spectrum |
+| news_ticker | PARTIAL | RSS headline ticker |
+| livecam | PLANNED | Multi-camera + CamSentinel |
+
+### Integration
+
+`scheme_manager.py` updated to use modular schemas first with legacy fallback.
+
+---
+
+## [2026-03-06] OBS Auto-Start Reliability Fix (No False Positives)
+
+**Change Type**: Bug Fix (Cross-Module Startup Path)
+**By**: 0102 (Codex)
+**WSP References**: WSP 27, WSP 84, WSP 91
+
+### Summary
+
+Fixed startup behavior where `main.py` could report `OBS streaming to YouTube` even when OBS output never became active.
+
+### Root Cause
+
+- `OBSController.start_streaming()` returned success immediately after RPC `StartStream`.
+- `main.py` printed success without post-start output verification.
+- In YouTube account-managed OBS flow, stream can remain inactive while OBS waits on
+  "Create broadcast and start streaming".
+
+### Files
+
+| File | Change |
+|------|--------|
+| `modules/platform_integration/antifafm_broadcaster/src/obs_controller.py` | Added start verification polling, timeout diagnostics, `get_last_start_error()` |
+| `main.py` | Added broadcast readiness preflight + strict OBS auto-start result handling |
+| `.env.example` | Added OBS auto-start verification and broadcast preflight env controls |
+| `modules/platform_integration/antifafm_broadcaster/tests/test_obs_controller_startup.py` | New startup verification tests |
+| `modules/platform_integration/antifafm_broadcaster/tests/TestModLog.md` | Test entry |
+| `modules/platform_integration/antifafm_broadcaster/ModLog.md` | V2.6.0 entry |
+| `modules/platform_integration/antifafm_broadcaster/ROADMAP.md` | Layer 2.6 handshake reliability status |
+
+---
+
+## [2026-02-27] YouTube DAE Browser Rotation Fix
+
+**Change Type**: Bug Fix (Cross-Module)
+**By**: 0102 (Opus)
+**WSP References**: WSP 84, WSP 27, WSP 22
+
+### Summary
+
+Fixed browser rotation issue where Edge/Chrome browsers stayed locked after commenting → scheduling → indexing. Root cause: `disconnect()` only cleared driver reference without calling `quit()`.
+
+### Root Cause
+
+| Location | Bug |
+|----------|-----|
+| `multi_channel_coordinator.py:674` | Calls `shorts_scheduler.close()` but method didn't exist |
+| `run_scheduler_dae()` finally block | Used `disconnect()` which only clears reference |
+| `run_indexer_dae()` finally block | Same issue |
+
+### Fix
+
+Added `close()` method to `YouTubeShortsScheduler` that calls `driver.quit()` to actually release browsers for rotation.
+
+### Files
+
+| File | Change |
+|------|--------|
+| `modules/platform_integration/youtube_shorts_scheduler/src/scheduler.py` | Added `close()` method, updated DAE entry points |
+| `modules/platform_integration/youtube_shorts_scheduler/ModLog.md` | Documented fix |
+
+---
+
+## [2026-02-26] antifaFM Broadcaster - PID Instance Lock Integration
+
+**Change Type**: Infrastructure Pattern Reuse
+**By**: 0102 (Opus)
+**WSP References**: WSP 84, WSP 27, WSP 22
+
+### Summary
+
+Integrated PID-based instance locking into antifaFM broadcaster to prevent orphaned FFmpeg processes and conflicting instances. Uses same `InstanceLock` pattern as `monitor_youtube()` in main.py.
+
+### Root Cause
+
+Headless broadcaster launch failures caused by:
+- Multiple FFmpeg processes conflicting on same RTMP endpoint
+- No mechanism to detect/kill orphaned broadcaster instances
+
+### Files
+
+| File | Change |
+|------|--------|
+| `modules/platform_integration/antifafm_broadcaster/scripts/launch.py` | Integrated `get_instance_lock("antifafm_broadcaster")` with duplicate detection and cleanup |
+| `modules/platform_integration/antifafm_broadcaster/ModLog.md` | V1.2.0 entry |
+
+### Pattern Applied
+
+```python
+# Same pattern as main.py monitor_youtube()
+lock = get_instance_lock("antifafm_broadcaster")
+duplicates = lock.check_duplicates()
+lock.kill_pids(duplicates)
+lock.acquire()
+# ... run broadcaster ...
+lock.release()
+```
+
+---
+
+## [2026-02-26] CTO Decision: main.py Roadmap in Root ROADMAP.md
+
+**Change Type**: Architecture Decision
+**By**: 0102 (CTO)
+**WSP References**: WSP 49, WSP 22
+
+### Decision
+
+main.py is an entrypoint, not a module. Creating a separate `main_ROADMAP.md` would violate WSP 49 module structure.
+
+**Resolution**: Added `[TERMINAL] Entrypoint (main.py) Roadmap` section to root ROADMAP.md.
+
+### Rationale
+
+- main.py should remain thin (orchestrates, doesn't execute)
+- Root ROADMAP.md is already HoloIndex-indexed (line 1320 of cli.py)
+- Single source of truth for system-wide roadmap items
+- Phase 2 UTF-8 work tracked in `modules/development/wsp_tools/TODO_WSP90_PHASE2.md`
+
+---
+
+## [2026-02-26] WSP 90 Bulk Fix - UTF-8 Wrapping Deduplication
+
+**Change Type**: Bug Fix (System-Wide)
+**By**: 0102 (012 + Opus)
+**WSP References**: WSP 90, WSP 50, WSP 22
+
+### Summary
+
+Fixed "lost sys.stderr" startup error caused by 379 modules re-wrapping stdout/stderr at import time. Each module's UTF-8 wrapping eventually broke the stream.
+
+### Root Cause
+
+WSP 90 UTF-8 pattern was copy-pasted into 379 modules. When imported, each re-wraps stderr, causing cascade failure.
+
+### Solution
+
+1. **main.py** sets `FOUNDUPS_UTF8_WRAPPED=1` flag BEFORE wrapping
+2. **Guard pattern** for modules requiring wrapping:
+   ```python
+   if sys.platform.startswith('win') and not os.environ.get('FOUNDUPS_UTF8_WRAPPED'):
+   ```
+3. **Bulk fix script** created: `modules/development/wsp_tools/scripts/fix_wsp90_utf8_bulk.py`
+
+### Files
+
+| File | Change |
+|------|--------|
+| `main.py` | Added `FOUNDUPS_UTF8_WRAPPED=1` flag before wrapping |
+| `WSP_framework/src/WSP_90_UTF8_Encoding_Enforcement_Protocol.md` | Added bug fix section |
+| `modules/development/wsp_tools/scripts/fix_wsp90_utf8_bulk.py` | Created bulk fix tool |
+| `modules/development/wsp_tools/README.md` | Created module docs |
+| `modules/development/wsp_tools/ModLog.md` | Created module log |
+| 78 non-entrypoint modules | UTF-8 wrapping removed/guarded (Phase 1) |
+
+### Validation
+
+- `--dry-run` reports 0 pending in safe mode
+- `py_compile` passed on all modified files
+- main.py runs cleanly
+
+### Deferred
+
+- 155 entrypoint files require individual review (Phase 2)
+
+---
+
+## [2026-02-24] Sprint 1 Wiring Fix - ReAct Activated in Runtime Path
+
+**Change Type**: Orchestration Fix
+**By**: 0102 (Codex)
+**WSP References**: WSP 15, WSP 46, WSP 48, WSP 50
+
+### Summary
+
+Closed a functional gap in Sprint 1 implementation: `execute_skill_with_reasoning()` existed but was not used by public `execute_skill()` path.
+
+### Files
+
+| File | Change |
+|------|--------|
+| `modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py` | `execute_skill()` now routes through ReAct when enabled, single-pass moved to `_execute_skill_once()`, retry loop now calls single-pass directly, evolution only runs on final retry to avoid duplicate variation generation |
+
+### Validation
+
+- `py_compile` passes for orchestrator module
+- direct runtime smoke confirms:
+  - no recursion in `execute_skill()`
+  - ReAct executes bounded retries
+  - evolution not triggered on intermediate retries
+
+---
+
+## [2026-02-24] Sprint 2 Validation Fix - RAG Attempt Telemetry on Failures
+
+**Change Type**: Metrics Accuracy Fix
+**By**: 0102 (Codex)
+**WSP References**: WSP 15, WSP 22, WSP 50
+
+### Summary
+
+During Sprint 2 verification, retrieval telemetry was only recorded on successful/no-result paths inside the main `try` block. Hard retrieval failures could skip recording, inflating coverage metrics.
+
+### File
+
+| File | Change |
+|------|--------|
+| `modules/infrastructure/wre_core/wre_master_orchestrator/src/wre_master_orchestrator.py` | Moved retrieval telemetry write into `finally` path so every retrieval attempt is recorded (success, miss, or failure). |
+
+### Validation
+
+- `py_compile` passes.
+- Runtime smoke confirms retrieval attempt is recorded even when retrieval throws.
+
+---
+
+## [2026-02-24] CTO WRE CoT Deep Analysis Baseline
+
+**Change Type**: Architecture Analysis Document
+**By**: 0102 (Codex)
+**WSP References**: WSP 15 (Priority Scoring), WSP 22 (ModLog), WSP 46 (WRE Protocol), WSP 50 (Pre-Action)
+
+### Summary
+
+Added a CTO-level analysis document comparing current WRE/OpenClaw reasoning behavior against modern agentic patterns (ReAct, ToT, GoT, TT-SI, CodeAct, Agentic RAG), with a phased implementation order and acceptance criteria.
+
+| File | Change |
+|------|--------|
+| `WRE_COT_DEEP_ANALYSIS.md` | New deep-dive analysis and rollout plan |
+
+### Decision
+
+Treat current gap as a "reasoning wiring" issue rather than full architecture replacement:
+- P0: close variation promotion loop (TT-SI) + add ReAct retries
+- P1: add agentic retrieval and cross-skill graph edges
+- P2: add ToT selection and expand hybrid prompt+code execution
+
+---
+
 ## [2026-02-19] Database Consolidation + 0/1/2 Classifier Fix
 
 **Change Type**: Architectural Cleanup + Bug Fix

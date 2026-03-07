@@ -27,6 +27,10 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Any, Tuple
 from dataclasses import dataclass
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -65,14 +69,14 @@ class AgenticResponseGenerator:
     # Model registry (same as local_llm_worker_poc.py)
     MODEL_REGISTRY = {
         "gemma": {
-            "name": "gemma-3-270m-it-Q4_K_M.gguf",
-            "path": Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf"),
+            "name": "gemma-270m",
+            "path": resolve_triage_model_path(),
             "n_ctx": 512,
             "purpose": "Fast classification (50ms)"
         },
         "qwen": {
-            "name": "qwen-coder-1.5b.gguf",
-            "path": Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf"),
+            "name": "qwen-coder-7b",
+            "path": resolve_code_model_path(),
             "n_ctx": 2048,
             "purpose": "Response generation (200ms)"
         }

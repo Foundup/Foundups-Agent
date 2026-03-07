@@ -21,8 +21,8 @@ Download Qwen 2.5 0.5B Instruct GGUF Model for File Naming Enforcement
 This downloads a smaller, faster Qwen model (0.5B params) optimized for
 simple classification tasks like file naming violation detection.
 
-Target: E:/HoloIndex/models/qwen2.5-0.5b-instruct-q4_k_m.gguf
-Size: ~320MB (vs 1.1GB for qwen-coder-1.5b)
+Target: LOCAL_MODEL_GENERAL_DIR/qwen2.5-0.5b-instruct-q4_k_m.gguf
+Size: ~320MB (vs 4.4GB for qwen-coder-7b)
 Speed: ~3-5x faster inference
 Use case: WSP 57 file naming enforcement
 
@@ -31,6 +31,7 @@ WSP 57: Naming Coherence
 """
 
 from huggingface_hub import hf_hub_download
+import os
 from pathlib import Path
 import sys
 
@@ -51,7 +52,8 @@ def download_qwen_0_5b():
     # Configuration
     repo_id = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
     filename = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
-    local_dir = Path("E:/HoloIndex/models")
+    default_root = os.getenv("LOCAL_MODEL_ROOT", "E:/LM_studio/models/local")
+    local_dir = Path(os.getenv("LOCAL_MODEL_GENERAL_DIR", f"{default_root}/qwen3-4b"))
 
     print(f"Repository: {repo_id}")
     print(f"File: {filename}")
@@ -102,7 +104,7 @@ def download_qwen_0_5b():
         print("Troubleshooting:")
         print("  1. Check internet connection")
         print("  2. Install huggingface_hub: pip install huggingface_hub")
-        print("  3. Verify E:/HoloIndex/models is writable")
+        print(f"  3. Verify directory is writable: {local_dir}")
         print()
         sys.exit(1)
 
@@ -189,7 +191,7 @@ if __name__ == "__main__":
         print("   python holo_index/tests/test_qwen_file_naming_trainer.py")
         print()
         print("3. Configure as default for file naming:")
-        print(f"   export HOLO_QWEN_MODEL={model_path}")
+        print(f"   export LOCAL_MODEL_GENERAL_PATH={model_path}")
         print()
     else:
         print("1. Install llama-cpp-python:")
@@ -200,7 +202,7 @@ if __name__ == "__main__":
         print()
 
     print("Model comparison:")
-    print(f"  - qwen-coder-1.5b.gguf: 1.1GB, slower, better code understanding")
+    print(f"  - qwen-coder-7b.gguf: 4.4GB, slower, best for code understanding")
     print(f"  - qwen2.5-0.5b-instruct-q4_k_m.gguf: 320MB, faster, good for classification")
     print()
     print("For file naming enforcement, use the 0.5B model (3-5x faster).")

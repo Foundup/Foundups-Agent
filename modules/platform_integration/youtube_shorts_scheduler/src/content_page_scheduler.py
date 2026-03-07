@@ -235,7 +235,7 @@ class ContentPageScheduler:
         4. Apply visibility filter via sidebar Filter dropdown UI
 
         Args:
-            channel_key: "move2japan", "undaodu", "foundups", "ravingantifa"
+            channel_key: "move2japan", "undaodu", "foundups", "antifafm"
             content_type: "short" (Shorts), "upload" (Videos), "live" (Live)
             visibility: "UNLISTED", "PRIVATE", "SCHEDULED", "PUBLIC", or None
             sort_oldest_first: If True, sorts by date ascending (oldest first)

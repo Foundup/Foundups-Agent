@@ -15,6 +15,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -169,7 +174,7 @@ class BrowserActionsCoordinator:
         """Execute LinkedIn mission."""
         from .linkedin_actions import LinkedInActions
 
-        linkedin = LinkedInActions(profile=mission.params.get("profile", "linkedin_104834798"))
+        linkedin = LinkedInActions(profile=mission.params.get("profile", f"linkedin_{get_company_id('move2japan')}"))
 
         if mission.action_type == "read_feed":
             posts = await linkedin.read_feed(max_posts=mission.params.get("max_posts", 10))

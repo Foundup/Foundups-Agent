@@ -4,13 +4,15 @@ Interactive browser recording with on-screen START/STOP widget
 import sys
 import time
 import json
+import os
 from pathlib import Path
 from datetime import datetime
 import io
 
 # Force UTF-8 encoding for Windows console
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if sys.platform.startswith('win') and not os.environ.get('FOUNDUPS_UTF8_WRAPPED'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 repo_root = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(repo_root))

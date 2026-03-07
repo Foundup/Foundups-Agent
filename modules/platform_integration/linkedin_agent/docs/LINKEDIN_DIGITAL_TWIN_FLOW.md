@@ -119,6 +119,17 @@ Use the standard pulse points for troubleshooting across layers:
 
 ---
 
+## Recursive Failure Loop (WRE)
+
+- If L1 or L3 fails in the full chain, trigger WRE bounded reasoning diagnostics.
+- The diagnosis payload includes layer, error, and runtime context so failures become inspectable memory instead of dead-end exits.
+- Current toggle:
+  - `LINKEDIN_WRE_DIAG_ENABLED=true|false` (default: true)
+
+This keeps the LN commenting flow aligned with recursive improvement: detect -> diagnose -> refine selectors/inputs -> rerun.
+
+---
+
 ## Notes
 - UI-TARS is the **eyes**; Selenium is the **hands**.
 - Micro UI-TARS actions are allowed inside Selenium flows for verification gates.

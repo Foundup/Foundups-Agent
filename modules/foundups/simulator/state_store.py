@@ -124,6 +124,7 @@ class SimulatorState:
     total_stakes: int = 0
     total_dex_trades: int = 0
     total_dex_volume_ups: float = 0.0
+    total_operational_profit_ups: float = 0.0
     pavs_treasury_ups: float = 0.0
     network_pool_ups: float = 0.0
     fund_pool_ups: float = 0.0
@@ -327,6 +328,22 @@ class StateStore:
         self._state.pavs_treasury_ups = float(event.payload.get("pavs_treasury_ups", 0.0))
         self._state.network_pool_ups = float(event.payload.get("network_pool_ups", 0.0))
         self._state.fund_pool_ups = float(event.payload.get("fund_pool_ups", 0.0))
+
+    def _handle_operational_profit_distributed(self, event: SimEvent) -> None:
+        """Track autonomous business PnL routed through proxy/treasury lanes."""
+        foundup_id = event.foundup_id
+        net_profit = float(event.payload.get("net_profit_ups", 0.0))
+        staked_ups = float(event.payload.get("proxy_staked_ups", 0.0))
+        self._state.total_operational_profit_ups += net_profit
+
+        if foundup_id and foundup_id in self._state.foundups:
+            tile = self._state.foundups[foundup_id]
+            tile.last_activity_tick = event.tick
+            tile.pulse_glow(0.55)
+            if staked_ups > 0:
+                tile.stakes += 1
+                tile.total_staked += int(round(staked_ups))
+                self._state.total_stakes += int(round(staked_ups))
 
     def _handle_cabr_score_updated(self, event: SimEvent) -> None:
         """Track CABR score for render and downstream flow diagnostics."""

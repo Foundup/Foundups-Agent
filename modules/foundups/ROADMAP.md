@@ -9,6 +9,7 @@ implementation sources of truth:
 - `modules/foundups/agent_market/ROADMAP.md`
 - `modules/foundups/simulator/ROADMAP.md`
 - `modules/foundups/agent/ROADMAP.md`
+- `modules/foundups/docs/FOUNDUPS_PAVS_IRONCLAW_AGENT_BUILDER_DIGITAL_TWIN_ROADMAP.md`
 
 ## First-Principles Constraints
 1. No market claims without an auditable event/state trail.
@@ -51,6 +52,7 @@ implementation sources of truth:
 - Exit criteria:
   - Scenario runner emits deterministic manifests and metrics.
   - Market + lifecycle outputs stay reproducible by seed.
+  - IronClaw execution lane parity with OpenClaw control contracts is validated.
 
 ### Layer 4 - Operator and Member Control Panel
 - Scope: portfolio, FoundUp health, DEX tape, live events.
@@ -83,6 +85,7 @@ implementation sources of truth:
 2. DEX symbol registry and reservation policy.
 3. DEX event contract normalization across market and simulator.
 4. Concatenated tests across bridge + market + simulator.
+5. IronClaw sidecar lane for pAVS Agent Builder + Digital Twin (adapter-first, no control-plane rewrite).
 
 ### P1 (Next)
 1. Read models for control panel (portfolio, CABR, traction, active agents).

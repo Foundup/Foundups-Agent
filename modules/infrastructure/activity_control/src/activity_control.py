@@ -7,7 +7,7 @@ WSP Reference: WSP 80 (DAE Pattern), WSP 77 (Agent Coordination), WSP 91 (Observ
 Status: Production
 
 Architecture (Occam's Razor - Complete One Channel Before Moving):
-    For EACH channel (M2J -> UnDaoDu -> FoundUps -> RavingANTIFA):
+    For EACH channel (M2J -> UnDaoDu -> FoundUps -> antifaFM):
         1. Comment Engagement (process all comments to 0)
         2. Shorts Scheduling (if unlisted videos exist for THIS channel)
         3. Video Indexing (index THIS channel's videos)
@@ -101,14 +101,19 @@ class ActivityDecision:
 
 class ActivityRouter:
     """
-    Per-Channel Activity Router (Occam's Razor Model).
+    Activity Router with "All Comments First" model.
 
-    Completes ALL activities for one channel before moving to the next:
-        M2J: Comments -> Shorts -> Indexing -> DONE
-        UnDaoDu: Comments -> Shorts -> Indexing -> DONE
-        FoundUps: Comments -> Shorts -> Indexing -> DONE
-        RavingANTIFA: Comments -> Shorts -> Indexing -> DONE
-        -> IDLE -> Loop
+    2026-02-21 FIX: Changed from per-channel Occam's Razor to "all comments first".
+
+    New Flow:
+        1. ALL channels process COMMENTS first:
+           FoundUps -> antifaFM -> UnDaoDu -> Move2Japan (all COMMENTS)
+        2. THEN all channels process SHORTS:
+           (unlisted shorts scheduling across all channels)
+        3. THEN all channels process INDEXING (if enabled)
+        4. IDLE -> Loop
+
+    This ensures all comment backlogs are cleared before shorts scheduling begins.
 
     Usage:
         router = ActivityRouter()
@@ -118,12 +123,13 @@ class ActivityRouter:
         # When done, call router.signal_phase_complete(channel_id, phase)
     """
 
-    # Default channel rotation order
+    # Default channel rotation order (Edge channels first: FoundUps, antifaFM)
+    # Then Chrome channels: UnDaoDu, Move2Japan
     DEFAULT_CHANNELS = [
-        ("UC-LSSlOZwpGIRIYihaz8zCw", "Move2Japan"),
-        ("UCfHM9Fw9HD-NwiS0seD_oIA", "UnDaoDu"),
         ("UCSNTUXjAgpd4sgWYP0xoJgw", "FoundUps"),
-        ("UCVSmg5aOhP4tnQ9KFUg97qA", "RavingANTIFA"),
+        ("UCVSmg5aOhP4tnQ9KFUg97qA", "antifaFM"),
+        ("UCfHM9Fw9HD-NwiS0seD_oIA", "UnDaoDu"),
+        ("UC-LSSlOZwpGIRIYihaz8zCw", "Move2Japan"),
     ]
 
     def __init__(self):
@@ -236,15 +242,41 @@ class ActivityRouter:
 
         return False
 
+    def _all_channels_past_phase(self, target_phase: ChannelPhase) -> bool:
+        """Check if ALL channels have advanced past a given phase."""
+        phase_order = [ChannelPhase.COMMENTS, ChannelPhase.SHORTS, ChannelPhase.INDEXING, ChannelPhase.COMPLETE]
+        target_idx = phase_order.index(target_phase)
+
+        for state in self._channel_states.values():
+            state_idx = phase_order.index(state.phase)
+            if state_idx <= target_idx:
+                return False
+        return True
+
+    def _find_next_channel_in_phase(self, target_phase: ChannelPhase) -> Optional[ChannelState]:
+        """Find next channel that needs to process a given phase."""
+        # Start from current index and wrap around
+        for i in range(len(self._channels)):
+            idx = (self._current_channel_index + i) % len(self._channels)
+            channel_id, _ = self._channels[idx]
+            state = self._channel_states.get(channel_id)
+            if state and state.phase == target_phase:
+                self._current_channel_index = idx
+                return state
+        return None
+
     def get_next_activity(self) -> ActivityDecision:
         """
-        Determine next activity using Occam's Razor per-channel model.
+        Determine next activity using "All Comments First" model.
+
+        2026-02-21 FIX: Changed to process ALL channels' comments before shorts.
 
         Logic:
         1. PRIORITY: If live stream active -> LIVE_CHAT (interrupt everything)
-        2. Get current channel's phase
-        3. Return appropriate activity for that phase
-        4. If channel complete -> advance to next channel
+        2. ALL channels process COMMENTS first (find next channel needing comments)
+        3. THEN ALL channels process SHORTS (only after all comments done)
+        4. THEN ALL channels process INDEXING (only after all shorts done)
+        5. IDLE when all complete
 
         Returns:
             ActivityDecision with channel_id, activity, and browser
@@ -258,72 +290,81 @@ class ActivityRouter:
                 metadata={"interrupt": True}
             )
 
-        # Get current channel state
-        channel = self.current_channel
-        if not channel:
+        if not self._channel_states:
             return ActivityDecision(
                 next_activity=ActivityType.IDLE,
                 reason="No channels configured",
                 metadata={}
             )
 
-        # Determine activity based on channel's current phase
-        if channel.phase == ChannelPhase.COMMENTS:
+        # PHASE 1: ALL COMMENTS FIRST
+        # Find any channel still in COMMENTS phase
+        comment_channel = self._find_next_channel_in_phase(ChannelPhase.COMMENTS)
+        if comment_channel:
+            # Determine browser based on channel
+            browser = "edge" if comment_channel.channel_name in ["FoundUps", "antifaFM"] else "chrome"
             return ActivityDecision(
                 next_activity=ActivityType.COMMENT_ENGAGEMENT,
-                channel_id=channel.channel_id,
-                channel_name=channel.channel_name,
-                browser="chrome",
-                reason=f"Processing comments for {channel.channel_name}",
-                metadata={"phase": "comments", "channel_index": self._current_channel_index}
+                channel_id=comment_channel.channel_id,
+                channel_name=comment_channel.channel_name,
+                browser=browser,
+                reason=f"Processing comments for {comment_channel.channel_name} (all comments first)",
+                metadata={"phase": "comments", "mode": "all_comments_first"}
             )
 
-        elif channel.phase == ChannelPhase.SHORTS:
-            if self.is_shorts_enabled():
+        # PHASE 2: ALL SHORTS (only after ALL comments done)
+        if self.is_shorts_enabled():
+            shorts_channel = self._find_next_channel_in_phase(ChannelPhase.SHORTS)
+            if shorts_channel:
+                browser = "edge" if shorts_channel.channel_name in ["FoundUps", "antifaFM"] else "chrome"
                 return ActivityDecision(
                     next_activity=ActivityType.SHORTS_SCHEDULING,
-                    channel_id=channel.channel_id,
-                    channel_name=channel.channel_name,
-                    browser="chrome",
-                    reason=f"Scheduling shorts for {channel.channel_name}",
-                    metadata={"phase": "shorts", "channel_index": self._current_channel_index}
+                    channel_id=shorts_channel.channel_id,
+                    channel_name=shorts_channel.channel_name,
+                    browser=browser,
+                    reason=f"Scheduling shorts for {shorts_channel.channel_name} (all comments done)",
+                    metadata={"phase": "shorts", "mode": "all_comments_first"}
                 )
-            else:
-                # Skip shorts, advance to indexing
-                self._advance_phase(channel.channel_id)
-                return self.get_next_activity()
+        else:
+            # Skip shorts for all channels in SHORTS phase
+            for state in self._channel_states.values():
+                if state.phase == ChannelPhase.SHORTS:
+                    self._advance_phase(state.channel_id)
 
-        elif channel.phase == ChannelPhase.INDEXING:
-            if self.is_indexing_enabled():
+        # PHASE 3: ALL INDEXING (only after ALL shorts done)
+        if self.is_indexing_enabled():
+            indexing_channel = self._find_next_channel_in_phase(ChannelPhase.INDEXING)
+            if indexing_channel:
+                browser = "edge" if indexing_channel.channel_name in ["FoundUps", "antifaFM"] else "chrome"
                 return ActivityDecision(
                     next_activity=ActivityType.VIDEO_INDEXING,
-                    channel_id=channel.channel_id,
-                    channel_name=channel.channel_name,
-                    browser="chrome",
-                    reason=f"Indexing videos for {channel.channel_name}",
-                    metadata={"phase": "indexing", "channel_index": self._current_channel_index}
+                    channel_id=indexing_channel.channel_id,
+                    channel_name=indexing_channel.channel_name,
+                    browser=browser,
+                    reason=f"Indexing videos for {indexing_channel.channel_name}",
+                    metadata={"phase": "indexing", "mode": "all_comments_first"}
                 )
-            else:
-                # Skip indexing, mark channel complete
-                self._advance_phase(channel.channel_id)
-                return self.get_next_activity()
+        else:
+            # Skip indexing for all channels in INDEXING phase
+            for state in self._channel_states.values():
+                if state.phase == ChannelPhase.INDEXING:
+                    self._advance_phase(state.channel_id)
 
-        elif channel.phase == ChannelPhase.COMPLETE:
-            # Channel done - advance to next
-            if self._advance_to_next_channel():
-                return self.get_next_activity()
-            else:
-                # All channels complete
-                return ActivityDecision(
-                    next_activity=ActivityType.IDLE,
-                    reason="All channels complete - cycle will restart",
-                    metadata={"all_complete": True, "channels_processed": len(self._channels)}
-                )
+        # PHASE 4: ALL COMPLETE - reset for next cycle
+        all_complete = all(s.phase == ChannelPhase.COMPLETE for s in self._channel_states.values())
+        if all_complete:
+            logger.info("[ACTIVITY-ROUTER] All channels complete - resetting for next cycle")
+            self._reset_all_channels()
+            return ActivityDecision(
+                next_activity=ActivityType.IDLE,
+                reason="All channels complete - cycle will restart",
+                metadata={"all_complete": True, "channels_processed": len(self._channels)}
+            )
 
-        # Fallback
+        # Fallback - shouldn't reach here
         return ActivityDecision(
             next_activity=ActivityType.IDLE,
-            reason="Unknown state",
+            reason="Unknown state - will retry",
             metadata={}
         )
 
@@ -578,7 +619,7 @@ if __name__ == "__main__":
     )
 
     print("\n" + "="*60)
-    print(" ACTIVITY ROUTER - OCCAM'S RAZOR PER-CHANNEL MODEL")
+    print(" ACTIVITY ROUTER - ALL COMMENTS FIRST MODEL (2026-02-21)")
     print("="*60)
 
     router = ActivityRouter()
@@ -631,5 +672,5 @@ if __name__ == "__main__":
         print(f"   {complete} {ch['name']}")
 
     print("\n" + "="*60)
-    print(" TEST COMPLETE - Occam's Razor model working!")
+    print(" TEST COMPLETE - All Comments First model working!")
     print("="*60)

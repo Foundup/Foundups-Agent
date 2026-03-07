@@ -39,7 +39,12 @@ def load_comment_template() -> dict:
         }
 
 
-def test_layer1_selenium(dry_run: bool = False, ai_gate_passed: bool = True) -> dict:
+def test_layer1_selenium(
+    dry_run: bool = False,
+    ai_gate_passed: bool = True,
+    comment_text: str = "",
+    mentions=None,
+) -> dict:
     """
     Test Layer 1 with pure Selenium.
     
@@ -223,8 +228,11 @@ def test_layer1_selenium(dry_run: bool = False, ai_gate_passed: bool = True) -> 
     template = load_comment_template()
     comment_text = template.get("text", "Test comment from 0102.")
     
-    # Use shorter text for testing
-    test_text = "Test from 0102 Digital Twin - validating L1 flow."
+    # Prefer caller-provided text from orchestration/CLI.
+    if comment_text and comment_text.strip():
+        test_text = comment_text.strip()
+    else:
+        test_text = template.get("text", "").strip() or "Test from 0102 Digital Twin - validating L1 flow."
 
     editor_selectors = [
         ".comments-comment-box-comment__text-editor .ql-editor",
@@ -265,11 +273,18 @@ def test_layer1_selenium(dry_run: bool = False, ai_gate_passed: bool = True) -> 
             result["error"] = "UI-TARS could not verify typed comment text"
         return result
 
-    # Step 1.3: Insert @foundups mention
+    # Step 1.3: Insert @mention (default: @foundups)
     print("\n[STEP 1.3] Inserting @mention...")
     time.sleep(step_delay)
+    mention_list = mentions if isinstance(mentions, list) and mentions else ["@foundups"]
     try:
-        human.human_type(editor, " @foundups")
+        first_mention = str(mention_list[0]).strip()
+        if not first_mention:
+            first_mention = "@foundups"
+        if not first_mention.startswith("@"):
+            first_mention = f"@{first_mention.lstrip('@')}"
+
+        human.human_type(editor, f" {first_mention}")
         time.sleep(1.5)
 
         # Look for mention dropdown
@@ -430,6 +445,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Layer 1: Comment Test")
     parser.add_argument("--selenium", action="store_true", help="Run with pure Selenium")
     parser.add_argument("--dry-run", action="store_true", help="Validate without submitting")
+    parser.add_argument("--comment-text", default="", help="Override comment text for this run")
+    parser.add_argument(
+        "--mentions",
+        default="@foundups",
+        help="Comma-separated mentions (first mention is validated via dropdown)",
+    )
     parser.add_argument("--info", action="store_true", help="Show layer info only")
 
     args = parser.parse_args()
@@ -437,7 +458,12 @@ if __name__ == "__main__":
     if args.info:
         test_layer1_info()
     elif args.selenium:
-        result = test_layer1_selenium(dry_run=args.dry_run)
+        mention_list = [m.strip() for m in (args.mentions or "").split(",") if m.strip()]
+        result = test_layer1_selenium(
+            dry_run=args.dry_run,
+            comment_text=args.comment_text,
+            mentions=mention_list,
+        )
         sys.exit(0 if result["success"] else 1)
     else:
         test_layer1_info()

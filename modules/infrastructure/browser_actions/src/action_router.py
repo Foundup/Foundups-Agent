@@ -101,15 +101,21 @@ class ActionRouter:
         'execute_script',
     }
 
-    # Actions that use UI-TARS Vision (complex, dynamic)
-    VISION_ACTIONS = {
-        'like_comment',
-        'click_by_description',
-        'find_by_description',
-        'fill_form_smart',
-        'verify_element_state',
+    # Actions that have DOM implementations (try these first - fast)
+    # UI-TARS only used for diagnosis when these fail
+    DOM_FIRST_ACTIONS = {
         'scroll_to_element',
-        'interact_with_dialog',
+        'find_by_description',
+        'click_by_description',
+        'like_comment',  # Has DOM selector on LinkedIn
+    }
+
+    # Actions that REQUIRE vision (no DOM selector possible)
+    # These go directly to UI-TARS
+    VISION_ONLY_ACTIONS = {
+        'fill_form_smart',  # Dynamic form detection
+        'verify_element_state',  # Visual verification
+        'interact_with_dialog',  # Unknown dialog handling
     }
 
     def __init__(
@@ -454,10 +460,15 @@ class ActionRouter:
     def get_driver_for_action(self, action: str) -> DriverType:
         """
         Determine which driver should handle an action.
-        
+
+        Architecture: DOM-first + Vision-diagnose
+        - Most actions try Selenium first (fast, reliable when DOM is known)
+        - UI-TARS only used for diagnosis when Selenium fails
+        - Vision-only actions go directly to UI-TARS
+
         Args:
             action: Action name
-            
+
         Returns:
             DriverType for the action
         """
@@ -467,66 +478,102 @@ class ActionRouter:
                 return DriverType.SELENIUM
             return DriverType.VISION
 
+        # Core Selenium actions - always DOM
         if action in self.SELENIUM_ACTIONS:
             return DriverType.SELENIUM
-        elif action in self.VISION_ACTIONS:
+
+        # DOM-first actions - try Selenium, vision diagnoses failures
+        if action in self.DOM_FIRST_ACTIONS:
+            return DriverType.SELENIUM  # DOM first!
+
+        # Vision-only actions - no DOM possible
+        if action in self.VISION_ONLY_ACTIONS:
             return DriverType.VISION
-        else:
-            # Unknown action - default to vision (more flexible)
-            logger.debug(f"[ROUTER] Unknown action '{action}', defaulting to vision")
-            return DriverType.VISION
+
+        # Unknown action - try DOM first (faster), vision diagnoses if needed
+        logger.debug(f"[ROUTER] Unknown action '{action}', trying DOM first")
+        return DriverType.SELENIUM
 
     async def execute(
         self,
         action: str,
         params: Dict[str, Any],
         driver: DriverType = DriverType.AUTO,
-        timeout: int = 90,  # Increased for vision model inference (7B model on CPU)
+        timeout: int = 30,  # Reduced - DOM is fast, vision only for diagnosis
     ) -> RoutingResult:
         """
-        Execute an action via the appropriate driver.
+        Execute an action via DOM-first + Vision-diagnose architecture.
+
+        Flow:
+        1. Try Selenium (DOM) first - fast, reliable when selectors work
+        2. On failure, UI-TARS diagnoses what went wrong
+        3. If UI-TARS finds fix, update pattern and retry
+        4. Over time, system relies more on Selenium as patterns stabilize
 
         Args:
             action: Action name (e.g., 'like_comment', 'navigate')
             params: Action parameters
             driver: Force specific driver or AUTO for router decision
-            timeout: Max seconds for action (default 90s for vision models)
-            
+            timeout: Max seconds for action (default 30s - DOM is fast)
+
         Returns:
             RoutingResult with outcome
         """
         start_time = time.time()
-        
+
         # Determine driver
         if driver == DriverType.AUTO:
             driver = self.get_driver_for_action(action)
         # In vision-only mode, force everything except navigate to Vision
         if getattr(self, "_vision_only", False) and action != "navigate":
             driver = DriverType.VISION
-        
+
         self._emit_event("action_routed", {
             "action": action,
             "driver": driver.value,
             "params": params,
+            "architecture": "dom_first_vision_diagnose",
         })
-        
-        # Try primary driver
+
+        # === DOM-FIRST EXECUTION ===
         result = await self._execute_with_driver(action, params, driver, timeout)
-        
-        # Fallback if enabled and failed
+
+        # === VISION DIAGNOSIS ON FAILURE ===
         if (
             not result.success
             and self.fallback_enabled
             and not getattr(self, "_vision_only", False)
+            and action in self.DOM_FIRST_ACTIONS
         ):
-            fallback_driver = DriverType.VISION if driver == DriverType.SELENIUM else DriverType.SELENIUM
-            
-            logger.info(f"[ROUTER] Primary driver failed, trying fallback: {fallback_driver.value}")
+            logger.info(f"[ROUTER] DOM failed for '{action}', invoking UI-TARS diagnosis")
             self._routing_stats['fallbacks'] += 1
-            
-            result = await self._execute_with_driver(action, params, fallback_driver, timeout)
-            result.fallback_used = True
-        
+
+            # Diagnose with vision - ask "what went wrong?"
+            diagnosis = await self._diagnose_with_vision(action, params, result.error)
+
+            if diagnosis.get("new_selector"):
+                # UI-TARS found a fix - update pattern and retry
+                logger.info(f"[ROUTER] UI-TARS found fix: {diagnosis.get('new_selector')}")
+                self._update_selector_pattern(action, params, diagnosis)
+
+                # Retry with updated selector
+                updated_params = {**params, "selector": diagnosis["new_selector"]}
+                result = await self._execute_with_driver(action, updated_params, DriverType.SELENIUM, timeout)
+                result.fallback_used = True
+                result.result_data["diagnosis"] = diagnosis
+
+            elif diagnosis.get("vision_executed"):
+                # Vision executed the action directly (fallback)
+                result = RoutingResult(
+                    success=diagnosis.get("success", False),
+                    driver_used="tars_diagnosis",
+                    action=action,
+                    duration_ms=int((time.time() - start_time) * 1000),
+                    fallback_used=True,
+                    result_data={"diagnosis": diagnosis},
+                    error=diagnosis.get("error"),
+                )
+
         # Update stats
         if result.success:
             self._routing_stats['successes'] += 1
@@ -541,6 +588,110 @@ class ActionRouter:
         self._emit_event("action_complete", result.to_dict())
 
         return result
+
+    async def _diagnose_with_vision(
+        self,
+        action: str,
+        params: Dict[str, Any],
+        error: Optional[str],
+    ) -> Dict[str, Any]:
+        """
+        Use UI-TARS to diagnose why a DOM action failed.
+
+        Takes screenshot and asks vision model:
+        - "Why did this action fail?"
+        - "Where is the element now?"
+        - "What's the new selector?"
+
+        Returns:
+            Dict with diagnosis: {new_selector, reason, vision_executed, success}
+        """
+        bridge = await self._ensure_vision()
+        if bridge is None:
+            logger.warning("[ROUTER] No vision bridge for diagnosis")
+            return {"reason": "vision_unavailable"}
+
+        try:
+            # Get screenshot for diagnosis
+            driver = await self._ensure_selenium()
+            if driver is None:
+                return {"reason": "no_driver_for_screenshot"}
+
+            description = params.get("description", action)
+
+            # Ask UI-TARS to diagnose
+            diagnosis_result = await bridge.execute_action(
+                action="diagnose",
+                description=f"Diagnose failure: tried to '{action}' on '{description}' but got error: {error}. Find the element and suggest new selector.",
+                context={
+                    "original_action": action,
+                    "original_params": params,
+                    "error": error,
+                    "mode": "diagnose_and_fix",
+                },
+                timeout=60,
+                driver=driver,
+            )
+
+            if diagnosis_result.success:
+                return {
+                    "new_selector": diagnosis_result.result_data.get("suggested_selector"),
+                    "reason": diagnosis_result.result_data.get("diagnosis"),
+                    "element_found": diagnosis_result.result_data.get("element_found", False),
+                    "vision_executed": diagnosis_result.result_data.get("action_executed", False),
+                    "success": diagnosis_result.success,
+                }
+            else:
+                # Vision couldn't diagnose - maybe try executing directly
+                logger.info("[ROUTER] Diagnosis failed, trying vision execution")
+                exec_result = await bridge.execute_action(
+                    action=action.replace("_by_description", ""),
+                    description=description,
+                    context=params,
+                    timeout=60,
+                    driver=driver,
+                )
+                return {
+                    "reason": "vision_fallback_execution",
+                    "vision_executed": True,
+                    "success": exec_result.success,
+                    "error": exec_result.error,
+                }
+
+        except Exception as e:
+            logger.error(f"[ROUTER] Vision diagnosis error: {e}")
+            return {"reason": f"diagnosis_error: {e}"}
+
+    def _update_selector_pattern(
+        self,
+        action: str,
+        params: Dict[str, Any],
+        diagnosis: Dict[str, Any],
+    ) -> None:
+        """
+        Update selector pattern based on UI-TARS diagnosis.
+
+        Stores the new selector so future executions use it directly.
+        """
+        learner = self._get_pattern_learner()
+        if learner is None:
+            return
+
+        try:
+            platform = params.get("platform", "unknown")
+            new_selector = diagnosis.get("new_selector")
+
+            if new_selector:
+                learner.record_selector_update(
+                    action=action,
+                    platform=platform,
+                    old_selector=params.get("selector"),
+                    new_selector=new_selector,
+                    diagnosis_reason=diagnosis.get("reason"),
+                )
+                logger.info(f"[ROUTER] Selector pattern updated: {action} -> {new_selector[:50]}...")
+        except Exception as e:
+            logger.debug(f"[ROUTER] Pattern update failed: {e}")
 
     async def _execute_with_driver(
         self,
@@ -614,6 +765,125 @@ class ActionRouter:
                     duration_ms=0,
                     result_data={"text": element.text},
                 )
+            elif action == 'scroll_to_element':
+                # Scroll using JavaScript - works when vision fails
+                description = params.get('description', '')
+                scroll_amount = params.get('scroll_amount', 400)  # pixels
+
+                # Try to find element by description text first
+                if description:
+                    try:
+                        from selenium.webdriver.common.by import By
+                        # Try various selectors based on description
+                        element = None
+                        # Try finding by partial text
+                        elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{description[:30]}')]")
+                        if elements:
+                            element = elements[0]
+
+                        if element:
+                            # Scroll element into view
+                            driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element)
+                            import time
+                            time.sleep(0.5)  # Wait for smooth scroll
+                            success = True
+                        else:
+                            # Fallback: just scroll down by scroll_amount
+                            driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                            import time
+                            time.sleep(0.3)
+                            success = True
+                    except Exception:
+                        # Final fallback: simple scroll
+                        driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                        import time
+                        time.sleep(0.3)
+                        success = True
+                else:
+                    # No description, just scroll down
+                    driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                    import time
+                    time.sleep(0.3)
+                    success = True
+
+            elif action == 'find_by_description':
+                # Selenium fallback for find_by_description - try text search
+                description = params.get('description', '')
+                from selenium.webdriver.common.by import By
+                try:
+                    # Try various selectors
+                    element = None
+                    if description:
+                        # Try partial text match
+                        elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{description[:30]}')]")
+                        if elements:
+                            element = elements[0]
+                        # Try aria-label
+                        if not element:
+                            elements = driver.find_elements(By.XPATH, f"//*[contains(@aria-label, '{description[:30]}')]")
+                            if elements:
+                                element = elements[0]
+
+                    if element:
+                        return RoutingResult(
+                            success=True,
+                            driver_used="selenium",
+                            action=action,
+                            duration_ms=0,
+                            result_data={"found": True, "tag": element.tag_name},
+                        )
+                    else:
+                        return RoutingResult(
+                            success=False,
+                            driver_used="selenium",
+                            action=action,
+                            duration_ms=0,
+                            error=f"Element not found by description: {description}",
+                        )
+                except Exception as e:
+                    return RoutingResult(
+                        success=False,
+                        driver_used="selenium",
+                        action=action,
+                        duration_ms=0,
+                        error=f"Selenium find error: {e}",
+                    )
+            elif action == 'click_by_description':
+                # Selenium fallback for click_by_description - try text/aria search
+                description = params.get('description', '')
+                from selenium.webdriver.common.by import By
+                try:
+                    element = None
+                    if description:
+                        # Try partial text match
+                        elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{description[:30]}')]")
+                        if elements:
+                            element = elements[0]
+                        # Try aria-label
+                        if not element:
+                            elements = driver.find_elements(By.XPATH, f"//*[contains(@aria-label, '{description[:30]}')]")
+                            if elements:
+                                element = elements[0]
+
+                    if element:
+                        element.click()
+                        success = True
+                    else:
+                        return RoutingResult(
+                            success=False,
+                            driver_used="selenium",
+                            action=action,
+                            duration_ms=0,
+                            error=f"Element not found for click: {description}",
+                        )
+                except Exception as e:
+                    return RoutingResult(
+                        success=False,
+                        driver_used="selenium",
+                        action=action,
+                        duration_ms=0,
+                        error=f"Selenium click error: {e}",
+                    )
             else:
                 # Unsupported action for Selenium
                 return RoutingResult(

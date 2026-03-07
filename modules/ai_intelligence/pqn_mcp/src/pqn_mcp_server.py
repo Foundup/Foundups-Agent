@@ -56,6 +56,7 @@ from modules.ai_intelligence.pqn_alignment import (
     council_run,
     promote
 )
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 # fastMCP Integration
 try:
@@ -147,8 +148,8 @@ class PQNMCPServer:
 
         # Gemma Agent (8K context, pattern matching focus)
         if GEMMA_AVAILABLE:
-            # Load Gemma 2B model for pattern matching
-            model_path = os.getenv("GEMMA_MODEL_PATH", "models/gemma-2b.gguf")
+            # Load centralized triage model for pattern matching.
+            model_path = str(resolve_triage_model_path())
             if Path(model_path).exists():
                 self.gemma_model = Llama(
                     model_path=model_path,
@@ -156,6 +157,8 @@ class PQNMCPServer:
                     n_threads=4
                 )
                 logger.info("Gemma agent initialized for PQN pattern analysis")
+            else:
+                logger.warning("Gemma triage model not found: %s", model_path)
 
     async def detect_pqn_emergence(self, text_input: str) -> Dict[str, Any]:
         """

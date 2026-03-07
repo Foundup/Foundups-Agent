@@ -14,8 +14,7 @@ from datetime import datetime
 # Only apply when running as main script, not during import
 if __name__ == '__main__' and sys.platform.startswith('win'):
     try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        pass  # UTF-8 wrapping handled by entrypoint (WSP 90)
     except (OSError, ValueError):
         # Ignore if stdout/stderr already wrapped or closed
         pass

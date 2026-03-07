@@ -1,6 +1,71 @@
 # WSP Module ModLog: Shared Utilities
 **WSP Compliance**: WSP 22 (Module ModLog and Roadmap Protocol)
 
+## 2026-03-07 - LinkedIn Account Registry (Central Source of Truth)
+- **Problem**: LinkedIn company IDs were hardcoded across ~14+ modules, making account management fragile and creating duplication.
+- **Solution**: Added `linkedin_account_registry.py` as single source of truth for LinkedIn company accounts.
+  - Loads from `LINKEDIN_ACCOUNTS_JSON` env var for flexibility
+  - Provides fuzzy matching via `ACCOUNT_ALIASES` (monk→undaodu, m2j→move2japan, 012→undaodu)
+  - URL generators: `get_article_url()`, `get_admin_url()`, `get_company_page_url()`
+  - Default fallback via `LINKEDIN_DEFAULT_COMPANY` env var
+- **Impact**: All LinkedIn modules can import from central registry instead of hardcoding IDs.
+- **Files**:
+  - `linkedin_account_registry.py` (NEW)
+  - `.env.example` (updated with LINKEDIN_* vars)
+  - `modules/ai_intelligence/ai_overseer/skillz/linkedin_company_poster/executor.py` (migrated)
+- **WSP Compliance**: WSP 60 (Module Memory Architecture), WSP 3 (shared utilities for cross-domain config)
+- **Migration Status**: COMPLETE - 13 files migrated across 6 modules:
+  - linkedin_agent (2 files)
+  - social_media_orchestrator (6 files)
+  - foundups_selenium (1 file)
+  - browser_actions (1 file)
+  - git_push_dae (1 file)
+  - wre_core/development_monitor (1 file)
+  - git_social_posting (1 file)
+- **LinkedInCompany Constants**: Added `LinkedInCompany` class with name constants for type-safety
+  - Constants: FOUNDUPS, UNDAODU, MOVE2JAPAN, AUTONOMOUSWALL, ESINGULARITY, etc.
+  - Enables IDE autocomplete and reduces string typos
+- **CTO Note**: Added fork documentation to INTERFACE.md
+  - Documents ~72 hardcoded company name usages across 13 files
+  - Instructions for forkers to customize company names
+  - Reference to `qwen_bulk_import_migration` skill for automated refactoring
+- **YouTube Registry Integration**: Updated `youtube_channel_registry.py` to use linkedin_account_registry
+  - Added `linkedin_company` field to channel social config
+  - Resolves company names to IDs via `get_company_id()` at normalization time
+  - Updated `memory/youtube_channels.json` with linkedin_company values
+  - WSP 84 (Code Reuse) - single source of truth for LinkedIn IDs
+
+## 2026-03-07 - Managed Environment Loader (0102 Autopilot)
+- **Problem**: `.env` had ordering drift, duplicate keys, and non-parseable lines, causing unclear runtime precedence and operator overhead.
+- **Solution**: Added managed env utility: `env_managed.py`.
+  - Builds `.env.managed` from `.env` with deterministic policy:
+    - last duplicate key wins
+    - non-parseable/orphan lines preserved as comments for auditability
+  - Exposes stats (`duplicate_keys`, `duplicate_overwrites`, `orphan_lines`) for runtime diagnostics.
+- **Main Integration**:
+  - `main.py` now uses managed env flow by default (`FOUNDUPS_ENV_MANAGED=1`).
+  - Fallback to legacy direct `.env` loading if managed loader fails or is disabled.
+- **Operational Outcome**:
+  - 0102 can run with stable env precedence without manual `.env` reordering.
+  - Operator no longer needs to actively curate duplicate ordering in large env files.
+- **Files**:
+  - `modules/infrastructure/shared_utilities/env_managed.py`
+  - `main.py`
+  - `.env.example` (`FOUNDUPS_ENV_MANAGED=1`)
+
+## 2026-03-07 - Env Exposure Hardening (no managed copy on disk)
+- **Problem**: Persisting `.env.managed` on disk creates unnecessary secret-copy exposure risk.
+- **Solution**:
+  - Switched managed env runtime to in-memory normalization/application by default.
+  - Added explicit controls:
+    - `FOUNDUPS_ENV_MANAGED_DISK_COPY=0` (default)
+    - `FOUNDUPS_ENV_MANAGED_PURGE_COPY=1` (default)
+  - Auto-purges stale `.env.managed` copy when purge is enabled.
+  - Removed existing `.env.managed` from workspace.
+- **Operational Result**:
+  - Runtime keeps deterministic duplicate resolution without creating extra env files.
+  - `.env` remains the single authoritative secret file.
+
 ## 2026-02-02 - YouTube Channel Registry (Central Source of Truth)
 - **Problem**: Channel rotation lists were duplicated across modules, making new channel onboarding fragile.
 - **Solution**: Added `youtube_channel_registry.py` + registry JSON in module memory to centralize channel metadata (roles, browser grouping, shorts config).

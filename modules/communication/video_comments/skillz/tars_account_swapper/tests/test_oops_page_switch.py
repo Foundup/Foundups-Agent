@@ -68,7 +68,7 @@ Section 1 (Google Account B):
 - ytd-account-section-list-renderer[1]
   - ytd-account-item-section-renderer
     - ytd-account-item-renderer[0] -> FoundUps
-    - ytd-account-item-renderer[1] -> RavingANTIFA
+    - ytd-account-item-renderer[1] -> antifaFM
 
 SUCCESS CRITERIA:
 -----------------
@@ -189,7 +189,7 @@ class TestSwapFromOopsPage:
         with patch.object(swapper, '_is_permission_error', return_value=True):
             with patch.object(swapper, '_click_permission_switch', return_value=False):
                 with patch.object(swapper, 'swap_to', new_callable=AsyncMock, return_value=True) as mock_swap_to:
-                    result = await swapper.swap_from_oops_page("RavingANTIFA")
+                    result = await swapper.swap_from_oops_page("antifaFM")
 
         assert result is True
         mock_swap_to.assert_called_once()
@@ -225,7 +225,7 @@ class TestAccountSectionMapping:
 
         # Section 1 (Google Account B)
         assert swapper.ACCOUNT_PICKER_MAP["FoundUps"]["section"] == 1
-        assert swapper.ACCOUNT_PICKER_MAP["RavingANTIFA"]["section"] == 1
+        assert swapper.ACCOUNT_PICKER_MAP["antifaFM"]["section"] == 1
 
     def test_channels_config_has_all_four(self):
         """Verify all 4 channels are configured."""
@@ -236,29 +236,29 @@ class TestAccountSectionMapping:
         assert "Move2Japan" in channels
         assert "UnDaoDu" in channels
         assert "FoundUps" in channels
-        assert "RavingANTIFA" in channels
+        assert "antifaFM" in channels
 
 
 # =============================================================================
 # UI-TARS TRAINING SCENARIOS
 # =============================================================================
 """
-SCENARIO 1: RavingANTIFA shows OOPS (browser on Account A)
+SCENARIO 1: antifaFM shows OOPS (browser on Account A)
 -----------------------------------------------------------
 Input State:
 - Browser logged into Google Account A (UnDaoDu/Move2Japan session)
-- Navigated to RavingANTIFA Studio URL
+- Navigated to antifaFM Studio URL
 - OOPS page displayed
 
 Expected Actions:
 1. Detect OOPS page
 2. Click "Switch account" button on OOPS page
 3. Account picker appears showing Section 0 and Section 1
-4. Click on Section 1, item 1 (RavingANTIFA)
-5. Page reloads to RavingANTIFA Studio
+4. Click on Section 1, item 1 (antifaFM)
+5. Page reloads to antifaFM Studio
 
 Verification:
-- URL contains RavingANTIFA channel ID (UCVSmg5aOhP4tnQ9KFUg97qA)
+- URL contains antifaFM channel ID (UCVSmg5aOhP4tnQ9KFUg97qA)
 - No OOPS message visible
 - Studio UI loads normally
 
@@ -266,7 +266,7 @@ Verification:
 SCENARIO 2: Move2Japan shows OOPS (browser on Account B)
 ---------------------------------------------------------
 Input State:
-- Browser logged into Google Account B (FoundUps/RavingANTIFA session)
+- Browser logged into Google Account B (FoundUps/antifaFM session)
 - Navigated to Move2Japan Studio URL
 - OOPS page displayed
 
@@ -281,22 +281,22 @@ Verification:
 - Studio UI loads normally
 
 
-SCENARIO 3: Both FoundUps AND RavingANTIFA show OOPS
+SCENARIO 3: Both FoundUps AND antifaFM show OOPS
 -----------------------------------------------------
 This indicates browser is completely on wrong Google Account (Account A instead of B).
 
 Input State:
 - First try FoundUps -> OOPS
-- Try fallback RavingANTIFA -> also OOPS
+- Try fallback antifaFM -> also OOPS
 - Both Section 1 channels inaccessible
 
 Expected Log Output:
 ```
 [ROTATE] [Edge] OOPS PAGE detected for FoundUps
-[ROTATE] [Edge] Trying fallback channel: RavingANTIFA
-[ROTATE] [Edge] Fallback RavingANTIFA also shows OOPS
+[ROTATE] [Edge] Trying fallback channel: antifaFM
+[ROTATE] [Edge] Fallback antifaFM also shows OOPS
 [ROTATE] [Edge] WRONG GOOGLE ACCOUNT: Browser appears to be on Google Account A,
-                but needs Google Account B (FoundUps/RavingANTIFA) (Section 1)
+                but needs Google Account B (FoundUps/antifaFM) (Section 1)
 [ROTATE] [Edge] Attempting DIRECT OOPS page switch for FoundUps...
 ```
 """

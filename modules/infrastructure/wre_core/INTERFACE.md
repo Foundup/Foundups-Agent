@@ -211,6 +211,11 @@ class PatternMemory:
     - skill_outcomes: Execution records
     - skill_variations: A/B test variations
     - learning_events: Pattern improvement events
+
+    Known producers (2026-02):
+    - WRE master orchestrator execution pipeline
+    - OpenClawDAE validation/remember phase
+    - Standalone Claw action runner (`modules.communication.moltbot_bridge.src.action_cli`)
     """
 
     def __init__(self, db_path: Optional[Path] = None) -> None:

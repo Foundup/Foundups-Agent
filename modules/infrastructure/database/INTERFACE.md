@@ -1,169 +1,93 @@
-# database Interface Specification
+# Database Interface Specification
 
-**WSP 11 Compliance:** In Progress
-**Last Updated:** 2025-09-25
-**Version:** 0.1.0
+## Public Exports
+From `modules.infrastructure.database`:
 
-## [OVERVIEW] Module Overview
+- `DatabaseManager`
+- `ModuleDB`
+- `AgentDB`
+- `Database`
+- `audit_sqlite_file`
+- `run_sqlite_audit`
 
-**Domain:** infrastructure
-**Purpose:** [Brief description of module functionality]
+## DatabaseManager
+File: `modules/infrastructure/database/src/db_manager.py`
 
-## [API] Public API
+### Responsibilities
+- Resolve backend (`sqlite` or `postgres`)
+- Provide transactional connection context manager
+- Offer query/write helpers and metadata helpers
 
-### Primary Classes
+### Key Methods
+- `get_connection() -> context manager`
+- `execute_query(query, params=()) -> list[dict]`
+- `execute_write(query, params=()) -> int`
+- `table_exists(table_name) -> bool`
+- `get_table_info(table_name) -> list[dict]`
+- `backup_database(backup_path) -> bool` (sqlite only)
+- `backend_info() -> dict`
+- `get_stats() -> dict`
+- `reset_for_tests() -> None` (class method)
 
-#### Database
-```python
-class Database:
-    """Main class for [module functionality]"""
+### Environment Variables
+- `FOUNDUPS_DB_ENGINE`
+- `FOUNDUPS_DB_PATH`
+- `DATABASE_URL`
+- `FOUNDUPS_ENABLE_PGVECTOR`
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        """Initialize Database
+## ModuleDB
+File: `modules/infrastructure/database/src/module_db.py`
 
-        Args:
-            config: Optional configuration dictionary
-        """
+### Responsibilities
+- Enforce module table prefix convention: `modules_{module_name}_{table}`
+- Provide CRUD convenience methods over prefixed tables
 
-    def process(self, [parameters]) -> [ReturnType]:
-        """[Method description]
+### Key Methods
+- `create_table(table_name, schema)`
+- `insert(table_name, data)`
+- `update(table_name, data, where_clause, where_params)`
+- `delete(table_name, where_clause, where_params)`
+- `select(table_name, where_clause="", where_params=(), order_by="", limit=0)`
+- `count(table_name, where_clause="", where_params=())`
+- `upsert(table_name, data, id_field="id")`
 
-        Args:
-            [parameters]: [Parameter description]
+## AgentDB
+File: `modules/infrastructure/database/src/agent_db.py`
 
-        Returns:
-            [ReturnType]: [Return value description]
+### Responsibilities
+- Persist shared agent state and coordination artifacts
+- Manage agent-related schemas (`agents_*` and supporting tables)
 
-        Raises:
-            [ExceptionType]: [When exception is raised]
-        """
-```
+### Representative Methods
+- `record_awakening(agent_id, consciousness_level, koan=None)`
+- `get_awakening_state(agent_id) -> dict | None`
+- `learn_pattern(agent_id, pattern_type, pattern_data) -> int`
+- `get_patterns(agent_id=None, pattern_type=None, limit=50) -> list[dict]`
+- `record_error(error_hash, error_type, solution)`
+- `get_error_solution(error_hash) -> dict | None`
 
-### Utility Functions
+## SQLite Audit API
+File: `modules/infrastructure/database/src/sqlite_audit.py`
 
-#### utility_database
-```python
-def utility_database([parameters]) -> [ReturnType]:
-    """[Function description]
+### Types
+- `AuditOptions(max_tables=20, include_table_counts=True)`
 
-    Args:
-        [parameters]: [Parameter description]
+### Functions
+- `audit_sqlite_file(path: Path, options: AuditOptions | None = None) -> dict`
+- `run_sqlite_audit(targets: Sequence[Path | str] | None = None, options: AuditOptions | None = None) -> dict`
 
-    Returns:
-        [ReturnType]: [Return value description]
-    """
-```
-
-## [CONFIG] Configuration
-
-### Required Configuration
-```python
-# Example configuration
-config = {
-    "setting1": "value1",
-    "setting2": 42
-}
-```
-
-### Optional Configuration
-```python
-# Optional settings with defaults
-optional_config = {
-    "timeout": 30,  # Default: 30 seconds
-    "retries": 3    # Default: 3 attempts
-}
-```
-
-## [USAGE] Usage Examples
-
-### Basic Usage
-```python
-from modules.infrastructure.database import Database
-
-# Initialize
-instance = Database(config)
-
-# Use main functionality
-result = instance.process([example_parameters])
-print(f"Result: {result}")
-```
-
-### Advanced Usage
-```python
-# With custom configuration
-custom_config = {
-    "special_setting": "custom_value"
-}
-advanced_instance = Database(custom_config)
-
-# Use utility function
-processed = utility_database([input_data])
-```
-
-## [DEPENDENCIES] Dependencies
-
-### Internal Dependencies
-- modules.[domain].[dependency_module] - [Reason for dependency]
-
-### External Dependencies
-- [package_name]>=x.y.z - [Purpose of dependency]
-
-## [TESTING] Testing
-
-### Running Tests
+### CLI
 ```bash
-cd modules/infrastructure/database
-python -m pytest tests/
+python -m modules.infrastructure.database.src.sqlite_audit [options]
 ```
 
-### Test Coverage
-- **Current:** 0% (implementation needed)
-- **Target:** >=90%
+Options:
+- `--target <path>` (repeatable)
+- `--max-tables <n>`
+- `--no-table-counts`
+- `--output <path>`
 
-## [PERFORMANCE] Performance Characteristics
-
-### Expected Performance
-- **Latency:** [expected latency]
-- **Throughput:** [expected throughput]
-- **Resource Usage:** [memory/CPU expectations]
-
-## [ERRORS] Error Handling
-
-### Common Errors
-- **[ErrorType1]:** [Description and resolution]
-- **[ErrorType2]:** [Description and resolution]
-
-### Exception Hierarchy
-```python
-class [ModuleName]Error(Exception):
-    """Base exception for [module_name]"""
-    pass
-
-class [SpecificError]([ModuleName]Error):
-    """Specific error type"""
-    pass
-```
-
-## [HISTORY] Version History
-
-### 0.1.0 (2025-09-25)
-- Initial interface specification
-- Basic API structure defined
-- Placeholder implementation created
-
-## [NOTES] Development Notes
-
-### Current Status
-- [x] WSP 49 structure compliance
-- [x] Interface specification defined
-- [ ] Functional implementation (TODO)
-- [ ] Comprehensive testing (TODO)
-
-### Future Enhancements
-- [Enhancement 1]
-- [Enhancement 2]
-- [Integration with other modules]
-
----
-
-**WSP 11 Interface Compliance:** Structure Complete, Implementation Pending
+## Contract Boundaries
+1. This module owns operational relational persistence primitives.
+2. FAM/DAE event stores are separate modules and should not be bypassed for audit/event writes.
+3. Blockchain settlement anchoring is out of scope for this module.

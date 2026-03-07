@@ -7,6 +7,39 @@
 
 ## Change Log
 
+### 2026-02-27 - IMPROVE: Smart OOPS Page Recovery (Detect-Before-Swap)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 87 (Navigation), WSP 27 (DAE Architecture)
+
+**Problem:** CASCADE 2 (Return to Studio) blindly navigated after clicking without knowing which account we landed on:
+- Clicked "Return to Studio" → navigated directly to target → failed if wrong account was active
+- DOM order varies based on logged-in account → index-based selection unreliable
+
+**Solution:** Smart account detection after "Return to Studio":
+
+1. **Added `_detect_current_channel_name()`** (`account_swapper_skill.py:190-220`):
+   - Uses `_detect_current_channel_id()` to get channel ID from URL/page state
+   - Maps ID back to channel name via `CHANNELS` config
+   - Returns channel name (e.g., "FoundUps", "antifaFM") or None
+
+2. **Improved CASCADE 2 Flow** (`account_swapper_skill.py:464-518`):
+   ```
+   OLD: Click "Return to Studio" → navigate to target → (often fails if wrong account)
+   NEW: Click "Return to Studio" → DETECT current account → decide:
+        - If already on target → navigate directly (fast path)
+        - If on different account → swap via avatar/picker, THEN navigate
+   ```
+
+3. **Recovery Methods Now Tracked:**
+   - `return_to_studio_direct` - Already on correct account, navigated directly
+   - `return_to_studio_swap` - Was on wrong account, swapped then navigated
+
+**Files Changed:**
+- `skillz/tars_account_swapper/account_swapper_skill.py` - Added detection + smart CASCADE 2
+
+---
+
 ### 2026-02-20 - FIX: ContentAnalysis Not Passed to Skillz (Contextual Response Gap)
 
 **By:** 0102

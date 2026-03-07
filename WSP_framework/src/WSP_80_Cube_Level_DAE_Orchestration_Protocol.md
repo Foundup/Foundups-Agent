@@ -674,6 +674,73 @@ class MCPModuleConnector:
 - Emergent cube collaboration without central coordination
 - Pattern memory optimization through collective intelligence
 
+## 12. Reference Implementation: YouTube Comment DAE
+
+### 12.1 WSP 27 Four-Phase Mapping (Actual Implementation)
+
+The `video_comments` module demonstrates WSP 27's Signal/Knowledge/Protocol/Agentic pattern with **actual existing files**:
+
+```
+Phase -1: SIGNAL (Detection & Triggering)
+├── comment_monitor_dae.py      # New comment detection, event signals
+└── realtime_comment_dialogue.py # Real-time signal processing
+
+Phase 0: KNOWLEDGE (Pattern Memory & Analysis)
+├── commenter_history_store.py   # User profile persistence
+├── comment_content_analyzer.py  # Content analysis patterns
+├── commenter_classifier.py      # 0/1/2 classification (MAGA/Mod/Regular)
+├── moderator_lookup.py          # Mod detection from database
+└── engagement_feedback_store.py # Outcome storage for learning
+
+Phase 1: PROTOCOL (Rules & Structure)
+├── commenting_control_plane.py  # Control flow orchestration
+├── gemma_validator.py           # Pattern validation via Gemma 270M
+└── video_comments.py            # Main module orchestrator
+
+Phase 2: AGENTIC (Autonomous Execution)
+├── intelligent_reply_generator.py # Context-aware response generation
+├── llm_comment_generator.py       # LLM-powered content creation
+└── comment_monitor_dae.py         # Autonomous operation loop
+```
+
+### 12.2 Key Implementation Patterns
+
+**CommentMonitorDAE** (actual code from `comment_monitor_dae.py`):
+```python
+class CommentMonitorDAE:
+    """
+    WSP 27 Compliant DAE for YouTube Comments
+    Phase -1: Signal (new comments detected)
+    Phase 0: Knowledge (comment analysis)
+    Phase 1: Protocol (response generation)
+    Phase 2: Agentic (autonomous operation)
+    """
+```
+
+**IntelligentReplyGenerator** (actual code from `intelligent_reply_generator.py`):
+```python
+# Context-aware responses using existing infrastructure:
+# - BanterEngine: Themed response generation (ai_intelligence)
+# - Whack-a-MAGAT: Troll classification and mockery
+# - Moderator DB: Commenter profile lookup (livechat/memory)
+```
+
+### 12.3 Cross-Module Integration
+
+The YouTube Comment DAE demonstrates proper cube integration:
+- Uses `youtube_auth` for API access (platform_integration domain)
+- Uses `livechat` for memory and chat engine (communication domain)
+- Uses `banter_engine` for themed responses (ai_intelligence domain)
+- Follows WSP 3 functional distribution across domains
+
+### 12.4 Lessons for Other DAE Implementations
+
+1. **Document actual files** - Not aspirational architecture
+2. **Map to WSP 27 phases** - Each file should fit one phase
+3. **Reuse existing modules** - Don't duplicate (WSP 84)
+4. **Store outcomes** - Enable recursive learning (engagement_feedback_store)
+5. **Validate with Gemma** - Fast pattern matching before LLM calls
+
 ## Conclusion
 
 WSP 80 establishes the missing link between theoretical DAE architecture and practical implementation. By focusing DAE entities at the cube level, we achieve:

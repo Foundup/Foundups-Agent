@@ -1,4 +1,4 @@
-{
+﻿{
   "module_id": "foundups_vision_dae",
   "module_name": "FoundUps Vision DAE",
   "version": "0.4.0",
@@ -254,7 +254,7 @@
     },
     "ui_tars": {
       "description": "UI-TARS desktop automation integration",
-      "dispatch_inbox": "E:/HoloIndex/models/ui-tars-1.5/telemetry/inbox/",
+      "dispatch_inbox": "E:/LM_studio/models/local/ui-tars-1.5/telemetry/inbox/",
       "audit_trail": "modules/infrastructure/dae_infrastructure/foundups_vision_dae/memory/ui_tars_dispatches/",
       "retention": "14 days",
       "status": "operational",
@@ -269,7 +269,7 @@
       "description": "Social Media DAE LinkedIn posting integration",
       "scheduler": "modules/platform_integration/social_media_orchestrator/src/ui_tars_scheduler.py",
       "status": "operational",
-      "flow": "Vision DAE insights → ScheduledPost → UI-TARS scheduler → LinkedIn automation"
+      "flow": "Vision DAE insights 竊・ScheduledPost 竊・UI-TARS scheduler 竊・LinkedIn automation"
     }
   },
   "telemetry_outputs": {
@@ -345,3 +345,4 @@
     "status": "Complete Cardiovascular System - Sprint 5 full telemetry pipeline operational"
   }
 }
+

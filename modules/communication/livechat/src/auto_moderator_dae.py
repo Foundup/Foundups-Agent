@@ -31,6 +31,8 @@ from .persona_registry import resolve_channel_credential_set
 # Import extracted services (WSP 72: Module Independence, WSP 62: Large File Refactoring)
 from .stream_discovery_service import StreamDiscoveryService
 from .multi_channel_coordinator import MultiChannelCoordinator
+# RotationSupervisor: Task-based rotation with heartbeat stall detection (WSP 77)
+from .rotation_supervisor import RotationSupervisor, OperationType as RotationOperation
 # Activity Router for breadcrumb-based activity coordination (WSP 77)
 from modules.infrastructure.activity_control.src.activity_control import (
     get_activity_router, ActivityType
@@ -210,6 +212,19 @@ class AutoModeratorDAE:
 
         # Extracted services (WSP 72: Module Independence)
         self.stream_discovery_service: Optional[StreamDiscoveryService] = None  # Lazy init
+
+        # WRE Skill Triggers (WSP 46/96: Fire youtube-domain skills each cycle)
+        self._skill_trigger = None
+        try:
+            from modules.infrastructure.wre_core.src.skill_trigger import SkillTriggerMixin
+            self._skill_trigger = SkillTriggerMixin()
+            self._skill_trigger.init_skill_triggers(
+                domain="youtube",
+                cadence_minutes=int(os.getenv("WRE_YOUTUBE_SKILL_CADENCE_MINUTES", "10")),
+            )
+            logger.info("[WRE-TRIGGER] YouTube skill triggers initialized")
+        except Exception as trigger_exc:
+            logger.debug(f"[WRE-TRIGGER] Skill triggers unavailable: {trigger_exc}")
 
         logger.info("[OK] Auto Moderator DAE initialized")
 
@@ -693,7 +708,7 @@ class AutoModeratorDAE:
                             if ch and ch.get("name"):
                                 rotation_accounts.append(ch["name"])
                         if not rotation_accounts:
-                            rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
+                            rotation_accounts = ["Move2Japan", "UnDaoDu", "FoundUps", "antifaFM"]
                         self.current_studio_channel_index = (self.current_studio_channel_index + 1) % len(rotation_accounts)
                         target_account = rotation_accounts[self.current_studio_channel_index]
 
@@ -950,17 +965,17 @@ class AutoModeratorDAE:
 
         logger.info(f"[LOCK] Live stream detected - waiting for inbox clear (timeout: {timeout_seconds}s)")
 
-        # When a live stream is detected, ensure Edge channels (FoundUps → RavingANTIFA) have
+        # When a live stream is detected, ensure Edge channels (FoundUps → antifaFM) have
         # at least been ATTEMPTED once before handing off to live chat. Otherwise we can switch
         # to live chat immediately (no active channel set yet) and starve those channels.
         # WSP 50: never assume 'no active channel' means work is complete.
         required_edge_channels = []
         try:
             required_edge_channels = [
-                os.getenv("FOUNDUPS_CHANNEL_ID", "").strip(),
-                os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip(),
+                str(channel.get("id", "")).strip()
+                for channel in group_channels_by_browser(role="comments").get("edge", [])
+                if channel.get("id")
             ]
-            required_edge_channels = [c for c in required_edge_channels if c]
         except Exception:
             required_edge_channels = []
 
@@ -1363,28 +1378,66 @@ class AutoModeratorDAE:
                 except Exception:
                     pass  # Telemetry not critical
 
-                if browser_lock:
-                    logger.info(f"[{tag}-LOOP] PHASE 1: Acquiring browser lock...")
-                    await browser_lock.acquire()
-                    logger.info(f"[{tag}-LOOP] PHASE 1: Browser lock ACQUIRED")
-                try:
-                    logger.info(f"[{tag}-LOOP] PHASE 1: COMMENT ENGAGEMENT starting (timeout={phase1_timeout}s)...")
+                # 2026-03-07: RotationSupervisor toggle - uses spawn/heartbeat/kill paradigm
+                # instead of nested async loops. Detects stalls and auto-rotates.
+                use_rotation_supervisor = _env_truthy("YT_USE_ROTATION_SUPERVISOR", "false")
+
+                if use_rotation_supervisor:
+                    # NEW: Task-based rotation with heartbeat stall detection
+                    logger.info(f"[{tag}-LOOP] PHASE 1: Using RotationSupervisor (stall detection ENABLED)")
                     try:
-                        comments_processed = await asyncio.wait_for(
-                            self.multi_channel_coordinator.run_browser_engagement(
-                                browser=browser_name,
-                                runner=runner,
-                                max_comments=max_comments,
-                                mode=mode,
-                            ),
-                            timeout=phase1_timeout,
+                        supervisor = RotationSupervisor(
+                            browser=browser_name,
+                            heartbeat_timeout=float(os.getenv("YT_ROTATION_HEARTBEAT_TIMEOUT", "60")),
+                            task_timeout=float(os.getenv("YT_ROTATION_TASK_TIMEOUT", "300")),
                         )
-                    except asyncio.TimeoutError:
-                        logger.error(f"[{tag}-LOOP] PHASE 1 TIMEOUT after {phase1_timeout}s — skipping to next phase")
-                finally:
-                    if browser_lock and browser_lock.locked():
-                        browser_lock.release()
-                        logger.debug(f"[{tag}-LOOP] PHASE 1: Browser lock RELEASED")
+                        result = await supervisor.run_rotation(
+                            operation=RotationOperation.COMMENTS,
+                            max_items_per_channel=max_comments if max_comments > 0 else 10,
+                        )
+                        comments_processed = result.total_comments
+
+                        # Emit stall detection breadcrumb for AI Overseer
+                        if result.failed_channels:
+                            try:
+                                from modules.communication.livechat.src.breadcrumb_telemetry import get_breadcrumb_telemetry
+                                telemetry = get_breadcrumb_telemetry()
+                                telemetry.store_breadcrumb(
+                                    source_dae="rotation_supervisor",
+                                    event_type="stall_detected",
+                                    message=f"{tag} rotation stalled on: {result.failed_channels}",
+                                    phase="COMMENT-ENGAGEMENT",
+                                    metadata={"failed": result.failed_channels, "browser": browser_name},
+                                )
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        logger.error(f"[{tag}-LOOP] PHASE 1 RotationSupervisor error: {e}", exc_info=True)
+                        comments_processed = 0
+                else:
+                    # LEGACY: Nested async loops (no stall detection)
+                    if browser_lock:
+                        logger.info(f"[{tag}-LOOP] PHASE 1: Acquiring browser lock...")
+                        await browser_lock.acquire()
+                        logger.info(f"[{tag}-LOOP] PHASE 1: Browser lock ACQUIRED")
+                    try:
+                        logger.info(f"[{tag}-LOOP] PHASE 1: COMMENT ENGAGEMENT starting (timeout={phase1_timeout}s)...")
+                        try:
+                            comments_processed = await asyncio.wait_for(
+                                self.multi_channel_coordinator.run_browser_engagement(
+                                    browser=browser_name,
+                                    runner=runner,
+                                    max_comments=max_comments,
+                                    mode=mode,
+                                ),
+                                timeout=phase1_timeout,
+                            )
+                        except asyncio.TimeoutError:
+                            logger.error(f"[{tag}-LOOP] PHASE 1 TIMEOUT after {phase1_timeout}s — skipping to next phase")
+                    finally:
+                        if browser_lock and browser_lock.locked():
+                            browser_lock.release()
+                            logger.debug(f"[{tag}-LOOP] PHASE 1: Browser lock RELEASED")
                 phase1_elapsed = time.time() - phase1_start
                 logger.info(f"[{tag}-LOOP] PHASE 1: COMMENT ENGAGEMENT complete ({phase1_elapsed:.1f}s, {comments_processed} comments)")
 
@@ -1572,6 +1625,18 @@ class AutoModeratorDAE:
                     logger.info("-" * 50)
                     await asyncio.sleep(idle_sleep)
                 else:
+                    # Fire WRE youtube skill triggers before sleeping
+                    if self._skill_trigger:
+                        try:
+                            results = await self._skill_trigger.fire_pending_skills(
+                                extra_context={"browser": browser_name, "cycle": cycle_count},
+                            )
+                            if results:
+                                ok = sum(1 for r in results if r.get("success"))
+                                logger.info(f"[{tag}-LOOP] [WRE-TRIGGER] {ok}/{len(results)} skills fired")
+                        except Exception as skill_exc:
+                            logger.debug(f"[{tag}-LOOP] [WRE-TRIGGER] Skill fire error: {skill_exc}")
+
                     logger.info(f"[{tag}-LOOP] Sleeping {interval_minutes} minutes before next cycle...")
                     logger.info("-" * 50)
                     # Wait before next cycle
@@ -1946,8 +2011,11 @@ class AutoModeratorDAE:
                     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
 
                     # Comment engagement summary (critical for "what next?" orchestration)
-                    foundups_id = os.getenv("FOUNDUPS_CHANNEL_ID", "").strip()
-                    raving_id = os.getenv("RAVINGANTIFA_CHANNEL_ID", "").strip()
+                    edge_comment_channels = [
+                        channel
+                        for channel in group_channels_by_browser(role="comments").get("edge", [])
+                        if channel.get("id")
+                    ]
                     comment_status = getattr(self, "_comment_engagement_status", {}) or {}
                     def _channel_summary(cid: str) -> dict:
                         if not cid:
@@ -1964,15 +2032,15 @@ class AutoModeratorDAE:
                             "error": s.get("error"),
                         }
 
-                    foundups_summary = _channel_summary(foundups_id)
-                    raving_summary = _channel_summary(raving_id)
-                    edge_comments_cleared = bool(
-                        foundups_summary.get("known")
-                        and raving_summary.get("known")
-                        and foundups_summary.get("all_processed")
-                        and raving_summary.get("all_processed")
-                        and not foundups_summary.get("error")
-                        and not raving_summary.get("error")
+                    edge_summaries = {
+                        str(channel.get("key", channel.get("id"))): _channel_summary(str(channel.get("id", "")).strip())
+                        for channel in edge_comment_channels
+                    }
+                    edge_comments_cleared = bool(edge_summaries) and all(
+                        summary.get("known")
+                        and summary.get("all_processed")
+                        and not summary.get("error")
+                        for summary in edge_summaries.values()
                     )
 
                     heartbeat_data = {
@@ -1991,8 +2059,7 @@ class AutoModeratorDAE:
                             "live_chat_active": bool(getattr(self, "_live_chat_active", False)),
                             "active_channel_id": getattr(self, "_comment_engagement_active_channel", None),
                             "edge_comments_cleared": edge_comments_cleared,
-                            "foundups": foundups_summary,
-                            "ravingantifa": raving_summary,
+                            "edge_channels": edge_summaries,
                         },
                         "shorts_scheduling": {
                             "module_available": getattr(self, "_shorts_scheduler_available", False),
@@ -2012,8 +2079,9 @@ class AutoModeratorDAE:
                         event = {
                             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
                             "event": "edge_comments_cleared",
-                            "channels": [c for c in [foundups_id, raving_id] if c],
-                            "note": "FoundUps + RavingANTIFA all_processed=True; awaiting next action orchestration",
+                            "channels": [str(channel.get("id", "")).strip() for channel in edge_comment_channels if channel.get("id")],
+                            "channel_keys": [str(channel.get("key", "")).strip() for channel in edge_comment_channels if channel.get("key")],
+                            "note": "All Edge comment channels reached all_processed=True; awaiting next action orchestration",
                         }
                         with open(jsonl_path, "a", encoding="utf-8") as f:
                             json.dump(event, f)
@@ -2113,8 +2181,28 @@ class AutoModeratorDAE:
                             # ORIENT: Query for next activity decision
                             decision = activity_router.get_next_activity()
 
-                            # DECIDE: Determine if pivot needed
-                            current_activity = ActivityType.LIVE_CHAT if self._live_chat_active else ActivityType.COMMENT_ENGAGEMENT
+                            # DECIDE: Determine current activity based on ACTUAL page state (not just _live_chat_active)
+                            # FIX (2026-02-21): Use Chrome page type to determine actual activity
+                            chrome_page = page_state.get("chrome", {}).get("page_type") if page_state else None
+
+                            # If Chrome is on comments page, that's what we're doing (regardless of _live_chat_active)
+                            if chrome_page == "youtube_studio_comments":
+                                current_activity = ActivityType.COMMENT_ENGAGEMENT
+
+                                # FIX: When comments are cleared AND we're on comments page, signal completion
+                                if edge_comments_cleared:
+                                    # Get current channel from router
+                                    router_channel_id = activity_router.current_channel_id
+                                    if router_channel_id:
+                                        logger.info(f"[OODA-PIVOT] Comments cleared for {router_channel_id} - signaling completion")
+                                        activity_router.signal_comments_complete(router_channel_id)
+                                        # After signaling, get updated decision
+                                        decision = activity_router.get_next_activity()
+                            elif self._live_chat_active:
+                                current_activity = ActivityType.LIVE_CHAT
+                            else:
+                                current_activity = ActivityType.COMMENT_ENGAGEMENT
+
                             should_pivot = decision.next_activity != current_activity and decision.next_activity != ActivityType.IDLE
 
                             # Log OODA decision
@@ -2249,15 +2337,27 @@ class AutoModeratorDAE:
                             logger.debug(f"[AI-OVERSEER] Monitoring check failed: {e}")
 
                     # === COMMUNITY MONITOR: Autonomous comment engagement (every 20 pulses = 10 minutes) ===
-                    # CRITICAL: DISABLE autonomous comment engagement during live chat
-                    # User requirement: "Once on live chat, do NOT return to comments"
-                    # Comment engagement runs ONLY at startup, before first stream found
+                    # FIX (2026-02-21): Use activity router decision instead of just _live_chat_active
+                    # When Chrome is on comments page AND comments are done -> take break -> return to comments
                     if heartbeat_count % 20 == 0 and self.community_monitor:
-                        if self._live_chat_active:
-                            logger.debug(f"[LOCK] Pulse {heartbeat_count}: Comment engagement DISABLED (live chat active)")
+                        # Get activity router decision to determine if we should engage
+                        try:
+                            engage_router = get_activity_router()
+                            engage_decision = engage_router.get_next_activity()
+                            should_engage_per_router = engage_decision.next_activity == ActivityType.COMMENT_ENGAGEMENT
+                        except Exception:
+                            should_engage_per_router = not self._live_chat_active
+
+                        # Allow comment engagement if:
+                        # 1. Activity router says COMMENT_ENGAGEMENT is next, OR
+                        # 2. Chrome is on comments page (regardless of _live_chat_active)
+                        chrome_on_comments = (page_state.get("chrome", {}).get("page_type") == "youtube_studio_comments") if page_state else False
+
+                        if self._live_chat_active and not chrome_on_comments and not should_engage_per_router:
+                            logger.debug(f"[LOCK] Pulse {heartbeat_count}: Comment engagement DISABLED (live chat active, not on comments page)")
                         else:
                             try:
-                                logger.info(f"[COMMUNITY] Pulse {heartbeat_count}: Checking for comment engagement...")
+                                logger.info(f"[COMMUNITY] Pulse {heartbeat_count}: Checking for comment engagement (router_ok={should_engage_per_router}, chrome_comments={chrome_on_comments})...")
 
                                 # Check if we should engage now (verifies stream is active, no engagement in progress)
                                 should_engage = await self.community_monitor.should_check_now(heartbeat_count)

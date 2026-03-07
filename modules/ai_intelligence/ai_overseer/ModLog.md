@@ -2,7 +2,186 @@
 
 **Module**: `modules/ai_intelligence/ai_overseer/`
 **Status**: Active (Autonomous Code Patching + Daemon Restart + Activity Routing)
-**Version**: 0.8.0
+**Version**: 0.9.0
+
+---
+
+## 2026-03-07 - LinkedIn Company Poster Registry Migration
+
+**Author**: 0102
+**WSP**: 22, 60, 3
+
+### Changes
+
+- **skillz/linkedin_company_poster/executor.py**:
+  - Migrated from hardcoded COMPANY_ID to central registry import
+  - Now imports from `modules.infrastructure.shared_utilities.linkedin_account_registry`
+  - Functions updated: `get_article_url()`, `list_accounts()`, `switch_author()`
+  - Removed hardcoded company ID dictionary
+
+### Why
+
+LinkedIn company IDs were hardcoded across ~14+ modules. Created central registry in shared_utilities for single source of truth. This skill is first migrated consumer.
+
+### Migration
+
+```python
+# Before (hardcoded)
+COMPANY_ID = "1263645"
+ACCOUNT_IDS = {"foundups": "1263645", ...}
+
+# After (central registry)
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id, get_article_url, get_admin_url, ACCOUNT_ALIASES
+)
+COMPANY_ID = _get_default_company_id()
+```
+
+---
+
+## 2026-03-07 - Rotation Stall Detection + CLI Trigger
+
+**Author**: 0102
+**WSP**: 22, 77, 15, 91
+
+### Changes
+
+- **daemon_monitor_mixin.py**:
+  - Added `trigger_next_rotation` fix handler (lines 440-494)
+  - Spawns CLI command: `python -m modules.communication.livechat.src.rotation_supervisor --browser <browser> --operation <operation>`
+  - Added `check_rotation_stalls()` method for proactive breadcrumb monitoring
+
+- **youtube_daemon_monitor.json**:
+  - Added `rotation_stall_detected` signal pattern with `auto_fix` action
+  - Complexity: 1 (trivial CLI call), MPS Total: 16 (P0)
+
+### Why
+
+012 deep dive analysis revealed:
+- RotationSupervisor exists with heartbeat stall detection
+- But AI Overseer couldn't invoke it when stalls detected
+- Now AI Overseer can autonomously trigger CLI rotation on stall detection
+
+### Usage
+
+```python
+# Proactive stall check
+overseer.check_rotation_stalls(minutes=5, auto_trigger=True)
+# Returns: {"stalls_detected": N, "rotations_triggered": 1}
+```
+
+---
+## 2026-03-06 - External Stream Chat Skill (DOM-based engagement)
+
+**Author**: 0102
+**WSP**: 22, 27, 77, 91
+
+### Changes
+
+- Created `skillz/external_stream_chat/` skill module:
+  - `SKILLz.md` - Skill documentation with DOM selectors and usage
+  - `src/stream_chat_dae.py` - Main DAE implementation
+  - `executor.py` - CLI and skill executor
+  - `__init__.py` files for imports
+
+- **Functionality**:
+  - Navigate to ANY YouTube Live URL (not just owned channels)
+  - DOM-based chat input detection and message sending
+  - `!party` command for heart/reaction clicking
+  - Pixel offset calculation from chat input to reaction buttons
+  - Human behavior simulation integration (anti-detection)
+
+- **CLI Integration** in `openclaw_menu.py`:
+  - Option 10: "External Stream Chat (engage in any YouTube Live)"
+  - Interactive mode with `!send`, `!party`, `!watch`, `!status`
+  - Quick send, party mode, and watch-only modes
+
+### Why
+
+- 012 requested ability to engage in external streams like MIDDLE EAST MULTI-LIVE
+- Can't use YouTube API for streams we don't own → DOM automation required
+- `!party` clicks hearts using pixel offset from chat input position (10-50px left)
+
+### DOM Selectors
+```python
+'chat_input': "#input.yt-live-chat-text-input-field-renderer"
+'send_button': "#send-button button"
+'heart_emoji': "[aria-label*='heart' i]"
+```
+
+### Files Created
+- `skillz/external_stream_chat/SKILLz.md`
+- `skillz/external_stream_chat/src/stream_chat_dae.py`
+- `skillz/external_stream_chat/executor.py`
+- `skillz/external_stream_chat/__init__.py`
+- `skillz/external_stream_chat/src/__init__.py`
+
+### 2026-03-06 Update: M2M Coordinate-Based Enhancement
+
+**Enhancement**: Added M2M (Machine-to-Machine) instruction set with coordinate fallback
+
+- **Iframe handling**: YouTube chat is in `iframe#chatframe` - added `_switch_to_chat_iframe()` and `_switch_to_default()` methods
+- **Absolute coordinates** (fallback for iframe isolation):
+  - Chat input: (1260, 657)
+  - Send button: (1430, 657)
+  - Heart button: (1432, 657)
+  - Viewport reference: 1842x1004
+- **Click strategy priority**: DOM selectors → Pixel offset → Absolute coordinates
+- **Anti-detection**: +-3px randomization, 50-150ms typing delay
+- **Memory saved**: `memory/external_stream_chat_m2m.md`
+
+---
+## 2026-02-22 - IronClaw Runtime Monitoring Panel Entry
+
+**Author**: 0102
+**WSP**: 22, 46, 73, 91
+
+### Changes
+
+- Updated `src/ai_overseer.py`:
+  - Added `monitor_ironclaw_runtime(force=False)` runtime probe API.
+  - Added `get_ironclaw_runtime_status()` cached status accessor.
+  - Added telemetry event handling for `ironclaw_runtime_status_request`.
+  - Added `ironclaw_runtime_last_status` state tracking.
+- Updated OpenClaw/IronClaw CLI status view:
+  - `modules/infrastructure/cli/src/openclaw_menu.py`
+  - IronClaw runtime status now also prints an AI Overseer panel snapshot.
+- Added tests:
+  - `tests/test_ai_overseer_ironclaw_runtime.py`
+
+### Why
+
+- Required a first-class AI Overseer visibility surface for IronClaw health,
+  model inventory, and key-isolation state.
+
+---
+## 2026-02-20 - OpenClaw Port-Scan False-Positive Hardening
+
+**Author**: 0102
+**WSP**: 22, 50, 64
+
+### Changes
+
+- Updated `src/openclaw_security_sentinel.py` port scan gating:
+  - Added wildcard-binding filtering that ignores default system listeners (PID `0/4`).
+  - Added default ephemeral-port suppression (`>=49152`).
+  - Defaulted monitored scan scope to OpenClaw bridge port (`OPENCLAW_BRIDGE_PORT` / `18800`) to avoid unrelated host-process noise.
+  - Added env controls:
+    - `OPENCLAW_PORT_SCAN_IGNORE_PORTS`
+    - `OPENCLAW_PORT_SCAN_MONITORED_PORTS`
+    - `OPENCLAW_PORT_SCAN_IGNORE_EPHEMERAL`
+    - `OPENCLAW_PORT_SCAN_IGNORE_SYSTEM_PIDS`
+  - Added robust host/port parsing helpers for Windows/Linux-style netstat output.
+- Updated tests in `tests/test_openclaw_security_sentinel.py`:
+  - Added deterministic coverage for system/ephemeral suppression and monitored-port-only mode.
+  - Isolated cache/scan tests from host machine port state by mocking `_scan_ports`.
+- Updated env documentation:
+  - `INTERFACE.md`
+  - `README.md`
+
+### Why
+
+- Startup preflight was flagging normal host OS listeners as critical, which reduced signal quality and obscured true app-level exposure.
 
 ---
 ## 2026-02-17 - Added Strategic Diligence Gate SKILLz

@@ -167,7 +167,7 @@ class WorkContext:
 @dataclass
 class QwenAdvisorConfig:
     """Advisor configuration"""
-    model_path: Path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+    model_path: Path = Path("E:/LM_studio/models/local/qwen-coder-7b")
     max_tokens: int = 512
     temperature: float = 0.2
     cache_enabled: bool = True

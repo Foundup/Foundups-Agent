@@ -22,6 +22,7 @@ _ALLOWLIST = {
     "test_wsp_framework_sentinel.py",
     "test_m2m_compression_sentinel.py",
     "test_m2m_skill_shim.py",
+    "test_ai_overseer_ironclaw_runtime.py",
 }
 
 _HEAVY_TARGETS = [

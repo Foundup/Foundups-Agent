@@ -3,7 +3,7 @@
 UPDATE THIS FILE when providers release new models.
 All other modules should import from here, not hardcode model IDs.
 
-Last Updated: 2026-02-17
+Last Updated: 2026-02-22
 """
 
 from dataclasses import dataclass
@@ -61,9 +61,9 @@ OPENAI_MODELS: Dict[str, ModelInfo] = {
     "o3": ModelInfo(
         model_id="o3",
         provider="openai",
-        status=ModelStatus.CURRENT,
+        status=ModelStatus.SUNSET,
         release_date=date(2025, 4, 16),
-        notes="Reasoning model - complex problem solving ($2/$8 per 1M)"
+        notes="No longer available - use o3-pro or gpt-5.2"
     ),
     "o3-pro": ModelInfo(
         model_id="o3-pro",
@@ -297,26 +297,44 @@ GROK_MODELS: Dict[str, ModelInfo] = {
 }
 
 # =============================================================================
-# LOCAL MODELS (Ollama/llama.cpp)
+# LOCAL MODELS (LM Studio / Ollama / llama.cpp)
 # =============================================================================
 LOCAL_MODELS: Dict[str, ModelInfo] = {
+    "local/qwen-coder-7b": ModelInfo(
+        model_id="local/qwen-coder-7b",
+        provider="lm_studio_local",
+        status=ModelStatus.CURRENT,
+        notes="Default local coding model (qwen-coder-7b)"
+    ),
+    "local/qwen3-4b": ModelInfo(
+        model_id="local/qwen3-4b",
+        provider="lm_studio_local",
+        status=ModelStatus.CURRENT,
+        notes="General local reasoning/chat model (qwen3-4b)"
+    ),
+    "local/gemma-270m": ModelInfo(
+        model_id="local/gemma-270m",
+        provider="lm_studio_local",
+        status=ModelStatus.CURRENT,
+        notes="Fast local triage/classification model (gemma-270m)"
+    ),
     "qwen2.5:7b": ModelInfo(
         model_id="qwen2.5:7b",
         provider="ollama",
-        status=ModelStatus.CURRENT,
-        notes="Strategic planning, code generation"
+        status=ModelStatus.LEGACY,
+        notes="Legacy local model - prefer local/qwen3-4b or local/qwen-coder-7b"
     ),
     "gemma2:2b": ModelInfo(
         model_id="gemma2:2b",
         provider="ollama",
-        status=ModelStatus.CURRENT,
-        notes="Fast pattern matching, classification"
+        status=ModelStatus.LEGACY,
+        notes="Legacy local model - prefer local/gemma-270m"
     ),
     "llama3.2:3b": ModelInfo(
         model_id="llama3.2:3b",
         provider="ollama",
-        status=ModelStatus.CURRENT,
-        notes="General purpose local"
+        status=ModelStatus.LEGACY,
+        notes="Legacy local model - prefer local/qwen3-4b"
     ),
 }
 
@@ -338,7 +356,7 @@ RECOMMENDED_MODELS = {
     # 012's activity routing matrix (primary task types) — Feb 2026 current
     "coding": ["claude-opus-4-6", "gpt-5.2-codex", "grok-code-fast-1", "gemini-2.5-pro"],
     "math": ["o3", "o4-mini", "gemini-2.5-pro", "claude-opus-4-6"],
-    "reasoning": ["o3", "o3-pro", "claude-opus-4-6", "gemini-2.5-pro"],
+    "reasoning": ["o3-pro", "gpt-5.2", "claude-opus-4-6", "gemini-2.5-pro"],
     "social": ["grok-4", "gpt-5", "claude-sonnet-4-5-20250929"],
     "research": ["gemini-2.5-pro", "gpt-5.2", "claude-sonnet-4-5-20250929"],
     # Secondary task types
@@ -347,8 +365,9 @@ RECOMMENDED_MODELS = {
     "creative": ["claude-sonnet-4-5-20250929", "gpt-5", "gemini-2.5-flash"],
     "quick": ["grok-4-fast", "gpt-5", "claude-haiku-4-5-20251001", "gemini-2.5-flash"],
     # Local models
-    "local_fast": ["gemma2:2b", "llama3.2:3b"],
-    "local_smart": ["qwen2.5:7b"],
+    "local_fast": ["local/gemma-270m"],
+    "local_smart": ["local/qwen3-4b"],
+    "local_code": ["local/qwen-coder-7b"],
 }
 
 # =============================================================================
@@ -403,7 +422,7 @@ MIGRATION_MAP = {
     "gpt-4-turbo": "gpt-5.2",
     "gpt-4o": "gpt-5",
     "gpt-4o-mini": "gpt-5",
-    "o1": "o3",
+    "o1": "o3-pro",
     "o1-mini": "o4-mini",
     "o3-mini": "o4-mini",
     # Anthropic
@@ -417,6 +436,10 @@ MIGRATION_MAP = {
     "gemini-2.0-flash": "gemini-2.5-flash",
     # Grok (grok-2 deprecated, grok-4 is flagship)
     "grok-2": "grok-4",
+    # Local model refresh (LM Studio local stack)
+    "qwen2.5:7b": "local/qwen3-4b",
+    "gemma2:2b": "local/gemma-270m",
+    "llama3.2:3b": "local/qwen3-4b",
 }
 
 # =============================================================================

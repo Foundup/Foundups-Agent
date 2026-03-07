@@ -21,6 +21,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from modules.communication.moltbot_bridge.src.skill_safety_guard import run_skill_scan
+from modules.infrastructure.wre_core.src.skill_manifest_guard import generate_skill_manifest
 
 
 # ---------------------------------------------------------------------------
@@ -28,10 +29,20 @@ from modules.communication.moltbot_bridge.src.skill_safety_guard import run_skil
 # ---------------------------------------------------------------------------
 
 
+def _write_manifest(skills_dir: Path) -> None:
+    generate_skill_manifest(
+        skills_dir=skills_dir,
+        manifest_path=skills_dir / "SKILL_MANIFEST.json",
+    )
+
+
 def test_run_skill_scan_reports_missing_scanner(tmp_path: Path):
     """Scanner unavailable: available=False, passed=False (WSP 95 fail-closed)."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
 
     with patch("modules.communication.moltbot_bridge.src.skill_safety_guard.shutil.which", return_value=None):
         result = run_skill_scan(skills_dir=skills_dir)
@@ -46,6 +57,9 @@ def test_run_skill_scan_passes_on_zero_exit(tmp_path: Path):
     """Scanner runs successfully with no findings: passed=True."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
 
     class _Completed:
         returncode = 0
@@ -68,6 +82,9 @@ def test_run_skill_scan_fails_on_nonzero_exit(tmp_path: Path):
     """Scanner exits with error code: passed=False."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
 
     class _Completed:
         returncode = 3
@@ -90,6 +107,9 @@ def test_run_skill_scan_high_severity_blocks(tmp_path: Path):
     """High severity findings exceed medium threshold: passed=False (WSP 95)."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
 
@@ -129,6 +149,9 @@ def test_run_skill_scan_medium_at_threshold_blocks(tmp_path: Path):
     """Medium severity at medium threshold: passed=False (at-or-above blocks)."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
 
@@ -165,6 +188,9 @@ def test_run_skill_scan_low_below_threshold_allows(tmp_path: Path):
     """Low severity below medium threshold: passed=True (WSP 95)."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
 
@@ -201,6 +227,9 @@ def test_run_skill_scan_critical_severity_always_blocks(tmp_path: Path):
     """Critical severity always blocks regardless of threshold (WSP 95)."""
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    (skills_dir / "sample" / "SKILL.md").write_text("# test", encoding="utf-8")
+    _write_manifest(skills_dir)
     report_dir = tmp_path / "reports"
     report_dir.mkdir()
 
@@ -231,6 +260,26 @@ def test_run_skill_scan_critical_severity_always_blocks(tmp_path: Path):
             )
 
     assert result.passed is False  # Critical blocked even at high threshold
+
+
+def test_run_skill_scan_blocks_on_manifest_hash_mismatch(tmp_path: Path):
+    """Manifest mismatch blocks before scanner execution."""
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    (skills_dir / "sample").mkdir()
+    skill_file = skills_dir / "sample" / "SKILL.md"
+    skill_file.write_text("# v1", encoding="utf-8")
+    _write_manifest(skills_dir)
+    # Tamper after manifest generation.
+    skill_file.write_text("# v2", encoding="utf-8")
+
+    with patch("modules.communication.moltbot_bridge.src.skill_safety_guard.shutil.which", return_value="skill-scanner"):
+        with patch("modules.communication.moltbot_bridge.src.skill_safety_guard.subprocess.run") as mock_run:
+            result = run_skill_scan(skills_dir=skills_dir)
+
+    assert result.passed is False
+    assert "manifest" in result.message.lower()
+    assert mock_run.call_count == 0  # scanner should not run when manifest fails
 
 
 # ---------------------------------------------------------------------------
@@ -347,6 +396,41 @@ def test_openclaw_dae_cache_expiry_triggers_rescan():
         result = dae._ensure_skill_safety(force=False)
 
     assert result is False  # New scan failed
+
+
+def test_openclaw_dae_skill_scan_always_bypasses_cache():
+    """OPENCLAW_SKILL_SCAN_ALWAYS=1 forces fresh scan even within TTL."""
+    from modules.communication.moltbot_bridge.src.openclaw_dae import OpenClawDAE
+    from modules.communication.moltbot_bridge.src.skill_safety_guard import SkillScanResult
+
+    dae = OpenClawDAE()
+    dae._skill_scan_required = True
+    dae._skill_scan_enforced = True
+    dae._skill_scan_ttl_sec = 300
+    dae._skill_scan_always = True
+
+    # Seed valid cache that would normally short-circuit.
+    dae._skill_scan_checked_at = time.time()
+    dae._skill_scan_ok = True
+    dae._skill_scan_message = "cached pass"
+
+    mock_result = SkillScanResult(
+        available=True,
+        passed=False,
+        exit_code=1,
+        skills_dir="/test",
+        report_path=None,
+        message="fresh scan failed",
+    )
+
+    with patch(
+        "modules.communication.moltbot_bridge.src.skill_safety_guard.run_skill_scan",
+        return_value=mock_result,
+    ) as mock_scan:
+        result = dae._ensure_skill_safety(force=False)
+
+    assert mock_scan.call_count == 1
+    assert result is False
 
 
 def test_openclaw_dae_enforced_mode_blocks_failed_scan():

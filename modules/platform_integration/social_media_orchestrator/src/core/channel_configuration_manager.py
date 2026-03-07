@@ -10,12 +10,17 @@ import logging
 from typing import Dict, Optional, List, Any
 from enum import Enum
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 
 class LinkedInPage(Enum):
-    """LinkedIn company pages"""
-    UNDAODU = "165749317"
-    FOUNDUPS = "1263645"  # Corrected FoundUps page ID
-    GEOZAI = "104834798"  # Corrected GeoZai page ID for Move2Japan
+    """LinkedIn company pages - values loaded from central registry"""
+    UNDAODU = get_company_id("undaodu")
+    FOUNDUPS = get_company_id("foundups")
+    GEOZAI = get_company_id("move2japan")  # GeoZai page for Move2Japan
 
 
 class XAccount(Enum):
@@ -56,60 +61,23 @@ class ChannelConfigurationManager:
         self._load_channel_configuration()
 
     def _load_channel_configuration(self) -> None:
-        """Load channel configuration from file or use defaults"""
-        # Default configuration
-        default_config = {
-            '@UnDaoDu': {
-                'channel_id': 'UCOdP2Gc3n8xqGaHlDXi-Mbg',
-                'channel_name': 'UnDaoDu',
-                'linkedin_page': LinkedInPage.UNDAODU.value,
-                'x_account': XAccount.MOVE2JAPAN.value,
-                'use_foundups_x': False,
-                'enabled': True
-            },
-            '@FoundUps': {
-                'channel_id': 'UC8NMhWbOE9OVJF0V4DRmNnQ',
-                'channel_name': 'FoundUps',
-                'linkedin_page': LinkedInPage.FOUNDUPS.value,
-                'x_account': XAccount.FOUNDUPS.value,
-                'use_foundups_x': True,
-                'enabled': True
-            },
-            'Move 2 Japan': {
-                'channel_id': 'UCklMTNnu5POwRmQsg5JJumA',  # Updated to correct Move2Japan channel ID
-                'channel_name': 'Move 2 Japan',
-                'linkedin_page': LinkedInPage.GEOZAI.value,
-                'x_account': XAccount.MOVE2JAPAN.value,
-                'use_foundups_x': False,
-                'enabled': True
-            },
-            'FoundUps1934 [TEST]': {
-                'channel_id': 'UCROkIz1wOCP3tPk-1j3umyQ',
-                'channel_name': 'FoundUps1934 [TEST]',
-                'enabled': False
-            }
-        }
+        """Load channel configuration from JSON file only.
 
-        # Try to load from file
+        REFACTORED (2026-02-25): Removed hardcoded defaults.
+        All channel config should be in channels_config.json.
+        """
         if os.path.exists(self.config_path):
             try:
                 with open(self.config_path, 'r', encoding="utf-8") as f:
-                    loaded_config = json.load(f)
-                    # Start with loaded config, then add any missing defaults
-                    self.channel_configs = loaded_config.copy()
-                    # Add any default configs that aren't in the loaded file
-                    for channel, config in default_config.items():
-                        if channel not in self.channel_configs:
-                            self.channel_configs[channel] = config
-                    self.logger.info(f"[CONFIG] Loaded channel configuration from {self.config_path}")
+                    self.channel_configs = json.load(f)
+                    self.logger.info(f"[CONFIG] Loaded {len(self.channel_configs)} channels from {self.config_path}")
             except Exception as e:
-                self.logger.warning(f"[CONFIG] Could not load config file: {e}, using defaults")
-                self.channel_configs = default_config
+                self.logger.error(f"[CONFIG] Failed to load config file: {e}")
+                self.channel_configs = {}
         else:
-            self.logger.info("[CONFIG] Using default channel configuration")
-            self.channel_configs = default_config
-            # Save defaults to file
-            self._save_configuration()
+            self.logger.error(f"[CONFIG] Config file not found: {self.config_path}")
+            self.logger.error("[CONFIG] Create channels_config.json with channel definitions")
+            self.channel_configs = {}
 
     def _save_configuration(self) -> None:
         """Save current configuration to file"""
@@ -138,23 +106,29 @@ class ChannelConfigurationManager:
                 if config.get('channel_id') == channel_identifier:
                     self.logger.info(f"[CONFIG] Found config for channel ID {channel_identifier}: {config_name}")
                     self.logger.info(f"[CONFIG] LinkedIn page: {config.get('linkedin_page')} | X account: {config.get('x_account')}")
-                    # Validate configuration
-                    if config_name == "Move2Japan" and config.get('linkedin_page') != "104834798":
-                        self.logger.error(f"[CONFIG ERROR] Move2Japan should use LinkedIn page 104834798 (GeoZai), not {config.get('linkedin_page')}")
-                    elif config_name == "@UnDaoDu" and config.get('linkedin_page') != "165749317":
-                        self.logger.error(f"[CONFIG ERROR] UnDaoDu should use LinkedIn page 165749317, not {config.get('linkedin_page')}")
-                    elif config_name in ["@FoundUps", "FoundUps"] and config.get('linkedin_page') != "1263645":
-                        self.logger.error(f"[CONFIG ERROR] FoundUps should use LinkedIn page 1263645, not {config.get('linkedin_page')}")
+                    # Validate configuration using central registry
+                    move2japan_id = get_company_id("move2japan")
+                    undaodu_id = get_company_id("undaodu")
+                    foundups_id = get_company_id("foundups")
+                    if config_name == "Move2Japan" and config.get('linkedin_page') != move2japan_id:
+                        self.logger.error(f"[CONFIG ERROR] Move2Japan should use LinkedIn page {move2japan_id} (GeoZai), not {config.get('linkedin_page')}")
+                    elif config_name == "@UnDaoDu" and config.get('linkedin_page') != undaodu_id:
+                        self.logger.error(f"[CONFIG ERROR] UnDaoDu should use LinkedIn page {undaodu_id}, not {config.get('linkedin_page')}")
+                    elif config_name in ["@FoundUps", "FoundUps"] and config.get('linkedin_page') != foundups_id:
+                        self.logger.error(f"[CONFIG ERROR] FoundUps should use LinkedIn page {foundups_id}, not {config.get('linkedin_page')}")
                     return config.copy()
 
             # Fallback to hardcoded mapping if not found
+            # CRITICAL: Channel ID mappings must match the actual YouTube channels
+            # UC-LSSlOZwpGIRIYihaz8zCw = Move2Japan (NOT UnDaoDu!)
+            # UCfHM9Fw9HD-NwiS0seD_oIA = UnDaoDu
             channel_id_mapping = {
-                'UCklMTNnu5POwRmQsg5JJumA': 'Move 2 Japan',  # Updated to correct Move2Japan ID
-                'UC-LSSlOZwpGIRIYihaz8zCw': '@UnDaoDu',
+                'UCklMTNnu5POwRmQsg5JJumA': 'Move 2 Japan',  # Move2Japan alternate ID
+                'UC-LSSlOZwpGIRIYihaz8zCw': 'Move2Japan [JAPAN]',  # FIX: Move2Japan primary ID (was incorrectly mapped to @UnDaoDu)
                 'UC8NMhWbOE9OVJF0V4DRmNnQ': '@FoundUps',
-                'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps',  # Alternative FoundUps ID
-                'UCOdP2Gc3n8xqGaHlDXi-Mbg': '@UnDaoDu',  # UnDaoDu main ID
-                'UCMjyY1Sh8TAQCTnSGiLVGnQ': 'Move 2 Japan'  # Alternative Move 2 Japan ID
+                'UCSNTUXjAgpd4sgWYP0xoJgw': 'FoundUps [LOYAL]',  # FoundUps ID
+                'UCfHM9Fw9HD-NwiS0seD_oIA': '@UnDaoDu',  # UnDaoDu correct ID (was wrongly claimed by UC-LSSlOZwpGIRIYihaz8zCw)
+                'UCVSmg5aOhP4tnQ9KFUg97qA': 'antifaFM',  # antifaFM ID
             }
             channel_name = channel_id_mapping.get(channel_identifier)
             if channel_name and channel_name in self.channel_configs:

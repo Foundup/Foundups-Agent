@@ -19,7 +19,7 @@ ARCHITECTURE:
     Optionally auto-heals the tracker JSON via ScheduleTracker.remove_video().
 
 USAGE:
-    auditor = ScheduleAuditor(channel_key="ravingantifa", driver=driver)
+    auditor = ScheduleAuditor(channel_key="antifafm", driver=driver)
     report = auditor.run_audit()
     # report = {
     #   "conflicts": [...],
@@ -63,7 +63,7 @@ class ScheduleAuditor:
         Initialize auditor.
 
         Args:
-            channel_key: "move2japan", "undaodu", "foundups", "ravingantifa"
+            channel_key: "move2japan", "undaodu", "foundups", "antifafm"
             driver: Selenium WebDriver instance (Chrome or Edge)
             storage_dir: Optional custom storage directory for tracker files
         """

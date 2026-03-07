@@ -122,7 +122,7 @@
   "signal_patterns": {
     "edge_comments_cleared": {
       "regex": "\"event\"\\s*:\\s*\"edge_comments_cleared\"",
-      "description": "Operational signal: FoundUps + RavingANTIFA comment inboxes cleared (all_processed=True). Qwen should decide next orchestration step (stream monitor / live chat / idle automation).",
+      "description": "Operational signal: FoundUps + antifaFM comment inboxes cleared (all_processed=True). Qwen should decide next orchestration step (stream monitor / live chat / idle automation).",
       "wsp_15_mps": {
         "complexity": 1,
         "importance": 4,
@@ -132,6 +132,28 @@
         "priority": "P1",
         "rationale": "Not a bug; a state transition that enables next-step orchestration. Low complexity, high impact for autonomous flow."
       }
+    },
+    "rotation_stall_detected": {
+      "regex": "stall_detected|Heartbeat STALE|rotation stalled|KILLED.*rotating",
+      "description": "RotationSupervisor detected a stall - task heartbeat went stale or channel hung. Qwen should trigger CLI rotation for next browser/operation.",
+      "wsp_15_mps": {
+        "complexity": 1,
+        "importance": 5,
+        "deferability": 5,
+        "impact": 5,
+        "total_mps": 16,
+        "priority": "P0",
+        "rationale": "Trivial (CLI call), essential (unblocks rotation), cannot defer, transformative (restores autonomous flow)"
+      },
+      "qwen_action": "auto_fix",
+      "fix_action": "trigger_next_rotation",
+      "fix_commands": {
+        "chrome_comments": "python -m modules.communication.livechat.src.rotation_supervisor --browser chrome --operation comments --timeout 300",
+        "edge_comments": "python -m modules.communication.livechat.src.rotation_supervisor --browser edge --operation comments --timeout 300",
+        "chrome_shorts": "python -m modules.communication.livechat.src.rotation_supervisor --browser chrome --operation shorts --timeout 300",
+        "edge_shorts": "python -m modules.communication.livechat.src.rotation_supervisor --browser edge --operation shorts --timeout 300"
+      },
+      "announcement_template": "012 rotation stall detected on {browser} - triggering CLI rotation"
     }
   },
   "qwen_decision_logic": {
@@ -185,5 +207,5 @@
       "changes": "Initial skill creation with 6 error patterns"
     }
   ],
-  "last_monitoring_run": 1769648824.5921936
+  "last_monitoring_run": 1772086821.7083256
 }

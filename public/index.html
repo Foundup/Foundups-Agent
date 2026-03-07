@@ -11,21 +11,23 @@
 
   <!-- OpenGraph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://foundupscom.web.app/">
+  <meta property="og:url" content="https://foundups.com/">
   <meta property="og:title" content="FoundUPS — Where Will You Aim Your Compute?">
   <meta property="og:description"
     content="Your app idea, tokenized. AI agents earn value through Proof of Benefit. Every FoundUP has 21M tokens backed by BTC.">
-  <meta property="og:image" content="https://foundupscom.web.app/logo-dog.png">
+  <meta property="og:image" content="https://foundups.com/logo-dog.png">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:site" content="@foundups">
+  <meta name="twitter:site" content="@foundupscom">
+  <meta name="twitter:domain" content="foundups.com">
+  <meta name="twitter:url" content="https://foundups.com/">
   <meta name="twitter:title" content="FoundUPS — Where Will You Aim Your Compute?">
   <meta name="twitter:description" content="Your app idea, tokenized. AI agents earn value through Proof of Benefit.">
-  <meta name="twitter:image" content="https://foundupscom.web.app/logo-dog.png">
+  <meta name="twitter:image" content="https://foundups.com/logo-dog.png">
 
   <!-- Canonical -->
-  <link rel="canonical" href="https://foundupscom.web.app/">
+  <link rel="canonical" href="https://foundups.com/">
 
   <!-- Favicon - Red Dog Logo (crisp 32x32) -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -47,6 +49,144 @@
     src="https://supreme-oyster-20.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
     type="text/javascript"
   ></script>
+  <script>
+    // FoundUPS Clerk Theme - Dark premium aesthetic
+    window.FOUNDUPS_CLERK_APPEARANCE = {
+      variables: {
+        // Core colors
+        colorPrimary: '#7c5cfc',
+        colorBackground: '#0a0a0f',
+        colorInputBackground: '#12121a',
+        colorInputText: '#e4e2ec',
+        colorText: '#e4e2ec',
+        colorTextSecondary: '#9e9baf',
+        colorTextOnPrimaryBackground: '#ffffff',
+        colorDanger: '#ff4e4e',
+        colorSuccess: '#4ade80',
+        colorWarning: '#ffd700',
+        // Typography
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamilyButtons: "'Inter', sans-serif",
+        fontWeight: { normal: 400, medium: 500, bold: 600 },
+        // Borders & Radius
+        borderRadius: '12px',
+        colorNeutral: '#6b6880',
+        // Spacing
+        spacingUnit: '4px'
+      },
+      elements: {
+        // Root card
+        rootBox: {
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+        },
+        card: {
+          backgroundColor: '#0e0e1c',
+          border: '1px solid rgba(124, 92, 252, 0.2)',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(124, 92, 252, 0.1)'
+        },
+        // Header
+        headerTitle: {
+          color: '#e4e2ec',
+          fontWeight: '600',
+          fontSize: '1.25rem'
+        },
+        headerSubtitle: {
+          color: '#9e9baf'
+        },
+        // Social buttons
+        socialButtonsBlockButton: {
+          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px',
+          color: '#e4e2ec',
+          '&:hover': {
+            backgroundColor: 'rgba(124, 92, 252, 0.1)',
+            borderColor: 'rgba(124, 92, 252, 0.3)'
+          }
+        },
+        socialButtonsBlockButtonText: {
+          color: '#e4e2ec',
+          fontWeight: '500'
+        },
+        // Divider
+        dividerLine: {
+          backgroundColor: 'rgba(255, 255, 255, 0.08)'
+        },
+        dividerText: {
+          color: '#6b6880'
+        },
+        // Form fields
+        formFieldLabel: {
+          color: '#9e9baf',
+          fontSize: '0.85rem',
+          fontWeight: '500'
+        },
+        formFieldInput: {
+          backgroundColor: '#12121a',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px',
+          color: '#e4e2ec',
+          '&:focus': {
+            borderColor: '#7c5cfc',
+            boxShadow: '0 0 0 3px rgba(124, 92, 252, 0.15)'
+          }
+        },
+        // Primary button
+        formButtonPrimary: {
+          backgroundColor: '#7c5cfc',
+          borderRadius: '10px',
+          fontWeight: '600',
+          textTransform: 'none',
+          '&:hover': {
+            backgroundColor: '#6a4ce8'
+          }
+        },
+        // Footer
+        footerActionLink: {
+          color: '#7c5cfc',
+          fontWeight: '500',
+          '&:hover': {
+            color: '#9b82fc'
+          }
+        },
+        footerActionText: {
+          color: '#6b6880'
+        },
+        // Identity preview
+        identityPreviewText: {
+          color: '#e4e2ec'
+        },
+        identityPreviewEditButton: {
+          color: '#7c5cfc'
+        },
+        // Alert
+        alert: {
+          backgroundColor: 'rgba(255, 78, 78, 0.1)',
+          border: '1px solid rgba(255, 78, 78, 0.2)',
+          borderRadius: '10px'
+        },
+        alertText: {
+          color: '#ff6b6b'
+        },
+        // Logo area - make it prominent
+        logoBox: {
+          height: '48px'
+        },
+        logoImage: {
+          height: '40px'
+        }
+      },
+      layout: {
+        socialButtonsPlacement: 'top',
+        socialButtonsVariant: 'blockButton',
+        showOptionalFields: false,
+        helpPageUrl: 'https://foundups.com',
+        privacyPageUrl: 'https://foundups.com/privacy',
+        termsPageUrl: 'https://foundups.com/terms'
+      }
+    };
+  </script>
   <style>
     *,
     *::before,
@@ -139,6 +279,44 @@
     .nav-btn:hover {
       background: #6a4ce8;
       box-shadow: 0 4px 20px rgba(124, 92, 252, 0.35);
+    }
+
+    .nav-left, .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(124, 92, 252, 0.2);
+      border: 1px solid rgba(124, 92, 252, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      overflow: hidden;
+    }
+
+    .user-icon:hover {
+      background: rgba(124, 92, 252, 0.35);
+      border-color: var(--accent);
+    }
+
+    .user-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .user-icon svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
     }
 
     /* ─── HERO ─── */
@@ -1445,13 +1623,11 @@
 
   <!-- NAV -->
   <nav>
-    <a href="#" class="logo" style="text-decoration:none;display:flex;align-items:center;gap:8px;">
-      <img src="/logo-dog.png" alt="" style="width:28px;height:auto;">
-      <img src="/logo-foundups.svg" alt="FoundUPS" style="height:32px;width:auto;">
-    </a>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-      <a href="#how" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;">How it works</a>
-      <a href="/litepaper.html" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;">Litepaper</a>
+    <div class="nav-left">
+      <a href="#" class="logo" style="text-decoration:none;display:flex;align-items:center;gap:8px;">
+        <img src="/logo-dog.png" alt="" style="width:28px;height:auto;">
+        <img src="/logo-foundups.svg" alt="FoundUPS" style="height:32px;width:auto;">
+      </a>
       <a href="#team" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;">Team</a>
       <a href="https://foundups.org" target="_blank" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1459,6 +1635,16 @@
         </svg>
         Discord
       </a>
+    </div>
+    <div class="nav-right">
+      <a href="#how" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;">How it works</a>
+      <a href="/litepaper.html" class="btn-ghost" style="padding:5px 10px;font-size:0.7rem;">Litepaper</a>
+      <div id="userPortalIcon" class="user-icon" title="Member Portal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
     </div>
   </nav>
 
@@ -1664,140 +1850,6 @@
     </div>
   </section>
 
-  <!-- BETA SIGNUP -->
-  <section class="beta-section" id="beta">
-    <div class="container">
-      <div class="beta-card reveal">
-        <div id="betaFormWrap">
-          <div class="beta-icon"><img src="logo-dog.png" alt="FoundUPS" style="width:64px;height:auto;"></div>
-          <h2>Join FoundUPS</h2>
-          <p class="sub">Like Gmail in 2004 — you need an invite.<br>Get in early. Invite friends. Rise together.</p>
-
-          <!-- Toggle: Invite vs Waitlist -->
-          <div class="invite-toggle">
-            <button id="toggleInvite" class="active" onclick="showPanel('invite')">I Have an Invite</button>
-            <button id="toggleWaitlist" onclick="showPanel('waitlist')">Join the Waitlist</button>
-          </div>
-
-          <!-- INVITE PATH -->
-          <div id="invitePanel" class="signup-panel active">
-            <div id="inviteStep1">
-              <input type="text" class="invite-code-input" id="inviteCodeInput" placeholder="FUP-XXXX-XXXX"
-                maxlength="14" autocomplete="off">
-              <div class="invite-status" id="inviteStatus"></div>
-              <button class="beta-submit" id="verifyInviteBtn" style="margin-top:0.75rem;"
-                onclick="verifyInvite()">Verify Invite</button>
-            </div>
-
-            <div id="inviteStep2" style="display:none;">
-              <p style="color:var(--cyan);font-size:0.85rem;margin-bottom:1rem;">Invite verified! One click to join:</p>
-              <div class="social-auth-row" style="margin-bottom:1rem;">
-                <button type="button" class="social-btn google disabled" id="invGoogleBtn"
-                  style="flex:1;padding:12px 20px;font-size:0.95rem;" disabled>
-                  <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                    <path fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A11.96 11.96 0 0 0 1 12c0 1.94.46 3.77 1.18 5.39l3.66-2.84z" />
-                    <path fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                  </svg>
-                  Continue with Google
-                </button>
-              </div>
-              <div class="social-auth-row" style="margin-bottom:1rem;">
-                <button type="button" class="social-btn linkedin disabled" id="invLinkedinBtn"
-                  style="flex:1;padding:12px 20px;font-size:0.95rem;" disabled>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                  Continue with LinkedIn
-                </button>
-              </div>
-              <details style="margin-top:0.5rem;">
-                <summary style="color:var(--text-dim);font-size:0.8rem;cursor:pointer;">▸ or enter manually</summary>
-                <form class="beta-form" id="inviteSignupForm" style="margin-top:0.75rem;">
-                  <div class="input-row">
-                    <input type="text" class="beta-input" id="invNameInput" placeholder="Your name" required>
-                    <input type="email" class="beta-input" id="invEmailInput" placeholder="you@company.com" required>
-                  </div>
-                  <div class="input-row" style="margin-top:0.5rem;">
-                    <input type="text" class="beta-input" id="invUsernameInput" placeholder="Username (unique, 3-20 chars)" pattern="[a-zA-Z][a-zA-Z0-9_]{2,19}" style="flex:1;" required>
-                    <span id="usernameStatus" style="font-size:0.75rem;padding:0.5rem;min-width:80px;"></span>
-                  </div>
-                  <button type="submit" class="beta-submit" id="invSubmitBtn">Create Account</button>
-                </form>
-              </details>
-            </div>
-          </div>
-
-          <!-- WAITLIST PATH -->
-          <div id="waitlistPanel" class="signup-panel">
-            <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1rem;">One click to request access:</p>
-            <div class="social-auth-row" style="margin-bottom:1rem;">
-              <button type="button" class="social-btn google disabled" id="wlGoogleBtn"
-                style="flex:1;padding:12px 20px;font-size:0.95rem;" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                  <path fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A11.96 11.96 0 0 0 1 12c0 1.94.46 3.77 1.18 5.39l3.66-2.84z" />
-                  <path fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                Continue with Google
-              </button>
-            </div>
-            <div class="social-auth-row" style="margin-bottom:1rem;">
-              <button type="button" class="social-btn linkedin disabled" id="wlLinkedinBtn"
-                style="flex:1;padding:12px 20px;font-size:0.95rem;" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path
-                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                </svg>
-                Continue with LinkedIn
-              </button>
-            </div>
-            <details style="margin-top:0.5rem;">
-              <summary style="color:var(--text-dim);font-size:0.8rem;cursor:pointer;">or enter manually</summary>
-              <form class="beta-form" id="waitlistForm" style="margin-top:0.75rem;">
-                <div class="input-row">
-                  <input type="text" class="beta-input" id="wlNameInput" placeholder="Your name" required>
-                  <input type="email" class="beta-input" id="wlEmailInput" placeholder="you@company.com" required>
-                </div>
-                <button type="submit" class="beta-submit" id="wlSubmitBtn">Request Access</button>
-              </form>
-            </details>
-          </div>
-
-          <p class="invite-note">🔒 <strong>Invite-only.</strong> Early members get priority access + 5 invites to
-            share.</p>
-        </div>
-
-        <!-- SUCCESS: Waitlist -->
-        <div class="beta-success" id="waitlistSuccess">
-          <div class="checkmark">✓</div>
-          <h3>You're on the waitlist</h3>
-          <p>We'll reach out when it's your turn.</p>
-        </div>
-
-        <!-- SUCCESS: Account created -->
-        <div class="beta-success" id="accountSuccess">
-          <div class="checkmark">✓</div>
-          <h3>Welcome to FoundUPS</h3>
-          <p>Your account is live. Share your invite codes:</p>
-          <div class="invite-codes-display" id="inviteCodesDisplay"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
   <!-- TEAM -->
   <section id="team" style="padding:4rem 2rem;">
     <div class="container" style="max-width:700px;text-align:center;">
@@ -1897,17 +1949,11 @@
     import { getFirestore, collection, addDoc, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
     import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, OAuthProvider, createUserWithEmailAndPassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js';
     import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.4.0/firebase-functions.js';
+    import { loadFirebaseRuntimeConfig } from '/js/firebase-runtime-config.js';
 
-    const app = initializeApp({
-      apiKey: "AIzaSyCwvio08ozOzPECTqCzGmGffPMbk7Ol0Yc",
-      authDomain: "gen-lang-client-0061781628.firebaseapp.com",
-      projectId: "gen-lang-client-0061781628",
-      storageBucket: "gen-lang-client-0061781628.firebasestorage.app",
-      messagingSenderId: "56566376153",
-      appId: "1:56566376153:web:e1d6c460e9be8668ebc0c8",
-      measurementId: "G-C8W3744GHQ"
-    });
-    const analytics = getAnalytics(app);
+    const firebaseConfig = await loadFirebaseRuntimeConfig();
+    const app = initializeApp(firebaseConfig);
+    const analytics = firebaseConfig.measurementId ? getAnalytics(app) : null;
     const db = getFirestore(app);
     const auth = getAuth(app);
     const functions = getFunctions(app, 'us-central1');
@@ -1972,69 +2018,104 @@
       });
     });
 
-    // ENTER button → check if already signed in with Clerk, else show disclaimer
+    // ENTER button → check if already signed in with Clerk, else open Clerk sign-in
     enterBtn.addEventListener('click', async () => {
-      if (window.Clerk && window.Clerk.user) {
+      // Wait for Clerk to be available
+      while (!window.Clerk) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await window.Clerk.load({ appearance: window.FOUNDUPS_CLERK_APPEARANCE });
+
+      if (window.Clerk.user) {
         // Already signed in → go directly to member area
         window.location.href = '/member/';
       } else {
-        // Not signed in → show disclaimer with auth buttons
-        disclaimerModal.style.display = 'flex';
+        // Not signed in → open Clerk sign-in modal
+        // After sign-in, user will be redirected to /member/ where inviteGate handles the rest
+        window.Clerk.openSignIn({
+          redirectUrl: '/member/',
+          afterSignInUrl: '/member/',
+          afterSignUpUrl: '/member/'
+        });
       }
     });
 
-    // Clerk hosted sign-in URL (fallback if modal doesn't work)
-    // Note: .accounts.dev (NOT .clerk.accounts.dev)
-    const CLERK_SIGN_IN_URL = 'https://supreme-oyster-20.accounts.dev/sign-in?redirect_url=' + encodeURIComponent(window.location.origin + '/member/');
+    // User portal icon → same behavior as ENTER button
+    const userPortalIcon = document.getElementById('userPortalIcon');
+    userPortalIcon.addEventListener('click', async () => {
+      while (!window.Clerk) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await window.Clerk.load({ appearance: window.FOUNDUPS_CLERK_APPEARANCE });
+
+      if (window.Clerk.user) {
+        window.location.href = '/member/';
+      } else {
+        window.Clerk.openSignIn({
+          redirectUrl: '/member/',
+          afterSignInUrl: '/member/',
+          afterSignUpUrl: '/member/'
+        });
+      }
+    });
+
+    // Update user icon if logged in (show avatar)
+    (async () => {
+      while (!window.Clerk) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await window.Clerk.load({ appearance: window.FOUNDUPS_CLERK_APPEARANCE });
+      if (window.Clerk.user && window.Clerk.user.imageUrl) {
+        userPortalIcon.innerHTML = `<img src="${window.Clerk.user.imageUrl}" alt="Profile">`;
+        userPortalIcon.title = 'Go to Member Portal';
+      }
+    })();
 
     // Generic Clerk sign-in handler (confirms NOT accredited, NOT rep)
+    // Uses Clerk SDK's direct OAuth to skip the Clerk sign-in UI
     async function handleClerkSignIn(button, provider) {
-      console.log(`[Clerk] ${provider} sign-in button clicked at`, new Date().toISOString());
+      console.log(`[Clerk] ${provider} sign-in initiated`);
 
-      // Visual feedback immediately
+      // Cache invite code before OAuth (ensure it's saved)
+      const inviteInput = document.getElementById('disclaimerInviteCode');
+      if (inviteInput && inviteInput.value.length >= 10) {
+        localStorage.setItem('pendingInviteCode', inviteInput.value.toUpperCase());
+        console.log('[Clerk] Cached invite code:', inviteInput.value);
+      }
+
+      // Visual feedback
       button.classList.add('loading');
       button.style.transform = 'scale(0.98)';
       button.style.opacity = '0.7';
       button.disabled = true;
 
-      // If Clerk SDK not loaded, redirect directly to Clerk hosted sign-in
-      if (!window.Clerk) {
-        console.warn('[Clerk] SDK not loaded, redirecting to hosted sign-in...');
-        window.location.href = CLERK_SIGN_IN_URL;
-        return;
+      // Wait for Clerk SDK to be available
+      while (!window.Clerk) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
+      await window.Clerk.load({ appearance: window.FOUNDUPS_CLERK_APPEARANCE });
 
-      console.log('[Clerk] Clerk loaded:', !!window.Clerk);
+      // Map provider name to Clerk's OAuth strategy
+      const strategyMap = {
+        'Google': 'oauth_google',
+        'LinkedIn': 'oauth_linkedin',
+        'Discord': 'oauth_discord'
+      };
+      const strategy = strategyMap[provider] || 'oauth_google';
 
       try {
-        // Set a timeout - if modal doesn't appear within 3 seconds, redirect
-        const timeoutId = setTimeout(() => {
-          console.warn('[Clerk] Modal timeout - redirecting to hosted sign-in');
-          window.location.href = CLERK_SIGN_IN_URL;
-        }, 3000);
-
-        await window.Clerk.openSignIn({
-          afterSignInUrl: '/member/',
-          afterSignUpUrl: '/member/'
+        // Use direct OAuth - skips Clerk sign-in UI, goes straight to provider
+        await window.Clerk.client.signIn.authenticateWithRedirect({
+          strategy: strategy,
+          redirectUrl: window.location.origin + '/sso-callback/',
+          redirectUrlComplete: window.location.origin + '/member/'
         });
-
-        // Modal opened - clear the timeout
-        clearTimeout(timeoutId);
-        console.log('[Clerk] Modal opened successfully');
-
-        // Re-enable button after delay in case they close the modal
-        setTimeout(() => {
-          if (!window.Clerk.user) {
-            button.disabled = false;
-            button.classList.remove('loading');
-            button.style.transform = '';
-            button.style.opacity = '';
-          }
-        }, 1000);
-
       } catch (err) {
-        console.error('[Clerk] Error opening modal:', err);
-        window.location.href = CLERK_SIGN_IN_URL;
+        console.error('[Clerk] OAuth error:', err);
+        // Fallback to generic sign-in if direct OAuth fails
+        window.Clerk.redirectToSignIn({
+          redirectUrl: window.location.origin + '/member/'
+        });
       }
     }
 
@@ -2042,6 +2123,50 @@
     disclaimerSignInGoogle.addEventListener('click', () => handleClerkSignIn(disclaimerSignInGoogle, 'Google'));
     disclaimerSignInLinkedIn.addEventListener('click', () => handleClerkSignIn(disclaimerSignInLinkedIn, 'LinkedIn'));
     disclaimerSignInDiscord.addEventListener('click', () => handleClerkSignIn(disclaimerSignInDiscord, 'Discord'));
+
+    // ─── DISCLAIMER MODAL: INVITE CODE TOGGLE ───
+    const disclaimerToggleInvite = document.getElementById('disclaimerToggleInvite');
+    const disclaimerToggleWaitlist = document.getElementById('disclaimerToggleWaitlist');
+    const disclaimerInvitePanel = document.getElementById('disclaimerInvitePanel');
+    const disclaimerInviteCode = document.getElementById('disclaimerInviteCode');
+
+    disclaimerToggleInvite?.addEventListener('click', () => {
+      disclaimerToggleInvite.classList.add('active');
+      disclaimerToggleInvite.style.background = 'rgba(124,92,252,0.15)';
+      disclaimerToggleInvite.style.borderColor = 'rgba(124,92,252,0.4)';
+      disclaimerToggleInvite.style.color = '#fff';
+      disclaimerToggleWaitlist.classList.remove('active');
+      disclaimerToggleWaitlist.style.background = 'transparent';
+      disclaimerToggleWaitlist.style.borderColor = 'rgba(255,255,255,0.15)';
+      disclaimerToggleWaitlist.style.color = 'rgba(228,226,236,0.6)';
+      disclaimerInvitePanel.style.display = 'block';
+    });
+
+    disclaimerToggleWaitlist?.addEventListener('click', () => {
+      disclaimerToggleWaitlist.classList.add('active');
+      disclaimerToggleWaitlist.style.background = 'rgba(124,92,252,0.15)';
+      disclaimerToggleWaitlist.style.borderColor = 'rgba(124,92,252,0.4)';
+      disclaimerToggleWaitlist.style.color = '#fff';
+      disclaimerToggleInvite.classList.remove('active');
+      disclaimerToggleInvite.style.background = 'transparent';
+      disclaimerToggleInvite.style.borderColor = 'rgba(255,255,255,0.15)';
+      disclaimerToggleInvite.style.color = 'rgba(228,226,236,0.6)';
+      disclaimerInvitePanel.style.display = 'none';
+      // Clear cached code when switching to waitlist
+      localStorage.removeItem('pendingInviteCode');
+    });
+
+    // Auto-format invite code input
+    disclaimerInviteCode?.addEventListener('input', (e) => {
+      let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (val.length > 3) val = val.slice(0,3) + '-' + val.slice(3);
+      if (val.length > 8) val = val.slice(0,8) + '-' + val.slice(8);
+      e.target.value = val.slice(0, 14);
+      // Cache the code for after OAuth
+      if (val.length >= 10) {
+        localStorage.setItem('pendingInviteCode', e.target.value);
+      }
+    });
 
     // "I am accredited" button → show sorry modal
     iAmAccredited.addEventListener('click', () => {
@@ -2054,12 +2179,17 @@
       accreditedSorryModal.style.display = 'none';
     });
 
-    // Join waitlist from sorry modal
+    // Join waitlist from sorry modal (beta section removed - redirect to main flow)
     joinWaitlistFromSorry.addEventListener('click', () => {
       accreditedSorryModal.style.display = 'none';
-      document.getElementById('beta').scrollIntoView({ behavior: 'smooth' });
-      // Switch to waitlist panel
-      setTimeout(() => showPanel('waitlist'), 500);
+      const betaSection = document.getElementById('beta');
+      if (betaSection) {
+        betaSection.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => showPanel('waitlist'), 500);
+      } else {
+        // Beta section removed - use main ENTER flow instead
+        window.location.href = '/member/';
+      }
     });
 
     // Close modals on overlay click
@@ -2167,18 +2297,25 @@
       }
     });
 
-    // ─── Panel toggle ───
+    // ─── Panel toggle (legacy - beta section removed) ───
     window.showPanel = function (panel) {
+      // Beta section removed - this is kept for compatibility
+      const invitePanel = document.getElementById('invitePanel');
+      const waitlistPanel = document.getElementById('waitlistPanel');
+      const toggleInvite = document.getElementById('toggleInvite');
+      const toggleWaitlist = document.getElementById('toggleWaitlist');
+      if (!invitePanel) return; // Beta section not present
       currentPanel = panel;
-      document.getElementById('invitePanel').classList.toggle('active', panel === 'invite');
-      document.getElementById('waitlistPanel').classList.toggle('active', panel === 'waitlist');
-      document.getElementById('toggleInvite').classList.toggle('active', panel === 'invite');
-      document.getElementById('toggleWaitlist').classList.toggle('active', panel === 'waitlist');
+      invitePanel.classList.toggle('active', panel === 'invite');
+      waitlistPanel?.classList.toggle('active', panel === 'waitlist');
+      toggleInvite?.classList.toggle('active', panel === 'invite');
+      toggleWaitlist?.classList.toggle('active', panel === 'waitlist');
     };
 
-    // ─── Invite code verification ───
+    // ─── Invite code verification (legacy - beta section removed) ───
     window.verifyInvite = async function () {
       const input = document.getElementById('inviteCodeInput');
+      if (!input) return; // Beta section not present
       const status = document.getElementById('inviteStatus');
       const btn = document.getElementById('verifyInviteBtn');
       const code = input.value.trim().toUpperCase();
@@ -2343,64 +2480,63 @@
       });
     }
 
-    document.getElementById('inviteSignupForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('invSubmitBtn');
-      const username = document.getElementById('invUsernameInput')?.value?.trim();
+    // ─── Legacy beta section handlers (section removed - guarded for safety) ───
+    const inviteSignupForm = document.getElementById('inviteSignupForm');
+    if (inviteSignupForm) {
+      inviteSignupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('invSubmitBtn');
+        const username = document.getElementById('invUsernameInput')?.value?.trim();
+        if (username && !usernameValid) {
+          alert('Please choose an available username.');
+          return;
+        }
+        btn.disabled = true; btn.textContent = 'Creating account...';
+        try {
+          await completeSignup(
+            document.getElementById('invNameInput').value,
+            document.getElementById('invEmailInput').value,
+            'email',
+            username || null
+          );
+        } catch (err) {
+          console.error('Signup error:', err);
+          btn.disabled = false; btn.textContent = 'Create Account';
+          alert(err.message || 'Something went wrong. Try again.');
+        }
+      });
+    }
 
-      // Validate username before submit
-      if (username && !usernameValid) {
-        alert('Please choose an available username.');
-        return;
-      }
+    const invGoogleBtn = document.getElementById('invGoogleBtn');
+    if (invGoogleBtn) invGoogleBtn.addEventListener('click', () => signInWith(googleProvider, 'google', true));
 
-      btn.disabled = true; btn.textContent = 'Creating account...';
-      try {
-        await completeSignup(
-          document.getElementById('invNameInput').value,
-          document.getElementById('invEmailInput').value,
-          'email',
-          username || null
-        );
-      } catch (err) {
-        console.error('Signup error:', err);
-        btn.disabled = false; btn.textContent = 'Create Account';
-        alert(err.message || 'Something went wrong. Try again.');
-      }
-    });
+    const invLinkedinBtn = document.getElementById('invLinkedinBtn');
+    if (invLinkedinBtn) invLinkedinBtn.addEventListener('click', () => signInWith(linkedinProvider, 'linkedin', true));
 
-    // ─── Invite path: OAuth buttons ───
-    document.getElementById('invGoogleBtn').addEventListener('click', () => {
-      signInWith(googleProvider, 'google', true);
-    });
-    document.getElementById('invLinkedinBtn').addEventListener('click', () => {
-      signInWith(linkedinProvider, 'linkedin', true);
-    });
+    const waitlistForm = document.getElementById('waitlistForm');
+    if (waitlistForm) {
+      waitlistForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('wlSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Submitting...';
+        try {
+          await submitWaitlist(
+            document.getElementById('wlNameInput').value,
+            document.getElementById('wlEmailInput').value,
+            'email'
+          );
+        } catch (err) {
+          btn.disabled = false; btn.textContent = 'Request Access';
+          alert('Something went wrong. Try again.');
+        }
+      });
+    }
 
-    // ─── Waitlist path: email signup ───
-    document.getElementById('waitlistForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('wlSubmitBtn');
-      btn.disabled = true; btn.textContent = 'Submitting...';
-      try {
-        await submitWaitlist(
-          document.getElementById('wlNameInput').value,
-          document.getElementById('wlEmailInput').value,
-          'email'
-        );
-      } catch (err) {
-        btn.disabled = false; btn.textContent = 'Request Access';
-        alert('Something went wrong. Try again.');
-      }
-    });
+    const wlGoogleBtn = document.getElementById('wlGoogleBtn');
+    if (wlGoogleBtn) wlGoogleBtn.addEventListener('click', () => signInWith(googleProvider, 'google', false));
 
-    // ─── Waitlist path: OAuth buttons ───
-    document.getElementById('wlGoogleBtn').addEventListener('click', () => {
-      signInWith(googleProvider, 'google', false);
-    });
-    document.getElementById('wlLinkedinBtn').addEventListener('click', () => {
-      signInWith(linkedinProvider, 'linkedin', false);
-    });
+    const wlLinkedinBtn = document.getElementById('wlLinkedinBtn');
+    if (wlLinkedinBtn) wlLinkedinBtn.addEventListener('click', () => signInWith(linkedinProvider, 'linkedin', false));
 
   </script>
 
@@ -2580,7 +2716,21 @@
       <p class="disclaimer-subtext">
         By signing in below, you attest that you meet these requirements.
       </p>
-      <p class="disclaimer-subtext" style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-dim);">
+
+      <!-- Invite Code Toggle -->
+      <div style="display:flex;gap:0.5rem;margin:1.25rem 0;">
+        <button type="button" id="disclaimerToggleInvite" class="toggle-btn active" style="flex:1;padding:0.7rem;border-radius:8px;border:1px solid rgba(124,92,252,0.4);background:rgba(124,92,252,0.15);color:#fff;cursor:pointer;font-size:0.9rem;font-weight:500;">I Have an Invite</button>
+        <button type="button" id="disclaimerToggleWaitlist" class="toggle-btn" style="flex:1;padding:0.7rem;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(228,226,236,0.6);cursor:pointer;font-size:0.9rem;">Join Waitlist</button>
+      </div>
+
+      <!-- Invite Code Input (shown when "I Have an Invite" selected) -->
+      <div id="disclaimerInvitePanel" style="margin-bottom:1rem;">
+        <input type="text" id="disclaimerInviteCode" placeholder="FUP-XXXX-XXXX" maxlength="14"
+          style="width:100%;padding:0.9rem;font-size:1rem;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:2px;">
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;">Enter your invite code, then sign in to confirm</p>
+      </div>
+
+      <p class="disclaimer-subtext" style="margin-bottom:0.75rem;font-size:0.85rem;color:var(--text-dim);">
         Choose your sign-in method to confirm:
       </p>
       <div class="disclaimer-buttons" style="gap:0.75rem;display:flex;flex-direction:column;">

@@ -141,6 +141,9 @@ def handle_youtube_menu(
     print("5. [INFO] YouTube Stats")
     print("9. [LAB] Video Lab (Clip/Repurpose)")
     print("")
+    print("== STREAMING ==")
+    print("10. [DAE] antifaFM Broadcaster (Radio -> YouTube Live)")
+    print("")
     print("== OPERATIONS ==")
     print("R. [OPS] Rotation Controls (Account Swap/Test)")
     print("C. [OPS] Channel Registry (Add/Manage)")
@@ -328,6 +331,11 @@ def handle_youtube_menu(
     elif yt_choice == "9":
         # Video Lab (clip/export/format)
         _handle_video_lab_menu()
+        return False
+
+    elif yt_choice == "10":
+        # antifaFM Broadcaster (Radio -> YouTube Live)
+        _handle_antifafm_broadcaster_menu()
         return False
 
     elif yt_choice == "0":
@@ -719,6 +727,318 @@ def _handle_video_lab_menu() -> None:
         print("[ERROR] Invalid choice")
 
 
+def _handle_antifafm_broadcaster_menu() -> None:
+    """Handle antifaFM Broadcaster submenu (Radio -> YouTube Live)."""
+    print("\n[DAE] antifaFM Broadcaster")
+    print("=" * 60)
+    print("Streams antifaFM.com radio to YouTube Live via FFmpeg")
+    print("Icecast -> FFmpeg -> RTMP -> YouTube Live")
+    print("=" * 60)
+
+    try:
+        from modules.platform_integration.antifafm_broadcaster.src import AntifaFMBroadcaster
+    except ImportError as e:
+        print(f"[ERROR] Broadcaster module not available: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    broadcaster = AntifaFMBroadcaster(enable_ai_monitoring=False)
+    status = broadcaster.get_status()
+
+    # === PREFLIGHT CHECK ===
+    # If stream is running, check health and uptime
+    if status['status'] == 'broadcasting':
+        uptime_sec = status.get('uptime_seconds', 0) or 0
+        uptime_hrs = uptime_sec / 3600
+        health = status.get('health', {})
+        health_state = health.get('state', 'unknown')
+        restart_count = health.get('restart_count', 0)
+
+        print("\n" + "=" * 60)
+        print("[PREFLIGHT] Stream is LIVE")
+        print("=" * 60)
+        print(f"  Uptime:        {status.get('uptime_formatted', 'N/A')} ({uptime_hrs:.1f} hours)")
+        print(f"  Health:        {health_state}")
+        print(f"  Restarts:      {restart_count}")
+
+        # Check if stream has been running too long (>10 hours)
+        if uptime_hrs > 10:
+            print()
+            print("[WARN] Stream has been running for over 10 hours!")
+            print("       Long-running streams can degrade. Restart recommended.")
+            print()
+            restart = input("Restart stream now? [y/N]: ").strip().lower()
+            if restart == 'y':
+                print("[RADIO] Restarting broadcast...")
+                asyncio.run(broadcaster.stop())
+                import time
+                time.sleep(3)  # Brief pause before restart
+                success = asyncio.run(broadcaster.start())
+                if success:
+                    print("[OK] Broadcast restarted successfully")
+                else:
+                    print("[ERROR] Restart failed - check logs")
+                status = broadcaster.get_status()
+        print("=" * 60)
+
+    while True:
+        print("\n" + "-" * 60)
+        print(f"Status: {status['status']}")
+        print(f"Stream URL: {status['stream_url']}")
+        print(f"Visual: {status['visual_path']}")
+        print(f"Stream Key: {'configured' if status['stream_key_configured'] else 'NOT SET'}")
+        if status['uptime_formatted']:
+            print(f"Uptime: {status['uptime_formatted']}")
+        print("-" * 60)
+        print("1. Start broadcast")
+        print("2. Stop broadcast")
+        print("3. Refresh status")
+        print("4. View telemetry (last 10)")
+        print("-" * 60)
+        print("== SCHEMA TESTING ==")
+        print("5. [TEST] Cycle through all schemas")
+        print("6. [TEST] Lookup karaoke lyrics for song")
+        print("7. [TEST] View lyrics cache stats")
+        print("8. [OPS] Set schema signal (for live switching)")
+        print("-" * 60)
+        print("== DIAGNOSTICS ==")
+        print("9. [HEALTH] View stream health details")
+        print("-" * 60)
+        print("0. Back")
+        print("-" * 60)
+
+        choice = input("antifafm> ").strip()
+
+        if choice == "0":
+            break
+
+        if choice == "1":
+            if not status['stream_key_configured']:
+                print("[ERROR] Set ANTIFAFM_YOUTUBE_STREAM_KEY first")
+                input("\nPress Enter to continue...")
+                continue
+            print("[RADIO] Starting broadcast...")
+            success = asyncio.run(broadcaster.start())
+            if success:
+                print("[OK] Broadcasting to YouTube Live")
+            else:
+                print("[ERROR] Failed to start broadcast")
+            status = broadcaster.get_status()
+            continue
+
+        if choice == "2":
+            print("[RADIO] Stopping broadcast...")
+            asyncio.run(broadcaster.stop())
+            print("[OK] Broadcast stopped")
+            status = broadcaster.get_status()
+            continue
+
+        if choice == "3":
+            status = broadcaster.get_status()
+            print(f"[OK] Status refreshed: {status['status']}")
+            continue
+
+        if choice == "4":
+            telemetry_path = broadcaster.telemetry_path
+            if telemetry_path.exists():
+                import json
+                with open(telemetry_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                print(f"\n[TELEMETRY] Last 10 entries from {telemetry_path}:")
+                for line in lines[-10:]:
+                    try:
+                        entry = json.loads(line)
+                        print(f"  {entry['timestamp']} | {entry['status']} | uptime={entry['uptime_seconds']:.0f}s")
+                    except Exception:
+                        print(f"  {line.strip()}")
+            else:
+                print("[INFO] No telemetry file yet (starts after first broadcast)")
+            input("\nPress Enter to continue...")
+            continue
+
+        if choice == "5":
+            _test_all_schemas()
+            continue
+
+        if choice == "6":
+            _test_karaoke_lookup()
+            continue
+
+        if choice == "7":
+            _show_lyrics_cache_stats()
+            continue
+
+        if choice == "8":
+            _set_schema_signal()
+            continue
+
+        if choice == "9":
+            # Show detailed health diagnostics
+            print("\n[HEALTH] Stream Health Details")
+            print("=" * 60)
+            status = broadcaster.get_status()
+            health = status.get('health', {})
+            streamer = status.get('streamer', {})
+
+            print(f"  Status:          {status.get('status', 'unknown')}")
+            print(f"  Uptime:          {status.get('uptime_formatted', 'N/A')}")
+            uptime_sec = status.get('uptime_seconds', 0) or 0
+            print(f"  Uptime (hours):  {uptime_sec / 3600:.2f}")
+            print()
+            print("  [Health Monitor]")
+            print(f"    State:         {health.get('state', 'N/A')}")
+            print(f"    Restart count: {health.get('restart_count', 0)}")
+            print(f"    Last check:    {health.get('last_check', 'N/A')}")
+            print()
+            print("  [FFmpeg Streamer]")
+            print(f"    Running:       {streamer.get('running', False)}")
+            print(f"    Healthy:       {streamer.get('healthy', False)}")
+            print(f"    Frame count:   {streamer.get('frame_count', 'N/A')}")
+
+            # Show last 3 telemetry entries
+            telemetry_path = broadcaster.telemetry_path
+            if telemetry_path.exists():
+                import json
+                with open(telemetry_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                print()
+                print("  [Recent Telemetry]")
+                for line in lines[-3:]:
+                    try:
+                        entry = json.loads(line)
+                        print(f"    {entry['timestamp'][:19]} | {entry['status']} | up={entry['uptime_seconds']:.0f}s")
+                    except Exception:
+                        pass
+            print("=" * 60)
+            input("\nPress Enter to continue...")
+            continue
+
+        print("[ERROR] Invalid choice")
+
+
+def _test_all_schemas() -> None:
+    """Cycle through all schemas and show FFmpeg filters."""
+    try:
+        from modules.platform_integration.antifafm_broadcaster.src.scheme_manager import (
+            SchemeManager, OutputScheme
+        )
+    except ImportError as e:
+        print(f"[ERROR] Could not import scheme_manager: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    manager = SchemeManager()
+    print("\n[TEST] Cycling through all schemas...")
+    print("=" * 60)
+    for scheme in OutputScheme:
+        manager.set_scheme(scheme)
+        filter_str = manager.build_ffmpeg_filter()
+        print(f"\n{scheme.value}:")
+        print(f"  Filter: {filter_str[:80]}...")
+    print("=" * 60)
+    input("\nPress Enter to continue...")
+
+
+def _test_karaoke_lookup() -> None:
+    """Test karaoke lyrics lookup for a specific song."""
+    try:
+        from modules.platform_integration.antifafm_broadcaster.scripts.launch import (
+            get_cached_lyrics
+        )
+    except ImportError as e:
+        print(f"[ERROR] Could not import launch: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\n[TEST] Karaoke Lyrics Lookup")
+    print("=" * 60)
+    artist = input("Artist (or Enter for 'UnDaoDu'): ").strip() or "UnDaoDu"
+    title = input("Title: ").strip()
+    if not title:
+        print("[ERROR] Title required")
+        input("\nPress Enter to continue...")
+        return
+
+    lyrics = get_cached_lyrics(artist, title)
+    if lyrics:
+        print(f"\n[OK] Found {len(lyrics)} lines:")
+        for ts, text in lyrics[:10]:
+            mins, secs = ts // 60000, (ts % 60000) // 1000
+            print(f"  [{mins:02d}:{secs:02d}] {text[:60]}")
+        if len(lyrics) > 10:
+            print(f"  ... and {len(lyrics) - 10} more lines")
+    else:
+        print("[MISS] No lyrics found in cache")
+    input("\nPress Enter to continue...")
+
+
+def _show_lyrics_cache_stats() -> None:
+    """Show lyrics cache statistics with source breakdown."""
+    try:
+        from modules.platform_integration.antifafm_broadcaster.scripts.launch import (
+            _get_lyrics_db
+        )
+    except ImportError as e:
+        print(f"[ERROR] Could not import launch: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\n[LYRICS CACHE] Statistics")
+    print("=" * 60)
+    try:
+        conn = _get_lyrics_db()
+        # Get total
+        cursor = conn.execute("SELECT COUNT(*) FROM modules_lyrics_cache")
+        total = cursor.fetchone()[0]
+        print(f"  Total songs: {total}")
+
+        # Get breakdown by source
+        cursor = conn.execute(
+            "SELECT source, COUNT(*) FROM modules_lyrics_cache GROUP BY source ORDER BY COUNT(*) DESC"
+        )
+        print(f"  By source:")
+        for source, count in cursor.fetchall():
+            print(f"    {source}: {count}")
+    except Exception as e:
+        print(f"[ERROR] Database error: {e}")
+    print("=" * 60)
+    input("\nPress Enter to continue...")
+
+
+def _set_schema_signal() -> None:
+    """Set schema signal for live switching."""
+    try:
+        from modules.platform_integration.antifafm_broadcaster.src.scheme_manager import (
+            OutputScheme, write_scheme_signal, read_scheme_signal
+        )
+    except ImportError as e:
+        print(f"[ERROR] Could not import scheme_manager: {e}")
+        input("\nPress Enter to continue...")
+        return
+
+    print("\n[OPS] Schema Signal Control")
+    print("=" * 60)
+    print("Available schemas:")
+    for i, scheme in enumerate(OutputScheme, 1):
+        print(f"  {i}. {scheme.value}")
+    print("=" * 60)
+    choice = input("\nSelect schema (or Enter to read current): ").strip()
+    if not choice:
+        current, ts = read_scheme_signal()
+        if current:
+            print(f"[INFO] Current signal: {current} (set at {ts})")
+        else:
+            print("[INFO] No signal currently set")
+    else:
+        try:
+            scheme = list(OutputScheme)[int(choice) - 1]
+            write_scheme_signal(scheme.value)
+            print(f"[OK] Signal set to: {scheme.value}")
+        except (ValueError, IndexError):
+            print("[ERROR] Invalid selection")
+    input("\nPress Enter to continue...")
+
+
 def _handle_shorts_scheduler_menu() -> None:
     """Handle Shorts Scheduler submenu."""
     # Hot-reload Shorts Scheduler launcher for long-lived menu sessions (0102-first).
@@ -727,62 +1047,51 @@ def _handle_shorts_scheduler_menu() -> None:
     shorts_launch = importlib.reload(shorts_launch)
     show_shorts_scheduler_menu = shorts_launch.show_shorts_scheduler_menu
     run_multi_channel_scheduler = shorts_launch.run_multi_channel_scheduler
+    run_continuous_scheduler = shorts_launch.run_continuous_scheduler
 
     while True:
         sched_choice = show_shorts_scheduler_menu()
 
         if sched_choice == "1":
-            # Shorts (production): schedule ALL unlisted shorts (continuous until complete)
-            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
-            if content_type != "shorts":
-                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
-                input("\nPress Enter to continue...")
-                continue
-            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
-            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
-            # FIX: Changed max_videos from 1 to 9999 to actually schedule ALL shorts as menu says
-            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=9999, dry_run=False))
-            print(f"\n[RESULT] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
-            input("\nPress Enter to continue...")
-        elif sched_choice == "2":
-            # Shorts (production): schedule ALL unlisted shorts (safety: capped by max_videos)
-            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
-            if content_type != "shorts":
-                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
-                input("\nPress Enter to continue...")
-                continue
-            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
-            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
-            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=9999, dry_run=False))
-            print(f"\n[RESULT] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
-            input("\nPress Enter to continue...")
-        elif sched_choice == "3":
-            # Preview Only (DRY RUN)
-            content_type = (os.getenv("YT_SCHEDULER_CONTENT_TYPE", "shorts").strip().lower() or "shorts")
-            if content_type != "shorts":
-                print(f"\n[PLACEHOLDER] content_type={content_type} is not implemented yet. Use shorts.")
-                input("\nPress Enter to continue...")
-                continue
-            from modules.platform_integration.youtube_shorts_scheduler.src.scheduler import run_scheduler_dae
-            channel_key = (os.getenv("YT_SHORTS_SCHEDULER_CHANNEL_KEY", "move2japan").strip().lower() or "move2japan")
-            results = asyncio.run(run_scheduler_dae(channel_key=channel_key, max_videos=1, dry_run=True))
-            print(f"\n[DRY RUN] channel={results.get('channel', channel_key)} scheduled={results.get('total_scheduled', 0)} errors={results.get('total_errors', 0)}")
-            input("\nPress Enter to continue...")
-        elif sched_choice == "4":
-            # Chrome rotation (Move2Japan <-> UnDaoDu)
+            # Chrome (9222): Move2Japan + UnDaoDu
+            print("\n[CHROME] Scheduling shorts for Move2Japan + UnDaoDu...")
             run_multi_channel_scheduler(browser="chrome", mode="schedule", max_per_channel=9999)
             input("\nPress Enter to continue...")
-        elif sched_choice == "5":
-            # Edge rotation (FoundUps <-> RavingANTIFA)
+        elif sched_choice == "2":
+            # Edge (9223): FoundUps + antifaFM
+            print("\n[EDGE] Scheduling shorts for FoundUps + antifaFM...")
             run_multi_channel_scheduler(browser="edge", mode="schedule", max_per_channel=9999)
             input("\nPress Enter to continue...")
-        elif sched_choice == "6":
-            # Indexing handoff (use the dedicated Indexing menu)
-            print("\n[HANDOFF] Use: YouTube DAEs → 8 [INDEX] YouTube Indexing (Digital Twin Learning)")
+        elif sched_choice == "3":
+            # BOTH: Run Chrome AND Edge in parallel
+            import concurrent.futures
+            print("\n[PARALLEL] Scheduling shorts on Chrome AND Edge simultaneously...")
+            print("=" * 60)
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                chrome_future = executor.submit(
+                    run_multi_channel_scheduler,
+                    browser="chrome", mode="schedule", max_per_channel=9999
+                )
+                edge_future = executor.submit(
+                    run_multi_channel_scheduler,
+                    browser="edge", mode="schedule", max_per_channel=9999
+                )
+
+                # Wait for both to complete
+                chrome_result = chrome_future.result()
+                edge_result = edge_future.result()
+
+            print("\n" + "=" * 60)
+            print("[COMPLETE] Both browsers finished scheduling")
+            print(f"  Chrome: {chrome_result.get('total_scheduled', 0)} scheduled")
+            print(f"  Edge: {edge_result.get('total_scheduled', 0)} scheduled")
             input("\nPress Enter to continue...")
-        elif sched_choice == "7":
-            # Full Videos (future layer)
-            print("\n[PLACEHOLDER] Full video scheduling not yet implemented (content_type=videos)")
+        elif sched_choice == "4":
+            # CONTINUOUS: Auto-rotate both browsers until Ctrl+C
+            print("\n[CONTINUOUS] Starting autonomous rotation mode...")
+            print("Press Ctrl+C to stop")
+            run_continuous_scheduler(browser="both", mode="schedule", max_per_channel=9999)
             input("\nPress Enter to continue...")
         elif sched_choice == "0":
             break
@@ -896,12 +1205,12 @@ def _handle_rotation_controls_menu() -> None:
         if ch and ch.get("name"):
             CHANNELS.append(ch["name"])
     if not CHANNELS:
-        CHANNELS = ["Move2Japan", "UnDaoDu", "FoundUps", "RavingANTIFA"]
+        CHANNELS = ["Move2Japan", "UnDaoDu", "FoundUps", "antifaFM"]
 
     while True:
         # Get current rotation state from env
         rotation_enabled = env_truthy("YT_ROTATION_ENABLED", "true")
-        default_order = ",".join(CHANNELS) if CHANNELS else "Move2Japan,UnDaoDu,FoundUps,RavingANTIFA"
+        default_order = ",".join(CHANNELS) if CHANNELS else "Move2Japan,UnDaoDu,FoundUps,antifaFM"
         current_order = os.getenv("YT_ROTATION_ORDER", default_order)
         halt_on_error = env_truthy("YT_ROTATION_HALT_ON_ERROR", "false")
 
@@ -918,6 +1227,9 @@ def _handle_rotation_controls_menu() -> None:
         print("5. Set rotation order")
         print("6. Quick swap: Move2Japan -> UnDaoDu")
         print("7. Quick swap: UnDaoDu -> Move2Japan")
+        print("-" * 40)
+        print("8. [SIMPLE] In-Browser Rotation (Edge: FoundUps → antifaFM)")
+        print("9. [SIMPLE] In-Browser Rotation (Chrome: Move2Japan → UnDaoDu)")
         print("0. Back")
         print("=" * 60)
 
@@ -997,6 +1309,20 @@ def _handle_rotation_controls_menu() -> None:
             input("\nPress Enter to continue...")
             continue
 
+        if choice == "8":
+            # Simple In-Browser Rotation - Edge (FoundUps → antifaFM)
+            # Uses TarsAccountSwapper directly, no subprocess spawning
+            _run_agentic_rotation("edge")
+            input("\nPress Enter to continue...")
+            continue
+
+        if choice == "9":
+            # Simple In-Browser Rotation - Chrome (Move2Japan → UnDaoDu)
+            # Uses TarsAccountSwapper directly, no subprocess spawning
+            _run_agentic_rotation("chrome")
+            input("\nPress Enter to continue...")
+            continue
+
         print("[ERROR] Invalid choice")
 
 
@@ -1066,3 +1392,62 @@ def _check_rotation_status() -> None:
 
     except ImportError as e:
         print(f"[ERROR] Selenium not available: {e}")
+
+
+def _run_agentic_rotation(browser: str) -> None:
+    """
+    Run the Agentic Rotation Supervisor for a browser.
+
+    This uses the simple in-browser rotation pattern:
+    - Connects to browser once (Edge 9223 or Chrome 9222)
+    - Uses TarsAccountSwapper to swap between accounts
+    - Runs engagement on each channel sequentially
+    - Per-channel timeout via asyncio.wait_for (5 min default)
+    """
+    try:
+        from modules.communication.livechat.src.simple_rotation import SimpleRotation
+
+        # Get user settings
+        timeout = int(input("Per-channel timeout (seconds, default=300): ").strip() or "300")
+        max_comments = int(input("Max comments per channel (default=10): ").strip() or "10")
+
+        channels = ["FoundUps", "antifaFM"] if browser == "edge" else ["Move2Japan", "UnDaoDu"]
+
+        print("")
+        print("=" * 60)
+        print(f"[ROTATION] Simple In-Browser Rotation - {browser.upper()}")
+        print(f"  Timeout: {timeout}s per channel")
+        print(f"  Max comments: {max_comments}")
+        print(f"  Channels: {' → '.join(channels)}")
+        print(f"  Method: TarsAccountSwapper (no subprocess)")
+        print("=" * 60)
+        print("")
+
+        rotation = SimpleRotation(
+            browser=browser,
+            channel_timeout=timeout,
+        )
+
+        result = asyncio.run(rotation.run_rotation(
+            channels=channels,
+            max_comments=max_comments,
+        ))
+
+        print("")
+        print("=" * 60)
+        print("[ROTATION] Complete")
+        print(f"  Successful: {len(result.successful_channels)}/{len(channels)}")
+        print(f"  Total comments: {result.total_comments}")
+        print(f"  Time: {result.elapsed_seconds:.1f}s")
+        if result.failed_channels:
+            print(f"  Failed: {result.failed_channels}")
+        print("=" * 60)
+
+    except ImportError as e:
+        print(f"[ERROR] Simple rotation not available: {e}")
+        import traceback
+        traceback.print_exc()
+    except Exception as e:
+        print(f"[ERROR] Rotation failed: {e}")
+        import traceback
+        traceback.print_exc()

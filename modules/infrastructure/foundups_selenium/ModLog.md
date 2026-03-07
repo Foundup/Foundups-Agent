@@ -1,5 +1,54 @@
 # ModLog — FoundUps Selenium
 
+## V0.8.1 — LinkedIn Registry Migration
+
+**Date**: 2026-03-07
+**WSP Compliance**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
+
+### Changes
+- Migrated hardcoded LinkedIn profile mappings to central registry
+- `src/browser_manager.py`: Profile mappings now built dynamically from registry
+
+### Impact
+- LinkedIn browser profiles now managed via `LINKEDIN_ACCOUNTS_JSON` env var
+
+---
+
+## V0.8.0 — Cross-Process Browser Reconnection (CDP Support)
+
+**Date**: 2026-02-24
+**WSP Compliance**: WSP 3 (Architecture), WSP 77 (AI Coordination)
+
+### Problem
+When CLI restarts (new Python process), the BrowserManager singleton loses track of browsers running from previous process. It tries to create a new Chrome with same profile → "session not created: Chrome instance exited" error.
+
+### Solution: CDP-Based Cross-Process Reconnection
+
+1. **Debug Port**: Chrome now starts with `--remote-debugging-port` for reconnection
+2. **Session Files**: Port/profile info saved to `foundups_selenium/data/sessions/*.json`
+3. **Reconnection Logic**: On `get_browser()`:
+   - Check in-process `_browsers` dict first
+   - Check session file for existing port
+   - If Chrome running on port → connect via `debuggerAddress` CDP
+   - Only create new browser if nothing found
+
+### Changes
+- Added `_get_debug_port()`: Deterministic port per profile (9222-9322 range)
+- Added `_save_session()`: Persist port info to JSON
+- Added `_load_session()`: Load session on startup
+- Added `_is_browser_running()`: CDP health check (GET /json/version)
+- Added `_connect_to_existing()`: Connect via `debuggerAddress` option
+
+### Migration
+**IMPORTANT**: Existing running Chrome browsers were NOT started with debug ports.
+You must close all Chrome windows first, then restart the flow.
+Future runs will reconnect automatically.
+
+### Files Changed
+- `src/browser_manager.py`: Full CDP support
+
+---
+
 ## V0.7.0 — Unified Typing Module (FoundupsTyper)
 
 **WSP Compliance**: WSP 49 (Module Structure), WSP 77 (AI Coordination)

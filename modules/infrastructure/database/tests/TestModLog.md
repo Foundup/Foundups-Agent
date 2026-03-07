@@ -113,3 +113,16 @@ python -m pytest --cov=modules.infrastructure.database.src --cov-report=html mod
 - [OK] WSP 22: ModLog - this TestModLog documents evolution
 - [OK] WSP 49: Module structure - tests in proper location
 - [OK] WSP 78: Database architecture - quantum extensions tested
+## Entry: 2026-02-21 - SQLite Hardening Regression Coverage
+**Added Tests**:
+- `test_db_manager_sqlite_pragmas.py`
+  - verifies per-connection FK enforcement
+  - verifies busy-timeout pragma presence
+  - verifies sqlite backend info path wiring
+- `test_sqlite_audit.py`
+  - validates per-file audit report generation
+  - validates aggregate existing/missing target summary
+
+**Rationale**:
+- Protects against regressions where SQLite pragmas are only set at file-init time.
+- Ensures audit tooling remains deterministic and CI-friendly.

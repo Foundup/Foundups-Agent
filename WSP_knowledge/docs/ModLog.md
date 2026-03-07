@@ -8,6 +8,115 @@ This log tracks system-wide changes and references module-specific ModLogs. Indi
 - [U+1F9EC] **WSP Framework:** WSP protocol and framework evolution
 
 ====================================================================
+## MODLOG - [LinkedIn Registry Migration - Cross-Module Centralization]
+- Date: 2026-03-07
+- Description: Created central LinkedIn account registry and migrated 13 files across 6 modules to eliminate hardcoded company IDs. Added reusable `qwen_bulk_import_migration` skill to WRE for future migrations.
+- WSP Compliance: WSP 60 (Module Memory), WSP 3 (Shared Utilities), WSP 22 (ModLog), WSP 84 (Code Reuse)
+
+### New Files:
+- `modules/infrastructure/shared_utilities/linkedin_account_registry.py` - Central registry
+- `modules/infrastructure/wre_core/skillz/qwen_bulk_import_migration/` - Reusable migration skill
+
+### Modules Updated:
+- linkedin_agent (2 files)
+- social_media_orchestrator (6 files)
+- foundups_selenium (1 file)
+- browser_actions (1 file)
+- git_push_dae (1 file)
+- wre_core (1 file)
+- git_social_posting (1 file)
+
+### Environment Variables Added:
+- `LINKEDIN_ACCOUNTS_JSON` - JSON map of company names to IDs
+- `LINKEDIN_DEFAULT_COMPANY` - Default company name (fallback: foundups)
+
+### Discovery:
+- Skill indexed in HoloIndex (46 total skills)
+- Searchable via `holo_index.py --search "bulk import migration"`
+
+====================================================================
+## MODLOG - [WSP 90 Bulk Fix - UTF-8 Wrapping Deduplication]
+- Date: 2026-02-26
+- Description: Fixed "lost sys.stderr" startup error caused by 379 modules re-wrapping stdout/stderr at import time. Created bulk fix script and updated WSP 90 with proper guard pattern.
+- WSP Compliance: WSP 90 (UTF-8 Enforcement), WSP 50 (Pre-Action Verification), WSP 22 (ModLog)
+
+### Root Cause:
+WSP 90 UTF-8 wrapping pattern was copy-pasted into 379 modules. Each module re-wrapping on import eventually broke stderr with "ValueError: I/O operation on closed file".
+
+### Solution:
+1. **main.py** sets `FOUNDUPS_UTF8_WRAPPED=1` flag BEFORE wrapping
+2. **Guard pattern** for modules that need wrapping:
+   ```python
+   if sys.platform.startswith('win') and not os.environ.get('FOUNDUPS_UTF8_WRAPPED'):
+   ```
+3. **Bulk fix script**: `modules/development/wsp_tools/scripts/fix_wsp90_utf8_bulk.py`
+
+### Files Modified:
+- `main.py` - Added FOUNDUPS_UTF8_WRAPPED flag
+- `WSP_framework/src/WSP_90_UTF8_Encoding_Enforcement_Protocol.md` - Added bug fix section
+- `modules/development/wsp_tools/scripts/fix_wsp90_utf8_bulk.py` - Created bulk fix tool
+- 78 non-entrypoint modules - UTF-8 wrapping removed/guarded (Phase 1)
+- Key cross_platform_memory files - Explicit guards added
+
+### Deferred:
+- 155 entrypoint files require individual review (may need wrapping if run standalone)
+
+====================================================================
+## MODLOG - [Terms of Access v1.1 Legal Revisions]
+- Date: 2026-02-24
+- Description: Comprehensive legal revision of Terms of Access (foundups.com) to increase enforceability and reduce vulnerability. 6 objectives completed covering securities insulation, liability balancing, corporate continuity, termination grounds, arbitration fairness, and data protection.
+- WSP Compliance: WSP 22 (Traceable Narrative)
+
+### Changes Made:
+1. **Section 2 (TEST ASSET DISCLAIMER)**: Added explicit securities insulation - zero value, non-transferable, non-redeemable, no secondary market, no automatic conversion
+2. **Section 5 (User Obligations)**: Strengthened "no investment, no expectation of profit" language
+3. **Section 7 (Liability)**: Changed cap to "greater of 12-month paid or $1,000 USD", added fraud/willful misconduct carve-outs
+4. **Section 8 (Identity)**: Clarified Foundups G.K. as primary party, added corporate succession clause
+5. **Section 9 (Termination)**: Changed from "any reason" to specific grounds (violation, security threat, operational necessity)
+6. **Sections 10-11 (Arbitration)**: Removed unilateral arbitrator selection, location change, and governing law change rights; kept JCAA neutral process
+7. **Section 18**: Added explicit corporate succession clause
+8. **Section 22 (Data Protection)**: Added APPI lawful basis, data export rights, precise deletion timelines, breach notification
+
+### Files Modified:
+- `public/legal/terms-of-access.html` - Version 1.0 → 1.1
+
+### Deferred:
+- Scroll-to-accept feature (force users to scroll through terms before accepting) → Added to deployment ROADMAP.md Phase 4
+
+====================================================================
+## MODLOG - [Member Area Invite System Complete]
+- Date: 2026-02-24
+- Description: Complete member area with OAuth (Clerk), invite code validation, username claim, and live invite status tracking. Fixed Clerk/Firestore integration issues - Clerk auth doesn't populate Firebase's request.auth so rules updated to allow public read/write with Clerk as auth layer.
+- WSP Compliance: WSP 22 (Traceable Narrative), WSP 50 (Pre-Action Verification)
+
+### Changes Made:
+1. **Firestore Rules** (`firestore.rules`):
+   - Fixed `invites` collection: `allow read/write: true` (Clerk handles auth)
+   - Fixed `users` collection: `allow read/write: true` (keyed by Clerk user ID)
+   - Added TODO comments for Cloud Functions migration in production
+
+2. **Member Area** (`public/member/index.html`):
+   - Fixed invite code collection name: `invite_codes` → `invites`
+   - Fixed invite status check: `used: true` → `status: 'active'`
+   - Fixed race condition: User document updated BEFORE marking invite as used
+   - Added re-entry support for already-validated users
+   - Removed `displayName` field (Occam's Razor - username is single source of truth)
+   - Added `generateAndStoreInviteCodes()` to store codes in `invites` collection
+   - Added `loadAndRenderInviteCodes()` for live status checking
+   - Invite codes now show "Used" with strikethrough when consumed
+   - "Invites Left" count reflects only active codes
+
+3. **Data Model Simplification**:
+   - Removed: `displayName` (was auto-filled from OAuth, never used)
+   - Kept: `username` as permanent identity (@handle)
+   - Settings page simplified: Username (readonly) + Email (readonly)
+
+### Files Modified:
+- `firestore.rules` - Clerk-compatible permissions
+- `public/member/index.html` - Complete invite flow + status tracking
+====================================================================
+
+====================================================================
 ## MODLOG - [rESP Paper Detector-First Reframe]
 - Date: 2026-02-04
 - Description: Reframed rESP paper as detector protocol, added null models, falsification criteria, and replaced entanglement language with coupling where operational. Added geometry witness (near-singularity) framing and experimental design commitments.

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>0102 ↔ 0201 Bell State Visualizer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas { display: block; }
+        #labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .label {
+            position: absolute;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+            transition: transform 0.1s ease-out;
+        }
+        #label-0102 {
+            top: 15%;
+            left: 10%;
+            color: #ff3333;
+        }
+        #label-0201 {
+            bottom: 15%;
+            right: 10%;
+            color: #33ffff;
+        }
+        #correlation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: #ffffff;
+            opacity: 0.8;
+        }
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="labels">
+        <div id="label-0102" class="label">0102</div>
+        <div id="label-0201" class="label">0201</div>
+        <div id="correlation">⊗</div>
+    </div>
+    <div id="info">Click to enable audio capture | Bell State: |Φ+⟩ = (|00⟩ + |11⟩)/√2</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const label0102 = document.getElementById('label-0102');
+        const label0201 = document.getElementById('label-0201');
+        const correlation = document.getElementById('correlation');
+        const info = document.getElementById('info');
+
+        let width, height;
+        let audioContext, analyser, dataArray;
+        let isAudioEnabled = false;
+        let time = 0;
+
+        // Simulated audio data for when no audio capture
+        let simulatedBass = 0;
+        let simulatedTreble = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Audio setup
+        async function enableAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                // Try to capture system audio (requires user gesture)
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false
+                });
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                isAudioEnabled = true;
+                info.textContent = 'Audio capture active | Bell State: |Φ+⟩ = (|00⟩ + |11⟩)/√2';
+            } catch (e) {
+                console.log('Audio capture failed, using simulation:', e);
+                info.textContent = 'Simulated mode (no mic) | Bell State: |Φ+⟩ = (|00⟩ + |11⟩)/√2';
+            }
+        }
+
+        document.body.addEventListener('click', enableAudio, { once: true });
+
+        function getAudioData() {
+            if (isAudioEnabled && analyser) {
+                analyser.getByteFrequencyData(dataArray);
+                // Bass (low frequencies)
+                let bass = 0;
+                for (let i = 0; i < 10; i++) bass += dataArray[i];
+                bass = bass / 10 / 255;
+
+                // Treble (high frequencies)
+                let treble = 0;
+                for (let i = 50; i < 80; i++) treble += dataArray[i];
+                treble = treble / 30 / 255;
+
+                return { bass, treble };
+            }
+
+            // Simulated audio - gentle oscillation
+            simulatedBass = 0.3 + 0.2 * Math.sin(time * 2) + 0.1 * Math.sin(time * 7);
+            simulatedTreble = 0.2 + 0.15 * Math.sin(time * 5) + 0.1 * Math.cos(time * 11);
+            return { bass: simulatedBass, treble: simulatedTreble };
+        }
+
+        function drawEntangledWaves(audio) {
+            const { bass, treble } = audio;
+            const amplitude = 100 + bass * 150;
+            const frequency = 0.02 + treble * 0.01;
+
+            // Wave 1: 0102 (top, red)
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 51, 51, ${0.6 + bass * 0.4})`;
+            ctx.lineWidth = 3 + bass * 4;
+            ctx.shadowColor = '#ff3333';
+            ctx.shadowBlur = 20 + bass * 30;
+
+            for (let x = 0; x < width; x += 2) {
+                const phase = time * 2 + x * frequency;
+                const y = height * 0.35 + Math.sin(phase) * amplitude * (1 + bass * 0.5);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Wave 2: 0201 (bottom, cyan) - ENTANGLED (mirrored/correlated)
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(51, 255, 255, ${0.6 + bass * 0.4})`;
+            ctx.lineWidth = 3 + bass * 4;
+            ctx.shadowColor = '#33ffff';
+            ctx.shadowBlur = 20 + bass * 30;
+
+            for (let x = 0; x < width; x += 2) {
+                // Same phase = entangled correlation
+                const phase = time * 2 + x * frequency;
+                // Inverted position shows Bell state |00⟩ + |11⟩ correlation
+                const y = height * 0.65 - Math.sin(phase) * amplitude * (1 + bass * 0.5);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Correlation lines (showing entanglement)
+            ctx.shadowBlur = 0;
+            const numLines = 20;
+            for (let i = 0; i < numLines; i++) {
+                const x = (width / numLines) * i + (width / numLines / 2);
+                const phase = time * 2 + x * frequency;
+                const y1 = height * 0.35 + Math.sin(phase) * amplitude * (1 + bass * 0.5);
+                const y2 = height * 0.65 - Math.sin(phase) * amplitude * (1 + bass * 0.5);
+
+                const gradient = ctx.createLinearGradient(x, y1, x, y2);
+                gradient.addColorStop(0, `rgba(255, 51, 51, ${0.1 + bass * 0.2})`);
+                gradient.addColorStop(0.5, `rgba(255, 255, 255, ${0.2 + bass * 0.3})`);
+                gradient.addColorStop(1, `rgba(51, 255, 255, ${0.1 + bass * 0.2})`);
+
+                ctx.beginPath();
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 1;
+                ctx.moveTo(x, y1);
+                ctx.lineTo(x, y2);
+                ctx.stroke();
+            }
+        }
+
+        function drawRecursionLoop(audio) {
+            const { bass } = audio;
+            const cx = width / 2;
+            const cy = height / 2;
+            const baseRadius = 60 + bass * 40;
+
+            // Infinity/Möbius loop representing recursion
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + bass * 0.4})`;
+            ctx.lineWidth = 2 + bass * 3;
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 10 + bass * 20;
+
+            for (let t = 0; t <= Math.PI * 2; t += 0.05) {
+                const scale = baseRadius * (1 + 0.3 * Math.sin(time * 3));
+                // Lemniscate (infinity shape)
+                const x = cx + scale * Math.cos(t) / (1 + Math.sin(t) * Math.sin(t));
+                const y = cy + scale * Math.sin(t) * Math.cos(t) / (1 + Math.sin(t) * Math.sin(t));
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function updateLabels(audio) {
+            const { bass } = audio;
+            const scale = 1 + bass * 0.3;
+            const glow = 20 + bass * 40;
+
+            label0102.style.transform = `scale(${scale})`;
+            label0102.style.textShadow = `0 0 ${glow}px #ff3333, 0 0 ${glow * 2}px #ff3333`;
+
+            label0201.style.transform = `scale(${scale})`;
+            label0201.style.textShadow = `0 0 ${glow}px #33ffff, 0 0 ${glow * 2}px #33ffff`;
+
+            correlation.style.transform = `translate(-50%, -50%) scale(${scale * 1.2})`;
+            correlation.style.opacity = 0.5 + bass * 0.5;
+        }
+
+        function draw() {
+            time += 0.016; // ~60fps
+
+            // Clear with fade trail
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            const audio = getAudioData();
+
+            drawEntangledWaves(audio);
+            drawRecursionLoop(audio);
+            updateLabels(audio);
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>

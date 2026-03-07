@@ -1,5 +1,135 @@
 # YouTube Shorts Scheduler - ModLog
 
+## 2026-02-27 - Browser Rotation Fix: Add close() Method
+
+**WSP References**: WSP 84 (Code Reuse), WSP 27 (DAE Lifecycle)
+
+### Problem
+Browsers (Edge/Chrome) not rotating after commenting completes into scheduling/indexing:
+- `multi_channel_coordinator.py:674` calls `shorts_scheduler.close()` - **method didn't exist**
+- `run_scheduler_dae()` and `run_indexer_dae()` used `disconnect()` which only clears reference
+- Browsers stayed locked, preventing next automation cycle
+
+### Root Cause
+`disconnect()` only sets `self.driver = None` - it doesn't call `driver.quit()` to actually release the browser for rotation.
+
+### Fix
+1. Added `close()` method to `YouTubeShortsScheduler`:
+   ```python
+   def close(self):
+       """Close browser and release for rotation."""
+       if self.driver:
+           self.driver.quit()  # Actually close browser
+           self.driver = None
+           self.dom = None
+   ```
+
+2. Updated DAE entry points to use `close()`:
+   - `run_scheduler_dae()` finally block: `disconnect()` → `close()`
+   - `run_indexer_dae()` finally block: `disconnect()` → `close()`
+
+### Files Changed
+- `src/scheduler.py`: Added `close()` method (lines 150-166)
+- `src/scheduler.py`: `run_scheduler_dae()` finally uses `close()` (line 1148)
+- `src/scheduler.py`: `run_indexer_dae()` finally uses `close()` (line 1198)
+
+### Expected Result
+After scheduling/indexing completes, browser is properly closed and available for next DAE rotation cycle.
+
+---
+
+## 2026-02-25 - Edge Browser Hover Fix for Filter Dropdown (ADR-009)
+
+**WSP References**: WSP 77 (Agent Coordination), WSP 84 (Code Reuse)
+
+### Problem
+FoundUps shorts scheduler failing on Edge browser:
+```
+[DOM] Dropdown not visible yet (attempt 1)
+[DOM] Dropdown not visible yet (attempt 2)
+[DOM] Dropdown not visible yet (attempt 3)
+[DOM] Visibility menu item not found/clickable
+```
+
+Move2Japan (Chrome) succeeds, FoundUps (Edge) fails. Same code, different browsers.
+
+### Root Cause
+The filter dropdown is **hover-dependent**. After clicking the filter:
+1. Dropdown opens
+2. Mouse stays at click point (not in dropdown)
+3. On Edge (slow), dropdown closes before JS scan completes
+4. On Chrome (fast), scan completes in time
+
+### Fix
+Added mouse hover behavior to `_open_filter_ui()` in `dom_automation.py`:
+- After clicking filter, move mouse **80px down** into dropdown area
+- Keeps dropdown open while waiting for `tp-yt-paper-listbox` to render
+- Pattern modeled after edit button hover (line 1723-1727)
+
+### Files Changed
+- `src/dom_automation.py`: `_open_filter_ui()` - Added hover fix with ActionChains
+
+### Testing
+- FoundUps (Edge): Should now keep dropdown open during retry loop
+- Move2Japan (Chrome): No change (already fast enough)
+
+---
+
+## 2026-02-24 - AI-Driven Content Type Classification Skill (gemma_content_type_classifier)
+
+**WSP References**: WSP 95 (SKILLz Wardrobe), WSP 77 (Agent Coordination), WSP 27 (Phase 0 KNOWLEDGE)
+
+### What
+Created `gemma_content_type_classifier` skill to replace static `description_template` config with AI-driven classification.
+
+### Why
+012's insight: "isnt description_template = skillz?" - YES! Content type should be determined by AI analyzing video content, not hardcoded per-channel config.
+
+**Problem Solved**:
+- Static `description_template` in `youtube_channels.json` assigns templates at channel level
+- But channels may have mixed content (e.g., Move2Japan has FFCPLN music AND personal vlogs)
+- AI should classify EACH VIDEO, not use channel-wide defaults
+
+### Key Files Created
+
+**Skill (WSP 95 structure)**:
+- `skillz/gemma_content_type_classifier/SKILLz.md` - Skill definition with micro chain-of-thought
+- `skillz/gemma_content_type_classifier/executor.py` - Classification implementation
+- `skillz/gemma_content_type_classifier/__init__.py` - Module exports
+
+**Integration**:
+- `src/content_generator.py` - Added `get_ai_driven_template()` function
+
+### Classification Taxonomy
+
+| Content Type | Template | Channels | Indicators |
+|-------------|----------|----------|------------|
+| `ffcpln_music` | ffcpln | move2japan, ravingantifa | FFCPLN markers, Suno lyrics |
+| `ffcpln_news` | ffcpln | move2japan, ravingantifa | ICE, protest, raid, breaking |
+| `startup_tech` | foundups | foundups | pAVS, startup, AI, entrepreneur |
+| `mindfulness` | undaodu | undaodu | meditation, zen, mindfulness |
+
+### Usage
+
+```python
+# Before (static config):
+template = channel_config.get("description_template", "ffcpln")
+
+# After (skill-driven):
+from modules.platform_integration.youtube_shorts_scheduler.src.content_generator import get_ai_driven_template
+template = get_ai_driven_template(title=video_title, channel=channel_key, metadata=index_json)
+```
+
+### Test Results
+All 5 test cases pass with correct classification:
+- `#FFCPLN Burns MAGA` → ffcpln_music (marker detected)
+- `Building AI Agents with pAVS` → startup_tech (pAVS detected)
+- `Morning Meditation Music` → mindfulness (meditation detected)
+- `BREAKING: ICE Raids Chicago` → ffcpln_news (news detected)
+- `Random video` → channel baseline fallback
+
+---
+
 ## 2026-02-04 - CPS Agentic Navigation + Schedule Thinning + Inline Rescheduling
 
 **WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 84 (No Vibecoding)

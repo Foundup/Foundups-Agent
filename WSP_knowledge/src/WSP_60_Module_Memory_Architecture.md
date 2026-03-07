@@ -179,6 +179,22 @@ Planned feedback signals:
 
 All feedback and metrics remain silent in output; only memory storage is updated.
 
+### 3.8 Action Control-Plane Memory Writeback
+
+Standalone control planes that execute operational commands (for example,
+OpenClaw/IronClaw action runners) MUST write compact execution outcomes to
+module memory through PatternMemory-compatible records.
+
+Minimum required fields for each action execution memory event:
+- command surface (raw command or normalized action)
+- route/platform (`linkedin`, `x`, `youtube`, `social_campaign`, etc.)
+- success/failure
+- execution duration
+- session/sender/channel context
+
+This ensures direct CLI-triggered automation is recallable the same way as
+orchestrated DAE executions (WSP 48 + WSP 60 alignment).
+
 ## 4. Module Memory Directory Structure
 
 Each module follows this memory directory structure:

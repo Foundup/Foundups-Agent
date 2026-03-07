@@ -1,4 +1,4 @@
-# AI_Overseer Training Wardrobe Integration
+﻿# AI_Overseer Training Wardrobe Integration
 
 **Date**: 2025-10-28
 **Vision**: Use Gemma wardrobes for specialized daemon monitoring
@@ -9,33 +9,8 @@
 Instead of one generic Gemma (270M) detecting all daemon errors, create **specialized wardrobes** trained on specific daemon patterns:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ DAEMON MONITORING WARDROBE SYSTEM                      │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Gemma Base Model: 241MB (loaded once)                │
-│  ├─ gemma_youtube_daemon_monitor (10MB LoRA)          │
-│  │  └─ Trained on: Unicode errors, OAuth revoked,     │
-│  │                  quota exhaustion, stream errors    │
-│  │                                                     │
-│  ├─ gemma_mcp_daemon_monitor (10MB LoRA)              │
-│  │  └─ Trained on: MCP server crashes, tool failures,│
-│  │                  protocol violations                │
-│  │                                                     │
-│  ├─ gemma_git_daemon_monitor (10MB LoRA)              │
-│  │  └─ Trained on: Push failures, merge conflicts,   │
-│  │                  authentication errors              │
-│  │                                                     │
-│  └─ gemma_livechat_daemon_monitor (10MB LoRA)         │
-│      └─ Trained on: Chat send failures, throttling,   │
-│                      message validation errors          │
-│                                                         │
-│  Total Disk: 241MB + 40MB = 281MB (4 specialists)     │
-│  vs. Generic: 241MB (1 generalist)                    │
-│  Accuracy Gain: 87% → 95% (specialized training)      │
-│  Inference Speed: 50ms (same, GPU-accelerated)        │
-└─────────────────────────────────────────────────────────┘
-```
+笏娯楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・笏・DAEMON MONITORING WARDROBE SYSTEM                      笏・笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏､
+笏・                                                        笏・笏・ Gemma Base Model: 241MB (loaded once)                笏・笏・ 笏懌楳 gemma_youtube_daemon_monitor (10MB LoRA)          笏・笏・ 笏・ 笏披楳 Trained on: Unicode errors, OAuth revoked,     笏・笏・ 笏・                 quota exhaustion, stream errors    笏・笏・ 笏・                                                    笏・笏・ 笏懌楳 gemma_mcp_daemon_monitor (10MB LoRA)              笏・笏・ 笏・ 笏披楳 Trained on: MCP server crashes, tool failures,笏・笏・ 笏・                 protocol violations                笏・笏・ 笏・                                                    笏・笏・ 笏懌楳 gemma_git_daemon_monitor (10MB LoRA)              笏・笏・ 笏・ 笏披楳 Trained on: Push failures, merge conflicts,   笏・笏・ 笏・                 authentication errors              笏・笏・ 笏・                                                    笏・笏・ 笏披楳 gemma_livechat_daemon_monitor (10MB LoRA)         笏・笏・     笏披楳 Trained on: Chat send failures, throttling,   笏・笏・                     message validation errors          笏・笏・                                                        笏・笏・ Total Disk: 241MB + 40MB = 281MB (4 specialists)     笏・笏・ vs. Generic: 241MB (1 generalist)                    笏・笏・ Accuracy Gain: 87% 竊・95% (specialized training)      笏・笏・ Inference Speed: 50ms (same, GPU-accelerated)        笏・笏披楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・```
 
 ## How It Works
 
@@ -91,7 +66,7 @@ youtube_dataset.save("data/training_datasets/youtube_daemon_monitor.json")
 from holo_index.qwen_advisor.orchestration.gemma_domain_trainer import GemmaDomainTrainer
 
 trainer = GemmaDomainTrainer(
-    base_model=Path("E:/LLM_Models/gemma-3-270m-it.gguf"),
+    base_model=Path("LOCAL_MODEL_TRIAGE_* (default: E:/LM_studio/models/local/gemma-270m)"),
     training_data=Path("data/training_datasets/youtube_daemon_monitor.json")
 )
 
@@ -103,7 +78,7 @@ wardrobe = trainer.train(
 )
 
 # Save wardrobe (10MB)
-wardrobe.save("E:/HoloIndex/models/gemma-youtube-daemon-lora/")
+wardrobe.save("${LOCAL_MODEL_ROOT}/gemma-youtube-daemon-lora/")
 ```
 
 **Validation Results**:
@@ -174,10 +149,10 @@ def _store_monitoring_patterns(self, skill_path: Path, results: Dict) -> None:
 ## Implementation Roadmap
 
 ### Sprint 1: Base Gemma/Qwen Wiring (CURRENT)
-- ✅ Wire Gemma with generic 270M model
-- ✅ Wire Qwen for strategic classification
-- ✅ Create implementation patch
-- ⏳ Apply patch and test
+- 笨・Wire Gemma with generic 270M model
+- 笨・Wire Qwen for strategic classification
+- 笨・Create implementation patch
+- 竢ｳ Apply patch and test
 
 ### Sprint 2: Wardrobe Infrastructure (NEXT)
 - [ ] Implement `wear_wardrobe()` method in `GemmaRAGInference`
@@ -189,7 +164,7 @@ def _store_monitoring_patterns(self, skill_path: Path, results: Dict) -> None:
 - [ ] Mine 012.txt for YouTube daemon error examples (100+)
 - [ ] Train `gemma_youtube_daemon_monitor` wardrobe
 - [ ] Deploy in AI_overseer with wardrobe swapping
-- [ ] Measure accuracy improvement (87% → 95% target)
+- [ ] Measure accuracy improvement (87% 竊・95% target)
 
 ### Sprint 4: Multi-Daemon Wardrobes (SCALE)
 - [ ] Create MCP daemon wardrobe
@@ -256,7 +231,7 @@ result = self._gemma_engine.infer(prompt)
 - [ ] Train wardrobe with 100+ examples from 012.txt
 - [ ] Achieve >90% validation accuracy
 - [ ] Deploy in production AI_overseer
-- [ ] Measure false positive reduction (20% → <8%)
+- [ ] Measure false positive reduction (20% 竊・<8%)
 - [ ] Inference speed remains <100ms
 
 ### Production Success (4 Wardrobes)
@@ -288,7 +263,7 @@ result = self._gemma_engine.infer(prompt)
    - `git_daemon_monitor.json`
    - `livechat_daemon_monitor.json`
 
-5. `E:/HoloIndex/models/` (wardrobe storage)
+5. `LOCAL_MODEL_ROOT` (wardrobe storage)
    - `gemma-youtube-daemon-lora/` (10MB)
    - `gemma-mcp-daemon-lora/` (10MB)
    - `gemma-git-daemon-lora/` (10MB)
@@ -308,4 +283,6 @@ The current AI wiring patch provides the foundation. The wardrobe system provide
 
 ---
 
-**Next Action**: Apply base Gemma/Qwen wiring patch → Test with generic model → Add wardrobe infrastructure → Train YouTube specialist → Scale to all daemons
+**Next Action**: Apply base Gemma/Qwen wiring patch 竊・Test with generic model 竊・Add wardrobe infrastructure 竊・Train YouTube specialist 竊・Scale to all daemons
+
+

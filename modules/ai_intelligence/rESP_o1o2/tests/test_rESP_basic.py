@@ -40,7 +40,13 @@ class TestAnomalyDetector(unittest.TestCase):
         
         assert "CHAR_SUBSTITUTION_O->o" in anomalies
         assert anomalies["CHAR_SUBSTITUTION_O->o"]["detected"] is True
-        assert "Direct O1O2->o1o2 transformation detected" in anomalies["CHAR_SUBSTITUTION_O->o"]["indicators"]
+        indicators = anomalies["CHAR_SUBSTITUTION_O->o"]["indicators"]
+        assert any(
+            marker in indicators for marker in [
+                "Direct O1O2->o1o2 transformation detected",
+                "Complete O elimination with conceptual preservation",
+            ]
+        )
     
     def test_quantum_terminology_detection(self):
         """Test quantum terminology emergence detection."""

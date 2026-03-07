@@ -71,11 +71,11 @@ class SocialMediaOrchestrator:
         """
         self.config = config or {}
         self.logger = logger or self._setup_logger()
-        
-        # Initialize core components
-        self.oauth_coordinator = OAuthCoordinator(config.get('oauth', {}))
-        self.content_orchestrator = ContentOrchestrator(config.get('content', {}))
-        self.scheduling_engine = SchedulingEngine(config.get('scheduling', {}))
+
+        # Initialize core components (use self.config, not config - config may be None)
+        self.oauth_coordinator = OAuthCoordinator(self.config.get('oauth', {}))
+        self.content_orchestrator = ContentOrchestrator(self.config.get('content', {}))
+        self.scheduling_engine = SchedulingEngine(self.config.get('scheduling', {}))
         
         # Initialize platform adapters
         self.adapters = {

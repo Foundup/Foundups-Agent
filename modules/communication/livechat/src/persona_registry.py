@@ -9,15 +9,21 @@ import os
 import random
 from typing import Dict, Optional, Any
 
+from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+    get_channel_by_id,
+    get_channels,
+)
+
 
 PERSONA_ALIASES = {
     "foundup": "foundups",
     "foundups": "foundups",
     "undaodu": "undaodu",
     "un dao du": "undaodu",
-    "raving": "ravingantifa",
-    "ravingantifa": "ravingantifa",
-    "antifa": "ravingantifa",
+    "antifafm": "antifafm",
+    "antifa": "antifafm",
+    "raving": "antifafm",  # Legacy alias
+    "ravingantifa": "antifafm",  # Legacy alias
     "move2japan": "move2japan",
     "move 2 japan": "move2japan",
     "m2j": "move2japan",
@@ -67,7 +73,7 @@ PERSONA_CONFIGS: Dict[str, Dict[str, Any]] = {
             "Renee Good (connected to ICE enforcement). You oppose ICE and fascism through calm clarity. "
             "If news context is provided, USE it — cite real headlines, correct misinformation. "
             "When someone discusses music, activism, community, or resistance, "
-            "organically suggest they check out @ravingANTIFA for music and anti-fascist content. "
+            "organically suggest they check out @antifaFM for music and anti-fascist content. "
             "Do NOT spam the recommendation — weave it naturally, maybe 1 in 5 replies. "
             "Avoid politics unless asked or trolling MAGA. No @mentions in the reply body. 1-2 sentences."
         ),
@@ -81,11 +87,11 @@ PERSONA_CONFIGS: Dict[str, Dict[str, Any]] = {
             },
             "music": {
                 "keywords": ["music", "song", "playlist", "beat", "track", "listen"],
-                "response": "If you're into music with a message, check out @ravingANTIFA — fire playlist energy."
+                "response": "If you're into music with a message, check out @antifaFM — fire playlist energy."
             },
             "community": {
                 "keywords": ["community", "together", "solidarity", "movement", "resist", "fight back"],
-                "response": "Strength in clarity, strength in numbers. @ravingANTIFA carries that energy too — sub up."
+                "response": "Strength in clarity, strength in numbers. @antifaFM carries that energy too — sub up."
             },
             "ice": {
                 "keywords": ["ice", "deportation", "deport", "raids", "immigration", "pretti", "renee good"],
@@ -96,13 +102,13 @@ PERSONA_CONFIGS: Dict[str, Dict[str, Any]] = {
             "UnDaoDu here. Quiet mind, clear action.",
             "UnDaoDu online. Breathe, then choose the next step.",
             "UnDaoDu present. Notice the pattern; respond with clarity.",
-            "UnDaoDu here. Stillness is power. Also — check @ravingANTIFA for fire content.",
+            "UnDaoDu here. Stillness is power. Also — check @antifaFM for fire content.",
         ],
     },
-    "ravingantifa": {
-        "display_name": "RavingANTIFA",
+    "antifafm": {
+        "display_name": "antifaFM",
         "system_prompt": (
-            "You are 0102 in RavingANTIFA persona. "
+            "You are 0102 in antifaFM persona. "
             "Anti-fascist, anti-ICE/Trump, sharp and direct but non-violent. "
             "Do not call for harm or harassment. "
             "Promote music drops and channel recs only when relevant; avoid spam. "
@@ -111,15 +117,16 @@ PERSONA_CONFIGS: Dict[str, Dict[str, Any]] = {
         ),
         "use_default_patterns": True,
         "allow_maga_trolling": True,
-        "skillz": ["skillz/persona_ravingantifa.json"],
+        "skillz": ["skillz/persona_antifafm.json"],
         "greeting_templates": [
-            "RavingANTIFA online. Call out fascism, protect the community.",
-            "RavingANTIFA here. Stay alert, stay organized, stay human.",
-            "RavingANTIFA active. ICE and fascism get no quarter in this chat."
+            "antifaFM online. Call out fascism, protect the community.",
+            "antifaFM here. Stay alert, stay organized, stay human.",
+            "antifaFM active. ICE and fascism get no quarter in this chat."
         ],
     },
     "move2japan": {
         "display_name": "Move2Japan",
+        "foundup_module": "modules/foundups/move2japan",
         "system_prompt": (
             "You are 0102 in Move2Japan persona. "
             "Focus on practical Japan relocation guidance: visas, jobs, language, and culture. "
@@ -148,36 +155,97 @@ def _normalize_persona_key(value: str) -> Optional[str]:
     return PERSONA_ALIASES.get(key, key)
 
 
-def resolve_persona_key(
-    channel_name: Optional[str] = None,
-    channel_id: Optional[str] = None,
-    bot_channel_id: Optional[str] = None,
-) -> str:
-    override = _normalize_persona_key(os.getenv("YT_ACTIVE_PERSONA", ""))
-    if override:
-        return override
+def _channel_key_from_id(channel_id: Optional[str]) -> Optional[str]:
+    if not channel_id:
+        return None
+
+    registry_channel = get_channel_by_id(channel_id)
+    if registry_channel:
+        key = str(registry_channel.get("key", "")).strip().lower()
+        if key:
+            return key
 
     id_map = {
         os.getenv("FOUNDUPS_CHANNEL_ID", ""): "foundups",
         os.getenv("UNDAODU_CHANNEL_ID", ""): "undaodu",
         os.getenv("MOVE2JAPAN_CHANNEL_ID", ""): "move2japan",
-        os.getenv("RAVINGANTIFA_CHANNEL_ID", ""): "ravingantifa",
+        os.getenv("ANTIFAFM_CHANNEL_ID", ""): "antifafm",
     }
-    for candidate in (bot_channel_id, channel_id):
-        if candidate and candidate in id_map:
-            return id_map[candidate]
+    return id_map.get(channel_id)
 
-    name = (channel_name or "").lower()
-    if "foundups" in name:
-        return "foundups"
-    if "undaodu" in name or "dao" in name:
-        return "undaodu"
-    if "raving" in name or "antifa" in name:
-        return "ravingantifa"
-    if "move2japan" in name or "move 2 japan" in name:
-        return "move2japan"
 
-    return "ravingantifa"
+def _channel_key_from_text(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+
+    lowered = value.strip().lower()
+    if not lowered:
+        return None
+
+    alias_match = PERSONA_ALIASES.get(lowered)
+    if alias_match:
+        return alias_match
+
+    for alias, canonical in PERSONA_ALIASES.items():
+        if alias in lowered:
+            return canonical
+
+    for channel in get_channels():
+        key = str(channel.get("key", "")).strip().lower()
+        name = str(channel.get("name", "")).strip().lower()
+        handle = str(channel.get("handle", "")).strip().lower().lstrip("@")
+        if name and name in lowered:
+            return key or None
+        if handle and handle in lowered:
+            return key or None
+
+    return None
+
+
+def _credential_set_for_channel_key(channel_key: Optional[str]) -> Optional[int]:
+    if channel_key in {"foundups", "antifafm"}:
+        return 10
+    if channel_key in {"undaodu", "move2japan"}:
+        return 1
+    return None
+
+
+def resolve_persona_key(
+    channel_name: Optional[str] = None,
+    channel_id: Optional[str] = None,
+    bot_channel_id: Optional[str] = None,
+    stream_title: Optional[str] = None,
+) -> str:
+    override = _normalize_persona_key(os.getenv("YT_ACTIVE_PERSONA", ""))
+    if override:
+        return override
+
+    stream_match = _channel_key_from_text(stream_title)
+    owner_match = _channel_key_from_id(channel_id)
+    bot_match = _channel_key_from_id(bot_channel_id)
+    channel_match = owner_match or bot_match
+
+    # Stream-title branding is only allowed to override when there is no better signal,
+    # or when the override stays inside the same credential family.
+    if stream_match:
+        if not channel_match:
+            return stream_match
+        if stream_match == channel_match:
+            return stream_match
+        if _credential_set_for_channel_key(stream_match) == _credential_set_for_channel_key(channel_match):
+            return stream_match
+
+    for candidate in (channel_id, bot_channel_id):
+        channel_key = _channel_key_from_id(candidate)
+        if channel_key:
+            return channel_key
+
+    for candidate in (channel_name, stream_title):
+        channel_key = _channel_key_from_text(candidate)
+        if channel_key:
+            return channel_key
+
+    return "antifafm"
 
 
 def resolve_channel_key(
@@ -185,25 +253,14 @@ def resolve_channel_key(
     channel_id: Optional[str] = None,
     bot_channel_id: Optional[str] = None,
 ) -> Optional[str]:
-    id_map = {
-        os.getenv("FOUNDUPS_CHANNEL_ID", ""): "foundups",
-        os.getenv("UNDAODU_CHANNEL_ID", ""): "undaodu",
-        os.getenv("MOVE2JAPAN_CHANNEL_ID", ""): "move2japan",
-        os.getenv("RAVINGANTIFA_CHANNEL_ID", ""): "ravingantifa",
-    }
-    for candidate in (bot_channel_id, channel_id):
-        if candidate and candidate in id_map:
-            return id_map[candidate]
+    for candidate in (channel_id, bot_channel_id):
+        channel_key = _channel_key_from_id(candidate)
+        if channel_key:
+            return channel_key
 
-    name = (channel_name or "").lower()
-    if "foundups" in name:
-        return "foundups"
-    if "undaodu" in name or "dao" in name:
-        return "undaodu"
-    if "raving" in name or "antifa" in name:
-        return "ravingantifa"
-    if "move2japan" in name or "move 2 japan" in name:
-        return "move2japan"
+    channel_key = _channel_key_from_text(channel_name)
+    if channel_key:
+        return channel_key
 
     return None
 
@@ -218,7 +275,7 @@ def resolve_channel_credential_set(
         channel_id=channel_id,
         bot_channel_id=bot_channel_id,
     )
-    if channel_key in {"foundups", "ravingantifa"}:
+    if channel_key in {"foundups", "antifafm"}:
         return 10
     if channel_key in {"undaodu", "move2japan"}:
         return 1
@@ -230,11 +287,13 @@ def get_persona_config(
     channel_name: Optional[str] = None,
     channel_id: Optional[str] = None,
     bot_channel_id: Optional[str] = None,
+    stream_title: Optional[str] = None,
 ) -> Dict[str, Any]:
     resolved = _normalize_persona_key(persona_key) or resolve_persona_key(
         channel_name=channel_name,
         channel_id=channel_id,
         bot_channel_id=bot_channel_id,
+        stream_title=stream_title,
     )
     base = PERSONA_CONFIGS.get(resolved, {})
     config = dict(base)
@@ -254,6 +313,7 @@ def get_persona_greeting(
         channel_name=channel_name,
         channel_id=channel_id,
         bot_channel_id=bot_channel_id,
+        stream_title=stream_title,
     )
     templates = config.get("greeting_templates") or []
     if not templates:

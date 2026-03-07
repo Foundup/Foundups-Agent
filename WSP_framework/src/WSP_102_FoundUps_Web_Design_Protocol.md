@@ -38,27 +38,9 @@ Combine related actions into single screens:
 - Disclaimer + Auth buttons on same modal
 - Clicking sign-in = implicit confirmation of terms
 
-## 3. Authentication Architecture
+## 3. Authentication Flow
 
-### 3.1 Dual-Layer Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Auth Layer: CLERK                                       │
-│  - OAuth providers (Google, LinkedIn, etc.)             │
-│  - Session management                                    │
-│  - User identity (clerk.user.id)                        │
-│  - Why: Firebase OAuth was unreliable                   │
-├─────────────────────────────────────────────────────────┤
-│  Data Layer: FIREBASE FIRESTORE                          │
-│  - User data (invites, UPS balance, etc.)               │
-│  - FoundUp data                                          │
-│  - Keyed by Clerk user ID                               │
-│  - Why: Already deployed, reliable data storage         │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 3.2 The Curtain Pattern
+### 3.1 The Curtain Pattern
 
 Legal disclaimer (the "curtain") must appear BEFORE authentication:
 
@@ -68,7 +50,7 @@ Landing → ENTER → Disclaimer Modal (with embedded auth) → Sign in → Memb
 
 **Grade: B** (2 clicks to member area)
 
-### 3.3 Embedded Auth Buttons
+### 3.2 Embedded Auth Buttons
 
 Auth buttons appear directly on disclaimer modal:
 - "I Confirm — Sign in with Google"
@@ -80,27 +62,7 @@ Clicking sign-in button implicitly confirms:
 - User is NOT company representative
 - User agrees to Terms of Access and NDA
 
-### 3.4 Auth Flow Implementation
-
-```javascript
-// Landing page: Clerk SDK loaded, disclaimer buttons trigger Clerk.openSignIn()
-disclaimerSignInGoogle.addEventListener('click', async () => {
-  await window.Clerk.openSignIn({
-    afterSignInUrl: '/member/',
-    afterSignUpUrl: '/member/'
-  });
-});
-
-// Member page: Check Clerk auth, load Firestore data
-const user = window.Clerk.user;
-if (user) {
-  await loadUserData(user.id, user);  // Firestore keyed by Clerk ID
-} else {
-  window.location.href = '/?signin=required';
-}
-```
-
-### 3.5 Mobile Touch Targets
+### 3.3 Mobile Touch Targets
 
 - Minimum button size: 44x44px (Apple HIG)
 - Minimum spacing: 8px between targets
@@ -182,78 +144,18 @@ Links must be visible, clickable, and open in new tab.
 - Content: 1 column mobile → 2 columns desktop
 - Full-width cards on mobile
 
-## 7. Gate Template Architecture
-
-All FoundUps use the same entry gate pattern. This is a **reusable template**.
-
-### 7.1 Template Components
-
-| Component | Purpose | Customizable |
-|-----------|---------|--------------|
-| Landing page | Hero, value prop, ENTER | Branding, copy |
-| Disclaimer modal | Legal curtain | Requirements, jurisdiction |
-| OAuth buttons | Auth via Clerk | Providers enabled |
-| Member dashboard | User area | Features, data displayed |
-| Legal pages | ToA, NDA | Entity, jurisdiction |
-
-### 7.2 Template Variables (config.json)
-
-```json
-{
-  "foundupId": "foundups-alpha",
-  "name": "FoundUPS",
-  "tagline": "Peer-to-Peer Autonomous Venture System",
-  "colors": {
-    "accent": "#7c5cfc",
-    "background": "#08080f"
-  },
-  "legal": {
-    "jurisdiction": "Fukui District Court, Japan",
-    "entity": "Foundups G.K."
-  },
-  "disclaimers": [
-    "Are NOT accredited investors (SEC definition)",
-    "Are NOT company representatives"
-  ],
-  "oauth": {
-    "clerk_publishable_key": "pk_test_...",
-    "providers": ["google", "linkedin"]
-  },
-  "features": ["invites", "wallet", "agents", "foundups"]
-}
-```
-
-### 7.3 Folder Structure
+## 7. Folder Structure
 
 ```
-foundups-gate-template/
-├── index.html              # Landing (uses config.json)
+public/
+├── index.html          # Landing page
 ├── member/
-│   ├── index.html          # Dashboard
-│   └── css/member.css      # Member styles
+│   └── index.html      # Member dashboard
 ├── legal/
 │   ├── terms-of-access.html
 │   └── alpha-nda.html
-├── css/
-│   └── styles.css          # Shared styles
-├── config.json             # FoundUp-specific config
-└── assets/
-    ├── logo.svg
-    └── favicon.ico
-```
-
-### 7.4 Deployment
-
-Each FoundUp deploys to:
-- Firebase Hosting (static files)
-- Uses shared Clerk application (or own Clerk instance)
-- Own Firestore project (data isolation)
-
-```bash
-# Deploy a new FoundUp
-cp -r foundups-gate-template/ my-foundup/
-# Edit config.json with FoundUp specifics
-firebase deploy --only hosting
+└── css/
+    └── styles.css      # Shared styles
 ```
 
 ## 8. Testing Checklist

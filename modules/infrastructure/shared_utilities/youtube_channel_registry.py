@@ -9,6 +9,7 @@ Purpose:
 WSP References:
 - WSP 3: Functional Distribution (shared utilities for cross-domain config)
 - WSP 60: Module Memory Architecture (registry stored in module memory)
+- WSP 84: Code Reuse (uses linkedin_account_registry for company ID resolution)
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from modules.infrastructure.shared_utilities.linkedin_account_registry import get_company_id
 
 
 _REGISTRY_PATH = Path(__file__).resolve().parent / "memory" / "youtube_channels.json"
@@ -49,7 +52,7 @@ def _default_channels() -> List[Dict[str, Any]]:
                 "account_section": 0,
             },
             "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
-            "social": {"linkedin_page_id": "104834798", "x_account": "geozai", "enabled": True},
+            "social": {"linkedin_company": "move2japan", "x_account": "geozai", "enabled": True},
         },
         {
             "key": "undaodu",
@@ -58,15 +61,15 @@ def _default_channels() -> List[Dict[str, Any]]:
             "handle": "@UnDaoDu",
             "timezone": "Asia/Tokyo",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
-            "content_types": ["short", "upload"],  # vlogs + shorts
+            "content_types": ["short", "upload"],  # vlogs + shorts (NOT FFCPLN)
             "browser": {
                 "comment_browser": "chrome",
                 "preferred_port": _CHROME_PORT,
                 "available_ports": [_CHROME_PORT, _EDGE_PORT],
                 "account_section": 0,
             },
-            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
-            "social": {"linkedin_page_id": "165749317", "x_account": "undaodu", "enabled": True},
+            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "undaodu"},
+            "social": {"linkedin_company": "undaodu", "x_account": "undaodu", "enabled": True},
         },
         {
             "key": "foundups",
@@ -75,21 +78,21 @@ def _default_channels() -> List[Dict[str, Any]]:
             "handle": "@FoundUps",
             "timezone": "America/New_York",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
-            "content_types": ["short"],  # music shorts only
+            "content_types": ["short"],  # startup/pAVS content (NOT FFCPLN)
             "browser": {
                 "comment_browser": "edge",
                 "preferred_port": _EDGE_PORT,
                 "available_ports": [_CHROME_PORT, _EDGE_PORT],
                 "account_section": 1,
             },
-            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
-            "social": {"linkedin_page_id": "1263645", "x_account": "foundups", "enabled": True},
+            "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "foundups"},
+            "social": {"linkedin_company": "foundups", "x_account": "foundups", "enabled": True},
         },
         {
-            "key": "ravingantifa",
-            "id": os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
-            "name": "RavingANTIFA",
-            "handle": "@ravingANTIFA",
+            "key": "antifafm",
+            "id": os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+            "name": "antifaFM",
+            "handle": "@antifaFM",
             "timezone": "America/New_York",
             "roles": {"live_check": True, "comments": True, "shorts": True, "indexing": True},
             "content_types": ["short"],  # music shorts only
@@ -100,7 +103,7 @@ def _default_channels() -> List[Dict[str, Any]]:
                 "account_section": 1,
             },
             "shorts": {"time_slots": _DEFAULT_TIME_SLOTS, "max_per_day": 8, "description_template": "ffcpln"},
-            "social": {"linkedin_page_id": "1263645", "x_account": "ravingantifa", "enabled": True},
+            "social": {"linkedin_company": "foundups", "x_account": "antifafm", "enabled": True},
         },
     ]
 
@@ -148,8 +151,14 @@ def _normalize_channel(channel: Dict[str, Any]) -> Dict[str, Any]:
     normalized["content_types"] = [str(ct).strip().lower() for ct in content_types if str(ct).strip()]
 
     social = normalized.get("social") or {}
+    # Resolve linkedin_company to linkedin_page_id via central registry
+    linkedin_company = str(social.get("linkedin_company", "")).strip()
+    linkedin_page_id = str(social.get("linkedin_page_id", "")).strip()
+    if linkedin_company and not linkedin_page_id:
+        linkedin_page_id = get_company_id(linkedin_company) or ""
     normalized["social"] = {
-        "linkedin_page_id": str(social.get("linkedin_page_id", "")),
+        "linkedin_company": linkedin_company,
+        "linkedin_page_id": linkedin_page_id,
         "x_account": str(social.get("x_account", "")),
         "enabled": bool(social.get("enabled", False)),
     }
@@ -253,7 +262,7 @@ def get_rotation_order(role: Optional[str] = None) -> List[str]:
     """
     Determine rotation order using env override if present.
 
-    Env format: "Move2Japan,UnDaoDu,FoundUps,RavingANTIFA"
+    Env format: "Move2Japan,UnDaoDu,FoundUps,antifaFM"
     Names are matched against channel name or key (case-insensitive).
     """
     channels = get_channels(role=role)

@@ -37,6 +37,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +106,11 @@ class GemmaSegmentClassifier:
         Initialize segment classifier.
 
         Args:
-            model_path: Path to Gemma GGUF model (default: E:/HoloIndex/models/)
+            model_path: Path to Gemma GGUF model (default: LOCAL_MODEL_TRIAGE_*)
             use_gemma: Enable Gemma validation (can be disabled for fast heuristic-only mode)
         """
         if model_path is None:
-            model_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+            model_path = resolve_triage_model_path()
 
         self.model_path = model_path
         self.use_gemma = use_gemma

@@ -121,6 +121,22 @@ LinkedIn actions execute **after** YouTube live chat replies and YouTube schedul
 2. YouTube scheduling verification
 3. LinkedIn Digital Twin L0–L3 flow
 
+### Layered Orchestration Contract (Updated)
+
+The LinkedIn layered flow now supports explicit orchestration inputs so 0102 can drive deterministic runs:
+
+- L1 inputs:
+  - `comment_text`
+  - `mentions` (comma-separated at CLI, first mention validated in dropdown)
+- L3 inputs:
+  - `repost_text`
+  - `schedule_date`
+  - `schedule_time`
+
+Failure behavior:
+- Full-chain execution triggers bounded WRE recursive diagnosis on L1/L3 failure.
+- Toggle: `LINKEDIN_WRE_DIAG_ENABLED=true|false` (default: `true`).
+
 ## [OK] Implementation Status
 
 ### **Current Capabilities (OPERATIONAL)**

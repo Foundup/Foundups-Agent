@@ -1,111 +1,118 @@
-# Database Module — Architecture
+# Database Module Architecture
 
-> System-specific implementation of [WSP 78: Database Architecture & Scaling Protocol](../../WSP_framework/src/WSP_78_Database_Architecture_Scaling_Protocol.md)
+System-specific implementation of `WSP_framework/src/WSP_78_Database_Architecture_Scaling_Protocol.md`.
 
-## Unified Database: `data/foundups.db`
+## Scope
+This architecture focuses on data boundaries that affect:
+- Simulator (`modules/foundups/simulator`)
+- CABR/PoB economics flow
+- FAM and DAE event observability
+- Blockchain settlement readiness
 
-Single SQLite file, three namespaces, managed by `DatabaseManager` singleton.
+## Current Runtime Topology (Observed 2026-02-21)
 
-### Current Table Registry
+### Core SQLite Stores
+| Path | Role | Notes |
+|---|---|---|
+| `data/foundups.db` | Primary operational store | Large multi-module DB; WAL enabled |
+| `modules/foundups/agent_market/memory/fam_audit.db` | FAM audit index | JSONL+SQLite dual-write |
+| `modules/infrastructure/dae_daemon/memory/dae_audit.db` | DAE audit index | JSONL+SQLite dual-write |
+| `modules/foundups/simulator/memory/*/fam_audit.db` | Per-run simulation audit artifacts | Disposable run evidence |
 
-#### Agent Tables (`agents_*`) — [agent_db.py](src/agent_db.py)
+### Important Observations
+- Simulator render state is event-derived and in-memory (`event_bus` -> `state_store`).
+- CABR routing and operational profit distribution are emitted as events, then rendered from event stream.
+- Epoch ledger in simulator is currently in-memory (blockchain-lite evidence, not settlement).
+- `data/foundups.db` contains mixed prefixed and unprefixed tables (shared infra tables exist).
 
-| Table                          | Purpose                                           |
-| ------------------------------ | ------------------------------------------------- |
-| `agents_awakening`             | Agent consciousness state tracking                |
-| `agents_memory`                | Learned patterns (type + JSON data)               |
-| `agents_errors`                | Error learning with solutions (WSP 48)            |
-| `agents_breadcrumbs`           | Multi-agent coordination trails (WSP 54)          |
-| `agents_contracts`             | Handoff task assignment between agents            |
-| `agents_collaboration_signals` | Agent availability and skills                     |
-| `agents_coordination_events`   | Inter-agent communication events                  |
-| `agents_autonomous_tasks`      | Discovered work items with priority               |
-| `agents_social_posts`          | Agent-generated social media posts for 012 review |
+## Data Layer Contract
 
-#### Module Documentation Registry
+### Layer A: Runtime/Derived
+- `modules/foundups/simulator/state_store.py`
+- Non-authoritative, replayable from events.
 
-| Table                        | Purpose                                  |
-| ---------------------------- | ---------------------------------------- |
-| `modules`                    | Registered modules (name, path, domain)  |
-| `module_documents`           | Documents per module (type, path, title) |
-| `document_relationships`     | Bidirectional doc links                  |
-| `module_wsp_implementations` | WSP protocols per module                 |
-| `document_cross_references`  | Cross-references in documents            |
+### Layer B: Operational Relational
+- Managed through `modules/infrastructure/database/src/db_manager.py`.
+- SQLite default locally, PostgreSQL optional for shared deployment.
 
-#### Infrastructure Tables
+### Layer C: Audit/Event
+- FAM event store and DAE event store:
+  - Append-only JSONL
+  - SQLite index for query, dedupe, and parity checks
 
-| Table                    | Purpose                                 |
-| ------------------------ | --------------------------------------- |
-| `index_refresh_tracking` | HoloIndex refresh timestamps and counts |
-| `selenium_sessions`      | Browser telemetry via `TelemetryStore`  |
+### Layer D: Settlement
+- Off-chain in current implementation.
+- Target: on-chain anchoring for epoch commitments, payout commitments, and treasury settlement.
 
----
+## SIM/CABR-Specific Boundary
 
-## Satellite DBs (Outside Unified Store)
+1. CABR flow math
+- Occurs in simulator economics modules.
+- Must emit auditable events for every routed amount.
 
-These databases exist outside `foundups.db`. Each has a rationale, but consolidation is a future goal per WSP 78.
+2. Proxy beneficiary semantics
+- Agent work is execution.
+- 012 proxy receives UPS distributions (beneficial owner lane).
+- This distinction belongs in event payloads and accounting, not UI-only state.
 
-| File                                                              | Owner                        | Rationale                                   |
-| ----------------------------------------------------------------- | ---------------------------- | ------------------------------------------- |
-| `social_media_orchestrator/memory/orchestrator_posted_streams.db` | `DuplicatePreventionManager` | YouTube video dedup — high-frequency writes |
-| `foundups_vision/data/training/*.db`                              | `VisionTrainingCollector`    | Large binary blobs (screenshots)            |
-| `holo_index/violations.db`                                        | HoloIndex                    | File violation tracking                     |
-| Various `chroma.sqlite3`                                          | ChromaDB                     | Vector embeddings — managed by library      |
-| `modules/foundups/simulator/memory/*/fam_audit.db`                | FAM Simulator                | Per-run audit logs                          |
-| `modules/gamification/*/data/*.db`                                | Gamification                 | Game scores and quiz data                   |
+3. Treasury accounting
+- Operational state tracks balances and flow counters.
+- Final settlement is a separate concern and must be anchorable.
 
-### Migration Path
+## Satellite Stores Policy
 
-- **Phase 1 (Now)**: New features write to `data/foundups.db`
-- **Phase 2**: Migrate `DuplicatePreventionManager` to unified DB
-- **Phase 3**: Leave ChromaDB and binary-heavy stores as satellite (by design)
+Allowed when justified:
+- Library-owned vector stores (for example Chroma internals)
+- Binary-heavy or disposable simulation artifacts
+- Isolated subsystem scratch stores with clear ownership
 
----
+Every satellite DB must define:
+- Owner
+- Retention window
+- Why not in `data/foundups.db`
+- Migration/permanence decision
 
-## File Structure
+Current simulator policy reference:
+- `modules/foundups/simulator/docs/SATELLITE_STORES.md`
 
-```
-modules/infrastructure/database/
-├── ARCHITECTURE.md              ← you are here
-├── src/
-│   ├── db_manager.py            # Core singleton (WSP 78)
-│   ├── module_db.py             # Module base class with auto-prefixing
-│   ├── agent_db.py              # Agent memory + social post capture
-│   ├── quantum_agent_db.py      # Quantum encoding extensions
-│   ├── quantum_schema.sql       # Quantum table schemas
-│   ├── quantum_encoding.py      # Quantum data encoding
-│   ├── database.py              # Legacy compatibility
-│   ├── dae_orchestration_hub.py # DAE coordination
-│   ├── dae_orchestration_integration.py
-│   ├── chromadb_corruption_prevention.py
-│   └── chromadb_scaling_analysis.py
-├── data/
-│   └── foundups.db              # Single unified database
-└── tests/
-    └── test_corruption_prevention.py
-```
+## Known Architecture Gaps
 
----
+1. SQLite sprawl
+- Many SQLite files exist across the repo, including browser profile artifacts and per-run simulator DBs.
+- Not all are part of canonical operational accounting.
 
-## Post Capture Review Workflow
+2. Documentation drift
+- Legacy docs described a strict "single SQLite file" model while runtime already includes dual-write audit stores and backend abstraction.
 
-```
-draft → pending_review → approved → posted
-                       ↘ rejected
-```
+3. Settlement boundary not yet implemented
+- Epoch proofs exist off-chain; no production-grade anchor publisher pipeline is enforced yet.
 
-```python
-from modules.infrastructure.database.src.agent_db import AgentDB
-db = AgentDB()
+## Immediate Enforcement Rules
 
-# Agent records a post
-post_id = db.record_post('linkedin', 'comment', 'Your VC model is dead...',
-                         identity='UnDaoDu', tone='pushback')
-# 012 reviews
-posts = db.get_posts_for_review()
-db.approve_post(post_id, notes='good pushback')
-# Agent publishes
-db.mark_posted(post_id)
-```
+1. Operational writes
+- Use `DatabaseManager` or a documented persistence adapter boundary.
 
-_Last Updated: 2026-02-19_
+2. Event observability writes
+- Use append-only event stores with dedupe and sequence guarantees.
+
+3. SQLite safety
+- Enforce per-connection pragmas (`foreign_keys`, `busy_timeout`).
+- Keep WAL for long-lived writable stores.
+
+4. Claims discipline
+- Sustainability, payout, and treasury claims must reference event/audit artifacts or settlement anchors, not derived UI state.
+
+## Recommended Next Phase
+
+1. Introduce a settlement-anchor service boundary
+- Consume epoch/event commitments
+- Publish anchors on target chain
+- Persist tx refs back into operational/audit stores
+
+2. Move shared deployments to PostgreSQL
+- Keep SQLite for local deterministic runs
+- Keep interface contracts unchanged
+
+3. Add CI checks
+- SQLite audit report generation
+- Drift checks for undocumented new DB files

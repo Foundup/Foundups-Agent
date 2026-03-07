@@ -27,7 +27,17 @@ import sys
 import time
 import traceback
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
 
+
+@preflight_guard("git_push_dae")
 def launch_git_push_dae(run_once: bool = False):
     """
     Launch GitPushDAE daemon with WSP 91 full observability.

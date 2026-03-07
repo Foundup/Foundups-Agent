@@ -156,10 +156,7 @@ class WRESkillsLoader:
         if not skill_info:
             raise ValueError(f"Skill not found in registry: {skill_name}")
 
-        # Load SKILLz.md (preferred) or SKILL.md (legacy fallback)
-        skill_path = self.repo_root / skill_info["location"] / "SKILLz.md"
-        if not skill_path.exists():
-            skill_path = self.repo_root / skill_info["location"] / "SKILL.md"
+        skill_path = self.resolve_skill_file(skill_name)
         if not skill_path.exists():
             raise FileNotFoundError(f"Skill file not found: {skill_path}")
 
@@ -178,6 +175,29 @@ class WRESkillsLoader:
         self.skill_cache[cache_key] = filtered_content
         logger.info(f"[WRE-LOADER] Loaded skill: {skill_name} for {agent_type} ({len(filtered_content)} chars)")
         return filtered_content
+
+    def resolve_skill_file(self, skill_name: str) -> Path:
+        """
+        Resolve canonical skill file path (SKILLz.md preferred, SKILL.md fallback).
+
+        Raises:
+            ValueError: if skill is absent from registry
+            FileNotFoundError: if neither SKILLz.md nor SKILL.md exists
+        """
+        skill_info = self.registry["skills"].get(skill_name)
+        if not skill_info:
+            raise ValueError(f"Skill not found in registry: {skill_name}")
+
+        base_dir = self.repo_root / skill_info["location"]
+        preferred = base_dir / "SKILLz.md"
+        legacy = base_dir / "SKILL.md"
+        if preferred.exists():
+            return preferred
+        if legacy.exists():
+            return legacy
+        raise FileNotFoundError(
+            f"Skill file not found for {skill_name}: {preferred} or {legacy}"
+        )
 
     def inject_skill_into_prompt(
         self,

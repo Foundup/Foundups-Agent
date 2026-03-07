@@ -15,6 +15,11 @@ from typing import Dict, Optional, Tuple, Any
 from enum import Enum
 from dataclasses import dataclass
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 
 class PostingStatus(Enum):
     """Posting status codes"""
@@ -85,11 +90,11 @@ class PlatformPostingService:
         start_time = time.time()
 
         try:
-            # Channel-to-LinkedIn page validation
+            # Channel-to-LinkedIn page validation (using central registry)
             page_mapping = {
-                "104834798": "GeoZai (Move2Japan)",  # Corrected GeoZai page ID
-                "165749317": "UnDaoDu",
-                "1263645": "FoundUps"
+                get_company_id("move2japan"): "GeoZai (Move2Japan)",
+                get_company_id("undaodu"): "UnDaoDu",
+                get_company_id("foundups"): "FoundUps",
             }
 
             # Verify we're posting to a valid page
@@ -108,12 +113,15 @@ class PlatformPostingService:
             self.logger.info(f"[OK] Verified LinkedIn page: {page_name} (ID: {linkedin_page})")
 
             # Double-check channel mapping from title
-            if "Move2Japan" in title and linkedin_page != "104834798":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: Move2Japan stream should post to GeoZai (104834798), but got {linkedin_page}")
-            elif "UnDaoDu" in title and linkedin_page != "165749317":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: UnDaoDu stream should post to UnDaoDu (165749317), but got {linkedin_page}")
-            elif "FoundUps" in title and linkedin_page != "1263645":
-                self.logger.warning(f"[U+26A0]️ MISMATCH: FoundUps stream should post to FoundUps (1263645), but got {linkedin_page}")
+            move2japan_id = get_company_id("move2japan")
+            undaodu_id = get_company_id("undaodu")
+            foundups_id = get_company_id("foundups")
+            if "Move2Japan" in title and linkedin_page != move2japan_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: Move2Japan stream should post to GeoZai ({move2japan_id}), but got {linkedin_page}")
+            elif "UnDaoDu" in title and linkedin_page != undaodu_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: UnDaoDu stream should post to UnDaoDu ({undaodu_id}), but got {linkedin_page}")
+            elif "FoundUps" in title and linkedin_page != foundups_id:
+                self.logger.warning(f"[U+26A0]️ MISMATCH: FoundUps stream should post to FoundUps ({foundups_id}), but got {linkedin_page}")
 
             # Apply posting delay to slow down requests
             current_time = time.time()
@@ -141,8 +149,8 @@ class PlatformPostingService:
                     duration=time.time() - start_time
                 )
 
-            # Prepare post content
-            post_content = self._format_linkedin_post(title, url)
+            # Prepare post content (pass linkedin_page for channel-specific templates)
+            post_content = self._format_linkedin_post(title, url, linkedin_page)
 
             # Run anti-detection poster
             self.logger.info(f"[ROCKET] Launching anti-detection poster for {page_name} (browser: {self.browser_config['linkedin']})")
@@ -358,18 +366,53 @@ class PlatformPostingService:
         else:
             return self.browser_config['x_geozei']
 
-    def _format_linkedin_post(self, title: str, url: str) -> str:
+    def _format_linkedin_post(self, title: str, url: str, linkedin_page: str = None) -> str:
         """
         Format content for LinkedIn post
 
         Args:
             title: Stream title
             url: Stream URL
+            linkedin_page: LinkedIn page ID (for channel-specific formatting)
 
         Returns:
             Formatted post content
         """
-        # LinkedIn allows up to 3000 characters
+        # Check if this is an antifaFM post (GeoZai page + antifaFM content)
+        is_antifafm = (
+            'antifafm' in title.lower() or
+            'antifa' in title.lower() or
+            'ffcpln' in title.lower() or
+            linkedin_page == get_company_id("move2japan")  # GeoZai page handles antifaFM
+        )
+
+        if is_antifafm:
+            # Use antifaFM skill templates
+            try:
+                from modules.platform_integration.social_media_orchestrator.skillz.antifafm_linkedin_post.executor import generate_post
+                # Extract video_id from URL
+                video_id = url.split("v=")[-1].split("&")[0] if "v=" in url else "live"
+                result = generate_post(video_id, title)
+                content = result.get("post_content", "")
+                if content:
+                    self.logger.info(f"[FFCPLN] Using antifaFM template: {result.get('template_used')}")
+                    return content
+            except Exception as e:
+                self.logger.warning(f"[FFCPLN] Skill failed, using fallback: {e}")
+
+            # Fallback antifaFM template
+            content = f"""🔴 LIVE NOW: antifaFM - 24/7 Music for Fighting Fascism
+
+The resistance has a soundtrack. 160+ songs for democracy.
+
+🎵 Tune in: {url}
+
+#FFCPLN #Democracy2026 #Resistance #AntiFascist #Music
+
+👆 2026 is the year. Join us."""
+            return content
+
+        # Default LinkedIn template
         content = f"🔴 LIVE NOW: {title}\n\n"
         content += f"Join the conversation: {url}\n\n"
         content += "#LiveStream #Tech #Coding #AI #Innovation"

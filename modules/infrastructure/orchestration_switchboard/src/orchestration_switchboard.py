@@ -454,7 +454,7 @@ class OrchestrationSwitchboard:
 
         # Determine browser based on channel
         # Chrome (9222): move2japan, undaodu
-        # Edge (9223): foundups, ravingantifa
+        # Edge (9223): foundups, antifafm
         if channel_key.lower() in ["move2japan", "undaodu"]:
             browser = "chrome"
             port = 9222

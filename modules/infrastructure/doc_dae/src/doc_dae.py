@@ -34,6 +34,10 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
+from modules.infrastructure.shared_utilities.local_model_selection import (
+    resolve_code_model_path,
+    resolve_triage_model_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +76,9 @@ class DocDAE:
         """Initialize Qwen/Gemma agents for WSP 77 coordination."""
         try:
             from holo_index.qwen_advisor.gemma_rag_inference import GemmaRAGInference
-            from pathlib import Path
 
-            gemma_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
-            qwen_path = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+            gemma_path = resolve_triage_model_path()
+            qwen_path = resolve_code_model_path()
 
             if gemma_path.exists() and qwen_path.exists():
                 self.gemma_engine = GemmaRAGInference(

@@ -20,6 +20,11 @@ from pathlib import Path
 # Add parent path for imports
 sys.path.insert(0, 'O:/Foundups-Agent')
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 # Import existing anti-detection posters for multi-account management
 from modules.platform_integration.x_twitter.src.x_anti_detection_poster import AntiDetectionX
 # LinkedIn poster imported dynamically in _create_poster to avoid conflicts
@@ -51,17 +56,17 @@ class AccountCredentialManager:
     
     def _load_from_env(self):
         """Load credentials from environment variables"""
-        # LinkedIn accounts
+        # LinkedIn accounts (using central registry for company IDs)
         self.credentials['LINKEDIN_FOUNDUPS'] = {
             'email': os.getenv('LINKEDIN_EMAIL', 'mtrout@foundups.com'),
             'password': os.getenv('LINKEDIN_PASSWORD'),
-            'company_id': '104834798'
+            'company_id': get_company_id("move2japan"),  # GeoZai/Move2Japan page
         }
-        
+
         self.credentials['LINKEDIN_DEV'] = {
             'email': os.getenv('LINKEDIN_DEV_EMAIL', os.getenv('LINKEDIN_EMAIL', 'mtrout@foundups.com')),
             'password': os.getenv('LINKEDIN_DEV_PASS', os.getenv('LINKEDIN_PASSWORD')),
-            'company_id': '1263645'
+            'company_id': get_company_id("foundups"),
         }
         
         # X/Twitter accounts
@@ -115,7 +120,7 @@ class MultiAccountManager:
             'accounts': {
                 'linkedin': {
                     'foundups_company': {
-                        'id': '104834798',
+                        'id': get_company_id("move2japan"),  # GeoZai/Move2Japan page
                         'type': 'company',
                         'name': 'FoundUps',
                         'credentials_key': 'LINKEDIN_FOUNDUPS'

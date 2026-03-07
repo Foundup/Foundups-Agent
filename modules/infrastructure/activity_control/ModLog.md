@@ -11,6 +11,45 @@ This log tracks changes to the **activity_control** module in the **infrastructu
 
 ## MODLOG ENTRIES
 
+### 2026-02-21: "All Comments First" Model (V2.0.0)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 77 (Agent Coordination), WSP 80 (DAE Pattern)
+
+**Change:** Replaced per-channel Occam's Razor model with "All Comments First" model.
+
+**Problem:**
+- Per-channel model: FoundUps Comments→Shorts→Indexing → Next channel
+- User needed: ALL comments done across ALL channels BEFORE shorts scheduling
+- OODA loop didn't pivot when comments were cleared
+
+**Solution:**
+Rewrote `get_next_activity()` to implement "All Comments First" flow:
+
+**New Flow:**
+```
+Phase 1: ALL COMMENTS (FoundUps → RavingANTIFA → UnDaoDu → Move2Japan)
+         ↓ all channels past COMMENTS phase
+Phase 2: ALL SHORTS (scheduling across all channels)
+         ↓ all channels past SHORTS phase
+Phase 3: ALL INDEXING (if enabled)
+         ↓ all channels COMPLETE
+Phase 4: IDLE → Loop back to Phase 1
+```
+
+**Key Changes:**
+- `_all_channels_past_phase()`: Check if ALL channels have advanced past a phase
+- `_find_next_channel_in_phase()`: Find next channel needing a specific phase
+- `get_next_activity()`: Phases-first routing (all comments → all shorts → all indexing)
+- Channel order updated: FoundUps, RavingANTIFA (Edge) → UnDaoDu, Move2Japan (Chrome)
+
+**Integration:**
+- auto_moderator_dae.py OODA loop now detects Chrome page state
+- Signals `signal_comments_complete()` when `edge_comments_cleared`
+- Router advances all channels through phases correctly
+
+---
+
 ### 2026-01-23: Activity Router Implementation (V1.0.0)
 
 **By:** 0102

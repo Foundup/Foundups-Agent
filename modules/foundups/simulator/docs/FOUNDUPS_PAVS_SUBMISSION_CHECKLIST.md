@@ -16,6 +16,8 @@ Date baseline: 2026-02-22.
 - [x] Units are explicit for all equations and key variables.
 - [x] Invariants (I1-I7) are consistent across Sections 3 and 7.
 - [x] Sustainability metric language is consistent (`downside_ratio_p10 >= 1.0` as condition, not proof).
+- [x] Return on Compute (RoC) is explicitly defined (`rho_compute = compute_margin_usd / compute_spend_usd`).
+- [x] RoC interpretation boundaries are explicit (`>0` productive lane, `<0` treasury drag).
 - [x] Demurrage semantics match code constants (monthly adaptive band, not per-tick claims).
 - [x] Fee schedules and splits match current code paths.
 
@@ -32,6 +34,7 @@ Date baseline: 2026-02-22.
 - [x] Reproduction commands run in current environment (or limitations disclosed).
 - [x] Determinism test references are accurate.
 - [x] Artifact paths in appendix exist.
+- [x] Unified sustainability output includes RoC fields (`return_on_compute_ratio`, `value_per_compute_dollar`).
 
 Recommended commands:
 ```powershell
@@ -43,6 +46,12 @@ Test-Path modules/foundups/simulator/memory/validation_runs_2026_02_18_postfix/s
 # Determinism test
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
 python -m pytest modules/foundups/simulator/tests/test_scenario_runner_determinism.py -q
+
+# Unified sustainability (RoC output)
+python -m modules.foundups.simulator.economics.unified_sustainability
+
+# Unified sustainability test suite
+python -m pytest modules/foundups/simulator/tests/test_unified_sustainability.py -q
 ```
 
 ## E. Risk and Disclosure
@@ -78,6 +87,10 @@ python -m pytest modules/foundups/simulator/tests/test_scenario_runner_determini
 ### Commands Executed
 - `python -m pytest modules/foundups/simulator/tests/test_scenario_runner_determinism.py -q`  
   Result: `1 passed` (with two non-blocking pytest config warnings).
+- `python -m modules.foundups.simulator.economics.unified_sustainability`  
+  Result: emits RoC fields (`RoC=0.6000`, `Value per $1 compute=1.60x`) and `total_tasks=500,000`.
+- `python -m pytest modules/foundups/simulator/tests/test_unified_sustainability.py -q`  
+  Result: `9 passed` (with two non-blocking pytest config warnings).
 - Artifact existence checks:
   - `modules/foundups/simulator/memory/validation_runs_2026_02_18_postfix/baseline_800_metrics.json`
   - `modules/foundups/simulator/memory/validation_runs_2026_02_18_postfix/high_adoption_800_metrics.json`

@@ -2,6 +2,40 @@
 
 **WSP Compliance**: WSP 11 (Interface Protocol), WSP 49 (Module Structure)
 
+## CLI Interface (Agent-Callable)
+
+```bash
+# Index all videos for a channel
+python -m modules.ai_intelligence.video_indexer.cli --channel undaodu
+
+# Index specific video
+python -m modules.ai_intelligence.video_indexer.cli --channel move2japan --video-id abc123
+
+# Check indexing status
+python -m modules.ai_intelligence.video_indexer.cli --status
+
+# List indexed videos for channel
+python -m modules.ai_intelligence.video_indexer.cli --channel undaodu --list
+
+# Force reindex (ignore existing)
+python -m modules.ai_intelligence.video_indexer.cli --channel move2japan --reindex
+```
+
+### CLI Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--channel`, `-c` | str | required | Channel: move2japan, undaodu, foundups, ravingantifa |
+| `--video-id`, `-v` | str | - | Specific video ID to index |
+| `--batch-size`, `-b` | int | 10 | Videos per batch |
+| `--status`, `-s` | flag | - | Show indexing status |
+| `--list`, `-l` | flag | - | List indexed videos |
+| `--reindex` | flag | - | Force reindex existing |
+| `--skip-holoindex` | flag | - | Skip ChromaDB (JSON only) |
+| `--verbose` | flag | - | Verbose logging |
+
+---
+
 ## Public API
 
 ### VideoIndexer (Main Orchestrator)

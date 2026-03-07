@@ -7,6 +7,10 @@ The WRE Core is the central module building engine for 0102 autonomous operation
 
 **NEW**: Universal PatternMemory for collective false-positive learning integrated with AI Overseer, HoloDAE, and WSP automation. See [PATTERN_MEMORY_ARCHITECTURE.md](PATTERN_MEMORY_ARCHITECTURE.md) for complete architecture and integration guide.
 
+PatternMemory now also receives standalone Claw action outcomes from
+`modules.communication.moltbot_bridge.src.action_cli` (skill naming:
+`action_cli_<route>_<action>`), so direct agent commands are recallable in WRE.
+
 ## 2026-02-19 Alignment Update
 
 This module now enforces the following runtime behavior:

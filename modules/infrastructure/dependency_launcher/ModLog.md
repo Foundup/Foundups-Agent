@@ -7,6 +7,42 @@
 
 ## Change Log
 
+### 2026-02-22: Browser Connection Retry Helpers (Timing Race Fix)
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 27 (DAE Architecture), WSP 50 (Pre-Action Verification)
+
+**Problem:** Browser connections were failing due to timing race conditions. The system would:
+1. Detect DevTools port open
+2. Attempt Selenium connection
+3. Fail because browser wasn't fully ready yet
+
+The `is_devtools_responding()` HTTP check wasn't sufficient - the browser could respond to HTTP but not be ready for WebDriver.
+
+**Solution:** Added robust connection helpers with retry logic:
+
+1. **`connect_chrome_with_retry()`**:
+   - Verifies DevTools responding before connection attempt
+   - Retries up to 3 times with 2s delay
+   - Auto-relaunches Chrome on persistent failure
+   - Verifies connection is alive after connecting
+
+2. **`connect_edge_with_retry()`**:
+   - Same pattern for Edge browser
+
+**Files Updated:**
+- `src/dae_dependencies.py`: Added `connect_chrome_with_retry()` and `connect_edge_with_retry()` helpers
+- `modules/communication/livechat/src/multi_channel_coordinator.py`: Uses new helpers for Chrome/Edge
+- `modules/ai_intelligence/video_indexer/src/studio_ask_indexer.py`: Uses new helpers
+- `modules/platform_integration/youtube_shorts_scheduler/src/scheduler.py`: Uses new helpers
+
+**Impact:**
+- Eliminates "session not created: cannot connect to chrome" timing errors
+- Auto-recovery from browser crashes during connection
+- Consistent behavior across all browser-using modules
+
+---
+
 ### 2026-01-23: Session Restore Prevention (Multi-Tab Fix)
 
 **By:** 0102

@@ -12,6 +12,7 @@
 - Implement full pattern library
 - Add WSP validation layer
 - Create comprehensive tests
+- Establish IronClaw worker route for simulation and digital-twin execution
 
 ### Tasks
 - [ ] Convert social_media_orchestrator -> plugin
@@ -19,6 +20,7 @@
 - [ ] Convert 0102_orchestrator -> plugin
 - [ ] Build pattern library from existing code
 - [ ] Add test coverage (>90% per WSP 5)
+- [x] Scaffold `ironclaw_worker` plugin + optional registration toggle
 
 ## Phase 2: MVP (2.2.2) - Following Sprint
 ### Goals

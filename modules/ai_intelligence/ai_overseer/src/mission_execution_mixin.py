@@ -308,7 +308,7 @@ class MissionExecutionMixin:
                     "method": "qwen_llm_planning",
                     "result": parsed,
                     "agent": AgentRole.PARTNER.value,
-                    "model_used": "qwen-coder-1.5b",
+                    "model_used": "qwen-coder-7b",
                 }
                 if mcp_support and mcp_support.get("success") and abs_path:
                     result["mcp_support"] = {

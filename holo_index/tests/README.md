@@ -22,4 +22,4 @@
 
 ## Integration Requirements
 - Some integration tests require local model assets and may be skipped by default.
-- When running integration tests, ensure the model cache is available on `E:/HoloIndex/models`.
+- When running integration tests, ensure `LOCAL_MODEL_ROOT` (or role-specific `LOCAL_MODEL_*`) points to valid GGUF files.

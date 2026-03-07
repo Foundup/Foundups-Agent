@@ -77,7 +77,7 @@ class TarsAccountSwapper:
         m2j_id = os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw")
         undaodu_id = os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA")
         foundups_id = os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw")
-        raving_id = os.getenv("RAVINGANTIFA_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
+        antifafm_id = os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA")
         return {
             "Move2Japan": {
                 "id": m2j_id,
@@ -94,10 +94,10 @@ class TarsAccountSwapper:
                 "url": f"https://studio.youtube.com/channel/{foundups_id}/comments/inbox",
                 "match_terms": ["foundups", "@foundups", "found ups"],
             },
-            "RavingANTIFA": {
-                "id": raving_id,
-                "url": f"https://studio.youtube.com/channel/{raving_id}/comments/inbox",
-                "match_terms": ["ravingantifa", "@ravingantifa", "raving antifa"],
+            "antifaFM": {
+                "id": antifafm_id,
+                "url": f"https://studio.youtube.com/channel/{antifafm_id}/comments/inbox",
+                "match_terms": ["antifafm", "@antifafm", "antifa fm"],
             },
         }
 
@@ -195,6 +195,40 @@ class TarsAccountSwapper:
             return match.group(1) if match else None
         except Exception:
             return None
+
+    async def _detect_current_channel_name(self) -> Optional[str]:
+        """
+        Detect which channel we're currently on by checking URL/page state.
+
+        Returns channel name (e.g., "FoundUps", "antifaFM") or None.
+        Used after "Return to Studio" to know which account is active.
+
+        2026-02-27: Added for smart OOPS recovery - detect before swap.
+        """
+        channel_id = await self._detect_current_channel_id()
+        if not channel_id:
+            # Fallback: Try URL pattern without async
+            try:
+                url = self.driver.current_url or ""
+                # Match both /channel/ID and /channel/ID/anything
+                match = re.search(r"studio\.youtube\.com/channel/([^/?#]+)", url)
+                if match:
+                    channel_id = match.group(1)
+            except Exception:
+                pass
+
+        if not channel_id:
+            logger.debug("[TARS-SWAP] Could not detect current channel ID")
+            return None
+
+        # Map ID back to channel name
+        for name, config in self.CHANNELS.items():
+            if config.get("id") == channel_id:
+                logger.info(f"[TARS-SWAP] Detected current channel: {name} ({channel_id})")
+                return name
+
+        logger.warning(f"[TARS-SWAP] Unknown channel ID: {channel_id}")
+        return None
 
     def _is_permission_error(self) -> bool:
         """Detect Studio permission error page."""
@@ -362,7 +396,7 @@ class TarsAccountSwapper:
         5. Direct URL navigation to target (last resort)
 
         Args:
-            target: Target channel name ('Move2Japan', 'UnDaoDu', 'FoundUps', 'RavingANTIFA')
+            target: Target channel name ('Move2Japan', 'UnDaoDu', 'FoundUps', 'antifaFM')
             navigate_to_comments: Whether to navigate to comments after switch
 
         Returns:
@@ -428,6 +462,7 @@ class TarsAccountSwapper:
                 logger.warning(f"[TARS-SWAP] Failed to select {target} from picker after Switch Account")
 
         # === CASCADE 2: Try "Return to Studio" (DOM then UI-TARS) ===
+        # 2026-02-27: IMPROVED - Detect which account we land on, THEN decide if swap needed
         logger.info("[TARS-SWAP] Step 3: Trying 'Return to Studio' button...")
 
         return_clicked = self._click_return_to_studio()
@@ -439,19 +474,48 @@ class TarsAccountSwapper:
 
         if return_clicked:
             await self.sleep_human(3.0, 0.5)
-            logger.info(f"[TARS-SWAP] Returned to Studio - now navigating to {target}...")
 
-            # After returning to Studio, navigate directly to target channel
-            if navigate_to_comments:
-                await self.navigate_to_comments(target)
-                await asyncio.sleep(3)
+            # DETECT which account we landed on
+            current_channel = await self._detect_current_channel_name()
+            logger.info(f"[TARS-SWAP] Returned to Studio - detected current account: {current_channel}")
 
-            if await self._ensure_target_access(target):
-                logger.info(f"[TARS-SWAP] 🚀 Return to Studio + navigate to {target} successful!")
-                _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="return_to_studio")
-                return True
+            if current_channel == target:
+                # Already on target account - just navigate to comments
+                logger.info(f"[TARS-SWAP] Already on {target} - navigating directly to comments...")
+                if navigate_to_comments:
+                    await self.navigate_to_comments(target)
+                    await asyncio.sleep(3)
 
-            logger.warning(f"[TARS-SWAP] Return to Studio succeeded but {target} still inaccessible")
+                if await self._ensure_target_access(target):
+                    logger.info(f"[TARS-SWAP] 🚀 Return to Studio + direct navigate to {target} successful!")
+                    _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="return_to_studio_direct")
+                    return True
+            else:
+                # On different account - need to swap first
+                logger.info(f"[TARS-SWAP] On {current_channel}, need {target} - initiating account swap...")
+
+                # Click avatar to open account picker
+                if await self.click_avatar():
+                    await self.sleep_human(1.5, 0.3)
+                    if await self.click_switch_account():
+                        await self.sleep_human(2.0, 0.5)
+
+                        # Select target account
+                        match_terms = (self.CHANNELS.get(target, {}) or {}).get("match_terms") or []
+                        if await self.select_account(target, match_terms=match_terms):
+                            await self.sleep_human(3.0, 0.5)
+
+                            # Now navigate to target comments
+                            if navigate_to_comments:
+                                await self.navigate_to_comments(target)
+                                await asyncio.sleep(3)
+
+                            if await self._ensure_target_access(target):
+                                logger.info(f"[TARS-SWAP] 🚀 Return to Studio + smart swap to {target} successful!")
+                                _emit_oops_signal("oops_page_recovered", channel_name=target, recovery_method="return_to_studio_swap")
+                                return True
+
+            logger.warning(f"[TARS-SWAP] Return to Studio cascade did not reach {target}")
 
         # === CASCADE 3: Direct URL navigation (last resort) ===
         logger.info(f"[TARS-SWAP] Step 4: LAST RESORT - Direct URL navigation to {target}...")
@@ -550,18 +614,20 @@ class TarsAccountSwapper:
 
     # 2026-01-29: FLUID DUAL-BROWSER ARCHITECTURE
     # Both Google accounts logged into BOTH browsers - picker structure identical on Chrome & Edge
-    # Section 0 (Google Account A): UnDaoDu (index 0), Move2Japan (index 1)
-    # Section 1 (Google Account B): FoundUps (index 0), RavingANTIFA (index 1)
-    # This means: Chrome (9222) can access ALL 4, Edge (9223) can access ALL 4
+    # Account picker mapping - TEXT MATCH IS PRIMARY (indices change based on active account)
+    # 2026-02-27: DOM order depends on which Google account is logged in
+    # - When UnDaoDu logged in: Section 0 = UnDaoDu[0], Move2Japan[1]; Section 1 = FoundUps[0], antifaFM[1]
+    # - When FoundUps logged in: Section 0 = FoundUps[0], antifaFM[1]; Section 1 = UnDaoDu[0], Move2Japan[1]
+    # SOLUTION: Use TEXT MATCHING primarily, indices as hint only
     ACCOUNT_PICKER_MAP = {
-        "UnDaoDu": {"section": 0, "index": 0, "text_match": "undaodu"},
-        "Move2Japan": {"section": 0, "index": 1, "text_match": "move2japan"},
-        "FoundUps": {"section": 1, "index": 0, "text_match": "foundups"},
-        "RavingANTIFA": {"section": 1, "index": 1, "text_match": "ravingantifa"},
+        "UnDaoDu": {"section": None, "index": None, "text_match": "undaodu"},
+        "Move2Japan": {"section": None, "index": None, "text_match": "move2japan"},
+        "FoundUps": {"section": None, "index": None, "text_match": "foundups"},
+        "antifaFM": {"section": None, "index": None, "text_match": "antifafm"},
     }
 
     async def select_account(self, target_name: str, match_terms: Optional[list] = None) -> bool:
-        """Step 3: Select the target account by name (Move2Japan, UnDaoDu, FoundUps, or RavingANTIFA)."""
+        """Step 3: Select the target account by name (Move2Japan, UnDaoDu, FoundUps, or antifaFM)."""
         logger.info(f"[TARS-SWAP] Selecting account: {target_name}...")
         try:
             # Debug: List all available accounts in the picker
@@ -649,7 +715,7 @@ class TarsAccountSwapper:
     async def swap_to(self, target: str, *, navigate_to_comments: bool = True) -> bool:
         """
         Improved swap sequence with direct Studio navigation.
-        target: 'UnDaoDu', 'Move2Japan', 'FoundUps', or 'RavingANTIFA'
+        target: 'UnDaoDu', 'Move2Japan', 'FoundUps', or 'antifaFM'
         """
         # 2026-01-29: Enhanced logging for debugging swap failures
         try:

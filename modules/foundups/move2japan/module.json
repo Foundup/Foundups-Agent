@@ -1,0 +1,34 @@
+{
+  "name": "move2japan",
+  "type": "foundup",
+  "domain": "foundups",
+  "version": "0.1.0",
+  "status": "poc",
+  "description": "Agent-driven relocation system — guided ascent from intent to settlement in Japan",
+  "surfaces": {
+    "funnel": "movetojapan.info",
+    "pwa": "movetojapan.foundups.com"
+  },
+  "wsp_compliance": [
+    "WSP 3", "WSP 11", "WSP 22", "WSP 27",
+    "WSP 49", "WSP 60", "WSP 80", "WSP 95"
+  ],
+  "integration_points": {
+    "livechat_skill": "communication/livechat/skillz/persona_move2japan.json",
+    "yt_dae": "YouTube Domain Autonomous Agent",
+    "foundups_platform": "modules/foundups/"
+  },
+  "stakeholder_model": "stakeholder",
+  "mountain_model": {
+    "base_camps": [
+      "BC0_IntentCapture",
+      "BC1_PassportReadiness",
+      "BC2_MigrationPathway",
+      "BC3_EconomicViability",
+      "BC4_LocationFit",
+      "BC5_HousingPathway",
+      "BC6_PaperworkExecution",
+      "BC7_LandingSettlement"
+    ]
+  }
+}

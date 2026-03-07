@@ -21,6 +21,17 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# WRE CoT preflight - recursive enforcement after watch period
+try:
+    from modules.infrastructure.wre_core.src.dae_preflight import preflight_guard
+except ImportError:
+    def preflight_guard(name, quiet=True):
+        def decorator(func):
+            return func
+        return decorator
+
+
+@preflight_guard("pqn_dae")
 def run_pqn_dae():
     """Run PQN Orchestration Menu."""
     while True:

@@ -1,8 +1,8 @@
 # WSP 77: Agent Coordination Protocol
 
 **Status**: ACTIVE
-**Version**: 1.0
-**Date**: 2025-10-15
+**Version**: 1.1
+**Date**: 2026-03-07
 **Author**: 0102 (HoloIndex Coordinator)
 
 ---
@@ -12,6 +12,30 @@
 WSP 77 establishes the foundational protocol for multi-agent coordination in the Foundups ecosystem. This protocol defines how specialized AI agents (0102, Qwen, Gemma) collaborate on complex tasks through HoloIndex as the central coordination fabric.
 
 **Key Innovation**: HoloIndex transforms from a "search tool" to an "analysis orchestration platform" that enables agent specialization and collaboration.
+
+### 2026 Claw Extension (OpenClaw / IronClaw / ZeroClaw)
+
+WSP 77 is extended for the Claw runtime era:
+
+- **OpenClaw**: Coordination/control plane (intent routing, policy gates, preflight, orchestration).
+- **IronClaw**: Execution plane (runtime/model backend, strict execution path).
+- **ZeroClaw (proposed)**: Fail-safe constrained profile, not a separate product.
+  - Deterministic/local-first responses
+  - External model calls disabled
+  - Mutating actions blocked or reduced to advisory mode
+  - Used during degraded security/runtime conditions
+
+**First-principles ownership split**:
+
+- **`WSP_framework/` owns canonical policy and coordination contracts** (MUST/SHALL rules).
+- **`WSP_agentic/` owns operational playbooks, experiments, and session behavior artifacts**.
+
+This keeps governance stable while allowing fast operational iteration.
+
+### ZeroClaw Decision
+
+Do **not** add ZeroClaw as a new subsystem yet.  
+Implement ZeroClaw as a **runtime security profile** under OpenClaw policy controls first.
 
 ---
 

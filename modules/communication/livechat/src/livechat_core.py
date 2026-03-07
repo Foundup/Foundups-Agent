@@ -98,6 +98,7 @@ class LiveChatCore:
         self.live_chat_id = live_chat_id
         self.channel_name = channel_name or "StreamOwner"
         self.channel_id = channel_id or "owner"
+        self.stream_title = None
         self.next_page_token = None
         self.is_running = False
         self.memory_dir = "memory"
@@ -140,22 +141,7 @@ class LiveChatCore:
             logger.debug(f"Could not get bot channel ID: {e}")
 
         self.bot_channel_id = bot_channel_id
-        self.persona_key = resolve_persona_key(
-            channel_name=self.channel_name,
-            channel_id=self.channel_id,
-            bot_channel_id=self.bot_channel_id,
-        )
-        self.persona_config = get_persona_config(
-            persona_key=self.persona_key,
-            channel_name=self.channel_name,
-            channel_id=self.channel_id,
-            bot_channel_id=self.bot_channel_id,
-        )
-        self.pinned_credential_set = resolve_channel_credential_set(
-            channel_name=self.channel_name,
-            channel_id=self.channel_id,
-            bot_channel_id=self.bot_channel_id,
-        )
+        self._refresh_persona_context()
         self.session_manager = SessionManager(
             youtube_service,
             video_id,
@@ -173,6 +159,7 @@ class LiveChatCore:
             channel_name=self.channel_name,
             channel_id=self.channel_id,
             bot_channel_id=self.bot_channel_id,
+            stream_title=self.stream_title,
         )
         self.chat_poller = ChatPoller(youtube_service, live_chat_id, self.channel_name, self.channel_id)
         
@@ -270,6 +257,42 @@ class LiveChatCore:
         self._force_credential_mismatch_logged = False
 
         logger.info(f"LiveChatCore initialized for video: {video_id}")
+
+    def _refresh_persona_context(self) -> None:
+        """Resolve persona and auth routing from the latest stream/channel metadata."""
+        self.persona_key = resolve_persona_key(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+            stream_title=self.stream_title,
+        )
+        self.persona_config = get_persona_config(
+            persona_key=self.persona_key,
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+            stream_title=self.stream_title,
+        )
+        self.pinned_credential_set = resolve_channel_credential_set(
+            channel_name=self.channel_name,
+            channel_id=self.channel_id,
+            bot_channel_id=self.bot_channel_id,
+        )
+
+        if hasattr(self, "session_manager"):
+            self.session_manager.persona_key = self.persona_key
+            self.session_manager.channel_name = self.channel_name
+            self.session_manager.channel_id = self.channel_id
+            self.session_manager.bot_channel_id = self.bot_channel_id
+
+        if hasattr(self, "message_processor"):
+            self.message_processor.update_persona_context(
+                persona_key=self.persona_key,
+                channel_name=self.channel_name,
+                channel_id=self.channel_id,
+                bot_channel_id=self.bot_channel_id,
+                stream_title=self.stream_title,
+            )
     
     async def initialize(self) -> bool:
         """
@@ -292,7 +315,11 @@ class LiveChatCore:
         self.live_chat_id = self.session_manager.live_chat_id
         self.channel_name = getattr(self.session_manager, 'channel_title', self.channel_name)
         self.channel_id = getattr(self.session_manager, 'channel_id', self.channel_id)
-        
+        self.stream_title = getattr(self.session_manager, 'stream_title', self.stream_title)
+
+        # Session initialization is the first point where we know the real stream metadata.
+        self._refresh_persona_context()
+
         # Update components with new info
         self.chat_sender.live_chat_id = self.live_chat_id
         self.chat_poller.live_chat_id = self.live_chat_id
@@ -519,7 +546,27 @@ class LiveChatCore:
             
             # Log the message
             logger.debug(f"[{author_name}]: {display_message}")
-            
+
+            # Schema commands for antifaFM (mods/owner only)
+            if (is_moderator or is_owner) and display_message:
+                schema_cmd = display_message.strip().lower()
+                schema_map = {
+                    '!karaoke': 'KARAOKE', '/karaoke': 'KARAOKE',
+                    '!lyrics': 'KARAOKE', '/lyrics': 'KARAOKE',
+                    '!video': 'VIDEO_GRID', '/video': 'VIDEO_GRID',
+                    '!grid': 'VIDEO_GRID', '/grid': 'VIDEO_GRID',
+                    '!news': 'NEWS', '/news': 'NEWS',
+                    '!full': 'VIDEO_FULL', '/full': 'VIDEO_FULL',
+                }
+                if schema_cmd in schema_map:
+                    try:
+                        from pathlib import Path
+                        schema_file = Path(__file__).parent.parent.parent.parent / "platform_integration" / "antifafm_broadcaster" / "data" / "current_schema.txt"
+                        schema_file.write_text(schema_map[schema_cmd])
+                        logger.info(f"[SCHEMA] {author_name} switched to {schema_map[schema_cmd]}")
+                    except Exception as e:
+                        logger.warning(f"[SCHEMA] Failed to switch: {e}")
+
             # Track message timestamp for activity monitoring
             self.message_timestamps.append(time.time())
             # Clean old timestamps (keep last hour)

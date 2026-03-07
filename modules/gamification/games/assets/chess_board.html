@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chess - 0102 Games</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 42px;
+            color: #ff3333;
+            text-shadow: 0 0 15px #ff3333;
+        }
+        .players {
+            font-size: 28px;
+            margin-top: 15px;
+        }
+        .white-player { color: #fff; }
+        .black-player { color: #888; }
+        .turn-indicator {
+            font-size: 32px;
+            margin-top: 15px;
+            padding: 10px 25px;
+            border-radius: 8px;
+        }
+        .turn-white { background: #fff; color: #000; }
+        .turn-black { background: #333; color: #fff; border: 2px solid #fff; }
+        .board-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 100px);
+            grid-template-rows: repeat(8, 100px);
+            border: 6px solid #ff3333;
+            box-shadow: 0 0 40px rgba(255, 51, 51, 0.6);
+        }
+        .square {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            user-select: none;
+        }
+        .light { background: #f0d9b5; }
+        .dark { background: #b58863; }
+        .last-move { box-shadow: inset 0 0 10px 5px rgba(255, 255, 0, 0.5); }
+        .piece { text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .row-labels, .col-labels {
+            display: flex;
+            font-size: 24px;
+            color: #aaa;
+            font-weight: bold;
+        }
+        .row-labels {
+            flex-direction: column;
+            justify-content: space-around;
+            height: 800px;
+            padding: 0 15px;
+        }
+        .col-labels {
+            justify-content: space-around;
+            width: 800px;
+            padding: 15px 0;
+        }
+        .last-move-text {
+            font-size: 36px;
+            margin-top: 20px;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        .waiting {
+            font-size: 32px;
+            color: #ff3333;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .no-game {
+            text-align: center;
+        }
+        .no-game h1 {
+            font-size: 72px;
+            color: #ff3333;
+            text-shadow: 0 0 20px #ff3333;
+        }
+        .no-game p {
+            font-size: 36px;
+            margin-top: 30px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <script>
+        // Chess piece Unicode
+        const PIECES = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+        };
+
+        const STATE_URL = 'file:///O:/Foundups-Agent/modules/gamification/games/data/chess_state.json';
+
+        function parseFEN(fen) {
+            const parts = fen.split(' ');
+            const rows = parts[0].split('/');
+            const board = [];
+
+            for (const row of rows) {
+                const boardRow = [];
+                for (const char of row) {
+                    if (char >= '1' && char <= '8') {
+                        for (let i = 0; i < parseInt(char); i++) {
+                            boardRow.push('');
+                        }
+                    } else {
+                        boardRow.push(char);
+                    }
+                }
+                board.push(boardRow);
+            }
+            return board;
+        }
+
+        function renderBoard(state) {
+            const container = document.getElementById('game-container');
+
+            if (!state || state.status !== 'active') {
+                container.innerHTML = `
+                    <div class="no-game">
+                        <h1>♟️ CHESS</h1>
+                        <p>Type !chess in chat to play!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const board = parseFEN(state.board_fen);
+            const isWhiteTurn = state.current_turn === 'white';
+
+            let html = `
+                <div class="header">
+                    <div class="title">♟️ CHESS</div>
+                    <div class="players">
+                        <span class="white-player">⚪ ${state.white_player}</span>
+                        &nbsp;vs&nbsp;
+                        <span class="black-player">⚫ ${state.black_player}</span>
+                    </div>
+                    <div class="turn-indicator ${isWhiteTurn ? 'turn-white' : 'turn-black'}">
+                        @${isWhiteTurn ? state.white_player : state.black_player}'s turn
+                    </div>
+                </div>
+                <div class="board-container">
+                    <div class="row-labels">
+                        ${[8,7,6,5,4,3,2,1].map(n => `<span>${n}</span>`).join('')}
+                    </div>
+                    <div>
+                        <div class="board">
+            `;
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const isLight = (row + col) % 2 === 0;
+                    const piece = board[row][col];
+                    const pieceChar = PIECES[piece] || '';
+
+                    html += `<div class="square ${isLight ? 'light' : 'dark'}">
+                        <span class="piece">${pieceChar}</span>
+                    </div>`;
+                }
+            }
+
+            html += `
+                        </div>
+                        <div class="col-labels">
+                            ${['a','b','c','d','e','f','g','h'].map(c => `<span>${c}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.last_move) {
+                html += `<div class="last-move-text">Last: ${state.last_move}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function loadState() {
+            try {
+                // For local file access, we need to handle CORS
+                // In OBS browser source, local files should work
+                const response = await fetch(STATE_URL + '?t=' + Date.now());
+                if (response.ok) {
+                    const state = await response.json();
+                    renderBoard(state);
+                } else {
+                    renderBoard(null);
+                }
+            } catch (e) {
+                // Try alternative: look for state in window
+                console.log('Fetch failed, showing waiting screen');
+                renderBoard(null);
+            }
+        }
+
+        // Initial load
+        renderBoard(null);
+
+        // Poll for updates
+        setInterval(loadState, 1000);
+    </script>
+</body>
+</html>

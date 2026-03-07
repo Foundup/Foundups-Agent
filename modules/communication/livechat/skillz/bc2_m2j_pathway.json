@@ -1,0 +1,23 @@
+{
+  "skillz_name": "bc2_m2j_pathway",
+  "skillz_type": "foundup_gate",
+  "foundup": "move2japan",
+  "foundup_module": "modules/foundups/move2japan",
+  "description": "Base Camp 2 — Migration pathway discovery. Stub skillz for BC1 handoff target.",
+  "wsp_compliance": ["WSP 77", "WSP 95"],
+  "version": "0.1.0",
+  "status": "stub",
+
+  "pathways": [
+    "work_visa",
+    "student",
+    "spouse_family",
+    "remote_income",
+    "entrepreneur",
+    "retirement"
+  ],
+
+  "response_templates": {
+    "pathway_question": "🗾 Now let's figure out your move path. What best describes your situation?\n\n1️⃣ Work visa (job in Japan)\n2️⃣ Student\n3️⃣ Spouse/family\n4️⃣ Remote income (work from Japan)\n5️⃣ Entrepreneur\n6️⃣ Retirement / long-term stay"
+  }
+}

@@ -25,7 +25,11 @@
     }
   ],
   "env": {
-    "HOLO_QWEN_MODEL": "E:/HoloIndex/models/qwen-coder-1.5b.gguf",
+    "LOCAL_MODEL_ROOT": "E:/LM_studio/models/local",
+    "LOCAL_MODEL_TRIAGE_DIR": "E:/LM_studio/models/local/gemma-270m",
+    "LOCAL_MODEL_GENERAL_DIR": "E:/LM_studio/models/local/qwen3-4b",
+    "LOCAL_MODEL_CODE_DIR": "E:/LM_studio/models/local/qwen-coder-7b",
+    "HOLO_QWEN_MODEL": "E:/LM_studio/models/local/qwen-coder-7b",
     "HOLO_QWEN_MAX_TOKENS": "512",
     "HOLO_QWEN_TEMPERATURE": "0.2"
   },

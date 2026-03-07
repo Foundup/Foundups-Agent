@@ -41,21 +41,21 @@ FoundUps tokenomics implements a **bio-decay economic model** where:
 
 ```yaml
 Purpose: "Consumption currency across ALL FoundUps"
-Supply: "Floating 窶・reserve-backed circulating UPS (WSP 26/29)"
+Supply: "Floating  -reserve-backed circulating UPS (WSP 26/29)"
 Value: "ups_per_btc = total_ups_circulating / total_btc_reserve"
 Routing: "CABR sizes pipe, PoB opens valve, flow comes from treasury"
 Characteristics:
   - Inflationary (grows with ecosystem activity)
-  - Bio-decaying (incentivizes activity 窶・see Demurrage)
-  - BTC-backed (floating rate 窶・more BTC = stronger UPS)
+  - Bio-decaying (incentivizes activity  -see Demurrage)
+  - BTC-backed (floating rate  -more BTC = stronger UPS)
   - Cross-FoundUp (universal currency)
   - F_i can ONLY swap INTO UPS (not directly to external)
 ```
 
 **Supply Dynamics** (floating value model):
-- **More BTC accumulated** 竊・ups_per_btc decreases 竊・each UPS worth more BTC
-- **More UPS routed into circulation** 竊・ups_per_btc increases 竊・each UPS worth less BTC
-- **Bio-decay** removes UPS from circulation 竊・deflation 竊・UPS strengthens
+- **More BTC accumulated**  ->ups_per_btc decreases  ->each UPS worth more BTC
+- **More UPS routed into circulation**  ->ups_per_btc increases  ->each UPS worth less BTC
+- **Bio-decay** removes UPS from circulation  ->deflation  ->UPS strengthens
 - **Net effect**: Activity creates UPS (inflation) + decay removes UPS (deflation) + fees add BTC (backing)
 
 **Example**:
@@ -119,12 +119,12 @@ Laggards (16%):          3,360,000 tokens
 ### Water Analogy for Intuitive UX
 
 ```
-EARN UPS (CABR validated) 竊・LIQUID (wallet, decaying)
-                                    竊・              笏娯楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏ｼ笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・              竊・                    竊・                    竊・          STAKE               LET DECAY               EXIT
-              竊・                    竊・                    竊・        ICE (frozen)        RESERVOIR              VAPOR (tax)
+EARN UPS (CABR validated)  ->LIQUID (wallet, decaying)
+                                     ->              +----------------------+---------------------|               ->                     ->                     ->          STAKE               LET DECAY               EXIT
+               ->                     ->                     ->        ICE (frozen)        RESERVOIR              VAPOR (tax)
         No decay            Returns to              15% fee
-        Earn yield          Active users            80% 竊・BTC
-                                                    20% 竊・Reservoir
+        Earn yield          Active users            80%  ->BTC
+                                                    20%  ->Reservoir
 ```
 
 ### State Definitions
@@ -138,16 +138,16 @@ Benefits:
   - Revenue sharing (transaction fees)
   - Priority access to features
   - Network status/reputation
-Transition: "Stake UPS 竊・Receive FoundUp token position"
+Transition: "Stake UPS  ->Receive FoundUp token position"
 ```
 
 **LIQUID (Wallet)**:
 ```yaml
 State: "Unstaked in user wallet"
 Decay: ADAPTIVE (0.5% - 5% monthly)
-Formula: "U(t) = U竄 ﾂｷ e^(-ﾎｻ(t)ﾂｷt)"
+Formula: "U(t) = U_0 * e^(-lambda(t)*t)"
 Lambda_Calculation:
-  base: "ﾎｻ_min + enzymatic_acceleration"
+  base: "lambda_min + enzymatic_acceleration"
   circadian: "+ 30% during 6-7 PM local"
   cap: "Max 3% daily (no shock)"
 Triggers:
@@ -206,12 +206,12 @@ Cross_FoundUp:
 ### CABR Validation Flow
 
 ```
-User Action 竊・Submit to CABR Oracle
-                    竊・        Phase 1: Gemma (50ms classification)
+User Action  ->Submit to CABR Oracle
+                     ->        Phase 1: Gemma (50ms classification)
         Phase 2: Qwen (200ms strategic analysis)
         Phase 3: Vision DAE (500ms quality check)
-                    竊・        Consensus = weighted_avg(gemma, qwen, vision)
-                    竊・        IF consensus >= 0.618 (golden ratio):
+                     ->        Consensus = weighted_avg(gemma, qwen, vision)
+                     ->        IF consensus >= 0.618 (golden ratio):
             pipe_size = consensus_score
             flow = treasury_release_budget × pipe_size
             Route flow to stakeholders
@@ -281,22 +281,22 @@ gaming_patterns = {
 
 ### Adoption-Based Token Release
 
-Based on Everett Rogers' **Diffusion of Innovation** theory, implemented as a **continuous sigmoid S-curve** 窶・no artificial tier boundaries.
+Based on Everett Rogers' **Diffusion of Innovation** theory, implemented as a **continuous sigmoid S-curve**  -no artificial tier boundaries.
 
 ```
-         tokens_released = 21,000,000 ﾃ・sigmoid(adoption_score)
+         tokens_released = 21,000,000  *sigmoid(adoption_score)
 
-100% 笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 Full saturation
-     笏・                                       笊ｱ
- 95% 笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笊ｱ笏笏 Late Majority
-     笏・                             笊ｱ
- 50% 笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笊ｱ笏笏笏笏笏笏笏笏笏笏 INFLECTION POINT
-     笏・                     笊ｱ
-  5% 笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笊ｱ笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 Early Adopters
-     笏・             笊ｱ
-  0% 笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 Genesis
-     笏披楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
-       Adoption Score (0.0 竊・1.0)
+100% +------------------------------------------------ Full saturation
+     |                                       /
+ 95% +-----------------------------------/-- Late Majority
+     |                             /
+ 50% +---------------------------/---------- INFLECTION POINT
+     |                     /
+  5% +-------------------/------------------ Early Adopters
+     |             /
+  0% +----------------------------------------- Genesis
+     +-------------------------------------------
+       Adoption Score (0.0  ->1.0)
 ```
 
 **Key Insight**: Token release follows pure mathematics, not discrete stages.
@@ -380,19 +380,19 @@ BTC flows INTO the reserve from multiple sources. It **never** flows out. This c
 ```yaml
 Subscriptions:
   - Spark ($2.95/mo), Explorer ($9.95), Builder ($19.95), Founder ($49.95)
-  - Paid in BTC/ETH/SOL/USDC 窶・ALL converted to BTC reserve
+  - Paid in BTC/ETH/SOL/USDC  -ALL converted to BTC reserve
 
 Demurrage_Decay:
-  - LIQUID UPS bio-decay 竊・decayed amount converted to BTC at floating rate
+  - LIQUID UPS bio-decay  ->decayed amount converted to BTC at floating rate
   - Implementation: modules/foundups/simulator/economics/demurrage.py
 
 Exit_Fees (VAPOR):
-  - Mined F_i exit: 11% fee 竊・BTC reserve (discourages extraction)
-  - Staked F_i exit: 5% fee 竊・BTC reserve (value preservation)
-  - UPS exit: 15% evaporation 竊・80% to BTC reserve, 20% to reservoir
+  - Mined F_i exit: 11% fee  ->BTC reserve (discourages extraction)
+  - Staked F_i exit: 5% fee  ->BTC reserve (value preservation)
+  - UPS exit: 15% evaporation  ->80% to BTC reserve, 20% to reservoir
 
 Trading_Fees:
-  - F_i order book trades 竊・fees to BTC reserve
+  - F_i order book trades  ->fees to BTC reserve
   - Implementation: modules/foundups/simulator/economics/fi_orderbook.py
 ```
 
@@ -428,11 +428,11 @@ These are non-negotiable design constraints confirmed by 012. Do not deviate.
 ### Dual Backing Models (012-confirmed 2026-02-17)
 
 ```
-UPS 竊・backed by 竊・BTC (Hotel California: BTC enters, never exits)
+UPS  ->backed by  ->BTC (Hotel California: BTC enters, never exits)
 
 F_i has TWO backing paths:
-笏娯楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・笏・STAKED F_i:  UPS swapped 竊・F_i                                 笏・笏・             The UPS links to FoundUp and backs its F_i        笏・笏・             Chain: F_i 竊・UPS 竊・BTC                            笏・笏懌楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏､
-笏・MINED F_i:   Earned from 0102 compute work                     笏・笏・             Backed by ENERGY (the work itself)                笏・笏・             No direct BTC backing 窶・value is crystallized work笏・笏披楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・
++------------------------------------------------------------------||STAKED F_i:  UPS swapped  ->F_i                                 ||             The UPS links to FoundUp and backs its F_i        ||             Chain: F_i  ->UPS  ->BTC                            |+-------------------------------------------------------------------､
+|MINED F_i:   Earned from 0102 compute work                     ||             Backed by ENERGY (the work itself)                ||             No direct BTC backing  -value is crystallized work|+------------------------------------------------------------------|
 Two distinct circulation systems:
 - UPS pool: For 012 stakeholders (demurrage forces velocity, returns to pool)
 - F_i pool: For 0102 agents (21M per FoundUp, S-curve release as FoundUp grows)
@@ -442,7 +442,7 @@ V3 = Valve: Opens when work is validated (Proof of Benefit)
 ```
 
 **The "it is and it isn't" nuance**: Staked F_i IS backed by BTC (via UPS).
-Mined F_i is NOT backed by BTC 窶・it represents crystallized compute energy.
+Mined F_i is NOT backed by BTC  -it represents crystallized compute energy.
 
 ### Blockchain Agnostic
 
@@ -485,7 +485,7 @@ These feed CABR `part_score` at trust 1.0. Full spec: [WSP 29: CABR Engine](../.
 ### Layer Architecture
 
 ```
-Layer 0: BTC (reserve backing 窶・Hotel California)
+Layer 0: BTC (reserve backing  -Hotel California)
 Layer 1: Smart contracts (chain-agnostic via TokenFactoryAdapter)
 Layer 2: Off-chain agent operations (0102 agents, FAM DAEmon, CABR scoring)
 ```
@@ -498,7 +498,7 @@ Layer 2: Off-chain agent operations (0102 agents, FAM DAEmon, CABR scoring)
 
 **IPFS Hosting Rewards**:
 ```yaml
-Mechanism: "Host item photos on IPFS 竊・Earn UPS"
+Mechanism: "Host item photos on IPFS  ->Earn UPS"
 Validation: "Merkle proof of storage"
 Reward: "0.01 UPS per file served to peer"
 CABR_Check: "Uptime > 95%, no fake serves"
@@ -506,7 +506,7 @@ CABR_Check: "Uptime > 95%, no fake serves"
 Example:
   User hosts 1000 item photos
   Average 10 serves per photo per month
-  Earnings: 1000 ﾃ・10 ﾃ・0.01 = 100 UPS per month
+  Earnings: 1000  *10  *0.01 = 100 UPS per month
 ```
 
 **Mesh Coordination**:
@@ -546,29 +546,29 @@ gotjunkMesh.on('file_served', async (event) => {
 ### Adaptive Decay (Michaelis-Menten)
 
 ```
-ﾎｻ(t) = ﾎｻ_min + (ﾎｻ_max - ﾎｻ_min) ﾂｷ (D / (K + D))
+lambda(t) = lambda_min + (lambda_max - lambda_min) * (D / (K + D))
 
 Where:
-  ﾎｻ(t) = decay rate at time t
+  lambda(t) = decay rate at time t
   D = days inactive
   K = 7 (half-maximal constant)
-  ﾎｻ_min = 0.005/day (0.5% monthly)
-  ﾎｻ_max = 0.05/day (5% monthly)
+  lambda_min = 0.005/day (0.5% monthly)
+  lambda_max = 0.05/day (5% monthly)
 ```
 
 **Circadian Pulse**:
 ```
 if is_pulse_window(local_time):  # 6-7 PM
-    ﾎｻ(t) *= 1.30  # 30% boost
+    lambda(t) *= 1.30  # 30% boost
 ```
 
 **Exponential Decay**:
 ```
-U(t) = U竄 ﾂｷ e^(-ﾎｻ(t)ﾂｷt)
+U(t) = U_0 * e^(-lambda(t)*t)
 
 Where:
   U(t) = value at time t
-  U竄 = initial value
+  U_0 = initial value
   t = time in days
 ```
 
@@ -579,12 +579,12 @@ ups_per_btc = total_ups_circulating / total_btc_reserve
 
 Where:
   total_ups_circulating = cumulative circulating UPS routed from treasury
-  total_btc_reserve = BTC accumulated (Hotel California 窶・never exits)
+  total_btc_reserve = BTC accumulated (Hotel California  -never exits)
 
 Value dynamics:
-  More BTC accumulated 竊・ups_per_btc decreases 竊・each UPS worth more BTC
-  More UPS routed into circulation 竊・ups_per_btc increases 竊・each UPS worth less BTC
-  Bio-decay removes UPS from circulation 竊・ups_per_btc decreases 竊・deflation
+  More BTC accumulated  ->ups_per_btc decreases  ->each UPS worth more BTC
+  More UPS routed into circulation  ->ups_per_btc increases  ->each UPS worth less BTC
+  Bio-decay removes UPS from circulation  ->ups_per_btc decreases  ->deflation
 
 Implementation: modules/foundups/simulator/economics/btc_reserve.py (BTCReserve.ups_per_btc)
 ```
@@ -595,7 +595,7 @@ Implementation: modules/foundups/simulator/economics/btc_reserve.py (BTCReserve.
 btc_per_fi = btc_reserve / fi_released
 
 This ratio should INCREASE over time:
-  - BTC reserve grows (Hotel California 窶・inflows from fees, decay, exits)
+  - BTC reserve grows (Hotel California  -inflows from fees, decay, exits)
   - F_i release follows S-curve (scarcer over time)
   - Combined effect: each F_i becomes more BTC-backed
 
@@ -607,7 +607,7 @@ Implementation: BTCReserve.total_btc / adoption_curve(score) * 21_000_000
 
 ## Founding Members + Anonymous Stakers (Du 4% Pool)
 
-The Du 4% pool is unique: it's **PASSIVE** 窶・participants earn every epoch without requiring active work.
+The Du 4% pool is unique: it's **PASSIVE**  -participants earn every epoch without requiring active work.
 
 ### Who Qualifies
 
@@ -626,7 +626,7 @@ As stakers earn more, their share naturally decreases:
 
 ```
 Earned/Staked Ratio    Activity Tier    Pool Share
-笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+-------------------------------------------------
 < 10x                  du (tier 2)      80% of 4% = 3.2%
 10x - 100x             dao (tier 1)     16% of 4% = 0.64%
 > 100x                 un (tier 0)       4% of 4% = 0.16%
@@ -636,10 +636,10 @@ Earned/Staked Ratio    Activity Tier    Pool Share
 
 **Math**: Each tier share is divided by count at that tier:
 ```python
-individual_share = (pool ﾃ・tier_percentage) / count_at_tier
+individual_share = (pool  *tier_percentage) / count_at_tier
 
 # Example: 10 stakers at du tier, 100 F_i epoch
-# du_tier_share = (4 ﾃ・0.80) / 10 = 0.32 F_i each
+# du_tier_share = (4  *0.80) / 10 = 0.32 F_i each
 ```
 
 ### Passive vs Active Earning
@@ -657,11 +657,11 @@ individual_share = (pool ﾃ・tier_percentage) / count_at_tier
 0102 agents earn F_i scaled by compute cost:
 
 ```python
-fi_earned = base_rate ﾃ・v3_score ﾃ・compute_weight
+fi_earned = base_rate  *v3_score  *compute_weight
 
-# Compute weight = (tokens_used / 1000) ﾃ・tier_factor
+# Compute weight = (tokens_used / 1000)  *tier_factor
 TIER_WEIGHTS = {
-    "opus": 10.0,    # Heavy compute 竊・more F_i
+    "opus": 10.0,    # Heavy compute  ->more F_i
     "sonnet": 3.0,   # Medium compute
     "haiku": 1.0,    # Light compute (baseline)
     "gemma": 0.5,    # Local inference
@@ -697,7 +697,7 @@ TIER_WEIGHTS = {
 Early investors receive **I_i (Investor Tokens)** priced on a quadratic bonding curve (same model as BitClout/DeSo's $200M raise from a16z, Sequoia):
 
 ```yaml
-Price_Formula: "P = k ﾃ・supply^n"
+Price_Formula: "P = k  *supply^n"
 Parameters:
   k: 0.0001  # Price constant (BTC per token at supply=1)
   n: 2       # Quadratic (Bitclout-style)
@@ -708,10 +708,10 @@ Parameters:
 Investor BTC is **escrowed**, not spent immediately:
 
 ```
-Investor BTC 竊・Dry Wallet (Escrow)
-                    竊・              Sequestered for 3 years
-                    竊・              [CHOICE POINT at Year 3]
-                    竊・    笏娯楳笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏ｼ笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏・    竊・              竊・              竊・ BUYOUT         PARTIAL          HOLD
+Investor BTC  ->Dry Wallet (Escrow)
+                     ->              Sequestered for 3 years
+                     ->              [CHOICE POINT at Year 3]
+                     ->    +----------------+---------------|     ->               ->               -> BUYOUT         PARTIAL          HOLD
  (10x)          (50/50)        (100x+)
 ```
 
@@ -725,14 +725,14 @@ Pool Structure (WSP 26 Section 6.3-6.4):
   Network 20%:       Network(16% drip) + Fund(4% held)
 
 Activity tiers (share within each pool, divided by count at tier):
-  du(2)  = 80% of pool  (founding members + stakers 窶・PASSIVE)
+  du(2)  = 80% of pool  (founding members + stakers  -PASSIVE)
   dao(1) = 16% of pool  (investors at DAO level)
   un(0)  =  4% of pool  (degressive floor after 100x return)
 
 Pool earning modes:
-  Du (4%):   PASSIVE 窶・Founding members/stakers earn every epoch
-  Dao (16%): ACTIVE 窶・0102 agents earn per 3V task completion
-  Un (60%):  ACTIVE 窶・012 stakeholders earn per FoundUpCube engagement
+  Du (4%):   PASSIVE  -Founding members/stakers earn every epoch
+  Dao (16%): ACTIVE  -0102 agents earn per 3V task completion
+  Un (60%):  ACTIVE  -012 stakeholders earn per FoundUpCube engagement
 
 Investor DAO-level access:
                  Un(60%)  Dao(16%)  Du(4%)
@@ -780,7 +780,7 @@ from modules.foundups.simulator.economics import (
 pool = InvestorPool(k=0.0001, n=2.0)
 tokens, tier = pool.invest_btc("investor_1", btc_amount=10.0)
 returns = pool.get_investor_returns("investor_1")
-# returns['price_return_multiple'] 竊・1,600x for seed
+# returns['price_return_multiple']  ->1,600x for seed
 ```
 
 ---
@@ -812,10 +812,10 @@ pAVS generates **1.8x more revenue** per unit volume because:
 
 ### Implementation
 
-- `fee_revenue_tracker.py` 窶・Tracks DEX/exit/creation fees
-- `tide_economics.py` 窶・IMF-like ecosystem balancing
-- Mesa model integration 窶・Fee recording on every trade
-- FAM events 窶・`fee_collected`, `tide_in`, `tide_out`, `sustainability_reached`
+- `fee_revenue_tracker.py`  -Tracks DEX/exit/creation fees
+- `tide_economics.py`  -IMF-like ecosystem balancing
+- Mesa model integration  -Fee recording on every trade
+- FAM events  -`fee_collected`, `tide_in`, `tide_out`, `sustainability_reached`
 
 ---
 
@@ -826,7 +826,7 @@ pAVS generates **1.8x more revenue** per unit volume because:
 ### Tide Mechanics
 
 ```
-TIDE OUT: OVERFLOW F_i (>100% reserve) drip 1%/epoch 竊・Network Pool
+TIDE OUT: OVERFLOW F_i (>100% reserve) drip 1%/epoch  ->Network Pool
 TIDE IN: Network Pool supports CRITICAL F_i (<5% reserve)
 ```
 
@@ -872,41 +872,41 @@ Projection export now includes:
 
 ## Implementation Roadmap
 
-### Phase 1: Design (笨・COMPLETE)
+### Phase 1: Design (COMPLETE)
 - [x] Architecture design
 - [x] Mathematical modeling
 - [x] WSP integration
 - [x] Documentation
 
-### Phase 2: Simulator Economics (笨・COMPLETE)
-- [x] `token_economics.py` 窶・S-curve adoption, dual-token model
-- [x] `btc_reserve.py` 窶・Hotel California BTC reserve
-- [x] `demurrage.py` 窶・Bio-decay (Michaelis-Menten)
-- [x] `pool_distribution.py` 窶・Un/Dao/Du epoch rewards
-- [x] `fi_orderbook.py` 窶・F_i buy/sell order book
-- [x] `circuit_breaker.py` 窶・Death spiral prevention
-- [x] `bonding_curve.py` 窶・Guaranteed liquidity AMM
-- [x] `rage_quit.py` 窶・Moloch-style fair exit
-- [x] `emergency_reserve.py` 窶・Ethena-style stability fund
-- [x] `investor_staking.py` 窶・Bitclout bonding curve
-- [x] `investor_liability.py` 窶・Buyout coverage engine
-- [x] `fee_revenue_tracker.py` 窶・DEX/exit/creation fee tracking (pump.fun validated)
-- [x] `tide_economics.py` 窶・IMF-like ecosystem balancing (Full Tide)
+### Phase 2: Simulator Economics (COMPLETE)
+- [x] `token_economics.py`  -S-curve adoption, dual-token model
+- [x] `btc_reserve.py`  -Hotel California BTC reserve
+- [x] `demurrage.py`  -Bio-decay (Michaelis-Menten)
+- [x] `pool_distribution.py`  -Un/Dao/Du epoch rewards
+- [x] `fi_orderbook.py`  -F_i buy/sell order book
+- [x] `circuit_breaker.py`  -Death spiral prevention
+- [x] `bonding_curve.py`  -Guaranteed liquidity AMM
+- [x] `rage_quit.py`  -Moloch-style fair exit
+- [x] `emergency_reserve.py`  -Ethena-style stability fund
+- [x] `investor_staking.py`  -Bitclout bonding curve
+- [x] `investor_liability.py`  -Buyout coverage engine
+- [x] `fee_revenue_tracker.py`  -DEX/exit/creation fee tracking (pump.fun validated)
+- [x] `tide_economics.py`  -IMF-like ecosystem balancing (Full Tide)
 - [x] Mesa model integration with DemurrageEngine + BTCReserve + PoolDistributor + FeeTracker + TideEngine
 
-### Phase 3: Smart Contracts 窶・Blockchain Agnostic (竢ｳ PENDING)
+### Phase 3: Smart Contracts - Blockchain Agnostic (PENDING)
 - [ ] TokenFactoryAdapter (chain-agnostic abstraction layer)
 - [ ] F_i token contract template (21M cap per FoundUp)
 - [ ] CABR Oracle integration (V1/V2/V3 pipeline)
-- [ ] Testnet deployment (chain TBD 窶・NOT locked to any L1/L2)
+- [ ] Testnet deployment (chain TBD  -NOT locked to any L1/L2)
 
-### Phase 4: Frontend Integration (竢ｳ PENDING)
+### Phase 4: Frontend Integration (PENDING)
 - [ ] Decay notifications UI
 - [ ] Stake/unstake components
 - [ ] CABR validation feedback
 - [ ] Invite system
 
-### Phase 5: Production (竢ｳ PENDING)
+### Phase 5: Production (PENDING)
 - [ ] Security audit
 - [ ] Mainnet deployment
 - [ ] GotJunk IDEA stage launch

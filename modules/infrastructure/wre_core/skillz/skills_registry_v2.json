@@ -1,8 +1,28 @@
 {
   "version": "2.0",
-  "last_updated": "2026-02-17T07:47:21.814533+00:00",
-  "total_skills": 23,
+  "last_updated": "2026-03-07T12:00:00+00:00",
+  "total_skills": 28,
   "skills": {
+    "suno_stt_lyrics_extract": {
+      "location": "O:\\Foundups-Agent\\modules\\platform_integration\\antifafm_broadcaster\\skillz\\suno_stt_extract.json",
+      "agents": ["qwen", "gemma"],
+      "intent_type": "GENERAL",
+      "version": "1.1.0",
+      "promotion_state": "production",
+      "domain": "streaming",
+      "wsp_chain": ["WSP 84", "WSP 78", "WSP 50", "WSP 72"],
+      "description": "Automated lyrics extraction from Suno via Whisper STT with SQLite dedup"
+    },
+    "antifafm_add_video": {
+      "location": "O:\\Foundups-Agent\\modules\\platform_integration\\antifafm_broadcaster\\skillz\\add_video_link.json",
+      "agents": ["qwen"],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "production",
+      "domain": "streaming",
+      "wsp_chain": ["WSP 64", "WSP 91"],
+      "description": "Managing Directors add YouTube videos to broadcast background library"
+    },
     "gemma_pqn_data_processor": {
       "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\pqn_alignment\\skills\\gemma_pqn_data_processor",
       "agents": [
@@ -260,6 +280,25 @@
         "WSP 96"
       ]
     },
+    "linkedin_agentic_reply": {
+      "location": "O:\\Foundups-Agent\\modules\\platform_integration\\linkedin_agent\\skillz\\linkedin_agentic_reply",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "DECISION",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 42",
+        "WSP 46",
+        "WSP 50",
+        "WSP 77",
+        "WSP 95",
+        "WSP 96"
+      ],
+      "description": "Agentic LinkedIn reply wardrobe with selected-post reading and model-routed drafting"
+    },
     "m2m_compile_gate": {
       "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\m2m_compile_gate",
       "agents": [
@@ -346,6 +385,42 @@
         "WSP 91",
         "WSP 95"
       ]
+    },
+    "data_architecture_audit": {
+      "location": "O:\\Foundups-Agent\\modules\\ai_intelligence\\ai_overseer\\skillz\\data_architecture_audit",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "TELEMETRY",
+      "version": "1.0.0",
+      "promotion_state": "prototype",
+      "wsp_chain": [
+        "WSP 78",
+        "WSP 96",
+        "WSP 77",
+        "WSP 50"
+      ],
+      "invocation": "/audit-data",
+      "description": "WSP 78 compliance auditing of FoundUps data architecture"
+    },
+    "qwen_bulk_import_migration": {
+      "location": "O:\\Foundups-Agent\\modules\\infrastructure\\wre_core\\skillz\\qwen_bulk_import_migration",
+      "agents": [
+        "qwen",
+        "gemma"
+      ],
+      "intent_type": "REFACTOR",
+      "version": "1.0.0",
+      "promotion_state": "production",
+      "wsp_chain": [
+        "WSP 77",
+        "WSP 50",
+        "WSP 84",
+        "WSP 22"
+      ],
+      "invocation": "/migrate-imports",
+      "description": "Bulk import migration using Qwen planning and Gemma validation"
     }
   }
 }

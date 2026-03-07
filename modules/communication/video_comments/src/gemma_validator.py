@@ -33,6 +33,7 @@ import logging
 from typing import Dict, Optional
 from pathlib import Path
 from datetime import datetime
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,12 @@ class GemmaValidator:
         Initialize Gemma validator.
 
         Args:
-            model_path: Path to Gemma GGUF model (default: E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf)
+            model_path: Path to Gemma GGUF model (default: LOCAL_MODEL_TRIAGE_* resolution)
             timeout: Max inference time in seconds
         """
-        # Default model path (existing model on E: drive per zen coding)
+        # Default model path from central local model selection.
         if model_path is None:
-            model_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+            model_path = resolve_triage_model_path()
 
         self.model_path = model_path
         self.timeout = timeout
@@ -259,6 +260,152 @@ Classification:"""
             'validated': False,
             'confidence_delta': 0.0,
             'reasoning': 'Gemma inconclusive'
+        }
+
+    def is_emoji_heavy(self, comment_text: str, threshold: float = 0.5) -> bool:
+        """
+        Detect if comment is emoji-heavy (more than threshold ratio of emojis).
+
+        Pure Python detection - no Gemma needed for this.
+
+        Args:
+            comment_text: Comment content
+            threshold: Ratio of emoji chars to total chars to be considered "emoji-heavy"
+
+        Returns:
+            bool: True if emoji-heavy
+        """
+        import re
+        if not comment_text:
+            return False
+
+        # Unicode ranges for emojis
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F1E0-\U0001F1FF"  # flags
+            "\U00002702-\U000027B0"  # dingbats
+            "\U0001F900-\U0001F9FF"  # supplemental symbols
+            "\U0001FA00-\U0001FA6F"  # chess symbols
+            "\U0001FA70-\U0001FAFF"  # symbols & pictographs extended
+            "\U00002600-\U000026FF"  # misc symbols
+            "]+", flags=re.UNICODE
+        )
+
+        # Count emoji characters
+        emojis = emoji_pattern.findall(comment_text)
+        emoji_char_count = sum(len(e) for e in emojis)
+        total_chars = len(comment_text.replace(" ", ""))
+
+        if total_chars == 0:
+            return False
+
+        ratio = emoji_char_count / total_chars
+
+        logger.debug(f"[GEMMA] Emoji detection: {emoji_char_count}/{total_chars} = {ratio:.2f} (threshold: {threshold})")
+
+        return ratio >= threshold
+
+    def generate_emoji_response(self, comment_text: str) -> Dict:
+        """
+        Generate emoji response for emoji-heavy comments using Gemma.
+
+        Gemma picks appropriate emoji response based on comment sentiment/context.
+
+        Args:
+            comment_text: Emoji-heavy comment
+
+        Returns:
+            Dict with emoji_response, strategy, and confidence
+        """
+        # Emoji response pools by sentiment/context
+        EMOJI_RESPONSES = {
+            'positive': ['🔥🔥🔥', '💯💯', '🙌🙌', '👏👏👏', '✨✨✨', '🚀🚀', '💪💪', '❤️🔥'],
+            'celebration': ['🎉🎉🎉', '🥳🥳', '🎊🎊', '🏆🏆', '⭐⭐⭐', '🌟🌟'],
+            'agreement': ['👍👍', '✊✊', '💯', '🤝🤝', '👊👊'],
+            'love': ['❤️❤️', '💕💕', '🥰🥰', '😍😍', '💖💖'],
+            'funny': ['😂😂', '🤣🤣', '😆😆', '😹😹'],
+            'neutral': ['👀👀', '🤔💭', '👋👋', '✌️✌️'],
+        }
+
+        # Fast path: If Gemma unavailable, pick based on simple heuristics
+        if not self._initialize_gemma():
+            logger.info("[GEMMA] Emoji response: Gemma unavailable, using heuristic")
+            # Simple heuristic: check for common positive emojis
+            if any(e in comment_text for e in ['❤️', '💕', '😍', '🥰']):
+                import random
+                return {
+                    'emoji_response': random.choice(EMOJI_RESPONSES['love']),
+                    'strategy': 'heuristic_love',
+                    'confidence': 0.7
+                }
+            elif any(e in comment_text for e in ['😂', '🤣', '😆']):
+                import random
+                return {
+                    'emoji_response': random.choice(EMOJI_RESPONSES['funny']),
+                    'strategy': 'heuristic_funny',
+                    'confidence': 0.7
+                }
+            else:
+                import random
+                return {
+                    'emoji_response': random.choice(EMOJI_RESPONSES['positive']),
+                    'strategy': 'heuristic_positive',
+                    'confidence': 0.6
+                }
+
+        # Gemma path: Ask Gemma to classify emoji sentiment
+        prompt = f"""What is the sentiment of these emojis?
+Reply with ONE word: POSITIVE, CELEBRATION, AGREEMENT, LOVE, FUNNY, or NEUTRAL
+
+Emojis: {comment_text}
+
+Sentiment:"""
+
+        response = self._gemma_inference(prompt)
+
+        import random
+
+        if response:
+            response_clean = response.strip().upper()
+
+            # Map Gemma response to emoji pool
+            if 'CELEBRATION' in response_clean or 'PARTY' in response_clean:
+                pool = EMOJI_RESPONSES['celebration']
+                strategy = 'gemma_celebration'
+            elif 'LOVE' in response_clean or 'HEART' in response_clean:
+                pool = EMOJI_RESPONSES['love']
+                strategy = 'gemma_love'
+            elif 'FUNNY' in response_clean or 'LAUGH' in response_clean:
+                pool = EMOJI_RESPONSES['funny']
+                strategy = 'gemma_funny'
+            elif 'AGREEMENT' in response_clean or 'AGREE' in response_clean:
+                pool = EMOJI_RESPONSES['agreement']
+                strategy = 'gemma_agreement'
+            elif 'POSITIVE' in response_clean:
+                pool = EMOJI_RESPONSES['positive']
+                strategy = 'gemma_positive'
+            else:
+                pool = EMOJI_RESPONSES['neutral']
+                strategy = 'gemma_neutral'
+
+            emoji_response = random.choice(pool)
+            logger.info(f"[GEMMA] Emoji response: {emoji_response} (strategy: {strategy})")
+
+            return {
+                'emoji_response': emoji_response,
+                'strategy': strategy,
+                'confidence': 0.85
+            }
+
+        # Fallback if Gemma fails
+        logger.warning("[GEMMA] Emoji inference failed, using positive fallback")
+        return {
+            'emoji_response': random.choice(EMOJI_RESPONSES['positive']),
+            'strategy': 'gemma_fallback',
+            'confidence': 0.5
         }
 
     def validate_classification(

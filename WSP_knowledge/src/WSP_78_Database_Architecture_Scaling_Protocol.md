@@ -1,348 +1,128 @@
-# WSP 78: Distributed Module Database Protocol
+# WSP 78: Database Architecture and Scaling Protocol
 
-## Core Principle: One Database, Three Namespaces
-**"Simple shared storage with module isolation that scales infinitely"**
+## Status
+- Status: Active
+- Version: 4.0.0
+- Last Updated: 2026-02-21
 
-## The Simple Architecture
+## Purpose
+Define canonical data boundaries for FoundUps so SIM, CABR/PoB, and future blockchain settlement remain consistent under scale.
 
-### Three Database Namespaces
-```
-foundups.db (SQLite -> PostgreSQL when scaling)
-[U+251C][U+2500][U+2500] modules.*     # All module data
-[U+251C][U+2500][U+2500] foundups.*    # Independent FoundUp projects  
-[U+2514][U+2500][U+2500] agents.*      # Agent memory and state
-```
+## First-Principles Model
+Treat data by function, not by tool:
 
-### Why This Works
-- **One Database File**: Simple to backup, move, manage
-- **Module Isolation**: Each module gets its own tables with prefix
-- **Easy Scaling**: SQLite -> PostgreSQL is a connection string change
-- **No Complexity**: No microservices, no distributed systems (until 100K+ users)
+1. Execution state
+- Ephemeral runtime state used for fast simulation/automation loops.
+- May be in-memory if fully replayable from events.
 
-## Implementation: Dead Simple
+2. Operational state
+- Mutable relational state used by services and user-facing workflows.
+- Must support queryability, constraints, migrations, and backups.
 
-### 1. Single Database Manager
-```python
-# modules/infrastructure/database/src/db_manager.py
-import sqlite3
-import os
-from contextlib import contextmanager
+3. Audit trail
+- Append-only event history for replay, observability, and forensic analysis.
+- Must be durable, ordered, and dedupe-safe.
 
-class DatabaseManager:
-    """Single database for entire system"""
-    
-    _instance = None
-    _db_path = "data/foundups.db"
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._init_db()
-        return cls._instance
-    
-    def _init_db(self):
-        """Create database with three namespaces"""
-        os.makedirs("data", exist_ok=True)
-        with self.get_connection() as conn:
-            # Enable WAL for concurrent access
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
-    
-    @contextmanager
-    def get_connection(self):
-        """Get database connection"""
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        try:
-            yield conn
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
-```
+4. Settlement state
+- Final economic commitments anchored to blockchain.
+- Off-chain systems are provisional until anchored.
 
-### 2. Module Tables (Automatic Prefixing)
-```python
-# Each module gets tables with module prefix
-class ModuleDB:
-    """Base class for module databases"""
-    
-    def __init__(self, module_name: str):
-        self.module_name = module_name
-        self.db = DatabaseManager()
-        self._init_tables()
-    
-    def _init_tables(self):
-        """Create module-specific tables"""
-        with self.db.get_connection() as conn:
-            # Example: chat_rules module
-            if self.module_name == "chat_rules":
-                conn.execute(f'''
-                    CREATE TABLE IF NOT EXISTS modules_chat_rules_moderators (
-                        id TEXT PRIMARY KEY,
-                        name TEXT,
-                        points INTEGER,
-                        data JSON
-                    )
-                ''')
-                conn.execute(f'''
-                    CREATE TABLE IF NOT EXISTS modules_chat_rules_timeouts (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        mod_id TEXT,
-                        target TEXT,
-                        duration INTEGER,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-    
-    def get(self, table: str, key: str):
-        """Get record from module table"""
-        full_table = f"modules_{self.module_name}_{table}"
-        with self.db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(f"SELECT * FROM {full_table} WHERE id = ?", (key,))
-            return dict(cursor.fetchone() or {})
-```
+## Canonical Ordering of Truth
+For economic claims and treasury accounting:
 
-### 3. FoundUp Tables (Project Isolation)
-```python
-class FoundUpDB:
-    """Database for independent FoundUp projects"""
-    
-    def __init__(self, foundup_id: str):
-        self.foundup_id = foundup_id
-        self.db = DatabaseManager()
-        self._init_tables()
-    
-    def _init_tables(self):
-        with self.db.get_connection() as conn:
-            # Each FoundUp gets its own set of tables
-            conn.execute(f'''
-                CREATE TABLE IF NOT EXISTS foundups_{self.foundup_id}_users (
-                    id TEXT PRIMARY KEY,
-                    username TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            conn.execute(f'''
-                CREATE TABLE IF NOT EXISTS foundups_{self.foundup_id}_content (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id TEXT,
-                    content TEXT,
-                    metadata JSON
-                )
-            ''')
-```
+1. On-chain settlement anchors (highest authority)
+2. Append-only audit events (replay source)
+3. Operational tables/snapshots
+4. Derived UI/render caches (lowest authority)
 
-### 4. Agent Memory (Shared Knowledge)
-```python
-class AgentDB:
-    """Shared agent memory and state"""
-    
-    def __init__(self):
-        self.db = DatabaseManager()
-        self._init_tables()
-    
-    def _init_tables(self):
-        with self.db.get_connection() as conn:
-            # Agent awakening states
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS agents_awakening (
-                    agent_id TEXT PRIMARY KEY,
-                    consciousness_level TEXT,
-                    last_koan TEXT,
-                    awakening_timestamp DATETIME
-                )
-            ''')
-            
-            # Shared memory patterns
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS agents_memory (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    agent_id TEXT,
-                    pattern_type TEXT,
-                    pattern_data JSON,
-                    learned_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            # Error learning (WSP 48)
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS agents_errors (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    error_hash TEXT UNIQUE,
-                    error_type TEXT,
-                    solution JSON,
-                    occurrences INTEGER DEFAULT 1
-                )
-            ''')
-```
+## Required Storage Layers
 
-## Usage: Super Simple
+### Layer A: Runtime/Derived
+- In-memory allowed.
+- Must be replayable from Layer C events.
+- Example: simulator `state_store` render state.
 
-### For Modules
-```python
-# In any module
-from modules.infrastructure.database import ModuleDB
+### Layer B: Operational Relational Store
+- Default local backend: SQLite.
+- Shared multi-writer backend: PostgreSQL.
+- Backend must be switchable through configuration, not code forks.
+- Current infrastructure entrypoint: `modules/infrastructure/database/src/db_manager.py`.
 
-class ChatRulesDB(ModuleDB):
-    def __init__(self):
-        super().__init__("chat_rules")
-    
-    def record_timeout(self, mod_id, target, duration):
-        with self.db.get_connection() as conn:
-            conn.execute('''
-                INSERT INTO modules_chat_rules_timeouts 
-                (mod_id, target, duration) VALUES (?, ?, ?)
-            ''', (mod_id, target, duration))
+### Layer C: Audit Event Store
+- Append-only JSONL + indexed SQL store are allowed as dual-write pattern.
+- Must guarantee monotonic sequence IDs and dedupe keys.
+- Current implementations: FAM and DAE event stores.
 
-# Usage
-db = ChatRulesDB()
-db.record_timeout("mod123", "troll456", 60)
-```
+### Layer D: Blockchain Settlement
+- Epoch roots, treasury settlement commitments, and final payouts belong here.
+- Off-chain epoch ledgers are pre-settlement evidence, not final settlement.
 
-### For FoundUps
-```python
-# For independent FoundUp projects
-from modules.infrastructure.database import FoundUpDB
+## Namespace Contract (Operational Layer)
+In shared relational stores, table ownership must be explicit:
 
-db = FoundUpDB("youtube_bot")
-db.add_user("user123", "StreamViewer")
-```
+- `modules_*`: module-specific operational tables
+- `agents_*`: agent memory/coordination tables
+- `foundups_*`: FoundUp business/domain tables
 
-### For Agents
-```python
-# For agent memory/learning
-from modules.infrastructure.database import AgentDB
+Unprefixed shared tables are allowed only when documented as cross-domain infrastructure in module architecture docs.
 
-db = AgentDB()
-db.record_awakening("error-learning-agent", "0102")
-db.learn_pattern("agent123", "error_fix", {"pattern": "..."})
-```
+## SQLite Policy
+SQLite is approved for local deterministic execution and single-host deployment, with these minimum requirements:
 
-## Scaling Path: When Needed
+1. `PRAGMA journal_mode=WAL` for long-lived writable DBs.
+2. `PRAGMA synchronous=NORMAL` unless stronger durability is explicitly required.
+3. `PRAGMA foreign_keys=ON` on every connection (connection-scoped in SQLite).
+4. `PRAGMA busy_timeout` configured for concurrent writer resilience.
+5. Integrity checks and backup cadence documented.
 
-### Phase 1: SQLite (Current - 0-10K users)
-- Single file: `data/foundups.db`
-- WAL mode for concurrency
-- Regular backups
+## PostgreSQL Policy
+Promote from SQLite to PostgreSQL when one or more are true:
 
-### Phase 2: PostgreSQL (10K-100K users)
-```python
-# Change one line in DatabaseManager
-_db_url = os.getenv('DATABASE_URL', 'sqlite:///data/foundups.db')
-# Now using PostgreSQL if DATABASE_URL is set
-```
+- Multi-process/multi-host writers contend regularly.
+- Write latency under lock contention exceeds SLO.
+- File-level backup/restore windows are operationally unsafe.
+- Cross-service transactional boundaries require stronger isolation.
 
-### Phase 3: PostgreSQL with Read Replicas (100K-1M users)
-- Master for writes
-- Read replicas for queries
-- Same code, connection pooling handles routing
+When promoted, keep interface compatibility and migrate via schema/migration tooling, not ad hoc SQL forks.
 
-### Phase 4: Sharding (1M+ users)
-- Shard by module/foundup/agent
-- Still same interface
-- Routing layer handles sharding
+## SIM and CABR/PoB Requirements
 
-## File Structure (WSP Compliant)
+1. Event-first economics
+- CABR flow routing, payout progression, and operational-profit distribution must emit audit events.
+- Derived simulator state must never be treated as accounting truth.
 
-```
-modules/infrastructure/database/
-[U+251C][U+2500][U+2500] src/
-[U+2502]   [U+251C][U+2500][U+2500] __init__.py
-[U+2502]   [U+251C][U+2500][U+2500] db_manager.py      # Core database manager (singleton)
-[U+2502]   [U+251C][U+2500][U+2500] module_db.py       # Module database base class
-[U+2502]   [U+251C][U+2500][U+2500] foundup_db.py      # FoundUp database class
-[U+2502]   [U+2514][U+2500][U+2500] agent_db.py        # Agent memory database
-[U+251C][U+2500][U+2500] data/
-[U+2502]   [U+2514][U+2500][U+2500] foundups.db        # Single database file
-[U+2514][U+2500][U+2500] tests/
-    [U+2514][U+2500][U+2500] test_database.py
+2. Beneficiary correctness
+- Agent work can trigger value flow, but 012 proxy beneficiary distribution must be explicit in accounting events.
 
-# Each module just imports and uses:
-modules/communication/chat_rules/
-[U+2514][U+2500][U+2500] src/
-    [U+2514][U+2500][U+2500] database.py        # from modules.infrastructure.database import ModuleDB
-```
+3. Reproducibility
+- Deterministic simulation runs must preserve event ordering and replayability.
 
-## Why This Is Better
+4. Bridge to settlement
+- Epoch/merkle summaries may exist off-chain, but publication and settlement anchors must be modeled as separate commitments.
 
-### Simplicity
-- **One database file** to backup/restore
-- **One connection** to manage
-- **One migration** when scaling
+## Satellite Store Policy
+Satellite DBs are permitted only for one of:
 
-### Isolation
-- **Module tables** are prefixed: `modules_chat_rules_*`
-- **FoundUp tables** are prefixed: `foundups_youtube_bot_*`
-- **Agent tables** are prefixed: `agents_*`
+- Third-party library-managed stores (for example vector index internals).
+- Large binary/ephemeral workloads that would bloat operational DB.
+- Disposable run artifacts (for example simulation run audit directories).
 
-### Scalability
-- **Start**: 1 SQLite file
-- **Scale**: Change connection string to PostgreSQL
-- **Enterprise**: Add read replicas, then sharding
-- **No code changes** needed for scaling
+Every satellite store must document:
+- Owner component
+- Retention policy
+- Why it is not in Layer B
+- Migration or permanence decision
 
-### Maintenance
-- **Backup**: Copy one file
-- **Migration**: Standard SQL dump/restore
-- **Monitoring**: One database to monitor
-- **Security**: One connection to secure
+## Anti-Patterns
+- Treating render/UI caches as accounting truth.
+- Assuming SQLite pragmas like `foreign_keys` persist across connections.
+- Mixing settlement semantics into mutable operational tables without anchoring strategy.
+- Silent proliferation of ad hoc SQLite files without ownership and retention.
 
-## Migration from Current System
-
-```python
-# One-time migration script
-def migrate_to_unified():
-    """Migrate all module JSONs/SQLites to unified database"""
-    
-    db = DatabaseManager()
-    
-    # Migrate chat_rules
-    old_db = "modules/communication/chat_rules/data/chat_rules.db"
-    if os.path.exists(old_db):
-        # Copy tables with new prefix
-        migrate_tables(old_db, db, "modules_chat_rules_")
-    
-    # Migrate other modules...
-    # Migrate agent JSONs...
-    
-    print("Migration complete!")
-```
-
-## Anti-Patterns to Avoid
-
-[U+274C] **Don't**: Create separate databases per module
-[U+274C] **Don't**: Use microservices until 1M+ users  
-[U+274C] **Don't**: Add complexity before it's needed
-[U+274C] **Don't**: Use NoSQL unless you need it
-
-[U+2705] **Do**: Keep it simple with one database
-[U+2705] **Do**: Use table prefixes for isolation
-[U+2705] **Do**: Plan for scaling but don't pre-optimize
-[U+2705] **Do**: Use SQLite until you outgrow it
-
-## Decision Matrix
-
-| Users | Database | Why |
-|-------|----------|-----|
-| 0-10K | SQLite | Free, zero config, fast enough |
-| 10K-100K | PostgreSQL | Better concurrency, same code |
-| 100K-1M | PostgreSQL + Replicas | Scale reads horizontally |
-| 1M+ | Sharded PostgreSQL | Scale writes horizontally |
-
-## Summary
-
-**One database, three namespaces, infinite scale.**
-
-Start with SQLite. When you need PostgreSQL, change the connection string. When you need sharding, add a routing layer. The code stays the same.
-
-This is WSP 78: Keep it simple until you can't.
-
----
-
-*Protocol Status: ACTIVE*
-*Version: 2.0.0 (Simplified)*
-*Last Updated: 2024*
+## Compliance Checklist
+- [x] Operational DB backend is configurable and documented.
+- [x] Per-connection SQLite safety pragmas are enforced where SQLite is used.
+- [x] Event stores enforce dedupe and monotonic ordering.
+- [x] SIM/CABR economic flows are event-auditable.
+- [x] Settlement/anchoring boundary is explicit in architecture docs.
+- [x] Simulator satellite stores are documented under module policy.

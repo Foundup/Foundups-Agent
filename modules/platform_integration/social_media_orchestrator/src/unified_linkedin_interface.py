@@ -35,6 +35,11 @@ from typing import Dict, Any, Optional, List
 from enum import Enum
 from dataclasses import dataclass
 
+# LinkedIn account registry - centralized company ID management
+from modules.infrastructure.shared_utilities.linkedin_account_registry import (
+    get_company_id,
+)
+
 logger = logging.getLogger(__name__)
 
 def _env_truthy(name: str, default: str = "false") -> bool:
@@ -52,10 +57,10 @@ class LinkedInContentType(Enum):
     GENERAL_POST = "general_post"
 
 class LinkedInCompanyPage(Enum):
-    """Supported LinkedIn company pages"""
-    FOUNDUPS = "1263645"     # FoundUps main page
-    MOVE2JAPAN = "104834798" # Move2Japan page (same as FoundUps for streams)
-    UNDAODU = "68706058"     # UnDaoDu page (CORRECTED back to 68706058)
+    """Supported LinkedIn company pages - values loaded from central registry"""
+    FOUNDUPS = get_company_id("foundups")     # FoundUps main page
+    MOVE2JAPAN = get_company_id("move2japan") # Move2Japan page (GeoZai)
+    UNDAODU = get_company_id("undaodu")       # UnDaoDu page
 
 @dataclass
 class LinkedInPostRequest:

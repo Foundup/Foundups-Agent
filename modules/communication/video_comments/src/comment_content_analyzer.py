@@ -33,6 +33,7 @@ import re
 from typing import Dict, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_triage_model_path
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +132,7 @@ class CommentContentAnalyzer:
             use_gemma: Whether to use Gemma LLM (False = rule-based only)
         """
         if model_path is None:
-            model_path = Path("E:/HoloIndex/models/gemma-3-270m-it-Q4_K_M.gguf")
+            model_path = resolve_triage_model_path()
 
         self.model_path = model_path
         self.use_gemma = use_gemma

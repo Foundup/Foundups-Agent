@@ -10,8 +10,8 @@
     "deploy": "vercel --prod",
     "preview": "vercel"
   },
-  "dependencies": {},
   "devDependencies": {
+    "firebase": "^12.9.0",
     "vercel": "^32.0.0"
   },
   "engines": {

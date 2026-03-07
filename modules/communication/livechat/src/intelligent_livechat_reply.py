@@ -93,6 +93,7 @@ class IntelligentLivechatReply:
         channel_name: Optional[str] = None,
         channel_id: Optional[str] = None,
         bot_channel_id: Optional[str] = None,
+        stream_title: Optional[str] = None,
     ):
         self.grok_available = False
         self.grok_client = None
@@ -103,12 +104,14 @@ class IntelligentLivechatReply:
             channel_name=channel_name,
             channel_id=channel_id,
             bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
         )
         self.persona = get_persona_config(
             persona_key=persona_key or resolved_persona,
             channel_name=channel_name,
             channel_id=channel_id,
             bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
         )
         self.persona_key = self.persona.get("key", resolved_persona)
         persona_patterns = self.persona.get("pattern_responses")
@@ -460,12 +463,14 @@ def get_livechat_reply_generator(
     channel_name: Optional[str] = None,
     channel_id: Optional[str] = None,
     bot_channel_id: Optional[str] = None,
+    stream_title: Optional[str] = None,
 ) -> IntelligentLivechatReply:
     """Get or create a persona-specific livechat reply generator."""
     resolved = persona_key or resolve_persona_key(
         channel_name=channel_name,
         channel_id=channel_id,
         bot_channel_id=bot_channel_id,
+        stream_title=stream_title,
     )
     if resolved not in _livechat_reply_generators:
         _livechat_reply_generators[resolved] = IntelligentLivechatReply(
@@ -473,5 +478,6 @@ def get_livechat_reply_generator(
             channel_name=channel_name,
             channel_id=channel_id,
             bot_channel_id=bot_channel_id,
+            stream_title=stream_title,
         )
     return _livechat_reply_generators[resolved]

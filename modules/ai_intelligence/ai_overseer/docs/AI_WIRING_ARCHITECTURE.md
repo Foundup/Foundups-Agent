@@ -1,4 +1,4 @@
-# AI_Overseer AI Wiring Architecture
+﻿# AI_Overseer AI Wiring Architecture
 
 **Status**: Design Phase
 **Date**: 2025-10-28
@@ -86,9 +86,9 @@ def _qwen_classify_bugs(self, detected_bugs: List[Dict], skill: Dict) -> List[Di
     """Phase 2 (Qwen): Classify bugs with WSP 15 MPS scoring and determine actions"""
     for bug in detected_bugs:
         config = bug["config"]
-        qwen_action = config.get("qwen_action", "ignore")  # ❌ JSON LOOKUP
-        wsp_15_mps = config.get("wsp_15_mps", {})          # ❌ JSON LOOKUP
-        complexity = wsp_15_mps.get("complexity", 3)       # ❌ JSON LOOKUP
+        qwen_action = config.get("qwen_action", "ignore")  # 笶・JSON LOOKUP
+        wsp_15_mps = config.get("wsp_15_mps", {})          # 笶・JSON LOOKUP
+        complexity = wsp_15_mps.get("complexity", 3)       # 笶・JSON LOOKUP
         # ...
 ```
 
@@ -97,10 +97,11 @@ def _qwen_classify_bugs(self, detected_bugs: List[Dict], skill: Dict) -> List[Di
 def _qwen_classify_bugs(self, detected_bugs: List[Dict], skill: Dict) -> List[Dict]:
     """Phase 2 (Qwen): Strategic MPS scoring and action determination"""
     from holo_index.qwen_advisor.llm_engine import QwenInferenceEngine
+    from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 
     if not hasattr(self, '_qwen_engine'):
         self._qwen_engine = QwenInferenceEngine(
-            model_path=Path("E:/LLM_Models/qwen-coder-1.5b.gguf"),
+            model_path=resolve_code_model_path(),
             max_tokens=512,
             temperature=0.2
         )
@@ -287,7 +288,7 @@ def _store_monitoring_patterns(self, skill_path: Path, results: Dict) -> None:
 
 ### Sprint 4: End-to-End Testing (Day 4)
 - [ ] Live YouTube daemon monitoring
-- [ ] Verify Gemma → Qwen → 0102 → Learning flow
+- [ ] Verify Gemma 竊・Qwen 竊・0102 竊・Learning flow
 - [ ] Performance benchmarks
 - [ ] Documentation updates
 
@@ -304,7 +305,7 @@ def _store_monitoring_patterns(self, skill_path: Path, results: Dict) -> None:
 
 ## WSP Compliance
 
-- **WSP 77**: 4-phase agent coordination (Gemma → Qwen → 0102 → Learning)
+- **WSP 77**: 4-phase agent coordination (Gemma 竊・Qwen 竊・0102 竊・Learning)
 - **WSP 15**: Dynamic MPS scoring by Qwen
 - **WSP 96**: WRE skills architecture with libido control
 - **WSP 48**: Pattern memory and adaptive learning
@@ -321,14 +322,15 @@ def _store_monitoring_patterns(self, skill_path: Path, results: Dict) -> None:
 
 ## Next Steps
 
-1. ✅ Complete architecture design
-2. 🔄 Execute Micro-Sprint 1 (Gemma wiring)
-3. ⏳ Execute Micro-Sprint 2 (Qwen wiring)
-4. ⏳ Execute Micro-Sprint 3 (WRE + Learning)
-5. ⏳ End-to-end testing
-6. ⏳ Documentation + ModLog updates
+1. 笨・Complete architecture design
+2. 売 Execute Micro-Sprint 1 (Gemma wiring)
+3. 竢ｳ Execute Micro-Sprint 2 (Qwen wiring)
+4. 竢ｳ Execute Micro-Sprint 3 (WRE + Learning)
+5. 竢ｳ End-to-end testing
+6. 竢ｳ Documentation + ModLog updates
 
 ---
 
 **Architecture Status**: READY FOR IMPLEMENTATION
 **Next Action**: Execute Micro-Sprint 1 (Gemma Pattern Detection)
+

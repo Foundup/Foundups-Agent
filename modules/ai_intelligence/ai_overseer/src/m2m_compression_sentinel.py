@@ -27,6 +27,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from modules.infrastructure.shared_utilities.local_model_selection import resolve_code_model_path
 
 # Import M2MCompiler for actual compression
 try:
@@ -42,7 +43,7 @@ except ImportError:
 # Qwen integration for smart M2M compilation (llama_cpp direct GGUF loading)
 _QWEN_AVAILABLE = False
 _qwen_llm = None
-_QWEN_MODEL_PATH = Path("E:/HoloIndex/models/qwen-coder-1.5b.gguf")
+_QWEN_MODEL_PATH = resolve_code_model_path()
 
 def _init_qwen_llm():
     """Initialize Qwen via llama_cpp for fast local inference."""
@@ -883,7 +884,7 @@ class M2MCompressionSentinel:
         self,
         content: str,
         filename: str,
-        model: str = "qwen-coder-1.5b",
+        model: str = "qwen-coder-7b",
     ) -> Optional[str]:
         """Transform markdown to M2M format using Qwen intelligence.
 

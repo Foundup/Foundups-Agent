@@ -269,6 +269,24 @@ Always reference WSP 97 in your validation tasks and optimize for minimal, preci
 - **Mission Success**: All mission templates must achieve defined success criteria
 - **Recursive Validation**: Agents validate their own compliance with WSP 97
 
+### Operational CLI Hook: Connect WRE
+
+Use the canonical runtime command to verify WRE preflight connection and enforcement mode:
+
+```bash
+python main.py --connect-wre
+```
+
+Expected output shape:
+- `coded=YES`: command is wired in CLI
+- `connection=CONNECTED|PARTIAL`
+- `readiness=READY|INSUFFICIENT_DATA|DEGRADED|BLOCKED|DISABLED`
+- enforcement flags (`manual_enforced`, `auto_enforced_now`)
+- sample coverage and alert counts
+
+Rule: before running autonomous DAE operations, operators should run `--connect-wre`
+to confirm WRE preflight state and current enforcement behavior.
+
 ---
 
 ## Benefits

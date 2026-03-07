@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Checkers - 0102 Games</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 42px;
+            color: #33ffff;
+            text-shadow: 0 0 15px #33ffff;
+        }
+        .players {
+            font-size: 28px;
+            margin-top: 15px;
+        }
+        .white-player { color: #fff; }
+        .black-player { color: #888; }
+        .turn-indicator {
+            font-size: 32px;
+            margin-top: 15px;
+            padding: 10px 25px;
+            border-radius: 8px;
+        }
+        .turn-white { background: #fff; color: #000; }
+        .turn-black { background: #333; color: #fff; border: 3px solid #fff; }
+        .board-container {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 100px);
+            grid-template-rows: repeat(8, 100px);
+            border: 6px solid #33ffff;
+            box-shadow: 0 0 40px rgba(51, 255, 255, 0.6);
+        }
+        .square {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .light { background: #ddd; }
+        .dark { background: #228b22; }
+        .piece {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .white-piece {
+            background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+            border: 3px solid #999;
+        }
+        .black-piece {
+            background: radial-gradient(circle at 30% 30%, #444, #111);
+            border: 3px solid #000;
+            color: #fff;
+        }
+        .king::after {
+            content: '♔';
+            font-size: 36px;
+        }
+        .white-piece.king { color: #333; }
+        .black-piece.king { color: #fff; }
+        .row-labels, .col-labels {
+            display: flex;
+            font-size: 24px;
+            color: #aaa;
+            font-weight: bold;
+        }
+        .row-labels {
+            flex-direction: column;
+            justify-content: space-around;
+            height: 800px;
+            padding: 0 15px;
+        }
+        .col-labels {
+            justify-content: space-around;
+            width: 800px;
+            padding: 15px 0;
+        }
+        .last-move-text {
+            font-size: 36px;
+            margin-top: 20px;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+        .no-game {
+            text-align: center;
+        }
+        .no-game h1 {
+            font-size: 72px;
+            color: #33ffff;
+            text-shadow: 0 0 20px #33ffff;
+        }
+        .no-game p {
+            font-size: 36px;
+            margin-top: 30px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <script>
+        const STATE_URL = 'file:///O:/Foundups-Agent/modules/gamification/games/data/checkers_state.json';
+
+        function parseBoard(boardStr) {
+            // Board string is 64 chars, row by row from a1 to h8
+            const board = [];
+            for (let row = 0; row < 8; row++) {
+                const boardRow = [];
+                for (let col = 0; col < 8; col++) {
+                    boardRow.push(boardStr[row * 8 + col]);
+                }
+                board.push(boardRow);
+            }
+            return board;
+        }
+
+        function renderBoard(state) {
+            const container = document.getElementById('game-container');
+
+            if (!state || state.status !== 'active') {
+                container.innerHTML = `
+                    <div class="no-game">
+                        <h1>⚫ CHECKERS ⚪</h1>
+                        <p>Type !checkers in chat to play!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const board = parseBoard(state.board_fen);
+            const isWhiteTurn = state.current_turn === 'white';
+
+            let html = `
+                <div class="header">
+                    <div class="title">⚫ CHECKERS ⚪</div>
+                    <div class="players">
+                        <span class="white-player">⚪ ${state.white_player}</span>
+                        &nbsp;vs&nbsp;
+                        <span class="black-player">⚫ ${state.black_player}</span>
+                    </div>
+                    <div class="turn-indicator ${isWhiteTurn ? 'turn-white' : 'turn-black'}">
+                        @${isWhiteTurn ? state.white_player : state.black_player}'s turn
+                    </div>
+                </div>
+                <div class="board-container">
+                    <div class="row-labels">
+                        ${[8,7,6,5,4,3,2,1].map(n => `<span>${n}</span>`).join('')}
+                    </div>
+                    <div>
+                        <div class="board">
+            `;
+
+            // Render board (flip so row 1 is at bottom)
+            for (let displayRow = 7; displayRow >= 0; displayRow--) {
+                for (let col = 0; col < 8; col++) {
+                    const isLight = (displayRow + col) % 2 === 0;
+                    const piece = board[displayRow][col];
+
+                    let pieceHtml = '';
+                    if (piece === 'w') {
+                        pieceHtml = '<div class="piece white-piece"></div>';
+                    } else if (piece === 'W') {
+                        pieceHtml = '<div class="piece white-piece king"></div>';
+                    } else if (piece === 'b') {
+                        pieceHtml = '<div class="piece black-piece"></div>';
+                    } else if (piece === 'B') {
+                        pieceHtml = '<div class="piece black-piece king"></div>';
+                    }
+
+                    html += `<div class="square ${isLight ? 'light' : 'dark'}">${pieceHtml}</div>`;
+                }
+            }
+
+            html += `
+                        </div>
+                        <div class="col-labels">
+                            ${['a','b','c','d','e','f','g','h'].map(c => `<span>${c}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (state.last_move) {
+                html += `<div class="last-move-text">Last: ${state.last_move}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function loadState() {
+            try {
+                const response = await fetch(STATE_URL + '?t=' + Date.now());
+                if (response.ok) {
+                    const state = await response.json();
+                    renderBoard(state);
+                } else {
+                    renderBoard(null);
+                }
+            } catch (e) {
+                console.log('Fetch failed, showing waiting screen');
+                renderBoard(null);
+            }
+        }
+
+        // Initial load
+        renderBoard(null);
+
+        // Poll for updates
+        setInterval(loadState, 1000);
+    </script>
+</body>
+</html>

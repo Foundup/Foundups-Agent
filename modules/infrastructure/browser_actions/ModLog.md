@@ -7,6 +7,178 @@
 
 ## Change Log
 
+### 2026-03-07: LinkedIn Registry Migration
+**By:** 0102
+**WSP References:** WSP 22, WSP 60, WSP 3
+
+**Changes:**
+- `src/ai_overseer_integration.py`: Default LinkedIn profile now uses registry lookup
+- Import: `from modules.infrastructure.shared_utilities.linkedin_account_registry import get_default_company`
+
+**Impact:**
+- LinkedIn company IDs managed via `LINKEDIN_ACCOUNTS_JSON` env var
+
+---
+
+### 2026-03-05: Digital Twin parameter passthrough (L1/L3)
+**By:** 0102
+**WSP References:** WSP 22, WSP 50, WSP 73
+
+**Changes:**
+- `src/linkedin_actions.py` (`run_digital_twin_flow`):
+  - L1 call now passes orchestrated `comment_text` and `mentions`
+  - L3 call now passes `repost_text` alongside `schedule_date` and `schedule_time`
+
+**Impact:**
+- Removes silent drift between CLI intent and LN layered execution.
+- Keeps DOM/Selenium execution aligned with UI-TARS verification layers.
+- Synced module docs: `README.md`, `INTERFACE.md`, `ROADMAP.md`.
+
+---
+
+### 2026-02-24: LinkedIn SKILLz + Template-Only Fix
+**By:** 0102 (with 012 supervision)
+**WSP References:** WSP 22, WSP 96 (WRE Skills Protocol)
+
+**Changes:**
+- Created `skillz/linkedin_post_hunter/SKILLz.md`:
+  - DOM-first post detection (AI/capital/target authors)
+  - Keyword matching without LLM
+  - Repost filtering
+  - Fast ~10ms per post
+
+- Created `skillz/linkedin_engagement_poster/SKILLz.md`:
+  - 3 engagement modes: like, reply, like_reply
+  - Proactive account switching (BEFORE engaging)
+  - Brand-compliant templates ONLY (no YouTube LLM)
+  - Execution order: Switch -> Reply -> Like
+
+- Fixed `_generate_reply_for_post()`:
+  - **REMOVED** YouTube LLMCommentGenerator usage
+  - **NOW** uses templates only (`_template_reply_for_reason`)
+  - Prevents off-brand content (e.g., "MAGAts")
+
+- Updated `linkedin_feed_engagement.json` to v2.0.0:
+  - Added mode parameter (like/reply/like_reply)
+  - Added as_page for account switching
+  - Added brand_guardrails (REQUIRED/FORBIDDEN)
+  - Added reply_templates by engagement reason
+
+**Root Cause:** YouTube LLM (`LLMCommentGenerator`) was generating
+YouTube live chat content for LinkedIn posts - wrong context.
+
+---
+
+### 2026-02-24: Engagement Order Fix + Actor Selection
+**By:** 0102 (with 012 supervision)
+**WSP References:** WSP 22 (ModLog Protocol), WSP 50 (Pre-Action Verification)
+
+**Changes:**
+- `linkedin_actions.py`:
+  - Fixed `like_and_reply()` order: **Reply FIRST → Like AFTER** (per 012)
+  - Added `as_page` parameter for actor selection (e.g., "foundups")
+  - Added `_select_actor_for_reaction(page_name)` - Opens actor dropdown at END
+  - Updated Like button selectors for LinkedIn 2024: `button[aria-label*="Reaction button"]`
+  - Updated repost detection: checks for "Reaction button state: Like" = already liked
+  - Updated FoundUps messaging templates with ROC (Return on Compute) language
+
+**Correct Engagement Flow:**
+1. Reply FIRST (comment on post)
+2. Like AFTER (reaction after comment posted)
+3. Actor selection AT END (012 manually selects page for next engagement)
+
+**DOM Selectors (LinkedIn 2024):**
+- Like button: `button[aria-label*="Reaction button"]`
+- Actor dropdown: `[aria-label="Open actor selection screen"]`
+- Post content: `span[data-testid="expandable-text-box"]`
+
+**FoundUps Messaging (Capital Pushback):**
+- "foundups.com is building on different rails"
+- "ROI capitalism → ROC Return on Compute post-capitalism"
+- "Incentives align with communities instead of exits"
+
+---
+
+### 2026-02-24: Feed Iterator with DOM-First Processing
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol), WSP 50 (Pre-Action Verification)
+
+**Changes:**
+- `linkedin_actions.py`:
+  - Added `refresh_feed()` - Navigate to feed URL (F5 equivalent)
+  - Added `feed_iterator_reset()` - Reset iterator to index 0
+  - Added `feed_iterator_next()` - Get next post with auto-scroll
+  - Added `feed_iterator_current()` - Get current post without advancing
+  - Added `feed_iterator_skip(count)` - Skip posts without reading
+  - Added `_read_feed_post_at_index(index)` - DOM-based post extraction
+  - Added `_scroll_feed_down()` - Scroll to load more posts
+  - Added `iterate_feed(max_posts, skip_reposts, engagement_filter)` - Convenience wrapper
+  - Updated `run_engagement_session()` - Now uses DOM iterator by default
+  - Added `_generate_reply_for_post()` - Context-aware reply generation
+  - Added `_template_reply_for_reason()` - Template replies by engagement reason
+
+- `test_feed_iterator.py` (new):
+  - `--selenium` mode: Pure Selenium DOM iteration
+  - `--iterate` mode: Async LinkedInActions iterator
+  - `--engagement` mode: Full engagement session test
+  - `--dry-run` flag: Read only, no actions
+
+**Feed Iterator Features:**
+- Repost detection (skip reposts)
+- AI topic detection (engagement-worthy)
+- Capital pushback detection (FoundUps alternative perspective)
+- Target author detection (Salim Ismail, Peter Diamandis, etc.)
+- Auto-scroll for loading more posts
+- Position tracking for engagement clicks
+
+**LLME Transition:** COMPLETE → COMPLETE (iterator added)
+
+---
+
+### 2026-02-24: DOM-First + Vision-Diagnose Architecture
+**By:** 0102
+**WSP References:** WSP 22 (ModLog Protocol), WSP 77 (Agent Coordination), WSP 48 (Pattern Learning)
+
+**Architectural Change:** Restructured from "vision-first with Selenium fallback" to "DOM-first with vision diagnosis".
+
+**Old Architecture (wrong):**
+```
+Vision (UI-TARS) → Execute Action → If fails → Fallback to Selenium
+```
+
+**New Architecture (correct per 012):**
+```
+Selenium (DOM) → Execute → If success → Done (fast)
+                    ↓ failure
+              UI-TARS Diagnose → "What broke?" → Fix selector → Retry
+```
+
+**Changes:**
+- `action_router.py`:
+  - Renamed `VISION_ACTIONS` to `DOM_FIRST_ACTIONS` + `VISION_ONLY_ACTIONS`
+  - `get_driver_for_action()` now returns SELENIUM for DOM_FIRST_ACTIONS
+  - `execute()` now tries DOM first, calls `_diagnose_with_vision()` on failure
+  - Added `_diagnose_with_vision()` - asks UI-TARS "why did this fail?"
+  - Added `_update_selector_pattern()` - stores fixes for future use
+- `ui_tars_bridge.py`:
+  - Added `diagnose` action type - locates element without clicking
+  - Returns diagnosis info: coordinates, suggested selector, reason
+- Added Selenium implementations for `scroll_to_element`, `find_by_description`, `click_by_description`
+
+**Benefits:**
+- 99% of actions: Pure Selenium (~10ms) - fast
+- 1% failures: UI-TARS diagnoses (~2-5s) - self-healing
+- Pattern learning: System improves over time as selectors are updated
+
+**Impact:**
+- LinkedIn engagement sessions now DOM-first (faster, more reliable)
+- UI-TARS becomes the debugger, not the executor
+- Self-healing automation when DOM selectors break
+
+**LLME Transition:** COMPLETE → COMPLETE (architecture alignment per 012)
+
+---
+
 ### 2026-01-26: Digital Twin Flow Wired to LinkedInActions
 **By:** 0102
 **WSP References:** WSP 22 (ModLog Protocol), WSP 73 (Digital Twin Architecture), WSP 77 (Agent Coordination)

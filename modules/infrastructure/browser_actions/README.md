@@ -52,6 +52,12 @@ Browser Actions provides a unified interface for platform-specific browser autom
 - `comment_on_post(post_id, text)` → Selenium
 - `like_post(post_id)` → Selenium
 - `schedule_post(company_id, text, datetime)` → UI-TARS
+- `run_digital_twin_flow(comment_text, repost_text, schedule_date, schedule_time, mentions, identity_cycle, dry_run)` → layered L0-L3 execution
+
+LinkedIn digital twin flow details:
+- DOM/Selenium actions are primary execution path.
+- UI-TARS is used as verification gate for critical UI state checks.
+- Inputs from orchestration/CLI now pass through to L1 and L3 (no silent drops).
 
 ### X/Twitter (`x_actions.py`)
 - `post_tweet(text)` → Selenium

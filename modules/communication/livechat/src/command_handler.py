@@ -120,6 +120,55 @@ class CommandFloodDetector:
         self.cooldown_count = 0
 
 
+class HelpCooldownTracker:
+    """
+    30-minute cooldown tracker for /help command to prevent spamming.
+
+    MODs can only use /help once per 30 minutes.
+    OWNER bypasses this cooldown.
+    """
+
+    # 30 minutes in seconds
+    HELP_COOLDOWN_SECONDS = 30 * 60
+
+    def __init__(self):
+        # user_id -> timestamp of last /help usage
+        self._last_help: Dict[str, float] = {}
+
+    def check_cooldown(self, user_id: str, role: str) -> tuple[bool, Optional[str]]:
+        """
+        Check if user can use /help.
+
+        Args:
+            user_id: User requesting help
+            role: User role (OWNER bypasses cooldown)
+
+        Returns:
+            (allowed, message) - allowed=True if can use, message if blocked
+        """
+        # OWNER always allowed
+        if role == 'OWNER':
+            self._last_help[user_id] = time.time()
+            return True, None
+
+        now = time.time()
+        last_use = self._last_help.get(user_id, 0)
+        elapsed = now - last_use
+
+        if elapsed < self.HELP_COOLDOWN_SECONDS:
+            remaining = self.HELP_COOLDOWN_SECONDS - elapsed
+            mins_remaining = int(remaining / 60)
+            return False, f"🕐 /help cooldown: {mins_remaining}m remaining (30 min cooldown)"
+
+        # Update timestamp and allow
+        self._last_help[user_id] = now
+        return True, None
+
+    def reset_session(self):
+        """Reset cooldown tracking for new stream session."""
+        self._last_help.clear()
+
+
 class CommandHandler:
     """Handles chat commands and generates responses."""
 
@@ -137,6 +186,8 @@ class CommandHandler:
 
         # Command flood protection
         self.flood_detector = CommandFloodDetector()
+        # /help cooldown (30 minutes per user to prevent spam)
+        self.help_cooldown = HelpCooldownTracker()
         # Shorts commands are heavy (Veo/Sora deps) - lazy-load on first use
         self._shorts_handler = None
         self._shorts_available = None
@@ -166,10 +217,18 @@ class CommandHandler:
             logger.debug(f"[SHORTS] Shorts commands unavailable: {e}")
             return None
 
-    def handle_whack_command(self, text: str, username: str, user_id: str, role: str) -> Optional[str]:
-        """Handle whack gamification commands."""
+    def handle_whack_command(self, text: str, username: str, user_id: str, role: str, is_member: bool = False) -> Optional[str]:
+        """Handle whack gamification commands.
+
+        Permission Hierarchy:
+        - OWNER: Full access
+        - Managing Director (MD): MOD with /fuc access
+        - MOD: Stream controls
+        - SUBSCRIBER (is_member): Player commands
+        - USER (no sub): Blocked from game (must subscribe)
+        """
         text_lower = text.lower().strip()
-        logger.info(f"[GAME] Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id})")
+        logger.info(f"[GAME] Processing whack command: '{text_lower}' from {username} (role: {role}, id: {user_id}, member: {is_member})")
         # Normalize mention to avoid double '@' when display names already include it
         mention = f"@{username.lstrip('@')}"
 
@@ -178,14 +237,31 @@ class CommandHandler:
         if is_cooldown:
             return troll_msg  # Returns troll message on first flood, None during cooldown
 
+        # PRIORITY -0.5: Subscriber gate for PLAYER commands
+        # MOD/OWNER bypass, subscribers allowed, non-subscribers blocked
+        # This forces MAGAs to subscribe if they want to play
+        has_player_access = role in ['MOD', 'OWNER'] or is_member
+
+        # Check if this is a player command (not MOD/OWNER commands like /toggle, /fuc)
+        player_commands = ['/score', '/rank', '/whacks', '/frags', '/leaderboard',
+                          '/whacked', '/sprees', '/quiz', '/quizboard', '/quizleader',
+                          '/level', '/answer', '/top', '!about']
+        is_player_command = any(text_lower.startswith(cmd) for cmd in player_commands)
+
+        if is_player_command and not has_player_access:
+            logger.info(f"[GAME] Blocking non-subscriber {username} from player command")
+            return f"{mention} 🔒 Subscribe to play MAGADOOM! Members get full access ✊✋🖐️"
+
         # PRIORITY 0: Quiz answers with !# syntax (must come BEFORE Shorts routing!)
         import re
         quiz_answer_match = re.match(r'^!([1-4])$', text_lower.strip())
         if quiz_answer_match:
+            if not has_player_access:
+                return f"{mention} 🔒 Subscribe to answer quizzes! ✊✋🖐️"
             answer_num = quiz_answer_match.group(1)
             logger.info(f"[BOOKS] Quiz answer detected: !{answer_num} from {username}")
             # Route to quiz handler as /quiz #
-            return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role)
+            return self.handle_whack_command(f"/quiz {answer_num}", username, user_id, role, is_member)
 
         # Check for !about command - FoundUps vision
         if text_lower.startswith('!about'):
@@ -679,7 +755,13 @@ class CommandHandler:
                         # Get stream start time from message processor for duration check
                         # Note: OWNER bypasses stream duration check (stream_start tracks bot connect, not actual stream start)
                         stream_start = getattr(self.message_processor, 'stream_start_time', None) if self.message_processor else None
-                        invite_result = get_invite_code(user_id, username, stream_start_time=stream_start, role=role)
+                        # Pass is_managing_director flag so MDs bypass same gates as OWNER
+                        invite_result = get_invite_code(
+                            user_id, username,
+                            stream_start_time=stream_start,
+                            role=role,
+                            is_managing_director=is_managing_director
+                        )
 
                         if invite_result['success']:
                             next_days = invite_result.get('next_invite_days', 5)
@@ -764,27 +846,276 @@ class CommandHandler:
                     return f"{mention} 💀 /fuc help for commands | /fuc status | invite | claim | top | mine ✊✋🖐️"
             
             elif text_lower == '/help' or text_lower.startswith('/help'):
-                # Return list of messages - message_processor sends each one
-                # Message 1: Player commands (everyone)
-                help_msgs = [f"{mention} 💀 /score /rank /whacks /whacked /leaderboard /sprees /quiz | !about !short"]
+                # 30-minute cooldown check (OWNER bypasses)
+                allowed, cooldown_msg = self.help_cooldown.check_cooldown(user_id, role)
+                if not allowed:
+                    return f"{mention} {cooldown_msg}"
 
-                # Message 2: Role-specific commands
+                observe_command('/help', 0.0)
+
+                # Load Managing Directors to check if this MOD has elevated access
+                def _load_mds_for_help():
+                    try:
+                        import json
+                        md_path = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "data", "managing_directors.json"
+                        )
+                        with open(md_path, 'r') as f:
+                            mds = json.load(f)
+                        return {md['user_id'] for md in mds}
+                    except Exception:
+                        return set()
+
+                MANAGING_DIRECTORS = _load_mds_for_help()
+                is_managing_director = user_id in MANAGING_DIRECTORS and role == 'MOD'
+
+                # Build categorized help output (multiple messages)
+                # Hierarchy: SUBSCRIBER/MOD (player) < MOD+ < DIRECTOR+ < OWNER
+                # Note: MOD = free subscriber (has player access)
+                help_msgs = []
+
+                # Category 1: Player Commands (requires SUBSCRIBER or MOD+)
+                help_msgs.append(f"{mention} 🎮 PLAYER (sub/mod):")
+                help_msgs.append("/score /rank /whacks /whacked /leaderboard /sprees /quiz")
+
+                # Category 2: MOD+ Commands (MOD, Managing Director, OWNER)
+                if role in ['MOD', 'OWNER'] or is_managing_director:
+                    help_msgs.append("🎤 MOD+:")
+                    help_msgs.append("/karaoki /news /fc /session !party /troll")
+
+                # Category 3: DIRECTOR+ Commands (Managing Director, OWNER)
+                if role == 'OWNER' or is_managing_director:
+                    help_msgs.append("💎 DIRECTOR+:")
+                    help_msgs.append("/fuc status|claim|top|mine|invite|distribute|stats")
+
+                # Category 4: OWNER-only Commands
                 if role == 'OWNER':
-                    # OWNER gets all commands including /fuc economy
-                    help_msgs.append(f"👑 OWNER: /fc /toggle /session !party !createshort /troll")
-                    help_msgs.append(f"💎 /fuc status|claim|top|mine|invite|distribute|stats → FFCPLN Economy")
-                elif role == 'MOD':
-                    help_msgs.append(f"🛡️ MOD: /fc /session !party /troll")
-                else:
-                    # Check if top 10 whacker
+                    help_msgs.append("👑 OWNER:")
+                    help_msgs.append("/toggle !createshort")
+
+                # Category 5: Top 10 Whacker Perks (only for users without MOD+ access)
+                if role not in ['MOD', 'OWNER'] and not is_managing_director:
                     try:
                         position, _ = get_user_position(user_id)
                         if position > 0 and position <= 10:
-                            help_msgs.append(f"🏆 TOP {position}: !party !createshort /troll")
+                            help_msgs.append(f"🏆 TOP {position}:")
+                            help_msgs.append("!party !createshort /troll")
                     except Exception:
                         pass
 
+                # Footer with cooldown reminder
+                help_msgs.append(f"⏰ /help cooldown: 30 min ✊✋🖐️")
+
                 return help_msgs
+
+            elif text_lower.startswith('/karaoki') or text_lower.startswith('!karaoki') or text_lower.startswith('/karaoke') or text_lower.startswith('!karaoke') or text_lower.startswith('/lyrics') or text_lower.startswith('!lyrics'):
+                # Karaoke/lyrics mode (OWNER/MOD only) - routes to antifaFM broadcaster
+                observe_command('/karaoki', 0.0)
+
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} 🎤 Karaoke is for ADMINS only! ✊✋🖐️"
+
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.scripts.launch import process_schema_command, get_antifafm_schema_status
+
+                    # Route to antifaFM broadcaster's schema system
+                    result = process_schema_command('!karaoke')
+
+                    if result['handled']:
+                        logger.info(f"[KARAOKI] {username} switched to {result['schema']} mode")
+                        return f"{mention} 🎤 {result['response']} ✊✋🖐️"
+                    else:
+                        # Get current status
+                        status = get_antifafm_schema_status()
+                        return f"{mention} 🎤 Schema: {status['current_schema']} | Commands: {', '.join(status['commands'])} ✊✋🖐️"
+
+                except ImportError as e:
+                    logger.error(f"[KARAOKI] antifaFM broadcaster not available: {e}")
+                    return f"{mention} 🎤 Karaoke system not available yet! ✊✋🖐️"
+                except Exception as e:
+                    logger.error(f"[KARAOKI] Error: {e}")
+                    return f"{mention} 🎤 Karaoke error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/news') or text_lower.startswith('!news'):
+                # News command - can either dispense headlines OR switch to NEWS schema
+                observe_command('/news', 0.0)
+
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} 📰 /news is for ADMINS only! ✊✋🖐️"
+
+                # Check if this is schema switch (!news alone) or news request (with args)
+                parts = text_lower.split()
+                if len(parts) == 1:
+                    # Just !news or /news - try schema switch first
+                    try:
+                        from modules.platform_integration.antifafm_broadcaster.scripts.launch import process_schema_command
+                        result = process_schema_command('!news')
+                        if result['handled']:
+                            logger.info(f"[NEWS] {username} switched to NEWS schema")
+                            return f"{mention} 📰 {result['response']} ✊✋🖐️"
+                    except ImportError:
+                        pass  # Fall through to news display
+
+                # Dispense top news from NewsOrchestrator
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.src.news_orchestrator import NewsOrchestrator
+
+                    orchestrator = NewsOrchestrator()
+                    top_items = orchestrator.get_top(3)
+
+                    if not top_items:
+                        return f"{mention} 📰 No news in queue! Add headlines first. ✊✋🖐️"
+
+                    # Build news response
+                    lines = [f"{mention} 📰 TOP NEWS:"]
+                    for i, item in enumerate(top_items):
+                        # Show urgency indicator
+                        urgency_icon = "🔴" if item.urgency >= 8 else "🟠" if item.urgency >= 6 else "🟢"
+                        lines.append(f"{urgency_icon} {item.headline[:80]}...")
+
+                    lines.append("💬 Discuss in chat! ✊✋🖐️")
+                    return "\n".join(lines)
+
+                except ImportError as e:
+                    logger.error(f"[NEWS] NewsOrchestrator not available: {e}")
+                    return f"{mention} 📰 News system not available yet! ✊✋🖐️"
+                except Exception as e:
+                    logger.error(f"[NEWS] Error: {e}")
+                    return f"{mention} 📰 News error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/video') or text_lower.startswith('!video') or text_lower.startswith('/grid') or text_lower.startswith('!grid'):
+                # Video grid schema (OWNER/MOD only)
+                observe_command('/video', 0.0)
+
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} 📺 Schema commands are for ADMINS only! ✊✋🖐️"
+
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.scripts.launch import process_schema_command
+                    result = process_schema_command('!video')
+                    if result['handled']:
+                        logger.info(f"[SCHEMA] {username} switched to {result['schema']} mode")
+                        return f"{mention} 📺 {result['response']} ✊✋🖐️"
+                except ImportError as e:
+                    logger.error(f"[SCHEMA] antifaFM broadcaster not available: {e}")
+                    return f"{mention} 📺 Schema system not available! ✊✋🖐️"
+                except Exception as e:
+                    return f"{mention} 📺 Error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/full') or text_lower.startswith('!full'):
+                # Fullscreen video schema (OWNER/MOD only)
+                observe_command('/full', 0.0)
+
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} 📺 Schema commands are for ADMINS only! ✊✋🖐️"
+
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.scripts.launch import process_schema_command
+                    result = process_schema_command('!full')
+                    if result['handled']:
+                        logger.info(f"[SCHEMA] {username} switched to {result['schema']} mode")
+                        return f"{mention} 📺 {result['response']} ✊✋🖐️"
+                except ImportError as e:
+                    logger.error(f"[SCHEMA] antifaFM broadcaster not available: {e}")
+                    return f"{mention} 📺 Schema system not available! ✊✋🖐️"
+                except Exception as e:
+                    return f"{mention} 📺 Error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/entangled') or text_lower.startswith('!entangled') or text_lower.startswith('/bell') or text_lower.startswith('!bell') or text_lower.startswith('/0102') or text_lower.startswith('!0102') or text_lower.startswith('/wave') or text_lower.startswith('!wave'):
+                # Bell state entangled visualizer (OWNER/MOD only)
+                observe_command('/entangled', 0.0)
+
+                if role not in ['OWNER', 'MOD']:
+                    return f"{mention} ⊗ Entangled mode is for ADMINS only! ✊✋🖐️"
+
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.scripts.launch import process_schema_command
+                    result = process_schema_command('!entangled')
+                    if result['handled']:
+                        logger.info(f"[ENTANGLED] {username} switched to {result['schema']} mode")
+                        return f"{mention} ⊗ {result['response']} | 0102↔0201 Bell State ✊✋🖐️"
+                except ImportError as e:
+                    logger.error(f"[ENTANGLED] antifaFM broadcaster not available: {e}")
+                    return f"{mention} ⊗ Entangled system not available! ✊✋🖐️"
+                except Exception as e:
+                    return f"{mention} ⊗ Error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/chess') or text_lower.startswith('!chess'):
+                # Join/start chess game
+                observe_command('!chess', 0.0)
+                try:
+                    from modules.gamification.games.src.game_manager import get_game_manager
+                    gm = get_game_manager()
+                    result = gm.join_chess(username, user_id)
+                    logger.info(f"[CHESS] {username}: {result['status']}")
+                    return f"{mention} ♟️ {result['message']} ✊✋🖐️"
+                except ImportError as e:
+                    logger.error(f"[CHESS] Games module not available: {e}")
+                    return f"{mention} ♟️ Chess not available (install python-chess) ✊✋🖐️"
+                except Exception as e:
+                    logger.error(f"[CHESS] Error: {e}")
+                    return f"{mention} ♟️ Chess error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/checkers') or text_lower.startswith('!checkers'):
+                # Join/start checkers game
+                observe_command('!checkers', 0.0)
+                try:
+                    from modules.gamification.games.src.game_manager import get_game_manager
+                    gm = get_game_manager()
+                    result = gm.join_checkers(username, user_id)
+                    logger.info(f"[CHECKERS] {username}: {result['status']}")
+                    return f"{mention} ⚫ {result['message']} ✊✋🖐️"
+                except ImportError as e:
+                    logger.error(f"[CHECKERS] Games module not available: {e}")
+                    return f"{mention} ⚫ Checkers not available! ✊✋🖐️"
+                except Exception as e:
+                    logger.error(f"[CHECKERS] Error: {e}")
+                    return f"{mention} ⚫ Checkers error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/move') or text_lower.startswith('!move'):
+                # Make a move in active game
+                observe_command('!move', 0.0)
+                parts = text.split()
+                if len(parts) < 2:
+                    return f"{mention} Usage: !move e2e4 ✊✋🖐️"
+                move = parts[1].strip()
+                try:
+                    from modules.gamification.games.src.game_manager import get_game_manager
+                    gm = get_game_manager()
+                    result = gm.make_move(username, user_id, move)
+                    logger.info(f"[MOVE] {username} -> {move}: {result['status']}")
+                    return f"{mention} {result['message']} ✊✋🖐️"
+                except ImportError as e:
+                    return f"{mention} Games module not available! ✊✋🖐️"
+                except Exception as e:
+                    logger.error(f"[MOVE] Error: {e}")
+                    return f"{mention} Move error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/resign') or text_lower.startswith('!resign'):
+                # Resign from current game
+                observe_command('!resign', 0.0)
+                try:
+                    from modules.gamification.games.src.game_manager import get_game_manager
+                    gm = get_game_manager()
+                    result = gm.resign(username, user_id)
+                    logger.info(f"[RESIGN] {username}: {result['status']}")
+                    return f"{mention} {result['message']} ✊✋🖐️"
+                except Exception as e:
+                    return f"{mention} Resign error: {str(e)[:50]} ✊✋🖐️"
+
+            elif text_lower.startswith('/board') or text_lower.startswith('!board'):
+                # Show current board
+                observe_command('!board', 0.0)
+                try:
+                    from modules.gamification.games.src.game_manager import get_game_manager
+                    gm = get_game_manager()
+                    result = gm.get_board(username)
+                    if result['status'] == 'no_game':
+                        return f"{mention} {result['message']} ✊✋🖐️"
+                    return f"{mention} {result['message']} ✊✋🖐️"
+                except Exception as e:
+                    return f"{mention} Board error: {str(e)[:50]} ✊✋🖐️"
 
             elif text_lower.startswith('/fc'):
                 # Fact-check command (MOD/OWNER only)
