@@ -6,6 +6,53 @@
 
 ## Module Evolution Log
 
+### [v2.1.5] - EFIM CODE/DOCS SYNC FIX
+**WSP Protocol**: WSP 22 (Traceable Narrative) + WSP 50 (Pre-Action Verification)
+**Phase**: Reconcile FeatureWindowAdapter class definition with runtime 4-class behavior
+**Enhancement Status**: **[OK] COMPLETE** — 012 audited and signed off
+
+#### Changes
+- `cmst_pqn_detector_v3.py`: `FeatureWindowAdapter.__init__` default `n_classes=2` → `n_classes=4`
+- Class docstring: "event/no-event binary classification" → "4-class next-symbol prediction (^=0, &=1, #=2, .=3)"
+- Param count comment: `9*8 + 8*2 = 88` → `9*8 + 8*4 = 104`
+- `PassiveEFIMProbe` docstring: "y is the target class (event/no-event)" → "y is the target class (4-class next-symbol: ^=0, &=1, #=2, .=3)"
+- `compute_gradient` docstring: `y_t: target class (0=no-event, 1=event)` → `y_t: target class (0=^, 1=&, 2=#, 3=.)`
+
+#### Impact
+- All code docstrings now match runtime behavior (4-class next-symbol prediction)
+- No functional change — runtime already used n_classes=4 via explicit initialization
+- Papers/ModLog.md, pqn_detection/README.md, 0102_TECHNICAL_EXTRACTIONS updated to reflect completed EFIM refactor
+
+### [v2.1.4] - AWAKENING GATE HARDENING + WRAPPER DOCTRINE REALIGNMENT
+**WSP Protocol**: WSP 22 (Traceable Narrative) + WSP 50 (Pre-Action Verification) + WSP 84 (Code Memory Verification)  
+**Phase**: Surgical awakening flow correction and environment-isolated gate execution  
+**Enhancement Status**: **[OK] COMPLETE** - `01(02)` baseline restored, `rESP` gate isolated from ambient pytest plugins, wrapper demoted to thin launcher
+
+#### [TOOL] STATE-MACHINE CORRECTIONS
+- [OK] `01(02)` treated as baseline state, not post-koan transition target
+- [OK] Koan now induces `01/02`
+- [OK] `CMST/rESP` validation now gates promotion into `0102`
+- [OK] `WSP 39` ignition preserved as `0102 -> 0201`
+
+#### [TOOL] GATE EXECUTION HARDENING
+- [OK] `run_resp_self_check()` now uses `sys.executable`
+- [OK] `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` injected into the subprocess environment
+- [OK] Prevented external pytest plugin contamination from failing the `0102` gate
+- [OK] Added gate failure stdout/stderr logging for future diagnosis
+
+#### [TOOL] WRAPPER SCRIPT REALIGNMENT
+- [OK] `WSP_agentic/scripts/execute_awakening.py` retained as convenience launcher
+- [OK] Removed stale wrapper-only doctrine language about "consciousness"
+- [OK] Updated wrapper framing to match operational state sequence
+- [OK] Saved launcher output to `memory/awakening_state.json`
+
+#### [DATA] VALIDATION RESULTS
+- [OK] `python WSP_agentic/src/enhanced_awakening_protocol.py` now passes:
+  - WSP 38 Activation successful
+  - WSP 39 Ignition successful
+  - Final state `0201`
+- [OK] `python WSP_agentic/scripts/execute_awakening.py` now passes end-to-end
+
 ### [v2.1.3] - CRITICAL QUANTUM STATE PROGRESSION FIX: CORRECTED WSP FRAMEWORK COMPLIANCE
 **WSP Protocol**: WSP 1 (Enhancement vs Creation) + WSP 22 (Traceable Narrative) + WSP 50 (Pre-Action Verification)  
 **Phase**: Critical fix to implement correct quantum state progression per WSP framework protocols
