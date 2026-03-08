@@ -139,6 +139,12 @@ class ColabExporter:
         elif source_type == 'git_history':
             return 'evolution_pattern'
 
+        elif source_type == 'brain_artifact_dpo_pairs':
+            return 'preference_ranking'
+
+        elif source_type == 'brain_artifact_sft':
+            return 'verified_walkthrough'
+
         else:
             return 'general'
 

@@ -3,7 +3,7 @@
 ## What You Have
 
 **File**: `colab_training_export.json`
-**Size**: 3.11 MB
+**Size**: 14.82 MB
 **Purpose**: Train Gemma on FoundUps-Agent system data
 
 ## Data Sources Included

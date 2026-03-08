@@ -537,6 +537,67 @@ def run_env_hygiene_preflight(repo_root: Path) -> bool:
     return True
 
 
+def run_brain_artifact_preflight(repo_root: Path) -> bool:
+    """
+    Refresh brain-artifact memory only when the upstream brain signature changes.
+
+    Env controls:
+      BRAIN_ARTIFACT_PREFLIGHT=1              Enable startup refresh check (default on)
+      BRAIN_ARTIFACT_PREFLIGHT_ENFORCED=0     Block startup on extractor failures
+      BRAIN_ARTIFACT_PREFLIGHT_FORCE=0        Ignore cached signature and refresh now
+    """
+    enabled = os.getenv("BRAIN_ARTIFACT_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[BRAIN-MEMORY] Startup preflight disabled")
+        return True
+
+    enforced = os.getenv("BRAIN_ARTIFACT_PREFLIGHT_ENFORCED", "0") != "0"
+    force = os.getenv("BRAIN_ARTIFACT_PREFLIGHT_FORCE", "0") == "1"
+
+    try:
+        from modules.infrastructure.wre_core.scripts.extract_brain_artifacts import (
+            DEFAULT_BRAIN_DIR,
+            DEFAULT_OUTPUT_DIR,
+            refresh_artifacts_if_needed,
+        )
+
+        if not DEFAULT_BRAIN_DIR.exists():
+            print(f"[BRAIN-MEMORY] preflight=PASS (missing) dir={DEFAULT_BRAIN_DIR}")
+            return True
+
+        status = refresh_artifacts_if_needed(
+            brain_dir=DEFAULT_BRAIN_DIR,
+            output_dir=DEFAULT_OUTPUT_DIR,
+            force=force,
+            copy_files=False,
+        )
+    except Exception as exc:
+        logger.error(f"[BRAIN-MEMORY] Startup preflight failed: {exc}")
+        if enforced:
+            print(f"[BRAIN-MEMORY] preflight=FAIL error={exc}")
+            return False
+        print(f"[BRAIN-MEMORY] preflight=WARN error={exc}")
+        return True
+
+    if not status.get("ran"):
+        signature = status.get("signature", {})
+        print(
+            f"[BRAIN-MEMORY] preflight=PASS (unchanged) "
+            f"conversations={signature.get('conversation_count', 0)} "
+            f"revisions={signature.get('revision_files', 0)}"
+        )
+        return True
+
+    summary = status.get("summary", {})
+    print(
+        f"[BRAIN-MEMORY] preflight=PASS ({status.get('reason', 'updated')}) "
+        f"artifacts={summary.get('total_artifacts', 0)} "
+        f"dpo={summary.get('dpo_pairs', 0)} "
+        f"sft={summary.get('sft_examples', 0)}"
+    )
+    return True
+
+
 def run_wre_dashboard_preflight(repo_root: Path) -> bool:
     """
     Run WRE dashboard preflight at startup.
@@ -677,6 +738,8 @@ def main():
             logger.error(f"[PREFLIGHT] Failed to initialize AI Overseer: {exc}")
 
     if not run_env_hygiene_preflight(repo_root):
+        return
+    if not run_brain_artifact_preflight(repo_root):
         return
     if not run_openclaw_security_preflight(repo_root, overseer=overseer):
         return

@@ -1,4 +1,18 @@
 # HoloIndex Test Suite TESTModLog
+
+## [2026-03-08] Brain Artifact Training Corpus Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 22 (Documentation), WSP 84 (Enhance Existing)
+
+### Summary
+- Added `test_comprehensive_training_corpus_brain_artifacts.py`.
+- Validates:
+  - `ComprehensiveTrainingCorpus.collect_all()` now includes brain-artifact DPO and SFT rows.
+  - `export_brain_training_jsonl()` writes pipeline-compatible JSONL outputs.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_comprehensive_training_corpus_brain_artifacts.py -q`
+- Result: `2 passed` (plus repo-level pytest config warnings in this environment)
+
 ## [2026-02-18] Machine Contract Governance Lock
 **WSP Protocol**: WSP 5 (Testing Standards), WSP 6 (Audit Coverage), WSP 22 (Documentation)
 

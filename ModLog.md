@@ -1,5 +1,31 @@
 # FoundUps Agent - Development Log
 
+## [2026-03-08] Brain Artifact Memory Preflight + WSP Knowledge Promotion
+
+**Change Type**: System Integration / Memory Architecture  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 60, WSP 84, WSP 87
+
+### Summary
+
+Promoted Antigravity brain artifacts into the WSP knowledge layer as the canonical reasoning-trace memory target and added a lightweight startup preflight so `main.py` refreshes the index only when the upstream brain signature changes.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `main.py` | Added `run_brain_artifact_preflight()` and wired it into startup |
+| `modules/infrastructure/wre_core/scripts/extract_brain_artifacts.py` | Added incremental refresh state + training-example extraction |
+| `WSP_knowledge/reasoning_traces/` | Canonical brain artifact index, summary, and state manifest |
+| `training_data/brain_artifact_dpo_pairs.jsonl` | Preference-ranked plan revision pairs |
+| `training_data/brain_artifact_sft.jsonl` | Verified walkthrough SFT rows |
+
+### Result
+
+- `main.py` now self-monitors cross-session reasoning memory at startup.
+- Brain artifacts no longer live only under `wre_core` scratch memory.
+- The training pipeline now receives live DPO and SFT rows from session revisions.
+
 <!-- ============================================================
      SCOPE: System-Wide Changes ONLY (Root ModLog)
      ============================================================

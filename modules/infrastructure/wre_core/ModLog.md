@@ -2,6 +2,97 @@
 
 ## Chronological Change Log
 
+### [2026-03-08] - Brain Artifact Promotion to WSP_knowledge + Incremental Startup Refresh
+
+**WSP Protocol References**: WSP 60 (Module Memory), WSP 84 (Enhance Existing), WSP 87 (Code Navigation), WSP 22 (ModLog)
+**Impact Analysis**: Promotes Antigravity reasoning traces into the WSP knowledge layer, adds incremental refresh state, and exposes revision chains as reusable training data for Qwen/Gemma.
+
+#### Changes Made
+
+- `scripts/extract_brain_artifacts.py`:
+  - Reworked into a reusable library + CLI instead of a one-shot export script
+  - Canonical output moved to `WSP_knowledge/reasoning_traces/`
+  - Added `build_training_examples()` for DPO/SFT extraction from revision chains
+  - Added incremental refresh helpers:
+    - `build_scan_signature()`
+    - `load_scan_state()`
+    - `save_scan_state()`
+    - `refresh_artifacts_if_needed()`
+  - Added markdown sanitization for ASCII-safe summaries on Windows
+- `docs/BRAIN_ARTIFACTS_AS_MEMORY_ANALYSIS_20260307.md`:
+  - Updated memory target reference to `WSP_knowledge/reasoning_traces/`
+- `docs/BRAIN_ARTIFACTS_CONTINUATION_PROMPT_20260307.md`:
+  - Updated continuation handoff to point at the WSP knowledge memory target
+- `WSP_knowledge/reasoning_traces/`:
+  - Refreshed live artifact index, summary, and incremental state manifest
+
+#### Verification
+
+- `python modules\\infrastructure\\wre_core\\scripts\\extract_brain_artifacts.py --force`
+- Output:
+  - `WSP_knowledge/reasoning_traces/brain_artifact_index.json`
+  - `WSP_knowledge/reasoning_traces/brain_artifact_summary.md`
+  - `WSP_knowledge/reasoning_traces/brain_artifact_state.json`
+
+---
+
+### [2026-03-07] - Brain Artifact Extractor + Cross-Session Memory Discovery
+
+**WSP Protocol References**: WSP 60 (Module Memory), WSP 87 (Code Navigation), WSP 22 (ModLog)
+**Impact Analysis**: Enables discovery of 0102 reasoning traces across Antigravity sessions for WRE pattern learning, HoloIndex retrieval, and AI training data extraction.
+
+#### Changes Made
+
+- `scripts/extract_brain_artifacts.py` (NEW):
+  - Scans `~/.gemini/antigravity/brain/*/` for implementation plans, walkthroughs, audits, task checklists
+  - Builds structured JSON index + human-readable summary
+  - Counts revision history (`.resolved.N` files) as training signal
+  - CLI with `--copy-files`, `--json`, `--quiet` options
+- `memory/reasoning_traces/brain_artifact_index.json`:
+  - First scan output: **98 artifacts** across **25 conversations**
+  - **500 revision snapshots** (potential DPO/RLHF training pairs)
+- `memory/reasoning_traces/brain_artifact_summary.md`:
+  - Human-readable index for HoloIndex retrieval
+- `docs/BRAIN_ARTIFACTS_AS_MEMORY_ANALYSIS_20260307.md`:
+  - First-principles analysis: reasoning traces --> training data, HoloIndex memory, WRE patterns
+
+#### WSP 87 Violation (Self-Reported)
+
+Did not run `holo_index.py --search` before creating `extract_brain_artifacts.py`. Used `find_by_name` instead.
+
+#### Verification
+
+- `python modules\infrastructure\wre_core\scripts\extract_brain_artifacts.py` -- 98 artifacts, 500 revisions
+- Index written to `memory/reasoning_traces/brain_artifact_index.json` (125KB)
+
+---
+
+### [2026-03-07] - 6-Layer WRE Architecture Audit (External Spec vs Codebase)
+
+**WSP Protocol References**: WSP 46 (WRE Protocol), WSP 95 (SKILLz Wardrobe), WSP 77 (Agent Coordination), WSP 22 (ModLog)
+**Impact Analysis**: Deep-dive audit comparing 012's external system prompt (6-layer architecture spec) against actual codebase implementations.
+
+#### Verdict: Enhancement, Not Drift
+
+| Layer                        | Status                                                             |
+| ---------------------------- | ------------------------------------------------------------------ |
+| 1. WSP Governance            | [5/5] Fully implemented + enhanced                                 |
+| 2. Skill Wardrobe            | [5/5] 22 `skillz/` dirs, WSP 95 protocol, `SKILLz.md` format       |
+| 3. Skill Composition Engine  | [3/5] **Gap** -- selection exists, multi-step chaining is implicit |
+| 4. OpenClaw Execution        | [5/5] 4803-line frontal lobe with autonomy tiers + honeypot        |
+| 5. WRE Recursive Improvement | [4/5] PatternMemory + "recall, don't compute" philosophy           |
+| 6. Memory + Logging          | [4/5] 50KB pattern_memory.py, registries, metrics ingestion        |
+
+#### Key Finding
+
+The **Skill Composition Engine** (Layer 3) is the only layer without an explicit implementation. Skill selection and triggering exist (`skill_selector.py`, `skill_trigger.py`), but multi-step chain composition (the "letter --> word --> sentence" pattern from spec) lives implicitly inside DAEs rather than as a composable engine.
+
+#### Documentation
+
+- Full audit: `docs/WRE_6LAYER_ARCHITECTURE_AUDIT_20260307.md`
+
+---
+
 ### [2026-03-07] - Qwen Bulk Import Migration Skill
 
 **WSP Protocol References**: WSP 77 (Agent Coordination), WSP 50 (Pre-Action), WSP 84 (Code Reuse), WSP 22 (ModLog)
@@ -503,7 +594,7 @@ Phase 3 completes the autonomous execution chain:
 1. **Created wre_skills_discovery.py** (416 lines):
    - WRESkillsDiscovery class - Filesystem scanner (not registry-dependent)
    - DiscoveredSkill dataclass - Metadata container
-   - discover_all_skills() - Scans modules/_/_/skillz/\*\*/SKILLz.md
+   - discover*all_skills() - Scans modules/*/\_/skillz/\*\*/SKILLz.md
    - discover_by_agent() - Filter by agent type (qwen, gemma, grok, ui-tars)
    - discover_by_module() - Filter by module path
    - discover_production_ready() - Filter by fidelity threshold

@@ -1,0 +1,23 @@
+{
+  "updated_at": "2026-03-08T12:08:17.492642",
+  "signature": {
+    "brain_dir": "C:\\Users\\user\\.gemini\\antigravity\\brain",
+    "conversation_count": 29,
+    "markdown_files": 99,
+    "revision_files": 502,
+    "latest_mtime": 1772926280.981445
+  },
+  "summary": {
+    "total_artifacts": 99,
+    "by_type": {
+      "analysis": 34,
+      "plan": 24,
+      "task": 25,
+      "walkthrough": 16
+    },
+    "total_revisions": 502,
+    "dpo_pairs": 23,
+    "sft_examples": 16
+  },
+  "conversations": 29
+}

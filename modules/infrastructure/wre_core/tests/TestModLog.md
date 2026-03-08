@@ -1,5 +1,16 @@
 # TestModLog - wre_core/tests
 
+## 2026-03-08: Brain artifact extractor incremental refresh + training signal validation
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest -q modules/infrastructure/wre_core/tests/test_extract_brain_artifacts.py`
+- Status: PASS
+- Result: `2 passed, 2 warnings`
+- Notes:
+  - Validates DPO/SFT extraction from implementation-plan revision chains and walkthroughs.
+  - Validates incremental refresh state so unchanged brain directories skip full re-scan.
+
+---
+
 ## 2026-03-05: Self-audit escalation lane validation (phase 2)
 
 - Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest -q modules/infrastructure/wre_core/tests/test_daemon_self_audit_loop.py`

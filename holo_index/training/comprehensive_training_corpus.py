@@ -23,6 +23,11 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import subprocess
 
+from modules.infrastructure.wre_core.scripts.extract_brain_artifacts import (
+    DEFAULT_BRAIN_DIR,
+    build_training_examples,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,15 +46,22 @@ class ComprehensiveTrainingCorpus:
     Output: JSON corpus ready for ChromaDB or Colab
     """
 
-    def __init__(self, root_dir: str = "O:/Foundups-Agent"):
+    def __init__(
+        self,
+        root_dir: str = "O:/Foundups-Agent",
+        brain_dir: Optional[str] = None,
+    ):
         self.root = Path(root_dir)
+        self.brain_dir = Path(brain_dir) if brain_dir else DEFAULT_BRAIN_DIR
         self.corpus = {
             "012_operations": [],
             "modlogs": [],
             "wsp_violations": [],
             "chat_logs": [],
             "git_history": [],
-            "daemon_logs": []
+            "daemon_logs": [],
+            "brain_artifact_dpo_pairs": [],
+            "brain_artifact_sft": [],
         }
         self.stats = {
             "total_patterns": 0,
@@ -83,6 +95,9 @@ class ComprehensiveTrainingCorpus:
         # Priority 6: Daemon logs (DAE operations)
         self._collect_daemon_logs()
 
+        # Priority 7: Brain artifacts (cross-session reasoning traces)
+        self._collect_brain_artifacts()
+
         self.stats["total_patterns"] = sum(len(v) for v in self.corpus.values())
 
         logger.info(f"[CORPUS] Collection complete: {self.stats['total_patterns']} patterns")
@@ -91,9 +106,21 @@ class ComprehensiveTrainingCorpus:
                    f"Violations={len(self.corpus['wsp_violations'])}, "
                    f"Chats={len(self.corpus['chat_logs'])}, "
                    f"Git={len(self.corpus['git_history'])}, "
-                   f"Daemons={len(self.corpus['daemon_logs'])}")
+                   f"Daemons={len(self.corpus['daemon_logs'])}, "
+                   f"BrainDPO={len(self.corpus['brain_artifact_dpo_pairs'])}, "
+                   f"BrainSFT={len(self.corpus['brain_artifact_sft'])}")
 
         return self.corpus
+
+    def collect_brain_artifacts_only(self) -> Dict:
+        """Collect only brain-artifact training rows for incremental export."""
+        self.corpus["brain_artifact_dpo_pairs"] = []
+        self.corpus["brain_artifact_sft"] = []
+        self._collect_brain_artifacts()
+        return {
+            "brain_artifact_dpo_pairs": self.corpus["brain_artifact_dpo_pairs"],
+            "brain_artifact_sft": self.corpus["brain_artifact_sft"],
+        }
 
     def _collect_012_txt(self):
         """
@@ -283,6 +310,8 @@ class ComprehensiveTrainingCorpus:
                 cwd=str(self.root),
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
                 timeout=30
             )
 
@@ -290,7 +319,7 @@ class ComprehensiveTrainingCorpus:
                 logger.warning("[CORPUS] Git log failed - skipping git history")
                 return
 
-            commits = result.stdout.strip().split('\n')
+            commits = (result.stdout or "").strip().split('\n')
 
             for commit in commits:
                 if not commit:
@@ -315,11 +344,13 @@ class ComprehensiveTrainingCorpus:
                 cwd=str(self.root),
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='replace',
                 timeout=30
             )
 
             if rename_result.returncode == 0:
-                renames = rename_result.stdout.strip().split('\n')
+                renames = (rename_result.stdout or "").strip().split('\n')
                 for rename in renames:
                     if rename.startswith('R'):
                         parts = rename.split('\t')
@@ -375,6 +406,30 @@ class ComprehensiveTrainingCorpus:
 
         logger.info(f"[CORPUS] Collected {len(self.corpus['daemon_logs'])} daemon log entries")
         self.stats["sources_processed"] += 1
+
+    def _collect_brain_artifacts(self):
+        """
+        Collect cross-session reasoning traces from the Antigravity brain.
+
+        Outputs:
+        - DPO pairs from implementation plan revision chains
+        - SFT rows from final walkthroughs
+        """
+        logger.info("[CORPUS] Collecting brain artifact training data...")
+
+        try:
+            training_data = build_training_examples(self.brain_dir)
+            self.corpus["brain_artifact_dpo_pairs"].extend(training_data.get("dpo_pairs", []))
+            self.corpus["brain_artifact_sft"].extend(training_data.get("sft_examples", []))
+            logger.info(
+                "[CORPUS] Collected %s DPO pairs and %s SFT walkthroughs from brain artifacts",
+                len(self.corpus["brain_artifact_dpo_pairs"]),
+                len(self.corpus["brain_artifact_sft"]),
+            )
+            self.stats["sources_processed"] += 1
+        except Exception as e:
+            logger.error(f"[CORPUS] Error collecting brain artifacts: {e}")
+            self.stats["errors"].append(f"Brain artifacts: {e}")
 
     # Helper methods
 
@@ -475,6 +530,34 @@ class ComprehensiveTrainingCorpus:
 
         return output_path
 
+    def export_brain_training_jsonl(self, output_dir: str) -> Dict[str, Path]:
+        """
+        Export brain-artifact training rows in JSONL formats compatible with
+        the existing DPO/SFT pipeline shapes.
+        """
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        dpo_path = output_path / "brain_artifact_dpo_pairs.jsonl"
+        sft_path = output_path / "brain_artifact_sft.jsonl"
+
+        with open(dpo_path, "w", encoding="utf-8") as dpo_file:
+            for row in self.corpus["brain_artifact_dpo_pairs"]:
+                json.dump(row, dpo_file, ensure_ascii=False)
+                dpo_file.write("\n")
+
+        with open(sft_path, "w", encoding="utf-8") as sft_file:
+            for row in self.corpus["brain_artifact_sft"]:
+                json.dump(row, sft_file, ensure_ascii=False)
+                sft_file.write("\n")
+
+        logger.info("[CORPUS] Exported brain artifact DPO rows to %s", dpo_path)
+        logger.info("[CORPUS] Exported brain artifact SFT rows to %s", sft_path)
+        return {
+            "dpo_pairs": dpo_path,
+            "sft_examples": sft_path,
+        }
+
     def get_summary(self) -> Dict:
         """Get summary statistics of collected corpus."""
         return {
@@ -486,7 +569,9 @@ class ComprehensiveTrainingCorpus:
                 "wsp_violations": len(self.corpus["wsp_violations"]),
                 "chat_logs": len(self.corpus["chat_logs"]),
                 "git_history": len(self.corpus["git_history"]),
-                "daemon_logs": len(self.corpus["daemon_logs"])
+                "daemon_logs": len(self.corpus["daemon_logs"]),
+                "brain_artifact_dpo_pairs": len(self.corpus["brain_artifact_dpo_pairs"]),
+                "brain_artifact_sft": len(self.corpus["brain_artifact_sft"]),
             },
             "errors": len(self.stats["errors"])
         }

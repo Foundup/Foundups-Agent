@@ -1,5 +1,83 @@
 # HoloIndex Package ModLog
 
+## [2026-03-08] Brain Artifact Training-Corpus Wiring
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 60 (Memory Architecture), WSP 84 (Enhance Existing), WSP 87 (Navigation)  
+**Status**: [OK] COMPLETE
+
+### Context
+The existing `ComprehensiveTrainingCorpus` had six data sources but no path for Antigravity brain artifacts, which meant implementation-plan revisions and verified walkthroughs were invisible to the training pipeline.
+
+### Actions
+- Extended `holo_index/training/comprehensive_training_corpus.py`:
+  - Added `brain_artifact_dpo_pairs`
+  - Added `brain_artifact_sft`
+  - Added `_collect_brain_artifacts()`
+  - Added `collect_brain_artifacts_only()`
+  - Added `export_brain_training_jsonl()`
+  - Hardened `git log` subprocess decoding with UTF-8 `errors='replace'` so full export no longer trips on CP932 history bytes
+- Reused the WRE extractor instead of building a second collector:
+  - imports `build_training_examples()` from `modules/infrastructure/wre_core/scripts/extract_brain_artifacts.py`
+- Updated `holo_index/training/export_for_colab.py`:
+  - maps brain DPO rows to `preference_ranking`
+  - maps walkthrough SFT rows to `verified_walkthrough`
+- Exported live training files:
+  - `training_data/brain_artifact_dpo_pairs.jsonl`
+  - `training_data/brain_artifact_sft.jsonl`
+
+### Result
+- Brain revision chains now produce preference-ranked DPO data.
+- Final walkthroughs now produce SFT-compatible verified-approach data.
+- The training pipeline now has a canonical path from session reasoning to reusable model data.
+
+### Verification
+- `python -m py_compile holo_index\\training\\comprehensive_training_corpus.py holo_index\\training\\export_for_colab.py`
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q holo_index\\tests\\test_comprehensive_training_corpus_brain_artifacts.py`
+- Runtime export:
+  - `O:\\Foundups-Agent\\training_data\\brain_artifact_dpo_pairs.jsonl`
+  - `O:\\Foundups-Agent\\training_data\\brain_artifact_sft.jsonl`
+
+## [2026-03-08] Explicit Search-Mode Contract + WRE Escalation Hooks
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 50 (Pre-Action Verification), WSP 87 (Navigation Reliability), WSP 91 (Observability)  
+**Status**: [OK] COMPLETE
+
+### Context
+HoloIndex had grown multiple overlapping retrieval toggles (`--fast-search`, `--llm-advisor`, `HOLO_SKIP_MODEL`) but lacked one explicit contract for how search should run and when WRE should escalate from deterministic retrieval to advisor guidance.
+
+### Actions
+- Added shared search-mode contract helper:
+  - `holo_index/search_mode_contract.py`
+  - Normalizes `plain`, `advisor`, and `lexical` modes.
+  - Computes deterministic retrieval confidence, ambiguity, and WRE route hints.
+- Hardened runtime wiring:
+  - `holo_index/cli.py`
+    - Added `--mode plain|advisor|lexical`
+    - Kept `--fast-search` and `--llm-advisor` as legacy aliases
+    - Attached retrieval contract + `wre_hooks` to fast lexical payloads and bundle JSON
+    - Made explicit mode take precedence over hidden env toggles
+  - `holo_index/core/holo_index.py`
+    - `search(..., search_mode="plain")` now stamps payload metadata with the search contract
+  - `holo_index/core/search_cache.py`
+    - Cache key now includes `search_mode` so repeated queries do not leak stale mode metadata
+- Added regression coverage:
+  - `holo_index/tests/test_fast_search_mode.py`
+    - Explicit mode resolution
+    - WRE escalation hook contract
+
+### Result
+- Operators can now request deterministic retrieval or advisor-guided search explicitly.
+- WRE receives machine-readable confidence and escalation hints instead of inferring agency from side effects.
+- Verified CLI behavior:
+  - `python holo_index.py --help`
+  - `python holo_index.py --search "brain artifacts reasoning traces" --mode lexical --limit 5`
+  - `python holo_index.py --search "brain artifacts reasoning traces" --mode plain --limit 5`
+  - `python holo_index.py --bundle-json --search "brain artifacts reasoning traces" --mode lexical --limit 3`
+
+---
+
 ## [2026-02-18] Machine-Language Contract + Drift Hardening
 
 **Agent**: 0102  
