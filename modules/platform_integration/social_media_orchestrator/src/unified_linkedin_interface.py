@@ -30,6 +30,7 @@ import json
 import asyncio
 import threading
 import logging
+import importlib.util
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from enum import Enum
@@ -44,6 +45,10 @@ logger = logging.getLogger(__name__)
 
 def _env_truthy(name: str, default: str = "false") -> bool:
     return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+def _module_available(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
 
 # Global singleton to prevent multiple browser instances
 _GLOBAL_LINKEDIN_POSTER = None
@@ -231,10 +236,13 @@ class UnifiedLinkedInInterface:
 
         success = False
         error_message = None
+        mcp_available = _module_available("fastmcp")
 
         # Post via MCP FastMCP HoloIndex Server
         # MCP server handles: Selenium + Gemini Vision + Training Data Collection
         try:
+            if not mcp_available:
+                raise RuntimeError("fastmcp not installed; skipping MCP lane")
             import random
             from holo_index.mcp_client.holo_mcp_client import HoloIndexMCPClient
 
@@ -283,7 +291,10 @@ class UnifiedLinkedInInterface:
 
         except Exception as e:
             error_message = str(e)
-            logger.error(f"[UNIFIED LINKEDIN] Exception during MCP posting: {e}")
+            if not mcp_available:
+                logger.info("[UNIFIED LINKEDIN] fastmcp unavailable - using direct Selenium fallback")
+            else:
+                logger.error(f"[UNIFIED LINKEDIN] Exception during MCP posting: {e}")
 
             # Check if this is a cancellation/duplicate attempt
             if any(indicator in error_message.lower() for indicator in ["window already closed", "target window already closed", "no such window"]):

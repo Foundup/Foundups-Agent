@@ -1,4 +1,4 @@
-# ModLog - Social Media Orchestrator
+﻿# ModLog - Social Media Orchestrator
 
 **WSP Compliance**: WSP 22, WSP 49, WSP 42, WSP 11, WSP 3
 
@@ -20,6 +20,18 @@ Centralized orchestration system providing unified social media management acros
 - **Platform Adapters**: TwitterAdapter, LinkedInAdapter with unified interface
 
 ## Recent Changes
+
+### 2026-03-08 - LinkedIn Optional MCP Fallback Hardening
+**WSP References**: WSP 22 (ModLog), WSP 5 (Testing Standards), WSP 91 (Graceful Failure)
+
+**Changes Made**
+- Hardened `src/unified_linkedin_interface.py` so the MCP lane is skipped cleanly when `fastmcp` is not installed.
+- Added explicit direct-Selenium fallback logging for optional MCP dependency absence.
+- Prevented noisy dead-server startup attempts in local social posting flows.
+
+**Impact**
+- Missing `fastmcp` no longer creates a misleading MCP startup failure during post-commit social hooks.
+- Direct LinkedIn Selenium posting remains available as the fallback path.
 
 ### 2026-03-07 - LinkedIn Registry Migration
 **WSP References**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
@@ -68,7 +80,7 @@ Centralized orchestration system providing unified social media management acros
 
 **Root Cause**
 Two routing systems with inconsistent mappings:
-1. `channel_routing.py` (SocialMediaRouter): Correctly maps `UC-LSSlOZwpGIRIYihaz8zCw` → `Move2Japan [JAPAN]`
+1. `channel_routing.py` (SocialMediaRouter): Correctly maps `UC-LSSlOZwpGIRIYihaz8zCw` 竊・`Move2Japan [JAPAN]`
 2. `channel_configuration_manager.py`: Had wrong mapping + missing key
 
 **CRITICAL SYSTEM SEPARATION** (documented for future 0102):
@@ -81,9 +93,9 @@ These systems are **COMPLETELY SEPARATE** - YouTube scheduling should NEVER use 
 
 **Changes Made**
 1. Fixed channel ID mapping (line 167-176):
-   - `UC-LSSlOZwpGIRIYihaz8zCw` → `Move2Japan [JAPAN]` (was `@UnDaoDu`)
-   - `UCfHM9Fw9HD-NwiS0seD_oIA` → `@UnDaoDu` (correct UnDaoDu ID)
-   - Added `UCVSmg5aOhP4tnQ9KFUg97qA` → `RavingANTIFA`
+   - `UC-LSSlOZwpGIRIYihaz8zCw` 竊・`Move2Japan [JAPAN]` (was `@UnDaoDu`)
+   - `UCfHM9Fw9HD-NwiS0seD_oIA` 竊・`@UnDaoDu` (correct UnDaoDu ID)
+   - Added `UCVSmg5aOhP4tnQ9KFUg97qA` 竊・`RavingANTIFA`
 
 2. Added missing config keys:
    - `Move2Japan [JAPAN]` with correct channel_id and LinkedIn/X routing
@@ -122,7 +134,7 @@ channel_name=channel_name,  # Use actual channel_name from stream dict
 **WSP References**: WSP 22 (ModLog), WSP 73 (Digital Twin), WSP 50 (Pre-action verification)
 
 **Changes Made**
-1. Documented rotation sequence: YouTube live chat → Studio comments → scheduling → LinkedIn Digital Twin flow.
+1. Documented rotation sequence: YouTube live chat 竊・Studio comments 竊・scheduling 竊・LinkedIn Digital Twin flow.
 
 ### 2026-01-20 - Digital Twin POC Alignment (LinkedIn-first)
 **WSP References**: WSP 22 (ModLog), WSP 73 (Digital Twin), WSP 77 (Agent Coordination)
@@ -151,21 +163,21 @@ channel_name=channel_name,  # Use actual channel_name from stream dict
 **WSP References**: WSP 90, WSP 1, WSP 49
 
 **Problem Identified**
-- LinkedIn posts showing: `[U+1F534] LIVE NOW` instead of `🔴 LIVE NOW`
+- LinkedIn posts showing: `[U+1F534] LIVE NOW` instead of `閥 LIVE NOW`
 - X/Twitter posts also had Unicode escape sequences
 - Violates WSP 90 (UTF-8 Encoding Enforcement Protocol)
 - Posts to social media platforms looked broken with escape codes
 
 **Changes Made**
 1. Added UTF-8 encoding header to `platform_posting_service.py`: `# -*- coding: utf-8 -*-`
-2. Fixed `_format_linkedin_post()`: `[U+1F534]` → `🔴`
-3. Fixed `_format_x_post()`: `[U+1F534]` → `🔴`
+2. Fixed `_format_linkedin_post()`: `[U+1F534]` 竊・`閥`
+3. Fixed `_format_x_post()`: `[U+1F534]` 竊・`閥`
 
 **Impact**
-- ✅ LinkedIn posts now show: "🔴 LIVE NOW: Move2Japan..."
-- ✅ X/Twitter posts display properly with emoji
-- ✅ WSP 90 compliant across all social media posting
-- ✅ Professional appearance on social platforms
+- 笨・LinkedIn posts now show: "閥 LIVE NOW: Move2Japan..."
+- 笨・X/Twitter posts display properly with emoji
+- 笨・WSP 90 compliant across all social media posting
+- 笨・Professional appearance on social platforms
 
 ---
 
@@ -505,7 +517,7 @@ Each MCP post automatically saves to `holo_index/training/selenium_patterns.json
 - PlatformHealth enum with 5 states
 - qwen_pre_posting_check() returns intelligent decisions
 - Platform heat tracking (0=cold to 3=overheated)
-- ､役洫 emoji logging for QWEN visibility
+- 﨟橸ｽ､蠖ｹ豢ｫ・ｰ emoji logging for QWEN visibility
 
 # RefactoredPostingOrchestrator integration:
 - Calls qwen_pre_posting_check() before posting
@@ -873,7 +885,7 @@ await orchestrator.authenticate_platform('twitter', twitter_creds)
 
 # Cross-platform posting
 result = await orchestrator.post_content(
-    "Hello from FoundUps! 噫",
+    "Hello from FoundUps! 﨟槫勠",
     platforms=['twitter', 'linkedin'],
     options={'hashtags': ['#FoundUps', '#SocialMedia']}
 )
@@ -1027,7 +1039,7 @@ schedule_id = await orchestrator.schedule_content(
 2. **Quantum Features Implemented**:
    - AST pattern extraction for semantic code analysis
    - Quantum state encoding of code patterns (16-qubit superposition)
-   - Grover's algorithm for O(竏哢) search vs O(N) classical search
+   - Grover's algorithm for O(遶丞討) search vs O(N) classical search
    - Semantic similarity scoring with confidence metrics
    - Structure-based hashing for order-independent matching
 
@@ -1050,7 +1062,7 @@ schedule_id = await orchestrator.schedule_content(
 
 #### Benefits:
 - Detects semantic duplicates that classical grep/linting would miss
-- Quantum O(竏哢) search advantage for large codebases
+- Quantum O(遶丞討) search advantage for large codebases
 - Prevents vibecoding by finding functionally identical existing code
 - Enhanced duplicate prevention for social media content
 

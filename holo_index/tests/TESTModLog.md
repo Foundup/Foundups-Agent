@@ -1,4 +1,15 @@
-# HoloIndex Test Suite TESTModLog
+﻿# HoloIndex Test Suite TESTModLog
+
+## [2026-03-08] MCP Dependency Guard Coverage
+**WSP Protocol**: WSP 5 (Testing Standards), WSP 22 (Documentation), WSP 84 (Enhance Existing)
+
+### Summary
+- Added `test_holo_mcp_client.py`.
+- Verifies `HoloIndexMCPClient.connect()` fails cleanly when `fastmcp` is unavailable instead of attempting a dead subprocess launch.
+
+### Verification
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest holo_index/tests/test_holo_mcp_client.py -q`
+- Result: `1 passed`
 
 ## [2026-03-08] Brain Artifact Training Corpus Coverage
 **WSP Protocol**: WSP 5 (Testing Standards), WSP 22 (Documentation), WSP 84 (Enhance Existing)

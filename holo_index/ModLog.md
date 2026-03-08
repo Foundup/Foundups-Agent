@@ -1,5 +1,24 @@
 # HoloIndex Package ModLog
 
+## [2026-03-08] MCP Client Dependency Guard
+
+**Agent**: 0102  
+**WSP References**: WSP 22 (ModLog), WSP 84 (Enhance Existing), WSP 91 (Observability)  
+**Status**: [OK] COMPLETE
+
+### Context
+The post-commit social hook attempted to launch the FastMCP HoloIndex server even when `fastmcp` was not installed, producing noisy startup failures before Selenium fallback.
+
+### Actions
+- Hardened `holo_index/mcp_client/holo_mcp_client.py`:
+  - `connect()` now checks `importlib.util.find_spec("fastmcp")` before subprocess launch
+  - missing dependency now raises `RuntimeError("fastmcp is not installed")`
+  - `last_error` is set deterministically for callers and tests
+
+### Result
+- Missing `fastmcp` now fails fast and cleanly.
+- Callers can route directly to fallback behavior without spawning a dead MCP subprocess.
+
 ## [2026-03-08] Brain Artifact Training-Corpus Wiring
 
 **Agent**: 0102  

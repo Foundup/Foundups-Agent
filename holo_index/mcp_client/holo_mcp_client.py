@@ -26,6 +26,7 @@ WSP 93: CodeIndex Surgical Intelligence
 """
 
 import asyncio
+import importlib.util
 import json
 import subprocess
 import sys
@@ -82,6 +83,11 @@ class HoloIndexMCPClient:
         if self.process:
             print("[MCP-CLIENT] Already connected")
             return
+
+        if importlib.util.find_spec("fastmcp") is None:
+            message = "fastmcp is not installed"
+            self._set_error(message)
+            raise RuntimeError(message)
 
         print("[MCP-CLIENT] Starting FastMCP server process...")
 

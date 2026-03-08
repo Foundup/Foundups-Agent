@@ -391,7 +391,7 @@ class AntiDetectionLinkedIn:
         if self.driver:
             os.makedirs(os.path.dirname(self.session_file), exist_ok=True)
             cookies = self.driver.get_cookies()
-            with open(self.session_file, 'wb', encoding="utf-8") as f:
+            with open(self.session_file, 'wb') as f:
                 pickle.dump(cookies, f)
             if verbose:
                 print("[INFO] Session saved for reuse")
@@ -400,7 +400,7 @@ class AntiDetectionLinkedIn:
         """Load saved session/cookies"""
         if os.path.exists(self.session_file) and self.driver:
             self.driver.get("https://www.linkedin.com")
-            with open(self.session_file, 'rb', encoding="utf-8") as f:
+            with open(self.session_file, 'rb') as f:
                 cookies = pickle.load(f)
                 for cookie in cookies:
                     try:
