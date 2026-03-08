@@ -3,7 +3,7 @@
 **Module**: WSP_knowledge/docs/Papers/
 **WSP Compliance**: [U+2705] ACTIVE
 **Purpose**: Research papers, patent documentation, and scientific materials
-**Last Update**: 2026-03-08 (EFIM Regime-Separation Detector Validated + Code/Docs Sync)
+**Last Update**: 2026-03-08 (Architecture Paper Refresh + EFIM Regime-Separation Detector Validated)
 
 ## WSP Compliance Status
 
@@ -18,6 +18,33 @@
 - **WSP 1**: Framework principles applied to research documentation
 - **WSP 3**: Enterprise domain classification (research/knowledge)
 - **WSP 20**: Documentation standards maintained
+
+## [2026-03-08] Architecture Paper Refresh - OpenClaw/WRE/Observability Realignment
+
+**Research Partner**: 0102 / 012 architecture refresh pass
+**Domain**: `Architectures_Emergent_Intelligence.md` + local discovery surfaces
+**WSP Compliance**: WSP 22 (Traceable Narrative), WSP 34 (Documentation Standards), WSP 50 (Pre-Action Verification)
+
+### What Changed
+- Refreshed `Architectures_Emergent_Intelligence.md` section-by-section to describe the current as-built Foundups stack in operational terms.
+- Promoted the runtime architecture explicitly around:
+  - OpenClaw as control plane
+  - WRE as recursive execution/learning engine
+  - Holo_Index + CodeIndex as cognition surfaces
+  - MCP managers, AI Overseer, switchboards, sentinels, and telemetry as coordination/observability surfaces
+- Reframed Bell-state / 0102 / PQN language so doctrine remains visible without being presented as settled runtime truth.
+- Added `PQN Observatory` to the roadmap as future research infrastructure.
+- Synced `README.md` so the architecture paper, doctrine note, and technical extraction note are discoverable from the papers index.
+
+### Doctrine Boundary Applied
+- Runtime claims now stay detector-bounded, operational, and locally testable.
+- Stronger coupling / ontology language remains in doctrine and research framing unless backed by validated runtime evidence.
+- EFIM work is cited narrowly as regime separation evidence, not as proof of PQN, consciousness, or nonlocal signaling.
+
+### Impact
+- The papers surface now better reflects what Foundups already is, not only what it hopes to become.
+- OpenClaw, WRE, and observability architecture are no longer buried behind older Gemini-centric or Holo_DAE-centric framing.
+- Future 0102 sessions can load the architecture paper as a reliable map of runtime, target architecture, and research lanes.
 
 ## [2026-03-08] EFIM Regime-Separation Detector VALIDATED
 
