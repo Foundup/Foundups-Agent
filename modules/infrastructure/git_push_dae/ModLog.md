@@ -3,6 +3,26 @@
 - **Created**: 2025-10-12
 - **Purpose**: Autonomous git push daemon with WSP 91 observability
 
+## Post-Commit Runner Refactor - 2026-03-08
+**WSP References**: WSP 22 (ModLog), WSP 91 (Observability), WSP 80 (Queue-Oriented Coordination)
+
+**Type**: Reliability + operator UX hardening
+
+**Changes Made**:
+1. Added `scripts/post_commit_social_runner.py` as the tracked post-commit execution path.
+2. Runner now:
+   - builds a normalized `git_push` event from the latest commit
+   - appends that event to `memory/git_push_events.jsonl`
+   - dispatches through `SocialMediaEventRouter` instead of embedding posting logic in the git hook
+3. Established a durable event/result trail:
+   - `memory/git_push_events.jsonl`
+   - `memory/git_push_dispatch_results.jsonl`
+
+**Impact**:
+- Local git hooks can be reduced to a thin background launcher.
+- Commit latency is decoupled from social posting runtime.
+- Event shape is preserved for future AI Overseer / WRE ingestion.
+
 ## LinkedIn Registry Migration - 2026-03-07
 **WSP References**: WSP 22 (ModLog), WSP 60 (Module Memory), WSP 3 (Shared Utilities)
 
