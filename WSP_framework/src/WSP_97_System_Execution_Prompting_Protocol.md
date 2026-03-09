@@ -1,8 +1,8 @@
 # WSP 97: System Execution Prompting Protocol
 
 **Status**: ACTIVE
-**Version**: 1.0
-**Date**: 2025-10-17
+**Version**: 1.1
+**Date**: 2026-03-10
 **Author**: 0102 (System Execution Architect)
 
 ---
@@ -34,6 +34,70 @@ HoloIndex -> Research -> Hard Think -> First Principles -> Build -> Follow WSP
 - **First Principles**: Break down to fundamental truths (Occam's Razor)
 - **Build**: Execute with minimal complexity
 - **Follow WSP**: Ensure protocol compliance throughout
+
+### 1.1 CoT/CoR Verification Gates (v1.1)
+
+**Canonical Operator**:
+```text
+follow wsp
+:= retrieve wsp -> resolve execution plane? -> apply cot -> apply cor -> execute
+```
+
+The mantra steps include two verification gates that prevent common execution failures:
+
+#### CoT (Chain of Thought) = RETRIEVE before STATING
+
+**Maps to**: `HoloIndex -> Research`
+
+```
+GATE: Before stating any specific fact (numbers, paths, WSP numbers, code patterns):
+  1. Query HoloIndex or grep/glob for verification
+  2. Read relevant files to confirm
+  3. Only THEN state the fact
+
+VIOLATION: Confabulation (fabricated data without retrieval)
+RECOVERY: STOP → identify unverified claim → retrieve → resume
+```
+
+**Example**:
+- WRONG: "The video rotator is in `scripts/rotator.py`" (guessed)
+- RIGHT: Search first → "Found `video_rotator.py` at line 25 has ROTATION_VIDEOS"
+
+#### CoR (Chain of Reasoning) = DIALECTIC SWEEP before COMMITTING
+
+**Maps to**: `Hard Think -> First Principles`
+
+```
+GATE: Before committing to any implementation or decision:
+  1. Ask: "Is there a better way?"
+  2. Ask: "What am I assuming?"
+  3. Ask: "Does existing code already solve this?"
+  4. Verify assumptions against codebase
+
+VIOLATION: Vibecoding (skipped alternatives check)
+RECOVERY: STOP → identify assumption → search alternatives → sweep → resume
+```
+
+**Example**:
+- WRONG: Create new credential rotation system
+- RIGHT: Search first → Found `oauth_manager.py` with existing rotation → extend/use it
+
+#### Gate Integration
+
+```
+follow wsp := retrieve wsp -> resolve execution plane? -> apply cot -> apply cor -> execute
+                │                │                         │             │
+                │                │                         │             └─ execute only after gates pass
+                │                │                         └─ CoR Gate: Hard Think + First Principles
+                │                └─ classify WRE required vs not applicable
+                └─ retrieve governing WSPs and evidence first
+```
+
+**Question-Mark Rule**:
+- `resolve execution plane?` is a decision gate, not a forced WRE attachment.
+- Use WRE when the task is runtime-distributed, autonomous, routed, or multi-agent.
+- Mark WRE as not applicable for docs-only, local reasoning, and non-orchestrated single-surface work.
+- Not everything must connect to WRE; everything must be classified.
 
 ### 2. Agent-Specific Execution Profiles
 
