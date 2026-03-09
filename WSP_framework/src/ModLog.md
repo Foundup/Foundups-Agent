@@ -11,6 +11,27 @@
 
 ---
 
+## 2026-03-10 - WSP 97 Canonical Compression Clarified (Resolve Execution Plane?)
+
+**WSP References**: WSP 22, WSP 46, WSP 97, WSP 99
+
+**Changes Made**:
+- Updated `WSP_97_System_Execution_Prompting_Protocol.md`:
+  - Replaced the ambiguous phrase `follow wsp connect wre apply cot and cor` with the canonical compressed operator:
+    - `follow wsp := retrieve wsp -> resolve execution plane? -> apply cot -> apply cor -> execute`
+  - Added explicit question-mark semantics so execution-plane resolution is treated as a decision gate.
+  - Clarified that WRE must be connected only when the task is runtime-distributed, autonomous, routed, or multi-agent.
+  - Clarified that WRE should be marked not applicable for docs-only, local reasoning, and non-orchestrated single-surface work.
+- Updated `WSP_MASTER_INDEX.md`:
+  - Expanded WSP 97 catalog description to include execution-plane classification and the compressed operator semantics.
+
+**Rationale**:
+- Remove the "obedient attachment" failure mode where agents connect WRE just to satisfy wording.
+- Preserve the need for execution-plane verification without forcing fake coupling.
+- Keep `follow wsp` simple for 012 while making the hidden machine contract precise.
+
+---
+
 ## 2026-02-19 - WSP 46/95/96 Runtime Alignment (WRE Control Plane + Governance Boundary)
 
 **WSP References**: WSP 22, WSP 46, WSP 95, WSP 96
