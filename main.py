@@ -720,6 +720,94 @@ def run_wsp_framework_preflight(repo_root: Path, overseer: Any | None = None) ->
     return True
 
 
+def run_git_main_merge_sentinel_preflight(repo_root: Path) -> bool:
+    """Optionally auto-merge current clean feature branch to main at startup.
+
+    WSP 97 policy:
+    - diagnose repo state first
+    - mutate only when explicitly armed
+    """
+    enabled = os.getenv("GIT_MAIN_MERGE_SENTINEL", "0") != "0"
+    if not enabled:
+        logger.info("[GIT-MERGE-SENTINEL] Disabled")
+        print("[GIT-MERGE-SENTINEL] preflight=SKIP disarmed")
+        return True
+
+    enforced = os.getenv("GIT_MAIN_MERGE_SENTINEL_ENFORCED", "0") != "0"
+
+    try:
+        from modules.infrastructure.wre_core.src.git_main_merge_sentinel import (
+            run_main_merge_sentinel,
+        )
+
+        status = run_main_merge_sentinel(repo_root)
+    except Exception as exc:
+        logger.error(f"[GIT-MERGE-SENTINEL] Failed: {exc}")
+        if enforced:
+            print(f"[GIT-MERGE-SENTINEL] preflight=FAIL error={exc}")
+            return False
+        print(f"[GIT-MERGE-SENTINEL] preflight=WARN error={exc}")
+        return True
+
+    merged = status.get("merged", False)
+    message = status.get("message", "")
+    label = "PASS" if status.get("passed", True) else "WARN"
+    detail = f"merged=1 branch={status.get('branch', '?')}" if merged else message
+
+    print(f"[GIT-MERGE-SENTINEL] preflight={label} {detail}")
+
+    if not status.get("passed", True) and enforced:
+        print("[GIT-MERGE-SENTINEL] Startup blocked by GIT_MAIN_MERGE_SENTINEL_ENFORCED=1")
+        return False
+    return True
+
+
+def run_git_branch_hygiene_preflight(repo_root: Path) -> bool:
+    """Run git branch hygiene preflight at startup.
+
+    Warns about stale branches, orphaned worktrees, stash accumulation,
+    and behind-main drift. Read-only diagnostics - never auto-fixes.
+    """
+    enabled = os.getenv("GIT_BRANCH_HYGIENE_PREFLIGHT", "1") != "0"
+    if not enabled:
+        logger.info("[GIT-HYGIENE] Startup preflight disabled")
+        return True
+
+    enforced = os.getenv("GIT_BRANCH_HYGIENE_PREFLIGHT_ENFORCED", "0") != "0"
+    force = os.getenv("GIT_BRANCH_HYGIENE_PREFLIGHT_FORCE", "0") != "0"
+
+    try:
+        from modules.infrastructure.wre_core.src.git_branch_hygiene import (
+            run_git_branch_hygiene_preflight as _run_git_hygiene,
+        )
+
+        status = _run_git_hygiene(repo_root, force=force)
+    except Exception as exc:
+        logger.error(f"[GIT-HYGIENE] Startup preflight failed: {exc}")
+        if enforced:
+            print(f"[GIT-HYGIENE] preflight=FAIL error={exc}")
+            return False
+        print(f"[GIT-HYGIENE] preflight=WARN error={exc}")
+        return True
+
+    cache_state = "cached" if status.get("cached") else "fresh"
+    warning_count = int(status.get("warning_count", 0))
+    passed = status.get("passed", True)
+    label = "PASS" if passed else "WARN"
+
+    print(f"[GIT-HYGIENE] preflight={label} ({cache_state}) warnings={warning_count}")
+
+    if not passed:
+        for check in status.get("checks", []):
+            if not check.get("ok", True):
+                print(f"  [WARN] {check.get('message', '?')}")
+
+    if not passed and enforced:
+        print("[GIT-HYGIENE] Startup blocked by GIT_BRANCH_HYGIENE_PREFLIGHT_ENFORCED=1")
+        return False
+    return True
+
+
 def main():
     """Main entry point - thin router to CLI module."""
     repo_root = Path(__file__).resolve().parent
@@ -728,6 +816,8 @@ def main():
         or os.getenv("OPENCLAW_DEP_SECURITY_PREFLIGHT", "1") != "0"
         or os.getenv("WRE_DASHBOARD_PREFLIGHT", "1") != "0"
         or os.getenv("WSP_FRAMEWORK_PREFLIGHT", "1") != "0"
+        or os.getenv("GIT_BRANCH_HYGIENE_PREFLIGHT", "1") != "0"
+        or os.getenv("GIT_MAIN_MERGE_SENTINEL", "0") != "0"
     )
 
     overseer = None
@@ -748,6 +838,10 @@ def main():
     if not run_wre_dashboard_preflight(repo_root):
         return
     if not run_wsp_framework_preflight(repo_root, overseer=overseer):
+        return
+    if not run_git_branch_hygiene_preflight(repo_root):
+        return
+    if not run_git_main_merge_sentinel_preflight(repo_root):
         return
 
     # Auto-start antifaFM broadcaster (default ON, disable with ANTIFAFM_AUTO_START=0)

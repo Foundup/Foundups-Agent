@@ -2,6 +2,28 @@
 
 ## Chronological Change Log
 
+### [2026-03-11] - Git Startup Governance Aligned to WSP 97
+
+**WSP Protocol References**: WSP 22 (ModLog), WSP 97 (diagnose before mutation)
+**Impact Analysis**: Makes startup git behavior safe for recursive multi-0102 development by keeping read-only hygiene checks on and disarming mutating auto-merge unless explicitly armed.
+
+#### Files Changed
+- `src/git_main_merge_sentinel.py`
+  - Dirty worktree now disarms auto-merge/push unless `force=True`.
+- `tests/test_git_main_merge_sentinel.py`
+  - Added regression coverage for dirty `main` and dirty feature branches.
+
+#### Behavioral Change
+- `git_branch_hygiene` remains the default startup diagnostic lane.
+- `git_main_merge_sentinel` is now intended for explicit clean integration runs, not dirty sandbox startup.
+
+#### Why
+- `012` is the only human principal, but multiple `0102` sessions may touch the repo recursively.
+- Dirty worktrees are active sandboxes, not valid integration contexts.
+- WSP 97 requires diagnosis before mutation.
+
+---
+
 ### [2026-03-08] - Brain Artifact Promotion to WSP_knowledge + Incremental Startup Refresh
 
 **WSP Protocol References**: WSP 60 (Module Memory), WSP 84 (Enhance Existing), WSP 87 (Code Navigation), WSP 22 (ModLog)

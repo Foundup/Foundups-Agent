@@ -1,5 +1,15 @@
 # TestModLog - wre_core/tests
 
+## 2026-03-11: Git merge sentinel safety regression
+
+- Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/infrastructure/wre_core/tests/test_git_main_merge_sentinel.py -q`
+- Status: PASS
+- Result: `2 passed, 2 warnings`
+- Notes:
+  - Confirms startup merge sentinel disarms on dirty sandbox state for both `main` and feature branches.
+
+---
+
 ## 2026-03-08: Brain artifact extractor incremental refresh + training signal validation
 
 - Command: `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; pytest -q modules/infrastructure/wre_core/tests/test_extract_brain_artifacts.py`

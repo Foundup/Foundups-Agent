@@ -1,5 +1,32 @@
 # FoundUps Agent - Development Log
 
+## [2026-03-11] Git Startup Policy Aligned to WSP 97
+
+**Change Type**: Git Governance / Startup Safety  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 97
+
+### Summary
+
+Changed startup git policy so read-only hygiene runs before any optional merge automation, and made the merge sentinel opt-in instead of default-on.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `main.py` | Reordered git startup checks: hygiene before merge sentinel; merge sentinel now disarmed by default |
+| `.env.example` | Documented git startup governance env flags |
+| `docs/GIT_WORKFLOW_0102.md` | Added startup policy for sandbox vs integration contexts |
+| `modules/infrastructure/wre_core/src/git_main_merge_sentinel.py` | Dirty worktree now disarms auto-merge/push unless forced |
+
+### Why
+
+- FoundUps is operating in recursive multi-0102 development flow.
+- Dirty sandbox worktrees must not auto-merge into `main` on startup.
+- WSP 97 requires diagnosis before mutation.
+
+---
+
 ## [2026-03-08] Brain Artifact Memory Preflight + WSP Knowledge Promotion
 
 **Change Type**: System Integration / Memory Architecture  

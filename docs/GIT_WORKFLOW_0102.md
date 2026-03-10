@@ -90,6 +90,35 @@ git fetch --all
 git sts
 ```
 
+### Startup Policy
+`main.py` now treats git governance in two phases:
+
+1. `GIT_BRANCH_HYGIENE_PREFLIGHT=1`
+   - read-only diagnostics
+   - warns about drift, stale branches, detached worktrees, stash pileup, and unpushed commits
+
+2. `GIT_MAIN_MERGE_SENTINEL=0` by default
+   - mutating auto-merge is disarmed unless explicitly armed
+
+Why:
+- `012` is the only human principal
+- multiple `0102` sessions may still touch the repo recursively
+- dirty sandbox worktrees are active work, not valid integration contexts
+- WSP 97 requires diagnosis before mutation
+
+Rule:
+- Keep merge sentinel OFF in the primary sandbox worktree
+- Arm it only in a clean integration context when you explicitly want startup to land branch work on `main`
+
+Example:
+```bash
+# Safe sandbox default
+GIT_MAIN_MERGE_SENTINEL=0
+
+# Explicit integration run
+GIT_MAIN_MERGE_SENTINEL=1 python main.py
+```
+
 ### Before Committing
 ```bash
 # Stage specific files (not "git add .")
