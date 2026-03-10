@@ -1,5 +1,209 @@
 # FoundUps Agent - Development Log
 
+## [2026-03-11] OpenClaw Control-Plane Refactor: Bootstrap Constructor
+
+**Change Type**: Control Plane / Large File Reduction  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 62, WSP 73, WSP 97
+
+### Summary
+
+Extracted the OpenClaw control-plane bootstrap block out of `OpenClawDAE.__init__` into a dedicated bootstrap helper so the facade constructor focuses on orchestration instead of inline state wiring.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `modules/communication/moltbot_bridge/src/openclaw_bootstrap_config.py` | New bootstrap helper for identity/runtime/model/context state |
+| `modules/communication/moltbot_bridge/src/openclaw_dae.py` | Constructor now delegates bootstrap initialization |
+
+### Why
+
+- Control-plane setup should not live inline inside the facade constructor.
+- WSP 97 requires explicit plane boundaries even during boot.
+- WSP 62 requires continued decomposition of oversized files.
+
+---
+
+## [2026-03-11] WSP 97 Tiered Prompt Injection + RotationSupervisor Integration
+
+**Change Type**: Architecture / Agent Coordination
+**By**: 0102
+**WSP References**: WSP 97, WSP 77, WSP 93, WSP 91
+
+### Summary
+
+Two critical architectural gaps addressed:
+
+1. **WSP 97 Tiered Prompts**: Local models (Qwen/Gemma) now receive WSP 97-compliant system prompts, tiered by capability
+2. **RotationSupervisor Integration**: Comments/Shorts/Indexing rotation now uses heartbeat-based stall detection with AI Overseer trigger
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `holo_index/qwen_advisor/wsp97_prompts.py` | NEW: Tiered WSP 97 prompts (Gemma/Qwen-4B/Qwen-7B) |
+| `holo_index/qwen_advisor/llm_engine.py` | Auto-inject WSP 97 prompt (`use_wsp97=True`) |
+| `holo_index/qwen_advisor/gemma_rag_inference.py` | Qwen escalation uses `get_wsp97_prompt()` |
+| `modules/communication/livechat/src/auto_moderator_dae.py` | Added `YT_USE_ROTATION_SUPERVISOR` toggle |
+| `modules/ai_intelligence/ai_overseer/src/daemon_monitor_mixin.py` | Added `trigger_next_rotation` handler + `check_rotation_stalls()` |
+| `modules/communication/livechat/skillz/youtube_daemon_monitor.json` | Added `rotation_stall_detected` signal pattern |
+
+### Model Capability Assessment
+
+| Model | WSP 97 | Context | Escalation |
+|-------|--------|---------|------------|
+| Gemma-270M | NO (binary only) | 2K | Always for non-binary |
+| Qwen-4B | Partial (3-step) | 4K | Complexity >= 2 |
+| Qwen-7B | Full operational | 8K | Complexity >= 3 |
+| 0102 (Opus) | Full strategic | Unlimited | Never (arbiter) |
+
+### Why
+
+- CTO gap analysis revealed WSP 97 was NOT injected into any Qwen instance
+- RotationSupervisor existed (598 lines) but was NOT wired into main daemon
+- AI Overseer had no trigger to invoke rotation CLI on stall detection
+
+---
+
+## [2026-03-11] OpenClaw Control-Plane Refactor: Provider + Runtime Chain
+
+**Change Type**: Control Plane / Large File Reduction  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 62, WSP 73, WSP 97
+
+### Summary
+
+Extracted the OpenClaw conversation provider chain and IronClaw autostart/recovery runtime logic out of `openclaw_dae.py`, keeping the facade focused on routing and execution-plane orchestration.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `modules/communication/moltbot_bridge/src/openclaw_provider_chain.py` | New provider-chain helper for IronClaw and preferred external conversation |
+| `modules/communication/moltbot_bridge/src/openclaw_runtime_support.py` | Runtime support now owns IronClaw autostart/recovery logic |
+| `modules/communication/moltbot_bridge/src/openclaw_dae.py` | Reduced to provider/runtime wrapper methods |
+
+### Why
+
+- Provider/runtime behavior is a separate control-plane seam from identity, context, and intent routing.
+- WSP 97 requires explicit plane boundaries.
+- WSP 62 requires continued decomposition of oversized files.
+
+---
+
+## [2026-03-11] OpenClaw Control-Plane Refactor: Identity + Model Policy
+
+**Change Type**: Control Plane / Large File Reduction  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 62, WSP 73, WSP 97
+
+### Summary
+
+Extracted OpenClaw identity/context-pack assembly and model-routing policy out of `openclaw_dae.py`, keeping `OpenClawDAE` as a facade and reducing the file below 3000 lines.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `modules/communication/moltbot_bridge/src/openclaw_identity_context.py` | New identity query + WSP/context-pack helper module |
+| `modules/communication/moltbot_bridge/src/openclaw_model_policy.py` | New model-switch + agentic routing helper module |
+| `modules/communication/moltbot_bridge/src/openclaw_dae.py` | Reduced to thin wrappers for extracted concerns |
+
+### Why
+
+- `openclaw_dae.py` was still oversized and carrying multiple control-plane responsibilities.
+- WSP 97 favors explicit execution-plane boundaries.
+- WSP 62 requires incremental modularization instead of monolithic rewrites.
+
+---
+
+## [2026-03-11] Git Startup Policy Aligned to WSP 97
+
+**Change Type**: Git Governance / Startup Safety  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 97
+
+### Summary
+
+Changed startup git policy so read-only hygiene runs before any optional merge automation, and made the merge sentinel opt-in instead of default-on.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `main.py` | Reordered git startup checks: hygiene before merge sentinel; merge sentinel now disarmed by default |
+| `.env.example` | Documented git startup governance env flags |
+| `docs/GIT_WORKFLOW_0102.md` | Added startup policy for sandbox vs integration contexts |
+| `modules/infrastructure/wre_core/src/git_main_merge_sentinel.py` | Dirty worktree now disarms auto-merge/push unless forced |
+
+### Why
+
+- FoundUps is operating in recursive multi-0102 development flow.
+- Dirty sandbox worktrees must not auto-merge into `main` on startup.
+- WSP 97 requires diagnosis before mutation.
+
+---
+
+## [2026-03-10] Central DAEmon Main Bootstrap + OpenClaw Action Ledger
+
+**Change Type**: Control Plane / Observability  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 73, WSP 91
+
+### Summary
+
+Moved central DAEmon bootstrap into `main.py` so the cardiovascular bus is active before interactive menu/runtime work begins, and upgraded OpenClaw to emit structured action events for the core autonomy loop instead of only `message_in` / `message_out`.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `main.py` | Added `start_central_daemon()` and wired bootstrap before runtime services |
+| `modules/infrastructure/cli/src/main_menu.py` | Preserves fallback DAEmon startup only for direct CLI/test invocation |
+| `modules/communication/moltbot_bridge/src/openclaw_dae.py` | Emits structured DAEmon action events for classify/gate/plan/execute/validate |
+| `modules/infrastructure/dae_daemon/src/dae_adapter.py` | Added optional structured `details` payload support to `report_action()` |
+| `.env.example` | Documented `CENTRAL_DAEMON_ENABLED=1` |
+
+### Validation
+
+- `python -m py_compile main.py modules/communication/moltbot_bridge/src/openclaw_dae.py modules/infrastructure/cli/src/main_menu.py modules/infrastructure/dae_daemon/src/dae_adapter.py modules/infrastructure/dae_daemon/tests/test_dae_adapter.py`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "structured_actions_to_central_daemon" -q`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/infrastructure/dae_daemon/tests/test_dae_adapter.py -q`
+- `.\\.venv\\Scripts\\python.exe - <<PY ... start_central_daemon(); reset_central_daemon() ... PY`
+
+---
+
+## [2026-03-10] OpenClaw First-Pass Modularity Extraction
+
+**Change Type**: Refactor / Control Plane  
+**By**: 0102  
+**WSP References**: WSP 22, WSP 62, WSP 73, WSP 84
+
+### Summary
+
+Extracted the first two high-value seams from `modules/communication/moltbot_bridge/src/openclaw_dae.py`: the DAEmon action ledger and the runtime/model probe helpers. `OpenClawDAE` remains the public facade, but the control-plane file is no longer carrying those subsystems inline.
+
+### Files Changed
+
+| Location | Description |
+|----------|-------------|
+| `modules/communication/moltbot_bridge/src/openclaw_action_ledger.py` | New helper module for DAEmon action reporting and social-response capture |
+| `modules/communication/moltbot_bridge/src/openclaw_runtime_support.py` | New helper module for runtime/model/identity probing |
+| `modules/communication/moltbot_bridge/src/openclaw_dae.py` | Replaced extracted sections with thin wrappers |
+
+### Validation
+
+- `python -m py_compile modules/communication/moltbot_bridge/src/openclaw_dae.py modules/communication/moltbot_bridge/src/openclaw_action_ledger.py modules/communication/moltbot_bridge/src/openclaw_runtime_support.py`
+- `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'; .\.venv\Scripts\python.exe -m pytest modules/communication/moltbot_bridge/tests/test_openclaw_dae.py -k "structured_actions_to_central_daemon or model_availability_snapshot or qwen3_5 or identity_query" -q`
+
+### Result
+
+- `openclaw_dae.py` reduced from 4493 lines to 4194 lines.
+- This is not sufficient final modularity, but it establishes the correct extraction pattern for the next passes.
+
+---
+
 ## [2026-03-08] Brain Artifact Memory Preflight + WSP Knowledge Promotion
 
 **Change Type**: System Integration / Memory Architecture  
@@ -55627,3 +55831,25 @@ if cooldown_sets:
 
 ### Cleanup Recommendations
 - Consider migrating posted_streams.json from array to dict format with timestamps
+
+## 2026-03-11: OpenClaw WSP 97 facade refactor - planner, result memory, permission policy
+- Extracted three new control-plane modules under `modules/communication/moltbot_bridge/src/`:
+  - `openclaw_intent_planner.py`
+  - `openclaw_result_memory.py`
+  - `openclaw_permission_policy.py`
+- Reduced `openclaw_dae.py` from `2638` lines to `2086` lines while preserving behavior through targeted regression coverage.
+- Kept `OpenClawDAE` as the facade and moved policy/validation logic into auditable modules aligned to WSP 97 execution-plane separation.
+
+## 2026-03-11: OpenClaw WSP 97 facade refactor - execution routes
+- Added `modules/communication/moltbot_bridge/src/openclaw_execution_routes.py` and moved the post-plan route layer out of `openclaw_dae.py`.
+- `openclaw_dae.py` is now `1678` lines, down from `2638` before the current WSP 97 extraction series.
+- Route execution is now separated from intent planning, permission policy, conversation, runtime probing, and identity/context assembly.
+
+## 2026-03-11: OpenClaw WSP 97 facade refactor - turn state
+- Added `modules/communication/moltbot_bridge/src/openclaw_turn_state.py` and moved token telemetry + turn cancellation state out of `openclaw_dae.py`.
+- `openclaw_dae.py` is now `1603` lines, down from `2638` before the current WSP 97 extraction series.
+
+## 2026-03-11: OpenClaw WSP 97 facade refactor - status + process loop
+- Added `modules/communication/moltbot_bridge/src/openclaw_status_surface.py` and `openclaw_process_loop.py`.
+- `openclaw_dae.py` is now `1342` lines, down from `2638` before the current WSP 97 extraction series.
+- The remaining file content is predominantly facade wrappers, dataclasses, and the top-level honeypot control surface.
