@@ -69,22 +69,29 @@ def list_accounts() -> dict:
 
 
 def get_browser():
-    """Get or create LinkedIn browser session."""
+    """Get or create LinkedIn browser session (Edge debug port 9223)."""
+    from selenium import webdriver
+    from selenium.webdriver.edge.options import Options
+
+    # Primary: Connect to existing Edge debug session (port 9223)
+    try:
+        options = Options()
+        options.add_experimental_option("debuggerAddress", "127.0.0.1:9223")
+        driver = webdriver.Edge(options=options)
+        logger.info("[BROWSER] Connected to Edge debug port 9223")
+        return driver
+    except Exception as e:
+        logger.warning(f"[BROWSER] Edge debug connection failed: {e}")
+
+    # Fallback: Use BrowserManager
     try:
         from modules.infrastructure.foundups_selenium.src.browser_manager import get_browser_manager
         manager = get_browser_manager()
-        browser = manager.get_browser("chrome", f"linkedin_{COMPANY_ID}")
+        browser = manager.get_browser("edge", f"linkedin_{COMPANY_ID}")
         return browser
-    except Exception as e:
-        logger.warning(f"BrowserManager fallback: {e}")
-        # Fallback to direct selenium
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        options = Options()
-        profile_dir = "O:/Foundups-Agent/modules/platform_integration/linkedin_agent/data/chrome_profile"
-        options.add_argument(f"--user-data-dir={profile_dir}")
-        options.add_argument("--remote-debugging-port=9223")
-        return webdriver.Chrome(options=options)
+    except Exception as e2:
+        logger.error(f"[BROWSER] All connection methods failed: {e2}")
+        raise RuntimeError("Cannot connect to Edge browser for LinkedIn")
 
 
 def format_post(content: str, signature: str = SIGNATURE) -> str:
@@ -283,13 +290,14 @@ def test_formatting() -> Tuple[bool, str]:
 
         actions = ActionChains(driver)
 
-        # Type test content with formatting
-        test_lines = [
-            "Formatting Test by 0102🦞",
-            "",
-            "Testing **bold** with Ctrl+B:",
-        ]
-        body_field.send_keys("\n".join(test_lines))
+        # Type test content with formatting (use JS for emoji compatibility)
+        test_intro = "Formatting Test by 0102\n\nTesting **bold** with Ctrl+B:"
+        # Use JavaScript to insert text (handles all Unicode including emojis)
+        driver.execute_script(
+            "arguments[0].innerText = arguments[1]",
+            body_field,
+            test_intro
+        )
         time.sleep(0.3)
 
         # Select "BOLD" and apply bold
