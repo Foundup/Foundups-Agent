@@ -690,16 +690,31 @@ async def run_video_indexing_cycle(
         logger.warning("[VIDEO-INDEX] STOP file active (memory/STOP_VIDEO_INDEXER)")
         return {"skipped": True, "reason": "STOP file active"}
 
-    # Default channels from env - all 4 channels
+    # 2026-03-10: CRITICAL FIX - Filter channels by browser to prevent OOPS
     # Chrome (9222): Move2Japan, UnDaoDu (Set 1)
     # Edge (9223): FoundUps, antifaFM (Set 10)
+    # Trying to index an Edge channel on Chrome causes OOPS (wrong account)
     if not channels:
-        channels = [
-            os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
-            os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
-            os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
-            os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
-        ]
+        try:
+            from modules.infrastructure.shared_utilities.youtube_channel_registry import (
+                group_channels_by_browser,
+            )
+            grouped = group_channels_by_browser(role="indexing")
+            browser_channels = grouped.get(browser.lower(), [])
+            channels = [ch.get("id") for ch in browser_channels if ch.get("id")]
+            logger.info(f"[VIDEO-INDEX] Filtered to {browser.upper()} channels: {[ch.get('key') for ch in browser_channels]}")
+        except ImportError:
+            # Fallback to hardcoded if registry unavailable
+            if browser.lower() == "chrome":
+                channels = [
+                    os.getenv("MOVE2JAPAN_CHANNEL_ID", "UC-LSSlOZwpGIRIYihaz8zCw"),
+                    os.getenv("UNDAODU_CHANNEL_ID", "UCfHM9Fw9HD-NwiS0seD_oIA"),
+                ]
+            else:
+                channels = [
+                    os.getenv("FOUNDUPS_CHANNEL_ID", "UCSNTUXjAgpd4sgWYP0xoJgw"),
+                    os.getenv("ANTIFAFM_CHANNEL_ID", "UCVSmg5aOhP4tnQ9KFUg97qA"),
+                ]
         channels = [c for c in channels if c]
 
     logger.info("=" * 60)

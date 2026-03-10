@@ -6,6 +6,67 @@
 
 ---
 
+## 2026-03-11 - LinkedIn Company Poster Edge Browser Fix
+
+**Author**: 0102
+**WSP**: 22, 50, 97
+
+### Changes
+
+- Fixed `skillz/linkedin_company_poster/executor.py`:
+  - Changed browser from Chrome to Edge (port 9223)
+  - Added direct debug port connection as primary method
+  - Fixed BMP emoji error by removing emoji from send_keys (use JS instead)
+  - BrowserManager fallback as secondary method
+
+### Why
+
+LinkedIn posting requires Edge browser (port 9223). Chrome connection caused wrong browser access. Emoji in SIGNATURE caused ChromeDriver BMP error with send_keys.
+
+### Test Results
+
+- Edge debug connection: PASS
+- LinkedIn share dialog: PASS
+- 11 accounts loaded: PASS
+
+---
+
+## 2026-03-10 - FoundUps Architect Audit Skill
+
+**Author**: 0102
+**WSP**: 22, 50, 73, 77, 87, 97
+
+### Changes
+
+- Added `skillz/foundups_architect_audit/`
+  - `SKILLz.md`
+  - `executor.py`
+- The skill aggregates existing evidence instead of inventing a parallel audit path:
+  - OpenClaw capability audit
+  - Holo system check
+  - WSP framework sentinel
+  - OpenClaw security sentinel
+  - OpenClaw identity + model availability snapshot
+  - cross-platform LinkedIn loop readiness
+- Added architect-grade complexity floor inside the skill
+  - prevents AI Overseer mission heuristics from under-scoring full-stack Claw architecture audits
+  - keeps the fix local to this skill instead of silently changing global Overseer behavior
+
+### Why
+
+012 asked for a real FoundUps architect role that can audit the Claw stack top-to-bottom using WSP 97 reasoning, not a one-off chat answer.
+
+This skill makes that repeatable, discoverable, and retrievable by future 0102 sessions.
+
+### Output
+
+- JSON artifact:
+  - `modules/ai_intelligence/ai_overseer/memory/foundups_architect_audit_latest.json`
+- Markdown artifact:
+  - `modules/ai_intelligence/ai_overseer/memory/foundups_architect_audit_latest.md`
+
+---
+
 ## 2026-03-07 - LinkedIn Company Poster Registry Migration
 
 **Author**: 0102
@@ -1995,3 +2056,18 @@ from modules.platform_integration.youtube_auth.src.mcp_quota_server import MCPQu
 **Author**: 0102 (Claude Sonnet 4.5)
 **Reviewer**: 012 (Human oversight)
 **Status**: POC - Ready for testing and integration (now WITH MCP! [OK])
+
+## 2026-03-10: FoundUps architect audit Skillz
+
+**Author**: 0102  
+**WSP**: 15, 50, 77, 84, 97
+
+### Changes
+- Added `skillz/foundups_architect_audit/SKILLz.md`.
+- Added `skillz/foundups_architect_audit/executor.py`.
+- The executor composes existing audit evidence from AI Overseer, WSP framework drift, OpenClaw security, Holo system check, OpenClaw capability audit, and cross-platform orchestration readiness.
+- Added a local architect complexity floor so full-stack Claw/WRE audits cannot be under-scored by generic mission analysis heuristics.
+
+### Outcome
+- FoundUps now has a reusable architect-grade audit skill instead of a one-off prompt ritual.
+- Audit output is persisted as JSON + Markdown handoff artifacts under AI Overseer memory.

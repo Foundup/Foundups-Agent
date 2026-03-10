@@ -70,3 +70,31 @@ All moved test files need import path verification:
 - Followed WSP 85: Anti-pollution - no files in root
 - Followed WSP 34: Test documentation in TestModLog
 - Followed WSP 22: Documented all changes
+
+## 2026-03-11 - DAEmon Orchestration Switches + LinkedIn Phase 4
+
+### Added Environment Variable Switches
+- **YT_COMMENTS_ENABLED**: Phase 1 comment engagement gate
+- **YT_VIDEO_INDEXING_ENABLED**: Phase 2 video indexing gate
+- **YT_SHORTS_SCHEDULING_ENABLED**: Phase 3 shorts scheduling gate
+- **YT_SHORTS_PER_CYCLE**: Cap shorts per cycle (default: 5)
+- **LN_FEED_ENGAGEMENT_ENABLED**: Phase 4 LinkedIn engagement gate
+
+### Added Phase 4 LinkedIn Feed Engagement
+- Edge-only trigger after shorts scheduling completes
+- Imports `linkedin_feed_engagement` skill executor
+- Supports `LN_FEED_MODE`, `LN_FEED_MAX_POSTS`, `LN_FEED_DRY_RUN`
+
+### Browser Parameter Fix
+- Added explicit `browser=browser_name` to `run_video_indexing_cycle()` call
+- Prevents Chrome from accessing Edge-only channels
+
+### Test Results
+- **Switch parsing**: PASS (all 5 switches parse correctly)
+- **Browser isolation**: PASS (Chrome gets M2J/UnDaoDu only)
+- **LinkedIn Edge connection**: PASS (share dialog found)
+
+### WSP Compliance
+- WSP 22: Documented in TestModLog
+- WSP 50: Verified existing patterns before adding switches
+- WSP 72: Browser isolation respects channel boundaries

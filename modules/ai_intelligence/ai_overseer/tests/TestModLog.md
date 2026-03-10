@@ -2,6 +2,9 @@
 
 | Date       | Author | Description | Notes |
 |------------|--------|-------------|-------|
+| 2026-03-10 | 0102   | Revalidated FoundUps architect audit skill after complexity-floor/test fix | `2 passed, 2 warnings` with `AI_OVERSEER_HEAVY_TESTS=1`; confirms guard is exercised and audit artifacts still write correctly |
+| 2026-03-10 | 0102   | Added FoundUps architect audit skill tests | `test_foundups_architect_audit.py` validates artifact generation and qwen3.5 routing recommendation behavior |
+| 2026-03-10 | 0102   | FoundUps architect audit validation complete | `2 passed, 2 warnings` with `AI_OVERSEER_HEAVY_TESTS=1` for `test_foundups_architect_audit.py` |
 | 2025-10-29 | 0102   | Initial test scaffold created to satisfy WSP 49 | Placeholders ready for future coverage |
 | 2025-10-29 | 0102   | Added mixin coverage + pytest gating flags | Default runs stay lightweight; witness loop opt-in |
 | 2026-02-07 | 0102   | Added OpenClaw sentinel tests and allowlist updates | Validates fail-closed policy, cache TTL, and monitor lifecycle |
@@ -24,3 +27,4 @@
 | 2026-02-13 | 0102   | P0 hardening tranche: audit-driven fixes + tests | `test_m2m_compression_sentinel.py` expanded to 42 tests: 42 pass. Added TestHardening(10): method_truthful, qwen_fallback, validation_empty/no_header/no_sections/valid/corruption, path_collision, source_header, eval_metrics. Fixes: full headers (no 15-char truncation), Qwen method truthfulness, M2M output validation, path-stable staging/backups, deterministic promotion via src: header field. Eval: avg cosine similarity 0.434->0.582 (+34%) |
 | 2026-02-13 | 0102   | Content-based boot prompt detection + tests | `test_m2m_compression_sentinel.py` expanded to 46 tests: 46 pass. Added TestBootPromptDetection(4): identity_lock_detection, compile_rejects_boot_prompt, normal_docs_pass_through, threshold_requires_3_signals. Replaced filename-based exclusion with 10-pattern content detector (identity locks, equations, state math, quantum notation). Discovery: M2M is for reference docs, not executable prompts. |
 | 2026-02-13 | 0102   | Added M2M skill execution shim tests | Added `test_m2m_skill_shim.py` (5 tests, all pass). Coverage: unknown skill fail-closed, missing SKILLz doc fail, compile gate success path, compile gate boot-prompt rejection for SKILL content, stage-promote target-path gate. |
+| 2026-03-11 | 0102   | LinkedIn company poster Edge browser fix | Fixed `executor.py` to use Edge debug port 9223 instead of Chrome. Added direct debug connection priority over BrowserManager. Fixed BMP emoji error in send_keys by using JavaScript. Manual test: Edge connection ✓, LinkedIn share dialog ✓, accounts loaded (11) ✓ |

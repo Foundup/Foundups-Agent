@@ -387,41 +387,99 @@ class AutoModeratorDAE:
         logger.warning(f"[VERIFY] {account_name} inbox verification timeout (last_count={last_count})")
         return None
 
-    async def _reconnect_chrome_driver(self, chrome_port: int):
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
+    async def _reconnect_chrome_driver(self, chrome_port: int, max_retries: int = 3):
+        """Reconnect to Chrome with retry logic. Launches Chrome if not running."""
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_chrome
 
-            chrome_ok, chrome_msg = launch_chrome()
-            if not chrome_ok:
-                logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(f"[ROTATE] Chrome reconnect attempt {attempt}/{max_retries}...")
+
+                chrome_ok, chrome_msg = launch_chrome()
+                if not chrome_ok:
+                    logger.warning(f"[ROTATE] Chrome auto-launch failed: {chrome_msg}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(3)
+                        continue
+                    return None
+
+                # Wait a bit for browser to fully initialize
+                await asyncio.sleep(2)
+
+                opts = Options()
+                opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
+                driver = await asyncio.to_thread(webdriver.Chrome, options=opts)
+
+                # Verify connection works
+                try:
+                    await asyncio.to_thread(driver.execute_script, "return document.readyState")
+                    logger.info(f"[ROTATE] ✅ Chrome reconnected successfully")
+                    return driver
+                except Exception as verify_err:
+                    logger.warning(f"[ROTATE] Chrome connection verify failed: {verify_err}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(3)
+                        continue
+                    return None
+
+            except Exception as e:
+                logger.warning(f"[ROTATE] Chrome reconnect attempt {attempt} failed: {e}")
+                if attempt < max_retries:
+                    await asyncio.sleep(3)
+                    continue
                 return None
 
-            opts = Options()
-            opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{chrome_port}")
-            return await asyncio.to_thread(webdriver.Chrome, options=opts)
-        except Exception as e:
-            logger.warning(f"[ROTATE] Chrome reconnect failed: {e}")
-            return None
+        logger.error(f"[ROTATE] Chrome reconnect failed after {max_retries} attempts")
+        return None
 
-    async def _reconnect_edge_driver(self, edge_port: int):
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.edge.options import Options as EdgeOptions
-            from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
+    async def _reconnect_edge_driver(self, edge_port: int, max_retries: int = 3):
+        """Reconnect to Edge with retry logic. Launches Edge if not running."""
+        from selenium import webdriver
+        from selenium.webdriver.edge.options import Options as EdgeOptions
+        from modules.infrastructure.dependency_launcher.src.dae_dependencies import launch_edge
 
-            edge_ok, edge_msg = launch_edge()
-            if not edge_ok:
-                logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(f"[ROTATE] Edge reconnect attempt {attempt}/{max_retries}...")
+
+                edge_ok, edge_msg = launch_edge()
+                if not edge_ok:
+                    logger.warning(f"[ROTATE] Edge auto-launch failed: {edge_msg}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(3)
+                        continue
+                    return None
+
+                # Wait a bit for browser to fully initialize
+                await asyncio.sleep(2)
+
+                edge_opts = EdgeOptions()
+                edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
+                driver = await asyncio.to_thread(webdriver.Edge, options=edge_opts)
+
+                # Verify connection works
+                try:
+                    await asyncio.to_thread(driver.execute_script, "return document.readyState")
+                    logger.info(f"[ROTATE] ✅ Edge reconnected successfully")
+                    return driver
+                except Exception as verify_err:
+                    logger.warning(f"[ROTATE] Edge connection verify failed: {verify_err}")
+                    if attempt < max_retries:
+                        await asyncio.sleep(3)
+                        continue
+                    return None
+
+            except Exception as e:
+                logger.warning(f"[ROTATE] Edge reconnect attempt {attempt} failed: {e}")
+                if attempt < max_retries:
+                    await asyncio.sleep(3)
+                    continue
                 return None
 
-            edge_opts = EdgeOptions()
-            edge_opts.add_experimental_option("debuggerAddress", f"127.0.0.1:{edge_port}")
-            return await asyncio.to_thread(webdriver.Edge, options=edge_opts)
-        except Exception as e:
-            logger.warning(f"[ROTATE] Edge reconnect failed: {e}")
-            return None
+        logger.error(f"[ROTATE] Edge reconnect failed after {max_retries} attempts")
+        return None
     
     def connect(self) -> bool:
         """
@@ -1359,10 +1417,13 @@ class AutoModeratorDAE:
                 # WebDriver connect, OOPS recovery, or subprocess stalls.
                 # 2026-02-01: Browser lock prevents contention with leaked
                 # Phase 3 scheduler threads from the previous cycle.
+                # 2026-03-10: DAEmon switch for visibility (YT_COMMENTS_ENABLED)
                 # ============================================
                 phase1_start = time.time()
                 phase1_timeout = int(os.getenv("COMMUNITY_PHASE1_TIMEOUT", "5400"))  # 90 min default
                 comments_processed = 0
+                comments_enabled = os.getenv("YT_COMMENTS_ENABLED", "true").lower() in ("1", "true", "yes")
+                logger.info(f"[{tag}-LOOP] PHASE 1: YT_COMMENTS_ENABLED={comments_enabled}")
 
                 # FIX 2026-02-06: Emit breadcrumb so stream resolver knows to skip vision detection
                 try:
@@ -1382,7 +1443,10 @@ class AutoModeratorDAE:
                 # instead of nested async loops. Detects stalls and auto-rotates.
                 use_rotation_supervisor = _env_truthy("YT_USE_ROTATION_SUPERVISOR", "false")
 
-                if use_rotation_supervisor:
+                # 2026-03-10: DAEmon switch - skip comment engagement if disabled
+                if not comments_enabled:
+                    logger.info(f"[{tag}-LOOP] PHASE 1 SKIPPED: comments disabled via YT_COMMENTS_ENABLED=false")
+                elif use_rotation_supervisor:
                     # NEW: Task-based rotation with heartbeat stall detection
                     logger.info(f"[{tag}-LOOP] PHASE 1: Using RotationSupervisor (stall detection ENABLED)")
                     try:
@@ -1458,7 +1522,7 @@ class AutoModeratorDAE:
                     try:
                         from modules.ai_intelligence.video_indexer.src.studio_ask_indexer import run_video_indexing_cycle
                         logger.info(f"[{tag}-LOOP] PHASE 2: VIDEO INDEXING starting...")
-                        await run_video_indexing_cycle()
+                        await run_video_indexing_cycle(browser=browser_name)
                         try:
                             activity_router = get_activity_router()
                             activity_router.signal_activity_complete(
@@ -1573,6 +1637,47 @@ class AutoModeratorDAE:
                         if browser_lock and browser_lock.locked():
                             browser_lock.release()
                             logger.debug(f"[{tag}-LOOP] PHASE 3: Browser lock RELEASED")
+
+                # ============================================
+                # PHASE 4: LINKEDIN FEED ENGAGEMENT (Edge only)
+                # 2026-03-10: Trigger LinkedIn after YouTube tasks complete
+                # antifaFM completion triggers LinkedIn feed commenting
+                # ============================================
+                linkedin_enabled = os.getenv("LN_FEED_ENGAGEMENT_ENABLED", "false").lower() in ("1", "true", "yes")
+                linkedin_engaged = 0
+
+                if browser_name == "edge" and linkedin_enabled:
+                    phase4_start = time.time()
+                    logger.info(f"[{tag}-LOOP] PHASE 4: LINKEDIN FEED ENGAGEMENT starting...")
+                    try:
+                        from modules.platform_integration.linkedin_agent.skillz.linkedin_feed_engagement.executor import execute_skill
+                        ln_params = {
+                            "mode": os.getenv("LN_FEED_MODE", "like_reply"),
+                            "max_posts": os.getenv("LN_FEED_MAX_POSTS", "10"),
+                            "max_engagements": os.getenv("LN_FEED_MAX_ENGAGEMENTS", "3"),
+                            "dry_run": os.getenv("LN_FEED_DRY_RUN", "false"),
+                            "agentic": os.getenv("LN_FEED_AGENTIC", "true"),
+                        }
+                        result = await execute_skill(ln_params)
+                        linkedin_engaged = 1 if result.get("success") else 0
+                        phase4_elapsed = time.time() - phase4_start
+                        logger.info(f"[{tag}-LOOP] PHASE 4: LINKEDIN complete ({phase4_elapsed:.1f}s) success={result.get('success')}")
+
+                        # Signal LinkedIn completion for activity routing
+                        try:
+                            activity_router = get_activity_router()
+                            activity_router.signal_activity_complete(
+                                ActivityType.LINKEDIN_ENGAGEMENT if hasattr(ActivityType, 'LINKEDIN_ENGAGEMENT') else ActivityType.COMMENT_ENGAGEMENT,
+                                metadata={"cycle": cycle_count, "browser": browser_name, "linkedin_success": linkedin_engaged}
+                            )
+                        except Exception:
+                            pass
+                    except ImportError as ie:
+                        logger.warning(f"[{tag}-LOOP] PHASE 4 IMPORT FAILED: {ie}")
+                    except Exception as e:
+                        logger.error(f"[{tag}-LOOP] PHASE 4 LINKEDIN CRASHED: {e}", exc_info=True)
+                elif browser_name == "edge" and not linkedin_enabled:
+                    logger.info(f"[{tag}-LOOP] PHASE 4 SKIPPED: LN_FEED_ENGAGEMENT_ENABLED=false")
 
                 # ============================================
                 # CYCLE SUMMARY + IDLE DETECTION
