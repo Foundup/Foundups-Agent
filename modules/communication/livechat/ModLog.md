@@ -10,6 +10,36 @@ This log tracks changes specific to the **livechat** module in the **communicati
 
 ---
 
+## 2026-03-11 - DAEmon Orchestration Switches + LinkedIn Phase 4
+
+**By:** 0102
+**WSP References:** WSP 22 (ModLog), WSP 50 (Pre-Action), WSP 72 (Independence)
+
+### Changes Applied
+
+**1. auto_moderator_dae.py - Orchestration Switches:**
+- `YT_COMMENTS_ENABLED`: Gate Phase 1 comment engagement
+- `YT_VIDEO_INDEXING_ENABLED`: Gate Phase 2 video indexing
+- `YT_SHORTS_SCHEDULING_ENABLED`: Gate Phase 3 shorts scheduling
+- `YT_SHORTS_PER_CYCLE`: Cap shorts per cycle (default: 5)
+- `LN_FEED_ENGAGEMENT_ENABLED`: Gate Phase 4 LinkedIn engagement
+
+**2. Phase 4 LinkedIn Feed Engagement:**
+- Added Edge-only LinkedIn trigger after shorts scheduling completes
+- Imports `linkedin_feed_engagement` skill executor
+- Supports `LN_FEED_MODE`, `LN_FEED_MAX_POSTS`, `LN_FEED_DRY_RUN`
+
+**3. Browser Parameter Fix:**
+- Added explicit `browser=browser_name` to `run_video_indexing_cycle()` call
+- Prevents Chrome from accessing Edge-only channels (antifaFM, FoundUps)
+
+### Test Results
+- Switch parsing: PASS
+- Browser isolation: PASS (Chrome=M2J/UnDaoDu, Edge=FoundUps/antifaFM)
+- LinkedIn Edge connection: PASS
+
+---
+
 ## 2026-03-07 - RotationSupervisor Integration + AI Overseer Stall Detection
 
 **By:** 0102

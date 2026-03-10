@@ -2,6 +2,24 @@
 
 **WSP Compliance**: WSP 22 (ModLog Updates)
 
+## V0.19.2 - Browser Channel Isolation (2026-03-11)
+
+### Fixed
+- **Chrome OOPS on antifaFM**: Chrome was accessing Edge-only channels
+- Added `group_channels_by_browser(role="indexing")` filter in `studio_ask_indexer.py`
+- Chrome now only indexes: Move2Japan, UnDaoDu
+- Edge now only indexes: FoundUps, antifaFM
+
+### Changed Files
+- `src/studio_ask_indexer.py`: Added browser-aware channel filtering
+
+### WSP Compliance
+- **WSP 22**: ModLog documentation
+- **WSP 50**: Verified channel registry before modifying
+- **WSP 72**: Browser isolation respects module boundaries
+
+---
+
 ## V0.18.9 - Gemini 2.5 Flash Upgrade (2026-01-28)
 
 ### Updated

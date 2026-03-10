@@ -24,3 +24,19 @@
 
 ### Notes
 - Validates signal helpers (STOP/REINDEX) and index count telemetry helpers.
+
+## 2026-03-11
+
+### Browser Isolation Fix
+- **Change**: Added `group_channels_by_browser()` filter in `studio_ask_indexer.py`
+- **Purpose**: Prevent Chrome OOPS on Edge-only channels (antifaFM, FoundUps)
+- **Test**: Manual verification of channel grouping
+  ```
+  CHROME: ['move2japan', 'undaodu']
+  EDGE: ['foundups', 'antifafm']
+  ```
+- **Result**: PASS - Chrome no longer accesses antifaFM/FoundUps channels
+
+### WSP Compliance
+- WSP 50: Verified channel registry before modifying indexer
+- WSP 72: Browser isolation respects module boundaries
