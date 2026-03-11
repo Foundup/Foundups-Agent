@@ -295,8 +295,8 @@ async def update_obs_browser_source(url: str, fallback_on_fail: bool = True) -> 
 
         # Update browser source URL
         client.set_input_settings(
-            input_name=source_name,
-            input_settings={"url": actual_url},
+            name=source_name,
+            settings={"url": actual_url},
             overlay=True
         )
 
