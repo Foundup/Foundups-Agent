@@ -1,0 +1,341 @@
+"""
+Boot Layer Rotator - Master schema rotation for antifaFM stream
+
+Cycles through visual schemas every 10 minutes:
+  GCC Shipping → Chess → Karaoke → Video → (repeat)
+
+Each schema has its own 2-minute internal view rotation.
+Stakeholder/Delegate can override to pause or skip schemas.
+
+Usage:
+    python executor.py --daemon        # Start full rotation
+    python executor.py --skip-to chess # Skip to specific schema
+    python executor.py --list          # List available schemas
+
+WSP 27: Universal DAE Architecture
+"""
+
+import argparse
+import asyncio
+import logging
+import os
+import signal
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Callable
+
+logger = logging.getLogger(__name__)
+
+# Schema rotation interval (10 minutes per schema)
+SCHEMA_DURATION_SEC = 600
+
+# Override signal file
+OVERRIDE_SIGNAL_FILE = Path(__file__).parent / "rotator_override.signal"
+SKIP_TO_SIGNAL_FILE = Path(__file__).parent / "skip_to_schema.signal"
+
+# Coming Soon fallback for schemas not yet implemented
+COMING_SOON_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {{
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
+    text-align: center;
+}}
+.title {{
+    font-size: 4em;
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(255,100,100,0.5);
+    margin-bottom: 20px;
+}}
+.subtitle {{
+    font-size: 2.5em;
+    color: #ff6b6b;
+    animation: pulse 2s infinite;
+}}
+.signature {{
+    font-size: 3em;
+    margin-top: 40px;
+}}
+@keyframes pulse {{
+    0%, 100% {{ opacity: 1; }}
+    50% {{ opacity: 0.5; }}
+}}
+</style>
+</head>
+<body>
+<div class="title">{name}</div>
+<div class="subtitle">Coming Soon</div>
+<div class="signature">0102🦞</div>
+</body>
+</html>
+"""
+
+import base64
+
+
+def get_coming_soon_uri(name: str) -> str:
+    """Generate Coming Soon data URI for a schema."""
+    html = COMING_SOON_TEMPLATE.format(name=name)
+    return "data:text/html;base64," + base64.b64encode(html.encode()).decode()
+
+
+# Schema registry - all antifaFM visual schemas
+SCHEMAS: Dict[str, Dict[str, Any]] = {
+    "gcc": {
+        "name": "GCC Shipping Tracker",
+        "description": "Strait of Hormuz vessel tracking",
+        "executor": "gcc_shipping_tracker",
+        "implemented": True,
+    },
+    "chess": {
+        "name": "Chess Arena",
+        "description": "Live chess matches and puzzles",
+        "executor": None,
+        "implemented": False,
+    },
+    "checkers": {
+        "name": "Checkers",
+        "description": "Classic checkers gameplay",
+        "executor": None,
+        "implemented": False,
+    },
+    "video": {
+        "name": "Video Rotation",
+        "description": "Curated video playlist (current default)",
+        "executor": "video_layer",
+        "implemented": True,  # Existing functionality
+    },
+    "news": {
+        "name": "News Ticker",
+        "description": "Live news headlines and updates",
+        "executor": "news_ticker",
+        "implemented": True,  # Existing functionality
+    },
+    "cams": {
+        "name": "Live Cams",
+        "description": "Global webcam feeds",
+        "executor": None,
+        "implemented": False,
+    },
+    "karaoke": {
+        "name": "Karaoke Mode",
+        "description": "Song lyrics and sing-along",
+        "executor": None,
+        "implemented": False,
+    },
+    "weather": {
+        "name": "Weather Map",
+        "description": "Global weather visualization",
+        "executor": None,
+        "implemented": False,
+    },
+    "crypto": {
+        "name": "Crypto Ticker",
+        "description": "BTC/ETH price charts",
+        "executor": None,
+        "implemented": False,
+    },
+}
+
+# Default rotation order (10 min each schema)
+ROTATION_ORDER = ["gcc", "video", "news", "chess", "checkers", "cams", "karaoke"]
+
+
+async def update_obs_source(url: str) -> Dict[str, Any]:
+    """Update OBS browser source."""
+    try:
+        import obsws_python as obs
+
+        host = os.getenv("OBS_WEBSOCKET_HOST", "localhost")
+        port = int(os.getenv("OBS_WEBSOCKET_PORT", 4455))
+        password = os.getenv("OBS_WEBSOCKET_PASSWORD", "")
+
+        client = obs.ReqClient(host=host, port=port, password=password)
+        client.set_input_settings(
+            input_name="BootLayer_Browser",
+            input_settings={"url": url},
+            overlay=True
+        )
+        return {"success": True, "url": url}
+    except Exception as e:
+        logger.error(f"[ROTATOR] OBS update failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+async def run_schema(schema_id: str) -> Dict[str, Any]:
+    """
+    Run a single schema for its duration.
+
+    Returns when schema completes or is overridden.
+    """
+    schema = SCHEMAS.get(schema_id)
+    if not schema:
+        logger.error(f"[ROTATOR] Unknown schema: {schema_id}")
+        return {"error": f"Unknown schema: {schema_id}"}
+
+    logger.info(f"[ROTATOR] Starting schema: {schema['name']}")
+
+    if schema["implemented"] and schema["executor"]:
+        # Import and run the schema's executor
+        try:
+            if schema_id == "gcc":
+                from modules.platform_integration.antifafm_broadcaster.skillz.gcc_shipping_tracker.executor import (
+                    rotation_daemon as gcc_daemon
+                )
+                return await gcc_daemon(standalone=False)
+            # Add other schema imports here as they're implemented
+        except ImportError as e:
+            logger.error(f"[ROTATOR] Failed to import {schema_id}: {e}")
+            # Fall through to Coming Soon
+
+    # Not implemented - show Coming Soon
+    logger.info(f"[ROTATOR] Schema '{schema_id}' not implemented - showing Coming Soon")
+    coming_soon_url = get_coming_soon_uri(schema["name"])
+    await update_obs_source(coming_soon_url)
+
+    # Wait for schema duration
+    await asyncio.sleep(SCHEMA_DURATION_SEC)
+
+    return {
+        "schema": schema_id,
+        "elapsed_sec": SCHEMA_DURATION_SEC,
+        "fallback": True
+    }
+
+
+def check_override() -> bool:
+    """Check if rotation should pause."""
+    return OVERRIDE_SIGNAL_FILE.exists()
+
+
+def check_skip_to() -> Optional[str]:
+    """Check if should skip to a specific schema."""
+    if SKIP_TO_SIGNAL_FILE.exists():
+        try:
+            schema_id = SKIP_TO_SIGNAL_FILE.read_text().strip()
+            SKIP_TO_SIGNAL_FILE.unlink()
+            if schema_id in SCHEMAS:
+                return schema_id
+        except Exception:
+            pass
+    return None
+
+
+async def rotation_daemon():
+    """
+    Master rotation daemon - cycles through all schemas.
+
+    Each schema runs for ~10 minutes, then switches to next.
+    Stakeholder can override to pause or skip.
+    """
+    logger.info("[ROTATOR] Starting boot layer rotation daemon")
+    logger.info(f"[ROTATOR] Schemas: {' → '.join(ROTATION_ORDER)}")
+    logger.info(f"[ROTATOR] Schema duration: {SCHEMA_DURATION_SEC}s each")
+
+    schema_index = 0
+    running = True
+
+    def signal_handler(sig, frame):
+        nonlocal running
+        logger.info("[ROTATOR] Shutdown signal received")
+        running = False
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    while running:
+        # Check for override
+        if check_override():
+            logger.info("[ROTATOR] Override active - pausing rotation")
+            await asyncio.sleep(60)
+            continue
+
+        # Check for skip-to
+        skip_to = check_skip_to()
+        if skip_to:
+            logger.info(f"[ROTATOR] Skipping to schema: {skip_to}")
+            schema_index = ROTATION_ORDER.index(skip_to)
+
+        # Get current schema
+        schema_id = ROTATION_ORDER[schema_index]
+
+        # Run schema
+        result = await run_schema(schema_id)
+        logger.info(f"[ROTATOR] Schema '{schema_id}' completed: {result}")
+
+        # Check if override was set during schema
+        if result.get("override"):
+            logger.info("[ROTATOR] Schema reported override - pausing")
+            continue
+
+        # Move to next schema
+        schema_index = (schema_index + 1) % len(ROTATION_ORDER)
+
+    logger.info("[ROTATOR] Rotation daemon stopped")
+
+
+def main():
+    """CLI entry point."""
+    parser = argparse.ArgumentParser(
+        description="Boot Layer Rotator - Master schema rotation for antifaFM"
+    )
+    parser.add_argument("--daemon", action="store_true", help="Start rotation daemon")
+    parser.add_argument("--list", action="store_true", help="List available schemas")
+    parser.add_argument("--skip-to", type=str, help="Skip to specific schema")
+    parser.add_argument("--override", action="store_true", help="Pause rotation")
+    parser.add_argument("--clear", action="store_true", help="Clear override")
+
+    args = parser.parse_args()
+
+    if args.list:
+        print("\n=== Available Schemas ===")
+        for sid, schema in SCHEMAS.items():
+            status = "✓" if schema["implemented"] else "○"
+            print(f"  {status} {sid}: {schema['name']}")
+            print(f"      {schema['description']}")
+        print(f"\nRotation order: {' → '.join(ROTATION_ORDER)}")
+        print(f"Schema duration: {SCHEMA_DURATION_SEC}s each")
+        return
+
+    if args.override:
+        OVERRIDE_SIGNAL_FILE.touch()
+        print("[ROTATOR] Override set - rotation paused")
+        return
+
+    if args.clear:
+        if OVERRIDE_SIGNAL_FILE.exists():
+            OVERRIDE_SIGNAL_FILE.unlink()
+        print("[ROTATOR] Override cleared")
+        return
+
+    if args.skip_to:
+        if args.skip_to not in SCHEMAS:
+            print(f"[ERROR] Unknown schema: {args.skip_to}")
+            print(f"Available: {', '.join(SCHEMAS.keys())}")
+            return
+        SKIP_TO_SIGNAL_FILE.write_text(args.skip_to)
+        print(f"[ROTATOR] Will skip to: {args.skip_to}")
+        return
+
+    if args.daemon:
+        print("[ROTATOR] Starting boot layer rotation...")
+        print("[ROTATOR] Press Ctrl+C to stop")
+        asyncio.run(rotation_daemon())
+        return
+
+    # Default: show status
+    parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

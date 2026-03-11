@@ -30,8 +30,11 @@ from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Rotation interval (10 minutes)
-ROTATION_INTERVAL_SEC = 600
+# View rotation interval (2 minutes per view)
+VIEW_INTERVAL_SEC = 120
+
+# Schema duration before switching to next schema (10 minutes)
+SCHEMA_DURATION_SEC = 600
 
 # Stakeholder/Delegate override signal file
 OVERRIDE_SIGNAL_FILE = Path(__file__).parent / "stakeholder_override.signal"
@@ -335,18 +338,22 @@ def clear_stakeholder_override():
         logger.info("[GCC] Override signal cleared")
 
 
-async def rotation_daemon():
+async def rotation_daemon(standalone: bool = True):
     """
-    Boot layer daemon - 10-minute rotation cycle.
+    Boot layer daemon - 2-minute view rotation within 10-minute schema slot.
 
-    Shows GCC shipping map on stream, rotates views every 10 minutes.
-    Stops when stakeholder/delegate signals override.
+    Shows GCC shipping map on stream, rotates views every 2 minutes.
+    After 10 minutes (schema duration), returns to allow next schema.
+    Stops early if stakeholder/delegate signals override.
+
+    Args:
+        standalone: If True, runs indefinitely. If False, returns after schema duration.
+
+    Returns:
+        Dict with schema result (elapsed time, cycles completed, override status)
     """
-    logger.info("[GCC-DAEMON] Starting boot layer rotation (10-min cycle)")
-    logger.info(f"[GCC-DAEMON] Override signal file: {OVERRIDE_SIGNAL_FILE}")
-
-    # Clear any stale override
-    clear_stakeholder_override()
+    logger.info("[GCC-DAEMON] Starting GCC schema (2-min view rotation)")
+    logger.info(f"[GCC-DAEMON] Schema duration: {SCHEMA_DURATION_SEC}s, View interval: {VIEW_INTERVAL_SEC}s")
 
     # Rotation views
     views = [
@@ -356,40 +363,52 @@ async def rotation_daemon():
     ]
     view_index = 0
     cycle_count = 0
+    schema_start = asyncio.get_event_loop().time()
 
     running = True
+    override_detected = False
 
     def signal_handler(sig, frame):
         nonlocal running
         logger.info("[GCC-DAEMON] Shutdown signal received")
         running = False
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    if standalone:
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
     while running:
+        # Check schema duration (10 minutes)
+        elapsed = asyncio.get_event_loop().time() - schema_start
+        if not standalone and elapsed >= SCHEMA_DURATION_SEC:
+            logger.info(f"[GCC-DAEMON] Schema complete ({elapsed:.0f}s) - yielding to next schema")
+            break
+
         # Check for stakeholder override
         if check_stakeholder_override():
-            logger.info("[GCC-DAEMON] Waiting for override to clear...")
-            await asyncio.sleep(60)  # Check every minute
-            continue
+            logger.info("[GCC-DAEMON] Stakeholder override - pausing schema")
+            override_detected = True
+            if standalone:
+                await asyncio.sleep(60)
+                continue
+            else:
+                break
 
         # Get current view
         view_name, view_url = views[view_index]
         cycle_count += 1
 
-        logger.info(f"[GCC-DAEMON] Cycle {cycle_count}: Showing {view_name}")
+        logger.info(f"[GCC-DAEMON] View {cycle_count}: {view_name} (elapsed: {elapsed:.0f}s)")
 
         # Update OBS browser source
         obs_result = await update_obs_browser_source(view_url)
         if obs_result.get("success"):
-            logger.info(f"[GCC-DAEMON] OBS updated: {view_name}")
+            if obs_result.get("is_fallback"):
+                logger.info("[GCC-DAEMON] Showing Coming Soon fallback")
+            else:
+                logger.info(f"[GCC-DAEMON] OBS updated: {view_name}")
         else:
             logger.warning(f"[GCC-DAEMON] OBS update failed: {obs_result.get('error')}")
-
-        # Fetch and log current status
-        status = await fetch_ais_summary()
-        logger.info(f"[GCC-DAEMON] Status: {status.get('status', 'unknown')}")
 
         # Check alerts
         alerts = await check_alerts()
@@ -397,19 +416,33 @@ async def rotation_daemon():
             if alert.get("type") != "info":
                 logger.warning(f"[GCC-ALERT] {alert['type']}: {alert['message']}")
 
-        # Wait for rotation interval (check override every 30s)
-        wait_remaining = ROTATION_INTERVAL_SEC
+        # Wait for view interval (2 minutes), check override every 15s
+        wait_remaining = VIEW_INTERVAL_SEC
         while wait_remaining > 0 and running:
+            # Check schema duration
+            if not standalone:
+                elapsed = asyncio.get_event_loop().time() - schema_start
+                if elapsed >= SCHEMA_DURATION_SEC:
+                    break
             if check_stakeholder_override():
+                override_detected = True
                 break
-            sleep_time = min(30, wait_remaining)
+            sleep_time = min(15, wait_remaining)
             await asyncio.sleep(sleep_time)
             wait_remaining -= sleep_time
 
         # Rotate to next view
         view_index = (view_index + 1) % len(views)
 
-    logger.info("[GCC-DAEMON] Shutdown complete")
+    elapsed = asyncio.get_event_loop().time() - schema_start
+    logger.info(f"[GCC-DAEMON] Schema ended ({elapsed:.0f}s, {cycle_count} views)")
+
+    return {
+        "schema": "gcc",
+        "elapsed_sec": elapsed,
+        "view_count": cycle_count,
+        "override": override_detected
+    }
 
 
 def main():

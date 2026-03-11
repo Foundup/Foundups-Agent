@@ -27,12 +27,14 @@ python executor.py --clear-override
 ```
 
 ## Rotation Cycle (Boot Layer)
-| Minute | View | Description |
-|--------|------|-------------|
-| 0-10 | Hormuz | Strait of Hormuz close-up |
-| 10-20 | Gulf | Full Persian Gulf view |
-| 20-30 | Tankers | Oil tanker filter |
-| (repeat) | ... | Until stakeholder override |
+| Time | View | Description |
+|------|------|-------------|
+| 0-2 min | Hormuz | Strait of Hormuz close-up |
+| 2-4 min | Gulf | Full Persian Gulf view |
+| 4-6 min | Tankers | Oil tanker filter |
+| 6-8 min | Hormuz | (repeat cycle) |
+| 8-10 min | Gulf | ... |
+| 10 min | **SWITCH** | → Next schema (chess, video, etc.) |
 
 ## Data Sources
 
