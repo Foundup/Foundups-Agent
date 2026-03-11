@@ -36,6 +36,63 @@ ROTATION_INTERVAL_SEC = 600
 # Stakeholder/Delegate override signal file
 OVERRIDE_SIGNAL_FILE = Path(__file__).parent / "stakeholder_override.signal"
 
+# Coming Soon fallback HTML (data:uri for OBS browser source)
+COMING_SOON_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
+    text-align: center;
+}
+.title {
+    font-size: 4em;
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(255,100,100,0.5);
+    margin-bottom: 20px;
+}
+.subtitle {
+    font-size: 2.5em;
+    color: #ff6b6b;
+    animation: pulse 2s infinite;
+}
+.signature {
+    font-size: 3em;
+    margin-top: 40px;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.region {
+    font-size: 1.5em;
+    color: #4ecdc4;
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<div class="title">GCC Shipping Tracker</div>
+<div class="subtitle">Coming Soon</div>
+<div class="region">Strait of Hormuz | Persian Gulf</div>
+<div class="signature">0102🦞</div>
+</body>
+</html>
+"""
+
+# Encode as data URI for OBS browser source
+import base64
+COMING_SOON_DATA_URI = "data:text/html;base64," + base64.b64encode(COMING_SOON_HTML.encode()).decode()
+
 # MarineTraffic URLs for GCC region
 MARINETRAFFIC_HORMUZ = "https://www.marinetraffic.com/en/ais/home/centerx/56.3/centery/26.5/zoom/8"
 MARINETRAFFIC_GULF = "https://www.marinetraffic.com/en/ais/home/centerx/51.5/centery/26.0/zoom/6"
@@ -191,12 +248,36 @@ async def execute_skill(
     return result
 
 
-async def update_obs_browser_source(url: str) -> Dict[str, Any]:
+async def check_url_reachable(url: str, timeout: float = 10.0) -> bool:
+    """Check if a URL is reachable (basic HTTP HEAD check)."""
+    try:
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, timeout=aiohttp.ClientTimeout(total=timeout)) as response:
+                return response.status < 400
+    except ImportError:
+        # No aiohttp - assume reachable
+        return True
+    except Exception:
+        return False
+
+
+async def update_obs_browser_source(url: str, fallback_on_fail: bool = True) -> Dict[str, Any]:
     """
     Update OBS browser source to show GCC shipping map.
 
     Requires: GCC_Browser source in OBS scene.
+    Falls back to "Coming Soon" screen if URL check fails.
     """
+    actual_url = url
+
+    # Check if URL is reachable (skip for data URIs)
+    if fallback_on_fail and not url.startswith("data:"):
+        is_reachable = await check_url_reachable(url)
+        if not is_reachable:
+            logger.warning(f"[GCC] URL not reachable: {url[:50]}... - showing Coming Soon")
+            actual_url = COMING_SOON_DATA_URI
+
     try:
         import obsws_python as obs
 
@@ -209,12 +290,22 @@ async def update_obs_browser_source(url: str) -> Dict[str, Any]:
         # Update browser source URL
         client.set_input_settings(
             input_name="GCC_Browser",
-            input_settings={"url": url},
+            input_settings={"url": actual_url},
             overlay=True
         )
 
-        logger.info(f"[GCC] Updated OBS browser source: {url[:50]}...")
-        return {"success": True, "source": "GCC_Browser", "url": url}
+        is_fallback = actual_url == COMING_SOON_DATA_URI
+        if is_fallback:
+            logger.info("[GCC] Showing 'Coming Soon' fallback screen")
+        else:
+            logger.info(f"[GCC] Updated OBS browser source: {actual_url[:50]}...")
+
+        return {
+            "success": True,
+            "source": "GCC_Browser",
+            "url": actual_url,
+            "is_fallback": is_fallback
+        }
 
     except ImportError:
         logger.warning("[GCC] obsws-python not installed")
@@ -222,6 +313,11 @@ async def update_obs_browser_source(url: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[GCC] OBS update failed: {e}")
         return {"success": False, "error": str(e)}
+
+
+async def show_coming_soon() -> Dict[str, Any]:
+    """Show the Coming Soon fallback screen."""
+    return await update_obs_browser_source(COMING_SOON_DATA_URI, fallback_on_fail=False)
 
 
 def check_stakeholder_override() -> bool:
@@ -335,6 +431,7 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     parser.add_argument("--override", action="store_true", help="Set stakeholder override (pause daemon)")
     parser.add_argument("--clear-override", action="store_true", help="Clear stakeholder override")
+    parser.add_argument("--coming-soon", action="store_true", help="Show Coming Soon fallback screen")
 
     args = parser.parse_args()
 
@@ -348,6 +445,19 @@ def main():
     if args.clear_override:
         clear_stakeholder_override()
         print(f"[GCC] Override cleared - daemon will resume")
+        return
+
+    # Coming Soon screen test
+    if args.coming_soon:
+        print("[GCC] Showing Coming Soon fallback screen...")
+        result = asyncio.run(show_coming_soon())
+        if result.get("success"):
+            print("[GCC] Coming Soon screen displayed in OBS")
+        else:
+            print(f"[GCC] Failed: {result.get('error')}")
+            # Print the HTML for manual use
+            print("\n[GCC] Fallback HTML (copy to browser source):")
+            print(COMING_SOON_HTML[:200] + "...")
         return
 
     # Daemon mode
