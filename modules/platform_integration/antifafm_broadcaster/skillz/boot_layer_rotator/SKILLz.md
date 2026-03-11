@@ -66,8 +66,32 @@ When a schema is not implemented or fails to load:
 
 ## OBS Setup
 
-Requires browser source named `BootLayer_Browser` in OBS scene.
+Uses `OBS_BROWSER_SOURCE` env var (default: `antifaFM Website`).
+
+## WRE Connection
+
+```yaml
+trigger:
+  type: startup
+  source: main.py (antifaFM section)
+  gate: ANTIFAFM_BOOT_ROTATOR_ENABLED=1
+
+events_emitted:
+  - schema_started: {schema_id, timestamp}
+  - schema_completed: {schema_id, duration_sec, success}
+  - fallback_shown: {schema_id, reason}
+  - rotation_paused: {reason}
+  - rotation_resumed: {}
+
+control_signals:
+  - rotator_override.signal: Pause rotation
+  - skip_to_schema.signal: Skip to specific schema
+
+telemetry:
+  path: modules/platform_integration/antifafm_broadcaster/telemetry/rotator_events.jsonl
+```
 
 ## WSP Compliance
 - WSP 27: Universal DAE Architecture
 - WSP 103: CLI Interface Standard
+- WSP 60: Module Memory Architecture (event telemetry)
