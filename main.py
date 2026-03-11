@@ -942,6 +942,32 @@ def main():
             except Exception as e:
                 print(f"[RADIO] Dynamic metadata not available: {e}")
 
+            # Start boot layer rotator (GCC shipping, videos, news, etc.)
+            if os.getenv("ANTIFAFM_BOOT_ROTATOR_ENABLED", "1") == "1":
+                try:
+                    from modules.platform_integration.antifafm_broadcaster.skillz.boot_layer_rotator.executor import (
+                        rotation_daemon,
+                        ROTATION_ORDER,
+                    )
+                    import threading
+
+                    def run_boot_rotator():
+                        """Run boot layer rotation in background thread."""
+                        try:
+                            asyncio.run(rotation_daemon())
+                        except Exception as e:
+                            logger.error(f"[BOOT-ROTATOR] Error: {e}")
+
+                    rotator_thread = threading.Thread(
+                        target=run_boot_rotator,
+                        name="BootLayerRotator",
+                        daemon=True
+                    )
+                    rotator_thread.start()
+                    print(f"[RADIO] Boot layer rotator: {' → '.join(ROTATION_ORDER)} (10m each)")
+                except Exception as e:
+                    print(f"[RADIO] Boot layer rotator not available: {e}")
+
             # OBS mode: streaming is handled by OBS, chat starts when YT DAE is selected
             os.environ["ANTIFAFM_USE_OBS"] = "1"
             antifafm_auto_started = True  # OBS is streaming, that's enough for auto-start

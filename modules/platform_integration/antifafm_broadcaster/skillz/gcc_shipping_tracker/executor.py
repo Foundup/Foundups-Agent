@@ -290,9 +290,12 @@ async def update_obs_browser_source(url: str, fallback_on_fail: bool = True) -> 
 
         client = obs.ReqClient(host=host, port=port, password=password)
 
+        # Browser source name (env var or default to existing)
+        source_name = os.getenv("OBS_BROWSER_SOURCE", "antifaFM Website")
+
         # Update browser source URL
         client.set_input_settings(
-            input_name="GCC_Browser",
+            input_name=source_name,
             input_settings={"url": actual_url},
             overlay=True
         )
@@ -305,7 +308,7 @@ async def update_obs_browser_source(url: str, fallback_on_fail: bool = True) -> 
 
         return {
             "success": True,
-            "source": "GCC_Browser",
+            "source": source_name,
             "url": actual_url,
             "is_fallback": is_fallback
         }
