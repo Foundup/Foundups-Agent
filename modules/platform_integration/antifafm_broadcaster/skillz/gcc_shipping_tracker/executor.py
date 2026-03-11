@@ -251,8 +251,25 @@ async def execute_skill(
     return result
 
 
+# Trusted domains that block HEAD requests but work in browser context
+TRUSTED_DOMAINS = [
+    "marinetraffic.com",
+    "vesselfinder.com",
+    "fleetmon.com",
+]
+
+
+def is_trusted_domain(url: str) -> bool:
+    """Check if URL is from a trusted shipping tracker domain."""
+    return any(domain in url.lower() for domain in TRUSTED_DOMAINS)
+
+
 async def check_url_reachable(url: str, timeout: float = 10.0) -> bool:
     """Check if a URL is reachable (basic HTTP HEAD check)."""
+    # Skip check for trusted shipping domains (they block HEAD but work in browser)
+    if is_trusted_domain(url):
+        return True
+
     try:
         import aiohttp
         async with aiohttp.ClientSession() as session:
