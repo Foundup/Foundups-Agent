@@ -186,8 +186,8 @@ async def update_obs_source(url: str) -> Dict[str, Any]:
         # Browser source name (env var or default to existing)
         source_name = os.getenv("OBS_BROWSER_SOURCE", "antifaFM Website")
         client.set_input_settings(
-            input_name=source_name,
-            input_settings={"url": url},
+            name=source_name,
+            settings={"url": url},
             overlay=True
         )
         return {"success": True, "url": url}
