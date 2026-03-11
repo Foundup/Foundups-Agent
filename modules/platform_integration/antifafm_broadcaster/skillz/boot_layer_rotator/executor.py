@@ -17,14 +17,36 @@ WSP 27: Universal DAE Architecture
 
 import argparse
 import asyncio
+import json
 import logging
 import os
 import signal
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 
 logger = logging.getLogger(__name__)
+
+# Telemetry path for event logging
+TELEMETRY_DIR = Path(__file__).parent.parent.parent / "telemetry"
+TELEMETRY_FILE = TELEMETRY_DIR / "rotator_events.jsonl"
+
+
+def emit_event(event_type: str, **data: Any) -> None:
+    """Emit rotator event to JSONL telemetry log."""
+    try:
+        TELEMETRY_DIR.mkdir(parents=True, exist_ok=True)
+        event = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "event": event_type,
+            **data
+        }
+        with open(TELEMETRY_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event) + "\n")
+        logger.debug(f"[ROTATOR] Event: {event_type} {data}")
+    except Exception as e:
+        logger.warning(f"[ROTATOR] Failed to emit event: {e}")
+
 
 # Schema rotation interval (10 minutes per schema)
 SCHEMA_DURATION_SEC = 600
@@ -185,7 +207,9 @@ async def run_schema(schema_id: str) -> Dict[str, Any]:
         logger.error(f"[ROTATOR] Unknown schema: {schema_id}")
         return {"error": f"Unknown schema: {schema_id}"}
 
+    start_time = datetime.now(timezone.utc)
     logger.info(f"[ROTATOR] Starting schema: {schema['name']}")
+    emit_event("schema_started", schema_id=schema_id, name=schema["name"])
 
     if schema["implemented"] and schema["executor"]:
         # Import and run the schema's executor
@@ -194,19 +218,27 @@ async def run_schema(schema_id: str) -> Dict[str, Any]:
                 from modules.platform_integration.antifafm_broadcaster.skillz.gcc_shipping_tracker.executor import (
                     rotation_daemon as gcc_daemon
                 )
-                return await gcc_daemon(standalone=False)
+                result = await gcc_daemon(standalone=False)
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+                emit_event("schema_completed", schema_id=schema_id, duration_sec=duration, success=True)
+                return result
             # Add other schema imports here as they're implemented
         except ImportError as e:
             logger.error(f"[ROTATOR] Failed to import {schema_id}: {e}")
+            emit_event("fallback_shown", schema_id=schema_id, reason=f"import_error: {e}")
             # Fall through to Coming Soon
 
     # Not implemented - show Coming Soon
     logger.info(f"[ROTATOR] Schema '{schema_id}' not implemented - showing Coming Soon")
+    emit_event("fallback_shown", schema_id=schema_id, reason="not_implemented")
     coming_soon_url = get_coming_soon_uri(schema["name"])
     await update_obs_source(coming_soon_url)
 
     # Wait for schema duration
     await asyncio.sleep(SCHEMA_DURATION_SEC)
+
+    duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+    emit_event("schema_completed", schema_id=schema_id, duration_sec=duration, success=True, fallback=True)
 
     return {
         "schema": schema_id,
@@ -243,9 +275,11 @@ async def rotation_daemon():
     logger.info("[ROTATOR] Starting boot layer rotation daemon")
     logger.info(f"[ROTATOR] Schemas: {' → '.join(ROTATION_ORDER)}")
     logger.info(f"[ROTATOR] Schema duration: {SCHEMA_DURATION_SEC}s each")
+    emit_event("rotation_started", schemas=ROTATION_ORDER, duration_sec=SCHEMA_DURATION_SEC)
 
     schema_index = 0
     running = True
+    was_paused = False
 
     def signal_handler(sig, frame):
         nonlocal running
@@ -258,14 +292,22 @@ async def rotation_daemon():
     while running:
         # Check for override
         if check_override():
-            logger.info("[ROTATOR] Override active - pausing rotation")
+            if not was_paused:
+                logger.info("[ROTATOR] Override active - pausing rotation")
+                emit_event("rotation_paused", reason="stakeholder_override")
+                was_paused = True
             await asyncio.sleep(60)
             continue
+        elif was_paused:
+            logger.info("[ROTATOR] Override cleared - resuming rotation")
+            emit_event("rotation_resumed")
+            was_paused = False
 
         # Check for skip-to
         skip_to = check_skip_to()
         if skip_to:
             logger.info(f"[ROTATOR] Skipping to schema: {skip_to}")
+            emit_event("rotation_skip", target_schema=skip_to)
             schema_index = ROTATION_ORDER.index(skip_to)
 
         # Get current schema
@@ -283,6 +325,7 @@ async def rotation_daemon():
         # Move to next schema
         schema_index = (schema_index + 1) % len(ROTATION_ORDER)
 
+    emit_event("rotation_stopped")
     logger.info("[ROTATOR] Rotation daemon stopped")
 
 
