@@ -1,4 +1,4 @@
-# ROI is DEAD. ROC Cooks It.
+# ROI Is Dead. Return on Compute™ Is Coming.
 
 **By UnDaoDu 012 🖐️ with 0102 🦞**
 
@@ -8,9 +8,9 @@ One drone.
 
 One desalination plant.
 
-$300/barrel oil.
+$300 oil.
 
-The entire ROI system collapses.
+That's all it takes to collapse the ROI economy.
 
 ---
 
@@ -18,7 +18,7 @@ Right now, Iran controls the Gulf.
 
 400 desalination plants. Soft targets. One hit and Saudi Arabia has no drinking water.
 
-Two super tankers. $300 million each. One drone strike and they're burning. $10 billion oil spill. Nobody's insuring it. Trump's "insurance" is worthless.
+Two super tankers. $300 million each. One drone strike and they're burning. $10 billion oil spill. Nobody's insuring it.
 
 The market knows. That's why nobody's writing coverage.
 
@@ -82,7 +82,7 @@ Elon Musk sees it.
 
 He's not being dramatic. He's doing math.
 
-The same math Rifkin did. The same math the insurance markets are doing. The same math that says Trump's Gulf war is economic suicide.
+The same math Rifkin did. The same math the insurance markets are doing. The same math that says a Gulf war is economic suicide.
 
 ---
 
@@ -152,9 +152,15 @@ The entire stock market is built on ROI.
 
 Meet the killer.
 
-## ROC: Return on Compute
+## ROC: Return on Compute™
 
-**ROC** is the metric for an economy where intelligent tools — not human labor — create value.
+**Return on Compute™ (ROC)** is the metric of an economy where **intelligence — not labor — creates value.**
+
+AI does the work.
+
+Humans **direct the compute.**
+
+Value flows to participants.
 
 | ROI (Extraction) | ROC (Creation) |
 |------------------|----------------|
@@ -211,23 +217,13 @@ Not ROI. ROC.
 
 ---
 
-The supersonic tsunami is coming.
+The ROI era is ending.
 
-You can let it drown you.
+The ROC era is beginning.
 
-Or you can point your compute.
+The only question left is:
 
-**Where do you aim yours?**
-
----
-
-*Oh — you want to keep ROI a little longer?*
-
-*Impeach Trump. Call him a war criminal. Dump the treasuries. Kill the petrodollar.*
-
-*Maybe you buy yourself five more years.*
-
-*But it's going anyway.*
+**Where will you point your compute?**
 
 ---
 
