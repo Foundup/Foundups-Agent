@@ -2,6 +2,33 @@
 
 ## Latest Changes
 
+### V072 - LinkedIn Publishing Map + Article Targeting Skill
+**Date**: 2026-03-13
+**Status**: IMPLEMENTED
+
+**Problem Identified**:
+0102 could not reliably search Michael J Trout / UnDaoDu's full LinkedIn publishing ecosystem or recommend which LinkedIn entity should receive a new article draft.
+
+**Changes Made**:
+- Added canonical publishing corpus: `data/linkedin_publishing_map.json`
+  - personal profile, company pages, zero-article accounts, and not-yet-checked accounts
+  - historical article titles, company IDs, manage URLs, and article editor URLs
+- Added `src/content/publishing_router.py`
+  - `list_publishing_entities(...)`
+  - `search_published_articles(...)`
+  - `resolve_article_target(...)`
+- Exported the router via `src/content/__init__.py`
+- Added new discoverable skill: `skillz/linkedin_article_targeting/`
+  - actions: `list_entities`, `search_articles`, `resolve_target`
+- Updated docs/interfaces to mark the feature as discovery/routing only, not universal live posting.
+
+**Impact**:
+- 0102 can now search prior LinkedIn article history across the mapped publishing ecosystem.
+- New article drafts can be routed to a recommended LinkedIn entity with explicit limitations.
+- Future orchestrators have a stable corpus for "what has already been published and where?"
+
+**WSP**: WSP 11 (Interface), WSP 22 (ModLog), WSP 42 (Platform Integration), WSP 84 (No vibecoding)
+
 ### V071 - Session Pickle Encoding Fix for Fallback Posting
 **Date**: 2026-03-08
 **Status**: IMPLEMENTED

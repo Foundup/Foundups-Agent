@@ -57,6 +57,7 @@ This module operates within the **platform_integration** enterprise domain follo
 - [U+1F52E] Performance optimization and scalability
 - [U+1F52E] Advanced error handling and recovery
 - [U+1F52E] Digital Twin integration tests (LinkedIn comment flows)
+- [OK] Canonical multi-entity article map + targeting skill for routing new drafts to the right LinkedIn surface
 
 #### WSP Compliance Enhancement
 - [U+1F52E] Achieve [GREATER_EQUAL]90% test coverage (WSP 5)

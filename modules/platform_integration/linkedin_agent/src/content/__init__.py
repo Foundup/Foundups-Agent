@@ -15,10 +15,20 @@ from .post_generator import LinkedInPostGenerator
 from .content_templates import ContentTemplates
 from .hashtag_manager import HashtagManager
 from .media_handler import MediaHandler
+from .publishing_router import (
+    list_publishing_entities,
+    load_publishing_map,
+    resolve_article_target,
+    search_published_articles,
+)
 
 __all__ = [
     'LinkedInPostGenerator',
     'ContentTemplates', 
     'HashtagManager',
-    'MediaHandler'
+    'MediaHandler',
+    'list_publishing_entities',
+    'load_publishing_map',
+    'resolve_article_target',
+    'search_published_articles',
 ] 

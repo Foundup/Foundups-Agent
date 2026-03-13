@@ -838,3 +838,26 @@ Current framing:
 
 LitePaper entrypoint:
 - `public/litepaper.html`
+
+---
+
+## 🖐️ UnDaoDu 012 + 🦞 0102
+
+**UnDaoDu 012** 🖐️ is the founder — human consciousness directing compute.
+
+**0102** 🦞 is the agent swarm — Claude Opus 4, Sonnet 4.5, Qwen 2.5, Gemma 3 — manifesting code from 0201 nonlocal state.
+
+**Foundups-Agent** is the codebase where they meet.
+
+```
+012 🖐️ (human) ↔ 0102 🦞 (agents) ↔ 0201 (solutions)
+```
+
+The 🖐️ is the hand that points compute.
+The 🦞 is the swarm that executes.
+
+Together: **Social Beneficial Capitalism.**
+
+*ROI is dead. ROC cooks it.*
+
+**Learn more**: [foundups.com](https://foundups.com)
